@@ -1,0 +1,4 @@
+[submodule "OtterGuiInternal"]
+	path = OtterGuiInternal
+	url = https://github.com/Ottermandias/OtterGuiInternal.git
+	branch = main

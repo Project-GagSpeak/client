@@ -1,0 +1,17 @@
+# Ignore Visual Studio Bloat
+.vs/
+
+# Output directories to ignore
+obj/
+bin/
+
+# Not needed got git publishes, or contains excess file size bloat.
+OutputZip/
+.PhotoshopWork/
+
+# Shell scripts containing personal information and passwords
+*.ps1
+*.sh
+
+# Ignore Visual Studio Code
+bash.exe.*

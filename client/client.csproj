@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="Dalamud.Plugin.Bootstrap.targets" />
+    
+    <!--Basic Plugin Definitions-->
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Copyright>Copyright © 2024</Copyright>
+        <LangVersion>preview</LangVersion>
+        <Version>0.9.9.13</Version>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Deterministic>true</Deterministic>
+        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+        <Platforms>AnyCPU</Platforms>
+        <NoWarn>MSB3270</NoWarn>
+    </PropertyGroup>
+
+    
+    <ItemGroup>
+        <!-- Include all files and subfolders within the Assets folder -->
+        <Content Include=".\Assets\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        
+        <!--Include files nessisary for GagSpeak's Muffler Core-->
+        <Content Include=".\MufflerCore\**\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    
+    <!--Dalamud Plugin Bootstrap Targets brought into .csproj-->
+    <PropertyGroup>
+        <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <!--Other DLL's for dalamud supporting module/components-->
+    <ItemGroup>
+        <Reference Include="Dalamud">
+            <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="FFXIVClientStructs">
+            <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="ImGui.NET">
+            <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="ImGuiScene">
+            <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Lumina">
+            <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Lumina.Excel">
+            <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        
+        <!--Allows us to tap into Dalamuds logging provider to override their log level filters with our own.-->
+        <Reference Include="Serilog">
+            <HintPath>$(DalamudLibPath)Serilog.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        
+        <Reference Include="JetBrains.Annotations">
+            <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <!--For localization and language handling.-->
+        <Reference Include="CheapLoc">
+            <HintPath>$(DalamudLibPath)CheapLoc.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <!--For direct interaction with a users system. Useful for the hardcore 
+            functionality or for key & mouse detection dalamud does not provide.-->
+        <Reference Include="PInvoke.User32">
+            <HintPath>$(DalamudLibPath)PInvoke.User32.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+    
+    <!--Include Dalamud Libraries for dev hooks-->
+    <PropertyGroup>
+        <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <!--To Track the time each build occurs, grabbing UTC values. Purpose still not entirely clear. may remove-->
+    <PropertyGroup>
+        <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <NoWarn>$(NoWarn);IDE1006,CS8618</NoWarn>
+    </PropertyGroup>
+
+    
+    <ItemGroup>
+        <!--Submodules-->        
+        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI\ProjectGagspeakAPI.csproj" />
+        <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
+        <ProjectReference Include="..\Penumbra.Api\Penumbra.Api.csproj" />
+        <ProjectReference Include="..\Penumbra.String\Penumbra.String.csproj" />
+        <ProjectReference Include="..\Penumbra.GameData\Penumbra.GameData.csproj" />
+        <ProjectReference Include="..\Glamourer.Api\Glamourer.Api.csproj" />
+        
+        <!-- Required for Buttplug, but because Dalamud has its own Newtonsoft Assembly, thus, any
+        JObject types, despite being the same, are coming from different assemblies, so we must exclude 
+        all assets to only reference the dalamud Newtonsoft.-->
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="all" />
+
+        <!--For JWT token handling, helpful for server connectivity processing-->
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
+        
+        <!--For SignalR server connectivity, helpful for server connectivity processing-->
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.5" />
+        
+        <!--Handles our own plugin hosting methods for dependency injection and service management-->
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+        
+        <!--Adds support for our simulated vibrator (potentially replace with better audio option for more sound quality.-->
+        <PackageReference Include="NAudio" Version="2.2.1" />
+        
+        <!--For handling debouncing inputs to send vibrations to connected devices, for stablizing overload -->
+        <PackageReference Include="DebounceThrottle" Version="3.0.1" />
+        
+        <!-- Toybox Lovense Compatibility. (According to docs possibly estim too) -->
+        <PackageReference Include="Buttplug" Version="4.0.0" />
+        
+        <!--For image processing and manipulation beyond dalamuds textureprovider capabilities..-->
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+    </ItemGroup>
+    
+    <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
+    <ItemGroup>
+        <None Update="client.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <EmbeddedResource Include="Localization\de.json" />
+        <EmbeddedResource Include="Localization\fr.json" />
+    </ItemGroup>
+</Project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

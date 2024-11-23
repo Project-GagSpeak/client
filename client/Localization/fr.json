@@ -1,0 +1,59 @@
+{
+    "CautionaryWarningPage1": {
+        "message": "Sie werden dies nur einmal lesen können, Sie sind gewarnt worden.",
+        "description": "ToSStrings..ctor"
+    },
+    "GagSpeakIntroduction": {
+        "message": "GagSpeak is now a server-side application. This means that issues with desync, message delays, and other pairing issues are a thing of the past. Enjoy interacting with your partner anywhere in the game, including duties, cutscenes, gpose, across data centers, and more!",
+        "description": "ToSStrings..ctor"
+    },
+    "GagSpeakIntroduction2": {
+        "message": "Sie können mir im Voraus danken, aber ich habe mir die Zeit genommen, einen Account-Erstellungsprozess für GagSpeak-Server zu entwickeln, der es Ihnen nicht erforderlich macht, Ihre Lodestone-Seite zu ändern oder Discord beizutreten und die Lodestone-Informationen mit einem Bot zu registrieren.",
+        "description": "ToSStrings..ctor"
+    },
+    "GagSpeakIntroduction3": {
+        "message": "Es ist nicht schwer zu erkennen, dass dies ein Stimmungskiller für jeden sein kann, der das Plugin für eine einmalige Sache oder jemanden, der das Plugin nur kurzzeitig verwenden möchte, nutzen möchte. Um den Prozess zu sehen, klicken Sie unten auf die Schaltfläche für die Kontoerstellung.",
+        "description": "ToSStrings..ctor"
+    },
+    "PluginIpcNotice": {
+        "message": "Hinweis: Einige Komponenten in GagSpeak nutzen zusätzliche Plugins, um das Eintauchen zu verstärken, wie Penumbra, Glamourer, Moodles oder Customize+ Aktionen. Wenn Sie Funktionen nutzen möchten, die sie erfordern, müssen diese Plugins installiert sein.",
+        "description": "ToSStrings..ctor"
+    },
+    "LanguageLabel": {
+        "message": "Sprache",
+        "description": "ToSStrings..ctor"
+    },
+    "AgreementLabel": {
+
+        "message": "Anerkennung der Kontoerstellung & Servernutzung",
+        "description": "ToSStrings..ctor"
+    },
+    "ReadLabel": {
+        "message": "LESEN SIE DAS SORGFÄLTIG",
+        "description": "ToSStrings..ctor"
+    },
+    "AccountCreationIntro": {
+        "message": "Um ein neues Konto für den GagSpeak-Server zu erstellen, stellen Sie sicher, dass Sie mit dem Charakter eingeloggt sind, der das primäre Profil für das GagSpeak-Konto haben soll. Ich sage das, weil DER BUTTON ZUR ERZEUGUNG EINES PRIMÄRSCHLÜSSELS UNTEN NUR EINMAL GEDRÜCKT WERDEN KANN. Danach, wenn Sie GagSpeak auf anderen Alt-Charakteren verwenden möchten, müssen Sie Ihr Konto über den GagSpeak-Discord-Bot beanspruchen.",
+        "description": "ToSStrings..ctor"
+    },
+    "AccountCreationDetails": {
+        "message": "Sobald Ihr Konto erstellt ist, werden der geheime Schlüssel und die Benutzer-ID des Kontos an den derzeit eingeloggten Spieler gebunden, bleiben jedoch zunächst unbeansprucht. Ein unbeanspruchtes Konto stellt ein potentielles Sicherheitsrisiko dar, da jeder den Schlüssel in sein eigenes 'Platzieren Sie den Kontoschlüssel hier'-Feld während der Plugin-Einführung eingeben könnte, um auf das Konto zuzugreifen oder es zu beanspruchen (obwohl die Chance, dass dies passiert, unglaublich klein ist, aber dennoch möglich).",
+        "description": "ToSStrings..ctor"
+    },
+    "PostAccountClaimInfo": {
+        "message": "Nachdem Sie Ihr Konto beansprucht haben, können Sie nicht nur zusätzliche Profile erstellen, die mit Ihren Alt-Charakteren verknüpft werden können, sondern Sie können auch Spitznamen für andere festlegen und sich insgesamt ein personalisierteres Benutzererlebnis bieten.",
+        "description": "ToSStrings..ctor"
+    },
+    "ServerUsageTransparency": {
+        "message": "Sobald Sie mit dem GagSpeak-Server verbunden sind, werden die einzigen Daten, die über die Server übertragen und in der Datenbank gespeichert werden, neue Einstellungsinformationen und Details zu den Komponenten von zugelassenen Benutzern sein. Grundsätzlich werden keine sensiblen Daten gesendet, und es wird Ihnen gut gehen.",
+        "description": "ToSStrings..ctor"
+    },
+    "ButtonWillBeAvailableIn": {
+        "message": "'Ich stimme zu'-Button wird verfügbar sein in",
+        "description": "ToSStrings..ctor"
+    },
+    "AcknowledgeButton": {
+        "message": "Ich verstehe diese Informationen",
+        "description": "ToSStrings..ctor"
+    }
+}

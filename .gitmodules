@@ -1,0 +1,18 @@
+[submodule "OtterGui"]
+	path = OtterGui
+	url = https://github.com/Ottermandias/OtterGui.git
+[submodule "GagspeakAPI"]
+	path = GagspeakAPI
+	url = https://github.com/Project-GagSpeak/api.git
+[submodule "Penumbra.Api"]
+	path = Penumbra.Api
+	url = https://github.com/Ottermandias/Penumbra.Api.git
+[submodule "Penumbra.String"]
+	path = Penumbra.String
+	url = https://github.com/Ottermandias/Penumbra.String.git
+[submodule "Penumbra.GameData"]
+	path = Penumbra.GameData
+	url = https://github.com/Ottermandias/Penumbra.GameData.git
+[submodule "Glamourer.Api"]
+	path = Glamourer.Api
+	url = https://github.com/Ottermandias/Glamourer.Api.git
