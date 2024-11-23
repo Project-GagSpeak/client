@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
+using GagSpeak.Localization;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.Services.ConfigurationServices;
@@ -206,14 +207,14 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
                     // If its a estate entrance, and we are within 3.5f, interact with it.
 
 
-                    if (node.Name.TextValue is "Entrance" or "Apartment Building Entrance" && distance < 3.5f)
+                    if (node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterEstateName || node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterAPTOneName && distance < 3.5f)
                     {
                         _targetManager.Target = node;
                         TargetSystem.Instance()->InteractWithObject((GameObject*)node.Address, false);
                         break;
                     }
                     // If its a node that is an Entrance to Additional Chambers.
-                    if (node.Name.TextValue is "Entrance to Additional Chambers")
+                    if (node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterFCOneName)
                     {
                         // if we are not within 2f of it, attempt to execute the task.
                         if (distance > 2f && _clientConfigs.GagspeakConfig.MoveToChambersInEstates)

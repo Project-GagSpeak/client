@@ -169,13 +169,17 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var clearButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
         var resetButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.SyncAlt, "Reset");
 
+#if DEBUG 
         if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
         {
             _achievementManager.ResetAchievementData();
         }
         UiSharedService.AttachToolTip("Reset all Achievement Progress and Data.--SEP--Must hold CTRL+SHIFT to execute.--SEP--THIS ACTION IS NOT REVERSABLE.");
         ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(availableWidth - clearButtonSize - resetButtonSize - spacingX*2);
+        ImGui.SetNextItemWidth(availableWidth - clearButtonSize - resetButtonSize - spacingX * 2);
+#else
+        ImGui.SetNextItemWidth(availableWidth - clearButtonSize - spacingX);
+#endif
         string filter = AchievementSearchString;
         if (ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref filter, 255))
         {

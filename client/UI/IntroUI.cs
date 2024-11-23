@@ -20,7 +20,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly UiSharedService _uiShared;
-    private bool _readFirstPage = true;
+    private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
     private Task? _fetchAccountDetailsTask;
     private string _aquiredUID = string.Empty;
     private string _secretKey = string.Empty;
