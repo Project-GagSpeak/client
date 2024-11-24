@@ -120,8 +120,8 @@ public class IntroUi : WindowMediatorSubscriberBase
             "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.");
         ImGui.Spacing();
         _uiShared.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
-/*        // if the title text is pressed, proceed.
-        if (ImGui.IsItemClicked()) _readFirstPage = true;*/ // Prevent people from making accounts before i make the announcement.
+        // if the title text is pressed, proceed.
+        if (ImGui.IsItemClicked()) _readFirstPage = true;
 
         UiSharedService.ColorText("- KinkPlates™", ImGuiColors.ParsedGold);
         ImGui.SameLine();
