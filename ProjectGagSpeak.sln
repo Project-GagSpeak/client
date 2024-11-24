@@ -5,7 +5,7 @@ VisualStudioVersion = 17.6.33723.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtterGui", "OtterGui\OtterGui.csproj", "{8830BF74-F127-438B-8135-29CCBC328D86}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeak", "client\ProjectGagSpeak.csproj", "{3A4278DF-B8D5-4EF2-8AB0-137E750F8AFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeak", "ProjectGagSpeak\ProjectGagSpeak.csproj", "{3A4278DF-B8D5-4EF2-8AB0-137E750F8AFE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagspeakAPI", "GagspeakAPI\ProjectGagspeakAPI\ProjectGagspeakAPI.csproj", "{B6155D9C-EAB9-4987-8A94-0AC36A0FED4D}"
 EndProject

@@ -832,6 +832,30 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
             _uiShared.DrawHelpText(GSLoc.Settings.Preferences.LimitForNicksTT);
         }
+
+        _uiShared.DrawCombo("Info Location##settingsUiInfo", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
+        (i) => { _configService.Current.InfoNotification = i; _configService.Save(); }, _configService.Current.InfoNotification);
+        _uiShared.DrawHelpText("The location where \"Info\" notifications will display."
+                      + Environment.NewLine + "'Nowhere' will not show any Info notifications"
+                      + Environment.NewLine + "'Chat' will print Info notifications in chat"
+                      + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
+                      + Environment.NewLine + "'Both' will show chat as well as the toast notification");
+
+        _uiShared.DrawCombo("Warning Location##settingsUiWarn", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
+        (i) => { _configService.Current.WarningNotification = i; _configService.Save(); }, _configService.Current.WarningNotification);
+        _uiShared.DrawHelpText("The location where \"Warning\" notifications will display."
+                              + Environment.NewLine + "'Nowhere' will not show any Warning notifications"
+                              + Environment.NewLine + "'Chat' will print Warning notifications in chat"
+                              + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
+                              + Environment.NewLine + "'Both' will show chat as well as the toast notification");
+
+        _uiShared.DrawCombo("Error Location##settingsUi", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
+        (i) => { _configService.Current.ErrorNotification = i; _configService.Save(); }, _configService.Current.ErrorNotification);
+        _uiShared.DrawHelpText("The location where \"Error\" notifications will display."
+                              + Environment.NewLine + "'Nowhere' will not show any Error notifications"
+                              + Environment.NewLine + "'Chat' will print Error notifications in chat"
+                              + Environment.NewLine + "'Toast' will show Error toast notifications in the bottom right corner"
+                              + Environment.NewLine + "'Both' will show chat as well as the toast notification");
     }
 
     /// <summary> Displays the Debug section within the settings, where we can set our debug level </summary>

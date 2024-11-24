@@ -101,6 +101,7 @@ public class MigratePatterns
 
         PatternData newPatternToAdd = new PatternData
         {
+            UniqueIdentifier = Guid.NewGuid(),
             Name = oldPattern.Name,
             Description = oldPattern.Description,
             Author = "(Migrated Pattern)",
@@ -109,6 +110,8 @@ public class MigratePatterns
             StartPoint = TimeSpan.Zero,
             PlaybackDuration = oldPattern.Duration.GetTimespanFromTimespanString(),
             IsActive = false,
+            IsPublished = false,
+            CreatorUID = "OldMigration",
             ShouldLoop = oldPattern.Loop,
             PatternByteData = oldPattern.PatternData
         };
@@ -163,6 +166,7 @@ public class MigratePatterns
 
             var newPatternToAdd = new PatternData
             {
+                UniqueIdentifier = Guid.NewGuid(),
                 Name = oldPattern.Name,
                 Description = oldPattern.Description,
                 Author = "(Migrated Pattern)",
@@ -171,6 +175,8 @@ public class MigratePatterns
                 StartPoint = TimeSpan.Zero,
                 PlaybackDuration = oldPattern.Duration.GetTimespanFromTimespanString(),
                 IsActive = false,
+                IsPublished = false,
+                CreatorUID = "OldMigration",
                 ShouldLoop = oldPattern.Loop,
                 PatternByteData = oldPattern.PatternData
             };

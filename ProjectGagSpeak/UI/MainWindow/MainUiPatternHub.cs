@@ -200,7 +200,7 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
             _patternHubService.ToggleSort();
         }
         UiSharedService.AttachToolTip("Toggle Sort\n(Current: "+_patternHubService.CurrentSort+")");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => UnlocksEventManager.AchievementEvent(UnlocksEvent.TutorialCompleted));
     }
 }
 

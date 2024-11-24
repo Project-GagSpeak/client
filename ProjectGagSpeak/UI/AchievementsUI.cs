@@ -49,10 +49,6 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             MinimumSize = new Vector2(525, 400),
             MaximumSize = new Vector2(525, 2000)
         };
-
-        pi.UiBuilder.DisableCutsceneUiHide = true;
-        pi.UiBuilder.DisableGposeUiHide = true;
-        pi.UiBuilder.DisableUserUiHide = true;
     }
 
     private string AchievementSearchString = string.Empty;

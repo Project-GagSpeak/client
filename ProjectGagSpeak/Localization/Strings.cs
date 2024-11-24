@@ -116,16 +116,15 @@ namespace GagSpeak.Localization
         public readonly string Step12Desc = Loc.Localize("HelpMainUi_Step12Desc", "This is where you access your GagSpeak Global Settings, Hardcore Parameters, Plugin Preferences, and Account Management. (Take a look at it after the tutorial!)");
 
         public readonly string Step13Title = Loc.Localize("HelpMainUi_Step13Title", "Supporting GagSpeak");
-        public readonly string Step13Desc = Loc.Localize("HelpMainUi_Step13Desc", "A Short note aside, this plugin i've been working on hard for 8-10 hours a day, 7 days a week, for nearly a year, to provide something for " +
-            "you all to enjoy free of charge. If you ever fancy tossing a tip or becoming a supporter to say thanks or support me in any way, it would be much apperciated." +
-            "\nBut please don't feel guilty if you don't. Only support me if you want to! I will always love and cherish you all regardless ♥");
+        public readonly string Step13Desc = Loc.Localize("HelpMainUi_Step13Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much apperciated." +
+            "\n\nBut please don't feel guilty if you don't. Only support me if you want to! I will always love and cherish you all regardless ♥");
 
         public readonly string Step14Title = Loc.Localize("HelpMainUi_Step14Title", "To the Global Chat Panel");
         public readonly string Step14Desc = Loc.Localize("HelpMainUi_Step14Desc", "Select the Global Chat Panel to continue the tutorial, A place to talk to anyone else on GagSpeak from Anywhere!");
 
         public readonly string Step15Title = Loc.Localize("HelpMainUi_Step15Title", "The Global Chat");
         public readonly string Step15Desc = Loc.Localize("HelpMainUi_Step15Desc", "You're Name in here will display as [Kinkster-###] Where the ### is the last 3 characters of your UID." + Environment.NewLine +
-            "This is dont intentionally with safety in mind to keep you anonymous to other Kinksters you have not yet added, so you can feel comfortable chatting!");
+            "This is done intentionally with safety in mind, to keep you anonymous for other Kinksters you have not yet added!");
         public readonly string Step15DescExtended = Loc.Localize("HelpMainUi_Step15DescExtended", "You can hover over any name to perform actions such as opening their Light KinkPlate™ or Muting them." + Environment.NewLine +
             "The last 3 ### are intentionally visible to allow Kinksters to distinguish who they are talking with but better communication. Use this to your " +
             "advantage to discuss meetup spots to add eachother properly, without exposing yourself!");

@@ -143,7 +143,7 @@
     
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
     <ItemGroup>
-        <None Update="client.json">
+        <None Update="ProjectGagSpeak.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <EmbeddedResource Include="Localization\de.json" />

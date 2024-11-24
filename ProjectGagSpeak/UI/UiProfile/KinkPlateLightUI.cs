@@ -2,6 +2,7 @@ using Dalamud.Interface.Colors;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using System.Numerics;
@@ -32,7 +33,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         Size = new(256, 512);
         IsOpen = true;
 
-        _showFullUID = _pairManager.DirectPairs.Any(x => x.UserData.UID == pairUserData.UID);
+        _showFullUID = _pairManager.DirectPairs.Any(x => x.UserData.UID == pairUserData.UID) || pairUserData.UID == MainHub.UID;
         UserDataToDisplay = pairUserData;
     }
 

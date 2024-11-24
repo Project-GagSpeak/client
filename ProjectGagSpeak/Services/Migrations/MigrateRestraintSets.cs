@@ -88,6 +88,7 @@ public class MigrateRestraintSets
         // construct a new RestraintSet object from the old one.
         RestraintSet newSet = new RestraintSet()
         {
+            RestraintId = Guid.NewGuid(),
             Name = oldSet.Name,
             Description = oldSet.Description,
             Enabled = oldSet.Enabled,
@@ -126,6 +127,7 @@ public class MigrateRestraintSets
             // construct a new RestraintSet object from the old one.
             RestraintSet newSet = new RestraintSet()
             {
+                RestraintId = Guid.NewGuid(),
                 Name = oldSet.Name,
                 Description = oldSet.Description,
                 Enabled = oldSet.Enabled,

@@ -58,9 +58,6 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         IsWindowOpen = false;
         // do not respect close hotkey
         RespectCloseHotkey = false;
-        // disable ability for client to hide UI when hideUI hotkey is pressed
-        _pi.UiBuilder.DisableUserUiHide = true;
-        _pi.UiBuilder.DisableCutsceneUiHide = true;
 
         // set the stopwatch to send an elapsed time event after 2 seconds then stop
         _TimerRecorder = new UpdateTimer(2000, ToggleWindow);
@@ -113,6 +110,9 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
 
     public override void OnOpen()
     {
+        // disable ability for client to hide UI when hideUI hotkey is pressed
+        _pi.UiBuilder.DisableUserUiHide = true;
+        _pi.UiBuilder.DisableCutsceneUiHide = true;
         _logger.LogDebug($"BlindfoldWindow: OnOpen");
         // if an active timer is running
         if (_TimerRecorder.IsRunning)
@@ -295,6 +295,16 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 ImGui.Image(wrapSensual!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
             }
         }
+    }
+
+    public override void OnClose()
+    {
+        // enable ability for client to hide UI when hideUI hotkey is pressed
+        _pi.UiBuilder.DisableUserUiHide = false;
+        _pi.UiBuilder.DisableCutsceneUiHide = false;
+        _logger.LogDebug($"BlindfoldWindow: OnClose");
+        base.OnClose();
+        IsWindowOpen = false;
     }
 }
 
