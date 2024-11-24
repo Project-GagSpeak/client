@@ -119,7 +119,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         ImGui.TextWrapped("Project GagSpeak is a highly ambitious project that has been devloped over the course of a year in closed Beta, " +
             "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.");
         ImGui.Spacing();
-        _uiShared.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink)) _uiShared.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
         // if the title text is pressed, proceed.
         if (ImGui.IsItemClicked()) _readFirstPage = true;
 
@@ -160,7 +160,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         ImGui.Text(" Maximize Immersion and Helplessness with others (at your own risk!)");
 
         ImGui.Spacing();
-        ImGui.TextWrapped("Selecting the text, The Plugin Contains a variety of Modules, you can proceed to acknowledgements. " +
+        ImGui.TextWrapped("Clicking The large pink text above will advance you to the acknowledgements page. " +
             "I Hope you enjoy all the features that this plugin has to offer, and have a great time using it. ♥");
     }
 

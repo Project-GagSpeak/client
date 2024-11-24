@@ -26,6 +26,14 @@ public class GagSpeakLoc : IDisposable, IHostedService
         _tutorialService = tutorialService;
         _pi = pi;
 
+        _localization.SetupWithLangCode(_pi.UiLanguage);
+        GSLoc.ReInitialize();
+
+        // Update our forced stay entries as well.
+        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
+        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Save();
+
         // load tutorial strings.
         _tutorialService.InitializeTutorialStrings();
 
@@ -55,13 +63,6 @@ public class GagSpeakLoc : IDisposable, IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting GagSpeak Localization Service.");
-        _localization.SetupWithLangCode(_pi.UiLanguage);
-        GSLoc.ReInitialize();
-
-        // Update our forced stay entries as well.
-        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
-        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
-        _mainConfig.Save();
         return Task.CompletedTask;
     }
 
