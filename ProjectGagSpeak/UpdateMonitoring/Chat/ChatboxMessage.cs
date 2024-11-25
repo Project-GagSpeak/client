@@ -27,7 +27,7 @@ namespace GagSpeak.UpdateMonitoring.Chat;
 public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _mainConfig;
-    private readonly PlayerCharacterData _playerInfo;
+    private readonly ClientData _playerInfo;
     private readonly PuppeteerHandler _puppeteerHandler;
     private readonly ChatSender _chatSender;
     private readonly DeathRollService _deathRolls;
@@ -39,7 +39,7 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
 
     /// <summary> This is the constructor for the OnChatMsgManager class. </summary>
     public ChatBoxMessage(ILogger<ChatBoxMessage> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, PlayerCharacterData playerInfo,
+        GagspeakConfigService mainConfig, ClientData playerInfo,
         PuppeteerHandler puppeteerHandler, ChatSender chatSender,
         DeathRollService deathRolls, TriggerService triggers, IChatGui clientChat,
         IClientState clientState, IDataManager dataManager) : base(logger, mediator)
@@ -166,11 +166,7 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
 
         // return if the message type is not in our valid chat channels for puppeteer.
         if (_playerInfo.CoreDataNull || !_mainConfig.Current.ChannelsPuppeteer.Contains(channel.Value))
-        {
-            Logger.LogDebug("Message was not in a valid channel for puppeteer.", LoggerType.Puppeteer);
             return;
-        }
-
 
         // check for global puppeteer triggers
         var globalTriggers = _playerInfo.GlobalPerms?.GlobalTriggerPhrase.Split('|').ToList() ?? new List<string>();

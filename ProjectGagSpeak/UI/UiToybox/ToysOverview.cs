@@ -21,14 +21,14 @@ public class ToyboxOverview
     private readonly ILogger<ToyboxOverview> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly UiSharedService _uiShared;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly VibratorService _vibeService;
     private readonly TutorialService _guides;
 
     public ToyboxOverview(ILogger<ToyboxOverview> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService, PlayerCharacterData playerData,
+        UiSharedService uiSharedService, ClientData playerData,
         ClientConfigurationManager clientConfigs, ServerConfigurationManager serverConfigs,
         VibratorService vibeService, TutorialService guides)
     {

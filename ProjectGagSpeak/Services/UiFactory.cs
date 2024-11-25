@@ -31,7 +31,7 @@ public class UiFactory
     private readonly ClientMonitorService _clientService;
     private readonly GagManager _gagManager;
     private readonly PairManager _pairManager;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -55,7 +55,7 @@ public class UiFactory
     public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
         PiShockProvider shockProvider, ClientConfigurationManager clientConfigs, 
         ClientMonitorService clientService, GagManager gagManager, PairManager pairManager, 
-        PlayerCharacterData playerManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
+        ClientData playerManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
         KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, MoodlesService moodlesService, 
         OnFrameworkService frameworkUtils, PermissionPresetService presetService, 
         PermActionsComponents permActionHelpers, TextureService textures, ToyboxRemoteService remoteService, 

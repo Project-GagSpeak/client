@@ -214,13 +214,7 @@ public class Pair
     {
         _logger.LogDebug("Applying updated appearance data for " + data.User.UID, LoggerType.PairDataTransfer);
         LastAppearanceData = data.AppearanceData;
-
-        // update the locked slots.
-        if (data.UpdateKind is DataUpdateKind.AppearanceGagAppliedLayerOne or DataUpdateKind.AppearanceGagAppliedLayerTwo or DataUpdateKind.AppearanceGagAppliedLayerThree
-            or DataUpdateKind.AppearanceGagRemovedLayerOne or DataUpdateKind.AppearanceGagRemovedLayerTwo or DataUpdateKind.AppearanceGagRemovedLayerThree)
-        {
-            UpdateCachedLockedSlots();
-        }
+        UpdateCachedLockedSlots();
     }
 
     /// <summary>
@@ -236,23 +230,23 @@ public class Pair
         LastWardrobeData = data.WardrobeData;
 
         // depend on the EnabledBy field to know if we applied.
-        if (data.UpdateKind is DataUpdateKind.WardrobeRestraintApplied)
+        if (data.Type is WardrobeUpdateType.RestraintApplied)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintApplied, data.WardrobeData.ActiveSetId, true, data.WardrobeData.ActiveSetEnabledBy);
 
         // We can only detect the lock uid by listening for the assigner UID. Unlocks are processed via the actions tab.
-        if (data.UpdateKind is DataUpdateKind.WardrobeRestraintLocked)
+        if (data.Type is WardrobeUpdateType.RestraintLocked)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.WardrobeData.ActiveSetId, data.WardrobeData.Padlock.ToPadlock(), true, data.WardrobeData.Assigner, UserData.UID);
 
         // We can only detect the unlock uid by listening for the assigner UID. Unlocks are processed via the actions tab.
-        if (data.UpdateKind is DataUpdateKind.WardrobeRestraintUnlocked)
+        if (data.Type is WardrobeUpdateType.RestraintUnlocked)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.WardrobeData.ActiveSetId, previousLock, false, data.Enactor.UID, UserData.UID);
 
         // For removal
-        if (data.UpdateKind is DataUpdateKind.WardrobeRestraintDisabled)
+        if (data.Type is WardrobeUpdateType.RestraintDisabled)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintApplied, previousSetId, false, data.Enactor.UID);
 
         // if the type was apply or removal, we should update the locked slots.
-        if (data.UpdateKind is DataUpdateKind.WardrobeRestraintApplied or DataUpdateKind.WardrobeRestraintDisabled)
+        if (data.Type is WardrobeUpdateType.RestraintApplied or WardrobeUpdateType.RestraintDisabled)
             UpdateCachedLockedSlots();
 
     }
@@ -271,22 +265,18 @@ public class Pair
         }
 
         // otherwise, update the appropriate part.
-        if (data.UpdateKind is DataUpdateKind.PuppeteerAliasListUpdated)
+        if (data.Type is PuppeteerUpdateType.AliasListUpdated)
         {
             LastAliasData.AliasList = data.AliasData.AliasList;
         }
-        else if (data.UpdateKind is DataUpdateKind.PuppeteerPlayerNameRegistered)
+        else if (data.Type is PuppeteerUpdateType.PlayerNameRegistered)
         {
             LastAliasData.CharacterName = data.AliasData.CharacterName;
             LastAliasData.CharacterWorld = data.AliasData.CharacterWorld;
         }
-        else if (data.UpdateKind is DataUpdateKind.FullDataUpdate)
+        else if (data.Type is PuppeteerUpdateType.FullDataUpdate)
         {
             LastAliasData = data.AliasData;
-        }
-        else
-        {
-            _logger.LogWarning("Unknown Set Type: " + data.UpdateKind);
         }
     }
 

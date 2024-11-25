@@ -432,7 +432,7 @@ public partial class MainHub
     /// </summary>
     public Task Client_UserReceiveOtherDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOtherDataAppearance: {user}{updateKind}\n{data}", dataDto.User, dataDto.UpdateKind, dataDto.AppearanceData.ToGagString());
+        Logger.LogDebug("Client_UserReceiveOtherDataAppearance: {user}{updateKind}\n{data}", dataDto.User, dataDto.Type, dataDto.AppearanceData.ToGagString());
         ExecuteSafely(() => _pairs.ReceiveCharaAppearanceData(dataDto));
         return Task.CompletedTask;
     }

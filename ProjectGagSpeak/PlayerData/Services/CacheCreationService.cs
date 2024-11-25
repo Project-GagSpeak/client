@@ -15,10 +15,10 @@ namespace GagSpeak.PlayerData.Services;
 public struct CacheData
 {
     public GameObjectHandler? GameObj { get; set; }
-    public DataUpdateKind UpdateKind { get; set; }
+    public Enum UpdateKind { get; set; }
     public Guid Guid { get; set; }
 
-    public CacheData(GameObjectHandler? handler, DataUpdateKind updateKind, Guid guid)
+    public CacheData(GameObjectHandler? handler, Enum updateKind, Guid guid)
     {
         GameObj = handler;
         UpdateKind = updateKind;
@@ -63,7 +63,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             Logger.LogDebug("Received CreateCacheForObject for " + msg.ObjectToCreateFor + ", updating", LoggerType.ClientPlayerData);
             _cacheCreateLock.Wait();
             if (IpcCallerMoodles.APIAvailable) await FetchLatestMoodlesDataAsync().ConfigureAwait(false);
-            _cacheToCreate = new CacheData(msg.ObjectToCreateFor, DataUpdateKind.IpcUpdateVisible, Guid.Empty);
+            _cacheToCreate = new CacheData(msg.ObjectToCreateFor, IpcUpdateType.UpdateVisible, Guid.Empty);
             _cacheCreateLock.Release();
         });
 
@@ -78,7 +78,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 _playerIpcData.MoodlesStatuses.Clear();
                 _playerIpcData.MoodlesPresets.Clear();
                 Logger.LogDebug("Clearing cache for " + msg.ObjectToCreateFor, LoggerType.ClientPlayerData);
-                Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, DataUpdateKind.IpcMoodlesCleared));
+                Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, IpcUpdateType.MoodlesCleared));
                 // If we are in a cutscene, we should publish a mediator event to let our appearance handler know we need to redraw.
                 // This is a safe workaround from executing things on cutscene start because glamourer takes precedence first.
                 // However, this toggle consistently occurs after Glamourer finishes its draws.
@@ -93,7 +93,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
 
             await FetchLatestMoodlesDataAsync().ConfigureAwait(false);
             Logger.LogDebug("Moodles is now ready, fetching latest info and pushing to all visible pairs", LoggerType.IpcMoodles);
-            Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, DataUpdateKind.IpcUpdateVisible));
+            Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, IpcUpdateType.UpdateVisible));
         });
 
         Mediator.Subscribe<MoodlesStatusManagerUpdate>(this, (msg) =>
@@ -103,7 +103,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             if (_playerObject != null && _playerObject.Address != nint.Zero)
             {
                 Logger.LogDebug("Received new MoodlesStatusManagerUpdate", LoggerType.IpcMoodles);
-                _ = AddPlayerCacheToCreate(DataUpdateKind.IpcMoodlesStatusManagerChanged, Guid.Empty);
+                _ = AddPlayerCacheToCreate(IpcUpdateType.MoodlesStatusManagerChanged, Guid.Empty);
             }
         });
 
@@ -114,7 +114,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             if (_playerObject != null && _playerObject.Address != nint.Zero)
             {
                 Logger.LogDebug("Updating visible pairs with latest Moodles Data. [You Changed Settings of a Status!]", LoggerType.IpcMoodles);
-                _ = AddPlayerCacheToCreate(DataUpdateKind.IpcMoodlesStatusesUpdated, msg.Guid);
+                _ = AddPlayerCacheToCreate(IpcUpdateType.MoodlesStatusesUpdated, msg.Guid);
             }
         });
 
@@ -124,7 +124,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             if (_playerObject != null && _playerObject.Address != nint.Zero)
             {
                 Logger.LogDebug("Received a Status Manager change for Moodles. Updating player with latest IPC", LoggerType.IpcMoodles);
-                _ = AddPlayerCacheToCreate(DataUpdateKind.IpcMoodlesPresetsUpdated, msg.Guid);
+                _ = AddPlayerCacheToCreate(IpcUpdateType.MoodlesPresetsUpdated, msg.Guid);
             }
         });
 
@@ -149,7 +149,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
         _cts.Dispose();
     }
 
-    private async Task AddPlayerCacheToCreate(DataUpdateKind updateKind, Guid guid = default)
+    private async Task AddPlayerCacheToCreate(IpcUpdateType updateKind, Guid guid = default)
     {
         await _cacheCreateLock.WaitAsync().ConfigureAwait(false);
         _cacheToCreate = new CacheData(_playerObject, updateKind, guid);
@@ -173,7 +173,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 try
                 {
                     await BuildCharacterData(_playerIpcData, toCreate, _cts.Token).ConfigureAwait(false);
-                    Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, toCreate.UpdateKind));
+                    Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, (IpcUpdateType)toCreate.UpdateKind));
                 }
                 catch (Exception ex)
                 {
@@ -209,18 +209,18 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             // Obtain the Status Manager State for the player object.
             switch (playerObjData.UpdateKind)
             {
-                case DataUpdateKind.IpcMoodlesStatusesUpdated:
+                case IpcUpdateType.MoodlesStatusesUpdated:
                     {
                         await StatusSettingsUpdate(prevData, playerObjData, playerObjData.Guid).ConfigureAwait(false);
                     }
                     break;
-                case DataUpdateKind.IpcMoodlesPresetsUpdated:
+                case IpcUpdateType.MoodlesPresetsUpdated:
                     {
                         await PresetSettingsUpdate(prevData, playerObjData, playerObjData.Guid).ConfigureAwait(false);
                     }
                     break;
-                case DataUpdateKind.None:
-                case DataUpdateKind.IpcUpdateVisible:
+                case IpcUpdateType.None:
+                case IpcUpdateType.UpdateVisible:
                     {
                         prevData.MoodlesData = await _ipcManager.Moodles.GetStatusAsync(playerObjData.GameObj.NameWithWorld).ConfigureAwait(false) ?? string.Empty;
                         prevData.MoodlesDataStatuses = await _ipcManager.Moodles.GetStatusInfoAsync(playerObjData.GameObj.NameWithWorld).ConfigureAwait(false) ?? new();
@@ -229,12 +229,12 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                         prevData.MoodlesPresets = await _ipcManager.Moodles.GetPresetsInfoAsync().ConfigureAwait(false) ?? new();
                     }
                     break;
-                case DataUpdateKind.IpcMoodlesStatusManagerChanged:
+                case IpcUpdateType.MoodlesStatusManagerChanged:
                     {
                         await StatusManagerUpdate(prevData, playerObjData).ConfigureAwait(false);
                     }
                     break;
-                case DataUpdateKind.IpcMoodlesCleared:
+                case IpcUpdateType.MoodlesCleared:
                     Logger.LogTrace("Clearing Moodles Data for " + playerObjData, LoggerType.IpcMoodles);
                     break;
                 default: Logger.LogWarning("Unknown Update Kind for {object}", playerObjData); break;

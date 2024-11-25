@@ -20,12 +20,12 @@ public class AppearanceService : DisposableMediatorSubscriberBase
 {
     private readonly IpcManager _Interop; // can upgrade this to IpcManager if needed later.
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly OnFrameworkService _frameworkUtils;
 
     public AppearanceService(ILogger<AppearanceService> logger,
         GagspeakMediator mediator, ClientConfigurationManager clientConfigs,
-        PlayerCharacterData playerManager, OnFrameworkService frameworkUtils,
+        ClientData playerManager, OnFrameworkService frameworkUtils,
         IpcManager interop) : base(logger, mediator)
     {
         _Interop = interop;

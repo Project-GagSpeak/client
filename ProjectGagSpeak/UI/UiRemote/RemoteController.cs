@@ -28,13 +28,13 @@ namespace GagSpeak.UI.UiRemote;
 public class RemoteController : RemoteBase
 {
     private readonly ToyboxHub _apiHubToybox;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly GagManager _gagManager;
     private readonly UiSharedService _uiShared;
     private readonly VibratorService _vibeService;
     private readonly ToyboxRemoteService _remoteService;
     public RemoteController(ILogger<RemoteController> logger, GagspeakMediator mediator, 
-        ToyboxHub apiHubToybox, PlayerCharacterData playerManager, GagManager gagManager, 
+        ToyboxHub apiHubToybox, ClientData playerManager, GagManager gagManager, 
         UiSharedService uiShared, VibratorService vibeService, ToyboxRemoteService remoteService, 
         TutorialService guides, PrivateRoom privateRoom) 
         : base(logger, mediator, uiShared, vibeService, remoteService, guides, privateRoom.RoomName)

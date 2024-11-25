@@ -100,8 +100,8 @@ public class ClientMonitorService : IHostedService
     public TerritoryType TerritoryType => _gameData.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(TerritoryId) ?? default;
     public TerritoryIntendedUseEnum TerritoryIntendedUse => (TerritoryIntendedUseEnum)(_gameData.GetExcelSheet<TerritoryType>().GetRowOrDefault(TerritoryId)?.TerritoryIntendedUse.ValueNullable?.RowId ?? default);
 
-    public int PartySize => _partyList.Count;
-    public bool InSoloParty => _partyList.Count is 1 && IsInDuty;
+    public int PartySize => _partyList.Length;
+    public bool InSoloParty => _partyList.Length <= 1 && IsInDuty;
 
     public void OpenMapWithMapLink(MapLinkPayload mapLink) => _gameGui.OpenMapWithMapLink(mapLink);
     public bool TryGetAction(uint actionId, out GameAction action)

@@ -6,21 +6,16 @@ using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
-using System.Reflection.Metadata;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.PlayerData.Services;
 
 // A class intended to help execute any actions that should be performed by the client upon initial connection.
 public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
     private readonly GagManager _gagManager;
@@ -30,7 +25,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private readonly AppearanceManager _appearanceHandler;
 
     public OnConnectedService(ILogger<OnConnectedService> logger,
-        GagspeakMediator mediator, PlayerCharacterData playerData,
+        GagspeakMediator mediator, ClientData playerData,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
         GagManager gagManager, IpcManager ipcManager, WardrobeHandler wardrobeHandler,
         HardcoreHandler blindfold, AppearanceManager appearanceHandler) : base(logger, mediator)
@@ -56,7 +51,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
     private async void OnConnected()
     {
-        if(MainHub.ConnectionDto is null)
+        if (MainHub.ConnectionDto is null)
         {
             Logger.LogError("Connection DTO is null. Cannot proceed with OnConnected Service. (This shouldnt even be possible)", LoggerType.ClientPlayerData);
             return;
@@ -68,9 +63,6 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         _playerData.GlobalPerms = MainHub.ConnectionDto.UserGlobalPermissions;
         _playerData.AppearanceData = MainHub.ConnectionDto.CharaAppearanceData;
         Logger.LogDebug("Data Set", LoggerType.ClientPlayerData);
-
-        // See why this is necessary later.
-        //await _playerData.GetGlobalPiShockPerms();
 
         Logger.LogDebug("Setting up Update Tasks from GagSpeak Modules.", LoggerType.ClientPlayerData);
         // update the active gags
@@ -104,7 +96,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             // if it is not a set that had its time expired, then we should re-enable it, and re-lock it if it was locked.
             else
             {
-                if(restraintId != _clientConfigs.GetActiveSet()?.RestraintId)
+                if (restraintId != _clientConfigs.GetActiveSet()?.RestraintId)
                 {
                     Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
                     await _appearanceHandler.EnableRestraintSet(restraintId, serverData.ActiveSetEnabler, false, false);
@@ -117,7 +109,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
                 }
             }
             // update the data. (Note, setting these to false may trigger a loophole by skipping over the monitored achievements,
-            Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.FullDataUpdate));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
         }
         else
         {
@@ -131,17 +123,17 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
                 // disable it.
                 await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
                 // update the data. (Note, setting these to false may trigger a loophole by skipping over the monitored achievements,
-                Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.FullDataUpdate));
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
             }
         }
         _gagManager.UpdateGagLockComboSelections();
         _gagManager.UpdateRestraintLockSelections(false);
         // send our updated data.
         var activeGags = _playerData.AppearanceData.GagSlots.Where(x => x.GagType.ToGagType() is not GagType.None).Select(x => x.GagType).ToList();
-        
+
         // now that everything is updated, get the active set.
         var activeSetFinal = _clientConfigs.GetActiveSet();
-        if(activeSetFinal is not null)
+        if (activeSetFinal is not null)
         {
             // Enable the Hardcore Properties by invoking the ipc call.
             if (activeSetFinal.HasPropertiesForUser(activeSetFinal.EnabledBy))
@@ -164,12 +156,12 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private async void CheckHardcore()
     {
         // Stop this if it is true.
-        if(_hardcoreHandler.IsForcedToFollow)
+        if (_hardcoreHandler.IsForcedToFollow)
             _hardcoreHandler.UpdateForcedFollow(NewState.Disabled);
 
         // Re-Enable forced Sit if it is disabled.
-        if(_hardcoreHandler.IsForcedToEmote)
-            if(!string.IsNullOrEmpty(_playerData.GlobalPerms?.ForcedEmoteState))
+        if (_hardcoreHandler.IsForcedToEmote)
+            if (!string.IsNullOrEmpty(_playerData.GlobalPerms?.ForcedEmoteState))
                 _hardcoreHandler.UpdateForcedEmoteState(NewState.Enabled);
 
         // Re-Enable Forcd Stay if it was enabled.
@@ -181,11 +173,11 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             await _hardcoreHandler.HandleBlindfoldLogic(NewState.Enabled);
 
         // Re-Enable the chat related hardcore things.
-        if(_hardcoreHandler.IsHidingChat)
+        if (_hardcoreHandler.IsHidingChat)
             _hardcoreHandler.UpdateHideChatboxState(NewState.Enabled);
         if (_hardcoreHandler.IsHidingChatInput)
             _hardcoreHandler.UpdateHideChatInputState(NewState.Enabled);
-        if(_hardcoreHandler.IsBlockingChatInput)
+        if (_hardcoreHandler.IsBlockingChatInput)
             _hardcoreHandler.UpdateChatInputBlocking(NewState.Enabled);
     }
 

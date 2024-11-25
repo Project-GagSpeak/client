@@ -15,13 +15,13 @@ public class PermissionPresetService
 {
     private readonly ILogger<PermissionPresetService> _logger;
     private readonly MainHub _apiHubMain;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
     public PermissionPresetService(ILogger<PermissionPresetService> logger,
-        MainHub apiHubMain, PlayerCharacterData playerManager,
+        MainHub apiHubMain, ClientData playerManager,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
         UiSharedService uiShared)
     {

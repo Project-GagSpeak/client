@@ -32,7 +32,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly MainHub _apiHubMain;
     private readonly AccountsTab _accountsTab;
     private readonly DebugTab _debugTab;
-    private readonly PlayerCharacterData _playerCharacterManager;
+    private readonly ClientData _playerCharacterManager;
     private readonly IpcManager _ipcManager;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly GagspeakConfigService _configService;
@@ -49,7 +49,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator,
         MainHub apiHubMain, AccountsTab accounts, DebugTab debug,
         GagspeakConfigService configService, PairManager pairManager, 
-        PlayerCharacterData playerCharacterManager, ClientConfigurationManager clientConfigs, 
+        ClientData playerCharacterManager, ClientConfigurationManager clientConfigs, 
         PiShockProvider shockProvider, AvfxManager avfxManager, VfxSpawns vfxSpawns, 
         ServerConfigurationManager serverConfigs, IpcManager ipcManager, 
         SettingsHardcore hardcoreSettingsUI, UiSharedService uiShared,

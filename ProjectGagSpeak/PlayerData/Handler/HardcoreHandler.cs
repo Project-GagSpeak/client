@@ -22,7 +22,7 @@ namespace GagSpeak.PlayerData.Handlers;
 public class HardcoreHandler : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly AppearanceManager _appearanceHandler;
     private readonly PairManager _pairManager;
     private readonly MainHub _apiHubMain; // for sending the updates.
@@ -33,10 +33,10 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
 
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerData,
-        AppearanceManager appearanceHandler, PairManager pairManager,
-        MainHub apiHubMain, MoveController moveController, ChatSender chatSender,
-        EmoteMonitor emoteMonitor, ITargetManager targetManager) : base(logger, mediator)
+        ClientConfigurationManager clientConfigs, ClientData playerData,
+        AppearanceManager appearanceHandler, PairManager pairManager, MainHub apiHubMain, 
+        MoveController moveController, ChatSender chatSender, EmoteMonitor emoteMonitor, 
+        ITargetManager targetManager) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _playerData = playerData;

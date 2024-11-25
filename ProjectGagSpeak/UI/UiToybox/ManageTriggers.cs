@@ -31,7 +31,7 @@ public class ToyboxTriggerManager
     private readonly UiSharedService _uiShared;
     private readonly PairManager _pairManager;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly DeviceService _deviceController;
     private readonly TriggerHandler _handler;
     private readonly PatternHandler _patternHandler;
@@ -41,7 +41,7 @@ public class ToyboxTriggerManager
 
     public ToyboxTriggerManager(ILogger<ToyboxTriggerManager> logger, GagspeakMediator mediator,
         UiSharedService uiSharedService, PairManager pairManager, ClientConfigurationManager clientConfigs,
-        PlayerCharacterData playerManager, DeviceService deviceController, TriggerHandler handler,
+        ClientData playerManager, DeviceService deviceController, TriggerHandler handler,
         PatternHandler patternHandler, ClientMonitorService clientService, MoodlesService moodlesService,
         TutorialService guides)
     {

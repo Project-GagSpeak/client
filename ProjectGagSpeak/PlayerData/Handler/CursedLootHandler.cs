@@ -9,12 +9,12 @@ namespace GagSpeak.PlayerData.Handlers;
 public class CursedLootHandler : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly GagManager _gagManager;
     private readonly AppearanceManager _appearanceHandler;
 
     public CursedLootHandler(ILogger<CursedLootHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerData,
+        ClientConfigurationManager clientConfigs, ClientData playerData,
         GagManager gagManager, AppearanceManager handler) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;

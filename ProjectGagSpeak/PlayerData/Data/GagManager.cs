@@ -1,27 +1,22 @@
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.LayoutEngine.Layer;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Security.Cryptography.Pkcs;
 using System.Text.RegularExpressions;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.PlayerData.Data;
 
 public partial class GagManager : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _characterManager;
+    private readonly ClientData _clientData;
     private readonly GagDataHandler _gagDataHandler;
     private readonly Ipa_EN_FR_JP_SP_Handler _IPAParser;
 
@@ -33,11 +28,11 @@ public partial class GagManager : DisposableMediatorSubscriberBase
     public static Padlocks[] ComboPadlocks { get; set; } = new Padlocks[4] { Padlocks.None, Padlocks.None, Padlocks.None, Padlocks.None };
 
     public GagManager(ILogger<GagManager> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData characterManager, 
+        ClientConfigurationManager clientConfigs, ClientData clientData,
         GagDataHandler gagDataHandler, Ipa_EN_FR_JP_SP_Handler IPAParser) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
-        _characterManager = characterManager;
+        _clientData = clientData;
         _gagDataHandler = gagDataHandler;
         _IPAParser = IPAParser;
 
@@ -46,7 +41,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
     }
 
     public bool AnyGagActive => _activeGags.Any(gag => gag.Name != "None");
-    public bool AnyGagLocked => _characterManager.AppearanceData?.GagSlots.Any(x => x.Padlock != "None") ?? false;
+    public bool AnyGagLocked => _clientData.AppearanceData?.GagSlots.Any(x => x.Padlock != "None") ?? false;
     // This is a preview of the padlock type that will be applied to the restraint set.
     public static Padlocks[] ActiveSlotPadlocks { get; set; } = new Padlocks[4] { Padlocks.None, Padlocks.None, Padlocks.None, Padlocks.None };
     public static string[] ActiveSlotPasswords { get; set; } = new string[4] { "", "", "", "" };
@@ -56,12 +51,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
     public void UpdateGagGarblerLogic()
     {
         // compile the strings into a list of strings, then locate the names in the handler storage that match it.
-        _activeGags = new List<string>
-        {
-            _characterManager.AppearanceData?.GagSlots[0].GagType ?? GagType.None.GagName(),
-            _characterManager.AppearanceData?.GagSlots[1].GagType ?? GagType.None.GagName(),
-            _characterManager.AppearanceData?.GagSlots[2].GagType ?? GagType.None.GagName(),
-        }
+        _activeGags = _clientData.CurrentGagNames
         .Where(gagType => _gagDataHandler._gagTypes.Any(gag => gag.Name == gagType))
         .Select(gagType => _gagDataHandler._gagTypes.First(gag => gag.Name == gagType))
         .ToList();
@@ -70,44 +60,46 @@ public partial class GagManager : DisposableMediatorSubscriberBase
     public void PublishGagApplied(GagLayer layer)
     {
         Logger.LogTrace("Sending off Gag Applied Event to server!", LoggerType.GagHandling);
-        PushGagChange((int)layer, true);
+        Mediator.Publish(new PlayerCharAppearanceChanged(_clientData.CompileAppearanceToAPI(), layer, GagUpdateType.GagApplied, Padlocks.None));
     }
 
     public void PublishLockApplied(GagLayer layer, Padlocks padlockType, string password, DateTimeOffset endTime, string assigner)
     {
         Logger.LogTrace("Sending off Lock Applied Event to server!", LoggerType.PadlockHandling);
-        var newData = _characterManager.CompileAppearanceToAPI();
+        var newData = _clientData.CompileAppearanceToAPI();
+        var previousLock = newData.GagSlots[(int)layer].Padlock;
         newData.GagSlots[(int)layer].Padlock = padlockType.ToName();
         newData.GagSlots[(int)layer].Password = password;
         newData.GagSlots[(int)layer].Timer = endTime;
         newData.GagSlots[(int)layer].Assigner = assigner;
-        PushLockChange(newData, (int)layer, true);
+        Mediator.Publish(new PlayerCharAppearanceChanged(newData, layer, GagUpdateType.GagLocked, previousLock.ToPadlock()));
     }
 
     public void PublishLockRemoved(GagLayer layer)
     {
         Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
-        var newData = _characterManager.CompileAppearanceToAPI();
+        var newData = _clientData.CompileAppearanceToAPI();
+        var previousLock = newData.GagSlots[(int)layer].Padlock;
         newData.GagSlots[(int)layer].Padlock = Padlocks.None.ToName();
         newData.GagSlots[(int)layer].Password = "";
         newData.GagSlots[(int)layer].Timer = DateTimeOffset.UtcNow;
         newData.GagSlots[(int)layer].Assigner = "";
-        PushLockChange(newData, (int)layer, false);
+        Mediator.Publish(new PlayerCharAppearanceChanged(newData, layer, GagUpdateType.GagUnlocked, previousLock.ToPadlock()));
     }
 
     public void PublishGagRemoved(GagLayer layer)
     {
         Logger.LogTrace("Sending off Gag Removed Event to server!", LoggerType.GagHandling);
-        PushGagChange((int)layer, false);
+        Mediator.Publish(new PlayerCharAppearanceChanged(_clientData.CompileAppearanceToAPI(), layer, GagUpdateType.GagRemoved, Padlocks.None));
     }
 
     public void ApplyGag(GagLayer layer, GagType newGagType)
     {
-        if (_characterManager.CoreDataNull) return;
+        if (_clientData.CoreDataNull) return;
 
-        Logger.LogTrace("Applying "+newGagType.GagName()+" on layer "+layer.ToString(), LoggerType.GagHandling);
+        Logger.LogTrace("Applying " + newGagType.GagName() + " on layer " + layer.ToString(), LoggerType.GagHandling);
         // update the appearance data.
-        _characterManager.AppearanceData!.GagSlots[(int)layer].GagType = newGagType.GagName();
+        _clientData.AppearanceData!.GagSlots[(int)layer].GagType = newGagType.GagName();
         // update our combos and logic.
         UpdateGagLockComboSelections();
         UpdateGagGarblerLogic();
@@ -115,32 +107,30 @@ public partial class GagManager : DisposableMediatorSubscriberBase
 
     public void LockGag(GagLayer layer, Padlocks padlockType, string password, DateTimeOffset endTime, string assigner)
     {
-        if (_characterManager.CoreDataNull) return;
+        if (_clientData.CoreDataNull) return;
 
         Logger.LogTrace("Locking Gag at layer " + layer.ToString() + " with Padlock " + padlockType.ToName(), LoggerType.PadlockHandling);
         // update the appearance data.
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Padlock = padlockType.ToName();
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Password = password;
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Timer = endTime;
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Assigner = assigner;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Padlock = padlockType.ToName();
+        _clientData.AppearanceData!.GagSlots[(int)layer].Password = password;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Timer = endTime;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Assigner = assigner;
         // update our combos and logic.
         UpdateGagLockComboSelections();
-        UpdateGagGarblerLogic();
     }
 
     public void UnlockGag(GagLayer layer)
     {
-        if (_characterManager.CoreDataNull) return;
+        if (_clientData.CoreDataNull) return;
 
-        Logger.LogTrace("Unlocking " + _characterManager.AppearanceData!.GagSlots[(int)layer].Padlock + " at layer " + layer.ToString(), LoggerType.PadlockHandling);
+        Logger.LogTrace("Unlocking " + _clientData.AppearanceData!.GagSlots[(int)layer].Padlock + " at layer " + layer.ToString(), LoggerType.PadlockHandling);
         // update the appearance data.
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Padlock = Padlocks.None.ToName();
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Password = string.Empty;
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Timer = DateTimeOffset.MinValue;
-        _characterManager.AppearanceData!.GagSlots[(int)layer].Assigner = string.Empty;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Padlock = Padlocks.None.ToName();
+        _clientData.AppearanceData!.GagSlots[(int)layer].Password = string.Empty;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Timer = DateTimeOffset.MinValue;
+        _clientData.AppearanceData!.GagSlots[(int)layer].Assigner = string.Empty;
         // update our combos and logic.
         UpdateGagLockComboSelections();
-        UpdateGagGarblerLogic();
         // reset the dropdown inputs.
         ActiveSlotPadlocks[(int)layer] = Padlocks.None;
     }
@@ -151,15 +141,15 @@ public partial class GagManager : DisposableMediatorSubscriberBase
     /// <returns> true if the operation was successful, false if stopped due to no change </returns>
     public bool RemoveGag(GagLayer Layer)
     {
-        if (_characterManager.CoreDataNull) 
+        if (_clientData.CoreDataNull)
             return false;
 
-        if (_characterManager.AppearanceData!.GagSlots[(int)Layer].GagType.ToGagType() is GagType.None)
+        if (_clientData.AppearanceData!.GagSlots[(int)Layer].GagType.ToGagType() is GagType.None)
             return false;
 
-        Logger.LogTrace("Removing Gag at layer "+Layer.ToString(), LoggerType.GagHandling);
+        Logger.LogTrace("Removing Gag at layer " + Layer.ToString(), LoggerType.GagHandling);
         // update the appearance data.
-        _characterManager.AppearanceData!.GagSlots[(int)Layer].GagType = GagType.None.GagName();
+        _clientData.AppearanceData!.GagSlots[(int)Layer].GagType = GagType.None.GagName();
         // update our combos and logic.
         UpdateGagLockComboSelections();
         UpdateGagGarblerLogic();
@@ -168,20 +158,20 @@ public partial class GagManager : DisposableMediatorSubscriberBase
 
     public void UpdateGagLockComboSelections()
     {
-        if (_characterManager.AppearanceData == null)
+        if (_clientData.AppearanceData is null)
         {
             Logger.LogWarning("AppearanceData is null, cannot update combo selections.");
             return;
         }
-        ComboGags[0] = _characterManager.AppearanceData.GagSlots[0].GagType.ToGagType();
-        ComboGags[1] = _characterManager.AppearanceData.GagSlots[1].GagType.ToGagType();
-        ComboGags[2] = _characterManager.AppearanceData.GagSlots[2].GagType.ToGagType();
-        ComboPadlocks[0] = _characterManager.AppearanceData.GagSlots[0].Padlock.ToPadlock();
-        ComboPadlocks[1] = _characterManager.AppearanceData.GagSlots[1].Padlock.ToPadlock();
-        ComboPadlocks[2] = _characterManager.AppearanceData.GagSlots[2].Padlock.ToPadlock();
-        Logger.LogTrace("Dropdown Gags Now: " + string.Join(" || ", _characterManager.AppearanceData!.GagSlots.Select((g, i) => $"Gag {i}: {g.GagType}")), LoggerType.GagHandling);
+        ComboGags[0] = _clientData.AppearanceData.GagSlots[0].GagType.ToGagType();
+        ComboGags[1] = _clientData.AppearanceData.GagSlots[1].GagType.ToGagType();
+        ComboGags[2] = _clientData.AppearanceData.GagSlots[2].GagType.ToGagType();
+        ComboPadlocks[0] = _clientData.AppearanceData.GagSlots[0].Padlock.ToPadlock();
+        ComboPadlocks[1] = _clientData.AppearanceData.GagSlots[1].Padlock.ToPadlock();
+        ComboPadlocks[2] = _clientData.AppearanceData.GagSlots[2].Padlock.ToPadlock();
+        Logger.LogTrace("Dropdown Gags Now: " + string.Join(" || ", _clientData.AppearanceData!.GagSlots.Select((g, i) => $"Gag {i}: {g.GagType}")), LoggerType.GagHandling);
         Logger.LogTrace("Dropdown ActiveSlotPadlocks Now: " + string.Join(" || ", ActiveSlotPadlocks.Select((p, i) => $"Lock {i}: {p}")), LoggerType.PadlockHandling);
-        Logger.LogTrace("Dropdown Appearance Padlocks Now: " + string.Join(" || ", _characterManager.AppearanceData.GagSlots.Select((p, i) => $"Lock {i}: {p.Padlock}")), LoggerType.PadlockHandling);
+        Logger.LogTrace("Dropdown Appearance Padlocks Now: " + string.Join(" || ", _clientData.AppearanceData.GagSlots.Select((p, i) => $"Lock {i}: {p.Padlock}")), LoggerType.PadlockHandling);
     }
 
     public void UpdateRestraintLockSelections(bool clearActiveSlotPadlock)
@@ -190,45 +180,18 @@ public partial class GagManager : DisposableMediatorSubscriberBase
         ActiveSlotPadlocks[3] = clearActiveSlotPadlock ? Padlocks.None : _clientConfigs.GetActiveSet()?.LockType.ToPadlock() ?? Padlocks.None;
     }
 
-    private void PushGagChange(int layerIndex, bool isApplying)
-    {
-        var newData = _characterManager.CompileAppearanceToAPI();
-        DataUpdateKind updateKind = layerIndex switch
-        {
-            0 => isApplying ? DataUpdateKind.AppearanceGagAppliedLayerOne : DataUpdateKind.AppearanceGagRemovedLayerOne,
-            1 => isApplying ? DataUpdateKind.AppearanceGagAppliedLayerTwo : DataUpdateKind.AppearanceGagRemovedLayerTwo,
-            2 => isApplying ? DataUpdateKind.AppearanceGagAppliedLayerThree : DataUpdateKind.AppearanceGagRemovedLayerThree,
-            _ => throw new ArgumentOutOfRangeException(nameof(layerIndex), "Invalid layer index")
-        };
-
-        Mediator.Publish(new PlayerCharAppearanceChanged(newData, updateKind));
-    }
-
-    private void PushLockChange(CharaAppearanceData newData, int layerIndex, bool isLocking)
-    {
-        DataUpdateKind updateKind = layerIndex switch
-        {
-            0 => isLocking ? DataUpdateKind.AppearanceGagLockedLayerOne : DataUpdateKind.AppearanceGagUnlockedLayerOne,
-            1 => isLocking ? DataUpdateKind.AppearanceGagLockedLayerTwo : DataUpdateKind.AppearanceGagUnlockedLayerTwo,
-            2 => isLocking ? DataUpdateKind.AppearanceGagLockedLayerThree : DataUpdateKind.AppearanceGagUnlockedLayerThree,
-            _ => throw new ArgumentOutOfRangeException(nameof(layerIndex), "Invalid layer index")
-        };
-
-        Mediator.Publish(new PlayerCharAppearanceChanged(newData, updateKind));
-    }
-
     private void CheckForExpiredTimers()
     {
-        if (_characterManager.CoreDataNull) 
+        if (_clientData.CoreDataNull)
             return;
 
-        if (!AnyGagLocked) 
+        if (!AnyGagLocked)
             return;
 
         // If a gag does have a padlock, ensure it is a timer padlock
-        for (int i = 0; i < _characterManager.AppearanceData!.GagSlots.Length; i++)
+        for (int i = 0; i < _clientData.AppearanceData!.GagSlots.Length; i++)
         {
-            var gagSlot = _characterManager.AppearanceData.GagSlots[i];
+            var gagSlot = _clientData.AppearanceData.GagSlots[i];
             if (GenericHelpers.TimerPadlocks.Contains(gagSlot.Padlock) && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
                 PublishLockRemoved((GagLayer)i);
         }
@@ -352,7 +315,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
 
     public bool PasswordValidated(Padlocks padlock, int slot, bool currentlyLocked)
     {
-        Logger.LogDebug($"Validating Password for GagSlot {slot} which has padlock type "+padlock.ToName(), LoggerType.PadlockHandling);
+        Logger.LogDebug($"Validating Password for GagSlot {slot} which has padlock type " + padlock.ToName(), LoggerType.PadlockHandling);
         switch (padlock)
         {
             case Padlocks.None:
@@ -363,17 +326,17 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                 return true;
             case Padlocks.CombinationPadlock:
                 if (currentlyLocked)
-                    return ActiveSlotPasswords[slot] == _characterManager.AppearanceData?.GagSlots[slot].Password;
+                    return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
                 else
                     return ValidateCombination(ActiveSlotPasswords[slot]);
             case Padlocks.PasswordPadlock:
                 if (currentlyLocked)
-                    return ActiveSlotPasswords[slot] == _characterManager.AppearanceData?.GagSlots[slot].Password;
+                    return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
                 else
                     return ValidatePassword(ActiveSlotPasswords[slot]);
             case Padlocks.TimerPasswordPadlock:
                 if (currentlyLocked)
-                    return ActiveSlotPasswords[slot] == _characterManager.AppearanceData?.GagSlots[slot].Password;
+                    return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
                 else
                     return ValidatePassword(ActiveSlotPasswords[slot]) && TryParseTimeSpan(ActiveSlotTimers[slot], out TimeSpan test);
         }
@@ -461,7 +424,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
             // Return default if there are no items to display in the combo box.
             string comboLabel = "##ActiveGagsSelection" + layer.ToString();
             string displayText = ComboGags[(int)layer].GagName();
-            
+
             var comboItems = Enum.GetValues<GagType>();
             ImGui.SetNextItemWidth(width);
             if (ImGui.BeginCombo(comboLabel, displayText))
@@ -491,7 +454,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
             // Check if the item was right-clicked. If so, reset to default value.
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                Logger.LogTrace("Right-clicked on "+comboLabel+". Resetting to default value.", LoggerType.GagHandling);
+                Logger.LogTrace("Right-clicked on " + comboLabel + ". Resetting to default value.", LoggerType.GagHandling);
                 ComboGags[(int)layer] = comboItems.First();
                 onSelected?.Invoke(comboItems.First());
             }
@@ -519,7 +482,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                     bool isSelected = item.ToName() == ComboPadlocks[idValue].ToName();
                     if (ImGui.Selectable(item.ToName(), isSelected))
                     {
-                        Logger.LogTrace("Selected "+item.ToName()+" from "+comboLabel, LoggerType.PadlockHandling);
+                        Logger.LogTrace("Selected " + item.ToName() + " from " + comboLabel, LoggerType.PadlockHandling);
                         ComboPadlocks[idValue] = item;
                         onSelected?.Invoke(item);
                     }
@@ -529,7 +492,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
             // Check if the item was right-clicked. If so, reset to default value.
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                Logger.LogTrace("Right-clicked on "+comboLabel+". Resetting to default value.", LoggerType.PadlockHandling);
+                Logger.LogTrace("Right-clicked on " + comboLabel + ". Resetting to default value.", LoggerType.PadlockHandling);
                 ComboPadlocks[idValue] = comboItems.First();
                 onSelected?.Invoke(comboItems.First());
             }

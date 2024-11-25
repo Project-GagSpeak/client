@@ -15,12 +15,12 @@ namespace GagSpeak.Services;
 public class NotificationService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly GagspeakConfigService _mainConfig;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly INotificationManager _notifications;
     private readonly IChatGui _chat;
 
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, PlayerCharacterData playerData, IChatGui chat,
+        GagspeakConfigService mainConfig, ClientData playerData, IChatGui chat,
         INotificationManager notifications) : base(logger, mediator)
     {
         _mainConfig = mainConfig;

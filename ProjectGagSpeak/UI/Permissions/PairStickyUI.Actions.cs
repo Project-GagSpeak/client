@@ -147,7 +147,7 @@ public partial class PairStickyUI
             };
 
             _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new OnlineUserCharaAliasDataDto
-                (StickyPair.UserData, dataToPush, DataUpdateKind.PuppeteerPlayerNameRegistered));
+                (StickyPair.UserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered));
             _logger.LogDebug("Sent Puppeteer Name to " + PairNickOrAliasOrUID, LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip("Sends your Name & World to this pair so their puppeteer will listen for messages from you.");

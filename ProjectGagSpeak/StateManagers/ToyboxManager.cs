@@ -16,13 +16,13 @@ namespace GagSpeak.PlayerData.Handlers;
 public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly PatternPlayback _patternPlayback;
     private readonly PairManager _pairManager;
     private readonly OnFrameworkService _frameworkUtils;
 
     public ToyboxManager(ILogger<ToyboxManager> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerData,
+        ClientConfigurationManager clientConfigs, ClientData playerData,
         PatternPlayback patternPlayback, PairManager pairManager,
         OnFrameworkService frameworkUtils) : base(logger, mediator)
     {
@@ -74,7 +74,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxPatternExecuted));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.PatternExecuted));
 
         // If we are triggering an achievement, do so now.
         if (fireAchievement)
@@ -104,7 +104,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxPatternStopped));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.PatternStopped));
 
         // If we are triggering an achievement, do so now.
         if (fireAchievement)
@@ -130,7 +130,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxAlarmToggled));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.AlarmToggled));
 
         // If we are triggering an achievement, do so now.
         if (fireAchievement)
@@ -153,7 +153,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxAlarmToggled));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.AlarmToggled));
 
         // If we are triggering an achievement, do so now.
         if (fireAchievement)
@@ -181,7 +181,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
         pattern.IsActive = true;
         _clientConfigs.SavePatterns();
 
-        Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxPatternExecuted));
+        Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.PatternExecuted));
         UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Started, pattern.UniqueIdentifier, true);
 
         // afterwards, let's enable the pattern for the alarm.
@@ -208,7 +208,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxTriggerToggled));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.TriggerToggled));
     }
 
     public void DisableTrigger(Guid id, bool fireToServer = true, bool fireAchievement = true)
@@ -227,7 +227,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
 
         // If we are pushing to the server, do so now.
         if (fireToServer)
-            Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.ToyboxTriggerToggled));
+            Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.TriggerToggled));
     }
 
     public void ExecuteTrigger(Trigger triggerToFire)

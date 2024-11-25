@@ -22,7 +22,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
     protected readonly IdDisplayHandler _displayHandler;
     private readonly MainHub _apiHubMain;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly PermActionsComponents _permActions;
     private readonly PiShockProvider _shockProvider;
     private readonly PairManager _pairManager;
@@ -34,7 +34,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
         StickyWindowType drawType, IdDisplayHandler displayHandler, MainHub apiHubMain, 
-        PlayerCharacterData playerManager, PermActionsComponents permActions, 
+        ClientData playerManager, PermActionsComponents permActions, 
         PiShockProvider shockProvider, PairManager pairManager, ClientConfigurationManager clientConfigs,
         ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetService presetService,
         UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")

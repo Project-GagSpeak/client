@@ -25,7 +25,7 @@ namespace GagSpeak.UI.UiWardrobe;
 
 public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerCharacterData _clientPlayerData;
+    private readonly ClientData _clientPlayerData;
     private readonly SetPreviewComponent _drawDataHelper;
     private readonly ModAssociations _relatedMods;
     private readonly MoodlesAssociations _relatedMoodles;
@@ -35,7 +35,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     private readonly TutorialService _guides;
 
     public CursedDungeonLoot(ILogger<CursedDungeonLoot> logger,
-        GagspeakMediator mediator, PlayerCharacterData clientPlayerData,
+        GagspeakMediator mediator, ClientData clientPlayerData,
         SetPreviewComponent drawDataHelper, ModAssociations relatedMods,
         MoodlesAssociations relatedMoodles, CursedLootHandler handler,
         GagspeakConfigService mainConfig, UiSharedService uiShared,

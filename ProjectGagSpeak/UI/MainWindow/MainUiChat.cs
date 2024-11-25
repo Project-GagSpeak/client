@@ -19,7 +19,7 @@ namespace GagSpeak.UI.MainWindow;
 public class MainUiChat : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerData;
     private readonly GagManager _gagManager;
     private readonly KinkPlateService _kinkPlateManager;
     private readonly UiSharedService _uiSharedService;
@@ -27,12 +27,12 @@ public class MainUiChat : DisposableMediatorSubscriberBase
     private readonly TutorialService _guides;
 
     public MainUiChat(ILogger<MainUiChat> logger, GagspeakMediator mediator, 
-        MainHub apiHubMain, PlayerCharacterData playerManager, GagManager gagManager,
+        MainHub apiHubMain, ClientData playerManager, GagManager gagManager,
         KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {
         _apiHubMain = apiHubMain;
-        _playerManager = playerManager;
+        _playerData = playerManager;
         _gagManager = gagManager;
         _kinkPlateManager = kinkPlateManager;
         _uiSharedService = uiSharedService;
@@ -105,7 +105,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
                 return;
 
             // Process message if gagged
-            if (_playerManager.IsPlayerGagged)
+            if (_playerData.IsPlayerGagged && (_playerData.GlobalPerms?.LiveChatGarblerActive ?? false))
                 NextChatMessage = _gagManager.ProcessMessage(NextChatMessage);
 
             // Send message to the server

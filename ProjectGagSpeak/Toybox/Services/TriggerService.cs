@@ -24,7 +24,7 @@ namespace GagSpeak.Toybox.Services;
 // handles the management of the connected devices or simulated vibrator.
 public class TriggerService : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly ToyboxFactory _playerMonitorFactory;
     private readonly AppearanceManager _appearanceManager;
     private readonly ClientConfigurationManager _clientConfigs;
@@ -35,7 +35,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
     private readonly VibratorService _vibeService;
 
     public TriggerService(ILogger<TriggerService> logger, GagspeakMediator mediator,
-        PlayerCharacterData playerData, ToyboxFactory playerMonitorFactory, 
+        ClientData playerData, ToyboxFactory playerMonitorFactory, 
         AppearanceManager appearanceManager, ClientConfigurationManager clientConfigs, 
         IpcCallerMoodles moodlesIpc, UnlocksEventManager eventManager,
         ClientMonitorService clientMonitor, OnFrameworkService frameworkUtils, 

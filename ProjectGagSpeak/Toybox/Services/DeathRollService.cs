@@ -20,13 +20,13 @@ namespace GagSpeak.Toybox.Controllers;
 public sealed class DeathRollService
 {
     private readonly ILogger<DeathRollService> _logger;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly TriggerService _triggerService;
     private readonly IChatGui _chatGui;
 
-    public DeathRollService(ILogger<DeathRollService> logger, PlayerCharacterData playerManager,
+    public DeathRollService(ILogger<DeathRollService> logger, ClientData playerManager,
         ClientConfigurationManager clientConfigs, TriggerService triggerService,
         ClientMonitorService clientService, IChatGui chatGui)
     {

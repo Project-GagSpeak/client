@@ -13,12 +13,12 @@ namespace GagSpeak.PlayerData.Handlers;
 public class PatternHandler : MediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly ToyboxManager _toyboxStateManager;
 
     public PatternHandler(ILogger<PatternHandler> logger,
         GagspeakMediator mediator, ClientConfigurationManager clientConfigs,
-        PlayerCharacterData playerManager, ToyboxManager toyboxStateManager)
+        ClientData playerManager, ToyboxManager toyboxStateManager)
         : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;

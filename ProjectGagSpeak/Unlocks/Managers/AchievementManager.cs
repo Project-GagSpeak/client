@@ -24,7 +24,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _mainHub;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly PairManager _pairManager;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
@@ -44,7 +44,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     // Dictates if our connection occurred after an exception (within 5 minutes).
     private bool _reconnectedAfterException => DateTime.UtcNow - _lastDisconnectTime < TimeSpan.FromMinutes(5);
     public AchievementManager(ILogger<AchievementManager> logger, GagspeakMediator mediator, MainHub mainHub,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerData, PairManager pairManager,
+        ClientConfigurationManager clientConfigs, ClientData playerData, PairManager pairManager,
         ClientMonitorService clientService, OnFrameworkService frameworkUtils, CosmeticService cosmetics, 
         VibratorService vibeService, UnlocksEventManager eventManager, INotificationManager notifs, 
         IDutyState dutyState) : base(logger, mediator)

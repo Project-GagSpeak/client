@@ -409,7 +409,7 @@ public partial class MainHub
         try // if connected, try to push the data to the server
         {
             Logger.LogDebug("Pushing Character Composite data to "+string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)), LoggerType.OnlinePairs);
-            await UserPushData(new(onlineCharacters, data, DataUpdateKind.FullDataUpdate)).ConfigureAwait(false);
+            await UserPushData(new(onlineCharacters, data)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogDebug("Upload operation was cancelled"); }
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of composite data"); }
@@ -418,7 +418,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes Client's updated IPC data to the list of visible recipients.
     /// </summary>
-    public async Task PushCharacterIpcData(CharaIPCData data, List<UserData> visibleCharacters, DataUpdateKind updateKind)
+    public async Task PushCharacterIpcData(CharaIPCData data, List<UserData> visibleCharacters, IpcUpdateType updateKind)
     {
         if (!IsConnected) return;
 
@@ -435,7 +435,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes Client's updated appearance data to the list of online recipients.
     /// </summary>
-    public async Task PushCharacterAppearanceData(CharaAppearanceData data, List<UserData> onlineCharacters, DataUpdateKind updateKind)
+    public async Task PushCharacterAppearanceData(CharaAppearanceData data, List<UserData> onlineCharacters, GagLayer affectedType, GagUpdateType type, Padlocks prevPadlock)
     {
         if (!IsConnected) return;
 
@@ -443,13 +443,13 @@ public partial class MainHub
         {
             if (onlineCharacters.Any())
             {
-                Logger.LogDebug("Pushing Character Appearance data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
+                Logger.LogDebug("Pushing Character Appearance data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + type + "]", LoggerType.OnlinePairs);
             }
             else
             {
                 Logger.LogDebug("Updating AppearanceData to stored ActiveStateData", LoggerType.OnlinePairs);
             }
-            await UserPushDataAppearance(new(onlineCharacters, data, updateKind)).ConfigureAwait(false);
+            await UserPushDataAppearance(new(onlineCharacters, data, affectedType, type, prevPadlock)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Appearance data"); }
@@ -459,7 +459,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes Client's updated wardrobe data to the list of online recipients.
     /// </summary>
-    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, DataUpdateKind updateKind)
+    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, Padlocks prevPadlock)
     {
         if (!IsConnected) return;
 
@@ -467,7 +467,7 @@ public partial class MainHub
         {
             if(onlineCharacters.Any()) Logger.LogDebug("Pushing Character Wardrobe data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "["+updateKind+"]", LoggerType.OnlinePairs);
             else Logger.LogDebug("Updating WardrobeData to stored ActiveStateData", LoggerType.OnlinePairs);
-            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind)).ConfigureAwait(false);
+            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, prevPadlock)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
@@ -477,7 +477,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes Client's updated alias list data to the respective recipient.
     /// </summary>
-    public async Task PushCharacterAliasListData(CharaAliasData data, UserData onlineCharacter, DataUpdateKind updateKind)
+    public async Task PushCharacterAliasListData(CharaAliasData data, UserData onlineCharacter, PuppeteerUpdateType updateKind)
     {
         if (!IsConnected) return;
 
@@ -493,7 +493,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes Client's updated pattern information to the list of online recipients.
     /// </summary>
-    public async Task PushCharacterToyboxData(CharaToyboxData data, List<UserData> onlineCharacters, DataUpdateKind updateKind)
+    public async Task PushCharacterToyboxData(CharaToyboxData data, List<UserData> onlineCharacters, ToyboxUpdateType updateKind)
     {
         if (!IsConnected) return;
 

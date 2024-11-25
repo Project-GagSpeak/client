@@ -16,7 +16,7 @@ namespace GagSpeak.Services;
 public class SafewordService : MediatorSubscriberBase, IHostedService
 {
     private readonly MainHub _apiHubMain; // for sending the updates.
-    private readonly PlayerCharacterData _playerManager; // has our global permissions.
+    private readonly ClientData _playerManager; // has our global permissions.
     private readonly PairManager _pairManager; // for accessing the permissions of each pair.
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly GagManager _gagManager; // for removing gags.
@@ -25,10 +25,10 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     private readonly IpcFastUpdates _glamourFastEvent; // for reverting character.
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, PlayerCharacterData playerManager,
-        PairManager pairManager, ClientConfigurationManager clientConfigs,
-        GagManager gagManager, AppearanceManager appearanceManager, 
-        ToyboxManager toyboxManager, IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
+        MainHub apiHubMain, ClientData playerManager, PairManager pairManager, 
+        ClientConfigurationManager clientConfigs, GagManager gagManager, 
+        AppearanceManager appearanceManager, ToyboxManager toyboxManager, 
+        IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
     {
         _apiHubMain = apiHubMain;
         _playerManager = playerManager;

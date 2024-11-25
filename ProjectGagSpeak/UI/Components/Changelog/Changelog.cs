@@ -19,6 +19,10 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 0, 6)
+            .RegisterBugfix("Fixed Global Chat not checking if Live Chat Garbler was active or not before translating a message.")
+            .RegisterBugfix("Fixed Cursed Loot not working when in solo instances. (no it doesnt work in Deep dungeons, stop asking.)");
+
         VersionEntry(1, 0, 0, 0)
             .RegisterMain("Initial Public Open-Beta Release of Project GagSpeak")
             .RegisterFeature("All Features from Closed Beta Migrated to Open-Beta")
