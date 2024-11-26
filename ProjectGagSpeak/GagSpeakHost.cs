@@ -134,13 +134,17 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<UiService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
 
-            _clientConfigs.GagspeakConfig.ButtonUsed = false;
-
             // if the client does not have a valid setup or config, switch to the intro ui
             if (!_clientConfigs.GagspeakConfig.HasValidSetup() || !_serverConfigs.HasValidConfig())
             {
                 Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _clientConfigs.GagspeakConfig.HasValidSetup(), _serverConfigs.HasValidConfig());
                 // publish the switch to intro ui message to the mediator
+
+                if(_serverConfigs.AuthCount() <= 0)
+                {
+                    _clientConfigs.GagspeakConfig.ButtonUsed = false;
+                }
+
                 Mediator.Publish(new SwitchToIntroUiMessage());
                 return;
             }

@@ -27,8 +27,8 @@ public class IntroUi : WindowMediatorSubscriberBase
     private readonly TutorialService _guides;
     private bool ThemePushed = false;
     private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
-    private Task? _fetchAccountDetailsTask;
-    private Task? _initialAccountCreationTask;
+    private Task? _fetchAccountDetailsTask = null;
+    private Task? _initialAccountCreationTask = null;
     private string _aquiredUID = string.Empty;
     private string _secretKey = string.Empty;
 
@@ -269,6 +269,18 @@ public class IntroUi : WindowMediatorSubscriberBase
         var buttonWidth = _secretKey.Length != 64 ? 0 : ImGuiHelpers.GetButtonSize(buttonText).X + ImGui.GetStyle().ItemSpacing.X;
         var textSize = ImGui.CalcTextSize(text);
 
+        // if the primary account exists but does not have successful connection, load that into the information.
+        if (_serverConfigs.TryGetPrimaryAuth(out Authentication primaryAuth))
+        {
+            if(primaryAuth.SecretKey.HasHadSuccessfulConnection is false)
+            {
+                _aquiredUID = "RECOVERED-FROM-FAILED-CONNECTION";
+                _secretKey = primaryAuth.SecretKey.Key;
+            }
+            
+        }
+
+
         // if we dont have the account details yet, early return.
         if (_aquiredUID == string.Empty || _secretKey == string.Empty)
             return;
@@ -300,7 +312,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         UiSharedService.ColorText("Join as a new Kinkster?", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        if (ImGui.Button("Yes! Log me in!"))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: MainHub.ServerStatus is not ServerState.Offline or ServerState.Disconnected))
         {
             _logger.LogInformation("Creating Authentication for current character.");
             if (!_serverConfigs.AuthExistsForCurrentLocalContentId())
@@ -332,14 +344,22 @@ public class IntroUi : WindowMediatorSubscriberBase
     {
         try
         {
+            _configService.Current.AccountCreated = true; // set the account created flag to true
+            _logger.LogInformation("Attempting to connect to the server for the first time.");
             await _apiHubMain.Connect();
+            _logger.LogInformation("Connection Attempt finished, marking account as created.");
             if (MainHub.IsConnected)
             {
                 _guides.StartTutorial(TutorialType.MainUi);
                 _secretKey = string.Empty;
-                _configService.Current.AccountCreated = true; // set the account created flag to true
             }
             _configService.Save(); // save the configuration
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to the server for the first time.");
+            _configService.Current.AccountCreated = false;
+            _configService.Save();
         }
         finally
         {

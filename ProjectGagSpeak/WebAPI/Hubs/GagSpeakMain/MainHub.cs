@@ -307,7 +307,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
             Logger.LogInformation("New Account Details Fetched.", LoggerType.ApiCore);
             return accountDetails;
         }
-        catch (HubException ex) // Assuming MissingClaimException is a custom exception you've defined
+        catch (HubException ex)
         {
             Logger.LogError($"Error fetching new account details: Missing claim in token. {ex.Message}");
             throw;
