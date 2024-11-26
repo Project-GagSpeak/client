@@ -310,9 +310,10 @@ public class IntroUi : WindowMediatorSubscriberBase
         }
         ImGui.NewLine();
 
+        UiSharedService.ColorText("ServerState (For Debug Purposes): " + MainHub.ServerStatus, ImGuiColors.DalamudGrey);
         UiSharedService.ColorText("Join as a new Kinkster?", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: MainHub.ServerStatus is not ServerState.Offline or ServerState.Disconnected))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
         {
             _logger.LogInformation("Creating Authentication for current character.");
             if (!_serverConfigs.AuthExistsForCurrentLocalContentId())
