@@ -38,8 +38,8 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;
-    public HashSet<ChatChannel.Channels> ChannelsGagSpeak { get; set; } = new HashSet<ChatChannel.Channels> { ChatChannel.Channels.Say };
-    public HashSet<ChatChannel.Channels> ChannelsPuppeteer { get; set; } = new HashSet<ChatChannel.Channels> { ChatChannel.Channels.Say };
+    public HashSet<ChatChannel.Channels> ChannelsGagSpeak { get; set; } = new HashSet<ChatChannel.Channels>();
+    public HashSet<ChatChannel.Channels> ChannelsPuppeteer { get; set; } = new HashSet<ChatChannel.Channels>();
 
     // logging (debug)
     public bool LiveGarblerZoneChangeWarn { get; set; } = true;
@@ -48,7 +48,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool NotifyLimitToNickedPairs { get; set; } = false;
 
     public LogLevel LogLevel { get; set; } = LogLevel.Trace;
-    public HashSet<LoggerType> LoggerFilters { get; set; } = LoggerFilter.GetAllRecommendedFilters();
+    public HashSet<LoggerType> LoggerFilters { get; set; } = new HashSet<LoggerType>();
     public NotificationLocation InfoNotification { get; set; } = NotificationLocation.Both;
     public NotificationLocation WarningNotification { get; set; } = NotificationLocation.Both;
     public NotificationLocation ErrorNotification { get; set; } = NotificationLocation.Both;

@@ -38,7 +38,7 @@ public class DurationAchievement : AchievementBase
             return MilestoneGoal;
 
         // otherwise, return the ActiveItem with the longest duration from the DateTime.UtcNow and return its value in total minutes.
-        var elapsed = ActiveItems.Any() ? (DateTime.UtcNow - ActiveItems.Max(x => x.TimeAdded)) : TimeSpan.Zero;
+        var elapsed = ActiveItems.Any() ? (DateTime.UtcNow - ActiveItems.Min(x => x.TimeAdded)) : TimeSpan.Zero;
 
         // Return progress based on the specified unit
         return TimeUnit switch

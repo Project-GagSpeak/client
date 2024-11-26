@@ -149,6 +149,9 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         var activeSetId = activeSetFinal?.RestraintId ?? Guid.Empty;
         Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
 
+        if (_playerData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+            return;
+
         // Run a refresh on appearance data.
         await _appearanceHandler.RecalcAndReload(true);
     }

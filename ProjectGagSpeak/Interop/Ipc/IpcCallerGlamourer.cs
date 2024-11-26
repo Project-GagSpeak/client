@@ -325,7 +325,8 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private void GlamourerChanged(nint address, StateChangeType changeType)
     {
         // do not accept if coming from other player besides us.
-        if (address != _clientService.Address) return;
+        if (address != _clientService.Address) 
+            return;
 
         // block if we are not desiring to listen to changes yet.
         if (OnFrameworkService.GlamourChangeEventsDisabled) 
@@ -342,8 +343,15 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
             return;
         }
 
+        // This floods the hell out of API calls, do not take it.
+        if (changeType is StateChangeType.MaterialValue)
+            return;
 
-        if(changeType is StateChangeType.Reset or StateChangeType.Design or StateChangeType.Reapply or StateChangeType.Equip or StateChangeType.Stains)
+        if (_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+            return;
+
+
+        if (changeType is StateChangeType.Reset or StateChangeType.Design or StateChangeType.Reapply or StateChangeType.Equip or StateChangeType.Stains)
         {
             Logger.LogTrace($"StateChangeType is {changeType}", LoggerType.IpcGlamourer);
             IpcFastUpdates.InvokeGlamourer(GlamourUpdateType.ReapplyAll);

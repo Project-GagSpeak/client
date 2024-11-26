@@ -68,12 +68,13 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     private List<RestraintSet> RestraintSets => _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets;
     private List<CursedItem> CursedItems => _clientConfigs.CursedLootConfig.CursedLootStorage.CursedItems;
 
-    /// <summary> Finalized Glamourer Appearance that should be visible on the player. </summary>
+    /// <summary> 
+    /// Finalized Glamourer Appearance that should be visible on the player. 
+    /// </summary>
     private Dictionary<EquipSlot, IGlamourItem> ItemsToApply => _appearanceService.ItemsToApply;
     private IpcCallerGlamourer.MetaData MetaToApply => _appearanceService.MetaToApply;
     private HashSet<Guid> ExpectedMoodles => _appearanceService.ExpectedMoodles;
     private (JToken? Customize, JToken? Parameters) ExpectedCustomizations => _appearanceService.ExpectedCustomizations;
-
 
     /// <summary>
     /// The Latest Client Moodles Status List since the last update.

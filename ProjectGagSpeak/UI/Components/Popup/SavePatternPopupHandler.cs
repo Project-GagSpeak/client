@@ -217,6 +217,7 @@ public class SavePatternPopupHandler : IPopupHandler
         CompiledPatternData.UniqueIdentifier = Guid.NewGuid();
         // set the duration
         CompiledPatternData.Duration = message.Duration;
+        CompiledPatternData.PlaybackDuration = message.Duration;
         // set the pattern data
         CompiledPatternData.PatternByteData = message.StoredData;
         // set the creator.

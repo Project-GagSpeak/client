@@ -28,6 +28,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
     private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
     private Task? _fetchAccountDetailsTask;
+    private Task? _initialAccountCreationTask;
     private string _aquiredUID = string.Empty;
     private string _secretKey = string.Empty;
 
@@ -301,7 +302,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         ImGui.SameLine();
         if (ImGui.Button("Yes! Log me in!"))
         {
-            _logger.LogInformation("Recreating Authentication for current character.");
+            _logger.LogInformation("Creating Authentication for current character.");
             if (!_serverConfigs.AuthExistsForCurrentLocalContentId())
             {
                 _logger.LogDebug("Character has no secret key, generating new auth for current character", LoggerType.ApiCore);
@@ -317,13 +318,33 @@ public class IntroUi : WindowMediatorSubscriberBase
             _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
 
             // run the create connections and set our account created to true
-            _ = Task.Run(() => _apiHubMain.Connect());
-            _guides.StartTutorial(TutorialType.MainUi);
-            _secretKey = string.Empty;
-            _configService.Current.AccountCreated = true; // set the account created flag to true
-            _configService.Save(); // save the configuration
+            _initialAccountCreationTask = PerformFirstLoginAsync();
+
+            if (_initialAccountCreationTask is not null && !_initialAccountCreationTask.IsCompleted)
+            {
+                UiSharedService.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
+            }
         }
         UiSharedService.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
+    }
+
+    private async Task PerformFirstLoginAsync()
+    {
+        try
+        {
+            await _apiHubMain.Connect();
+            if (MainHub.IsConnected)
+            {
+                _guides.StartTutorial(TutorialType.MainUi);
+                _secretKey = string.Empty;
+                _configService.Current.AccountCreated = true; // set the account created flag to true
+            }
+            _configService.Save(); // save the configuration
+        }
+        finally
+        {
+            _initialAccountCreationTask = null;
+        }
     }
 
     private async Task FetchAccountDetailsAsync()

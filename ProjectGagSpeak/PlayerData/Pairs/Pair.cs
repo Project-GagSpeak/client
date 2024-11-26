@@ -363,7 +363,7 @@ public class Pair
         // return false instantly if the wardrobe data or light data is null.
         if (LastWardrobeData is null || LastLightStorage is null || LastAppearanceData is null)
         {
-            _logger.LogWarning("Wardrobe or LightStorage Data is null for " + UserData.UID);
+            _logger.LogDebug("Wardrobe or LightStorage Data is null for " + UserData.UID, LoggerType.PairDataTransfer);
             return;
         }
 

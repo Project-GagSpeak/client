@@ -222,7 +222,7 @@ public class MainUiAccount : DisposableMediatorSubscriberBase
                 ImGui.SetCursorPosY(childStartYpos + ((height - 23) / 2) + 0.5f); // 23 is the input text box height
                 ImGui.SetNextItemWidth(225 * ImGuiHelpers.GlobalScale);
                 var safeword = _config.Current.Safeword;
-                if (ImGui.InputTextWithHint("##Your Safeword", "Enter Safeword", ref safeword, 30, ImGuiInputTextFlags.EnterReturnsTrue))
+                if (ImGui.InputTextWithHint("##Your Safeword", "Enter Safeword", ref safeword, 30))
                 {
                     _config.Current.Safeword = safeword;
                     _config.Save();

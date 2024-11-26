@@ -120,7 +120,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     // but at the moment this handles any commonly known possible holes in config generation.
     public void InitConfigs()
     {
-        if (_configService.Current.LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
+        if (_configService.Current.LoggerFilters == new HashSet<LoggerType>() || _configService.Current.LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
         {
             // reset with recommended.
             _configService.Current.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();

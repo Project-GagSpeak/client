@@ -440,6 +440,8 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                     {
                         _handler.CloneRestraintSet(FilteredSetList[LastHoveredIndex]);
                     }
+                    // if you try to access filtered set list anywhere after this you will need to pull this into
+                    // a seperate function and do early returns to prevent crashes.
                     if (ImGui.Selectable("Delete Set") && FilteredSetList[LastHoveredIndex] != null)
                     {
                         _handler.RemoveRestraintSet(FilteredSetList[LastHoveredIndex].RestraintId);

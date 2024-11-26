@@ -49,10 +49,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         Mediator.Subscribe<MainHubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
         Mediator.Subscribe<MainHubReconnectedMessage>(this, (msg) => _ = HubInstanceOnReconnected());
         Mediator.Subscribe<MainHubReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
-
-        // if we are already logged in, then run the login function
-/*        if (_clientService.IsLoggedIn)
-            OnLogin();*/
     }
 
     public static UserData PlayerUserData => ConnectionDto!.User;
@@ -333,23 +329,25 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     {
         fetchedSecretKey = string.Empty;
 
-        // ensure we have a proper template for the active character.
-        if (_serverConfigs.CharacterHasSecretKey() is false)
-            if (_serverConfigs.AuthExistsForCurrentLocalContentId() is false)
-                _serverConfigs.GenerateAuthForCurrentCharacter();
-
         // if we are not logged in, we should not be able to connect.
-        if (!_clientService.IsLoggedIn)
+        if (_clientService.IsLoggedIn is false)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // if we have not yet made an account, abort this connection.
-        if (!_mainConfig.Current.AccountCreated)
+        if (_mainConfig.Current.AccountCreated is false)
         {
-            Logger.LogDebug("Account not yet created, Aborting Connection.", LoggerType.ApiCore);
+            Logger.LogDebug("Primary Account not yet created, Aborting Connection.", LoggerType.ApiCore);
             return false;
+        }
+
+        // ensure we have a proper template for the active character.
+        if (_serverConfigs.CharacterHasSecretKey() is false && _serverConfigs.AuthExistsForCurrentLocalContentId() is false)
+        {
+            // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
+            _serverConfigs.GenerateAuthForCurrentCharacter();
         }
 
         // If the client wishes to not be connected to the server, return.

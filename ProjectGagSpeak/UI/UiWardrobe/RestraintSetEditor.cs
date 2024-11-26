@@ -135,7 +135,7 @@ public class RestraintSetEditor : IMediatorSubscriber
 
         ImGui.Text("Restraint Set Name:");
         ImGui.SetNextItemWidth(width);
-        if (ImGui.InputTextWithHint($"##NameText", "Restraint Set Name...", ref refName, 48, ImGuiInputTextFlags.EnterReturnsTrue))
+        if (ImGui.InputTextWithHint($"##NameText", "Restraint Set Name...", ref refName, 48))
         {
             refRestraintSet.Name = refName;
         }
