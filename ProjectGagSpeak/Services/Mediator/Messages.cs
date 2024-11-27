@@ -86,8 +86,6 @@ public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
 
 ////////////// PUPPETEER RELATED RECORDS //////////////
 public record UpdateChatListeners : MessageBase; // for updating the chat listeners.
-public record UpdateCharacterListenerForUid(string Uid, string CharName, string CharWorld) : MessageBase;
-
 
 ////////////// TOYBOX RELATED RECORDS //////////////
 public record VfxActorRemoved(IntPtr data) : MessageBase;
@@ -142,7 +140,8 @@ public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHand
 
 /* ------------------ USER INTERFACE (UI) RECORDS------------------ */
 public enum ToggleType { Toggle, Show, Hide }
-public record RefreshUiMessage : MessageBase; // a message indicating the need to refresh the UI.
+public record UserPairSelected : MessageBase; // Fires whenever a new pair is selected from the userPairListHandler.
+public record RefreshUiMessage : MessageBase;
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase; // For toggling the UI.
 public record SwitchToIntroUiMessage : MessageBase; // indicates that we are in the introduction UI.
 public record SwitchToMainUiMessage : MessageBase; // indicates we are in the main UI.

@@ -267,8 +267,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
             {
                 // Perform a mediator call that we have updated a permission.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>("LiveChatGarblerActive", liveChatGarblerActive), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>("LiveChatGarblerActive", liveChatGarblerActive)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
@@ -278,8 +278,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.ItemAutoEquip = itemAutoEquip;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("ItemAutoEquip", itemAutoEquip), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("ItemAutoEquip", itemAutoEquip)));
             // perform recalculations to our cache.
             Mediator.Publish(new AppearanceImpactingSettingChanged());
         }
@@ -299,15 +299,15 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.WardrobeEnabled = wardrobeEnabled;
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("WardrobeEnabled", wardrobeEnabled), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("WardrobeEnabled", wardrobeEnabled)));
 
             // if this creates a race condition down the line remove the above line.
             if (wardrobeEnabled is false)
             {
                 // turn off all respective children as well and push the update.
                 _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = false;
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("RestraintSetAutoEquip", false), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("RestraintSetAutoEquip", false)));
                 // disable other options respective to it.
                 _clientConfigs.GagspeakConfig.DisableSetUponUnlock = false;
                 _clientConfigs.GagspeakConfig.CursedDungeonLoot = false;
@@ -323,7 +323,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = restraintSetAutoEquip;
                 // if this creates a race condition down the line remove the above line.
                 _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("RestraintSetAutoEquip", restraintSetAutoEquip), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("RestraintSetAutoEquip", restraintSetAutoEquip)));
                 // perform recalculations to our cache.
                 Mediator.Publish(new AppearanceImpactingSettingChanged());
             }
@@ -349,8 +349,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.MoodlesEnabled = moodlesEnabled;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("MoodlesEnabled", moodlesEnabled), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("MoodlesEnabled", moodlesEnabled)));
             // perform recalculations to our cache.
             Mediator.Publish(new AppearanceImpactingSettingChanged());
 
@@ -385,7 +385,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _playerCharacterManager.GlobalPerms.PuppeteerEnabled = puppeteerEnabled;
             // if this creates a race condition down the line remove the above line.
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("PuppeteerEnabled", puppeteerEnabled), MainHub.PlayerUserData));
+            MainHub.PlayerUserData, new KeyValuePair<string, object>("PuppeteerEnabled", puppeteerEnabled)));
 
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
@@ -400,7 +400,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase = globalTriggerPhrase;
                 // if this creates a race condition down the line remove the above line.
                 _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalTriggerPhrase", globalTriggerPhrase), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalTriggerPhrase", globalTriggerPhrase)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
@@ -409,8 +409,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests = globalAllowSitRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowSitRequests", globalAllowSitRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowSitRequests", globalAllowSitRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowSitTT);
@@ -419,8 +419,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests = globalAllowMotionRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowMotionRequests", globalAllowMotionRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowMotionRequests", globalAllowMotionRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowMotionTT);
@@ -429,8 +429,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests = globalAllowAllRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowAllRequests", globalAllowAllRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowAllRequests", globalAllowAllRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAllTT);
@@ -445,7 +445,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _playerCharacterManager.GlobalPerms.ToyboxEnabled = toyboxEnabled;
             // if this creates a race condition down the line remove the above line.
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("ToyboxEnabled", toyboxEnabled), MainHub.PlayerUserData));
+            MainHub.PlayerUserData, new KeyValuePair<string, object>("ToyboxEnabled", toyboxEnabled)));
 
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
@@ -487,8 +487,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.SpatialVibratorAudio = spatialVibratorAudio;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("SpatialVibratorAudio", spatialVibratorAudio), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("SpatialVibratorAudio", spatialVibratorAudio)));
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
@@ -516,8 +516,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.GlobalShockShareCode = globalShockCollarShareCode;
 
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("GlobalShockShareCode", globalShockCollarShareCode), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("GlobalShockShareCode", globalShockCollarShareCode)));
         }
         ImUtf8.SameLineInner();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
@@ -535,7 +535,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.MaxDuration = newPerms.MaxDuration;
                 _playerCharacterManager.GlobalPerms.MaxIntensity = newPerms.MaxIntensity;
                 // update the permissions.
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, _playerCharacterManager.GlobalPerms));
+                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerCharacterManager.GlobalPerms));
             });
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
@@ -553,8 +553,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             // Convert TimeSpan to ticks and send as UInt64
             ulong ticks = (ulong)_playerCharacterManager.GlobalPerms.GlobalShockVibrateDuration.Ticks;
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("GlobalShockVibrateDuration", ticks), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("GlobalShockVibrateDuration", ticks)));
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 

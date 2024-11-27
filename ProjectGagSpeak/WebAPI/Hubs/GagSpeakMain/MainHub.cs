@@ -403,31 +403,20 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         OnUserRemoveMoodles(dto => _ = Client_UserRemoveMoodles(dto));
         OnUserClearMoodles(dto => _ = Client_UserClearMoodles(dto));
 
-        OnUserUpdateSelfAllGlobalPerms(dto => _ = Client_UserUpdateSelfAllGlobalPerms(dto));
-        OnUserUpdateSelfAllUniquePerms(dto => _ = Client_UserUpdateSelfAllUniquePerms(dto));
-        OnUserUpdateSelfPairPermsGlobal(dto => _ = Client_UserUpdateSelfPairPermsGlobal(dto));
-        OnUserUpdateSelfPairPerms(dto => _ = Client_UserUpdateSelfPairPerms(dto));
-        OnUserUpdateSelfPairPermAccess(dto => _ = Client_UserUpdateSelfPairPermAccess(dto));
-        OnUserUpdateOtherAllPairPerms(dto => _ = Client_UserUpdateOtherAllPairPerms(dto));
-        OnUserUpdateOtherAllGlobalPerms(dto => _ = Client_UserUpdateOtherAllGlobalPerms(dto));
-        OnUserUpdateOtherAllUniquePerms(dto => _ = Client_UserUpdateOtherAllUniquePerms(dto));
-        OnUserUpdateOtherPairPermsGlobal(dto => _ = Client_UserUpdateOtherPairPermsGlobal(dto));
-        OnUserUpdateOtherPairPerms(dto => _ = Client_UserUpdateOtherPairPerms(dto));
-        OnUserUpdateOtherPairPermAccess(dto => _ = Client_UserUpdateOtherPairPermAccess(dto));
+        OnUserUpdateAllPerms(dto => _ = Client_UserUpdateAllPerms(dto));
+        OnUserUpdateAllGlobalPerms(dto => _ = Client_UserUpdateAllGlobalPerms(dto));
+        OnUserUpdateAllUniquePerms(dto => _ = Client_UserUpdateAllUniquePerms(dto));
+        OnUserUpdatePairPermsGlobal(dto => _ = Client_UserUpdatePairPermsGlobal(dto));
+        OnUserUpdatePairPerms(dto => _ = Client_UserUpdatePairPerms(dto));
+        OnUserUpdatePairPermAccess(dto => _ = Client_UserUpdatePairPermAccess(dto));
 
-        OnUserReceiveCharacterDataComposite(dto => _ = Client_UserReceiveCharacterDataComposite(dto));
-        OnUserReceiveOwnDataIpc(dto => _ = Client_UserReceiveOwnDataIpc(dto));
-        OnUserReceiveOtherDataIpc(dto => _ = Client_UserReceiveOtherDataIpc(dto));
-        OnUserReceiveOwnDataAppearance(dto => _ = Client_UserReceiveOwnDataAppearance(dto));
-        OnUserReceiveOtherDataAppearance(dto => _ = Client_UserReceiveOtherDataAppearance(dto));
-        OnUserReceiveOwnDataWardrobe(dto => _ = Client_UserReceiveOwnDataWardrobe(dto));
-        OnUserReceiveOtherDataWardrobe(dto => _ = Client_UserReceiveOtherDataWardrobe(dto));
-        OnUserReceiveOwnDataAlias(dto => _ = Client_UserReceiveOwnDataAlias(dto));
-        OnUserReceiveOtherDataAlias(dto => _ = Client_UserReceiveOtherDataAlias(dto));
-        OnUserReceiveOwnDataToybox(dto => _ = Client_UserReceiveOwnDataToybox(dto));
-        OnUserReceiveOtherDataToybox(dto => _ = Client_UserReceiveOtherDataToybox(dto));
-        OnUserReceiveOwnLightStorage(dto => _ = Client_UserReceiveOwnLightStorage(dto));
-        OnUserReceiveOtherLightStorage(dto => _ = Client_UserReceiveOtherLightStorage(dto));
+        OnUserReceiveDataComposite(dto => _ = Client_UserReceiveDataComposite(dto));
+        OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
+        OnUserReceiveDataAppearance(dto => _ = Client_UserReceiveDataAppearance(dto));
+        OnUserReceiveDataWardrobe(dto => _ = Client_UserReceiveDataWardrobe(dto));
+        OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
+        OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
+        OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
 
         OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));
         OnGlobalChatMessage(dto => _ = Client_GlobalChatMessage(dto));

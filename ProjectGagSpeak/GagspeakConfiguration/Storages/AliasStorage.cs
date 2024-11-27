@@ -11,32 +11,27 @@ namespace GagSpeak.GagspeakConfiguration.Models;
 [Serializable]
 public class AliasStorage
 {
-    /// <summary> The storage of all aliases you have for the spesified user (defined in key) </summary>
-    public string CharacterName { get; set; } = string.Empty;
-    public string CharacterWorld { get; set; } = string.Empty;
+    public bool HasNameStored => !string.IsNullOrEmpty(CharacterNameWithWorld);
+    public string CharacterNameWithWorld { get; set; } = string.Empty;
     public List<AliasTrigger> AliasList { get; set; } = [];
 
-    [JsonIgnore]
-    public string NameWithWorld => CharacterName+"@"+CharacterWorld;
-
-    [JsonIgnore]
-    public bool IsValid => !string.IsNullOrEmpty(CharacterName) && !string.IsNullOrEmpty(CharacterWorld);
 
 
-    public AliasStorage DeepCloneStorage()
+    public List<AliasTrigger> CloneAliasList()
     {
-        return new AliasStorage()
+        return AliasList.Select(alias => new AliasTrigger
         {
-            CharacterName = CharacterName,
-            CharacterWorld = CharacterWorld,
-            AliasList = AliasList,
-        };
+            Enabled = alias.Enabled,
+            InputCommand = alias.InputCommand,
+            OutputCommand = alias.OutputCommand
+        }).ToList();
     }
 
     public CharaAliasData ToAliasData()
     {
         return new CharaAliasData()
         {
+            HasNameStored = HasNameStored,
             AliasList = AliasList,
         };
     }

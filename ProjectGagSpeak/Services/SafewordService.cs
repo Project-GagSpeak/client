@@ -98,7 +98,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                 _playerManager.GlobalPerms.SpatialVibratorAudio = false;
 
                 Logger.LogInformation("Pushing Global updates to the server.", LoggerType.Safeword);
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, _playerManager.GlobalPerms));
+                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms));
                 Logger.LogInformation("Global updates pushed to the server.", LoggerType.Safeword);
             }
             Logger.LogInformation("Everything Disabled.", LoggerType.Safeword);
@@ -112,7 +112,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                     pair.OwnPerms.InHardcore = false;
                     // send the updates to the server.
                     if (MainHub.ServerStatus is ServerState.Connected)
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(pair.UserData, new KeyValuePair<string, object>("InHardcore", false)));
+                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(pair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false)));
                 }
             }
 
@@ -155,7 +155,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             if(MainHub.IsServerAlive)
             {
                 Logger.LogInformation("Pushing Global updates to the server.", LoggerType.Safeword);
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, _playerManager.GlobalPerms));
+                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms));
                 Logger.LogInformation("Global updates pushed to the server.", LoggerType.Safeword);
             }
         }
@@ -178,7 +178,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                 // send the updates to the server.
                 if (MainHub.ServerStatus is ServerState.Connected)
                 {
-                    _ = _apiHubMain.UserPushAllUniquePerms(new(pair.UserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms));
+                    _ = _apiHubMain.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms));
                 }
             }
         }

@@ -14,27 +14,19 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak.PlayerData.Handlers;
 
-public class PuppeteerHandler : DisposableMediatorSubscriberBase
+public class PuppeteerHandler
 {
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly ILogger<PuppeteerHandler> _logger;
     private readonly ClientData _playerChara;
+    private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
-    private readonly IDataManager _dataManager;
-
-
-    public PuppeteerHandler(ILogger<PuppeteerHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfiguration, ClientData playerChara,
-        PairManager pairManager, IDataManager dataManager) : base(logger, mediator)
+    public PuppeteerHandler(ILogger<PuppeteerHandler> logger, ClientData playerChara,
+        ClientConfigurationManager clientConfiguration, PairManager pairManager)
     {
+        _logger = logger;
         _clientConfigs = clientConfiguration;
         _playerChara = playerChara;
         _pairManager = pairManager;
-        _dataManager = dataManager;
-
-        Mediator.Subscribe<UpdateCharacterListenerForUid>(this, (msg) =>
-        {
-            UpdatePlayerInfoForUID(msg.Uid, msg.CharName, msg.CharWorld);
-        });
     }
 
     public Pair? SelectedPair = null; // Selected Pair we are viewing for Puppeteer.
@@ -44,8 +36,8 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     public string UidOfStorage => SelectedPair?.UserData.UID ?? string.Empty;
     public bool IsModified { get; private set; } = false;
 
-    public void StartEditingSet(AliasStorage aliasStorage)
-        => ClonedAliasStorageForEdit = aliasStorage.DeepCloneStorage();
+    public void StartEditingList(AliasStorage aliasStorage)
+        => aliasStorage.CloneAliasList();
 
     public void CancelEditingSet()
         => ClonedAliasStorageForEdit = null;
@@ -57,7 +49,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
         if (!IsModified)
         {
-            Logger.LogTrace("No changes were made to the Alias Storage.", LoggerType.Puppeteer);
+            _logger.LogTrace("No changes were made to the Alias Storage.", LoggerType.Puppeteer);
             return;
         }
 
@@ -66,10 +58,6 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     }
 
     public void MarkAsModified() => IsModified = true;
-
-    public void UpdatePlayerInfoForUID(string uid, string charaName, string charaWorld)
-        => _clientConfigs.UpdateAliasStoragePlayerInfo(uid, charaName, charaWorld);
-
 
     #region PuppeteerSettings
     public void OnClientMessageContainsPairTrigger(string msg)
@@ -86,12 +74,12 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
                 var endChar = pair.PairPerms.EndChar;
 
                 // Get the string that exists beyond the trigger phrase found in the message.
-                Logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
+                _logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
                 SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
 
                 // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
                 remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
-                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
+                _logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
 
                 // If the string contains the word "grovel", fire the grovel achievement.
                 if (remainingMessage.TextValue.Contains("grovel"))
@@ -112,30 +100,30 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         // for first time generations
         if (SelectedPair is null)
         {
-            Logger.LogTrace($"Setting selected pair to " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
+            _logger.LogTrace($"Setting selected pair to " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
             SelectedPair = pair;
-            StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
+            //StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
         }
 
         // for refreshing data once we switch pairs.
         if (SelectedPair.UserData.UID != pair.UserData.UID)
         {
-            Logger.LogTrace($"Updating display to reflect pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
+            _logger.LogTrace($"Updating display to reflect pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
             SelectedPair = pair;
-            StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
+            //StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
         }
         // log if the storage being edited is null.
         if (ClonedAliasStorageForEdit is null)
         {
-            Logger.LogWarning($"Storage being edited is null for pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
+            _logger.LogWarning($"Storage being edited is null for pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
         }
     }
 
     public AliasStorage GetAliasStorage(string pairUID)
         => _clientConfigs.FetchAliasStorageForPair(pairUID);
 
-    public string? GetUIDMatchingSender(string name, string world)
-        => _clientConfigs.GetUidMatchingSender(name, world);
+    public string? GetUIDMatchingSender(string nameWithWorld)
+        => _clientConfigs.GetUidMatchingSender(nameWithWorld);
 
     public void AddAlias(AliasTrigger alias)
         => _clientConfigs.AddNewAliasTrigger(UidOfStorage, alias);
@@ -160,7 +148,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
             var match = TryMatchTriggerWord(chatMessage.TextValue, triggerWord);
             if (!match.Success) continue;
 
-            Logger.LogTrace("Matched trigger word: " + triggerWord, LoggerType.Puppeteer);
+            _logger.LogTrace("Matched trigger word: " + triggerWord, LoggerType.Puppeteer);
             matchedTrigger = triggerWord;
             return true;
         }
@@ -169,28 +157,28 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
     public SeString GetMessageFromTrigger(string trigger, PuppeteerPerms perms, SeString chatMessage, XivChatType type, string? SenderUid = null)
     {
-        Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
-        Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
+        _logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
+        _logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
         // obtain the substring that occurs in the message after the trigger.
         SeString remainingMessage = chatMessage.TextValue.Substring(chatMessage.TextValue.IndexOf(trigger) + trigger.Length).Trim();
-        Logger.LogTrace("Remaining message: " + remainingMessage, LoggerType.Puppeteer);
+        _logger.LogTrace("Remaining message: " + remainingMessage, LoggerType.Puppeteer);
 
         // obtain the substring within the start and end char if provided.
         remainingMessage.GetSubstringWithinParentheses(perms.StartChar, perms.EndChar);
-        Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
+        _logger.LogTrace("Remaining message after brackets: " + remainingMessage);
 
         if (!SenderUid.IsNullOrEmpty())
         {
-            Logger.LogTrace("Checking for Aliases");
+            _logger.LogTrace("Checking for Aliases");
             remainingMessage = ConvertAliasCommandsIfAny(SenderUid, remainingMessage.TextValue);
         }
 
-        Logger.LogTrace("Remaining message after aliases: " + remainingMessage, LoggerType.Puppeteer);
+        _logger.LogTrace("Remaining message after aliases: " + remainingMessage, LoggerType.Puppeteer);
 
         // if the substring in the custom brackets is not null or empty, then convert brackets to angled and return.
         if (remainingMessage.TextValue.IsNullOrEmpty())
         {
-            Logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
+            _logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
             return new SeString();
         }
 
@@ -204,7 +192,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         }
 
         // return an empty SeString if we failed.
-        Logger.LogDebug("Message did not meet the criteria for the sender", LoggerType.Puppeteer);
+        _logger.LogDebug("Message did not meet the criteria for the sender", LoggerType.Puppeteer);
         return new SeString();
     }
 
@@ -212,7 +200,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     {
         if (perms.AllowAllRequests)
         {
-            Logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
+            _logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
             return true;
         }
 
@@ -222,8 +210,8 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
                 .FirstOrDefault(e => string.Equals(message.TextValue, e.Key.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrEmpty(emote.Key))
             {
-                Logger.LogTrace("Valid Emote name: " + emote.Key.Replace(" ", "").ToLower() + ", RowID: " + emote.Value, LoggerType.Puppeteer);
-                Logger.LogTrace("Accepting Message as you allow Motion Commands", LoggerType.Puppeteer);
+                _logger.LogTrace("Valid Emote name: " + emote.Key.Replace(" ", "").ToLower() + ", RowID: " + emote.Value, LoggerType.Puppeteer);
+                _logger.LogTrace("Accepting Message as you allow Motion Commands", LoggerType.Puppeteer);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)emote.Value);
                 return true;
             }
@@ -232,17 +220,17 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
         if (perms.AllowSitRequests)
         {
-            Logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
+            _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
             var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
             if (sitEmote.RowId is 50 or 52)
             {
-                Logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
+                _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)sitEmote.RowId);
                 return true;
             }
             if (EmoteMonitor.EmoteCommandsWithId.Where(e => e.Value is 90).Any(e => message.TextValue.Contains(e.Key.Replace(" ", "").ToLower())))
             {
-                Logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
+                _logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)90);
                 return true;
             }
@@ -257,7 +245,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         // now we can use this index to scan our aliasLists
         List<AliasTrigger> Triggers = GetAliasStorage(SenderUid).AliasList;
 
-        Logger.LogTrace("Found " + Triggers.Count + " alias triggers for this user", LoggerType.Puppeteer);
+        _logger.LogTrace("Found " + Triggers.Count + " alias triggers for this user", LoggerType.Puppeteer);
 
         // sort by descending length so that shorter equivalents to not override longer variants.
         var sortedAliases = Triggers.OrderByDescending(alias => alias.InputCommand.Length);

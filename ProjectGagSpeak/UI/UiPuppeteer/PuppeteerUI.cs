@@ -188,14 +188,15 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
 
         // draw title
-        DrawPuppeteerHeader(DefaultCellPadding);
+        //DrawPuppeteerHeader(DefaultCellPadding);
 
         ImGui.Separator();
 
         switch (_currentTab)
         {
             case PuppeteerTab.TriggerPhrases:
-                DrawTriggerPhrases(region.X);
+                _uiShared.BigText("Under Rework Construction");
+                /*DrawTriggerPhrases(region.X);*/
                 break;
             case PuppeteerTab.ClientAliasList:
                 _aliasTable.DrawAliasListTable(_puppeteerHandler.SelectedPair.UserData.UID, DefaultCellPadding.Y);
@@ -209,7 +210,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private bool AliasDataListExists => _puppeteerHandler.SelectedPair?.LastAliasData?.AliasList.Any() ?? false;
     private DateTime LastSaveTime = DateTime.MinValue;
 
-    private void DrawPuppeteerHeader(Vector2 DefaultCellPadding)
+/*    private void DrawPuppeteerHeader(Vector2 DefaultCellPadding)
     {
         if (_puppeteerHandler.SelectedPair is null || _puppeteerHandler.ClonedAliasStorageForEdit is null) 
             return;
@@ -289,8 +290,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 _currentTab = PuppeteerTab.PairAliasList;
             UiSharedService.AttachToolTip("View this Pair's Alias List.");
         }
-    }
-
+    }*/
+/*
     private void DrawTriggerPhrases(float width)
     {
         if (_puppeteerHandler.SelectedPair is null) return;
@@ -327,7 +328,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
         DrawTriggerPhraseDetailBox(pairTriggerData);
     }
-
+*/
     private void DrawPairAliasList(CharaAliasData? pairAliasData)
     {
         if (!AliasDataListExists || MainHub.ServerStatus is not ServerState.Connected || pairAliasData == null)
@@ -342,7 +343,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         foreach (var aliasItem in pairAliasData.AliasList)
             DrawAliasItemBox(aliasItem);
     }
-
+/*
     private void DrawTriggerPhraseDetailBox(TriggerData triggerInfo)
     {
         if (_puppeteerHandler.SelectedPair is null) 
@@ -418,13 +419,13 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 using (ImRaii.Disabled(!isClient))
                 {
                     ImUtf8.SameLineInner();
-                    using (ImRaii.PushColor(ImGuiCol.Text, triggerInfo.AllowsMotions ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+                    using (ImRaii.PushColor(ImGuiCol.Text, allowMotions ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
                     {
                         if (_uiShared.IconButton(FontAwesomeIcon.Walking, null, null, false, true))
                         {
-                            _logger.LogTrace($"Updated own pair permission: AllowEmotesExpressions to {!triggerInfo.AllowsMotions}");
+                            _logger.LogTrace($"Updated own pair permission: AllowEmotesExpressions to {!allowMotions}");
                             _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData,
-                                new KeyValuePair<string, object>("AllowMotionRequests", !triggerInfo.AllowsMotions)));
+                                new KeyValuePair<string, object>("AllowMotionRequests", !allowMotions)));
                         }
                     }
                 }
@@ -434,13 +435,13 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 using (ImRaii.Disabled(!isClient))
                 {
                     ImUtf8.SameLineInner();
-                    using (ImRaii.PushColor(ImGuiCol.Text, triggerInfo.AllowsAll ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+                    using (ImRaii.PushColor(ImGuiCol.Text, allowAll ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
                     {
                         if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, null, null, false, true))
                         {
-                            _logger.LogTrace($"Updated own pair permission: AllowAllCommands to {!triggerInfo.AllowsAll}");
+                            _logger.LogTrace($"Updated own pair permission: AllowAllCommands to {!allowAll}");
                             _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData,
-                                new KeyValuePair<string, object>("AllowAllRequests", !triggerInfo.AllowsAll)));
+                                new KeyValuePair<string, object>("AllowAllRequests", !allowAll)));
                         }
                     }
                 }
@@ -572,7 +573,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             }
         }
     }
-
+*/
 
     private void DrawAliasItemBox(AliasTrigger aliasItem)
     {

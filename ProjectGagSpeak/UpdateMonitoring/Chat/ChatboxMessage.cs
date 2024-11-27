@@ -219,7 +219,7 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
             return false;
 
         // make sure they exist in our alias list config
-        var uidOfSender = _puppeteerHandler.GetUIDMatchingSender(name, world);
+        var uidOfSender = _puppeteerHandler.GetUIDMatchingSender(nameWithWorld);
         if (uidOfSender.IsNullOrEmpty())
             return false;
 

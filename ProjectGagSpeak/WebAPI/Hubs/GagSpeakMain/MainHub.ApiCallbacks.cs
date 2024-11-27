@@ -186,88 +186,10 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Client_UserUpdateSelfAllGlobalPerms(UserAllGlobalPermChangeDto dto)
+    public Task Client_UserUpdateAllPerms(UserPairUpdateAllPermsDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
-        {
-            Logger.LogInformation("Updating all global permissions in bulk for self.", LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.SetGlobalPerms(dto.GlobalPermissions));
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogError("Don't try updating someone else's global permissions with a self global update call!");
-            return Task.CompletedTask;
-        }
-    }
-
-    public Task Client_UserUpdateSelfAllUniquePerms(UserPairUpdateAllUniqueDto dto)
-    {
-        Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
-        {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogInformation("Callback matched to a paired user. Updating global permissions for them.", LoggerType.Callbacks);
-            ExecuteSafely(() => _pairs.UpdatePairUpdateOwnAllUniquePermissions(dto));
-            return Task.CompletedTask;
-        }
-    }
-
-    /// <summary> 
-    /// Sent to client from server informing them to update their own global permissions
-    /// Status should be updated in the pair manager.
-    /// </summary>
-    public Task Client_UserUpdateSelfPairPermsGlobal(UserGlobalPermChangeDto dto)
-    {
-        Logger.LogDebug("Client_UserUpdateSelfPairPermsGlobal: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == UID)
-        {
-            Logger.LogTrace("Callback matched player character, updating own global permission data", LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.ApplyGlobalPerm(dto));
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogInformation("Callback matched to a paired user, but was called by update self. This shouldn't be possible!", LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
-    }
-
-    /// <summary> 
-    /// Sent to client from server informing them to update their own permissions for a pair.
-    /// the dto's UserData object should be the user pair that we are updating our own pair permissions for.
-    /// </summary>
-    public Task Client_UserUpdateSelfPairPerms(UserPairPermChangeDto dto)
-    {
-        Logger.LogDebug("Client_UserUpdateSelfPairPerms: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
-        return Task.CompletedTask;
-
-    }
-
-    /// <summary> 
-    /// Inform another pair to update their pair perm access for you
-    /// </summary>
-    public Task Client_UserUpdateSelfPairPermAccess(UserPairAccessChangeDto dto)
-    {
-        Logger.LogDebug("Client_UserUpdateSelfPairPermAccess: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> 
-    /// Sent to client from server informing them to update their ALL permissions of a paired user.
-    /// This should only be called once during the initial adding of a pair and never again.
-    /// </summary>
-    public Task Client_UserUpdateOtherAllPairPerms(UserPairUpdateAllPermsDto dto)
-    {
-        Logger.LogDebug("Client_UserUpdateOtherAllPairPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        Logger.LogDebug("Client_UserUpdateAllPerms: "+dto, LoggerType.Callbacks);
+        if(dto.IsFromSelf)
         {
             Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
             return Task.CompletedTask;
@@ -280,12 +202,13 @@ public partial class MainHub
         }
     }
 
-    public Task Client_UserUpdateOtherAllGlobalPerms(UserAllGlobalPermChangeDto dto)
+    public Task Client_UserUpdateAllGlobalPerms(UserPairUpdateAllGlobalPermsDto dto)
     {
         Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        if (dto.IsFromSelf)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
+            Logger.LogError("Callback called from self, and was for self. Sending to clientCallbacks", LoggerType.Callbacks);
+            ExecuteSafely(() => _clientCallbacks.SetGlobalPerms(dto.GlobalPermissions));
             return Task.CompletedTask;
         }
         else
@@ -296,29 +219,26 @@ public partial class MainHub
         }
     }
 
-    public Task Client_UserUpdateOtherAllUniquePerms(UserPairUpdateAllUniqueDto dto)
+    public Task Client_UserUpdateAllUniquePerms(UserPairUpdateAllUniqueDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        Logger.LogDebug("Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
+        if (dto.IsFromSelf)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
-            return Task.CompletedTask;
+            Logger.LogInformation("Callback matched to a paired user. Updating OwnUniquePairPerms them.", LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.UpdatePairUpdateOwnAllUniquePermissions(dto)); return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating global permissions for them.", LoggerType.Callbacks);
+            Logger.LogInformation("Callback matched to a paired user. Updating UniquePairPerms for them.", LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOtherAllUniquePermissions(dto));
             return Task.CompletedTask;
         }
     }
 
-    /// <summary> 
-    /// Sent to client from server informing them to update a user pair's global permission.
-    /// </summary>
-    public Task Client_UserUpdateOtherPairPermsGlobal(UserGlobalPermChangeDto dto)
+    public Task Client_UserUpdatePairPermsGlobal(UserGlobalPermChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPermsGlobal: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        if (dto.IsFromSelf)
         {
             Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
             return Task.CompletedTask;
@@ -331,15 +251,13 @@ public partial class MainHub
         }
     }
 
-    /// <summary> 
-    /// Sent to client from server informing them to update a user pair's permission option.
-    /// </summary>
-    public Task Client_UserUpdateOtherPairPerms(UserPairPermChangeDto dto)
+    public Task Client_UserUpdatePairPerms(UserPairPermChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPerms: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        if (dto.IsFromSelf)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
+            Logger.LogDebug("Client_UserUpdateSelfPairPerms: " + dto, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
             return Task.CompletedTask;
         }
         else
@@ -350,21 +268,13 @@ public partial class MainHub
         }
     }
 
-    /// <summary> 
-    /// Sent to client from server informing them to update the new edit access permissions the user pair has.
-    /// Status should be updated in the pair manager.
-    /// 
-    /// <para>
-    /// (This should be called upon only when the other client pair needs to send the updated permission access
-    /// into to the client. The client themselves should never be allowed to modify other user pairs edit access)
-    /// </para>
-    /// </summary>
-    public Task Client_UserUpdateOtherPairPermAccess(UserPairAccessChangeDto dto)
+    public Task Client_UserUpdatePairPermAccess(UserPairAccessChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPermAccess: "+dto, LoggerType.Callbacks);
-        if (dto.User.UID == ConnectionDto?.User.UID)
+        if (dto.IsFromSelf)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
+            Logger.LogDebug("Client_UserUpdateSelfPairPermAccess: " + dto, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
             return Task.CompletedTask;
         }
         else
@@ -379,9 +289,9 @@ public partial class MainHub
     /// <summary> 
     /// Should only ever get the other pairs. If getting self, something is up.
     /// </summary>
-    public Task Client_UserReceiveCharacterDataComposite(OnlineUserCompositeDataDto dataDto)
+    public Task Client_UserReceiveDataComposite(OnlineUserCompositeDataDto dataDto)
     {
-        Logger.LogTrace("Client_UserReceiveCharacterDataComposite:"+dataDto.User, LoggerType.Callbacks);
+        Logger.LogTrace("Client_UserReceiveDataComposite:" + dataDto.User, LoggerType.Callbacks);
         if (dataDto.User.UID == ConnectionDto?.User.UID)
         {
             Logger.LogWarning("Why are you trying to receive your own composite data? There is no need for this???");
@@ -395,133 +305,109 @@ public partial class MainHub
         }
     }
 
-
-    /// <summary> 
-    /// Update Own Appearance Data
-    /// </summary>
-    public Task Client_UserReceiveOwnDataIpc(OnlineUserCharaIpcDataDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOwnDataIpc (not executing any functions):"+dataDto.User, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
     /// <summary> 
     /// Update Other UserPair Ipc Data 
     /// </summary>
-    public Task Client_UserReceiveOtherDataIpc(OnlineUserCharaIpcDataDto dataDto)
+    public Task Client_UserReceiveDataIpc(OnlineUserCharaIpcDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOtherDataIpc: "+dataDto, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.ReceiveCharaIpcData(dataDto));
-        return Task.CompletedTask;
+        Logger.LogDebug("Client_UserReceiveDataIpc: "+dataDto, LoggerType.Callbacks);
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            Logger.LogDebug("Client_UserReceiveOwnDataIpc (not executing any functions):" + dataDto.User, LoggerType.Callbacks);
+            return Task.CompletedTask;
+        }
+        else
+        {
+            ExecuteSafely(() => _pairs.ReceiveCharaIpcData(dataDto));
+            return Task.CompletedTask;
+        }
     }
 
-
-    /// <summary> 
-    /// Update Own Appearance Data 
-    /// </summary>
-    public Task Client_UserReceiveOwnDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
+    public Task Client_UserReceiveDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataAppearance:"+dataDto.User, LoggerType.Callbacks);
-        bool callbackWasFromSelf = dataDto.User.UID == UID;
-        ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, callbackWasFromSelf));
-        return Task.CompletedTask;
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.IsFromSelf));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("Client_UserReceiveOtherDataAppearance: {user}{updateKind}\n{data}", dataDto.User, dataDto.Type, dataDto.AppearanceData.ToGagString());
+            ExecuteSafely(() => _pairs.ReceiveCharaAppearanceData(dataDto));
+            return Task.CompletedTask;
+        }
     }
 
-    /// <summary> 
-    /// Update Other UserPair Appearance Data
-    /// </summary>
-    public Task Client_UserReceiveOtherDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOtherDataAppearance: {user}{updateKind}\n{data}", dataDto.User, dataDto.Type, dataDto.AppearanceData.ToGagString());
-        ExecuteSafely(() => _pairs.ReceiveCharaAppearanceData(dataDto));
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Update Own Wardrobe Data 
-    /// </summary>
-    public Task Client_UserReceiveOwnDataWardrobe(OnlineUserCharaWardrobeDataDto dataDto)
+    public Task Client_UserReceiveDataWardrobe(OnlineUserCharaWardrobeDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataWardrobe:"+dataDto.User, LoggerType.Callbacks);
-        bool callbackWasFromSelf = dataDto.User.UID == UID;
-        ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, callbackWasFromSelf));
-        return Task.CompletedTask;
-
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.IsFromSelf));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("Client_UserReceiveOtherDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.ReceiveCharaWardrobeData(dataDto));
+            return Task.CompletedTask;
+        }
     }
 
-    /// <summary> 
-    /// Update Other UserPair Wardrobe Data 
-    /// </summary>
-    public Task Client_UserReceiveOtherDataWardrobe(OnlineUserCharaWardrobeDataDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOtherDataWardrobe:"+dataDto.User, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.ReceiveCharaWardrobeData(dataDto));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> 
-    /// Update Own UserPair Alias Data 
-    /// </summary>
-    public Task Client_UserReceiveOwnDataAlias(OnlineUserCharaAliasDataDto dataDto)
+    public Task Client_UserReceiveDataAlias(OnlineUserCharaAliasDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataAlias:"+dataDto.User, LoggerType.Callbacks);
-        bool callbackWasFromSelf = dataDto.User.UID == UID;
-        ExecuteSafely(() => _clientCallbacks.CallbackAliasStorageUpdate(dataDto));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> 
-    /// Update Other UserPair Alias Data
-    /// </summary>
-    public Task Client_UserReceiveOtherDataAlias(OnlineUserCharaAliasDataDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOtherDataAlias:"+dataDto.User, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.ReceiveCharaAliasData(dataDto));
-        return Task.CompletedTask;
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            ExecuteSafely(() => _clientCallbacks.CallbackAliasStorageUpdate(dataDto));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("Client_UserReceiveOtherDataAlias:" + dataDto.User, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.ReceiveCharaAliasData(dataDto));
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary> 
     /// Update Own UserPair Toybox Data 
     /// </summary>
-    public Task Client_UserReceiveOwnDataToybox(OnlineUserCharaToyboxDataDto dataDto)
+    public Task Client_UserReceiveDataToybox(OnlineUserCharaToyboxDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataToybox:"+dataDto.User, LoggerType.Callbacks);
-        bool callbackWasFromSelf = dataDto.User.UID == UID;
-        ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, callbackWasFromSelf));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> 
-    /// Update Other UserPair LightStorage Data 
-    /// </summary>
-    public Task Client_UserReceiveOtherDataToybox(OnlineUserCharaToyboxDataDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOtherDataToybox:" + dataDto.User, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.ReceiveCharaToyboxData(dataDto));
-        return Task.CompletedTask;
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.IsFromSelf));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("Client_UserReceiveOtherDataToybox:" + dataDto.User, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.ReceiveCharaToyboxData(dataDto));
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary> 
     /// Update Other UserPair Toybox Data 
     /// </summary>
-    public Task Client_UserReceiveOwnLightStorage(OnlineUserStorageUpdateDto dataDto)
+    public Task Client_UserReceiveLightStorage(OnlineUserStorageUpdateDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnLightStorage:" + dataDto.User, LoggerType.Callbacks);
-        ExecuteSafely(() => _clientCallbacks.CallbackLightStorageUpdate(dataDto));
-        return Task.CompletedTask;
+        if (dataDto.User.UID == MainHub.UID)
+        {
+            ExecuteSafely(() => _clientCallbacks.CallbackLightStorageUpdate(dataDto));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("Client_UserReceiveOtherLightStorage:" + dataDto.User, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.ReceiveCharaLightStorageData(dataDto));
+            return Task.CompletedTask;
+        }
     }
-
-    /// <summary> 
-    /// Update Own UserPair LightStorage Data 
-    /// </summary>
-    public Task Client_UserReceiveOtherLightStorage(OnlineUserStorageUpdateDto dataDto)
-    {
-        Logger.LogDebug("Client_UserReceiveOtherLightStorage:" + dataDto.User, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.ReceiveCharaLightStorageData(dataDto));
-        return Task.CompletedTask;
-    }
-
-
 
     /// <summary> 
     /// Receive a Shock Instruction from another Pair. 
@@ -679,147 +565,82 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Client_UpdateUserIndividualPairStatusDto), action);
     }
 
-    public void OnUserUpdateSelfAllGlobalPerms(Action<UserAllGlobalPermChangeDto> act)
+    public void OnUserUpdateAllPerms(Action<UserPairUpdateAllPermsDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateSelfAllGlobalPerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllPerms), act);
     }
 
-    public void OnUserUpdateSelfAllUniquePerms(Action<UserPairUpdateAllUniqueDto> act)
+    public void OnUserUpdateAllGlobalPerms(Action<UserPairUpdateAllGlobalPermsDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateSelfAllUniquePerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllGlobalPerms), act);
     }
 
-    public void OnUserUpdateSelfPairPermsGlobal(Action<UserGlobalPermChangeDto> act)
+    public void OnUserUpdateAllUniquePerms(Action<UserPairUpdateAllUniqueDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateSelfPairPermsGlobal), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllUniquePerms), act);
     }
 
-    public void OnUserUpdateSelfPairPerms(Action<UserPairPermChangeDto> act)
+    public void OnUserUpdatePairPermsGlobal(Action<UserGlobalPermChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateSelfPairPerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPermsGlobal), act);
     }
 
-    public void OnUserUpdateSelfPairPermAccess(Action<UserPairAccessChangeDto> act)
+    public void OnUserUpdatePairPerms(Action<UserPairPermChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateSelfPairPermAccess), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPerms), act);
     }
 
-    public void OnUserUpdateOtherAllPairPerms(Action<UserPairUpdateAllPermsDto> act)
+    public void OnUserUpdatePairPermAccess(Action<UserPairAccessChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherAllPairPerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPermAccess), act);
     }
 
-    public void OnUserUpdateOtherAllGlobalPerms(Action<UserAllGlobalPermChangeDto> act)
+    public void OnUserReceiveDataComposite(Action<OnlineUserCompositeDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherAllGlobalPerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataComposite), act);
     }
 
-    public void OnUserUpdateOtherAllUniquePerms(Action<UserPairUpdateAllUniqueDto> act)
+    public void OnUserReceiveDataIpc(Action<OnlineUserCharaIpcDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherAllUniquePerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataIpc), act);
     }
 
-    public void OnUserUpdateOtherPairPermsGlobal(Action<UserGlobalPermChangeDto> act)
+    public void OnUserReceiveDataAppearance(Action<OnlineUserCharaAppearanceDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherPairPermsGlobal), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataAppearance), act);
+    }
+    public void OnUserReceiveDataWardrobe(Action<OnlineUserCharaWardrobeDataDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataWardrobe), act);
     }
 
-    public void OnUserUpdateOtherPairPerms(Action<UserPairPermChangeDto> act)
+
+    public void OnUserReceiveDataAlias(Action<OnlineUserCharaAliasDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherPairPerms), act);
-    }
-    public void OnUserUpdateOtherPairPermAccess(Action<UserPairAccessChangeDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateOtherPairPermAccess), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataAlias), act);
     }
 
-    public void OnUserReceiveCharacterDataComposite(Action<OnlineUserCompositeDataDto> act)
+    public void OnUserReceiveDataToybox(Action<OnlineUserCharaToyboxDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveCharacterDataComposite), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataToybox), act);
     }
 
-    public void OnUserReceiveOwnDataIpc(Action<OnlineUserCharaIpcDataDto> act)
+    public void OnUserReceiveLightStorage(Action<OnlineUserStorageUpdateDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnDataIpc), act);
-    }
-
-    public void OnUserReceiveOtherDataIpc(Action<OnlineUserCharaIpcDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherDataIpc), act);
-    }
-
-    public void OnUserReceiveOwnDataAppearance(Action<OnlineUserCharaAppearanceDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnDataAppearance), act);
-    }
-
-    public void OnUserReceiveOtherDataAppearance(Action<OnlineUserCharaAppearanceDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherDataAppearance), act);
-    }
-
-    public void OnUserReceiveOwnDataWardrobe(Action<OnlineUserCharaWardrobeDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnDataWardrobe), act);
-    }
-
-    public void OnUserReceiveOtherDataWardrobe(Action<OnlineUserCharaWardrobeDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherDataWardrobe), act);
-    }
-
-    public void OnUserReceiveOwnDataAlias(Action<OnlineUserCharaAliasDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnDataAlias), act);
-    }
-
-    public void OnUserReceiveOtherDataAlias(Action<OnlineUserCharaAliasDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherDataAlias), act);
-    }
-
-    public void OnUserReceiveOwnDataToybox(Action<OnlineUserCharaToyboxDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnDataToybox), act);
-    }
-
-    public void OnUserReceiveOtherDataToybox(Action<OnlineUserCharaToyboxDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherDataToybox), act);
-    }
-
-    public void OnUserReceiveOwnLightStorage(Action<OnlineUserStorageUpdateDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOwnLightStorage), act);
-    }
-
-    public void OnUserReceiveOtherLightStorage(Action<OnlineUserStorageUpdateDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveOtherLightStorage), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveLightStorage), act);
     }
 
     public void OnUserReceiveShockInstruction(Action<ShockCollarActionDto> act)

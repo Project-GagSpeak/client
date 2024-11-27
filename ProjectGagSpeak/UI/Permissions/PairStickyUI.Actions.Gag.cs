@@ -63,7 +63,7 @@ public partial class PairStickyUI
 
                         newAppearance.GagSlots[_permActions.GagLayer].GagType = onButtonPress.GagName();
                         _ = _apiHubMain.UserPushPairDataAppearanceUpdate(
-                            new(StickyPair.UserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagApplied, newAppearance.GagSlots[_permActions.GagLayer].Padlock.ToPadlock()));
+                            new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagApplied, newAppearance.GagSlots[_permActions.GagLayer].Padlock.ToPadlock()));
 
                         _logger.LogDebug("Applying Selected Gag "+onButtonPress.GagName()+" to "+StickyPair.UserData.AliasOrUID, LoggerType.Permissions);
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, onButtonPress);
@@ -121,7 +121,7 @@ public partial class PairStickyUI
                             newAppearance.GagSlots[_permActions.GagLayer].Password = _permActions.Password;
                             newAppearance.GagSlots[_permActions.GagLayer].Timer = UiSharedService.GetEndTimeUTC(_permActions.Timer);
                             newAppearance.GagSlots[_permActions.GagLayer].Assigner = MainHub.UID;
-                            _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagLocked, Padlocks.None));
+                            _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagLocked, Padlocks.None));
                             _logger.LogDebug("Locking Gag with GagPadlock "+onButtonPress.ToName()+" to "+PairNickOrAliasOrUID, LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -182,7 +182,7 @@ public partial class PairStickyUI
                             newAppearance.GagSlots[_permActions.GagLayer].Password = _permActions.Password;
                             newAppearance.GagSlots[_permActions.GagLayer].Timer = DateTimeOffset.UtcNow;
                             newAppearance.GagSlots[_permActions.GagLayer].Assigner = MainHub.UID;
-                            _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagUnlocked, prevLock));
+                            _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagUnlocked, prevLock));
                             _logger.LogDebug("Unlocking Gag with GagPadlock "+selected.ToName()+" to "+PairNickOrAliasOrUID, LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -221,7 +221,7 @@ public partial class PairStickyUI
                         var newAppearance = StickyPair.LastAppearanceData.DeepClone();
                         if (newAppearance == null) throw new Exception("Appearance data is null, not sending");
                         newAppearance.GagSlots[_permActions.GagLayer].GagType = GagType.None.GagName();
-                        _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagRemoved, Padlocks.None));
+                        _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagRemoved, Padlocks.None));
                         _logger.LogDebug("Removing Gag from "+PairNickOrAliasOrUID, LoggerType.Permissions);
                         Opened = InteractionType.None;
                     }

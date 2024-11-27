@@ -150,7 +150,17 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
 
         if (_playerData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+        {
+            Logger.LogDebug("No Reason to Recalculate!");
             return;
+        }
+        else
+        {
+            Logger.LogDebug("IsGagged: " + _playerData.IsPlayerGagged);
+            Logger.LogDebug("ActiveSetIdx: " + _clientConfigs.GetActiveSetIdx());
+            Logger.LogDebug("Active Cursed Item Count: " + _clientConfigs.ActiveCursedItems.Count);
+            Logger.LogDebug("Recalculating Appearance Data", LoggerType.ClientPlayerData);
+        }
 
         // Run a refresh on appearance data.
         await _appearanceHandler.RecalcAndReload(true);

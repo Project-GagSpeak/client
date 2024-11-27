@@ -284,7 +284,7 @@ public partial class MainHub
     /// <summary>
     /// Pushes the toybox pattern & trigger information of the client to other recipients.
     /// </summary>
-    public async Task UserPushDataLightStorage(UserCharaStorageUpdateDto dto)
+    public async Task UserPushDataLightStorage(UserCharaLightStorageMessageDto dto)
     {
         // try and push the character data dto to the server
         try
@@ -297,7 +297,7 @@ public partial class MainHub
         }
     }
 
-    public async Task UserPushAllGlobalPerms(UserAllGlobalPermChangeDto allGlobalPerms)
+    public async Task UserPushAllGlobalPerms(UserPairUpdateAllGlobalPermsDto allGlobalPerms)
     {
         CheckConnection();
         try

@@ -360,8 +360,7 @@ public class ClientCallbackService
         // this call should only ever be used for updating the registered name of a pair. if used for any other purpose, log error.
         if (callbackDto.Type is PuppeteerUpdateType.PlayerNameRegistered)
         {
-            // do the update for name registration of this pair.
-            _mediator.Publish(new UpdateCharacterListenerForUid(callbackDto.User.UID, callbackDto.AliasData.CharacterName, callbackDto.AliasData.CharacterWorld));
+            _clientConfigs.UpdateAliasStoragePlayerInfo(callbackDto.User.UID, callbackDto.AliasData.ListenerName);
             _logger.LogDebug("Player Name Registered Successfully processed by Server!", LoggerType.Callbacks);
         }
         else if (callbackDto.Type is PuppeteerUpdateType.AliasListUpdated)

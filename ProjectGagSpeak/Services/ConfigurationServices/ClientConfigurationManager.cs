@@ -134,8 +134,8 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     {
         // select from the aliasStorages, the character name and world where the values are not string.empty.
         return AliasConfig.AliasStorage
-            .Where(x => x.Value.CharacterName != string.Empty && x.Value.CharacterWorld != string.Empty)
-            .Select(x => x.Value.NameWithWorld)
+            .Where(x => x.Value.CharacterNameWithWorld != string.Empty)
+            .Select(x => x.Value.CharacterNameWithWorld)
             .ToList();
     }
 
@@ -429,8 +429,8 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     public Dictionary<string, CharaAliasData> GetCompiledAliasData() => AliasConfig.FromAliasStorage();
 
-    public string? GetUidMatchingSender(string name, string world)
-        => AliasConfig.AliasStorage.FirstOrDefault(x => x.Value.CharacterName == name && x.Value.CharacterWorld == world).Key;
+    public string? GetUidMatchingSender(string nameWithWorld)
+        => AliasConfig.AliasStorage.FirstOrDefault(x => x.Value.CharacterNameWithWorld == nameWithWorld).Key;
 
     public AliasStorage FetchAliasStorageForPair(string userId)
     {
@@ -453,10 +453,9 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     }
 
     // called from a callback update from other paired client. Never called by self. Meant to set another players name to our config.
-    internal void UpdateAliasStoragePlayerInfo(string userId, string charaName, string charaWorld)
+    internal void UpdateAliasStoragePlayerInfo(string userId, string charaNameWorld)
     {
-        AliasConfig.AliasStorage[userId].CharacterName = charaName;
-        AliasConfig.AliasStorage[userId].CharacterWorld = charaWorld;
+        AliasConfig.AliasStorage[userId].CharacterNameWithWorld  = charaNameWorld;
         _aliasConfig.Save();
         Mediator.Publish(new UpdateChatListeners());
     }

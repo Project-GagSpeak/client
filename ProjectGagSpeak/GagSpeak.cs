@@ -309,9 +309,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new MoodlesService(s.GetRequiredService<ILogger<MoodlesService>>(), dm, tp))
 
         // Puppeteer UI
-        .AddSingleton((s) => new PuppeteerHandler(s.GetRequiredService<ILogger<PuppeteerHandler>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientConfigurationManager>(),
-            s.GetRequiredService<ClientData>(), s.GetRequiredService<PairManager>(), dm))
+        .AddSingleton<PuppeteerHandler>()
         .AddSingleton<AliasTable>()
 
         // Toybox UI

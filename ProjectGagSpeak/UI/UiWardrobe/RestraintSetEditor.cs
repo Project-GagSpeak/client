@@ -396,7 +396,7 @@ public class RestraintSetEditor : IMediatorSubscriber
                     ImGui.Separator();
                     using (var listChild = ImRaii.Child($"##RestraintHardcoreTraitsPairList", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
                     {
-                        _userPairListHandler.DrawPairListSelectable(width, false, 1);
+                        _userPairListHandler.DrawPairListSelectable(width, true, 1);
                     }
                 }
             }

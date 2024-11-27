@@ -271,8 +271,8 @@ public class Pair
         }
         else if (data.Type is PuppeteerUpdateType.PlayerNameRegistered)
         {
-            LastAliasData.CharacterName = data.AliasData.CharacterName;
-            LastAliasData.CharacterWorld = data.AliasData.CharacterWorld;
+            LastAliasData.HasNameStored = data.AliasData.HasNameStored;
+            LastAliasData.ListenerName = data.AliasData.ListenerName;
         }
         else if (data.Type is PuppeteerUpdateType.FullDataUpdate)
         {
