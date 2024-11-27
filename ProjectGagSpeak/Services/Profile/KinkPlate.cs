@@ -15,7 +15,7 @@ namespace GagSpeak.Services;
 /// </summary>
 public class KinkPlate : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly CosmeticService _cosmetics;
 
     // KinkPlate Data for User.
@@ -24,7 +24,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap? _storedProfileImage;
 
     public KinkPlate(ILogger<KinkPlate> logger, GagspeakMediator mediator,
-        PlayerCharacterData playerData, CosmeticService cosmeticService, 
+        ClientData playerData, CosmeticService cosmeticService, 
         KinkPlateContent plateContent, string base64ProfilePicture) : base(logger, mediator)
     {
         _playerData = playerData;

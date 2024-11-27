@@ -101,7 +101,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
 
-    public void UpdatePairUpdateOtherAllGlobalPermissions(UserAllGlobalPermChangeDto dto)
+    public void UpdatePairUpdateOtherAllGlobalPermissions(UserPairUpdateAllGlobalPermsDto dto)
     {
         // update the pairs permissions.
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }

@@ -49,10 +49,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         Mediator.Subscribe<MainHubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
         Mediator.Subscribe<MainHubReconnectedMessage>(this, (msg) => _ = HubInstanceOnReconnected());
         Mediator.Subscribe<MainHubReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
-
-        // if we are already logged in, then run the login function
-/*        if (_clientService.IsLoggedIn)
-            OnLogin();*/
     }
 
     public static UserData PlayerUserData => ConnectionDto!.User;
@@ -311,7 +307,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
             Logger.LogInformation("New Account Details Fetched.", LoggerType.ApiCore);
             return accountDetails;
         }
-        catch (HubException ex) // Assuming MissingClaimException is a custom exception you've defined
+        catch (HubException ex)
         {
             Logger.LogError($"Error fetching new account details: Missing claim in token. {ex.Message}");
             throw;
@@ -333,23 +329,25 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     {
         fetchedSecretKey = string.Empty;
 
-        // ensure we have a proper template for the active character.
-        if (_serverConfigs.CharacterHasSecretKey() is false)
-            if (_serverConfigs.AuthExistsForCurrentLocalContentId() is false)
-                _serverConfigs.GenerateAuthForCurrentCharacter();
-
         // if we are not logged in, we should not be able to connect.
-        if (!_clientService.IsLoggedIn)
+        if (_clientService.IsLoggedIn is false)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // if we have not yet made an account, abort this connection.
-        if (!_mainConfig.Current.AccountCreated)
+        if (_mainConfig.Current.AccountCreated is false)
         {
-            Logger.LogDebug("Account not yet created, Aborting Connection.", LoggerType.ApiCore);
+            Logger.LogDebug("Primary Account not yet created, Aborting Connection.", LoggerType.ApiCore);
             return false;
+        }
+
+        // ensure we have a proper template for the active character.
+        if (_serverConfigs.CharacterHasSecretKey() is false && _serverConfigs.AuthExistsForCurrentLocalContentId() is false)
+        {
+            // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
+            _serverConfigs.GenerateAuthForCurrentCharacter();
         }
 
         // If the client wishes to not be connected to the server, return.
@@ -405,31 +403,20 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         OnUserRemoveMoodles(dto => _ = Client_UserRemoveMoodles(dto));
         OnUserClearMoodles(dto => _ = Client_UserClearMoodles(dto));
 
-        OnUserUpdateSelfAllGlobalPerms(dto => _ = Client_UserUpdateSelfAllGlobalPerms(dto));
-        OnUserUpdateSelfAllUniquePerms(dto => _ = Client_UserUpdateSelfAllUniquePerms(dto));
-        OnUserUpdateSelfPairPermsGlobal(dto => _ = Client_UserUpdateSelfPairPermsGlobal(dto));
-        OnUserUpdateSelfPairPerms(dto => _ = Client_UserUpdateSelfPairPerms(dto));
-        OnUserUpdateSelfPairPermAccess(dto => _ = Client_UserUpdateSelfPairPermAccess(dto));
-        OnUserUpdateOtherAllPairPerms(dto => _ = Client_UserUpdateOtherAllPairPerms(dto));
-        OnUserUpdateOtherAllGlobalPerms(dto => _ = Client_UserUpdateOtherAllGlobalPerms(dto));
-        OnUserUpdateOtherAllUniquePerms(dto => _ = Client_UserUpdateOtherAllUniquePerms(dto));
-        OnUserUpdateOtherPairPermsGlobal(dto => _ = Client_UserUpdateOtherPairPermsGlobal(dto));
-        OnUserUpdateOtherPairPerms(dto => _ = Client_UserUpdateOtherPairPerms(dto));
-        OnUserUpdateOtherPairPermAccess(dto => _ = Client_UserUpdateOtherPairPermAccess(dto));
+        OnUserUpdateAllPerms(dto => _ = Client_UserUpdateAllPerms(dto));
+        OnUserUpdateAllGlobalPerms(dto => _ = Client_UserUpdateAllGlobalPerms(dto));
+        OnUserUpdateAllUniquePerms(dto => _ = Client_UserUpdateAllUniquePerms(dto));
+        OnUserUpdatePairPermsGlobal(dto => _ = Client_UserUpdatePairPermsGlobal(dto));
+        OnUserUpdatePairPerms(dto => _ = Client_UserUpdatePairPerms(dto));
+        OnUserUpdatePairPermAccess(dto => _ = Client_UserUpdatePairPermAccess(dto));
 
-        OnUserReceiveCharacterDataComposite(dto => _ = Client_UserReceiveCharacterDataComposite(dto));
-        OnUserReceiveOwnDataIpc(dto => _ = Client_UserReceiveOwnDataIpc(dto));
-        OnUserReceiveOtherDataIpc(dto => _ = Client_UserReceiveOtherDataIpc(dto));
-        OnUserReceiveOwnDataAppearance(dto => _ = Client_UserReceiveOwnDataAppearance(dto));
-        OnUserReceiveOtherDataAppearance(dto => _ = Client_UserReceiveOtherDataAppearance(dto));
-        OnUserReceiveOwnDataWardrobe(dto => _ = Client_UserReceiveOwnDataWardrobe(dto));
-        OnUserReceiveOtherDataWardrobe(dto => _ = Client_UserReceiveOtherDataWardrobe(dto));
-        OnUserReceiveOwnDataAlias(dto => _ = Client_UserReceiveOwnDataAlias(dto));
-        OnUserReceiveOtherDataAlias(dto => _ = Client_UserReceiveOtherDataAlias(dto));
-        OnUserReceiveOwnDataToybox(dto => _ = Client_UserReceiveOwnDataToybox(dto));
-        OnUserReceiveOtherDataToybox(dto => _ = Client_UserReceiveOtherDataToybox(dto));
-        OnUserReceiveOwnLightStorage(dto => _ = Client_UserReceiveOwnLightStorage(dto));
-        OnUserReceiveOtherLightStorage(dto => _ = Client_UserReceiveOtherLightStorage(dto));
+        OnUserReceiveDataComposite(dto => _ = Client_UserReceiveDataComposite(dto));
+        OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
+        OnUserReceiveDataAppearance(dto => _ = Client_UserReceiveDataAppearance(dto));
+        OnUserReceiveDataWardrobe(dto => _ = Client_UserReceiveDataWardrobe(dto));
+        OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
+        OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
+        OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
 
         OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));
         OnGlobalChatMessage(dto => _ = Client_GlobalChatMessage(dto));

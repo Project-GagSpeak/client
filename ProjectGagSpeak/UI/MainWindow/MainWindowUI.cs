@@ -431,7 +431,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
             var connectedIcon = _uiShared.GetServerStateIcon(MainHub.ServerStatus);
 
             // if the server is reconnecting or disconnecting
-            if (MainHub.ServerStatus is not (ServerState.Reconnecting or ServerState.Disconnecting))
+            using (ImRaii.Disabled(MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting))
             {
                 // we need to turn the button from the connected link to the disconnected link.
                 using (ImRaii.PushColor(ImGuiCol.Text, color))

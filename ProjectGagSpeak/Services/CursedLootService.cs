@@ -26,7 +26,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
 {
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly GagManager _gagManager;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly CursedLootHandler _handler;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
@@ -36,7 +36,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
 
     public CursedLootService(ILogger<CursedLootService> logger, GagspeakMediator mediator,
         ClientConfigurationManager clientConfigs, GagManager gagManager,
-        PlayerCharacterData playerData, CursedLootHandler handler, ClientMonitorService clientService, 
+        ClientData playerData, CursedLootHandler handler, ClientMonitorService clientService, 
         OnFrameworkService frameworkUtils, IGameInteropProvider interop) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
@@ -108,7 +108,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             {
                 foreach (var item in Loot.Instance()->Items)
                 {
-                    // Perform an early return if not valie.
+                    // Perform an early return if not valid.
                     if (item.ChestObjectId == obj->GetGameObjectId().ObjectId)
                     {
                         Logger.LogTrace("This treasure was already opened!", LoggerType.CursedLoot);
@@ -138,16 +138,21 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             {
                 unsafe
                 {
-                    bool valid = _clientService.PartySize is 1 ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == objectInteractedWith);
-                    if (valid && objectInteractedWith != LastOpenedTreasureId)
+                    bool valid = _clientService.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == objectInteractedWith);
+                    if (valid)
                     {
-                        Logger.LogTrace("One of the loot items is the nearest treasure and we just previously attempted to open one.", LoggerType.CursedLoot);
-                        LastOpenedTreasureId = objectInteractedWith;
-                        ApplyCursedLoot().ConfigureAwait(false);
+                        Logger.LogTrace("we satisfy valid condition.", LoggerType.CursedLoot);
+                        if(objectInteractedWith != LastOpenedTreasureId)
+                        {
+                            Logger.LogTrace("we just attempted to open a dungeon chest.", LoggerType.CursedLoot);
+                            LastOpenedTreasureId = objectInteractedWith;
+                            ApplyCursedLoot().ConfigureAwait(false);
+                            return;
+                        }
                     }
                     else
                     {
-                        Logger.LogTrace("No loot items are the nearest treasure, or we have already opened this chest.", LoggerType.CursedLoot);
+                        Logger.LogTrace("No loot items are the nearest treasure", LoggerType.CursedLoot);
                     }
                 }
             }).ConfigureAwait(false);
@@ -165,6 +170,12 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
     {
         // get the percent change to apply
         var percentChange = _handler.LockChance;
+
+        if(percentChange is 0)
+        {
+            Logger.LogDebug("No Point in rolling with 0% chance, skipping!", LoggerType.CursedLoot);
+            return;
+        }
 
         // Calculate if we should apply it or not. If we fail to roll a success, return.
         Random random = new Random();

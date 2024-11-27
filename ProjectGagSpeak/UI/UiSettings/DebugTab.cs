@@ -32,14 +32,16 @@ public class DebugTab
         { "WebAPI", new[] { LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens } }
     };
 
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerData;
+    private readonly ClientDataChanges _playerDataChanges;
     private readonly PairManager _pairManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly UiSharedService _uiShared;
-    public DebugTab(PairManager pairManager, PlayerCharacterData playerCharacterManager,
+    public DebugTab(PairManager pairManager, ClientData playerData, ClientDataChanges playerDataChanges,
         ClientConfigurationManager clientConfigs, UiSharedService uiShared)
     {
-        _playerManager = playerCharacterManager;
+        _playerData = playerData;
+        _playerDataChanges = playerDataChanges;
         _pairManager = pairManager;
         _clientConfigs = clientConfigs;
         _uiShared = uiShared;
@@ -168,9 +170,9 @@ public class DebugTab
 
     private void DrawPlayerCharacterDebug()
     {
-        DrawGlobalPermissions("Player", _playerManager.GlobalPerms ?? new UserGlobalPermissions());
-        DrawAppearance("Player", _playerManager.AppearanceData ?? new CharaAppearanceData());
-        DrawWardrobe("Player", _playerManager.CompileWardrobeToAPI());
+        DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
+        DrawAppearance("Player", _playerData.AppearanceData ?? new CharaAppearanceData());
+        DrawWardrobe("Player", _playerDataChanges.CompileWardrobeToAPI());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
@@ -182,7 +184,7 @@ public class DebugTab
                 }
             }
         }
-        DrawToybox("Player", _playerManager.CompileToyboxToAPI());
+        DrawToybox("Player", _playerDataChanges.CompileToyboxToAPI());
     }
 
     private void DrawPairsDebug()
@@ -258,13 +260,13 @@ public class DebugTab
         DrawPermissionRowBool("Sex Toy Active", perms.ToyIsActive);
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialVibratorAudio);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Forced Follow", perms.ForcedFollow.IsNullOrEmpty());
-        DrawPermissionRowBool("Forced Emote State", perms.ForcedEmoteState.IsNullOrEmpty());
-        DrawPermissionRowBool("Forced Stay", perms.ForcedStay.IsNullOrEmpty());
-        DrawPermissionRowBool("Forced Blindfold", perms.ForcedBlindfold.IsNullOrEmpty());
-        DrawPermissionRowBool("Chat Boxes Hidden", perms.ChatBoxesHidden.IsNullOrEmpty());
-        DrawPermissionRowBool("Chat Input Hiddeen", perms.ChatInputHidden.IsNullOrEmpty());
-        DrawPermissionRowBool("Chat Input Blocked", perms.ChatInputBlocked.IsNullOrEmpty());
+        DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
+        DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
+        DrawPermissionRowString("Forced Stay", perms.ForcedStay);
+        DrawPermissionRowString("Forced Blindfold", perms.ForcedBlindfold);
+        DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
+        DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
+        DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Shock Collar Active", perms.ShockCollarIsActive);
         DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);

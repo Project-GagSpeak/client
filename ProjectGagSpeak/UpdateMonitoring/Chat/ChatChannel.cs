@@ -161,6 +161,7 @@ public static class ChatChannel
         {
             result.AddRange(chatChannel.GetChannelAlias().Select(str => str + " "));
         }
+        StaticLogger.Logger.LogDebug($"ChatChannelsListAliases: {string.Join(", ", result)}");
         return result;
     }
 

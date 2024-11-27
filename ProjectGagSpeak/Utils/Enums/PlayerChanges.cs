@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerData.Data;
+namespace GagSpeak.Utils;
 
 public enum PlayerChanges
 {

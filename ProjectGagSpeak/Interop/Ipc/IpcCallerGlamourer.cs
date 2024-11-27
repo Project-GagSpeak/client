@@ -15,6 +15,9 @@ using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerData.Data;
+using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerData.Pairs;
 
 namespace GagSpeak.Interop.Ipc;
 
@@ -24,11 +27,13 @@ namespace GagSpeak.Interop.Ipc;
 public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller
 {
     /* ------------- Class Attributes ------------- */
-    private readonly IDalamudPluginInterface _pi;
-    private readonly GagspeakConfigService _gagspeakConfig;
+    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly ClientData _clientData;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly IpcFastUpdates _fastUpdates;
+    private readonly IDalamudPluginInterface _pi;
+
     private bool _shownGlamourerUnavailable = false; // safety net to prevent notification spam.
 
     /* --------- Glamourer API Event Subscribers -------- */
@@ -43,12 +48,13 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private readonly RevertToAutomation _RevertToAutomation;
 
     public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator,
-        IDalamudPluginInterface pluginInterface, GagspeakConfigService clientConfigs, 
-        ClientMonitorService clientService, OnFrameworkService frameworkUtils,
-        IpcFastUpdates fastUpdates) : base(logger, mediator)
+        IDalamudPluginInterface pluginInterface, ClientConfigurationManager clientConfigs,
+        ClientData clientData, ClientMonitorService clientService, 
+        OnFrameworkService frameworkUtils, IpcFastUpdates fastUpdates) : base(logger, mediator)
     {
         _pi = pluginInterface;
-        _gagspeakConfig = clientConfigs;
+        _clientConfigs = clientConfigs;
+        _clientData = clientData;
         _frameworkUtils = frameworkUtils;
         _clientService = clientService;
         _fastUpdates = fastUpdates;
@@ -108,25 +114,21 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         _glamourChanged.Disable();
         _glamourChanged?.Dispose();
 
-        // revert our character back to the base game state (But dont if we are closing the game)
-        Task.Run(() => _frameworkUtils.RunOnFrameworkThread(() =>
-        {
-            // do not run this if we are closing out of the game.
-            if (_frameworkUtils.IsFrameworkUnloading)
-            {
-                Logger.LogWarning("Not reverting character as we are closing the game.", LoggerType.IpcGlamourer);
-                return;
-            }
+        // do not run this if we are closing out of the game.
+        if (_frameworkUtils.IsFrameworkUnloading)
+            return;
 
-            // revert the character. (for disabling the plugin)
-            switch (_gagspeakConfig.Current.RevertStyle)
-            {
-                case RevertStyle.RevertToGame: GlamourerRevertToGame(false).ConfigureAwait(false); break;
-                case RevertStyle.RevertEquipToGame: GlamourerRevertToGame(true).ConfigureAwait(false); break;
-                case RevertStyle.RevertToAutomation: GlamourerRevertToAutomation(false).ConfigureAwait(false); break;
-                case RevertStyle.RevertEquipToAutomation: GlamourerRevertToAutomation(true).ConfigureAwait(false); break;
-            }
-        }));
+        if(_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false) 
+            return;
+
+        // revert the character. (for disabling the plugin)
+        switch (_clientConfigs.GagspeakConfig.RevertStyle)
+        {
+            case RevertStyle.RevertToGame: GlamourerRevertToGame(false).ConfigureAwait(false); break;
+            case RevertStyle.RevertEquipToGame: GlamourerRevertToGame(true).ConfigureAwait(false); break;
+            case RevertStyle.RevertToAutomation: GlamourerRevertToAutomation(false).ConfigureAwait(false); break;
+            case RevertStyle.RevertEquipToAutomation: GlamourerRevertToAutomation(true).ConfigureAwait(false); break;
+        }
     }
 
     /// <summary> ========== BEGIN OUR IPC CALL MANAGEMENT UNDER ASYNC TASKS ========== </summary>
@@ -323,7 +325,8 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private void GlamourerChanged(nint address, StateChangeType changeType)
     {
         // do not accept if coming from other player besides us.
-        if (address != _clientService.Address) return;
+        if (address != _clientService.Address) 
+            return;
 
         // block if we are not desiring to listen to changes yet.
         if (OnFrameworkService.GlamourChangeEventsDisabled) 
@@ -340,8 +343,15 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
             return;
         }
 
+        // This floods the hell out of API calls, do not take it.
+        if (changeType is StateChangeType.MaterialValue)
+            return;
 
-        if(changeType is StateChangeType.Reset or StateChangeType.Design or StateChangeType.Reapply or StateChangeType.Equip or StateChangeType.Stains)
+        if (_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+            return;
+
+
+        if (changeType is StateChangeType.Reset or StateChangeType.Design or StateChangeType.Reapply or StateChangeType.Equip or StateChangeType.Stains)
         {
             Logger.LogTrace($"StateChangeType is {changeType}", LoggerType.IpcGlamourer);
             IpcFastUpdates.InvokeGlamourer(GlamourUpdateType.ReapplyAll);

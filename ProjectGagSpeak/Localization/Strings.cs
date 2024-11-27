@@ -678,7 +678,7 @@ namespace GagSpeak.Localization
         public readonly string GagGlamours = Loc.Localize("MainOptions_GagGlamours", "Gag Glamours");
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply your Gag Glamour Items once gagged!");
 
-        public readonly string GagPadlockTimer = Loc.Localize("MainOptions_GagPadlockTimer", "Expired Timers remove their Gag (Temporarily Not Working Fully Yet)");
+        public readonly string GagPadlockTimer = Loc.Localize("MainOptions_GagPadlockTimer", "Expired Timers remove their Gag");
         public readonly string GagPadlockTimerTT = Loc.Localize("MainOptions_GagPadlockTimerTT", "If a gag is locked with a timer, upon the timers expiration, the Gag will be removed.");
 
         public readonly string WardrobeActive = Loc.Localize("MainOptions_WardrobeActive", "Wardrobe Features");

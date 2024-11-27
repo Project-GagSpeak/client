@@ -1,6 +1,5 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.ChatMessages;
 using GagSpeak.GagspeakConfiguration;
 using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
@@ -8,7 +7,6 @@ using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
@@ -122,12 +120,12 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     // but at the moment this handles any commonly known possible holes in config generation.
     public void InitConfigs()
     {
-        if(_configService.Current.LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
+        if (_configService.Current.LoggerFilters.Count is 0 || _configService.Current.LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
         {
             // reset with recommended.
             _configService.Current.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
             Save();
-        }    
+        }
     }
 
     /* -------------------- Update Monitoring & Hardcore Methods -------------------- */
@@ -136,8 +134,8 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     {
         // select from the aliasStorages, the character name and world where the values are not string.empty.
         return AliasConfig.AliasStorage
-            .Where(x => x.Value.CharacterName != string.Empty && x.Value.CharacterWorld != string.Empty)
-            .Select(x => x.Value.NameWithWorld)
+            .Where(x => x.Value.CharacterNameWithWorld != string.Empty)
+            .Select(x => x.Value.CharacterNameWithWorld)
             .ToList();
     }
 
@@ -246,6 +244,9 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
         return newName;
     }
+
+
+    public bool HasGlamourerAlterations => GetActiveSetIdx() != -1 || ActiveCursedItems.Count > 0;
 
 
 
@@ -428,8 +429,8 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     public Dictionary<string, CharaAliasData> GetCompiledAliasData() => AliasConfig.FromAliasStorage();
 
-    public string? GetUidMatchingSender(string name, string world)
-        => AliasConfig.AliasStorage.FirstOrDefault(x => x.Value.CharacterName == name && x.Value.CharacterWorld == world).Key;
+    public string? GetUidMatchingSender(string nameWithWorld)
+        => AliasConfig.AliasStorage.FirstOrDefault(x => x.Value.CharacterNameWithWorld == nameWithWorld).Key;
 
     public AliasStorage FetchAliasStorageForPair(string userId)
     {
@@ -448,14 +449,13 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     {
         AliasConfig.AliasStorage[userId] = newStorage;
         _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userId, DataUpdateKind.PuppeteerAliasListUpdated));
+        Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
     }
 
     // called from a callback update from other paired client. Never called by self. Meant to set another players name to our config.
-    internal void UpdateAliasStoragePlayerInfo(string userId, string charaName, string charaWorld)
+    internal void UpdateAliasStoragePlayerInfo(string userId, string charaNameWorld)
     {
-        AliasConfig.AliasStorage[userId].CharacterName = charaName;
-        AliasConfig.AliasStorage[userId].CharacterWorld = charaWorld;
+        AliasConfig.AliasStorage[userId].CharacterNameWithWorld  = charaNameWorld;
         _aliasConfig.Save();
         Mediator.Publish(new UpdateChatListeners());
     }
@@ -464,7 +464,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     {
         AliasConfig.AliasStorage[userUid].AliasList.Add(newTrigger);
         _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userUid, DataUpdateKind.PuppeteerAliasListUpdated));
+        Mediator.Publish(new PlayerCharAliasChanged(userUid, PuppeteerUpdateType.AliasListUpdated));
     }
 
     internal void RemoveAliasTrigger(string userUid, AliasTrigger triggerToRemove)
@@ -473,7 +473,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         var idx = AliasConfig.AliasStorage[userUid].AliasList.FindIndex(x => x == triggerToRemove);
         AliasConfig.AliasStorage[userUid].AliasList.RemoveAt(idx);
         _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userUid, DataUpdateKind.PuppeteerAliasListUpdated));
+        Mediator.Publish(new PlayerCharAliasChanged(userUid, PuppeteerUpdateType.AliasListUpdated));
     }
 
     #endregion Alias Config Methods
@@ -657,7 +657,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         foreach (var trigger in TriggerConfig.TriggerStorage.Triggers)
             trigger.Enabled = false;
         _triggerConfig.Save();
-        Mediator.Publish(new PlayerCharToyboxChanged(DataUpdateKind.Safeword));
+        Mediator.Publish(new PlayerCharToyboxChanged(ToyboxUpdateType.Safeword));
 
         return Task.CompletedTask;
     }

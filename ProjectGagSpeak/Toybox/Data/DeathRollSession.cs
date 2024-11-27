@@ -48,7 +48,7 @@ public class DeathRollSession
         }
 
         // Check if roll matches cap and is in sequence
-        if (rollValue < CurrentRollCap)
+        if (rollValue <= CurrentRollCap)
         {
             LastRollTime = DateTime.UtcNow;
             CurrentRollCap = rollValue;

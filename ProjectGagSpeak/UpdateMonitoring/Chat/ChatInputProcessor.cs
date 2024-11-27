@@ -28,7 +28,7 @@ public unsafe class ChatInputDetour : IDisposable
     private readonly ILogger<ChatInputDetour> _logger;
     private readonly GagspeakConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly GagManager _gagManager;
     private readonly EmoteMonitor _emoteMonitor;
 
@@ -38,7 +38,7 @@ public unsafe class ChatInputDetour : IDisposable
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, PlayerCharacterData playerManager, GagManager gagManager,
+        GagspeakConfigService config, ClientData playerManager, GagManager gagManager,
         EmoteMonitor emoteMonitor, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes
@@ -130,14 +130,6 @@ public unsafe class ChatInputDetour : IDisposable
             // If current channel message is being sent to is in list of enabled channels, translate it.
             if (_config.Current.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Current.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
             {
-                // see if this is an outgoing tell, if it is, we must make sure it isn't garbled for encoded messages
-                if (ChatChannel.GetChatChannel() == ChatChannel.Channels.Tell || matchedChannelType.Contains("/t") || matchedChannelType.Contains("/tell"))
-                {
-                    // it is a tell, we need to make sure it is not garbled if it is an encoded message
-                    _logger.LogTrace($"Message is a outgoing tell message, skipping garbling", LoggerType.ChatDetours);
-                    return ProcessChatInputHook.Original(uiModule, message, a3);
-                }
-
                 // only obtain the text payloads from this message, as nothing else should madder.
                 var textPayloads = originalSeString.Payloads.OfType<TextPayload>().ToList();
 

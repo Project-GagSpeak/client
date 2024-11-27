@@ -3,6 +3,7 @@ using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace GagSpeak.Services.ConfigurationServices;
@@ -91,11 +92,19 @@ public class ServerConfigurationManager
         }
     }
 
+    public int AuthCount() => CurrentServer.Authentications.Count;
+
     public bool HasAnyAltAuths() => CurrentServer.Authentications.Any(a => !a.IsPrimary);
 
     public bool CharacterHasSecretKey()
     {
         return CurrentServer.Authentications.Any(a => a.CharacterPlayerContentId == _clientService.ContentId && !string.IsNullOrEmpty(a.SecretKey.Key));
+    }
+
+    public bool TryGetPrimaryAuth([NotNullWhenAttribute(true)] out Authentication auth)
+    {
+        auth = CurrentServer.Authentications.FirstOrDefault(a => a.IsPrimary)!;
+        return auth != null;
     }
 
     public bool AuthExistsForCurrentLocalContentId()

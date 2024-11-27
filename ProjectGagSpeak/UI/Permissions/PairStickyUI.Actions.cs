@@ -3,6 +3,7 @@ using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.Connection;
@@ -111,7 +112,7 @@ public partial class PairStickyUI
             var pauseText = OwnPerms.IsPaused ? "Unpause " + PairNickOrAliasOrUID : "Pause " + PairNickOrAliasOrUID;
             if (_uiShared.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
-                _ = _apiHubMain.UserUpdateOwnPairPerm(new UserPairPermChangeDto(StickyPair.UserData,
+                _ = _apiHubMain.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData,
                     new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused)));
             }
             UiSharedService.AttachToolTip(!OwnPerms.IsPaused
@@ -141,13 +142,12 @@ public partial class PairStickyUI
             // compile the alias data to send including our own name and world information, along with an empty alias list.
             var dataToPush = new CharaAliasData()
             {
-                CharacterName = name,
-                CharacterWorld = worldName,
+                ListenerName = name + "@" + worldName,
                 AliasList = new List<AliasTrigger>()
             };
 
             _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new OnlineUserCharaAliasDataDto
-                (StickyPair.UserData, dataToPush, DataUpdateKind.PuppeteerPlayerNameRegistered));
+                (StickyPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered));
             _logger.LogDebug("Sent Puppeteer Name to " + PairNickOrAliasOrUID, LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip("Sends your Name & World to this pair so their puppeteer will listen for messages from you.");

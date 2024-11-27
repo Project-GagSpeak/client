@@ -30,7 +30,7 @@ namespace GagSpeak.PlayerData.Handlers;
 public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerData;
+    private readonly ClientData _playerData;
     private readonly GagManager _gagManager;
     private readonly PairManager _pairManager;
     private readonly IpcManager _ipcManager;
@@ -39,7 +39,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     private readonly OnFrameworkService _frameworkUtils;
 
     public AppearanceManager(ILogger<AppearanceManager> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerData,
+        ClientConfigurationManager clientConfigs, ClientData playerData,
         GagManager gagManager, PairManager pairManager, IpcManager ipcManager, 
         AppearanceService appearanceService, ClientMonitorService clientService,
         OnFrameworkService frameworkUtils) : base(logger, mediator)
@@ -68,12 +68,13 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     private List<RestraintSet> RestraintSets => _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets;
     private List<CursedItem> CursedItems => _clientConfigs.CursedLootConfig.CursedLootStorage.CursedItems;
 
-    /// <summary> Finalized Glamourer Appearance that should be visible on the player. </summary>
+    /// <summary> 
+    /// Finalized Glamourer Appearance that should be visible on the player. 
+    /// </summary>
     private Dictionary<EquipSlot, IGlamourItem> ItemsToApply => _appearanceService.ItemsToApply;
     private IpcCallerGlamourer.MetaData MetaToApply => _appearanceService.MetaToApply;
     private HashSet<Guid> ExpectedMoodles => _appearanceService.ExpectedMoodles;
     private (JToken? Customize, JToken? Parameters) ExpectedCustomizations => _appearanceService.ExpectedCustomizations;
-
 
     /// <summary>
     /// The Latest Client Moodles Status List since the last update.
@@ -183,7 +184,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 
             await RecalcAndReload(false);
 
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.WardrobeRestraintApplied));
+            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintApplied, setRef.LockType.ToPadlock()));
 
             // Finally, we should let our trigger controller know that we just enabled a restraint set.
             //_triggerController.CheckActiveRestraintTriggers(restraintID, NewState.Enabled);
@@ -235,7 +236,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             Logger.LogInformation("DISABLE SET [" + setRef.Name + "] END", LoggerType.AppearanceState);
             await RecalcAndReload(true, moodlesToRemove);
 
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.WardrobeRestraintDisabled));
+            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintDisabled, setRef.LockType.ToPadlock()));
 
             // Finally, we should let our trigger controller know that we just enabled a restraint set.
             //_triggerController.CheckActiveRestraintTriggers(restraintID, NewState.Disabled);
@@ -269,6 +270,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             }
 
             // Assign the lock information to the set.
+            var prevLock = setRef.LockType.ToPadlock();
             setRef.LockType = padlock.ToName();
             setRef.LockPassword = pwd;
             setRef.LockedUntil = endTime;
@@ -282,7 +284,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 + " with: " + (endTime - DateTimeOffset.UtcNow) + " by: " + assigner, LoggerType.AppearanceState);
 
             // After this, we should push our changes to the server, if we have marked for us to.
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.WardrobeRestraintLocked));
+            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintLocked, prevLock));
 
             // Finally, we should fire to our achievement manager, if we have marked for us to.
             if (triggerAchievement)
@@ -327,6 +329,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             var previousAssigner = setRef.LockedBy;
 
             // Assign the lock information to the set.
+            var prevLock = setRef.LockType.ToPadlock();
             setRef.LockType = Padlocks.None.ToName();
             setRef.LockPassword = string.Empty;
             setRef.LockedUntil = DateTimeOffset.MinValue;
@@ -344,7 +347,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 
             // After this, we should push our changes to the server, if we have marked for us to.
             if (pushToServer)
-                Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.WardrobeRestraintUnlocked));
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintUnlocked, prevLock));
 
             // If we should fire the sold slave achievement, fire it.
             bool soldSlaveSatisfied = (previousAssigner != MainHub.UID && previousAssigner != MainHub.UID) && (lockRemover != MainHub.UID && lockRemover != MainHub.UID);
@@ -490,7 +493,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 await RecalcAndReload(false);
             }
             if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.CursedItemApplied));
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, Padlocks.None));
         });
     }
 
@@ -523,7 +526,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             }
 
             if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(DataUpdateKind.CursedItemRemoved));
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemRemoved, Padlocks.MimicPadlock));
         });
     }
 
@@ -571,7 +574,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             }
             Logger.LogInformation("Active gags disabled.", LoggerType.Safeword);
             // finally, push the gag change for the safeword.
-            Mediator.Publish(new PlayerCharAppearanceChanged(new CharaAppearanceData(), DataUpdateKind.Safeword));
+            Mediator.Publish(new PlayerCharAppearanceChanged(new CharaAppearanceData(), GagLayer.UnderLayer, GagUpdateType.Safeword, Padlocks.None));
         }
 
         // if an active set exists we need to unlock and disable it.

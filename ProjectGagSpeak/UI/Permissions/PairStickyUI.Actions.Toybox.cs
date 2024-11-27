@@ -40,8 +40,8 @@ public partial class PairStickyUI
         string toyToggleText = StickyPair.PairGlobals.ToyIsActive ? "Turn Off " + PairNickOrAliasOrUID + "'s Toys" : "Turn On " + PairNickOrAliasOrUID + "'s Toys";
         if (_uiShared.IconTextButton(FontAwesomeIcon.User, toyToggleText, WindowMenuWidth, true))
         {
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData,
-                new KeyValuePair<string, object>("ToyIsActive", !StickyPair.PairGlobals.ToyIsActive), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("ToyIsActive", !StickyPair.PairGlobals.ToyIsActive)));
             _logger.LogDebug("Toggled Toybox for " + PairNickOrAliasOrUID + "(New State: " + !StickyPair.PairGlobals.ToyIsActive + ")", LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip("Toggles the state of " + PairNickOrAliasOrUID + "'s connected Toys.");
@@ -89,7 +89,7 @@ public partial class PairStickyUI
                             newToyboxData.ActivePatternId = onButtonPress.Identifier;
 
                             // Run the call to execute the pattern to the server.
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, newToyboxData, DataUpdateKind.ToyboxPatternExecuted));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternExecuted));
                             _logger.LogDebug("Executing Pattern " + onButtonPress.Name + " on " + PairNickOrAliasOrUID + "'s Toy", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -107,7 +107,7 @@ public partial class PairStickyUI
                 var newToyboxData = lastToyboxData.DeepClone();
                 if (newToyboxData == null) throw new Exception("Toybox data is null, not sending");
 
-                _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, newToyboxData, DataUpdateKind.ToyboxPatternStopped));
+                _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternStopped));
                 _logger.LogDebug("Stopped active Pattern running on "+PairNickOrAliasOrUID+"'s toy", LoggerType.Permissions);
             }
             catch (Exception e) { _logger.LogError("Failed to push updated ToyboxPattern data: " + e.Message); }
@@ -155,7 +155,7 @@ public partial class PairStickyUI
                                 newToyboxData.ActiveAlarms.Add(onButtonPress.Identifier);
 
                             // Send out the command.
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, newToyboxData, DataUpdateKind.ToyboxAlarmToggled));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.AlarmToggled));
                             _logger.LogDebug("Toggling Alarm " + onButtonPress.Name + " on " + PairNickOrAliasOrUID + "'s AlarmList", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -202,7 +202,7 @@ public partial class PairStickyUI
                             else 
                                 newToyboxData.ActiveTriggers.Add(onButtonPress.Identifier);
 
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, newToyboxData, DataUpdateKind.ToyboxTriggerToggled));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.TriggerToggled));
                             _logger.LogDebug("Toggling Trigger "+onButtonPress.Name+" on "+PairNickOrAliasOrUID+"'s TriggerList", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }

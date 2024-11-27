@@ -65,7 +65,7 @@ public partial class PairStickyUI
 
                         newWardrobe.ActiveSetId = onButtonPress.Identifier;
                         newWardrobe.ActiveSetEnabledBy = MainHub.UID;
-                        _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, newWardrobe, MainHub.PlayerUserData, DataUpdateKind.WardrobeRestraintApplied));
+                        _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobe, WardrobeUpdateType.RestraintApplied, newWardrobe.Padlock.ToPadlock()));
                         _logger.LogDebug("Applying Restraint Set with GagPadlock " + onButtonPress.ToString() + " to " + PairNickOrAliasOrUID, LoggerType.Permissions);
                         Opened = InteractionType.ApplyRestraint;
                     }
@@ -130,7 +130,7 @@ public partial class PairStickyUI
                             newWardrobeData.Password = _permActions.Password;
                             newWardrobeData.Timer = UiSharedService.GetEndTimeUTC(_permActions.Timer);
                             newWardrobeData.Assigner = MainHub.UID;
-                            _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, newWardrobeData, MainHub.PlayerUserData, DataUpdateKind.WardrobeRestraintLocked));
+                            _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintLocked, Padlocks.None));
                             _logger.LogDebug("Locking Restraint Set with GagPadlock " + onButtonPress.ToString() + " to " + PairNickOrAliasOrUID, LoggerType.Permissions);
                             Opened = InteractionType.None;
                             // reset the password and timer
@@ -185,11 +185,12 @@ public partial class PairStickyUI
                         var res = _permActions.PadlockVerifyUnlock<IPadlockable>(newWardrobeData, selected, PairPerms.OwnerLocks, PairPerms.DevotionalLocks);
                         if (res.Item1)
                         {
+                            var prevLock = newWardrobeData.Padlock.ToPadlock();
                             newWardrobeData.Padlock = selected.ToName();
                             newWardrobeData.Password = _permActions.Password;
                             newWardrobeData.Timer = DateTimeOffset.UtcNow;
                             newWardrobeData.Assigner = MainHub.UID;
-                            _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, newWardrobeData, MainHub.PlayerUserData, DataUpdateKind.WardrobeRestraintUnlocked));
+                            _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintUnlocked, prevLock));
                             _logger.LogDebug("Unlocking Restraint Set with GagPadlock " + selected.ToString() + " to " + PairNickOrAliasOrUID, LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -228,7 +229,7 @@ public partial class PairStickyUI
                         if (newWardrobeData == null) throw new Exception("Wardrobe data is null, not sending");
                         newWardrobeData.ActiveSetId = Guid.Empty;
                         newWardrobeData.ActiveSetEnabledBy = string.Empty;
-                        _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, newWardrobeData, MainHub.PlayerUserData, DataUpdateKind.WardrobeRestraintDisabled));
+                        _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintDisabled, Padlocks.None));
                         _logger.LogDebug("Removing Restraint Set from " + PairNickOrAliasOrUID, LoggerType.Permissions);
                         Opened = InteractionType.None;
                     }

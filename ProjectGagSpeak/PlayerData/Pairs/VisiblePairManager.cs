@@ -17,7 +17,7 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
     private readonly ClientMonitorService _clientService;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly PairManager _pairManager;
 
     // Stores the last recieved IpcData from our client player characters cache creation service.
@@ -27,7 +27,7 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
     private readonly HashSet<PairHandler> _newVisiblePlayers = [];
 
     public VisiblePairManager(ILogger<VisiblePairManager> logger, GagspeakMediator mediator, 
-        MainHub apiHubMain, ClientMonitorService clientService, PlayerCharacterData playerManager,
+        MainHub apiHubMain, ClientMonitorService clientService, ClientData playerManager,
         PairManager pairManager) : base(logger, mediator)
     {
         _apiHubMain = apiHubMain;
@@ -86,13 +86,13 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
 
         // Push our IPC data to those players, applying our moodles data & sending customize+ info.
         Logger.LogTrace("Has new visible players, pushing character data", LoggerType.VisiblePairs);
-        PushCharacterIpcData(newVisiblePlayers.Select(c => c.OnlineUser.User).ToList(), DataUpdateKind.IpcUpdateVisible);
+        PushCharacterIpcData(newVisiblePlayers.Select(c => c.OnlineUser.User).ToList(), IpcUpdateType.FullDataUpdate);
     }
 
     /// <summary>
     /// Pushes the character IPC data to the server for the visible players.
     /// </summary>
-    private void PushCharacterIpcData(List<UserData> visablePlayers, DataUpdateKind updateKind)
+    private void PushCharacterIpcData(List<UserData> visablePlayers, IpcUpdateType updateKind)
     {
         // If the list contains any contents and we have new data, asynchronously push it to the server.
         if (visablePlayers.Any() && LastIpcData != null)

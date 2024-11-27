@@ -261,47 +261,67 @@ public class ToyboxPatterns
 
         using (var rightChild = ImRaii.Child($"###PatternListPreview", region with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
         {
-            for (int i = 0; i < FilteredPatternsList.Count; i++)
+            try
             {
-                var set = FilteredPatternsList[i];
-                DrawPatternSelectable(set, i);
-
-                if (ImGui.IsItemHovered())
+                for (int i = 0; i < FilteredPatternsList.Count; i++)
                 {
-                    anyItemHovered = true;
-                    LastHoveredIndex = i;
-                }
+                    var set = FilteredPatternsList[i];
+                    DrawPatternSelectable(set, i);
 
-                // if the item is right clicked, open the popup
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    if (LastHoveredIndex == i && !FilteredPatternsList[i].IsActive)
-                        ImGui.OpenPopup($"PatternDataContext{i}");
-                }
-            }
-
-            bool isPopupOpen = LastHoveredIndex != -1 && ImGui.IsPopupOpen($"PatternDataContext{LastHoveredIndex}");
-
-            if (LastHoveredIndex != -1 && LastHoveredIndex < FilteredPatternsList.Count)
-            {
-                // Begin the popup for the current item
-                if (ImGui.BeginPopup($"PatternDataContext{LastHoveredIndex}"))
-                {
-                    if (ImGui.Selectable("Delete Pattern")) 
-                        HandleDelete(FilteredPatternsList[LastHoveredIndex]);    
-                    if (FilteredPatternsList[LastHoveredIndex].CreatorUID == MainHub.UID)
+                    if (ImGui.IsItemHovered())
                     {
-                        if (ImGui.Selectable("Unpublish & Delete Pattern"))
-                            HandleDelete(FilteredPatternsList[LastHoveredIndex], true);
+                        anyItemHovered = true;
+                        LastHoveredIndex = i;
                     }
-                    ImGui.EndPopup();
-                }
-            }
 
-            // if no item is hovered, reset the last hovered index
-            if (!anyItemHovered && !isPopupOpen) LastHoveredIndex = -1;
+                    // if the item is right clicked, open the popup
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    {
+                        if (LastHoveredIndex == i && !FilteredPatternsList[i].IsActive)
+                            ImGui.OpenPopup($"PatternDataContext{i}");
+                    }
+                }
+
+                bool isPopupOpen = LastHoveredIndex != -1 && ImGui.IsPopupOpen($"PatternDataContext{LastHoveredIndex}");
+
+                if (LastHoveredIndex != -1 && LastHoveredIndex < FilteredPatternsList.Count)
+                    HandlePopupMenu();
+
+                // if no item is hovered, reset the last hovered index
+                if (!anyItemHovered && !isPopupOpen) LastHoveredIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error: " + ex);
+                _logger.LogError("Values at time of Error: " + LastHoveredIndex + " " + FilteredPatternsList.Count);
+            }
         }
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.ModifyingPatterns, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
+    }
+
+    private void HandlePopupMenu()
+    {
+        if (ImGui.BeginPopup("PatternDataContext"+LastHoveredIndex))
+        {
+            // perform early returns to avoid crashes.
+            if (ImGui.Selectable("Delete Pattern"))
+            {
+                HandleDelete(FilteredPatternsList[LastHoveredIndex]);
+                ImGui.EndPopup();
+                return;
+            }
+            // perform early returns to avoid crashes.
+            if (FilteredPatternsList[LastHoveredIndex].CreatorUID == MainHub.UID)
+            {
+                if (ImGui.Selectable("Unpublish & Delete Pattern"))
+                {
+                    HandleDelete(FilteredPatternsList[LastHoveredIndex], true);
+                    ImGui.EndPopup();
+                    return;
+                }
+            }
+            ImGui.EndPopup();
+        }
     }
 
     private void HandleDelete(PatternData refPattern, bool unpublish = false)

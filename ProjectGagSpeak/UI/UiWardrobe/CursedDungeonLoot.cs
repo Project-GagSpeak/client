@@ -25,7 +25,7 @@ namespace GagSpeak.UI.UiWardrobe;
 
 public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerCharacterData _clientPlayerData;
+    private readonly ClientData _clientPlayerData;
     private readonly SetPreviewComponent _drawDataHelper;
     private readonly ModAssociations _relatedMods;
     private readonly MoodlesAssociations _relatedMoodles;
@@ -35,7 +35,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     private readonly TutorialService _guides;
 
     public CursedDungeonLoot(ILogger<CursedDungeonLoot> logger,
-        GagspeakMediator mediator, PlayerCharacterData clientPlayerData,
+        GagspeakMediator mediator, ClientData clientPlayerData,
         SetPreviewComponent drawDataHelper, ModAssociations relatedMods,
         MoodlesAssociations relatedMoodles, CursedLootHandler handler,
         GagspeakConfigService mainConfig, UiSharedService uiShared,
@@ -92,10 +92,6 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 
     public void DrawCursedLootPanel()
     {
-        // If the expended item index is not -1, set creator expanded to false.
-        if (ExpandedItemIndex != -1)
-            CreatorExpanded = false;
-
         // inform user they dont have the settings enabled for it, and return.
         if (!_mainConfig.Current.CursedDungeonLoot)
         {
@@ -106,7 +102,6 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 
         // split thye UI veritcally in half. The right side will display the sets in the pool and the 
         var region = ImGui.GetContentRegionAvail();
-        var topLeftSideHeight = region.Y;
         var width = ImGui.GetContentRegionAvail().X * .55f;
 
         // setup the usings for the styles in the following selectables that are shared.
@@ -122,19 +117,23 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             ImGui.TableNextRow(); ImGui.TableNextColumn();
             var regionSize = ImGui.GetContentRegionAvail();
 
-            using (ImRaii.Child($"###CursedItemsList", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
+            using (ImRaii.Child($"###CursedItemsList", regionSize, false, ImGuiWindowFlags.NoDecoration))
             {
                 CursedLootHeader("Your Cursed Items");
                 ImGui.Separator();
                 DrawSearchFilter(regionSize.X, ImGui.GetStyle().ItemInnerSpacing.X);
                 ImGui.Separator();
-                NewItemWindow();
-                DrawCursedItemList();
+                var scrollRegion = ImGui.GetContentRegionAvail();
+                using (ImRaii.Child("###CursedItemsListScroll", scrollRegion, false, ImGuiWindowFlags.NoScrollbar))
+                {
+                    NewItemWindow();
+                    DrawCursedItemList();
+                }
             }
             ImGui.TableNextColumn();
 
             regionSize = ImGui.GetContentRegionAvail();
-            using (ImRaii.Child($"###ActiveCursedSets", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
+            using (ImRaii.Child($"###ActiveCursedSets", regionSize, false, ImGuiWindowFlags.NoDecoration))
             {
                 CursedLootHeader("Enabled Pool");
                 ImGui.Separator();
@@ -153,28 +152,34 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     {
         if (_handler.CursedItems.Count <= 0) return;
 
-        var region = ImGui.GetContentRegionAvail();
-        var topLeftSideHeight = region.Y;
         bool itemGotHovered = false;
-        using (ImRaii.Child($"###CursedItemList", region with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
+        // print out the items in the list.
+        for (int i = 0; i < FilteredItemList.Count; i++)
         {
-            // print out the items in the list.
-            for (int i = 0; i < FilteredItemList.Count; i++)
-            {
-                var item = FilteredItemList[i];
-                bool isHovered = i == HoveredItemIndex;
+            var item = FilteredItemList[i];
+            bool isHovered = i == HoveredItemIndex;
 
-                // draw the selectable item.
-                CursedItemSelectable(item, i, hovered: i == HoveredItemIndex, expanded: i == ExpandedItemIndex,
-                    onCaretPressed: (idx) => ExpandedItemIndex = (idx ? i : -1),
-                    onItemEnabled: (enabled) => { item.InPool = enabled; _handler.Save(); });
-
-                // if its not expanded and we are hovering, set the hovered index.
-                if (ExpandedItemIndex != i && ImGui.IsItemHovered())
+            // draw the selectable item.
+            CursedItemSelectable(item, i, hovered: i == HoveredItemIndex, expanded: i == ExpandedItemIndex,
+                onCaretPressed: (newExpandedState) =>
                 {
-                    itemGotHovered = true;
-                    HoveredItemIndex = i;
-                }
+                    if (newExpandedState is true)
+                    {
+                        ExpandedItemIndex = i;
+                        CreatorExpanded = false;
+                    }
+                    else
+                    {
+                        ExpandedItemIndex = -1;
+                    }
+                },
+                onItemEnabled: (enabled) => { item.InPool = enabled; _handler.Save(); });
+
+            // if its not expanded and we are hovering, set the hovered index.
+            if (ExpandedItemIndex != i && ImGui.IsItemHovered())
+            {
+                itemGotHovered = true;
+                HoveredItemIndex = i;
             }
         }
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.CursedItemList, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
@@ -286,7 +291,10 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             }
 
             if (_uiShared.IconButton(CreatorExpanded ? FontAwesomeIcon.CaretUp : FontAwesomeIcon.CaretDown, inPopup: true))
+            {
                 CreatorExpanded = !CreatorExpanded;
+                if (CreatorExpanded) ExpandedItemIndex = -1;
+            }
         }
         // tutorial stuff
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.CreatingCursedItems, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize, () => CreatorExpanded = true);
@@ -361,15 +369,13 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 
         if (expanded)
         {
-            using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: item.InPool || !KeyMonitor.ShiftPressed(), inPopup: true))
             {
-                if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: item.InPool || !KeyMonitor.ShiftPressed(), inPopup: true))
-                {
-                    _handler.RemoveItem(item.LootId);
-                    Logger.LogInformation("Removing " + item.Name + " from cursed item list.");
-                }
-                UiSharedService.AttachToolTip("Remove this Cursed Item from your storage! (Hold Shift)");
+                _handler.RemoveItem(item.LootId);
+                Logger.LogInformation("Removing " + item.Name + " from cursed item list.");
             }
+            UiSharedService.AttachToolTip("Remove this Cursed Item from your storage!--SEP--" +
+                "Item must not be in the Enabled Pool, also must hold SHIFT");
             ImUtf8.SameLineInner();
         }
 

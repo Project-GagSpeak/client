@@ -28,6 +28,7 @@ public class UserPairListHandler
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly GagspeakConfigService _configService;
     private readonly UiSharedService _uiSharedService;
+    private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger,
@@ -44,14 +45,23 @@ public class UserPairListHandler
         _uiSharedService = uiSharedService;
 
         UpdateDrawFoldersAndUserPairDraws();
-
-
     }
 
     /// <summary> List of all draw folders to display in the UI </summary>
     public List<DrawUserPair> AllPairDrawsDistinct => _allUserPairDrawsDistinct;
 
-    public Pair? SelectedPair { get; private set; } = null;
+    public Pair? SelectedPair
+    {
+        get => _selectedPair;
+        private set
+        {
+            if (_selectedPair != value)
+            {
+                _selectedPair = value;
+                _mediator.Publish(new UserPairSelected());
+            }
+        }
+    }
 
     public string Filter
     {
@@ -98,27 +108,28 @@ public class UserPairListHandler
     /// <summary> 
     /// Draws all bi-directionally paired users (online or offline) without any tag header. 
     /// </summary>
-    public void DrawPairListSelectable(float windowContentWidth, bool useCustomOnlineTag, byte id)
+    public void DrawPairListSelectable(float windowContentWidth, bool showOffline, byte id)
     {
-        var tagToUse = useCustomOnlineTag ? TagHandler.CustomOnlineTag : TagHandler.CustomAllTag;
+        var tagToUse = TagHandler.CustomAllTag;
 
         var allTagFolder = _drawFolders
             .FirstOrDefault(folder => folder is DrawFolderBase && ((DrawFolderBase)folder).ID == tagToUse);
 
         if (allTagFolder == null) return;
 
-        var drawFolderBase = (DrawFolderBase)allTagFolder; // Cast to DrawFolderBase
+        var folderDrawPairs = showOffline ? ((DrawFolderBase)allTagFolder).DrawPairs.ToList() : ((DrawFolderBase)allTagFolder).DrawPairs.Where(x => x.Pair.IsOnline).ToList();
 
         using var indent = ImRaii.PushIndent(_uiSharedService.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
 
-        if (!drawFolderBase.DrawPairs.Any())
+        if (!folderDrawPairs.Any())
         {
             ImGui.TextUnformatted("No Draw Pairs to Draw");
         }
 
-        for (int i = 0; i < drawFolderBase.DrawPairs.Count; i++)
+        for (int i = 0; i < folderDrawPairs.Count(); i++)
         {
-            var item = drawFolderBase.DrawPairs[i];
+            var item = folderDrawPairs[i];
+
             bool isSelected = SelectedPair is not null && SelectedPair.UserData.UID == item.Pair.UserData.UID;
 
             using (var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(isSelected ? ImGuiCol.FrameBgHovered : ImGuiCol.FrameBg), isSelected))

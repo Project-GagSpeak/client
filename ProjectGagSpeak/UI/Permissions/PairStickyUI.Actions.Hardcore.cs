@@ -56,7 +56,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
             string newStr = PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ForcedFollow", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", newStr)));
         }
         
         DrawForcedEmoteSection();
@@ -66,7 +66,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
         {
             string newStr = PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ForcedStay", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedStay", newStr)));
         }
 
         var toggleBlindfoldIcon = PairGlobals.IsBlindfolded() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.Mask;
@@ -74,7 +74,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(toggleBlindfoldIcon, toggleBlindfoldText, WindowMenuWidth, true, disableBlindfoldToggle, "##ForcedToBeBlindfoldedHardcoreAction"))
         {
             string newStr = PairGlobals.IsBlindfolded() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ForcedBlindfold", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedBlindfold", newStr)));
         }
 
         var toggleChatboxIcon = PairGlobals.IsChatHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
@@ -82,7 +82,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
         {
             string newStr = PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ChatBoxesHidden", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatBoxesHidden", newStr)));
         }
 
         var toggleChatInputIcon = PairGlobals.IsChatInputHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
@@ -90,7 +90,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
         {
             string newStr = PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ChatInputHidden", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputHidden", newStr)));
         }
 
         var toggleChatBlockingIcon = PairGlobals.IsChatInputBlocked() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentDots;
@@ -98,7 +98,7 @@ public partial class PairStickyUI
         if (_uiShared.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
         {
             string newStr = PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ChatInputBlocked", newStr), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputBlocked", newStr)));
         }
         ImGui.Separator();
     }
@@ -113,7 +113,7 @@ public partial class PairStickyUI
         {
             //////////////////// DRAW OUT FOR STOPPING FORCED EMOTE HERE /////////////////////
             if (_uiShared.IconTextButton(FontAwesomeIcon.StopCircle, "Let "+PairNickOrAliasOrUID+" move again.", WindowMenuWidth, true, id: "##ForcedToStayHardcoreAction"))
-                _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ForcedEmoteState", string.Empty), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", string.Empty)));
         }
         else
         {
@@ -157,7 +157,7 @@ public partial class PairStickyUI
                             // Compile the string for sending.
                             string newStr = MainHub.UID + "|" + SelectedEmote?.RowId.ToString() + "|" + SelectedCPose.ToString() + (PairPerms.DevotionalStatesForPair ? Globals.DevotedString : string.Empty);
                             _logger.LogDebug("Sending EmoteState update for emote: " + (SelectedEmote?.Name.ToString()));
-                            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr), MainHub.PlayerUserData));
+                            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr)));
                             Opened = InteractionType.None;
                         }
                     }

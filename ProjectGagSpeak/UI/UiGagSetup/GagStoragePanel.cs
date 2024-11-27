@@ -37,13 +37,13 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
 {
     private const float ComboWidth = 225f;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PlayerCharacterData _playerManager;
+    private readonly ClientData _playerManager;
     private readonly MoodlesAssociations _relatedMoodles;
     private readonly GameItemStainHandler _itemStainHandler;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     public GagStoragePanel(ILogger<GagStoragePanel> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, PlayerCharacterData playerManager,
+        ClientConfigurationManager clientConfigs, ClientData playerManager,
         GameItemStainHandler itemStainHandler, MoodlesAssociations relatedMoodles, 
         UiSharedService uiShared, TutorialService guides) : base(logger, mediator)
     {

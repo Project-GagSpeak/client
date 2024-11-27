@@ -106,7 +106,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             // On the same line, draw out the search bar.
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(160f);
-            ImGui.InputTextWithHint("##InteractionEventSearch", "Search Filter Text...", ref FilterText, 64, ImGuiInputTextFlags.EnterReturnsTrue);
+            ImGui.InputTextWithHint("##InteractionEventSearch", "Search Filter Text...", ref FilterText, 64);
 
             // On the same line, draw out the filter category dropdown
             ImUtf8.SameLineInner();

@@ -32,7 +32,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly MainHub _apiHubMain;
     private readonly AccountsTab _accountsTab;
     private readonly DebugTab _debugTab;
-    private readonly PlayerCharacterData _playerCharacterManager;
+    private readonly ClientData _playerCharacterManager;
     private readonly IpcManager _ipcManager;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly GagspeakConfigService _configService;
@@ -49,7 +49,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator,
         MainHub apiHubMain, AccountsTab accounts, DebugTab debug,
         GagspeakConfigService configService, PairManager pairManager, 
-        PlayerCharacterData playerCharacterManager, ClientConfigurationManager clientConfigs, 
+        ClientData playerCharacterManager, ClientConfigurationManager clientConfigs, 
         PiShockProvider shockProvider, AvfxManager avfxManager, VfxSpawns vfxSpawns, 
         ServerConfigurationManager serverConfigs, IpcManager ipcManager, 
         SettingsHardcore hardcoreSettingsUI, UiSharedService uiShared,
@@ -267,8 +267,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
             {
                 // Perform a mediator call that we have updated a permission.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>("LiveChatGarblerActive", liveChatGarblerActive), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>("LiveChatGarblerActive", liveChatGarblerActive)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
@@ -278,8 +278,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.ItemAutoEquip = itemAutoEquip;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("ItemAutoEquip", itemAutoEquip), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("ItemAutoEquip", itemAutoEquip)));
             // perform recalculations to our cache.
             Mediator.Publish(new AppearanceImpactingSettingChanged());
         }
@@ -299,15 +299,15 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.WardrobeEnabled = wardrobeEnabled;
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("WardrobeEnabled", wardrobeEnabled), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("WardrobeEnabled", wardrobeEnabled)));
 
             // if this creates a race condition down the line remove the above line.
             if (wardrobeEnabled is false)
             {
                 // turn off all respective children as well and push the update.
                 _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = false;
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("RestraintSetAutoEquip", false), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("RestraintSetAutoEquip", false)));
                 // disable other options respective to it.
                 _clientConfigs.GagspeakConfig.DisableSetUponUnlock = false;
                 _clientConfigs.GagspeakConfig.CursedDungeonLoot = false;
@@ -323,7 +323,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = restraintSetAutoEquip;
                 // if this creates a race condition down the line remove the above line.
                 _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("RestraintSetAutoEquip", restraintSetAutoEquip), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("RestraintSetAutoEquip", restraintSetAutoEquip)));
                 // perform recalculations to our cache.
                 Mediator.Publish(new AppearanceImpactingSettingChanged());
             }
@@ -349,8 +349,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.MoodlesEnabled = moodlesEnabled;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("MoodlesEnabled", moodlesEnabled), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("MoodlesEnabled", moodlesEnabled)));
             // perform recalculations to our cache.
             Mediator.Publish(new AppearanceImpactingSettingChanged());
 
@@ -385,7 +385,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _playerCharacterManager.GlobalPerms.PuppeteerEnabled = puppeteerEnabled;
             // if this creates a race condition down the line remove the above line.
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("PuppeteerEnabled", puppeteerEnabled), MainHub.PlayerUserData));
+            MainHub.PlayerUserData, new KeyValuePair<string, object>("PuppeteerEnabled", puppeteerEnabled)));
 
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
@@ -400,7 +400,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase = globalTriggerPhrase;
                 // if this creates a race condition down the line remove the above line.
                 _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalTriggerPhrase", globalTriggerPhrase), MainHub.PlayerUserData));
+                MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalTriggerPhrase", globalTriggerPhrase)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
@@ -409,8 +409,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests = globalAllowSitRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowSitRequests", globalAllowSitRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowSitRequests", globalAllowSitRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowSitTT);
@@ -419,8 +419,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests = globalAllowMotionRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowMotionRequests", globalAllowMotionRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowMotionRequests", globalAllowMotionRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowMotionTT);
@@ -429,8 +429,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests = globalAllowAllRequests;
                 // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("GlobalAllowAllRequests", globalAllowAllRequests), MainHub.PlayerUserData));
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("GlobalAllowAllRequests", globalAllowAllRequests)));
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAllTT);
@@ -445,7 +445,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _playerCharacterManager.GlobalPerms.ToyboxEnabled = toyboxEnabled;
             // if this creates a race condition down the line remove the above line.
             _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("ToyboxEnabled", toyboxEnabled), MainHub.PlayerUserData));
+            MainHub.PlayerUserData, new KeyValuePair<string, object>("ToyboxEnabled", toyboxEnabled)));
 
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
@@ -487,8 +487,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.SpatialVibratorAudio = spatialVibratorAudio;
             // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("SpatialVibratorAudio", spatialVibratorAudio), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("SpatialVibratorAudio", spatialVibratorAudio)));
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
@@ -516,8 +516,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _playerCharacterManager.GlobalPerms.GlobalShockShareCode = globalShockCollarShareCode;
 
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("GlobalShockShareCode", globalShockCollarShareCode), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("GlobalShockShareCode", globalShockCollarShareCode)));
         }
         ImUtf8.SameLineInner();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
@@ -535,7 +535,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _playerCharacterManager.GlobalPerms.MaxDuration = newPerms.MaxDuration;
                 _playerCharacterManager.GlobalPerms.MaxIntensity = newPerms.MaxIntensity;
                 // update the permissions.
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, _playerCharacterManager.GlobalPerms));
+                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerCharacterManager.GlobalPerms));
             });
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
@@ -553,8 +553,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             // Convert TimeSpan to ticks and send as UInt64
             ulong ticks = (ulong)_playerCharacterManager.GlobalPerms.GlobalShockVibrateDuration.Ticks;
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("GlobalShockVibrateDuration", ticks), MainHub.PlayerUserData));
+            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+            new KeyValuePair<string, object>("GlobalShockVibrateDuration", ticks)));
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
@@ -856,111 +856,5 @@ public class SettingsUi : WindowMediatorSubscriberBase
                               + Environment.NewLine + "'Chat' will print Error notifications in chat"
                               + Environment.NewLine + "'Toast' will show Error toast notifications in the bottom right corner"
                               + Environment.NewLine + "'Both' will show chat as well as the toast notification");
-    }
-
-    /// <summary> Displays the Debug section within the settings, where we can set our debug level </summary>
-    private static readonly Dictionary<string, LoggerType[]> loggerSections = new Dictionary<string, LoggerType[]>
-    {
-        { "Foundation", new[] { LoggerType.Achievements, LoggerType.AchievementEvents, LoggerType.AchievementInfo } },
-        { "Interop", new[] { LoggerType.IpcGagSpeak, LoggerType.IpcCustomize, LoggerType.IpcGlamourer, LoggerType.IpcMare, LoggerType.IpcMoodles, LoggerType.IpcPenumbra } },
-        { "State Managers", new[] { LoggerType.AppearanceState, LoggerType.ToyboxState, LoggerType.Mediator, LoggerType.GarblerCore } },
-        { "Update Monitors", new[] { LoggerType.ToyboxAlarms, LoggerType.ActionsNotifier, LoggerType.KinkPlateMonitor, LoggerType.EmoteMonitor, LoggerType.ChatDetours, LoggerType.ActionEffects, LoggerType.SpatialAudioLogger } },
-        { "Hardcore", new[] { LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt } },
-        { "Data & Modules", new[] { LoggerType.ClientPlayerData, LoggerType.GagHandling, LoggerType.PadlockHandling, LoggerType.Restraints, LoggerType.Puppeteer, LoggerType.CursedLoot, LoggerType.ToyboxDevices, LoggerType.ToyboxPatterns, LoggerType.ToyboxTriggers, LoggerType.VibeControl } },
-        { "Pair Data", new[] { LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers, LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.PrivateRooms, LoggerType.GameObjects } },
-        { "Services", new[] { LoggerType.Cosmetics, LoggerType.Textures, LoggerType.GlobalChat, LoggerType.ContextDtr, LoggerType.PatternHub, LoggerType.Safeword } },
-        { "UI", new[] { LoggerType.UiCore, LoggerType.UserPairDrawer, LoggerType.Permissions, LoggerType.Simulation } },
-        { "WebAPI", new[] { LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens } }
-    };
-
-    private void DrawLoggerSettings()
-    {
-        bool isFirstSection = true;
-
-        // Iterate through each section in loggerSections
-        foreach (var section in loggerSections)
-        {
-            // Begin a new group for the section
-            using (ImRaii.Group())
-            {
-                // Calculate the number of checkboxes in the current section
-                var checkboxes = section.Value;
-
-                // Draw a custom line above the table to simulate the upper border
-                var drawList = ImGui.GetWindowDrawList();
-                var cursorPos = ImGui.GetCursorScreenPos();
-                drawList.AddLine(new Vector2(cursorPos.X, cursorPos.Y), new Vector2(cursorPos.X + ImGui.GetContentRegionAvail().X, cursorPos.Y), ImGui.GetColorU32(ImGuiCol.Border));
-
-                // Add some vertical spacing to position the table correctly
-                ImGui.Dummy(new Vector2(0, 1));
-
-                // Begin a new table for the checkboxes without any borders
-                if (ImGui.BeginTable(section.Key, 4, ImGuiTableFlags.None))
-                {
-                    // Iterate through the checkboxes, managing columns and rows
-                    for (int i = 0; i < checkboxes.Length; i++)
-                    {
-                        ImGui.TableNextColumn();
-
-                        bool isEnabled = _configService.Current.LoggerFilters.Contains(checkboxes[i]);
-
-                        if (ImGui.Checkbox(checkboxes[i].ToName(), ref isEnabled))
-                        {
-                            if (isEnabled)
-                            {
-                                _configService.Current.LoggerFilters.Add(checkboxes[i]);
-                                LoggerFilter.AddAllowedCategory(checkboxes[i]);
-                            }
-                            else
-                            {
-                                _configService.Current.LoggerFilters.Remove(checkboxes[i]);
-                                LoggerFilter.RemoveAllowedCategory(checkboxes[i]);
-                            }
-                            _configService.Save();
-                        }
-                    }
-
-                    // Add "All On" and "All Off" buttons for the first section
-                    if (isFirstSection)
-                    {
-                        ImGui.TableNextColumn();
-                        if (ImGui.Button("All On"))
-                        {
-                            _configService.Current.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
-                            _configService.Save();
-                            LoggerFilter.AddAllowedCategories(_configService.Current.LoggerFilters);
-                        }
-                        ImUtf8.SameLineInner();
-                        if (ImGui.Button("All Off"))
-                        {
-                            _configService.Current.LoggerFilters.Clear();
-                            _configService.Current.LoggerFilters.Add(LoggerType.None);
-                            _configService.Save();
-                            LoggerFilter.ClearAllowedCategories();
-                        }
-                    }
-
-                    ImGui.EndTable();
-                }
-
-                // Display a tooltip when hovering over any element in the group
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
-                {
-                    ImGui.BeginTooltip();
-                    UiSharedService.ColorText(section.Key, ImGuiColors.ParsedGold);
-                    ImGui.EndTooltip();
-                }
-            }
-
-            // Mark that the first section has been processed
-            isFirstSection = false;
-        }
-
-        // Ensure LoggerType.None is always included in the filtered categories
-        if (!_configService.Current.LoggerFilters.Contains(LoggerType.None))
-        {
-            _configService.Current.LoggerFilters.Add(LoggerType.None);
-            LoggerFilter.AddAllowedCategory(LoggerType.None);
-        }
     }
 }

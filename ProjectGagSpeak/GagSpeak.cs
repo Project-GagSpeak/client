@@ -173,11 +173,11 @@ public static class GagSpeakServiceExtensions
 
         // Chat Services
         .AddSingleton((s) => new ChatBoxMessage(s.GetRequiredService<ILogger<ChatBoxMessage>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PlayerCharacterData>(), s.GetRequiredService<PuppeteerHandler>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ClientData>(), s.GetRequiredService<PuppeteerHandler>(),
             s.GetRequiredService<ChatSender>(), s.GetRequiredService<DeathRollService>(), s.GetRequiredService<TriggerService>(), cg, cs, dm))
         .AddSingleton((s) => new ChatSender(ss))
         .AddSingleton((s) => new ChatInputDetour(s.GetRequiredService<ILogger<ChatInputDetour>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
-            s.GetRequiredService<PlayerCharacterData>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<EmoteMonitor>(), ss, gip))
+            s.GetRequiredService<ClientData>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<EmoteMonitor>(), ss, gip))
 
         // Hardcore services.
         .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), s.GetRequiredService<ClientConfigurationManager>(),
@@ -196,10 +196,11 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PatternHandler>()
         .AddSingleton<WardrobeHandler>()
         .AddSingleton((s) => new HardcoreHandler(s.GetRequiredService<ILogger<HardcoreHandler>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<PlayerCharacterData>(), s.GetRequiredService<AppearanceManager>(),
+            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<ClientData>(), s.GetRequiredService<AppearanceManager>(),
             s.GetRequiredService<PairManager>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MoveController>(),
             s.GetRequiredService<ChatSender>(), s.GetRequiredService<EmoteMonitor>(), tm))
-        .AddSingleton<PlayerCharacterData>()
+        .AddSingleton<ClientData>()
+        .AddSingleton<ClientDataChanges>()
         .AddSingleton<GameObjectHandlerFactory>()
         .AddSingleton<PairFactory>()
         .AddSingleton<PairHandlerFactory>()
@@ -219,12 +220,12 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PatternPlayback>()
         .AddSingleton<AlarmHandler>()
         .AddSingleton<TriggerHandler>()
-        .AddSingleton((s) => new DeathRollService(s.GetRequiredService<ILogger<DeathRollService>>(), s.GetRequiredService<PlayerCharacterData>(),
+        .AddSingleton((s) => new DeathRollService(s.GetRequiredService<ILogger<DeathRollService>>(), s.GetRequiredService<ClientData>(),
             s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<TriggerService>(), s.GetRequiredService<ClientMonitorService>(), cg))
 
         // Unlocks / Achievements
         .AddSingleton((s) => new AchievementManager(s.GetRequiredService<ILogger<AchievementManager>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<PlayerCharacterData>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<ClientMonitorService>(),
+            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<ClientData>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<ClientMonitorService>(),
             s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CosmeticService>(), s.GetRequiredService<VibratorService>(), s.GetRequiredService<UnlocksEventManager>(), nm, ds))
         .AddSingleton<UnlocksEventManager>()
 
@@ -308,9 +309,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new MoodlesService(s.GetRequiredService<ILogger<MoodlesService>>(), dm, tp))
 
         // Puppeteer UI
-        .AddSingleton((s) => new PuppeteerHandler(s.GetRequiredService<ILogger<PuppeteerHandler>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientConfigurationManager>(),
-            s.GetRequiredService<PlayerCharacterData>(), s.GetRequiredService<PairManager>(), dm))
+        .AddSingleton<PuppeteerHandler>()
         .AddSingleton<AliasTable>()
 
         // Toybox UI
@@ -355,7 +354,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<Tutorial>()
         .AddSingleton<AchievementsService>()
         .AddSingleton((s) => new CursedLootService(s.GetRequiredService<ILogger<CursedLootService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<PlayerCharacterData>(),
+            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<ClientData>(),
             s.GetRequiredService<CursedLootHandler>(), s.GetRequiredService<ClientMonitorService>(), s.GetRequiredService<OnFrameworkService>(), gip))
         .AddSingleton<SafewordService>()
         .AddSingleton<VibratorService>()
@@ -378,7 +377,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new CosmeticService(s.GetRequiredService<ILogger<CosmeticService>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<OnFrameworkService>(), pi, tp))
         .AddSingleton((s) => new NotificationService(s.GetRequiredService<ILogger<NotificationService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PlayerCharacterData>(), cg, nm));
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ClientData>(), cg, nm));
     #endregion GenericServices
 
     #region IpcServices
@@ -391,8 +390,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new IpcCallerPenumbra(s.GetRequiredService<ILogger<IpcCallerPenumbra>>(), pi,
             s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<GagspeakMediator>()))
         .AddSingleton((s) => new IpcCallerGlamourer(s.GetRequiredService<ILogger<IpcCallerGlamourer>>(), s.GetRequiredService<GagspeakMediator>(),
-            pi, s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ClientMonitorService>(), s.GetRequiredService<OnFrameworkService>(),
-             s.GetRequiredService<IpcFastUpdates>()))
+            pi, s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<ClientData>(), s.GetRequiredService<ClientMonitorService>(), 
+            s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<IpcFastUpdates>()))
         .AddSingleton((s) => new IpcCallerCustomize(s.GetRequiredService<ILogger<IpcCallerCustomize>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<OnFrameworkService>(),
             s.GetRequiredService<IpcFastUpdates>(), pi, cs))

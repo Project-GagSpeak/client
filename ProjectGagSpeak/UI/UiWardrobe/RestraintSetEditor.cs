@@ -135,7 +135,7 @@ public class RestraintSetEditor : IMediatorSubscriber
 
         ImGui.Text("Restraint Set Name:");
         ImGui.SetNextItemWidth(width);
-        if (ImGui.InputTextWithHint($"##NameText", "Restraint Set Name...", ref refName, 48, ImGuiInputTextFlags.EnterReturnsTrue))
+        if (ImGui.InputTextWithHint($"##NameText", "Restraint Set Name...", ref refName, 48))
         {
             refRestraintSet.Name = refName;
         }
@@ -396,7 +396,7 @@ public class RestraintSetEditor : IMediatorSubscriber
                     ImGui.Separator();
                     using (var listChild = ImRaii.Child($"##RestraintHardcoreTraitsPairList", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
                     {
-                        _userPairListHandler.DrawPairListSelectable(width, false, 1);
+                        _userPairListHandler.DrawPairListSelectable(width, true, 1);
                     }
                 }
             }

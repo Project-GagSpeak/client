@@ -3,6 +3,7 @@ using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Interop.IpcHelpers.GameData;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.Utils;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Enums;
 

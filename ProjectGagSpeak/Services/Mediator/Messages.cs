@@ -86,8 +86,6 @@ public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
 
 ////////////// PUPPETEER RELATED RECORDS //////////////
 public record UpdateChatListeners : MessageBase; // for updating the chat listeners.
-public record UpdateCharacterListenerForUid(string Uid, string CharName, string CharWorld) : MessageBase;
-
 
 ////////////// TOYBOX RELATED RECORDS //////////////
 public record VfxActorRemoved(IntPtr data) : MessageBase;
@@ -105,10 +103,10 @@ public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) :
 
 
 /* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-public record PlayerCharAppearanceChanged(CharaAppearanceData newGagData, DataUpdateKind UpdateKind) : MessageBase;
-public record PlayerCharWardrobeChanged(DataUpdateKind UpdateKind) : MessageBase;
-public record PlayerCharAliasChanged(string UpdatedPairUID, DataUpdateKind UpdateKind) : MessageBase;
-public record PlayerCharToyboxChanged(DataUpdateKind UpdateKind) : MessageBase;
+public record PlayerCharAppearanceChanged(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : MessageBase;
+public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, Padlocks PreviousLock) : MessageBase;
+public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
+public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
 public record PlayerCharStorageUpdated : MessageBase;
 public record PlayerLatestActiveItems(UserData User, List<string> ActiveGags, Guid ActiveRestraint) : MessageBase;
 
@@ -130,11 +128,11 @@ public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensit
 
 /* ----------------- Character Cache Creation Records ----------------- */
 public record CharacterDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
-public record CharacterIpcDataCreatedMessage(CharaIPCData CharaIPCData, DataUpdateKind UpdateKind) : SameThreadMessage;
-public record CharacterAppearanceDataCreatedMessage(CharaAppearanceData CharaAppearanceData, DataUpdateKind UpdateKind) : SameThreadMessage;
-public record CharacterWardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, DataUpdateKind UpdateKind) : SameThreadMessage;
-public record CharacterAliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, DataUpdateKind UpdateKind) : SameThreadMessage;
-public record CharacterToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, DataUpdateKind UpdateKind) : SameThreadMessage;
+public record CharacterIpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
+public record CharacterAppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
+public record CharacterWardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, Padlocks PreviousPadlock) : SameThreadMessage;
+public record CharacterAliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
+public record CharacterToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
 public record CharacterStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
@@ -142,7 +140,8 @@ public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHand
 
 /* ------------------ USER INTERFACE (UI) RECORDS------------------ */
 public enum ToggleType { Toggle, Show, Hide }
-public record RefreshUiMessage : MessageBase; // a message indicating the need to refresh the UI.
+public record UserPairSelected : MessageBase; // Fires whenever a new pair is selected from the userPairListHandler.
+public record RefreshUiMessage : MessageBase;
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase; // For toggling the UI.
 public record SwitchToIntroUiMessage : MessageBase; // indicates that we are in the introduction UI.
 public record SwitchToMainUiMessage : MessageBase; // indicates we are in the main UI.
