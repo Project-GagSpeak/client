@@ -189,7 +189,7 @@ public partial class MainHub
     public Task Client_UserUpdateAllPerms(UserPairUpdateAllPermsDto dto)
     {
         Logger.LogDebug("Client_UserUpdateAllPerms: "+dto, LoggerType.Callbacks);
-        if(dto.IsFromSelf)
+        if(dto.Direction is UpdateDir.Own)
         {
             Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
             return Task.CompletedTask;
@@ -205,7 +205,7 @@ public partial class MainHub
     public Task Client_UserUpdateAllGlobalPerms(UserPairUpdateAllGlobalPermsDto dto)
     {
         Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
-        if (dto.IsFromSelf)
+        if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogError("Callback called from self, and was for self. Sending to clientCallbacks", LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.SetGlobalPerms(dto.GlobalPermissions));
@@ -222,7 +222,7 @@ public partial class MainHub
     public Task Client_UserUpdateAllUniquePerms(UserPairUpdateAllUniqueDto dto)
     {
         Logger.LogDebug("Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
-        if (dto.IsFromSelf)
+        if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogInformation("Callback matched to a paired user. Updating OwnUniquePairPerms them.", LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOwnAllUniquePermissions(dto)); return Task.CompletedTask;
@@ -238,7 +238,7 @@ public partial class MainHub
     public Task Client_UserUpdatePairPermsGlobal(UserGlobalPermChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPermsGlobal: "+dto, LoggerType.Callbacks);
-        if (dto.IsFromSelf)
+        if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
             return Task.CompletedTask;
@@ -254,7 +254,7 @@ public partial class MainHub
     public Task Client_UserUpdatePairPerms(UserPairPermChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPerms: "+dto, LoggerType.Callbacks);
-        if (dto.IsFromSelf)
+        if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("Client_UserUpdateSelfPairPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
@@ -271,7 +271,7 @@ public partial class MainHub
     public Task Client_UserUpdatePairPermAccess(UserPairAccessChangeDto dto)
     {
         Logger.LogDebug("Client_UserUpdateOtherPairPermAccess: "+dto, LoggerType.Callbacks);
-        if (dto.IsFromSelf)
+        if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("Client_UserUpdateSelfPairPermAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
@@ -326,9 +326,9 @@ public partial class MainHub
     public Task Client_UserReceiveDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataAppearance:"+dataDto.User, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
-            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.IsFromSelf));
+            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
@@ -342,9 +342,9 @@ public partial class MainHub
     public Task Client_UserReceiveDataWardrobe(OnlineUserCharaWardrobeDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataWardrobe:"+dataDto.User, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
-            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.IsFromSelf));
+            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
@@ -358,7 +358,7 @@ public partial class MainHub
     public Task Client_UserReceiveDataAlias(OnlineUserCharaAliasDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataAlias:"+dataDto.User, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
             ExecuteSafely(() => _clientCallbacks.CallbackAliasStorageUpdate(dataDto));
             return Task.CompletedTask;
@@ -377,9 +377,9 @@ public partial class MainHub
     public Task Client_UserReceiveDataToybox(OnlineUserCharaToyboxDataDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnDataToybox:"+dataDto.User, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
-            ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.IsFromSelf));
+            ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
@@ -396,7 +396,7 @@ public partial class MainHub
     public Task Client_UserReceiveLightStorage(OnlineUserStorageUpdateDto dataDto)
     {
         Logger.LogDebug("Client_UserReceiveOwnLightStorage:" + dataDto.User, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
             ExecuteSafely(() => _clientCallbacks.CallbackLightStorageUpdate(dataDto));
             return Task.CompletedTask;

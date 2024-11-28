@@ -132,7 +132,7 @@ public class PermissionPresetService
 
     private void PushCmdToServer(Pair pairToDrawListFor, Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple, string presetName)
     {
-        _ = _apiHubMain.UserPushAllUniquePerms(new(pairToDrawListFor.UserData, MainHub.PlayerUserData, permissionTuple.Item1, permissionTuple.Item2));
+        _ = _apiHubMain.UserPushAllUniquePerms(new(pairToDrawListFor.UserData, MainHub.PlayerUserData, permissionTuple.Item1, permissionTuple.Item2, UpdateDir.Own));
         _logger.LogInformation("Applied {preset} preset to pair {pair}", presetName, pairToDrawListFor.UserData.UID);
         LastApplyTime = DateTime.UtcNow;
     }

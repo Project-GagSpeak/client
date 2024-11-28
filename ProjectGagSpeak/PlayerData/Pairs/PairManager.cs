@@ -313,21 +313,21 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         // if they are found, publish an event message that we have received character data from our paired User
         Logger.LogInformation("Received Character Composite Data from "+(pair.GetNickname() ?? pair.UserData.AliasOrUID), LoggerType.PairDataTransfer);
 
-        _allClientPairs[dto.User].ApplyLightStorageData(new(dto.User, dto.User, dto.CompositeData.LightStorageData));
-        _allClientPairs[dto.User].ApplyAppearanceData(new(dto.User, dto.User, dto.CompositeData.AppearanceData, GagLayer.UnderLayer, GagUpdateType.FullDataUpdate, Padlocks.None));
-        _allClientPairs[dto.User].ApplyWardrobeData(new(dto.User, dto.User, dto.CompositeData.WardrobeData, WardrobeUpdateType.FullDataUpdate, Padlocks.None));
-        _allClientPairs[dto.User].ApplyToyboxData(new(dto.User, dto.User, dto.CompositeData.ToyboxData, ToyboxUpdateType.FullDataUpdate));
+        _allClientPairs[dto.User].ApplyLightStorageData(new(dto.User, dto.User, dto.CompositeData.LightStorageData, UpdateDir.Own));
+        _allClientPairs[dto.User].ApplyAppearanceData(new(dto.User, dto.User, dto.CompositeData.AppearanceData, GagLayer.UnderLayer, GagUpdateType.FullDataUpdate, Padlocks.None, UpdateDir.Own));
+        _allClientPairs[dto.User].ApplyWardrobeData(new(dto.User, dto.User, dto.CompositeData.WardrobeData, WardrobeUpdateType.FullDataUpdate, Padlocks.None, UpdateDir.Own));
+        _allClientPairs[dto.User].ApplyToyboxData(new(dto.User, dto.User, dto.CompositeData.ToyboxData, ToyboxUpdateType.FullDataUpdate, UpdateDir.Own));
 
         // first see if our clientUID exists as a key in dto.CompositeData.AliasData. If it does not, define it as an empty data.
         if (dto.CompositeData.AliasData.ContainsKey(clientUID))
         {
             Logger.LogTrace("Found Alias Data Stroage for " + pair.GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-            _allClientPairs[dto.User].ApplyAliasData(new(dto.User, dto.User, dto.CompositeData.AliasData[clientUID], PuppeteerUpdateType.FullDataUpdate));
+            _allClientPairs[dto.User].ApplyAliasData(new(dto.User, dto.User, dto.CompositeData.AliasData[clientUID], PuppeteerUpdateType.FullDataUpdate, UpdateDir.Own));
         }
         else
         {
             Logger.LogTrace("No Alias Data Storage found for " + pair.GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-            _allClientPairs[dto.User].ApplyAliasData(new(dto.User, dto.User, new CharaAliasData(), PuppeteerUpdateType.FullDataUpdate));
+            _allClientPairs[dto.User].ApplyAliasData(new(dto.User, dto.User, new CharaAliasData(), PuppeteerUpdateType.FullDataUpdate, UpdateDir.Own));
         }
 
         // do an initial slot update.

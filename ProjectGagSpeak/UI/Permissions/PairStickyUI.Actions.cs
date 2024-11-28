@@ -112,8 +112,7 @@ public partial class PairStickyUI
             var pauseText = OwnPerms.IsPaused ? "Unpause " + PairNickOrAliasOrUID : "Pause " + PairNickOrAliasOrUID;
             if (_uiShared.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
-                _ = _apiHubMain.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused)));
+                _ = _apiHubMain.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused), UpdateDir.Own));
             }
             UiSharedService.AttachToolTip(!OwnPerms.IsPaused
                 ? "Pause pairing with " + PairNickOrAliasOrUID : "Resume pairing with " + PairNickOrAliasOrUID);
@@ -146,8 +145,7 @@ public partial class PairStickyUI
                 AliasList = new List<AliasTrigger>()
             };
 
-            _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new OnlineUserCharaAliasDataDto
-                (StickyPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered));
+            _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered, UpdateDir.Own));
             _logger.LogDebug("Sent Puppeteer Name to " + PairNickOrAliasOrUID, LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip("Sends your Name & World to this pair so their puppeteer will listen for messages from you.");

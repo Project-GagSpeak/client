@@ -411,7 +411,7 @@ public partial class PairStickyUI
                     OwnPerms.MaxDuration = newPerms.MaxDuration;
                     OwnPerms.MaxIntensity = newPerms.MaxIntensity;
                     // update the permissions.
-                    _ = _apiHubMain.UserPushAllUniquePerms(new(StickyPair.UserData, MainHub.PlayerUserData, OwnPerms, StickyPair.OwnPermAccess));
+                    _ = _apiHubMain.UserPushAllUniquePerms(new(StickyPair.UserData, MainHub.PlayerUserData, OwnPerms, StickyPair.OwnPermAccess, UpdateDir.Other));
                 });
             }
         }
@@ -627,23 +627,20 @@ public partial class PairStickyUI
             case PermissionType.Global:
                 {
                     _logger.LogTrace($"Updated own global permission: {permissionName} to {newValue}", LoggerType.Permissions);
-                    _ = _apiHubMain.UserUpdateOwnGlobalPerm(new UserGlobalPermChangeDto(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                        new KeyValuePair<string, object>(permissionName, newValue)));
+                    _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>(permissionName, newValue), UpdateDir.Own));
                 }
                 break;
             case PermissionType.UniquePairPerm:
                 {
                     _logger.LogTrace($"Updated own pair permission: {permissionName} to {newValue}", LoggerType.Permissions);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new UserPairPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData,
-                        new KeyValuePair<string, object>(permissionName, newValue)));
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>(permissionName, newValue), UpdateDir.Own));
                 }
                 break;
             // this case should technically never be called for this particular instance.
             case PermissionType.UniquePairPermEditAccess:
                 {
                     _logger.LogTrace($"Updated own edit access permission: {permissionName} to {newValue}", LoggerType.Permissions);
-                    _ = _apiHubMain.UserUpdateOwnPairPermAccess(new UserPairAccessChangeDto(StickyPair.UserData, MainHub.PlayerUserData,
-                        new KeyValuePair<string, object>(permissionName, newValue)));
+                    _ = _apiHubMain.UserUpdateOwnPairPermAccess(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>(permissionName, newValue), UpdateDir.Own));
                 }
                 break;
         }

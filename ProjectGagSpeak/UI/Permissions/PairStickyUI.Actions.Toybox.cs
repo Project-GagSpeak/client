@@ -40,8 +40,7 @@ public partial class PairStickyUI
         string toyToggleText = StickyPair.PairGlobals.ToyIsActive ? "Turn Off " + PairNickOrAliasOrUID + "'s Toys" : "Turn On " + PairNickOrAliasOrUID + "'s Toys";
         if (_uiShared.IconTextButton(FontAwesomeIcon.User, toyToggleText, WindowMenuWidth, true))
         {
-            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new UserGlobalPermChangeDto(StickyPair.UserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("ToyIsActive", !StickyPair.PairGlobals.ToyIsActive)));
+            _ = _apiHubMain.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ToyIsActive", !StickyPair.PairGlobals.ToyIsActive), UpdateDir.Other));
             _logger.LogDebug("Toggled Toybox for " + PairNickOrAliasOrUID + "(New State: " + !StickyPair.PairGlobals.ToyIsActive + ")", LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip("Toggles the state of " + PairNickOrAliasOrUID + "'s connected Toys.");
@@ -89,7 +88,7 @@ public partial class PairStickyUI
                             newToyboxData.ActivePatternId = onButtonPress.Identifier;
 
                             // Run the call to execute the pattern to the server.
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternExecuted));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternExecuted, UpdateDir.Other));
                             _logger.LogDebug("Executing Pattern " + onButtonPress.Name + " on " + PairNickOrAliasOrUID + "'s Toy", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -107,7 +106,7 @@ public partial class PairStickyUI
                 var newToyboxData = lastToyboxData.DeepClone();
                 if (newToyboxData == null) throw new Exception("Toybox data is null, not sending");
 
-                _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternStopped));
+                _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternStopped, UpdateDir.Other));
                 _logger.LogDebug("Stopped active Pattern running on "+PairNickOrAliasOrUID+"'s toy", LoggerType.Permissions);
             }
             catch (Exception e) { _logger.LogError("Failed to push updated ToyboxPattern data: " + e.Message); }
@@ -155,7 +154,7 @@ public partial class PairStickyUI
                                 newToyboxData.ActiveAlarms.Add(onButtonPress.Identifier);
 
                             // Send out the command.
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.AlarmToggled));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.AlarmToggled, UpdateDir.Other));
                             _logger.LogDebug("Toggling Alarm " + onButtonPress.Name + " on " + PairNickOrAliasOrUID + "'s AlarmList", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
@@ -202,7 +201,7 @@ public partial class PairStickyUI
                             else 
                                 newToyboxData.ActiveTriggers.Add(onButtonPress.Identifier);
 
-                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.TriggerToggled));
+                            _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.TriggerToggled, UpdateDir.Other));
                             _logger.LogDebug("Toggling Trigger "+onButtonPress.Name+" on "+PairNickOrAliasOrUID+"'s TriggerList", LoggerType.Permissions);
                             Opened = InteractionType.None;
                         }
