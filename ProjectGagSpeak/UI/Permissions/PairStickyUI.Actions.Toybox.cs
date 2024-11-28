@@ -105,7 +105,8 @@ public partial class PairStickyUI
             {
                 var newToyboxData = lastToyboxData.DeepClone();
                 if (newToyboxData == null) throw new Exception("Toybox data is null, not sending");
-
+                newToyboxData.InteractionId = lastToyboxData.ActivePatternId;
+                newToyboxData.ActivePatternId = Guid.Empty;
                 _ = _apiHubMain.UserPushPairDataToyboxUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.PatternStopped, UpdateDir.Other));
                 _logger.LogDebug("Stopped active Pattern running on "+PairNickOrAliasOrUID+"'s toy", LoggerType.Permissions);
             }

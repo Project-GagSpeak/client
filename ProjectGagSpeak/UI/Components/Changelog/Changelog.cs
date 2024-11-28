@@ -19,6 +19,12 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 2, 0)
+            .RegisterMain("Puppeteer Module temporarily under Maitenance after recovering from the backend changes.")
+            .RegisterFeature("You will now be able to see when you have successfully updated a pair with your name for puppeteer.")
+            .RegisterFeature("Alias List entries now have a better UI and can be labeled.")
+            .RegisterBugfix("Fixed the backend explosion that ruined everything.")
+            .RegisterBugfix("Fixed some other bugs.");
         VersionEntry(1, 0, 1, 0)
             .RegisterQol("Glamourer Automatic Recalculations now only occur when you are Gagged, Restrained, or have Cursed Loot active, instead of happening all the time. This was an oversight, I apologize.")
             .RegisterQol("New Account creation now WAITS until you have a valid registered authentication before appending your primary account.")
