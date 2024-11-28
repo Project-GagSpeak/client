@@ -188,15 +188,14 @@ public partial class MainHub
 
     public Task Client_UserUpdateAllPerms(UserPairUpdateAllPermsDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateAllPerms: "+dto, LoggerType.Callbacks);
         if(dto.Direction is UpdateDir.Own)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
+            Logger.LogError("Should never be calling self for an update all perms.");
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating all permissions for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdateAllPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairAllPermissions(dto));
             return Task.CompletedTask;
         }
@@ -204,16 +203,15 @@ public partial class MainHub
 
     public Task Client_UserUpdateAllGlobalPerms(UserPairUpdateAllGlobalPermsDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateSelfAllGlobalPerms: "+dto, LoggerType.Callbacks);
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogError("Callback called from self, and was for self. Sending to clientCallbacks", LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdateAllGlobalPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.SetGlobalPerms(dto.GlobalPermissions));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating global permissions for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdateAllGlobalPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOtherAllGlobalPermissions(dto));
             return Task.CompletedTask;
         }
@@ -221,15 +219,14 @@ public partial class MainHub
 
     public Task Client_UserUpdateAllUniquePerms(UserPairUpdateAllUniqueDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating OwnUniquePairPerms them.", LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOwnAllUniquePermissions(dto)); return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating UniquePairPerms for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOtherAllUniquePermissions(dto));
             return Task.CompletedTask;
         }
@@ -237,15 +234,15 @@ public partial class MainHub
 
     public Task Client_UserUpdatePairPermsGlobal(UserGlobalPermChangeDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateOtherPairPermsGlobal: "+dto, LoggerType.Callbacks);
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogError("When updating permissions of otherUser, you shouldn't be calling yourself!");
+            Logger.LogDebug("OWN Client_UserUpdatePairPermsGlobal: " + dto, LoggerType.Callbacks);
+            ExecuteSafely(() => _clientCallbacks.ApplyGlobalPerm(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating global permissions for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdatePairPermsGlobal: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairGlobalPermission(dto));
             return Task.CompletedTask;
         }
@@ -253,16 +250,15 @@ public partial class MainHub
 
     public Task Client_UserUpdatePairPerms(UserPairPermChangeDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateOtherPairPerms: "+dto, LoggerType.Callbacks);
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("Client_UserUpdateSelfPairPerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdatePairPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating permissions for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdatePairPerms: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairPermission(dto));
             return Task.CompletedTask;
         }
@@ -270,16 +266,15 @@ public partial class MainHub
 
     public Task Client_UserUpdatePairPermAccess(UserPairAccessChangeDto dto)
     {
-        Logger.LogDebug("Client_UserUpdateOtherPairPermAccess: "+dto, LoggerType.Callbacks);
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("Client_UserUpdateSelfPairPermAccess: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdatePairPermAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogInformation("Callback matched to a paired user. Updating permissions for them.", LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdatePairPermAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairAccessPermission(dto));
             return Task.CompletedTask;
         }
@@ -291,7 +286,6 @@ public partial class MainHub
     /// </summary>
     public Task Client_UserReceiveDataComposite(OnlineUserCompositeDataDto dataDto)
     {
-        Logger.LogTrace("Client_UserReceiveDataComposite:" + dataDto.User, LoggerType.Callbacks);
         if (dataDto.User.UID == ConnectionDto?.User.UID)
         {
             Logger.LogWarning("Why are you trying to receive your own composite data? There is no need for this???");
@@ -310,14 +304,14 @@ public partial class MainHub
     /// </summary>
     public Task Client_UserReceiveDataIpc(OnlineUserCharaIpcDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveDataIpc: "+dataDto, LoggerType.Callbacks);
-        if (dataDto.User.UID == MainHub.UID)
+        if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("Client_UserReceiveOwnDataIpc (not executing any functions):" + dataDto.User, LoggerType.Callbacks);
             return Task.CompletedTask;
         }
         else
         {
+            Logger.LogDebug("OTHER Client_UserReceiveDataIpc:" + dataDto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaIpcData(dataDto));
             return Task.CompletedTask;
         }
@@ -325,15 +319,15 @@ public partial class MainHub
 
     public Task Client_UserReceiveDataAppearance(OnlineUserCharaAppearanceDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOwnDataAppearance:"+dataDto.User, LoggerType.Callbacks);
         if (dataDto.Direction is UpdateDir.Own)
         {
+            Logger.LogDebug("OWN Client_UserReceiveDataAppearance:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("Client_UserReceiveOtherDataAppearance: {user}{updateKind}\n{data}", dataDto.User, dataDto.Type, dataDto.AppearanceData.ToGagString());
+            Logger.LogDebug("OTHER Client_UserReceiveDataAppearance");
             ExecuteSafely(() => _pairs.ReceiveCharaAppearanceData(dataDto));
             return Task.CompletedTask;
         }
@@ -341,15 +335,15 @@ public partial class MainHub
 
     public Task Client_UserReceiveDataWardrobe(OnlineUserCharaWardrobeDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOwnDataWardrobe:"+dataDto.User, LoggerType.Callbacks);
         if (dataDto.Direction is UpdateDir.Own)
         {
+            Logger.LogDebug("OWN Client_UserReceiveDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("Client_UserReceiveOtherDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserReceiveDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaWardrobeData(dataDto));
             return Task.CompletedTask;
         }
@@ -357,15 +351,15 @@ public partial class MainHub
 
     public Task Client_UserReceiveDataAlias(OnlineUserCharaAliasDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOwnDataAlias:"+dataDto.User, LoggerType.Callbacks);
         if (dataDto.Direction is UpdateDir.Own)
         {
+            Logger.LogDebug("OWN Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.CallbackAliasStorageUpdate(dataDto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("Client_UserReceiveOtherDataAlias:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaAliasData(dataDto));
             return Task.CompletedTask;
         }
@@ -376,15 +370,15 @@ public partial class MainHub
     /// </summary>
     public Task Client_UserReceiveDataToybox(OnlineUserCharaToyboxDataDto dataDto)
     {
-        Logger.LogDebug("Client_UserReceiveOwnDataToybox:"+dataDto.User, LoggerType.Callbacks);
         if (dataDto.Direction is UpdateDir.Own)
         {
+            Logger.LogDebug("OWN Client_UserReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("Client_UserReceiveOtherDataToybox:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaToyboxData(dataDto));
             return Task.CompletedTask;
         }
