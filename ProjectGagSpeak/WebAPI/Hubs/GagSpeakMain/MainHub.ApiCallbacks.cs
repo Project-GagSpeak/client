@@ -322,7 +322,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataAppearance:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
+            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
             return Task.CompletedTask;
         }
         else
@@ -338,7 +338,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
+            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
             return Task.CompletedTask;
         }
         else
@@ -373,7 +373,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.Enactor.UID == dataDto.User.UID));
+            ExecuteSafely(() => _clientCallbacks.CallbackToyboxUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
             return Task.CompletedTask;
         }
         else
