@@ -448,7 +448,13 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     internal void UpdateAliasList(string userId, List<AliasTrigger> aliasList)
     {
         // try and get the alias storage from the dictionary by the key.
-        if (AliasConfig.AliasStorage.ContainsKey(userId))
+        if (!AliasConfig.AliasStorage.ContainsKey(userId))
+        {
+            AliasConfig.AliasStorage[userId] = new AliasStorage() { AliasList = aliasList };
+            _aliasConfig.Save();
+            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+        }
+        else
         {
             AliasConfig.AliasStorage[userId].AliasList = aliasList;
             _aliasConfig.Save();
@@ -459,14 +465,18 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     // called from a callback update from other paired client. Never called by self. Meant to set another players name to our config.
     internal void UpdateAliasStoragePlayerInfo(string userId, string charaNameWorld)
     {
-        if(AliasConfig.AliasStorage.ContainsKey(userId))
+        if(!AliasConfig.AliasStorage.ContainsKey(userId))
+        {
+            AliasConfig.AliasStorage[userId] = new AliasStorage() { CharacterNameWithWorld = charaNameWorld };
+            _aliasConfig.Save();
+            Mediator.Publish(new UpdateChatListeners());
+        }
+        else
         {
             AliasConfig.AliasStorage[userId].CharacterNameWithWorld = charaNameWorld;
             _aliasConfig.Save();
             Mediator.Publish(new UpdateChatListeners());
-            return;
         }
-        Logger.LogWarning("Someone tried to update your alias storage player info but it's not yet made!");
     }
 
     #endregion Alias Config Methods

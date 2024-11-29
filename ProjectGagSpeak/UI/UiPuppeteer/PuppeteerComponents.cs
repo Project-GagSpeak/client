@@ -107,7 +107,7 @@ public class PuppeteerComponents
         // display name, then display the downloads and likes on the other side.
         var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 4 - ImGui.GetStyle().ItemInnerSpacing.X * 3;
         using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
-            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, pairHasName))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, pairHasName || !_handler.SelectedPair.IsOnline))
                 onSendName?.Invoke();
         UiSharedService.AttachToolTip("Send this Pair your In-Game Character Name, so they can listen to your players for triggers!" +
         "--SEP--This is intentionally done this way so that you are not always transferring your name with general actions.");
