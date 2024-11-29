@@ -73,8 +73,8 @@ public class PuppeteerHandler : IMediatorSubscriber
                 SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
 
                 // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
-                remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
-                _logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
+                remainingMessage = remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
+                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
 
                 // If the string contains the word "grovel", fire the grovel achievement.
                 if (remainingMessage.TextValue.Contains("grovel"))
@@ -141,8 +141,8 @@ public class PuppeteerHandler : IMediatorSubscriber
         _logger.LogTrace("Remaining message: " + remainingMessage, LoggerType.Puppeteer);
 
         // obtain the substring within the start and end char if provided.
-        remainingMessage.GetSubstringWithinParentheses(perms.StartChar, perms.EndChar);
-        _logger.LogTrace("Remaining message after brackets: " + remainingMessage);
+        remainingMessage = remainingMessage.GetSubstringWithinParentheses(perms.StartChar, perms.EndChar);
+        Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
 
         if (!SenderUid.IsNullOrEmpty())
         {
