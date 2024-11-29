@@ -45,12 +45,6 @@ public partial class PairStickyUI
                 DrawWardrobeActions();
             }
 
-            if (StickyPair.LastAliasData != null)
-            {
-                ImGui.TextUnformatted("Puppeteer Actions");
-                DrawPuppeteerActions();
-            }
-
             if (StickyPair.LastIpcData != null && StickyPair.IsVisible)
             {
                 ImGui.TextUnformatted("Moodles Actions");
@@ -127,28 +121,6 @@ public partial class PairStickyUI
             UiSharedService.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
         }
 
-        ImGui.Separator();
-    }
-
-    private void DrawPuppeteerActions()
-    {
-        // draw the Alias List popout ref button. (opens a popout window 
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Update " + PairNickOrAliasOrUID + " with your Name", WindowMenuWidth, true))
-        {
-            var name = _clientService.Name;
-            var world = _clientService.HomeWorldId;
-            var worldName = OnFrameworkService.WorldData.Value[(ushort)world];
-            // compile the alias data to send including our own name and world information, along with an empty alias list.
-            var dataToPush = new CharaAliasData()
-            {
-                ListenerName = name + "@" + worldName,
-                AliasList = new List<AliasTrigger>()
-            };
-
-            _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered, UpdateDir.Own));
-            _logger.LogDebug("Sent Puppeteer Name to " + PairNickOrAliasOrUID, LoggerType.Permissions);
-        }
-        UiSharedService.AttachToolTip("Sends your Name & World to this pair so their puppeteer will listen for messages from you.");
         ImGui.Separator();
     }
 

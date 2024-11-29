@@ -263,15 +263,10 @@ public class IntroUi : WindowMediatorSubscriberBase
             UiSharedService.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
         }
 
-        // next place the text field for inserting the key, and then the button for creating the account.
-        var text = "Account Secret Key: ";
-        var buttonText = "Create / Sign into your Account with Secret Key";
-        var buttonWidth = _secretKey.Length != 64 ? 0 : ImGuiHelpers.GetButtonSize(buttonText).X + ImGui.GetStyle().ItemSpacing.X;
-        var textSize = ImGui.CalcTextSize(text);
-
         // if the primary account exists but does not have successful connection, load that into the information.
         if (_serverConfigs.TryGetPrimaryAuth(out Authentication primaryAuth))
         {
+            _logger.LogDebug("Primary Auth Exists, loading information.");
             if(primaryAuth.SecretKey.HasHadSuccessfulConnection is false)
             {
                 _aquiredUID = "RECOVERED-FROM-FAILED-CONNECTION";
@@ -279,7 +274,6 @@ public class IntroUi : WindowMediatorSubscriberBase
             }
             
         }
-
 
         // if we dont have the account details yet, early return.
         if (_aquiredUID == string.Empty || _secretKey == string.Empty)
@@ -352,7 +346,6 @@ public class IntroUi : WindowMediatorSubscriberBase
             if (MainHub.IsConnected)
             {
                 _guides.StartTutorial(TutorialType.MainUi);
-                _secretKey = string.Empty;
             }
             _configService.Save(); // save the configuration
         }
@@ -375,7 +368,9 @@ public class IntroUi : WindowMediatorSubscriberBase
             var accountDetails = await _apiHubMain.FetchFreshAccountDetails();
             _aquiredUID = accountDetails.Item1;
             _secretKey = accountDetails.Item2;
-            _fetchAccountDetailsTask = null;
+            _logger.LogInformation("Fetched Account Details, UID: {UID}, SecretKey: {SecretKey}", _aquiredUID, _secretKey);
+            _logger.LogDebug("_aquiredUID: " + _aquiredUID);
+            _logger.LogDebug("_secretKey: " + _secretKey);
         }
         catch (Exception)
         {
@@ -384,6 +379,10 @@ public class IntroUi : WindowMediatorSubscriberBase
             // Reset the button used flag
             _configService.Current.ButtonUsed = false;
             _configService.Save();
+        }
+        finally
+        {
+            _fetchAccountDetailsTask = null;
         }
     }
 }

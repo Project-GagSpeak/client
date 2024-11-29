@@ -14,50 +14,45 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak.PlayerData.Handlers;
 
-public class PuppeteerHandler
+public class PuppeteerHandler : IMediatorSubscriber
 {
     private readonly ILogger<PuppeteerHandler> _logger;
     private readonly ClientData _playerChara;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
-    public PuppeteerHandler(ILogger<PuppeteerHandler> logger, ClientData playerChara,
-        ClientConfigurationManager clientConfiguration, PairManager pairManager)
+    public GagspeakMediator Mediator { get; init; }
+
+    public PuppeteerHandler(ILogger<PuppeteerHandler> logger, GagspeakMediator mediator,
+        ClientData playerChara, ClientConfigurationManager clientConfiguration, 
+        PairManager pairManager)
     {
         _logger = logger;
+        Mediator = mediator;
         _clientConfigs = clientConfiguration;
         _playerChara = playerChara;
         _pairManager = pairManager;
+
+        Mediator.Subscribe<UserPairSelected>(this, (newPair) => SelectedPair = newPair.Pair);
     }
 
     public Pair? SelectedPair = null; // Selected Pair we are viewing for Puppeteer.
 
     // Store an accessor of the alarm being edited.
-    public AliasStorage? ClonedAliasStorageForEdit { get; private set; } = null;
+    public List<AliasTrigger>? ClonedAliasListForEdit { get; private set; } = null;
     public string UidOfStorage => SelectedPair?.UserData.UID ?? string.Empty;
-    public bool IsModified { get; private set; } = false;
-
     public void StartEditingList(AliasStorage aliasStorage)
-        => aliasStorage.CloneAliasList();
+        => ClonedAliasListForEdit = aliasStorage.CloneAliasList();
 
     public void CancelEditingSet()
-        => ClonedAliasStorageForEdit = null;
+        => ClonedAliasListForEdit = null;
 
     public void UpdatedEditedStorage()
     {
-        if (ClonedAliasStorageForEdit is null)
+        if (ClonedAliasListForEdit is null)
             return;
 
-        if (!IsModified)
-        {
-            _logger.LogTrace("No changes were made to the Alias Storage.", LoggerType.Puppeteer);
-            return;
-        }
-
-        IsModified = false;
-        _clientConfigs.UpdateAliasStorage(UidOfStorage, ClonedAliasStorageForEdit!);
+        _clientConfigs.UpdateAliasList(UidOfStorage, ClonedAliasListForEdit);
     }
-
-    public void MarkAsModified() => IsModified = true;
 
     #region PuppeteerSettings
     public void OnClientMessageContainsPairTrigger(string msg)
@@ -94,41 +89,23 @@ public class PuppeteerHandler
         }
     }
 
-
-    public void UpdateDisplayForNewPair(Pair pair)
-    {
-        // for first time generations
-        if (SelectedPair is null)
-        {
-            _logger.LogTrace($"Setting selected pair to " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
-            SelectedPair = pair;
-            //StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
-        }
-
-        // for refreshing data once we switch pairs.
-        if (SelectedPair.UserData.UID != pair.UserData.UID)
-        {
-            _logger.LogTrace($"Updating display to reflect pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
-            SelectedPair = pair;
-            //StartEditingSet(_clientConfigs.FetchAliasStorageForPair(pair.UserData.UID));
-        }
-        // log if the storage being edited is null.
-        if (ClonedAliasStorageForEdit is null)
-        {
-            _logger.LogWarning($"Storage being edited is null for pair " + pair.UserData.AliasOrUID, LoggerType.Puppeteer);
-        }
-    }
-
     public AliasStorage GetAliasStorage(string pairUID)
         => _clientConfigs.FetchAliasStorageForPair(pairUID);
 
     public string? GetUIDMatchingSender(string nameWithWorld)
         => _clientConfigs.GetUidMatchingSender(nameWithWorld);
 
-    public void AddAlias(AliasTrigger alias)
+    public string ListenerNameForPair()
+    {
+        if (_clientConfigs.AliasConfig.AliasStorage.TryGetValue(UidOfStorage, out var aliasStorage))
+            return aliasStorage.HasNameStored ? aliasStorage.CharacterNameWithWorld : "Not Yet Listening!";
+        return "Not Yet Listening!";
+    }
+
+/*    public void AddAlias(AliasTrigger alias)
         => _clientConfigs.AddNewAliasTrigger(UidOfStorage, alias);
     public void RemoveAlias(AliasTrigger alias)
-        => _clientConfigs.RemoveAliasTrigger(UidOfStorage, alias);
+        => _clientConfigs.RemoveAliasTrigger(UidOfStorage, alias);*/
 
     #endregion PuppeteerSettings
 

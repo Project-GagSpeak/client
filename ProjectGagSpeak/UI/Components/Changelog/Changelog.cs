@@ -19,6 +19,10 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 2, 1)
+            .RegisterMain("Appended back the Puppeteer Trigger Info section of the Puppeteer Module. (Alias Lists still in progress)")
+            .RegisterQol("Update pair with your UID button has been moved to the puppeteer UI and no longer in the actions list.")
+            .RegisterBugfix("None yet, i want to finish this up first...");
         VersionEntry(1, 0, 2, 0)
             .RegisterMain("Puppeteer Module temporarily under Maitenance after recovering from the backend changes.")
             .RegisterFeature("You will now be able to see when you have successfully updated a pair with your name for puppeteer.")

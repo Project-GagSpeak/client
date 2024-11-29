@@ -58,7 +58,8 @@ public class UserPairListHandler
             if (_selectedPair != value)
             {
                 _selectedPair = value;
-                _mediator.Publish(new UserPairSelected());
+                _logger.LogTrace("Selected Pair: " + value?.UserData.UID);
+                _mediator.Publish(new UserPairSelected(value));
             }
         }
     }
