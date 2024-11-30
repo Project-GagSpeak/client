@@ -33,13 +33,13 @@ public class MainUiHomepage
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Type)>
         {
-            ("Sextoy Remote", FontAwesomeIcon.WaveSquare, typeof(RemotePersonal)),
-            ("Orders Module", FontAwesomeIcon.ClipboardList, typeof(OrdersUI)),
-            ("Gags Module", FontAwesomeIcon.CommentSlash, typeof(GagSetupUI)),
-            ("Wardrobe Module", FontAwesomeIcon.ToiletPortable, typeof(WardrobeUI)),
-            ("Puppeteer Module", FontAwesomeIcon.PersonHarassing, typeof(PuppeteerUI)),
-            ("Toybox Module", FontAwesomeIcon.BoxOpen, typeof(ToyboxUI)),
-            ("Achievements Module", FontAwesomeIcon.Trophy, typeof(AchievementsUI)),
+            ("Sex Toy Remote", FontAwesomeIcon.WaveSquare, typeof(RemotePersonal)),
+            ("Orders", FontAwesomeIcon.ClipboardList, typeof(OrdersUI)),
+            ("Gags", FontAwesomeIcon.CommentSlash, typeof(GagSetupUI)),
+            ("Wardrobe", FontAwesomeIcon.ToiletPortable, typeof(WardrobeUI)),
+            ("Puppeteer", FontAwesomeIcon.PersonHarassing, typeof(PuppeteerUI)),
+            ("Toybox", FontAwesomeIcon.BoxOpen, typeof(ToyboxUI)),
+            ("Achievements", FontAwesomeIcon.Trophy, typeof(AchievementsUI)),
         };
     }
 
