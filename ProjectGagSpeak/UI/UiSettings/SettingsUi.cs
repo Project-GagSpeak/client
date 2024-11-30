@@ -106,14 +106,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         switch (_configService.Current.LanguageDialect)
         {
-            case "IPA_US": return "US";
-            case "IPA_UK": return "UK";
-            case "IPA_FRENCH": return "France";
-            case "IPA_QUEBEC": return "Quebec";
-            case "IPA_JAPAN": return "Japan";
-            case "IPA_SPAIN": return "Spain";
-            case "IPA_MEXICO": return "Mexico";
-            default: return "US";
+            case "IPA_UK": return "en-GB";
+            case "IPA_US": return "en-US";
+            case "IPA_SPAIN": return "es-ES";
+            case "IPA_MEXICO": return "es-MX";
+            case "IPA_FRENCH": return "fr-FR";
+            case "IPA_QUEBEC": return "fr-CA";
+            case "IPA_JAPAN": return "ja-JP"
+            default: return "en-US";
         }
     }
 
