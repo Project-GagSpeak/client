@@ -445,35 +445,38 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     }
 
     // Called whenever set is saved.
-    internal void UpdateAliasStorage(string userId, AliasStorage newStorage)
+    internal void UpdateAliasList(string userId, List<AliasTrigger> aliasList)
     {
-        AliasConfig.AliasStorage[userId] = newStorage;
-        _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+        // try and get the alias storage from the dictionary by the key.
+        if (!AliasConfig.AliasStorage.ContainsKey(userId))
+        {
+            AliasConfig.AliasStorage[userId] = new AliasStorage() { AliasList = aliasList };
+            _aliasConfig.Save();
+            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+        }
+        else
+        {
+            AliasConfig.AliasStorage[userId].AliasList = aliasList;
+            _aliasConfig.Save();
+            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+        }
     }
 
     // called from a callback update from other paired client. Never called by self. Meant to set another players name to our config.
     internal void UpdateAliasStoragePlayerInfo(string userId, string charaNameWorld)
     {
-        AliasConfig.AliasStorage[userId].CharacterNameWithWorld  = charaNameWorld;
-        _aliasConfig.Save();
-        Mediator.Publish(new UpdateChatListeners());
-    }
-
-    internal void AddNewAliasTrigger(string userUid, AliasTrigger newTrigger)
-    {
-        AliasConfig.AliasStorage[userUid].AliasList.Add(newTrigger);
-        _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userUid, PuppeteerUpdateType.AliasListUpdated));
-    }
-
-    internal void RemoveAliasTrigger(string userUid, AliasTrigger triggerToRemove)
-    {
-        // locate where it is.
-        var idx = AliasConfig.AliasStorage[userUid].AliasList.FindIndex(x => x == triggerToRemove);
-        AliasConfig.AliasStorage[userUid].AliasList.RemoveAt(idx);
-        _aliasConfig.Save();
-        Mediator.Publish(new PlayerCharAliasChanged(userUid, PuppeteerUpdateType.AliasListUpdated));
+        if(!AliasConfig.AliasStorage.ContainsKey(userId))
+        {
+            AliasConfig.AliasStorage[userId] = new AliasStorage() { CharacterNameWithWorld = charaNameWorld };
+            _aliasConfig.Save();
+            Mediator.Publish(new UpdateChatListeners());
+        }
+        else
+        {
+            AliasConfig.AliasStorage[userId].CharacterNameWithWorld = charaNameWorld;
+            _aliasConfig.Save();
+            Mediator.Publish(new UpdateChatListeners());
+        }
     }
 
     #endregion Alias Config Methods

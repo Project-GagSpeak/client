@@ -29,7 +29,7 @@ public class AliasTable : DisposableMediatorSubscriberBase
     private int EditableAliasIndex = -1; // Field to track the editable AliasTrigger
     private AliasTrigger NewTrigger = new AliasTrigger(); // stores data of a trigger yet to be added, modifiable in the add new alias row.
 
-    public void DrawAliasListTable(string KeyToDrawFor, float paddingHeight)
+/*    public void DrawAliasListTable(string KeyToDrawFor, float paddingHeight)
     {
         // draw table.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(ImGui.GetStyle().CellPadding.X * 0.3f, paddingHeight));
@@ -43,7 +43,7 @@ public class AliasTable : DisposableMediatorSubscriberBase
         // create a new alias trigger list temporarily
         try
         { 
-            var aliasTriggerListShallowCopy = _handler.ClonedAliasStorageForEdit?.AliasList.ToList();
+            var aliasTriggerListShallowCopy = _handler.ClonedAliasListForEdit?.AliasList.ToList();
             if(aliasTriggerListShallowCopy is null)
                 return;
 
@@ -63,13 +63,11 @@ public class AliasTable : DisposableMediatorSubscriberBase
         ImGui.TableNextColumn();
         if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: !KeyMonitor.ShiftPressed()))
             _handler.RemoveAlias(aliasTrigger);
-        if(ImGui.IsItemDeactivatedAfterEdit()) _handler.MarkAsModified();
         UiSharedService.AttachToolTip("Delete alias from list.--SEP--Hold SHIFT in order to delete.");
 
         var enabledRef = aliasTrigger.Enabled;
         if (ImGui.Checkbox($"##Enable{idx}{aliasTrigger.InputCommand}", ref enabledRef))
             _handler.ClonedAliasStorageForEdit!.AliasList[idx].Enabled = enabledRef;
-        if (ImGui.IsItemDeactivatedAfterEdit()) _handler.MarkAsModified();
         UiSharedService.AttachToolTip("Enable / Disable the Alias.");
         // try to draw the rest, but if it was removed, it cant, so we should skip over and consume the error
         try
@@ -81,7 +79,6 @@ public class AliasTable : DisposableMediatorSubscriberBase
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 if (ImGui.InputTextWithHint($"##aliasText{idx}", "Input phrase goes here...", ref aliasInput, 64))
                     _handler.ClonedAliasStorageForEdit!.AliasList[idx].InputCommand = aliasInput;
-                if (ImGui.IsItemDeactivatedAfterEdit()) _handler.MarkAsModified();
                 UiSharedService.AttachToolTip($"The string of words that {userID} would have to say to make you execute the output command");
 
                 // next line draw output
@@ -94,7 +91,6 @@ public class AliasTable : DisposableMediatorSubscriberBase
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 if (ImGui.InputTextWithHint($"##command{idx}", "Output command goes here...", ref aliasOutput, 200))
                     _handler.ClonedAliasStorageForEdit!.AliasList[idx].OutputCommand = aliasOutput;
-                if (ImGui.IsItemDeactivatedAfterEdit()) _handler.MarkAsModified();
                 UiSharedService.AttachToolTip($"Replaces the statement above in the puppeteers message with this.--SEP--DO NOT INCLUDE A '/' HERE.");
             }
         }
@@ -124,5 +120,5 @@ public class AliasTable : DisposableMediatorSubscriberBase
         if (ImGui.InputTextWithHint("##newAliasCommand", "Output Command...", ref newAliasCommand, 200))
             NewTrigger.OutputCommand = newAliasCommand; // Update the new alias entry output
         UiSharedService.AttachToolTip("The command that will be executed when the input phrase is said by the player.");
-    }
+    }*/
 }

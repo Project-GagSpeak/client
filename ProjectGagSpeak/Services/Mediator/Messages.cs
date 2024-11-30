@@ -140,7 +140,7 @@ public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHand
 
 /* ------------------ USER INTERFACE (UI) RECORDS------------------ */
 public enum ToggleType { Toggle, Show, Hide }
-public record UserPairSelected : MessageBase; // Fires whenever a new pair is selected from the userPairListHandler.
+public record UserPairSelected(Pair? Pair) : MessageBase; // Fires whenever a new pair is selected from the userPairListHandler.
 public record RefreshUiMessage : MessageBase;
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase; // For toggling the UI.
 public record SwitchToIntroUiMessage : MessageBase; // indicates that we are in the introduction UI.

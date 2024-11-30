@@ -257,7 +257,7 @@ public class Pair
     /// </summary>
     public void ApplyAliasData(OnlineUserCharaAliasDataDto data)
     {
-        _logger.LogDebug("Applying updated alias data for " + data.User.UID, LoggerType.PairDataTransfer);
+        _logger.LogDebug("Applying updated alias data for " + data.User.UID + " with type: " + data.Type, LoggerType.PairDataTransfer);
         // update either the name associated to the list, or the list itself.
         if (LastAliasData == null)
         {
@@ -271,6 +271,7 @@ public class Pair
         }
         else if (data.Type is PuppeteerUpdateType.PlayerNameRegistered)
         {
+            _logger.LogTrace("Updating Listener name to " + data.AliasData.ListenerName + " and HasStored to " + data.AliasData.HasNameStored, LoggerType.PairDataTransfer);
             LastAliasData.HasNameStored = data.AliasData.HasNameStored;
             LastAliasData.ListenerName = data.AliasData.ListenerName;
         }

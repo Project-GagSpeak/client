@@ -4,17 +4,20 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using GagSpeak.Localization;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.UI;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.IPC;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Enums;
 using ImGuiNET;
 using OtterGui.Text;
@@ -25,150 +28,24 @@ namespace GagSpeak.UI.UiPuppeteer;
 public class PuppeteerComponents
 {
     private readonly ILogger<PuppeteerComponents> _logger;
-    private readonly MainHub _apiHubMain;
     private readonly AliasTable _aliasTable;
     private readonly ClientConfigurationManager _clientConfigs;
+    private readonly PuppeteerHandler _handler;
     private readonly UiSharedService _uiShared;
-    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, MainHub mainHub,
-        AliasTable aliasTable, ClientConfigurationManager clientConfigs,
-        PuppeteerHandler handler, UiSharedService uiShared)
+    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, AliasTable aliasTable, 
+        ClientConfigurationManager clientConfigs, PuppeteerHandler handler, UiSharedService uiShared)
     {
         _logger = logger;
-        _apiHubMain = mainHub;
         _aliasTable = aliasTable;
         _clientConfigs = clientConfigs;
+        _handler = handler;
         _uiShared = uiShared;
     }
 
-    /*public void DrawTriggerInfoBoxClient(UserData clientUserData, Action? onEditToggle = null, 
-
-    public void DrawTriggerInfoBox(UserData userData, string nickAliasUID, string listenerName, string triggerPhrase, char startChar, char endChar, bool allowSits, 
-        bool allowMotions, bool allowAll, FontAwesomeIcon saveIcon = FontAwesomeIcon.Save, Action? onEditToggle = null)
-    {
-        bool isClient = nickAliasUID.IsNullOrEmpty();
-        // push rounding window corners
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // create the child window.
-        using var child = ImRaii.Child("##TriggerDataFor" + listenerName, new Vector2(ImGui.GetContentRegionAvail().X, 0), true, ImGuiWindowFlags.ChildWindow);
-
-        DrawListenerGroup();
-
-        if (isClient)
-        {
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_clientConfigs.AliasConfig.AliasStorage[selectedPair.UserData.UID].NameWithWorld ?? "");
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.AlignTextToFramePadding();
-            UiSharedService.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
-        }
-
-        // Handle the case where data is matched.
-        var TriggerPhrase = isClient ? (UnsavedTriggerPhrase ?? triggerInfo.TriggerPhrase) : triggerInfo.TriggerPhrase;
-        string[] triggers = TriggerPhrase.Split('|');
-
-        ImGui.Spacing();
-        if (isEditingTriggerOptions && isClient)
-        {
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-            if (ImGui.InputTextWithHint($"##{displayName}-Trigger", "Leave Blank for none...", ref TriggerPhrase, 64))
-                UnsavedTriggerPhrase = TriggerPhrase;
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                _handler.MarkAsModified();
-            UiSharedService.AttachToolTip("You can create multiple trigger phrases by placing a | between phrases.");
-        }
-        else
-        {
-            if (!triggers.Any() || triggers[0].IsNullOrEmpty())
-            {
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Trigger Phrase Set.");
-            }
-
-            foreach (var trigger in triggers)
-            {
-                if (trigger.IsNullOrEmpty()) continue;
-
-                _uiShared.IconText(FontAwesomeIcon.QuoteLeft, ImGuiColors.ParsedPink);
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(trigger);
-                ImUtf8.SameLineInner();
-                _uiShared.IconText(FontAwesomeIcon.QuoteRight, ImGuiColors.ParsedPink);
-            }
-        }
-
-        using (ImRaii.Group())
-        {
-            ImGui.Spacing();
-            ImGui.AlignTextToFramePadding();
-            UiSharedService.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
-            ImGui.SameLine();
-            var startChar = isClient ? (UnsavedNewStartChar ?? triggerInfo.StartChar.ToString()) : triggerInfo.StartChar.ToString();
-            var endChar = isClient ? (UnsavedNewEndChar ?? triggerInfo.EndChar.ToString()) : triggerInfo.EndChar.ToString();
-            if (isEditingTriggerOptions && isClient)
-            {
-                ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-                if (ImGui.InputText($"##{displayName}sStarChar", ref startChar, 1))
-                    UnsavedNewStartChar = startChar;
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                {
-                    if (string.IsNullOrWhiteSpace(endChar))
-                        UnsavedNewEndChar = "(";
-                    _handler.MarkAsModified();
-                }
-            }
-            else
-            {
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(startChar.ToString());
-            }
-            UiSharedService.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
-
-            ImUtf8.SameLineInner();
-            _uiShared.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
-            ImUtf8.SameLineInner();
-            if (isEditingTriggerOptions && isClient)
-            {
-                ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-                if (ImGui.InputText($"##{displayName}sEndChar", ref endChar, 1))
-                    UnsavedNewEndChar = endChar;
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                {
-                    if (string.IsNullOrWhiteSpace(endChar))
-                        UnsavedNewEndChar = ")";
-                    _handler.MarkAsModified();
-                }
-            }
-            else
-            {
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(endChar.ToString());
-            }
-            UiSharedService.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
-        }
-
-        // if no trigger phrase set, return.
-        if (TriggerPhrase.IsNullOrEmpty()) return;
-
-        ImGui.Spacing();
-        ImGui.Separator();
-
-        if (!displayInRed)
-        {
-            string charaName = !isClient
-                ? $"<YourNameWorld> "
-                : $"<{_handler.ClonedAliasStorageForEdit?.CharacterName.Split(' ').First()}" +
-                  $"{_handler.ClonedAliasStorageForEdit?.CharacterWorld}> ";
-            UiSharedService.ColorText("Example Usage:", ImGuiColors.ParsedPink);
-            ImGui.TextWrapped(charaName + triggers[0] + " " +
-                selectedPair?.OwnPerms.StartChar +
-               " glamour apply Hogtied | p | [me] " +
-               selectedPair?.OwnPerms.EndChar);
-        }
-    }
+    private UserPairPermissions OwnPerms => _handler.SelectedPair?.OwnPerms ?? new UserPairPermissions();
+    private UserEditAccessPermissions OwnEditPerms => _handler.SelectedPair?.OwnPermAccess ?? new UserEditAccessPermissions();
+    private UserPairPermissions PairPerms => _handler.SelectedPair?.PairPerms ?? new UserPairPermissions();
+    private UserEditAccessPermissions PairEditPerms => _handler.SelectedPair?.PairPermAccess ?? new UserEditAccessPermissions();
 
     public void DrawOwnAliasItem()
     {
@@ -185,312 +62,179 @@ public class PuppeteerComponents
 
     }
 
-    public void DrawListenerGroupClient(
+    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
     {
-        using (var group = ImRaii.Group())
+        using var group = ImRaii.Group();
+
+        ImGui.AlignTextToFramePadding();
+        UiSharedService.ColorText("Listening To", ImGuiColors.ParsedPink);
+
+        var remainingWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
+        
+        // so they let sits?
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
+                onSitsChange?.Invoke(!OwnPerms.AllowSitRequests);
+        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true))
+                onMotionChange?.Invoke(!OwnPerms.AllowMotionRequests);
+        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
+                onAllChange?.Invoke(!OwnPerms.AllowAllRequests);
+        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform any command.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Edit, inPopup: true))
+                onEditToggle?.Invoke(!isEditing);
+        UiSharedService.AttachToolTip(isEditing ? "Stop Editing your TriggerPhrase Info." : "Modify Your TriggerPhrase Info");
+    }
+
+    public void DrawListenerPairGroup(Action? onSendName = null)
+    {
+        if(_handler.SelectedPair?.LastAliasData is null)
+            return;
+        bool pairHasName = _handler.SelectedPair.LastAliasData.HasNameStored;
+        using var group = ImRaii.Group();
+
+        // display name, then display the downloads and likes on the other side.
+        var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 4 - ImGui.GetStyle().ItemInnerSpacing.X * 3;
+        using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, pairHasName || !_handler.SelectedPair.IsOnline))
+                onSendName?.Invoke();
+        UiSharedService.AttachToolTip("Send this Pair your In-Game Character Name, so they can listen to your players for triggers!" +
+        "--SEP--This is intentionally done this way so that you are not always transferring your name with general actions.");
+
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
+        using (ImRaii.Disabled())
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            _uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true);
+        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled())
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            _uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true);
+        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled())
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            _uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
+        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform any command.");
+    }
+
+    public void DrawEditingTriggersWindow(ref string tempTriggers, ref string tempSartChar, ref string tempEndChar)
+    {
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.AlignTextToFramePadding();
+        UiSharedService.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
+
+        ImGui.Spacing();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        ImGui.InputTextWithHint("##TriggerPhrase", "Leave Blank for none...", ref tempTriggers, 64);
+        UiSharedService.AttachToolTip("You can create multiple trigger phrases by placing a | between phrases.");
+
+        using (ImRaii.Group())
         {
-            // display name, then display the downloads and likes on the other side.
+            ImGui.Spacing();
             ImGui.AlignTextToFramePadding();
-            UiSharedService.ColorText(isClient ? "Listening To" : "Pair's Trigger Phrases", ImGuiColors.ParsedPink);
-            UiSharedService.AttachToolTip(isClient
-                ? "The In Game Character that can use your trigger phrases below on you"
-                : "The phrases you can say to this Kinkster that will execute their triggers.");
+            UiSharedService.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
 
-            var remainingWidth = iconSize.X * (isClient ? 5 : 4) - ImGui.GetStyle().ItemInnerSpacing.X * (isClient ? 4 : 3);
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
-            using (ImRaii.Disabled(!isClient))
-            {
-                using (ImRaii.PushColor(ImGuiCol.Text, allowSits ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                {
-                    if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                    {
-                        _logger.LogTrace($"Updated own pair permission: AllowSitCommands to {!allowSits}");
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                            new KeyValuePair<string, object>("AllowSitRequests", !allowSits)));
-                    }
-                }
-            }
-            UiSharedService.AttachToolTip(isClient
-                ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)"
-                : selectedPair.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
-            using (ImRaii.Disabled(!isClient))
-            {
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushColor(ImGuiCol.Text, allowMotions ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                {
-                    if (_uiShared.IconButton(FontAwesomeIcon.Walking, null, null, false, true))
-                    {
-                        _logger.LogTrace($"Updated own pair permission: AllowEmotesExpressions to {!allowMotions}");
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                            new KeyValuePair<string, object>("AllowMotionRequests", !allowMotions)));
-                    }
-                }
-            }
-            UiSharedService.AttachToolTip(isClient
-                ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)"
-                : selectedPair.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
-            using (ImRaii.Disabled(!isClient))
-            {
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushColor(ImGuiCol.Text, allowAll ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                {
-                    if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, null, null, false, true))
-                    {
-                        _logger.LogTrace($"Updated own pair permission: AllowAllCommands to {!allowAll}");
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                            new KeyValuePair<string, object>("AllowAllRequests", !allowAll)));
-                    }
-                }
-            }
-            UiSharedService.AttachToolTip(isClient
-                ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform any command."
-                : selectedPair.GetNickAliasOrUid() + " allows you to make them perform any command.");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
+            ImGui.InputText("##sStarChar", ref tempSartChar, 1);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+                if (string.IsNullOrWhiteSpace(tempSartChar)) tempSartChar = "(";
+            UiSharedService.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
+                Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
 
-            if (isClient)
-            {
-                ImUtf8.SameLineInner();
-                using (var color = ImRaii.PushColor(ImGuiCol.Text, (saveIcon == FontAwesomeIcon.Save) ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey))
-                {
-                    if (_uiShared.IconButton(FontAwesomeIcon.Edit, inPopup: true))
-                        onEditToggle.Invoke();
-                }
-                UiSharedService.AttachToolTip((saveIcon == FontAwesomeIcon.Save) ? "Stop Editing your TriggerPhrase Info." : "Modify Your TriggerPhrase Info");
-            }
+            ImUtf8.SameLineInner();
+            _uiShared.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
+            ImUtf8.SameLineInner();
+
+            ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
+            ImGui.InputText("##sEndChar", ref tempEndChar, 1);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+                if(string.IsNullOrWhiteSpace(tempEndChar)) tempEndChar = ")";
+            UiSharedService.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
+                Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
         }
     }
 
-    private void DrawTriggerPhraseDetailBox(TriggerData triggerInfo)
+    public void DrawTriggersWindow(string triggerPhrases, string startChar, string endChar)
     {
-        if (selectedPair is null) 
-            return;
+        var TriggerPhrase = triggerPhrases;
+        string[] triggers = TriggerPhrase.Split('|');
 
-        bool isClient = triggerInfo.UID == "Client";
-        bool displayInRed = isClient && !_handler.ClonedAliasStorageForEdit!.IsValid;
-        var iconSize = isEditingTriggerOptions ? _uiShared.GetIconButtonSize(FontAwesomeIcon.Save) : _uiShared.GetIconButtonSize(FontAwesomeIcon.Edit);
-        string displayName = triggerInfo.NickOrAlias.IsNullOrEmpty() ? triggerInfo.UID : triggerInfo.NickOrAlias;
-
-
-        // push rounding window corners
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, displayInRed ? ImGuiColors.DPSRed : ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // create the child window.
-        using (var patternResChild = ImRaii.Child("##TriggerDataFor" + triggerInfo.UID, ImGui.GetContentRegionAvail(), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Group())
         {
-            if (!patternResChild) return;
-
-            // Handle Case where data is not yet matched.
-            if (displayInRed && isClient)
-            {
-                using (ImRaii.Group())
-                {
-                    UiSharedService.ColorTextCentered("Not Listening To Pair's Character.", ImGuiColors.DalamudRed);
-                    ImGui.Spacing();
-                    UiSharedService.ColorTextCentered("This pair must press the action:", ImGuiColors.DalamudRed);
-                    ImGui.Spacing();
-
-                    ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth()) / 2
-                        - (_uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Update [UID] with your Name") - 5 * ImGuiHelpers.GlobalScale) / 2);
-
-                    using (ImRaii.Disabled(true))
-                    {
-                        _uiShared.IconTextButton(FontAwesomeIcon.Sync, "Update [UID] with your Name", null, false);
-                    }
-                    ImGui.Spacing();
-                    UiSharedService.ColorTextCentered("(If you wanna be controlled by them)", ImGuiColors.DalamudRed);
-                    return;
-                }
-            }
-
-            using (var group = ImRaii.Group())
-            {
-                // display name, then display the downloads and likes on the other side.
-                ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText(isClient ? "Listening To" : "Pair's Trigger Phrases", ImGuiColors.ParsedPink);
-                UiSharedService.AttachToolTip(isClient
-                    ? "The In Game Character that can use your trigger phrases below on you"
-                    : "The phrases you can say to this Kinkster that will execute their triggers.");
-
-                var remainingWidth = iconSize.X * (isClient ? 5 : 4) - ImGui.GetStyle().ItemInnerSpacing.X * (isClient ? 4 : 3);
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
-                using (ImRaii.Disabled(!isClient))
-                {
-                    using (ImRaii.PushColor(ImGuiCol.Text, triggerInfo.AllowsSits ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                    {
-                        if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                        {
-                            _logger.LogTrace($"Updated own pair permission: AllowSitCommands to {!triggerInfo.AllowsSits}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                                new KeyValuePair<string, object>("AllowSitRequests", !triggerInfo.AllowsSits)));
-                        }
-                    }
-                }
-                UiSharedService.AttachToolTip(isClient
-                    ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)"
-                    : selectedPair.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
-                using (ImRaii.Disabled(!isClient))
-                {
-                    ImUtf8.SameLineInner();
-                    using (ImRaii.PushColor(ImGuiCol.Text, allowMotions ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                    {
-                        if (_uiShared.IconButton(FontAwesomeIcon.Walking, null, null, false, true))
-                        {
-                            _logger.LogTrace($"Updated own pair permission: AllowEmotesExpressions to {!allowMotions}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                                new KeyValuePair<string, object>("AllowMotionRequests", !allowMotions)));
-                        }
-                    }
-                }
-                UiSharedService.AttachToolTip(isClient
-                    ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)"
-                    : selectedPair.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
-                using (ImRaii.Disabled(!isClient))
-                {
-                    ImUtf8.SameLineInner();
-                    using (ImRaii.PushColor(ImGuiCol.Text, allowAll ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-                    {
-                        if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, null, null, false, true))
-                        {
-                            _logger.LogTrace($"Updated own pair permission: AllowAllCommands to {!allowAll}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(selectedPair.UserData,
-                                new KeyValuePair<string, object>("AllowAllRequests", !allowAll)));
-                        }
-                    }
-                }
-                UiSharedService.AttachToolTip(isClient
-                    ? "Allows " + selectedPair.GetNickAliasOrUid() + " to make you perform any command."
-                    : selectedPair.GetNickAliasOrUid() + " allows you to make them perform any command.");
-
-                if (isClient)
-                {
-                    ImUtf8.SameLineInner();
-                    using (var color = ImRaii.PushColor(ImGuiCol.Text, isEditingTriggerOptions ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey))
-                    {
-                        if (_uiShared.IconButton(FontAwesomeIcon.Edit, inPopup: true))
-                            isEditingTriggerOptions = !isEditingTriggerOptions;
-                    }
-                    UiSharedService.AttachToolTip(isEditingTriggerOptions ? "Stop Editing your TriggerPhrase Info." : "Modify Your TriggerPhrase Info");
-                }
-            }
-
-            if(isClient)
-            {
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_handler.ClonedAliasStorageForEdit?.NameWithWorld ?? "");
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
-            }
-
-            // Handle the case where data is matched.
-            var TriggerPhrase = isClient ? (UnsavedTriggerPhrase ?? triggerInfo.TriggerPhrase) : triggerInfo.TriggerPhrase;
-            string[] triggers = TriggerPhrase.Split('|');
-
-            ImGui.Spacing();
-            if (isEditingTriggerOptions && isClient)
-            {
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                if (ImGui.InputTextWithHint($"##{displayName}-Trigger", "Leave Blank for none...", ref TriggerPhrase, 64))
-                    UnsavedTriggerPhrase = TriggerPhrase;
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                    _handler.MarkAsModified();
-                UiSharedService.AttachToolTip("You can create multiple trigger phrases by placing a | between phrases.");
-            }
-            else
-            {
-                if (!triggers.Any() || triggers[0].IsNullOrEmpty())
-                {
-                    using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Trigger Phrase Set.");
-                }
-
-                foreach (var trigger in triggers)
-                {
-                    if (trigger.IsNullOrEmpty()) continue;
-
-                    _uiShared.IconText(FontAwesomeIcon.QuoteLeft, ImGuiColors.ParsedPink);
-                    ImUtf8.SameLineInner();
-                    using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(trigger);
-                    ImUtf8.SameLineInner();
-                    _uiShared.IconText(FontAwesomeIcon.QuoteRight, ImGuiColors.ParsedPink);
-                }
-            }
-
-            using (ImRaii.Group())
-            {
-                ImGui.Spacing();
-                ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
-                ImGui.SameLine();
-                var startChar = isClient ? (UnsavedNewStartChar ?? triggerInfo.StartChar.ToString()) : triggerInfo.StartChar.ToString();
-                var endChar = isClient ? (UnsavedNewEndChar ?? triggerInfo.EndChar.ToString()) : triggerInfo.EndChar.ToString();
-                if (isEditingTriggerOptions && isClient)
-                {
-                    ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-                    if (ImGui.InputText($"##{displayName}sStarChar", ref startChar, 1))
-                        UnsavedNewStartChar = startChar;
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                    {
-                        if (string.IsNullOrWhiteSpace(endChar))
-                            UnsavedNewEndChar = "(";
-                        _handler.MarkAsModified();
-                    }
-                }
-                else
-                {
-                    using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(startChar.ToString());
-                }
-                UiSharedService.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
-                    Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
-
-                ImUtf8.SameLineInner();
-                _uiShared.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
-                ImUtf8.SameLineInner();
-                if (isEditingTriggerOptions && isClient)
-                {
-                    ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-                    if (ImGui.InputText($"##{displayName}sEndChar", ref endChar, 1))
-                        UnsavedNewEndChar = endChar;
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                    {
-                        if (string.IsNullOrWhiteSpace(endChar))
-                            UnsavedNewEndChar = ")";
-                        _handler.MarkAsModified();
-                    }
-                }
-                else
-                {
-                    using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(endChar.ToString());
-                }
-                UiSharedService.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
-                    Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
-            }
-
-            // if no trigger phrase set, return.
-            if (TriggerPhrase.IsNullOrEmpty()) return;
-
             ImGui.Spacing();
             ImGui.Separator();
+            ImGui.AlignTextToFramePadding();
+            UiSharedService.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
 
-            if (!displayInRed)
+            if (!triggers.Any() || triggers[0].IsNullOrEmpty())
             {
-                string charaName = !isClient
-                    ? $"<YourNameWorld> "
-                    : $"<{_handler.ClonedAliasStorageForEdit?.CharacterName.Split(' ').First()}" +
-                      $"{_handler.ClonedAliasStorageForEdit?.CharacterWorld}> ";
-                UiSharedService.ColorText("Example Usage:", ImGuiColors.ParsedPink);
-                ImGui.TextWrapped(charaName + triggers[0] + " " +
-                    selectedPair?.OwnPerms.StartChar +
-                   " glamour apply Hogtied | p | [me] " +
-                   selectedPair?.OwnPerms.EndChar);
+                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Trigger Phrase Set.");
+            }
+
+            foreach (var trigger in triggers)
+            {
+                if (trigger.IsNullOrEmpty())
+                    continue;
+
+                _uiShared.IconText(FontAwesomeIcon.QuoteLeft, ImGuiColors.ParsedPink);
+
+                ImUtf8.SameLineInner();
+                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(trigger);
+
+                ImUtf8.SameLineInner();
+                _uiShared.IconText(FontAwesomeIcon.QuoteRight, ImGuiColors.ParsedPink);
             }
         }
+
+        using (ImRaii.Group())
+        {
+            ImGui.Spacing();
+            ImGui.AlignTextToFramePadding();
+            UiSharedService.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
+            ImGui.SameLine();
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(startChar);
+            UiSharedService.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
+                Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
+
+            ImUtf8.SameLineInner();
+            _uiShared.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
+            ImUtf8.SameLineInner();
+
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(endChar);
+            UiSharedService.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
+                Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
+        }
+
+        if(triggerPhrases.IsNullOrEmpty())
+            return;
+
+        ImGui.Spacing();
+        ImGui.Separator();
+
+        string charaName = $"<YourNameWorld> ";
+        UiSharedService.ColorText("Example Usage:", ImGuiColors.ParsedPink);
+        ImGui.TextWrapped(charaName + triggers[0] + " " + OwnPerms.StartChar + " glamour apply Hogtied | p | [me] " + PairPerms.EndChar);
+
     }
 
 
-    private void DrawAliasItemBox(AliasTrigger aliasItem)
+    public void DrawAliasItemBox(AliasTrigger aliasItem)
     {
         // push rounding window corners
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
@@ -525,5 +269,5 @@ public class PuppeteerComponents
                 UiSharedService.AttachToolTip("The command that will be executed when the input phrase is said by the pair.");
             }
         }
-    }*/
+    }
 }
