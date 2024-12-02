@@ -303,7 +303,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                         if (!UnsavedNewEndChar.IsNullOrEmpty())
                         {
                             _logger.LogTrace($"Updated own pair permission: EndChar to {UnsavedNewEndChar}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("EndChar", UnsavedNewStartChar[0]), UpdateDir.Own));
+                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("EndChar", UnsavedNewEndChar[0]), UpdateDir.Own));
                             UnsavedNewEndChar = string.Empty;
                         }
                         LastSaveTime = DateTime.Now;
