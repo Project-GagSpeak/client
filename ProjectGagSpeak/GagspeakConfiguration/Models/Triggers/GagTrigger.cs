@@ -22,19 +22,12 @@ public record GagTrigger : Trigger
     {
         return new GagTrigger
         {
-            TriggerIdentifier = TriggerIdentifier,
+            Identifier = Identifier,
             Enabled = Enabled,
             Priority = Priority,
             Name = Name,
             Description = Description,
-            StartAfter = StartAfter,
-            EndAfter = EndAfter,
-            TriggerActionKind = TriggerActionKind,
-            TriggerAction = TriggerAction,
-            ShockTriggerAction = ShockTriggerAction,
-            RestraintTriggerAction = RestraintTriggerAction,
-            GagTypeAction = GagTypeAction,
-            MoodlesIdentifier = MoodlesIdentifier,
+            ExecutableAction = ExecutableAction.DeepClone(),
             Gag = Gag,
             GagState = GagState
         };

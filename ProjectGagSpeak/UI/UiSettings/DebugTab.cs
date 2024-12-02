@@ -490,7 +490,7 @@ public class DebugTab
         foreach (var aliasData in alias.AliasList)
         {
             ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
-            ImGuiUtil.DrawTableColumn(aliasData.OutputCommand);
+            ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
             ImGui.TableNextRow();
         }
     }

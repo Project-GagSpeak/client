@@ -6,7 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 
-namespace GagSpeak.PlayerData.Handlers;
+namespace GagSpeak.StateManagers;
 
 /// <summary>
 /// State Manager that manages the latest state of Everything within the Toybox.
@@ -195,7 +195,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
     public void EnableTrigger(Guid id, string enactorUID, bool fireToServer = true)
     {
         // make sure that the trigger actually exists too.
-        var trigger = Triggers.FirstOrDefault(x => x.TriggerIdentifier == id);
+        var trigger = Triggers.FirstOrDefault(x => x.Identifier == id);
         if (trigger is null)
         {
             Logger.LogWarning("Attempted to enable a trigger that does not exist.", LoggerType.ToyboxTriggers);
@@ -214,7 +214,7 @@ public sealed class ToyboxManager : DisposableMediatorSubscriberBase
     public void DisableTrigger(Guid id, bool fireToServer = true, bool fireAchievement = true)
     {
         // make sure that the trigger actually exists too.
-        var trigger = Triggers.FirstOrDefault(x => x.TriggerIdentifier == id);
+        var trigger = Triggers.FirstOrDefault(x => x.Identifier == id);
         if (trigger is null)
         {
             Logger.LogWarning("Attempted to disable a trigger that does not exist.", LoggerType.ToyboxTriggers);

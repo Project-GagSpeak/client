@@ -17,7 +17,7 @@ using GagspeakAPI.Extensions;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Enums;
 
-namespace GagSpeak.PlayerData.Handlers;
+namespace GagSpeak.StateManagers;
 
 /// <summary>
 /// AppearanceHandler is responsible for handling any changes to the client player's appearance.

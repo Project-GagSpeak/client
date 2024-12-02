@@ -611,14 +611,13 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     /* --------------------- Toybox Trigger Configs --------------------- */
     #region Trigger Config Methods
     public List<Trigger> ActiveTriggers => TriggerConfig.TriggerStorage.Triggers.Where(x => x.Enabled).ToList();
-    public IEnumerable<ChatTrigger> ActiveChatTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<ChatTrigger>().Where(x => x.Enabled);
     public IEnumerable<SpellActionTrigger> ActiveSpellActionTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<SpellActionTrigger>().Where(x => x.Enabled);
     public IEnumerable<HealthPercentTrigger> ActiveHealthPercentTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<HealthPercentTrigger>().Where(x => x.Enabled);
     public IEnumerable<RestraintTrigger> ActiveRestraintTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<RestraintTrigger>().Where(x => x.Enabled);
     public IEnumerable<GagTrigger> ActiveGagStateTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<GagTrigger>().Where(x => x.Enabled);
     public IEnumerable<SocialTrigger> ActiveSocialTriggers => TriggerConfig.TriggerStorage.Triggers.OfType<SocialTrigger>().Where(x => x.Enabled);
 
-    internal bool IsGuidInTriggers(Guid triggerId) => TriggerConfig.TriggerStorage.Triggers.Any(x => x.TriggerIdentifier == triggerId);
+    internal bool IsGuidInTriggers(Guid triggerId) => TriggerConfig.TriggerStorage.Triggers.Any(x => x.Identifier == triggerId);
 
     internal void AddNewTrigger(Trigger trigger)
     {
@@ -633,7 +632,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     internal void RemoveTrigger(Trigger triggerToRemove)
     {
         Logger.LogInformation("Trigger Removed: " + triggerToRemove.Name, LoggerType.ToyboxTriggers);
-        TriggerConfig.TriggerStorage.Triggers.RemoveAll(x => x.TriggerIdentifier == triggerToRemove.TriggerIdentifier);
+        TriggerConfig.TriggerStorage.Triggers.RemoveAll(x => x.Identifier == triggerToRemove.Identifier);
         _triggerConfig.Save();
         Mediator.Publish(new PlayerCharStorageUpdated());
     }
@@ -673,7 +672,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         {
             ActivePatternId = ActivePatternGuid(),
             ActiveAlarms = AlarmConfig.AlarmStorage.Alarms.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
-            ActiveTriggers = TriggerConfig.TriggerStorage.Triggers.Where(x => x.Enabled).Select(x => x.TriggerIdentifier).ToList(),
+            ActiveTriggers = TriggerConfig.TriggerStorage.Triggers.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
         };
     }
 
@@ -740,13 +739,14 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
                 foreach (var aliasTrigger in alias.Value.AliasList)
                 {
                     ImGui.Separator();
+                    ImGui.Text("("+aliasTrigger.Name+")");
+                    ImGui.SameLine();
                     ImGui.Text("[INPUT TRIGGER]: ");
                     ImGui.SameLine();
                     ImGui.Text(aliasTrigger.InputCommand);
                     ImGui.NewLine();
-                    ImGui.Text("[OUTPUT RESPONSE]: ");
+                    ImGui.Text("[OUTPUT Handles] (WIP): ");
                     ImGui.SameLine();
-                    ImGui.Text(aliasTrigger.OutputCommand);
                 }
                 ImGui.TreePop();
             }

@@ -3,7 +3,11 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -15,8 +19,10 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.IPC;
 using ImGuiNET;
+using OtterGui.Classes;
 using OtterGui.Text;
 using System.Numerics;
+using System.Reflection.Metadata;
 
 namespace GagSpeak.UI.UiPuppeteer;
 
@@ -24,9 +30,10 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
     private readonly AliasTable _aliasTable;
+    private readonly ClientData _clientData;
     private readonly PuppeteerComponents _components;
-    private readonly PuppeteerHandler _puppeteerHandler;
-    private readonly UserPairListHandler _userPairListHandler;
+    private readonly PuppeteerHandler _handler;
+    private readonly UserPairListHandler _pairList;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly CosmeticService _cosmetics;
@@ -36,16 +43,17 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private enum PuppeteerTab { TriggerPhrases, ClientAliasList, PairAliasList }
 
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, AliasTable aliasTable, PuppeteerComponents components,
-        PuppeteerHandler handler, UserPairListHandler userPairListHandler, 
+        MainHub apiHubMain, AliasTable aliasTable, ClientData clientData,
+        PuppeteerComponents components, PuppeteerHandler handler, UserPairListHandler pairList, 
         ClientConfigurationManager clientConfigs, ClientMonitorService clientService,
         CosmeticService cosmetics, UiSharedService uiShared) : base(logger, mediator, "Puppeteer UI")
     {
         _apiHubMain = apiHubMain;
         _aliasTable = aliasTable;
+        _clientData = clientData;
         _components = components;
-        _puppeteerHandler = handler;
-        _userPairListHandler = userPairListHandler;
+        _handler = handler;
+        _pairList = pairList;
         _clientConfigs = clientConfigs;
         _clientService = clientService;
         _cosmetics = cosmetics;
@@ -62,10 +70,15 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         RespectCloseHotkey = false;
     }
 
+    private string AliasSearchString = string.Empty;
+    private int LastHoveredIndex = -1;
     private bool isEditingTriggerOptions = false;
     private string UnsavedTriggerPhrase = string.Empty;
     private string UnsavedNewStartChar = string.Empty;
     private string UnsavedNewEndChar = string.Empty;
+    private DateTime LastSaveTime = DateTime.MinValue;
+    private Guid ExpandedAliasItem = Guid.Empty;
+
 
     private bool ThemePushed = false;
     protected override void PreDrawInternal()
@@ -131,17 +144,16 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 float width = ImGui.GetContentRegionAvail().X;
 
                 // show the search filter just above the contacts list to form a nice separation.
-                _userPairListHandler.DrawSearchFilter(width, ImGui.GetStyle().ItemInnerSpacing.X, false);
+                _pairList.DrawSearchFilter(width, ImGui.GetStyle().ItemInnerSpacing.X, false);
                 ImGui.Separator();
                 using (ImRaii.Child($"###PuppeteerList", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
-                {
-                    _userPairListHandler.DrawPairListSelectable(width, true, 2);
-                }
+                    _pairList.DrawPairListSelectable(width, true, 2);
             }
         }
 
         ImGui.TableNextColumn();
-        using (ImRaii.Child($"###PuppeteerRightSide", Vector2.Zero, false)) DrawPuppeteer(cellPadding);
+        using (ImRaii.Child($"###PuppeteerRightSide", ImGui.GetContentRegionAvail(), false)) 
+            DrawPuppeteer(cellPadding);
     }
 
 
@@ -149,7 +161,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private void DrawPuppeteer(Vector2 DefaultCellPadding)
     {
         // update the display if we switched selected Pairs.
-        if (_puppeteerHandler.SelectedPair is null)
+        if (_handler.SelectedPair is null)
         {
             _uiShared.BigText("Select a Pair to view information!");
             return;
@@ -165,21 +177,21 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 DrawTriggerPhrases();
                 break;
             case PuppeteerTab.ClientAliasList:
-                ImGui.Text("Alias List Under Construction");
-                //_aliasTable.DrawAliasListTable(_puppeteerHandler.SelectedPair.UserData.UID, DefaultCellPadding.Y);
+                DrawClientAliasList(_handler.SelectedPair);
                 break;
             case PuppeteerTab.PairAliasList:
-                ImGui.Text("Alias List Under Construction");
+                DrawPairAliasList(_handler.SelectedPair);
                 break;
         }
-    }
 
-    private bool AliasDataListExists => _puppeteerHandler.SelectedPair?.LastAliasData?.AliasList.Any() ?? false;
-    private DateTime LastSaveTime = DateTime.MinValue;
+        // if the tab is not ClientAliasList and we are editing, cancel the edit.
+        if (_currentTab != PuppeteerTab.ClientAliasList && _handler.IsEditingList)
+            _handler.CancelEditingList();
+    }
 
     private void DrawPuppeteerHeader(Vector2 DefaultCellPadding)
     {
-        if (_puppeteerHandler.SelectedPair is null)
+        if (_handler.SelectedPair is null)
             return;
 
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
@@ -242,35 +254,32 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawClientTriggersBox()
     {
-        if (_puppeteerHandler.SelectedPair is null)
+        if (_handler.SelectedPair is null)
             return;
 
-        // push rounding window corners
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
         using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
         using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
         using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         // create the child window.
-        using (ImRaii.Child("##TriggerDataForClient", new Vector2(ImGui.GetContentRegionAvail().X, 0), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child("##TriggerDataForClient", new Vector2(ImGui.GetContentRegionAvail().X, 0), true, ImGuiWindowFlags.ChildWindow | ImGuiWindowFlags.NoScrollbar))
         {
             // Draw the client change actions.
             _components.DrawListenerClientGroup(isEditingTriggerOptions,
                 (newSits) =>
                 {
                     _logger.LogTrace($"Updated AlowSits permission: " + newSits);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowSitRequests", newSits), UpdateDir.Own));
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowSitRequests", newSits), UpdateDir.Own));
                 },
                 (newMotions) =>
                 {
                     _logger.LogTrace($"Updated AlowMotions permission: " + newMotions);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowMotionRequests", newMotions), UpdateDir.Own));
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowMotionRequests", newMotions), UpdateDir.Own));
                 },
                 (newAll) =>
                 {
                     _logger.LogTrace($"Updated AlowAll permission: " + newAll);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowAllRequests", newAll), UpdateDir.Own));
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowAllRequests", newAll), UpdateDir.Own));
                 },
                 (newEditState) =>
                 {
@@ -282,33 +291,33 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                         if (!UnsavedTriggerPhrase.IsNullOrEmpty())
                         {
                             _logger.LogTrace($"Updated own pair permission: TriggerPhrase to {UnsavedTriggerPhrase}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("TriggerPhrase", UnsavedTriggerPhrase), UpdateDir.Own));
+                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("TriggerPhrase", UnsavedTriggerPhrase), UpdateDir.Own));
                             UnsavedTriggerPhrase = string.Empty;
                         }
                         if (!UnsavedNewStartChar.IsNullOrEmpty())
                         {
                             _logger.LogTrace($"Updated own pair permission: StartChar to {UnsavedNewStartChar}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("StartChar", UnsavedNewStartChar[0]), UpdateDir.Own));
+                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("StartChar", UnsavedNewStartChar[0]), UpdateDir.Own));
                             UnsavedNewStartChar = string.Empty;
                         }
                         if (!UnsavedNewEndChar.IsNullOrEmpty())
                         {
                             _logger.LogTrace($"Updated own pair permission: EndChar to {UnsavedNewEndChar}");
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("EndChar", UnsavedNewStartChar[0]), UpdateDir.Own));
+                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("EndChar", UnsavedNewStartChar[0]), UpdateDir.Own));
                             UnsavedNewEndChar = string.Empty;
                         }
                         LastSaveTime = DateTime.Now;
                     }
                     else
                     {
-                        UnsavedTriggerPhrase = _puppeteerHandler.SelectedPair.OwnPerms.TriggerPhrase;
-                        UnsavedNewStartChar = _puppeteerHandler.SelectedPair.OwnPerms.StartChar.ToString();
-                        UnsavedNewEndChar = _puppeteerHandler.SelectedPair.OwnPerms.EndChar.ToString();
+                        UnsavedTriggerPhrase = _handler.SelectedPair.OwnPerms.TriggerPhrase;
+                        UnsavedNewStartChar = _handler.SelectedPair.OwnPerms.StartChar.ToString();
+                        UnsavedNewEndChar = _handler.SelectedPair.OwnPerms.EndChar.ToString();
                     }
                 });
 
             // setup the listener name if any.
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_puppeteerHandler.ListenerNameForPair());
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_handler.ListenerNameForPair());
             UiSharedService.AttachToolTip("The In Game Character that can use your trigger phrases below on you");
 
             // draw the trigger phrase box based on if we are editing or not.
@@ -316,18 +325,18 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 _components.DrawEditingTriggersWindow(ref UnsavedTriggerPhrase, ref UnsavedNewStartChar, ref UnsavedNewEndChar);
             else
                 _components.DrawTriggersWindow(
-                    _puppeteerHandler.SelectedPair.OwnPerms.TriggerPhrase,
-                    _puppeteerHandler.SelectedPair.OwnPerms.StartChar.ToString(),
-                    _puppeteerHandler.SelectedPair.OwnPerms.EndChar.ToString());
+                    _handler.SelectedPair.OwnPerms.TriggerPhrase,
+                    _handler.SelectedPair.OwnPerms.StartChar.ToString(),
+                    _handler.SelectedPair.OwnPerms.EndChar.ToString());
         }
     }
 
     private void DrawPairTriggersBox()
     {
-        if(_puppeteerHandler.SelectedPair?.LastAliasData is null || _clientService.ClientPlayer is null)
+        if(_handler.SelectedPair?.LastAliasData is null || _clientService.ClientPlayer is null)
             return;
 
-        var name = _puppeteerHandler.SelectedPair.UserData.UID;
+        var name = _handler.SelectedPair.UserData.UID;
         // push rounding window corners
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
         // push a pink border color for the window border.
@@ -350,71 +359,166 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                     HasNameStored = true,
                     ListenerName = name + "@" + worldName,
                 };
-                _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(_puppeteerHandler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered, UpdateDir.Own));
-                _logger.LogDebug("Sent Puppeteer Name to " + _puppeteerHandler.SelectedPair.GetNickAliasOrUid(), LoggerType.Permissions);
+                _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered, UpdateDir.Own));
+                _logger.LogDebug("Sent Puppeteer Name to " + _handler.SelectedPair.GetNickAliasOrUid(), LoggerType.Permissions);
             });
 
             // Draw out the listener name.
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_puppeteerHandler.SelectedPair.LastAliasData.HasNameStored 
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_handler.SelectedPair.LastAliasData.HasNameStored 
                 ? _clientService.ClientPlayer.GetNameWithWorld() : "Not Yet Listening!");
 
             // Draw the display for trigger phrases.
             _components.DrawTriggersWindow(
-                _puppeteerHandler.SelectedPair.PairPerms.TriggerPhrase,
-                _puppeteerHandler.SelectedPair.PairPerms.StartChar.ToString(),
-                _puppeteerHandler.SelectedPair.PairPerms.EndChar.ToString());
+                _handler.SelectedPair.PairPerms.TriggerPhrase,
+                _handler.SelectedPair.PairPerms.StartChar.ToString(),
+                _handler.SelectedPair.PairPerms.EndChar.ToString());
         }
     }
 
-    private void DrawPairAliasList(CharaAliasData? pairAliasData)
+    private void DrawClientAliasList(Pair? pair)
     {
-        if (!AliasDataListExists || MainHub.ServerStatus is not ServerState.Connected || pairAliasData == null)
+        if(pair is null) return;
+
+        // if we failed to get the storage, create one.
+        if(!_clientConfigs.AliasConfig.AliasStorage.TryGetValue(pair.UserData.UID, out var storage))
         {
-            _uiShared.BigText("Pair has no List for you!");
+            _logger.LogDebug("Creating new Alias Storage for " + pair.UserData.UID);
+            _clientConfigs.AliasConfig.AliasStorage[pair.UserData.UID] = new AliasStorage();
+            // perform a return so the next execution returns true.
             return;
         }
 
-        using var pairAliasListChild = ImRaii.Child("##PairAliasListChild", ImGui.GetContentRegionAvail(), false);
-        if (!pairAliasListChild) return;
-        // display a custom box icon for each search result obtained.
-        foreach (var aliasItem in pairAliasData.AliasList)
-            DrawAliasItemBox(aliasItem);
-    }
-
-    private void DrawAliasItemBox(AliasTrigger aliasItem)
-    {
-        // push rounding window corners
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // create the child window.
-
-        float height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (var patternResChild = ImRaii.Child("##PatternResult_" + aliasItem.InputCommand + aliasItem.OutputCommand, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child("##ClientAliasListChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
         {
-            if (!patternResChild) return;
+            // Formatting.
+            using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
+            using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(8,5));
+            using var framePadding = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(4, 2));
+            using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
+            using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
-            using (ImRaii.Group())
+            // Draw out the search filter, then the list of alias's below.
+            DrawSearchFilter(ref AliasSearchString, true, _handler.IsEditingList, (onEditToggle) =>
             {
+                if (onEditToggle)
+                    // we now wish to start editing, so clone the set.
+                    _handler.StartEditingList(storage);
+                else
+                    // if we are not editing, then we should save the changes.
+                    _handler.SaveModifiedList();
+            });
+            ImGui.Separator();
 
-                _uiShared.BooleanToColoredIcon(aliasItem.Enabled, false);
-                ImUtf8.SameLineInner();
-                _uiShared.IconText(FontAwesomeIcon.QuoteLeft, ImGuiColors.ParsedPink);
-                ImUtf8.SameLineInner();
-                UiSharedService.ColorText(aliasItem.InputCommand, ImGuiColors.ParsedPink);
-                UiSharedService.AttachToolTip("The string of words that will trigger the output command.");
-                ImUtf8.SameLineInner();
-                _uiShared.IconText(FontAwesomeIcon.QuoteRight, ImGuiColors.ParsedPink);
-                ImGui.Separator();
+            using var seperatorColor = ImRaii.PushColor(ImGuiCol.Separator, ImGuiColors.ParsedPink);
 
-                _uiShared.IconText(FontAwesomeIcon.LongArrowAltRight, ImGuiColors.ParsedPink);
-                ImUtf8.SameLineInner();
-                UiSharedService.TextWrapped(aliasItem.OutputCommand);
-                UiSharedService.AttachToolTip("The command that will be executed when the input phrase is said by the pair.");
+            var data = _handler.ClonedAliasListForEdit is not null ? _handler.ClonedAliasListForEdit : storage.AliasList;
+            var items = data.Where(trigger => trigger.Name.Contains(AliasSearchString, StringComparison.OrdinalIgnoreCase)).ToList();
+            var lightSets = _clientConfigs.StoredRestraintSets.Select(x => x.ToLightData()).ToList();
+            var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
+
+            foreach (var aliasItem in items)
+            {
+                if (_handler.IsEditingList)
+                {
+                    _components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData);
+                }
+                else
+                {
+                    var isExpanded = ExpandedAliasItem == aliasItem.AliasIdentifier;
+                    _components.DrawAliasItemBox(ref isExpanded, aliasItem, lightSets, ipcData);
+                    if(isExpanded != (ExpandedAliasItem == aliasItem.AliasIdentifier))
+                        ExpandedAliasItem = isExpanded ? aliasItem.AliasIdentifier : Guid.Empty;
+                }
             }
         }
+    }
+
+    private void DrawPairAliasList(Pair? pair)
+    {
+        if(pair is null) return;
+
+        // if any of our data is invalid, do not show.
+        if (MainHub.ServerStatus is not ServerState.Connected || pair.LastAliasData is null)
+        {
+            _uiShared.BigText("Not Connected, or required Data is null!");
+            return;
+        }
+
+        using (ImRaii.Child("##PairAliasListChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
+        {
+            // Formatting.
+            using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
+            using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(8, 5));
+            using var framePadding = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(4, 2));
+            using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
+            using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+            DrawSearchFilter(ref AliasSearchString, false);
+            ImGui.Separator();
+
+            if (pair.LastAliasData.AliasList.Count <= 0)
+            {
+                _uiShared.GagspeakBigText("No Alias's found from this Kinkster!");
+                return;
+            }
+
+            using var seperatorColor = ImRaii.PushColor(ImGuiCol.Separator, ImGuiColors.ParsedPink);
+
+            var items = pair.LastAliasData.AliasList.Where(a => a.Name.Contains(AliasSearchString, StringComparison.OrdinalIgnoreCase)).ToList();
+            var lightRestraints = pair.LastLightStorage?.Restraints ?? new List<LightRestraintData>();
+            var moodlesInfo = pair.LastIpcData ?? new CharaIPCData();
+
+            // Draw out the pairs list
+            foreach (var aliasItem in items)
+            {
+                var isExpanded = ExpandedAliasItem == aliasItem.AliasIdentifier;
+                _components.DrawAliasItemBox(ref isExpanded, aliasItem, lightRestraints, moodlesInfo);
+                if (isExpanded != (ExpandedAliasItem == aliasItem.AliasIdentifier))
+                    ExpandedAliasItem = isExpanded ? aliasItem.AliasIdentifier : Guid.Empty;
+            }
+        }
+    }
+
+    public void DrawSearchFilter(ref string AliasSearchString, bool showAddEdit, bool isEditing = false, Action<bool>? onEditToggle = null)
+    {
+        var editSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Edit);
+        var addNewSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Plus, "New Alias");
+        var clearSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
+
+        var spaceLeft = showAddEdit 
+            ? editSize.X + addNewSize + clearSize + spacing * 3 
+            : clearSize + spacing * 2;
+
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - spaceLeft);
+        if (ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255))
+            LastHoveredIndex = -1;
+        ImUtf8.SameLineInner();
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
+        {
+            AliasSearchString = string.Empty;
+            LastHoveredIndex = -1;
+        }
+        UiSharedService.AttachToolTip("Clear the search filter.");
+
+        // Dont show the rest if we are not editing.
+        if(!showAddEdit)
+            return;
+
+        ImUtf8.SameLineInner();
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: _handler.ClonedAliasListForEdit is null))
+        {
+            _logger.LogDebug("Adding new Alias");
+            _handler.ClonedAliasListForEdit?.Insert(0, new AliasTrigger());
+        }
+        UiSharedService.AttachToolTip("Add a new Alias to the list.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))
+            if (_uiShared.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
+                onEditToggle?.Invoke(!isEditing);
+        UiSharedService.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
     }
 }

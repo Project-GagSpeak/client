@@ -18,9 +18,8 @@ public class GagStorage
 
     public GagStorage()
     {
-        GagEquipData = Enum
-            .GetValues(typeof(GagType))
-            .Cast<GagType>().ToDictionary(gagType => gagType, gagType => new GagDrawData(ItemIdVars.NothingItem(EquipSlot.Head)));
+        GagEquipData = Enum.GetValues(typeof(GagType)).Cast<GagType>()
+            .ToDictionary(gagType => gagType, gagType => new GagDrawData(ItemIdVars.NothingItem(EquipSlot.Head)));
     }
 
     public Dictionary<GagType, AppliedSlot> GetAppliedSlotGagData()

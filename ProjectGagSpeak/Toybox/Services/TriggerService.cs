@@ -1,22 +1,16 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using GagSpeak.ChatMessages;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
-using Lumina.Excel.Sheets;
-using OtterGui;
 using GameAction = Lumina.Excel.Sheets.Action;
 
 namespace GagSpeak.Toybox.Services;
@@ -24,28 +18,23 @@ namespace GagSpeak.Toybox.Services;
 // handles the management of the connected devices or simulated vibrator.
 public class TriggerService : DisposableMediatorSubscriberBase
 {
-    private readonly ClientData _playerData;
+    private readonly ActionExecutor _actionExecuter;
     private readonly ToyboxFactory _playerMonitorFactory;
-    private readonly AppearanceManager _appearanceManager;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly IpcCallerMoodles _moodlesIpc;
     private readonly UnlocksEventManager _eventManager;
     private readonly ClientMonitorService _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly VibratorService _vibeService;
 
     public TriggerService(ILogger<TriggerService> logger, GagspeakMediator mediator,
-        ClientData playerData, ToyboxFactory playerMonitorFactory, 
-        AppearanceManager appearanceManager, ClientConfigurationManager clientConfigs, 
-        IpcCallerMoodles moodlesIpc, UnlocksEventManager eventManager,
-        ClientMonitorService clientMonitor, OnFrameworkService frameworkUtils, 
+        ActionExecutor actionExecuter, ToyboxFactory playerMonitorFactory,
+        ClientConfigurationManager clientConfigs, UnlocksEventManager eventManager,
+        ClientMonitorService clientMonitor, OnFrameworkService frameworkUtils,
         VibratorService vibeService) : base(logger, mediator)
     {
-        _playerData = playerData;
+        _actionExecuter = actionExecuter;
         _playerMonitorFactory = playerMonitorFactory;
-        _appearanceManager = appearanceManager;
         _clientConfigs = clientConfigs;
-        _moodlesIpc = moodlesIpc;
         _eventManager = eventManager;
         _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
@@ -80,31 +69,6 @@ public class TriggerService : DisposableMediatorSubscriberBase
     private void OnRestraintLock(RestraintSet set, Padlocks padlock, bool isLocking, string enactorUID)
     {
         if (isLocking) CheckActiveRestraintTriggers(set.RestraintId, NewState.Locked);
-    }
-
-    #region Trigger Checks
-    public void CheckActiveChatTriggers(XivChatType chatType, string senderNameWithWorld, string message)
-    {
-        // if the sender name is ourselves, ignore the message.
-        if (senderNameWithWorld == _clientMonitor.ClientPlayer.NameWithWorld()) return;
-
-        // Check to see if any active chat triggers are in the message
-        var channel = ChatChannel.GetChatChannelFromXivChatType(chatType);
-        if (channel == null)
-            return;
-
-        var matchingTriggers = _clientConfigs.ActiveChatTriggers
-            .Where(x => x.AllowedChannels.Any()
-                && x.AllowedChannels.Contains(channel.Value)
-                && x.FromPlayerName == senderNameWithWorld
-                && message.Contains(x.ChatText, StringComparison.Ordinal))
-            .ToList();
-        // if the triggers is not empty, perform logic, but return if there isnt any.
-        if (!matchingTriggers.Any())
-            return;
-
-        foreach (var trigger in matchingTriggers)
-            ExecuteTriggerAction(trigger, null);
     }
 
     private void CheckSpellActionTriggers(ActionEffectEntry actionEffect)
@@ -191,7 +155,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
         // execute this trigger action.
         if (highestPriorityTrigger != null)
-            ExecuteTriggerAction(highestPriorityTrigger, TriggerActionKind.Restraint);
+            ExecuteTriggerAction(highestPriorityTrigger);
     }
 
     private void CheckGagStateTriggers(GagType gagType, NewState newState)
@@ -212,137 +176,23 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
         // execute this trigger action.
         if (highestPriorityTrigger != null)
-            ExecuteTriggerAction(highestPriorityTrigger, TriggerActionKind.Gag);
+            ExecuteTriggerAction(highestPriorityTrigger);
     }
-    #endregion Trigger Checks
 
-    public async void ExecuteTriggerAction(Trigger trigger, TriggerActionKind? triggerTypeThatFired = null)
+    public async void ExecuteTriggerAction(Trigger trigger)
     {
-        if (triggerTypeThatFired is not null && trigger.TriggerActionKind == triggerTypeThatFired)
-        {
-            Logger.LogError("Why the hell are you trying to create a loophole? No. Just no.");
-            return;
-        }
-
         Logger.LogInformation("Your Trigger With Name " + trigger.Name + " and priority " + trigger.Priority + " triggering action "
-            + trigger.TriggerActionKind.ToName(), LoggerType.ToyboxTriggers);
+            + trigger.GetTypeName().ToName(), LoggerType.ToyboxTriggers);
 
-        switch (trigger.TriggerActionKind)
+        switch (trigger.GetTypeName())
         {
-            case TriggerActionKind.SexToy:
-                _vibeService.DeviceHandler.ExecuteVibeTrigger(trigger);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                Logger.LogInformation("Vibe Trigger Executed", LoggerType.ToyboxTriggers);
-                break;
-
-            case TriggerActionKind.ShockCollar:
-                if (_playerData.GlobalPerms == null || _playerData.GlobalPerms.GlobalShockShareCode.IsNullOrEmpty() || !_playerData.GlobalPerms.HasValidShareCode())
-                {
-                    Logger.LogError("Cannot apply a shock collar action without global permissions set.\n These are used for Trigger Limitations.");
-                }
-                _vibeService.ExecuteShockAction(_playerData.GlobalPerms!.GlobalShockShareCode, trigger.ShockTriggerAction);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                Logger.LogInformation("Applied Shock Collar action.", LoggerType.ToyboxTriggers);
-                break;
-
-            case TriggerActionKind.Restraint:
-                // if the set does not exist in our list of sets, log error and return.
-                if (!_clientConfigs.StoredRestraintSets.Any(x => x.RestraintId == trigger.RestraintTriggerAction.Identifier))
-                {
-                    Logger.LogError("Cannot apply a restraint set that does not exist in the list of restraint sets.");
-                    return;
-                }
-                // if a set is active and already locked, do not execute, and log error.                
-                var activeSet = _clientConfigs.GetActiveSet();
-                if (activeSet is not null && activeSet.Locked)
-                {
-                    Logger.LogError("Cannot apply a restraint set while another is active and locked.");
-                    return;
-                }
-                if (activeSet is not null)
-                {
-                    // dont do anything if the set is already applied.
-                    if (activeSet.RestraintId == trigger.RestraintTriggerAction.Identifier)
-                        return;
-
-                    // otherwise, swap the sets.
-                    Logger.LogInformation("Applying Restraint Set " + trigger.RestraintTriggerAction.Name + " with state " + NewState.Enabled, LoggerType.ToyboxTriggers);
-                    await _appearanceManager.RestraintSwapped(trigger.RestraintTriggerAction.Identifier);
+            case ActionExecutionType.SexToy:
+            case ActionExecutionType.ShockCollar:
+            case ActionExecutionType.Restraint:
+            case ActionExecutionType.Gag:
+            case ActionExecutionType.Moodle:
+                if (await _actionExecuter.ExecuteActionAsync(trigger.ExecutableAction, MainHub.UID))
                     UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                }
-                else
-                {
-                    Logger.LogInformation("Applying Restraint Set " + trigger.RestraintTriggerAction.Name + " with state " + NewState.Enabled, LoggerType.ToyboxTriggers);
-                    await _appearanceManager.EnableRestraintSet(trigger.RestraintTriggerAction.Identifier, MainHub.UID, true);
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                }
-                break;
-
-            case TriggerActionKind.Gag:
-                if (_playerData.AppearanceData == null) return;
-                // if a gag on the layer we want to apply to is already equipped and locked, do not execute, and log error.
-                if (_playerData.AppearanceData.GagSlots.Any(x => x.GagType.ToGagType() == trigger.GagTypeAction))
-                {
-                    Logger.LogInformation("Cannot apply a gag while another of the same type is already equipped.", LoggerType.ToyboxTriggers);
-                    return;
-                }
-                // find the first available slot to put it on
-                var availableSlot = _playerData.AppearanceData!.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
-                // If no slot is available, return.
-                if (availableSlot is -1)
-                {
-                    Logger.LogInformation("No Gag Slots are left to apply a gag to!", LoggerType.ToyboxTriggers);
-                    return;
-                }
-                Logger.LogInformation("Applying Gag Type " + trigger.GagTypeAction + " to layer " + (GagLayer)availableSlot);
-                await _appearanceManager.GagApplied((GagLayer)availableSlot, trigger.GagTypeAction, isSelfApplied: true);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                break;
-
-            case TriggerActionKind.Moodle:
-                if (!IpcCallerMoodles.APIAvailable)
-                {
-                    Logger.LogError("Moodles IPC is not available, cannot execute moodle trigger.");
-                    return;
-                }
-                // see if the moodle status guid exists in our list of stored statuses.
-                if (_playerData.LastIpcData is null)
-                {
-                    Logger.LogInformation("LastIpcData is null, cannot execute moodle trigger.", LoggerType.ToyboxTriggers);
-                    return;
-                }
-                if (!_playerData.LastIpcData.MoodlesStatuses.Any(x => x.GUID == trigger.MoodlesIdentifier))
-                {
-                    Logger.LogInformation("We do not have any moodles that are the same as our moodle identifier for this trigger!.", LoggerType.ToyboxTriggers);
-                    return;
-                }
-                if (_playerData.LastIpcData.MoodlesDataStatuses.Any(x => x.GUID == trigger.MoodlesIdentifier))
-                {
-                    Logger.LogInformation("This Moodle is already present on us, ignoring!", LoggerType.ToyboxTriggers);
-                    return;
-                }
-                // we have a valid moodle to set, so go ahead and try to apply it!
-                Logger.LogInformation("Applying moodle status with GUID " + trigger.MoodlesIdentifier, LoggerType.ToyboxTriggers);
-                await _moodlesIpc.ApplyOwnStatusByGUID(new List<Guid>() { trigger.MoodlesIdentifier });
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                break;
-
-            case TriggerActionKind.MoodlePreset:
-                if (!IpcCallerMoodles.APIAvailable)
-                {
-                    Logger.LogError("Moodles IPC is not available, cannot execute moodle trigger.");
-                    return;
-                }
-                // see if the Moodle preset guid exists in our list of stored presets.
-                if (_playerData.LastIpcData != null && _playerData.LastIpcData.MoodlesPresets.Any(x => x.Item1 == trigger.MoodlesIdentifier))
-                {
-                    // we have a valid Moodle to set, so go ahead and try to apply it!
-                    Logger.LogInformation("Applying Moodle preset with GUID " + trigger.MoodlesIdentifier, LoggerType.ToyboxTriggers);
-                    await _moodlesIpc.ApplyOwnPresetByGUID(trigger.MoodlesIdentifier);
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                    return;
-                }
-                Logger.LogDebug("Moodle preset with GUID " + trigger.MoodlesIdentifier + " not found in the list of presets.", LoggerType.ToyboxTriggers);
                 break;
         }
     }
@@ -362,7 +212,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
                     var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
                     var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
                     string actionStr = "UNKN ACT";
-                    if(_clientMonitor.TryGetAction(actionEffect.ActionID, out GameAction action)) actionStr = action.Name.ToString();
+                    if (_clientMonitor.TryGetAction(actionEffect.ActionID, out GameAction action)) actionStr = action.Name.ToString();
                     Logger.LogDebug($"Source:{sourceCharaStr}, Target: {targetCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
                         $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
                 }
@@ -398,7 +248,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
     private void UpdateTrackedPlayerHealth()
     {
-        if (!MonitoredPlayers.Any()) 
+        if (!MonitoredPlayers.Any())
             return;
 
         // By grouping triggers into a dictionary where the key is the player name, we reduce the need to filter triggers multiple times.
@@ -450,7 +300,6 @@ public class TriggerService : DisposableMediatorSubscriberBase
             player.UpdateHpChange();
         }
     }
-
 }
 
 

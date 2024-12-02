@@ -1,6 +1,3 @@
-using GagspeakAPI.Enums;
-using GagspeakAPI.Data;
-
 namespace GagSpeak.GagspeakConfiguration.Models;
 
 /// <summary>
@@ -10,7 +7,7 @@ namespace GagSpeak.GagspeakConfiguration.Models;
 public record SocialTrigger : Trigger
 {
     public override TriggerKind Type => TriggerKind.SocialAction;
-    
+
     // the social action to monitor.
     public SocialActionType SocialType { get; set; } = SocialActionType.DeathRollLoss;
 
@@ -18,19 +15,12 @@ public record SocialTrigger : Trigger
     {
         return new SocialTrigger
         {
-            TriggerIdentifier = TriggerIdentifier,
+            Identifier = Identifier,
             Enabled = Enabled,
             Priority = Priority,
             Name = Name,
             Description = Description,
-            StartAfter = StartAfter,
-            EndAfter = EndAfter,
-            TriggerActionKind = TriggerActionKind,
-            TriggerAction = TriggerAction,
-            ShockTriggerAction = ShockTriggerAction,
-            RestraintTriggerAction = RestraintTriggerAction,
-            GagTypeAction = GagTypeAction,
-            MoodlesIdentifier = MoodlesIdentifier,
+            ExecutableAction = ExecutableAction.DeepClone(),
             SocialType = SocialType
         };
     }

@@ -6,6 +6,7 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -471,7 +472,7 @@ public class ClientCallbackService
 
             case ToyboxUpdateType.TriggerToggled:
                 // verify that this item actually exists.
-                var trigger = _clientConfigs.TriggerConfig.TriggerStorage.Triggers.FirstOrDefault(x => x.TriggerIdentifier == idAffected);
+                var trigger = _clientConfigs.TriggerConfig.TriggerStorage.Triggers.FirstOrDefault(x => x.Identifier == idAffected);
                 if (trigger is null)
                 {
                     // Locate the trigger by the interactionGUID.

@@ -1,6 +1,3 @@
-using GagspeakAPI.Enums;
-using GagspeakAPI.Data;
-
 namespace GagSpeak.GagspeakConfiguration.Models;
 
 /// <summary>
@@ -19,7 +16,7 @@ public record SpellActionTrigger : Trigger
 
     // the ID of the action to listen to.
     public uint ActionID { get; set; } = uint.MaxValue;
-    
+
     // the threshold value that must be healed/dealt to trigger the action (-1 = full, 0 = onAction)
     public int ThresholdMinValue { get; set; } = -1;
     public int ThresholdMaxValue { get; set; } = 10000000;
@@ -28,19 +25,12 @@ public record SpellActionTrigger : Trigger
     {
         return new SpellActionTrigger
         {
-            TriggerIdentifier = TriggerIdentifier,
+            Identifier = Identifier,
             Enabled = Enabled,
             Priority = Priority,
             Name = Name,
             Description = Description,
-            StartAfter = StartAfter,
-            EndAfter = EndAfter,
-            TriggerActionKind = TriggerActionKind,
-            TriggerAction = TriggerAction,
-            ShockTriggerAction = ShockTriggerAction,
-            RestraintTriggerAction = RestraintTriggerAction,
-            GagTypeAction = GagTypeAction,
-            MoodlesIdentifier = MoodlesIdentifier,
+            ExecutableAction = ExecutableAction.DeepClone(),
             ActionKind = ActionKind,
             Direction = Direction,
             ActionID = ActionID,

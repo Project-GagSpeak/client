@@ -4,6 +4,7 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Enums;

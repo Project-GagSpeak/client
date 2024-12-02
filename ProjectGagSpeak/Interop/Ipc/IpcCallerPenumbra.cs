@@ -19,6 +19,7 @@ using GagSpeak.GagspeakConfiguration.Models;
 using Lumina.Excel.Sheets;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.StateManagers;
 
 namespace GagSpeak.Interop.Ipc;
 

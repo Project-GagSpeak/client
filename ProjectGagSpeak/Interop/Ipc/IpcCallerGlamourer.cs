@@ -18,6 +18,7 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.StateManagers;
 
 namespace GagSpeak.Interop.Ipc;
 

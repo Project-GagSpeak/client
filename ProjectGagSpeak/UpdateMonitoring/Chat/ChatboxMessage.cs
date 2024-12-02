@@ -161,9 +161,6 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
             return;
         }
 
-        // route to scan for any active triggers. (block outgoing tells because otherwise they always come up as from the recipient).
-        if (type != XivChatType.TellOutgoing) _triggers.CheckActiveChatTriggers(type, senderName + "@" + senderWorld, message.TextValue);
-
         // return if the message type is not in our valid chat channels for puppeteer.
         if (_playerInfo.CoreDataNull || !_mainConfig.Current.ChannelsPuppeteer.Contains(channel.Value))
             return;
@@ -172,15 +169,12 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
         var globalTriggers = _playerInfo.GlobalPerms?.GlobalTriggerPhrase.Split('|').ToList() ?? new List<string>();
         if (_puppeteerHandler.IsValidTriggerWord(globalTriggers, message, out string matchedTrigger))
         {
-            // convert everything to PuppeteerPerms
-            var permsGlobal = new PuppeteerHandler.PuppeteerPerms(
-                _playerInfo.GlobalPerms!.GlobalAllowSitRequests,
-                _playerInfo.GlobalPerms.GlobalAllowMotionRequests,
-                _playerInfo.GlobalPerms.GlobalAllowAllRequests);
-            // the message did contain the trigger word, to obtain the message to send.
-            SeString msgToSend = _puppeteerHandler.GetMessageFromTrigger(matchedTrigger, permsGlobal, message, type);
-
-            if (msgToSend.TextValue.IsNullOrEmpty())
+            // check permissions.
+            _playerInfo.GlobalPerms!.PuppetPerms(out bool sit, out bool emote, out bool all);
+            SeString msgToSend = _puppeteerHandler.ParseOutputFromGlobal(matchedTrigger, message, type, sit, emote, all);
+            
+            // escape early if fail.
+            if (msgToSend.TextValue.IsNullOrEmpty()) 
                 return;
 
             // enqueue the message and log success
@@ -191,21 +185,14 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
         // check for puppeteer pair triggers
         if (SenderIsInPuppeteerListeners(senderName, senderWorld, out Pair pair))
         {
+            // get our triggers for the pair.
             var pairTriggers = pair.OwnPerms.TriggerPhrase.Split('|').ToList();
+            // check if the message contains our trigger phrase.
             if (_puppeteerHandler.IsValidTriggerWord(pairTriggers, message, out string matchedPairTrigger))
             {
+                // log success
                 Logger.LogInformation(senderName + " used your pair trigger phrase to make you execute a message!");
-                var permsPair = new PuppeteerHandler.PuppeteerPerms(pair.OwnPerms.AllowSitRequests,
-                    pair.OwnPerms.AllowMotionRequests, pair.OwnPerms.AllowAllRequests,
-                    pair.OwnPerms.StartChar, pair.OwnPerms.EndChar);
-
-                SeString msgToSend = _puppeteerHandler.GetMessageFromTrigger(matchedPairTrigger, permsPair, message, type, pair.UserData.UID);
-
-                if (msgToSend.TextValue.IsNullOrEmpty())
-                    return;
-
-                Logger.LogInformation(senderName + " used your pair trigger phrase to make you execute a message!", LoggerType.Puppeteer);
-                EnqueueMessage("/" + msgToSend.TextValue);
+                _puppeteerHandler.ParseOutputAndExecute(matchedPairTrigger, message, type, pair);
             }
         }
     }

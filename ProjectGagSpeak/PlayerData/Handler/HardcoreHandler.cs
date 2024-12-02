@@ -1,11 +1,10 @@
 using Dalamud.Game.ClientState.Objects;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
@@ -14,7 +13,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using System.Numerics;
-using System.Reflection.Metadata;
 using static GagspeakAPI.Extensions.GlobalPermExtensions;
 
 namespace GagSpeak.PlayerData.Handlers;
@@ -34,8 +32,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
         ClientConfigurationManager clientConfigs, ClientData playerData,
-        AppearanceManager appearanceHandler, PairManager pairManager, MainHub apiHubMain, 
-        MoveController moveController, ChatSender chatSender, EmoteMonitor emoteMonitor, 
+        AppearanceManager appearanceHandler, PairManager pairManager, MainHub apiHubMain,
+        MoveController moveController, ChatSender chatSender, EmoteMonitor emoteMonitor,
         ITargetManager targetManager) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
@@ -114,7 +112,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         if (newState is NewState.Enabled)
         {
             LastMovementTime = DateTimeOffset.UtcNow;
-            Logger.LogDebug("Following UID: [" + _playerData.GlobalPerms?.ForcedFollow.HardcorePermUID()+"]", LoggerType.HardcoreMovement);
+            Logger.LogDebug("Following UID: [" + _playerData.GlobalPerms?.ForcedFollow.HardcorePermUID() + "]", LoggerType.HardcoreMovement);
             // grab the pair from the pair manager to obtain its game object and begin following it.
             var pairToFollow = _pairManager.DirectPairs.FirstOrDefault(pair => pair.UserData.UID == _playerData.GlobalPerms?.ForcedFollow.HardcorePermUID());
             if (pairToFollow is null)
@@ -199,7 +197,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 // if its not the expected cycle pose, we need to cycle the emote into the correct state.
                 if (currentCyclePose != ForcedEmoteState.CyclePoseByte)
                 {
-                    Logger.LogDebug("Your CyclePose State ["+ currentCyclePose + "] does not match the requested cycle pose state. ["+ ForcedEmoteState.CyclePoseByte + "]");
+                    Logger.LogDebug("Your CyclePose State [" + currentCyclePose + "] does not match the requested cycle pose state. [" + ForcedEmoteState.CyclePoseByte + "]");
                     // After this, we need to handle our current cycle pose state,
                     if (!EmoteMonitor.IsCyclePoseTaskRunning)
                         _emoteMonitor.ForceCyclePose(ForcedEmoteState.CyclePoseByte);

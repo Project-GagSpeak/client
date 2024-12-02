@@ -1,6 +1,3 @@
-using GagspeakAPI.Data;
-using GagspeakAPI.Enums;
-
 namespace GagSpeak.GagspeakConfiguration.Models;
 
 /// <summary>
@@ -12,7 +9,7 @@ public record HealthPercentTrigger : Trigger
     public override TriggerKind Type => TriggerKind.HealthPercent;
 
     // Player Name to monitor the health % of. use format Player Name@World
-    public string PlayerToMonitor { get; set; } = string.Empty; 
+    public string PlayerToMonitor { get; set; } = string.Empty;
 
     // if allowing percentageHealth
     public bool UsePercentageHealth { get; set; } = false;
@@ -30,19 +27,12 @@ public record HealthPercentTrigger : Trigger
     {
         return new HealthPercentTrigger
         {
-            TriggerIdentifier = TriggerIdentifier,
+            Identifier = Identifier,
             Enabled = Enabled,
             Priority = Priority,
             Name = Name,
             Description = Description,
-            StartAfter = StartAfter,
-            EndAfter = EndAfter,
-            TriggerActionKind = TriggerActionKind,
-            TriggerAction = TriggerAction,
-            ShockTriggerAction = ShockTriggerAction,
-            RestraintTriggerAction = RestraintTriggerAction,
-            GagTypeAction = GagTypeAction,
-            MoodlesIdentifier = MoodlesIdentifier,
+            ExecutableAction = ExecutableAction.DeepClone(),
             PlayerToMonitor = PlayerToMonitor,
             UsePercentageHealth = UsePercentageHealth,
             PassKind = PassKind,

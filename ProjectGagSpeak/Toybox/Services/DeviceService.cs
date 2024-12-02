@@ -1,9 +1,11 @@
 using Buttplug.Client;
 using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.InterfaceConverters;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Data;
 using GagSpeak.UI;
+using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.Toybox.Controllers;
 
@@ -355,7 +357,7 @@ public class DeviceService : DisposableMediatorSubscriberBase
         }
     }
 
-    public void ExecuteVibeTrigger(Trigger trigger)
+    public void ExecuteVibeTrigger(SexToyAction sexToyAction)
     {
         // if we are not connected do not allow
         if (!ConnectedToIntiface || ButtPlugClient == null)

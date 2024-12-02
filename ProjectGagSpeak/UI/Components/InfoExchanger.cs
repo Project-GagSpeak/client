@@ -155,9 +155,6 @@ public class AccountInfoExchanger
                 Trigger? triggerAbstract = null;
                 switch (triggerType)
                 {
-                    case TriggerKind.Chat:
-                        triggerAbstract = triggerToken.ToObject<ChatTrigger>()!;
-                        break;
                     case TriggerKind.SpellAction:
                         triggerAbstract = triggerToken.ToObject<SpellActionTrigger>()!;
                         break;

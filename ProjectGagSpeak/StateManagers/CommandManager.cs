@@ -11,7 +11,7 @@ using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using OtterGui.Classes;
 
-namespace GagSpeak.Services;
+namespace GagSpeak.StateManagers;
 
 /// <summary> Handles all of the commands that are used in the plugin. </summary>
 public sealed class CommandManager : IDisposable

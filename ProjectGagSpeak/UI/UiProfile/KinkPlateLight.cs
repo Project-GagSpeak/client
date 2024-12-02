@@ -163,6 +163,9 @@ public class KinkPlateLight
             // display it, it should be green if connected and red when not.
             ImGui.TextColored(ImGuiColors.ParsedPink, displayName);
         }
+#if DEBUG
+        UiSharedService.CopyableDisplayText(userData.UID);
+#endif
     }
 
     private void DrawDescription(ImDrawListPtr drawList, KinkPlate profile, UserData userData, bool isPair)

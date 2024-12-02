@@ -27,6 +27,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Migrations;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.StateManagers;
 using GagSpeak.Toybox.Controllers;
 using GagSpeak.Toybox.Data;
 using GagSpeak.Toybox.Services;
@@ -351,6 +352,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PiShockProvider>()
 
         // Service Services
+        .AddSingleton<ActionExecutor>()
         .AddSingleton<TutorialService>()
         .AddSingleton<Tutorial>()
         .AddSingleton<AchievementsService>()

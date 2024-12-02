@@ -1,3 +1,6 @@
+using GagSpeak.Hardcore.ForcedStay;
+using GagSpeak.InterfaceConverters;
+
 namespace GagSpeak.GagspeakConfiguration.Models;
 
 /// <summary>
@@ -8,5 +11,5 @@ namespace GagSpeak.GagspeakConfiguration.Models;
 [Serializable]
 public record TriggerStorage
 {
-    public List<Trigger> Triggers { get; set; } = [];
+    public List<Trigger> Triggers { get; set; } = new();
 }

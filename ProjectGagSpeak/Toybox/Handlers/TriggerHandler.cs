@@ -1,5 +1,6 @@
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.StateManagers;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.PlayerData.Handlers;
@@ -22,8 +23,8 @@ public class TriggerHandler
     public void StartEditingTrigger(Trigger trigger)
     {
         ClonedTriggerForEdit = trigger.DeepClone();
-        Guid originalID = trigger.TriggerIdentifier; // Prevent storing the trigger ID by reference.
-        ClonedTriggerForEdit.TriggerIdentifier = originalID; // Ensure the ID remains the same here.
+        Guid originalID = trigger.Identifier; // Prevent storing the trigger ID by reference.
+        ClonedTriggerForEdit.Identifier = originalID; // Ensure the ID remains the same here.
     }
 
     public void CancelEditingTrigger() => ClonedTriggerForEdit = null;
@@ -33,7 +34,7 @@ public class TriggerHandler
         if (ClonedTriggerForEdit is null)
             return;
         // locate the restraint set that contains the matching guid.
-        var triggerIdx = Triggers.FindIndex(x => x.TriggerIdentifier == ClonedTriggerForEdit.TriggerIdentifier);
+        var triggerIdx = Triggers.FindIndex(x => x.Identifier == ClonedTriggerForEdit.Identifier);
         if (triggerIdx == -1)
             return;
         // update that set with the new cloned set.
@@ -50,8 +51,8 @@ public class TriggerHandler
     }
 
     public void EnableTrigger(Trigger trigger)
-    => _toyboxStateManager.EnableTrigger(trigger.TriggerIdentifier, MainHub.UID);
+    => _toyboxStateManager.EnableTrigger(trigger.Identifier, MainHub.UID);
 
     public void DisableTrigger(Trigger trigger)
-        => _toyboxStateManager.DisableTrigger(trigger.TriggerIdentifier);
+        => _toyboxStateManager.DisableTrigger(trigger.Identifier);
 }

@@ -73,6 +73,10 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
             ? UserDataToDisplay.AliasOrUID
             : "Kinkster-" + UserDataToDisplay.UID.Substring(UserDataToDisplay.UID.Length - 3);
 
+        #if DEBUG
+        DisplayName = UserDataToDisplay.UID;
+        #endif
+
         var drawList = ImGui.GetWindowDrawList();
         // clip based on the region of our draw space.
         _lightUI.RectMin = drawList.GetClipRectMin();

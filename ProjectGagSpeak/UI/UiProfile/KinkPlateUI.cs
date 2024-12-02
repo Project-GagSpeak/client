@@ -7,6 +7,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;

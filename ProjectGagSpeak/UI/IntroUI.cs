@@ -2,6 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.GagspeakConfiguration;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Services.ConfigurationServices;
@@ -266,8 +267,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         // if the primary account exists but does not have successful connection, load that into the information.
         if (_serverConfigs.TryGetPrimaryAuth(out Authentication primaryAuth))
         {
-            _logger.LogDebug("Primary Auth Exists, loading information.");
-            if(primaryAuth.SecretKey.HasHadSuccessfulConnection is false)
+            if(!primaryAuth.SecretKey.Key.IsNullOrEmpty() && primaryAuth.SecretKey.HasHadSuccessfulConnection is false)
             {
                 _aquiredUID = "RECOVERED-FROM-FAILED-CONNECTION";
                 _secretKey = primaryAuth.SecretKey.Key;

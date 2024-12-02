@@ -7,16 +7,23 @@ namespace GagSpeak.Utils;
 public static class GenericHelpers
 {
     public static IEnumerable<Padlocks> NoOwnerPadlockList = Enum.GetValues<Padlocks>()
-        .Cast<Padlocks>()
         .Where(p => p is not Padlocks.OwnerPadlock && p is not Padlocks.OwnerTimerPadlock
             && p is not Padlocks.DevotionalPadlock && p is not Padlocks.DevotionalTimerPadlock
-            && p is not Padlocks.MimicPadlock)
-        .ToArray();
+            && p is not Padlocks.MimicPadlock);
 
     public static IEnumerable<Padlocks> NoMimicPadlockList = Enum.GetValues<Padlocks>()
-        .Cast<Padlocks>()
-        .Where(p => p is not Padlocks.MimicPadlock)
-        .ToArray();
+        .Where(p => p is not Padlocks.MimicPadlock);
+
+    public static IEnumerable<ActionExecutionType> ActionTypesRestraint => Enum.GetValues<ActionExecutionType>()
+        .Where(x => x is not ActionExecutionType.Restraint && x is not ActionExecutionType.TextOutput);
+    public static IEnumerable<ActionExecutionType> ActionTypesOnGag => Enum.GetValues<ActionExecutionType>()
+        .Where(x => x is not ActionExecutionType.Gag && x is not ActionExecutionType.TextOutput);
+    public static IEnumerable<ActionExecutionType> ActionTypesTrigger => Enum.GetValues<ActionExecutionType>()
+        .Where(x => x is not ActionExecutionType.TextOutput);
+
+    public static IEnumerable<NewState> RestrictedTriggerStates => Enum.GetValues<NewState>()
+        .Where(x => x is not NewState.Disabled && x is not NewState.Unlocked);
+
 
     /// <summary> A generic function to iterate through a collection and perform an action on each item </summary>
     public static void Each<T>(this IEnumerable<T> collection, Action<T> function)

@@ -485,7 +485,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
             UiSharedService.ColorText("Trigger Action Kind:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
-            ImGui.Text(SelectedTrigger.TriggerActionKind.ToString());
+            ImGui.Text(SelectedTrigger.GetTypeName().ToName());
         }
     }
 
@@ -606,7 +606,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         LoadedCursedItems = importedCursedItems.Where(x => _clientConfigs.IsGuidInItems(x.LootId) is false).ToList();
 
         var importedTriggers = _infoExchanger.GetTriggersFromUID(uid);
-        LoadedTriggers = importedTriggers.Where(x => _clientConfigs.IsGuidInTriggers(x.TriggerIdentifier) is false).ToList();
+        LoadedTriggers = importedTriggers.Where(x => _clientConfigs.IsGuidInTriggers(x.Identifier) is false).ToList();
         
         var importedAlarms = _infoExchanger.GetAlarmsFromUID(uid);
         LoadedAlarms = importedAlarms.Where(x => _clientConfigs.IsGuidInAlarms(x.Identifier) is false).ToList();

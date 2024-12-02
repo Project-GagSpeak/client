@@ -15,15 +15,14 @@ public class AliasStorage
     public string CharacterNameWithWorld { get; set; } = string.Empty;
     public List<AliasTrigger> AliasList { get; set; } = [];
 
-
-
     public List<AliasTrigger> CloneAliasList()
     {
         return AliasList.Select(alias => new AliasTrigger
         {
             Enabled = alias.Enabled,
+            Name = alias.Name,
             InputCommand = alias.InputCommand,
-            OutputCommand = alias.OutputCommand
+            Executions = alias.Executions
         }).ToList();
     }
 

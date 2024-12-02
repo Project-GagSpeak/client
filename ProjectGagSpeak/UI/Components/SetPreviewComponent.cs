@@ -3,7 +3,9 @@ using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
 using ImGuiNET;
+using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using OtterGui.Widgets;
@@ -30,6 +32,9 @@ public class SetPreviewComponent
     private Vector2 GameIconSize;
     private readonly GameItemCombo[] ItemCombos;
     private readonly StainColorCombo StainColorCombos;
+    // A temp storage container for the currently previewed restraint set.
+    // Useful for loading in light restraint data without constantly resolving the item on every drawFrame.
+    private Dictionary<EquipSlot, EquipItem> CachedPreview = new();
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
@@ -50,11 +55,29 @@ public class SetPreviewComponent
         DrawRestraintSetDisplay(set);
     }
 
-    public void DrawRestraintSetPreviewTooltip(RestraintSet set)
+    public void DrawRestraintOnHover(RestraintSet set)
     {
-        ImGui.BeginTooltip();
-        DrawRestraintSetDisplay(set);
-        ImGui.EndTooltip();
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.BeginTooltip();
+            DrawRestraintSetDisplay(set);
+            ImGui.EndTooltip();
+        }
+    }
+
+    public void DrawLightRestraintOnHover(LightRestraintData lightSet)
+    {
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.BeginTooltip();
+            DrawRestraintSetDisplay(lightSet);
+            ImGui.EndTooltip();
+        }
+        else
+        {
+            // clear the cached preview
+            CachedPreview.Clear();
+        }
     }
 
     public void DrawEquipSlotPreview(GagDrawData refData, float totalLength)
@@ -107,6 +130,40 @@ public class SetPreviewComponent
             }
         }
     }
+    private void DrawRestraintSetDisplay(LightRestraintData lightSet)
+    {
+        if (CachedPreview.IsNullOrEmpty())
+        {
+            ImGui.Text("Loading...");
+            LoadCacheFromLightSet(lightSet);
+            return;
+        }
+
+        using var equipIconsTable = ImRaii.Table("equipIconsTable", 2, ImGuiTableFlags.RowBg);
+        if (!equipIconsTable) return;
+
+        var width = GameIconSize.X;
+        ImGui.TableSetupColumn("EquipmentSlots", ImGuiTableColumnFlags.WidthFixed, width);
+        ImGui.TableSetupColumn("AccessorySlots", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableNextRow(); ImGui.TableNextColumn();
+
+        // draw out the equipment slots (maybe add support for stains but idk lol.)
+        foreach (var slot in EquipSlotExtensions.EquipmentSlots)
+            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+        ImGui.TableNextColumn();
+        // draw out the accessory slots (maybe add support for stains but idk lol.)
+        foreach (var slot in EquipSlotExtensions.AccessorySlots)
+            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+    }
+
+    private void LoadCacheFromLightSet(LightRestraintData lightSet)
+    {
+        foreach (var slot in EquipSlotExtensions.EqdpSlots)
+        {
+            var customIdForSlot = lightSet.AffectedSlots.FirstOrDefault(x => x.Slot == (int)slot)?.CustomItemId ?? ulong.MaxValue;
+            CachedPreview[slot] = ItemIdVars.Resolve(slot, customIdForSlot);
+        }
+    }
 
     private void DrawStain(RestraintSet refSet, EquipSlot slot)
     {
@@ -117,11 +174,8 @@ public class SetPreviewComponent
             using var id = ImUtf8.PushId(index);
             var found = _textureHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo, but dont make it hoverable
-            using (var disabled = ImRaii.Disabled(true))
-            {
-                StainColorCombos.Draw($"##stain{refSet.DrawData[slot].Slot}",
-                    stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
-            }
+            using (ImRaii.Disabled(true))
+                StainColorCombos.Draw($"##stain{refSet.DrawData[slot].Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
         }
     }
 
@@ -134,11 +188,8 @@ public class SetPreviewComponent
             using var id = ImUtf8.PushId(index);
             var found = _textureHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo, but dont make it hoverable
-            using (var disabled = ImRaii.Disabled(true))
-            {
-                StainColorCombos.Draw($"##EquipStainPreview{refEquipItem.Slot}",
-                    stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
-            }
+            using (ImRaii.Disabled(true))
+                StainColorCombos.Draw($"##EquipStainPreview{refEquipItem.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
         }
     }
 
