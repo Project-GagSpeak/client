@@ -77,8 +77,6 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private string UnsavedNewStartChar = string.Empty;
     private string UnsavedNewEndChar = string.Empty;
     private DateTime LastSaveTime = DateTime.MinValue;
-    private Guid ExpandedAliasItem = Guid.Empty;
-
 
     private bool ThemePushed = false;
     protected override void PreDrawInternal()
@@ -219,20 +217,29 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerYpos);
             var currentYpos = ImGui.GetCursorPosY();
             if (_uiShared.IconTextButton(FontAwesomeIcon.Microphone, "Triggers", null, false, _currentTab == PuppeteerTab.TriggerPhrases))
+            {
                 _currentTab = PuppeteerTab.TriggerPhrases;
+                _components.ExpandedAliasItems.Clear();
+            }
             UiSharedService.AttachToolTip("View your set trigger phrase, your pairs, and use case examples!");
 
             // draw revert button at the same location but right below that button
             ImGui.SameLine();
             ImGui.SetCursorPosY(currentYpos);
             if (_uiShared.IconTextButton(FontAwesomeIcon.EllipsisV, "Your List", disabled: _currentTab is PuppeteerTab.ClientAliasList))
+            {
                 _currentTab = PuppeteerTab.ClientAliasList;
+                _components.ExpandedAliasItems.Clear();
+            }
             UiSharedService.AttachToolTip("Configure your Alias List.");
 
             ImGui.SameLine();
             ImGui.SetCursorPosY(currentYpos);
             if (_uiShared.IconTextButton(FontAwesomeIcon.EllipsisV, "Pair's List", disabled: _currentTab == PuppeteerTab.PairAliasList))
+            {
                 _currentTab = PuppeteerTab.PairAliasList;
+                _components.ExpandedAliasItems.Clear();
+            }
             UiSharedService.AttachToolTip("View this Pair's Alias List.");
         }
     }
@@ -413,22 +420,19 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             using var seperatorColor = ImRaii.PushColor(ImGuiCol.Separator, ImGuiColors.ParsedPink);
 
             var data = _handler.ClonedAliasListForEdit is not null ? _handler.ClonedAliasListForEdit : storage.AliasList;
-            var items = data.Where(trigger => trigger.Name.Contains(AliasSearchString, StringComparison.OrdinalIgnoreCase)).ToList();
+            List<AliasTrigger> items = data.Where(trigger => trigger.Name.Contains(AliasSearchString, StringComparison.OrdinalIgnoreCase)).ToList();
             var lightSets = _clientConfigs.StoredRestraintSets.Select(x => x.ToLightData()).ToList();
             var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
 
-            foreach (var aliasItem in items)
+            for(var i = 0; i < items.Count; i++)
             {
                 if (_handler.IsEditingList)
                 {
-                    _components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData);
+                    _components.DrawAliasItemEditBox(items[i], lightSets, ipcData);
                 }
                 else
                 {
-                    var isExpanded = ExpandedAliasItem == aliasItem.AliasIdentifier;
-                    _components.DrawAliasItemBox(ref isExpanded, aliasItem, lightSets, ipcData);
-                    if(isExpanded != (ExpandedAliasItem == aliasItem.AliasIdentifier))
-                        ExpandedAliasItem = isExpanded ? aliasItem.AliasIdentifier : Guid.Empty;
+                    _components.DrawAliasItemBox(items[i].AliasIdentifier.ToString()+i, items[i], lightSets, ipcData);
                 }
             }
         }
@@ -471,12 +475,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var moodlesInfo = pair.LastIpcData ?? new CharaIPCData();
 
             // Draw out the pairs list
-            foreach (var aliasItem in items)
+            for (var i = 0; i < items.Count; i++)
             {
-                var isExpanded = ExpandedAliasItem == aliasItem.AliasIdentifier;
-                _components.DrawAliasItemBox(ref isExpanded, aliasItem, lightRestraints, moodlesInfo);
-                if (isExpanded != (ExpandedAliasItem == aliasItem.AliasIdentifier))
-                    ExpandedAliasItem = isExpanded ? aliasItem.AliasIdentifier : Guid.Empty;
+                _components.DrawAliasItemBox(items[i].AliasIdentifier.ToString() + i, items[i], lightRestraints, moodlesInfo);
             }
         }
     }

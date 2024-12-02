@@ -159,7 +159,7 @@ public sealed class ActionExecutor
         if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
         {
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
-            ChatBoxMessage.EnqueueMessage(remainingMessage.TextValue);
+            ChatBoxMessage.EnqueueMessage("/"+remainingMessage.TextValue);
             return true;
         }
 
@@ -184,10 +184,19 @@ public sealed class ActionExecutor
 
         // if a set is active and already locked, do not execute, and log error.                
         var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is not null && activeSet.Locked)
+        if (activeSet is not null)
         {
-            _logger.LogError("Cannot apply a restraint set while current is locked!");
-            return false;
+            if (activeSet.Locked)
+            {
+                _logger.LogError("Cannot apply/remove a restraint set while current is locked!");
+                return false;
+            }
+            // This set is already enabled.
+            if (activeSet.RestraintId == restraintAction.OutputIdentifier && restraintAction.NewState is NewState.Enabled)
+            {
+                _logger.LogWarning("Set is already enabled, no need to re-enable.");
+                return false;
+            }
         }
 
         // if enabling.
@@ -216,12 +225,9 @@ public sealed class ActionExecutor
                 return false;
 
             // if the set is active, and the set is the one we want to disable, disable it.
-            if (activeSet.RestraintId == restraintAction.OutputIdentifier)
-            {
-                _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.", LoggerType.Restraints);
-                await _appearanceManager.DisableRestraintSet(restraintAction.OutputIdentifier, MainHub.UID);
-                return true;
-            }
+            _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
+            await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID);
+            return true;
         }
 
         return false; // Failure.

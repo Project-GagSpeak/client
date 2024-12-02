@@ -43,6 +43,8 @@ public class PuppeteerComponents
         _moodlesService = moodlesService;
     }
 
+    public Dictionary<string, bool> ExpandedAliasItems { get; set; } = new();
+
     private UserPairPermissions OwnPerms => _handler.SelectedPair?.OwnPerms ?? new UserPairPermissions();
     private UserEditAccessPermissions OwnEditPerms => _handler.SelectedPair?.OwnPermAccess ?? new UserEditAccessPermissions();
     private UserPairPermissions PairPerms => _handler.SelectedPair?.PairPerms ?? new UserPairPermissions();
@@ -219,10 +221,14 @@ public class PuppeteerComponents
 
     }
 
-    public void DrawAliasItemBox(ref bool isExpanded, AliasTrigger aliasItem, List<LightRestraintData> sets, CharaIPCData? moodles = null)
+    public void DrawAliasItemBox(string id, AliasTrigger aliasItem, List<LightRestraintData> sets, CharaIPCData? moodles = null)
     {
+        // if the id is not present in the dictionary, add it.
+        if (!ExpandedAliasItems.ContainsKey(id))
+            ExpandedAliasItems.Add(id, false);
+
         var storedOutput = aliasItem.CurrentTypes();
-        var storedOutputSize = isExpanded ? (storedOutput.Any() ? storedOutput.Count() : 1) : (storedOutput.Any() ? 1 : 0);
+        var storedOutputSize = ExpandedAliasItems[id] ? (storedOutput.Any() ? storedOutput.Count() : 1) : (storedOutput.Any() ? 1 : 0);
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var winFramePadHeight = ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().FramePadding.Y * 2;
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
@@ -245,9 +251,9 @@ public class PuppeteerComponents
             UiSharedService.AttachToolTip("The Alias Label given to help with searching and organization.");
 
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-            if(_uiShared.IconButton(isExpanded ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
-                isExpanded = !isExpanded;
-            UiSharedService.AttachToolTip(isExpanded ? "Collapse the Alias Item." : "Expand the Alias Item.");
+            if(_uiShared.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
+                ExpandedAliasItems[id] = !ExpandedAliasItems[id];
+            UiSharedService.AttachToolTip(ExpandedAliasItems[id] ? "Collapse the Alias Item." : "Expand the Alias Item.");
                         
             // cast a seperator Line here.
             ImGui.Separator();
@@ -287,7 +293,7 @@ public class PuppeteerComponents
                     "--SEP--Do not include the '/' in your output.");
 
                 // End viewing the rest if we meet the condition here.
-                if (!isExpanded && totalDisplayed >= storedOutputSize) 
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize) 
                     return;
                 totalDisplayed++;
             }
@@ -317,7 +323,7 @@ public class PuppeteerComponents
                     UiSharedService.AttachToolTip("The new state set on the targetted gag.");
                 }
                 // End viewing the rest if we meet the condition here.
-                if (!isExpanded && totalDisplayed >= storedOutputSize)
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
@@ -345,9 +351,8 @@ public class PuppeteerComponents
                     // any other type, list here.
                     else
                     {
-                        ImGui.TextUnformatted("Sets the new state:");
                         ImGui.SameLine();
-                        UiSharedService.ColorText(bindAction.NewState.ToString(), ImGuiColors.TankBlue);
+                        UiSharedService.ColorText("Disables", ImGuiColors.TankBlue);
                         UiSharedService.AttachToolTip("The new state applied to the restraint set.");
 
                         ImGui.SameLine();
@@ -356,7 +361,7 @@ public class PuppeteerComponents
                     }
                 }
                 // End viewing the rest if we meet the condition here.
-                if (!isExpanded && totalDisplayed >= storedOutputSize)
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
@@ -385,7 +390,7 @@ public class PuppeteerComponents
                     UiSharedService.ColorText(moodleInfo, ImGuiColors.TankBlue);
                 }
                 // End viewing the rest if we meet the condition here.
-                if (!isExpanded && totalDisplayed >= storedOutputSize)
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
@@ -422,7 +427,7 @@ public class PuppeteerComponents
                     }
                 }
                 // End viewing the rest if we meet the condition here.
-                if (!isExpanded && totalDisplayed >= storedOutputSize)
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
