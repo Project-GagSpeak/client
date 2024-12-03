@@ -50,30 +50,10 @@ public class TriggerConfigService : ConfigurationServiceBase<TriggerConfig>
         // Extract the old triggers
         JArray oldTriggers = oldConfigJson["Triggers"] as JArray ?? new JArray();
 
-        // Create a new array for the new triggers
-        JArray newTriggers = new JArray();
-
-        foreach (JObject oldTrigger in oldTriggers)
-        {
-            JObject newTrigger = new JObject
-            {
-                ["Identifier"] = oldTrigger["TriggerIdentifier"] ?? Guid.NewGuid().ToString(),
-                ["Enabled"] = oldTrigger["Enabled"] ?? false,
-                ["Priority"] = oldTrigger["Priority"] ?? 0,
-                ["Name"] = oldTrigger["Name"] ?? "",
-                ["Description"] = oldTrigger["Description"] ?? "",
-            };
-
-            // other stuff here.
-
-            // Add the new trigger to the list
-            newTriggers.Add(newTrigger);
-        }
-
         // Add the new triggers to the config
         newConfigJson["TriggerStorage"] = new JObject
         {
-            ["Triggers"] = newTriggers
+            ["Triggers"] = new JArray()
         };
 
         return newConfigJson;

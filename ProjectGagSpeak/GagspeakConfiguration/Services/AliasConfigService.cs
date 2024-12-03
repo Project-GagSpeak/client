@@ -45,9 +45,57 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
         // set the version to 1
         newConfigJson["Version"] = 1;
 
-        // perform our changes here.
+        // Migrate AliasStorage
+        var oldAliasStorage = oldConfigJson["AliasStorage"] as JObject;
+        if (oldAliasStorage != null)
+        {
+            JObject newAliasStorage = new();
+            foreach (var property in oldAliasStorage.Properties())
+            {
+                string key = property.Name;
+                JObject? oldAliasStorageValue = property.Value as JObject;
+                if (oldAliasStorageValue is not null)
+                {
+                    JObject newAliasStorageValue = new();
+                    newAliasStorageValue["HasNameStored"] = oldAliasStorageValue["HasNameStored"];
+                    newAliasStorageValue["CharacterNameWithWorld"] = oldAliasStorageValue["CharacterNameWithWorld"];
 
-        return oldConfigJson;
+                    // Migrate AliasList
+                    var oldAliasList = oldAliasStorageValue["AliasList"] as JArray;
+                    if (oldAliasList != null)
+                    {
+                        JArray newAliasList = new();
+                        foreach (var oldAliasItem in oldAliasList)
+                        {
+                            if (oldAliasItem is JObject oldAliasObject)
+                            {
+                                JObject newAliasItem = new();
+                                newAliasItem["AliasIdentifier"] = Guid.NewGuid().ToString();
+                                newAliasItem["Enabled"] = oldAliasObject["Enabled"];
+                                newAliasItem["Name"] = oldAliasObject["AliasLabel"];
+                                newAliasItem["InputCommand"] = oldAliasObject["InputCommand"];
+
+                                // Convert OutputCommand to Executions
+                                JObject executions = new();
+                                JObject textOutput = new();
+                                textOutput["ExecutionType"] = 0; // Assuming 0 is the enum value for TextOutput
+                                textOutput["OutputCommand"] = oldAliasObject["OutputCommand"];
+                                executions["TextOutput"] = textOutput;
+
+                                newAliasItem["Executions"] = executions;
+                                newAliasList.Add(newAliasItem);
+                            }
+                        }
+                        newAliasStorageValue["AliasList"] = newAliasList;
+                    }
+
+                    newAliasStorage[key] = newAliasStorageValue;
+                }
+            }
+            newConfigJson["AliasStorage"] = newAliasStorage;
+        }
+
+        return newConfigJson;
     }
 
     protected override AliasConfig DeserializeConfig(JObject configJson)
