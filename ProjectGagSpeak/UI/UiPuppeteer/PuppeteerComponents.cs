@@ -601,7 +601,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Invoke");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasGagState" + aliasItem.AliasIdentifier, 60f, Enum.GetValues<NewState>(), (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasGagState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         gagAction.NewState = i;
                         _handler.MadeAliasChangeSinceLastEdit = true;
@@ -634,7 +634,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Invoke");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasRestraintState" + aliasItem.AliasIdentifier, 60f, Enum.GetValues<NewState>(), (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasRestraintState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         bindAction.NewState = i;
                         _handler.MadeAliasChangeSinceLastEdit = true;
@@ -671,7 +671,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Apply");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasMoodleType" + aliasItem.AliasIdentifier, 75f, Enum.GetValues<IpcToggleType>(), (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasMoodleType" + aliasItem.AliasIdentifier, 90f, Enum.GetValues<IpcToggleType>(), (item) => item.ToString(), (i) =>
                     {
                         statusAction.MoodleType = i;
                         _handler.MadeAliasChangeSinceLastEdit = true;
