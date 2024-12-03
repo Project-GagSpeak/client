@@ -24,7 +24,7 @@ namespace GagSpeak.UpdateMonitoring.Chat;
 /// It is worth noting that this detection occurs after the message is sent to the server, and should not be
 /// depended on for translation prior to sending.
 /// </summary>
-public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
+public class ChatBoxMessage : DisposableMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _mainConfig;
     private readonly ClientData _playerInfo;
@@ -171,15 +171,8 @@ public unsafe class ChatBoxMessage : DisposableMediatorSubscriberBase
         {
             // check permissions.
             _playerInfo.GlobalPerms!.PuppetPerms(out bool sit, out bool emote, out bool all);
-            SeString msgToSend = _puppeteerHandler.ParseOutputFromGlobal(matchedTrigger, message, type, sit, emote, all);
-            
-            // escape early if fail.
-            if (msgToSend.TextValue.IsNullOrEmpty()) 
-                return;
-
-            // enqueue the message and log success
-            Logger.LogInformation(senderName + " used your global trigger phase to make you execute a message!", LoggerType.Puppeteer);
-            EnqueueMessage("/" + msgToSend.TextValue);
+            if (_puppeteerHandler.ParseOutputFromGlobalAndExecute(matchedTrigger, message, type, sit, emote, all))
+                return; // early return to prevent double trigger call.
         }
 
         // check for puppeteer pair triggers

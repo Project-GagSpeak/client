@@ -50,7 +50,7 @@ public sealed class ActionExecutor
 
         return actionExecutable.ExecutionType switch
         {
-            ActionExecutionType.TextOutput => await HandleTextAction(actionExecutable as TextAction, performerUID),
+            ActionExecutionType.TextOutput => HandleTextAction(actionExecutable as TextAction, performerUID),
             ActionExecutionType.Gag => await HandleGagAction(actionExecutable as GagAction, performerUID),
             ActionExecutionType.Restraint => await HandleRestraintAction(actionExecutable as RestraintAction, performerUID),
             ActionExecutionType.Moodle => await HandleMoodleAction(actionExecutable as MoodleAction, performerUID),
@@ -69,6 +69,62 @@ public sealed class ActionExecutor
             if (result && anySuccess) anySuccess = true;
         }
         if (anySuccess) onSuccess?.Invoke();
+    }
+    private bool HandleTextAction(TextAction? textAction, string performerUID)
+    {
+        if (textAction is null)
+        {
+            _logger.LogWarning("Executing Action is invalid, cannot execute Text Action.");
+            return false;
+        }
+
+        // construct the new SeString to send.
+        var remainingMessage = new SeString().Append(textAction.OutputCommand);
+        if (remainingMessage.TextValue.IsNullOrEmpty())
+        {
+            _logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
+            return false;
+        }
+
+        // apply bracket conversions.
+        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
+        // verify permissions are satisfied.
+        var executerUID = performerUID;
+        var sits = false;
+        var motions = false;
+        var all = false;
+        // if performer is self, use global perms, otherwise, use pair perms.
+        if(performerUID == MainHub.UID)
+        {
+            sits = _playerData.GlobalPerms?.GlobalAllowSitRequests ?? false;
+            motions = _playerData.GlobalPerms?.GlobalAllowMotionRequests ?? false;
+            all = _playerData.GlobalPerms?.GlobalAllowAllRequests ?? false;
+        }
+        else
+        {
+            var matchedPair = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == performerUID);
+            if (matchedPair is null)
+            {
+                _logger.LogWarning("No pair found for the performer, cannot execute Text Action.");
+                return false;
+            }
+
+            matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool all2, out char startChar, out char endChar);
+            sits = sits2;
+            motions = motions2;
+            all = all2;
+        }
+
+        // only apply it if the message meets the criteria for the sender.
+        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        {
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+            ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
+            return true;
+        }
+
+        // Implement text logic here
+        return false;
     }
 
     private async Task<bool> HandleGagAction(GagAction? gagAction, string performerUID)
@@ -123,47 +179,6 @@ public sealed class ActionExecutor
                 }
             }
         }
-        return false;
-    }
-
-    private async Task<bool> HandleTextAction(TextAction? textAction, string performerUID)
-    {
-        if (textAction is null)
-        {
-            _logger.LogWarning("Executing Action is invalid, cannot execute Text Action.");
-            return false;
-        }
-
-        // construct the new SeString to send.
-        var remainingMessage = new SeString().Append(textAction.OutputCommand);
-        if (remainingMessage.TextValue.IsNullOrEmpty())
-        {
-            _logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
-            return false;
-        }
-
-        // apply bracket conversions.
-        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
-        // verify permissions are satisfied.
-        var matchedPair = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == performerUID);
-        if (matchedPair is null)
-        {
-            _logger.LogWarning("No pair found for the performer, cannot execute Text Action.");
-            return false;
-        }
-
-        matchedPair.OwnPerms.PuppetPerms(out bool sits, out bool motions, out bool all, out char startChar, out char endChar);
-
-
-        // only apply it if the message meets the criteria for the sender.
-        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
-        {
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
-            ChatBoxMessage.EnqueueMessage("/"+remainingMessage.TextValue);
-            return true;
-        }
-
-        // Implement text logic here
         return false;
     }
 
@@ -304,7 +319,7 @@ public sealed class ActionExecutor
 
     public bool MeetsSettingCriteria(bool canSit, bool canEmote, bool canAll, SeString message)
     {
-        if (canSit)
+        if (canAll)
         {
             _logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
             return true;
@@ -324,7 +339,7 @@ public sealed class ActionExecutor
         }
 
         // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
-        if (canAll)
+        if (canSit)
         {
             _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
             var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));

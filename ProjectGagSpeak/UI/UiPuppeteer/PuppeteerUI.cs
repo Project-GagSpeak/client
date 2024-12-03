@@ -19,6 +19,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.IPC;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
 using System.Numerics;
@@ -40,7 +41,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private readonly UiSharedService _uiShared;
 
     private PuppeteerTab _currentTab = PuppeteerTab.TriggerPhrases;
+    private PuppeteerMode _currentMode = PuppeteerMode.Global;
     private enum PuppeteerTab { TriggerPhrases, ClientAliasList, PairAliasList }
+    private enum PuppeteerMode { Global, Pairs }
 
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
         MainHub apiHubMain, AliasTable aliasTable, ClientData clientData,
@@ -68,6 +71,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             MaximumSize = new Vector2(1000, float.MaxValue)
         };
         RespectCloseHotkey = false;
+
+        // update tab on pair selection.
+        Mediator.Subscribe<UserPairSelected>(this, (newPair) => _currentMode = newPair is null ? PuppeteerMode.Global : PuppeteerMode.Pairs);
     }
 
     private string AliasSearchString = string.Empty;
@@ -77,6 +83,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private string UnsavedNewStartChar = string.Empty;
     private string UnsavedNewEndChar = string.Empty;
     private DateTime LastSaveTime = DateTime.MinValue;
+    private bool EditingGlobalTriggers = false;
 
     private bool ThemePushed = false;
     protected override void PreDrawInternal()
@@ -142,21 +149,39 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 float width = ImGui.GetContentRegionAvail().X;
 
                 // show the search filter just above the contacts list to form a nice separation.
-                _pairList.DrawSearchFilter(width, ImGui.GetStyle().ItemInnerSpacing.X, false);
+                _pairList.DrawSearchFilter(true, false, FontAwesomeIcon.Globe, onIb2: () => _currentMode = PuppeteerMode.Global);
                 ImGui.Separator();
                 using (ImRaii.Child($"###PuppeteerList", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
-                    _pairList.DrawPairListSelectable(width, true, 2);
+                    _pairList.DrawPairListSelectable(true, 2);
             }
         }
 
         ImGui.TableNextColumn();
-        using (ImRaii.Child($"###PuppeteerRightSide", ImGui.GetContentRegionAvail(), false)) 
-            DrawPuppeteer(cellPadding);
+        using (ImRaii.Child($"###PuppeteerRightSide", ImGui.GetContentRegionAvail(), false))
+        {
+            if (_currentMode == PuppeteerMode.Global)
+            {
+                DrawGlobalPuppeteer(cellPadding);
+            }
+            else
+            {
+                DrawPairPuppeteer(cellPadding);
+            }
+        }
     }
 
+    private void DrawGlobalPuppeteer(Vector2 DefaultCellPadding)
+    {
+        // Draw Title
+        using (_uiShared.GagspeakTitleFont.Push()) ImGuiUtil.Center("Global Alias Triggers");
+        ImGui.Separator();
+
+        // Draw Contents.
+        DrawGlobalAliasList();
+    }
 
     // Main Right-half Draw function for puppeteer.
-    private void DrawPuppeteer(Vector2 DefaultCellPadding)
+    private void DrawPairPuppeteer(Vector2 DefaultCellPadding)
     {
         // update the display if we switched selected Pairs.
         if (_handler.SelectedPair is null)
@@ -382,6 +407,71 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         }
     }
 
+    private void DrawGlobalAliasList()
+    {
+        // create if null.
+        if (_clientConfigs.AliasConfig.GlobalAliasList is null)
+        {
+            _clientConfigs.AliasConfig.GlobalAliasList = new List<AliasTrigger>();
+            _clientConfigs.SaveAlias();
+            return;
+        }
+
+        using (ImRaii.Child("##GlobalAliasListChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
+        {
+            // Formatting.
+            using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
+            using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(8, 5));
+            using var framePadding = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(4, 2));
+            using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
+            using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+            // Draw out the search filter, then the list of alias's below.
+            DrawSearchFilter(ref AliasSearchString, true, true, EditingGlobalTriggers,
+            () =>
+            {
+                _clientConfigs.AliasConfig.GlobalAliasList.Insert(0, new AliasTrigger());
+                _clientConfigs.SaveAlias();
+            },
+            (newEditState) =>
+            {
+                EditingGlobalTriggers = newEditState;
+                _clientConfigs.SaveAlias();
+            });
+            ImGui.Separator();
+
+            using var seperatorColor = ImRaii.PushColor(ImGuiCol.Separator, ImGuiColors.ParsedPink);
+
+            List<AliasTrigger> items = _clientConfigs.AliasConfig.GlobalAliasList
+                .Where(trigger => trigger.Name.Contains(AliasSearchString, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var lightSets = _clientConfigs.StoredRestraintSets.Select(x => x.ToLightData()).ToList();
+            var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
+
+            Guid aliasToRemove = Guid.Empty; // used for removing items after we finish drawing the list.
+            foreach(var globalAlias in items)
+            {
+                if(EditingGlobalTriggers)
+                {
+                    if (_components.DrawAliasItemEditBox(globalAlias, lightSets, ipcData, out bool wasRemoved))
+                        _clientConfigs.SaveAlias();
+                    if (wasRemoved)
+                        aliasToRemove = globalAlias.AliasIdentifier;
+                    continue;
+                }
+                // otherwise, draw the normal box.
+                _components.DrawAliasItemBox(globalAlias.AliasIdentifier.ToString(), globalAlias, lightSets, ipcData);
+            }
+            // remove if we should.
+            if (aliasToRemove != Guid.Empty)
+            {
+                _clientConfigs.AliasConfig.GlobalAliasList.RemoveAll(x => x.AliasIdentifier == aliasToRemove);
+                _clientConfigs.SaveAlias();
+            }
+        }
+    }
+
     private void DrawClientAliasList(Pair? pair)
     {
         if(pair is null) return;
@@ -406,14 +496,12 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
             // Draw out the search filter, then the list of alias's below.
-            DrawSearchFilter(ref AliasSearchString, true, _handler.IsEditingList, (onEditToggle) =>
+            DrawSearchFilter(ref AliasSearchString, true, true, _handler.IsEditingList,
+            () => _handler.ClonedAliasListForEdit?.Insert(0, new AliasTrigger()),
+            (onEditToggle) =>
             {
-                if (onEditToggle)
-                    // we now wish to start editing, so clone the set.
-                    _handler.StartEditingList(storage);
-                else
-                    // if we are not editing, then we should save the changes.
-                    _handler.SaveModifiedList();
+                if (onEditToggle) _handler.StartEditingList(storage);
+                else _handler.SaveModifiedList();
             });
             ImGui.Separator();
 
@@ -424,16 +512,24 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var lightSets = _clientConfigs.StoredRestraintSets.Select(x => x.ToLightData()).ToList();
             var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
 
-            for(var i = 0; i < items.Count; i++)
+            Guid idToRemove = Guid.Empty;
+            foreach(var aliasItem in items)
             {
                 if (_handler.IsEditingList)
                 {
-                    _components.DrawAliasItemEditBox(items[i], lightSets, ipcData);
+                    if(_components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData, out bool wasRemoved))
+                        _handler.MadeAliasChangeSinceLastEdit = true;
+                    if (wasRemoved)
+                        idToRemove = aliasItem.AliasIdentifier;
                 }
-                else
-                {
-                    _components.DrawAliasItemBox(items[i].AliasIdentifier.ToString()+i, items[i], lightSets, ipcData);
-                }
+                // otherwise, draw the normal box.
+                _components.DrawAliasItemBox(aliasItem.AliasIdentifier.ToString(), aliasItem, lightSets, ipcData);
+            }
+            // handle case where we removed an item from the list after we finish drawing them all so we dont run into out of bounds errors.
+            if (idToRemove != Guid.Empty && _handler.ClonedAliasListForEdit is not null)
+            {
+                _handler.ClonedAliasListForEdit.RemoveAll(x => x.AliasIdentifier == idToRemove);
+                _handler.MadeAliasChangeSinceLastEdit = true;
             }
         }
     }
@@ -459,7 +555,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
             using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
-            DrawSearchFilter(ref AliasSearchString, false);
+            DrawSearchFilter(ref AliasSearchString, false, false);
             ImGui.Separator();
 
             if (pair.LastAliasData.AliasList.Count <= 0)
@@ -482,16 +578,15 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         }
     }
 
-    public void DrawSearchFilter(ref string AliasSearchString, bool showAddEdit, bool isEditing = false, Action<bool>? onEditToggle = null)
+    public void DrawSearchFilter(ref string searchStr, bool showAdd, bool showEdit, bool isEditing = false, 
+        Action? onAdd = null, Action<bool>? onEditToggle = null)
     {
-        var editSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Edit);
-        var addNewSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Plus, "New Alias");
-        var clearSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
+        var editSize = showEdit ? _uiShared.GetIconButtonSize(FontAwesomeIcon.Edit).X + spacing : 0;
+        var addNewSize = showAdd ? _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Plus, "New Alias") + spacing : 0;
+        var clearSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing;
 
-        var spaceLeft = showAddEdit 
-            ? editSize.X + addNewSize + clearSize + spacing * 3 
-            : clearSize + spacing * 2;
+        var spaceLeft = editSize + addNewSize + clearSize;
 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - spaceLeft);
         if (ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255))
@@ -505,21 +600,24 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         UiSharedService.AttachToolTip("Clear the search filter.");
 
         // Dont show the rest if we are not editing.
-        if(!showAddEdit)
-            return;
-
-        ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: _handler.ClonedAliasListForEdit is null))
+        if(showAdd)
         {
-            _logger.LogDebug("Adding new Alias");
-            _handler.ClonedAliasListForEdit?.Insert(0, new AliasTrigger());
+            ImUtf8.SameLineInner();
+            if (_uiShared.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: !isEditing))
+            {
+                _logger.LogDebug("Adding new Alias");
+                onAdd?.Invoke();
+            }
+            UiSharedService.AttachToolTip("Add a new Alias to the list.");
         }
-        UiSharedService.AttachToolTip("Add a new Alias to the list.");
 
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))
-            if (_uiShared.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
-                onEditToggle?.Invoke(!isEditing);
-        UiSharedService.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
+        if(showEdit)
+        {
+            ImUtf8.SameLineInner();
+            using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))
+                if (_uiShared.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
+                    onEditToggle?.Invoke(!isEditing);
+            UiSharedService.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
+        }
     }
 }

@@ -105,6 +105,21 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
         // Parse Version
         aliasConfig.Version = configJson["Version"]?.Value<int>() ?? AliasConfig.CurrentVersion;
 
+        // parse the GlobalAliasList
+        var globalAliasListArray = configJson["GlobalAliasList"] as JArray;
+        aliasConfig.GlobalAliasList = new List<AliasTrigger>();
+        if (globalAliasListArray is not null)
+        {
+            foreach (var item in globalAliasListArray)
+            {
+                if (item is JObject aliasObject)
+                {
+                    var aliasTrigger = ParseAliasTrigger(aliasObject);
+                    aliasConfig.GlobalAliasList.Add(aliasTrigger);
+                }
+            }
+        }
+
         // Parse AliasStorage
         var aliasStorageObj = configJson["AliasStorage"] as JObject;
         if (aliasStorageObj != null)

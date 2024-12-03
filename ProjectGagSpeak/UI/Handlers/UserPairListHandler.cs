@@ -82,12 +82,9 @@ public class UserPairListHandler
     /// Draws the list of pairs belonging to the client user.
     /// Groups the pairs by their tags (folders)
     /// </summary>
-    public void DrawPairs(float windowContentWidth)
+    public void DrawPairs()
     {
-        // begin the list child, with no border and of the height calculated above
         using var child = ImRaii.Child("list", ImGui.GetContentRegionAvail(), border: false, ImGuiWindowFlags.NoScrollbar);
-
-
         // display a message is no pairs are present.
         if (AllPairDrawsDistinct.Count <= 0)
         {
@@ -109,7 +106,7 @@ public class UserPairListHandler
     /// <summary> 
     /// Draws all bi-directionally paired users (online or offline) without any tag header. 
     /// </summary>
-    public void DrawPairListSelectable(float windowContentWidth, bool showOffline, byte id)
+    public void DrawPairListSelectable(bool showOffline, byte id)
     {
         var tagToUse = TagHandler.CustomAllTag;
 
@@ -144,35 +141,62 @@ public class UserPairListHandler
     }
 
     /// <summary> Draws the search filter for our user pair list (whitelist) </summary>
-    public void DrawSearchFilter(float availableWidth, float spacingX, bool showClear = true, bool showButton = true)
+    public void DrawSearchFilter(bool showClear, bool showClearText,
+        FontAwesomeIcon ibTwo = FontAwesomeIcon.None, string ib2text = "", string ib2tooltip = "", Action? onIb2 = null)
     {
-        var buttonSize = showClear
-            ? _uiSharedService.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear")
-            : _uiSharedService.GetIconButtonSize(FontAwesomeIcon.Ban).X;
-        ImGui.SetNextItemWidth(availableWidth - (showButton ? buttonSize + spacingX : 0));
+        var width = ImGui.GetContentRegionAvail().X;
+        var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
+
+        var buttonOneSize = showClear
+            ? (showClearText
+                ? _uiSharedService.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
+                : _uiSharedService.GetIconButtonSize(FontAwesomeIcon.Ban).X + spacing)
+            : 0;
+        var buttonTwoSize = ibTwo == FontAwesomeIcon.None ? 0 : ib2text.IsNullOrWhitespace()
+            ? _uiSharedService.GetIconButtonSize(ibTwo).X + spacing
+            : _uiSharedService.GetIconTextButtonSize(ibTwo, ib2text) + spacing;
+
+        var searchWidth = width - (buttonOneSize + buttonTwoSize);
+
+        ImGui.SetNextItemWidth(searchWidth);
         string filter = Filter;
         if (ImGui.InputTextWithHint("##filter", "Filter for UID/notes", ref filter, 255))
         {
             Filter = filter;
         }
 
-        if(!showButton) 
-            return;
-
-        ImUtf8.SameLineInner();
+        // perform the firstbutton if we should.
         if (showClear)
         {
-            if (_uiSharedService.IconTextButton(FontAwesomeIcon.Ban, "Clear", null, false, string.IsNullOrEmpty(Filter)))
+            ImUtf8.SameLineInner();
+            if (showClearText)
             {
-                Filter = string.Empty;
+                if (_uiSharedService.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
+                    Filter = string.Empty;
             }
+            else
+            {
+                if (_uiSharedService.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
+                    Filter = string.Empty;
+            }
+            UiSharedService.AttachToolTip("Clears the filter");
         }
-        else
+
+        // perform the second button if we should.
+        if (ibTwo != FontAwesomeIcon.None)
         {
-            if (_uiSharedService.IconButton(FontAwesomeIcon.Ban, null, "FilterClear", string.IsNullOrEmpty(Filter)))
+            ImUtf8.SameLineInner();
+            if (ib2text.IsNullOrWhitespace())
             {
-                Filter = string.Empty;
+                if (_uiSharedService.IconButton(ibTwo, null, "FilterButtonTwo"+ ibTwo))
+                    onIb2?.Invoke();
             }
+            else
+            {
+                if (_uiSharedService.IconTextButton(ibTwo, ib2text))
+                    onIb2?.Invoke();
+            }
+            UiSharedService.AttachToolTip(ib2tooltip);
         }
     }
 

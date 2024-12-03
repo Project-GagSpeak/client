@@ -19,6 +19,11 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 3, 1)
+            .RegisterFeature("Added Global Alias Triggers.")
+            .RegisterQol("Added the ability to clone hardcore permissions set for one Kinkster to other pairs in different collection types.")
+            .RegisterBugfix("Fixed issue where you couldnt remove alias triggers.")
+            .RegisterBugfix("Fixed issue where you couldnt fire commands that were not aliases at all lol.");
         VersionEntry(1, 0, 3, 0)
             .RegisterMain("Puppeteer Has gotten a massive DLC expansion pack kink deluxe.")
             .RegisterMain("Puppeteer alias outputs can now contain all trigger actions.")

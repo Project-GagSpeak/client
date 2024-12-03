@@ -9,8 +9,11 @@ using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
 using GagSpeak.UpdateMonitoring;
+using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Interfaces;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
@@ -154,7 +157,49 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         return false;
     }
 
-    public async void ParseOutputAndExecute(string trigger, SeString chatMessage, XivChatType type, Pair senderPair)
+    /// <summary>
+    /// Parses and executes from a global trigger phrase.
+    /// </summary>
+    /// <returns>True if it was fired, false if not.</returns>
+    public bool ParseOutputFromGlobalAndExecute(string trigger, SeString chatMessage, XivChatType type, bool sits, bool motions, bool all)
+    {
+        Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
+        Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
+        // obtain the substring that occurs in the message after the trigger.
+        SeString remainingMessage = chatMessage.TextValue.Substring(chatMessage.TextValue.IndexOf(trigger) + trigger.Length).Trim();
+        Logger.LogTrace("Remaining message: " + remainingMessage, LoggerType.Puppeteer);
+
+        // obtain the substring within the start and end char if provided.
+        remainingMessage = remainingMessage.GetSubstringWithinParentheses();
+        Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
+
+        // if any are found here, it will perform a call to the action executer, so we can return.
+        Logger.LogTrace("Checking for Aliases");
+        var wasAnAlias = ConvertAliasCommandsIfAny(remainingMessage, _clientConfigs.AliasConfig.GlobalAliasList, MainHub.UID);
+        if (wasAnAlias)
+            return true;
+
+        // otherwise, proceed to parse normal message.
+        if (remainingMessage.TextValue.IsNullOrEmpty())
+        {
+            Logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
+            return false;
+        }
+
+        // apply bracket conversions.
+        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
+        // only apply it if the message meets the criteria for the sender.
+        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        {
+            Logger.LogInformation("Your Global Trigger phrase was used to make you execute a message!", LoggerType.Puppeteer);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+            ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
+            return true;
+        }
+        return false;
+    }
+
+    public bool ParseOutputAndExecute(string trigger, SeString chatMessage, XivChatType type, Pair senderPair)
     {
         senderPair.OwnPerms.PuppetPerms(out bool sits, out bool motions, out bool all, out char startChar, out char endChar);
         var SenderUid = senderPair.UserData.UID;
@@ -168,41 +213,36 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         remainingMessage = remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
         Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
 
+        // if any are found here, it will perform a call to the action executer, so we can return.
         Logger.LogTrace("Checking for Aliases");
-        // if any are found here, it will perform a call to the action executer.
-        await ConvertAliasCommandsIfAny(remainingMessage, SenderUid);
-    }
+        var wasAnAlias = ConvertAliasCommandsIfAny(remainingMessage, _clientConfigs.AliasConfig.AliasStorage[SenderUid].AliasList, SenderUid);
+        if (wasAnAlias)
+            return true;
 
-
-    public SeString ParseOutputFromGlobal(string trigger, SeString chatMessage, XivChatType type, bool sits, bool motions, bool all)
-    {
-        Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
-        Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
-        // obtain the substring that occurs in the message after the trigger.
-        SeString remainingMessage = chatMessage.TextValue.Substring(chatMessage.TextValue.IndexOf(trigger) + trigger.Length).Trim();
-        Logger.LogTrace("Remaining message: " + remainingMessage, LoggerType.Puppeteer);
-
-        // obtain the substring within the start and end char if provided.
-        remainingMessage = remainingMessage.GetSubstringWithinParentheses();
-        Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
-
-        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
-
-        // only apply it if the message meets the criteria for the sender.
-        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        // otherwise, proceed to parse normal message.
+        if (remainingMessage.TextValue.IsNullOrEmpty())
         {
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
-            return remainingMessage;
+            Logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
+            return false;
         }
 
-        // return an empty SeString if we failed.
-        Logger.LogDebug("Message did not meet the criteria for the sender", LoggerType.Puppeteer);
-        return new SeString();
+        // apply bracket conversions.
+        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
+        // verify permissions are satisfied.
+        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        {
+            Logger.LogInformation("[" + SenderUid + "] used your trigger phase to make you execute a message!", LoggerType.Puppeteer);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+            ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
+            return true;
+        }
+
+        return false;
     }
 
     public bool MeetsSettingCriteria(bool canSit, bool canEmote, bool canAll, SeString message)
     {
-        if (canSit)
+        if (canAll)
         {
             Logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
             return true;
@@ -222,7 +262,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         }
 
         // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
-        if (canAll)
+        if (canSit)
         {
             Logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
             var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
@@ -248,18 +288,15 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     /// Converts the input commands to the output commands from the alias list if any.
     /// Will also determine what kind of message to prepare for execution
     /// </summary>
-    public async Task ConvertAliasCommandsIfAny(SeString messageWithAlias, string SenderUid)
+    public bool ConvertAliasCommandsIfAny(SeString messageWithAlias, List<AliasTrigger> AliasItems, string SenderUid)
     {
-
-        // now we can use this index to scan our aliasLists
-        List<AliasTrigger> AliasTriggers = _clientConfigs.AliasConfig.AliasStorage[SenderUid].AliasList;
-
-        Logger.LogTrace("Found " + AliasTriggers.Count + " alias triggers for this user", LoggerType.Puppeteer);
+        bool wasAnAlias = false;
+        Logger.LogTrace("Found " + AliasItems.Count + " alias triggers for this user", LoggerType.Puppeteer);
 
         // sort by descending length so that shorter equivalents to not override longer variants.
-        var sortedAliases = AliasTriggers.OrderByDescending(alias => alias.InputCommand.Length);
+        var sortedAliases = AliasItems.OrderByDescending(alias => alias.InputCommand.Length);
         // see if our message contains any of the alias strings. For it to match, it must match the full alias string.
-        foreach (AliasTrigger alias in AliasTriggers)
+        foreach (AliasTrigger alias in AliasItems)
         {
             // if the alias is not enabled, skip!
             if (!alias.Enabled) 
@@ -275,6 +312,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
             // Increment the alias trigger count
             _aliasTriggerCount++;
+            wasAnAlias = true;
             // Check if the threshold is exceeded
             if (_aliasTriggerCount > _aliasTriggerThresholdPerCycle)
             {
@@ -285,8 +323,9 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
             // the alias exists in this message, so go ahead and fore the multi-action execute!
             Logger.LogTrace("Alias found: " + alias.InputCommand, LoggerType.Puppeteer);
-            await _actionExecuter.ExecuteMultiActionAsync(alias.Executions.Values.ToList(), SenderUid);
+            _ = _actionExecuter.ExecuteMultiActionAsync(alias.Executions.Values.ToList(), SenderUid);
         }
+        return wasAnAlias;
     }
 
     private Match TryMatchTriggerWord(string message, string triggerWord)

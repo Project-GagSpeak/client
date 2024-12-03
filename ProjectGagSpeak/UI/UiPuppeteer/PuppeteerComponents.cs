@@ -474,9 +474,13 @@ public class PuppeteerComponents
     /// <summary>
     /// Draws the editor for an alias item.
     /// </summary>
-    /// <returns>True if it was deleted, false if nothing occured.</returns>
-    public bool DrawAliasItemEditBox(AliasTrigger aliasItem, List<LightRestraintData> sets, CharaIPCData moodleData)
+    /// <returns>True if an element was modified, false otherwise.</returns>
+    public bool DrawAliasItemEditBox(AliasTrigger aliasItem, List<LightRestraintData> sets, CharaIPCData moodleData, out bool shouldRemove)
     {
+        // Assume we are not removing, and have made no modifications.
+        bool wasModified = false;
+        shouldRemove = false;
+
         // pre-calculations.
         var storedOutputTypes = aliasItem.CurrentTypes();
         var storedOutputSize = storedOutputTypes.Any() ? storedOutputTypes.Count() : 1;
@@ -490,7 +494,7 @@ public class PuppeteerComponents
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
 
         using var child = ImRaii.Child("##AliasEditor_" + aliasItem.AliasIdentifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow);
-        if (!child) return false;
+        if (!child) return wasModified;
 
         using (ImRaii.Group())
         {
@@ -499,7 +503,7 @@ public class PuppeteerComponents
             if(ImGui.IsItemClicked())
             {
                 aliasItem.Enabled = !aliasItem.Enabled;
-                _handler.MadeAliasChangeSinceLastEdit = true;
+                wasModified = true;
             }
             UiSharedService.AttachToolTip("If the Alias is currently Enabled or Disabled." +
                 "--SEP--Click this while in edit mode to toggle the state!");
@@ -510,7 +514,7 @@ public class PuppeteerComponents
             if (ImGui.InputTextWithHint("##AliasName_" + aliasItem.AliasIdentifier, "Give Alias a Label...", ref tempName, 70))
             {
                 aliasItem.Name = tempName;
-                _handler.MadeAliasChangeSinceLastEdit = true;
+                wasModified = true;
             }
             UiSharedService.AttachToolTip("The Alias Label given to help with searching and organization.");
 
@@ -528,23 +532,19 @@ public class PuppeteerComponents
             if (_uiShared.IconButton(FontAwesomeIcon.Plus, disabled: !canUseButton))
             {
                 aliasItem.AddActionForType((ActionExecutionType)selectedType!);
-                _handler.MadeAliasChangeSinceLastEdit = true;
+                wasModified = true;
                 // change the selected combo value to the new default.
                 _uiShared._selectedComboItems["AliasTypeCombo" + aliasItem.AliasIdentifier] = aliasItem.UnregisteredTypes().FirstOrDefault();
             }
             UiSharedService.AttachToolTip("Adds the item from the dropdown to the list of active output types." +
                 "--SEP--Only 1 of each type can be added maximum");
 
-
             ImUtf8.SameLineInner();
             if (_uiShared.IconButton(FontAwesomeIcon.TrashAlt, disabled: !KeyMonitor.ShiftPressed()))
-                return true;
-            UiSharedService.AttachToolTip("Deletes this Alias Item from the list." +
-                "--SEP--Hold Shift to confirm deletion.");
-            // Edit toggle
-            ImUtf8.SameLineInner();
-            if (_uiShared.IconButton(FontAwesomeIcon.TrashAlt, disabled: !KeyMonitor.ShiftPressed()))
-                return true;
+            {
+                shouldRemove = true;
+                return false;
+            }
             UiSharedService.AttachToolTip("Deletes this Alias Item from the list." +
                 "--SEP--Hold Shift to confirm deletion.");
 
@@ -560,7 +560,7 @@ public class PuppeteerComponents
             if (ImGui.InputTextWithHint("##InputCommand_" + aliasItem.AliasIdentifier, "Enter Text To Scan For...", ref inputCommand, 256))
             {
                 aliasItem.InputCommand = inputCommand;
-                _handler.MadeAliasChangeSinceLastEdit = true;
+                wasModified = true;
             }
             UiSharedService.AttachToolTip("The text to scan for (Input String)");
 
@@ -580,7 +580,7 @@ public class PuppeteerComponents
                         if (ImGui.InputText("##TextOutput_" + aliasItem.AliasIdentifier, ref outputText, 256))
                         {
                             textAction.OutputCommand = outputText;
-                            _handler.MadeAliasChangeSinceLastEdit = true;
+                            wasModified = true;
                         }
                     }
                 }
@@ -604,7 +604,7 @@ public class PuppeteerComponents
                     _uiShared.DrawCombo("AliasGagState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         gagAction.NewState = i;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }, gagAction.NewState, false, ImGuiComboFlags.NoArrowButton);
 
                     ImGui.SameLine();
@@ -613,7 +613,7 @@ public class PuppeteerComponents
                     _uiShared.DrawCombo("AliasGagType" + aliasItem.AliasIdentifier, 150f, Enum.GetValues<GagType>(), (item) => item.GagName(), (i) =>
                     {
                         gagAction.GagType = i;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }, gagAction.GagType, false, ImGuiComboFlags.NoArrowButton);
                     UiSharedService.AttachToolTip("Selecting NONE will serve as a wildcard during removal, otherwise, it will remove the first matching GagType.");
                 }
@@ -637,7 +637,7 @@ public class PuppeteerComponents
                     _uiShared.DrawCombo("AliasRestraintState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         bindAction.NewState = i;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }, bindAction.NewState, false, ImGuiComboFlags.NoArrowButton);
 
                     ImGui.SameLine();
@@ -650,7 +650,7 @@ public class PuppeteerComponents
                         _uiShared.DrawCombo("AliasRestraintSet" + aliasItem.AliasIdentifier, 150f, sets, (item) => item.Name, (i) =>
                         {
                             bindAction.OutputIdentifier = i?.Identifier ?? Guid.Empty;
-                            _handler.MadeAliasChangeSinceLastEdit = true;
+                            wasModified = true;
                         }, defaultSet, false, ImGuiComboFlags.NoArrowButton);
                     }
 
@@ -674,7 +674,7 @@ public class PuppeteerComponents
                     _uiShared.DrawCombo("AliasMoodleType" + aliasItem.AliasIdentifier, 90f, Enum.GetValues<IpcToggleType>(), (item) => item.ToString(), (i) =>
                     {
                         statusAction.MoodleType = i;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }, statusAction.MoodleType, false, ImGuiComboFlags.NoArrowButton);
 
                     if (statusAction.MoodleType is IpcToggleType.MoodlesStatus)
@@ -686,7 +686,7 @@ public class PuppeteerComponents
                         _moodlesService.DrawMoodleStatusCombo("##AliasMoodleStatus" + aliasItem.AliasIdentifier, 175f, moodleData.MoodlesStatuses, (i) =>
                         {
                             statusAction.Identifier = i ?? Guid.Empty;
-                            _handler.MadeAliasChangeSinceLastEdit = true;
+                            wasModified = true;
                         }, 1, statusAction.Identifier);
                     }
                     else
@@ -698,7 +698,7 @@ public class PuppeteerComponents
                         _moodlesService.DrawMoodlesPresetCombo("##AliasMoodlePreset" + aliasItem.AliasIdentifier, 1575f, moodleData.MoodlesPresets, moodleData.MoodlesStatuses, (i) =>
                         {
                             statusAction.Identifier = i ?? Guid.Empty;
-                            _handler.MadeAliasChangeSinceLastEdit = true;
+                            wasModified = true;
                         }, statusAction.Identifier);
                     }
                 }
@@ -720,7 +720,7 @@ public class PuppeteerComponents
                     _uiShared.DrawCombo("ShockOpCode" + aliasItem.AliasIdentifier, 60f, Enum.GetValues<ShockMode>(), (mode) => mode.ToString(), (i) =>
                     {
                         shockAction.ShockInstruction.OpCode = i;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }, shockAction.ShockInstruction.OpCode, false, ImGuiComboFlags.NoArrowButton);
 
                     ImGui.SameLine();
@@ -741,7 +741,7 @@ public class PuppeteerComponents
                         if (value % 1 == 0 && value >= 1 && value <= 15) { newMaxDuration = (int)value; }
                         else { newMaxDuration = (int)(value * 1000); }
                         shockAction.ShockInstruction.Duration = newMaxDuration;
-                        _handler.MadeAliasChangeSinceLastEdit = true;
+                        wasModified = true;
                     }
 
                     // display extra information if a vibrator or shock.
@@ -755,7 +755,7 @@ public class PuppeteerComponents
                         if (ImGui.SliderInt("##ShockIntensity" + aliasItem.AliasIdentifier, ref intensity, 0, 100))
                         {
                             shockAction.ShockInstruction.Intensity = intensity;
-                            _handler.MadeAliasChangeSinceLastEdit = true;
+                            wasModified = true;
                         }
 
                         ImGui.SameLine();

@@ -1,3 +1,4 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Handlers;
@@ -26,14 +27,11 @@ public class MainUiWhitelist : DisposableMediatorSubscriberBase
     /// </summary>
     public void DrawWhitelistSection()
     {
-        var _windowContentWidth = UiSharedService.GetWindowContentRegionWidth();
-        var _spacingX = ImGui.GetStyle().ItemInnerSpacing.X;
-
         try
         {
-            _userPairListHandler.DrawSearchFilter(_windowContentWidth, _spacingX);
+            _userPairListHandler.DrawSearchFilter(true, true);
             ImGui.Separator();
-            _userPairListHandler.DrawPairs(_windowContentWidth);
+            _userPairListHandler.DrawPairs();
         }
         catch (Exception ex)
         {

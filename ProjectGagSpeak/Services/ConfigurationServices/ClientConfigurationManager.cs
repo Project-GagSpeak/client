@@ -479,6 +479,8 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         }
     }
 
+    internal void SaveAlias() => _aliasConfig.Save();
+
     #endregion Alias Config Methods
     /* --------------------- Toybox Pattern Configs --------------------- */
     #region Pattern Config Methods

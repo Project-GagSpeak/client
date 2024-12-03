@@ -392,11 +392,11 @@ public class RestraintSetEditor : IMediatorSubscriber
                 using (var textAlign = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f)))
                 {
                     // show the search filter just above the contacts list to form a nice separation.
-                    _userPairListHandler.DrawSearchFilter(width, ImGui.GetStyle().ItemInnerSpacing.X, showButton: false);
+                    _userPairListHandler.DrawSearchFilter(false, false);
                     ImGui.Separator();
                     using (var listChild = ImRaii.Child($"##RestraintHardcoreTraitsPairList", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
                     {
-                        _userPairListHandler.DrawPairListSelectable(width, true, 1);
+                        _userPairListHandler.DrawPairListSelectable(true, 1);
                     }
                 }
             }
