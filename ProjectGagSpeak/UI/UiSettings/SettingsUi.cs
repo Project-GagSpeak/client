@@ -112,7 +112,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             case "IPA_MEXICO": return "es-MX";
             case "IPA_FRENCH": return "fr-FR";
             case "IPA_QUEBEC": return "fr-CA";
-            case "IPA_JAPAN": return "ja-JP"
+            case "IPA_JAPAN": return "ja-JP";
             default: return "en-US";
         }
     }

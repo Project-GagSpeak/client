@@ -96,9 +96,9 @@ public class RestraintSetEditor : IMediatorSubscriber
                 // Open the specified tab programmatically
                 using (var open = ImRaii.TabItem(tab.Key, _setNextTab == tab.Key ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None))
                 {
-                    if(_setNextTab == tab.Key) _setNextTab = string.Empty;
+                    if (_setNextTab == tab.Key) _setNextTab = string.Empty;
 
-                    switch(tab.Key)
+                    switch (tab.Key)
                     {
                         case "Info":
                             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.InfoTab, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize, () => refRestraint.Name = "Tutorial Set");
@@ -119,7 +119,7 @@ public class RestraintSetEditor : IMediatorSubscriber
                         case "Hardcore Traits":
                             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ToHardcoreTraitsTab, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize, () => _setNextTab = "Hardcore Traits");
                             break;
-                    }                   
+                    }
                     if (open) tab.Value.Invoke();
                 }
             }
@@ -237,11 +237,11 @@ public class RestraintSetEditor : IMediatorSubscriber
             ImGui.TableNextColumn();
             // draw the checkbox options.
             // preset some variables to grab from our config service.
-            bool forceHelmet= refRestraintSet.ForceHeadgear;
+            bool forceHelmet = refRestraintSet.ForceHeadgear;
             bool forceVisor = refRestraintSet.ForceVisor;
             bool applyCustomizations = refRestraintSet.ApplyCustomizations;
 
-            using(ImRaii.Group())
+            using (ImRaii.Group())
             {
                 if (ImGui.Checkbox("Headgear", ref forceHelmet))
                 {
@@ -256,8 +256,8 @@ public class RestraintSetEditor : IMediatorSubscriber
                 _uiShared.DrawHelpText("Will force your visor to become visible when the set is applied. (Via Glamourer State)");
             }
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Metadata, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
-            
-            if(ImGui.Checkbox("Apply Customize", ref applyCustomizations))
+
+            if (ImGui.Checkbox("Apply Customize", ref applyCustomizations))
             {
                 refRestraintSet.ApplyCustomizations = applyCustomizations;
             }
@@ -325,7 +325,7 @@ public class RestraintSetEditor : IMediatorSubscriber
                 .ToList();
             // draw out all the active associated moodles in the restraint set with thier icon beside them.
             using (ImRaii.Group())
-            {            
+            {
                 UiSharedService.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
                 ImGui.Separator();
 
@@ -443,41 +443,84 @@ public class RestraintSetEditor : IMediatorSubscriber
         if (!refRestraintSet.SetTraits.ContainsKey(selectedPairRef.UserData.UID))
             return;
 
-        bool legsBound = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].LegsRestrained;
-        bool armsBound = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].ArmsRestrained;
-        bool gagged = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Gagged;
-        bool blindfolded = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Blindfolded;
-        bool immobile = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Immobile;
-        bool weighty = refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Weighty;
+        HardcoreTraits currentPairTraits = refRestraintSet.SetTraits[selectedPairRef.UserData.UID];
+        bool legsBound = currentPairTraits.LegsRestrained;
+        bool armsBound = currentPairTraits.ArmsRestrained;
+        bool gagged = currentPairTraits.Gagged;
+        bool blindfolded = currentPairTraits.Blindfolded;
+        bool immobile = currentPairTraits.Immobile;
+        bool weighty = currentPairTraits.Weighty;
 
         if (ImGui.Checkbox("Legs will be restrainted", ref legsBound))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].LegsRestrained = legsBound;
+            currentPairTraits.LegsRestrained = legsBound;
         _uiShared.DrawHelpText("Any action which typically involves fast leg movement is restricted");
 
         if (ImGui.Checkbox("Arms will be restrainted", ref armsBound))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].ArmsRestrained = armsBound;
+            currentPairTraits.ArmsRestrained = armsBound;
         _uiShared.DrawHelpText("Any action which typically involves fast arm movement is restricted");
 
         if (ImGui.Checkbox("Gagged", ref gagged))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Gagged = gagged;
+            currentPairTraits.Gagged = gagged;
         _uiShared.DrawHelpText("Any action requiring speech is restricted");
 
         if (ImGui.Checkbox("Blindfolded", ref blindfolded))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Blindfolded = blindfolded;
+            currentPairTraits.Blindfolded = blindfolded;
         _uiShared.DrawHelpText("Any actions requiring awareness or sight is restricted");
 
         if (ImGui.Checkbox("Immobile", ref immobile))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Immobile = immobile;
+            currentPairTraits.Immobile = immobile;
         _uiShared.DrawHelpText("Player becomes unable to move in this set");
 
         if (ImGui.Checkbox("Weighty", ref weighty))
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].Weighty = weighty;
+            currentPairTraits.Weighty = weighty;
         _uiShared.DrawHelpText("Player is forced to only walk while wearing this restraint");
 
-        _uiShared.DrawCombo("Stimulation Level##" + refRestraintSet.RestraintId + "stimulationLevel", 125f, Enum.GetValues<StimulationLevel>(),
-            (name) => name.ToString(), (i) => refRestraintSet.SetTraits[selectedPairRef.UserData.UID].StimulationLevel = i,
-            refRestraintSet.SetTraits[selectedPairRef.UserData.UID].StimulationLevel);
+        _uiShared.DrawCombo("Stimulation Level##" + refRestraintSet.RestraintId + "stimulationLevel" + selectedPairRef.UserData.UID, 125f, Enum.GetValues<StimulationLevel>(),
+            (name) => name.ToString(), (i) => currentPairTraits.StimulationLevel = i,
+            currentPairTraits.StimulationLevel);
         _uiShared.DrawHelpText("Any action requiring focus or concentration has its recast time slower and slower~");
+
+        ImGui.Spacing();
+        if (ImGui.CollapsingHeader("Advanced"))
+        {
+            if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Clone Permissions to Allowed Pairs"))
+            {
+                CopyTraitsToPairs(currentPairTraits, _pairManager.DirectPairs, refRestraintSet, false);
+            }
+            _uiShared.DrawHelpText("Applies currently selected hardcore traits to all pairs that you have allowed to have hardcore traits in this set.");
+
+            if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Clone Permissions to Hardcore Pairs", disabled: !KeyMonitor.ShiftPressed()))
+            {
+                CopyTraitsToPairs(currentPairTraits, _pairManager.DirectPairs.Where(p => p.OwnPerms.InHardcore), refRestraintSet, true);
+            }
+            _uiShared.DrawHelpText("Applies currently selected hardcore traits to all hardcore mode pairs, INCLUDING those currently prevented in this set. Must be holding SHIFT.");
+
+            if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Clone Permissions to ALL Pairs", disabled: !KeyMonitor.ShiftPressed()))
+            {
+                CopyTraitsToPairs(currentPairTraits, _pairManager.DirectPairs, refRestraintSet, true);
+            }
+            _uiShared.DrawHelpText("Applies currently selected hardcore traits to ALL pairs, INCLUDING those currently prevented in this set. Must be holding SHIFT.");
+        }
+    }
+
+    private static void CopyTraitsToPairs(HardcoreTraits traits, IEnumerable<Pair> pairs, RestraintSet refRestraintSet, bool allowNewPairs)
+    {
+        foreach (var pair in pairs)
+        {
+            if (!refRestraintSet.SetTraits.ContainsKey(pair.UserData.UID))
+            {
+                if (!allowNewPairs)
+                    continue;
+                refRestraintSet.SetTraits[pair.UserData.UID] = new HardcoreTraits();
+            }
+            refRestraintSet.SetTraits[pair.UserData.UID].LegsRestrained = traits.LegsRestrained;
+            refRestraintSet.SetTraits[pair.UserData.UID].ArmsRestrained = traits.ArmsRestrained;
+            refRestraintSet.SetTraits[pair.UserData.UID].Gagged = traits.Gagged;
+            refRestraintSet.SetTraits[pair.UserData.UID].Blindfolded = traits.Blindfolded;
+            refRestraintSet.SetTraits[pair.UserData.UID].Immobile = traits.Immobile;
+            refRestraintSet.SetTraits[pair.UserData.UID].Weighty = traits.Weighty;
+            refRestraintSet.SetTraits[pair.UserData.UID].StimulationLevel = traits.StimulationLevel;
+        }
     }
 
     // space for helper functions below

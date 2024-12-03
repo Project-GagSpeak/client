@@ -66,7 +66,7 @@ public partial class PairStickyUI
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
         DrawOwnSetting("ItemAutoEquip", "ItemAutoEquipAllowed",
-            _playerManager.GlobalPerms.ItemAutoEquip ? "Auto-equip Gag Glamours Active" : Auto-equip Gag Glamours Inactive",
+            _playerManager.GlobalPerms.ItemAutoEquip ? "Auto-equip Gag Glamours Active" : "Auto-equip Gag Glamours Inactive",
             _playerManager.GlobalPerms.ItemAutoEquip ? FontAwesomeIcon.Surprise : FontAwesomeIcon.Ban,
             _playerManager.GlobalPerms.ItemAutoEquip ? "Click to disable auto-equip for Gag Glamours (Global)" : "Click to enable auto-equip for Gag Glamours (Global)",
             OwnPerms.InHardcore,
