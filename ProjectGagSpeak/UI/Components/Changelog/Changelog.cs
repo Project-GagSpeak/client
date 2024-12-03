@@ -19,6 +19,13 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 3, 0)
+            .RegisterMain("Puppeteer Has gotten a massive DLC expansion pack kink deluxe.")
+            .RegisterMain("Puppeteer alias outputs can now contain all trigger actions.")
+            .RegisterFeature("Chat Triggers were removed.")
+            .RegisterFeature("Trigger configs were reset due to the above change.")
+            .RegisterQol("Alias Triggers should be automatically migrated for you.")
+            .RegisterBugfix("Lots of bugs are still known in my #gagspeak-issues channel, i will try and sort through them overtime. Please be paitent.");
         VersionEntry(1, 0, 2, 1)
             .RegisterMain("Appended back the Puppeteer Trigger Info section of the Puppeteer Module. (Alias Lists still in progress)")
             .RegisterQol("Update pair with your UID button has been moved to the puppeteer UI and no longer in the actions list.")
