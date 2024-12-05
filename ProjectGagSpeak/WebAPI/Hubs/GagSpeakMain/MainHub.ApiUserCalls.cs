@@ -20,25 +20,44 @@ namespace GagSpeak.WebAPI;
 public partial class MainHub
 {
     /// <summary> 
-    /// Sends request to the server, asking to add the defined UserDto to the clients UserPair list.
+    /// Creates a new Kinkster Pair request for the other user we wish to pair with.
+    /// Will generate a UserAddPairRequest on callback if valid.
     /// </summary>
-    public async Task UserAddPair(UserDto user)
+    public async Task UserSendPairRequest(UserDto user)
     {
-        // if we are not connected, return
         if (!IsConnected) return;
-        Logger.LogDebug("Adding pair "+user+" to client. Sending call to server.", LoggerType.ApiCore);
-        // otherwise, call the UserAddPair function on the server with the user data transfer object via signalR
-        await GagSpeakHubMain!.SendAsync(nameof(UserAddPair), user).ConfigureAwait(false); // wait for request to send.
+        Logger.LogDebug("Pushing an outgoing kinkster request to "+user, LoggerType.ApiCore);
+        await GagSpeakHubMain!.SendAsync(nameof(UserSendPairRequest), user).ConfigureAwait(false); // wait for request to send.
     }
+
+    public async Task UserCancelPairRequest(UserDto user)
+    {
+        if (!IsConnected) return;
+        Logger.LogDebug("Cancelling an outgoing kinkster request to "+user, LoggerType.ApiCore);
+        await GagSpeakHubMain!.SendAsync(nameof(UserCancelPairRequest), user).ConfigureAwait(false); // wait for request to send.
+    }
+
+    public async Task UserAcceptIncPairRequest(UserDto user)
+    {
+        if (!IsConnected) return;
+        Logger.LogDebug("Accepting an incoming kinkster request from "+user, LoggerType.ApiCore);
+        await GagSpeakHubMain!.SendAsync(nameof(UserAcceptIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
+    }
+
+    public async Task UserRejectIncPairRequest(UserDto user)
+    {
+        if (!IsConnected) return;
+        Logger.LogDebug("Rejecting an incoming kinkster request from "+user, LoggerType.ApiCore);
+        await GagSpeakHubMain!.SendAsync(nameof(UserRejectIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
+    }
+
 
     /// <summary> 
     /// Send a request to the server, asking it to remove the declared UserDto from the clients userPair list.
     /// </summary>
     public async Task UserRemovePair(UserDto userDto)
     {
-        // if we are not connected, return
         if (!IsConnected) return;
-        // if we are connected, send the request to remove the user from the user pair list
         await GagSpeakHubMain!.SendAsync(nameof(UserRemovePair), userDto).ConfigureAwait(false);
     }
 
@@ -47,9 +66,7 @@ public partial class MainHub
     /// </summary>
     public async Task UserDelete()
     {
-        // verify that we are connected
         CheckConnection();
-        // send the account deletion request to the server
         await GagSpeakHubMain!.SendAsync(nameof(UserDelete)).ConfigureAwait(false);
     }
 
@@ -69,6 +86,11 @@ public partial class MainHub
     public async Task<List<UserPairDto>> UserGetPairedClients()
     {
         return await GagSpeakHubMain!.InvokeAsync<List<UserPairDto>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
+    }
+
+    public async Task<List<UserPairRequestDto>> UserGetPairRequests()
+    {
+        return await GagSpeakHubMain!.InvokeAsync<List<UserPairRequestDto>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
     }
 
 
@@ -105,6 +127,18 @@ public partial class MainHub
     {
         if (!IsConnected) return false;
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(RemovePattern), patternId).ConfigureAwait(false);
+    }
+
+    public async Task<bool> RemoveMoodle(Guid moodleId)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(RemoveMoodle), moodleId).ConfigureAwait(false);
+    }
+
+    public async Task<bool> LikeMoodle(Guid moodleId)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
     }
 
     /// <summary>

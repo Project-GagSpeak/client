@@ -19,7 +19,11 @@ public class MainUiWhitelist : DisposableMediatorSubscriberBase
         _userPairListHandler = userPairListHandler;
         _userPairListHandler.UpdateDrawFoldersAndUserPairDraws();
 
-        Mediator.Subscribe<RefreshUiMessage>(this, (msg) => _userPairListHandler.UpdateDrawFoldersAndUserPairDraws());
+        Mediator.Subscribe<RefreshUiMessage>(this, (msg) =>
+        {
+            _userPairListHandler.UpdateDrawFoldersAndUserPairDraws(); // Update Pair List
+            _userPairListHandler.UpdateKinksterRequests(); // Update Kinkster Requests
+        });
     }
 
     /// <summary>

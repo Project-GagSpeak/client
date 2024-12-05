@@ -91,7 +91,8 @@ public sealed class CommandManager : IDisposable
 
         else if (string.Equals(splitArgs[0], "settings", StringComparison.OrdinalIgnoreCase))
         {
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            if (_mainConfig.Current.HasValidSetup())
+                _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
 
         // if its help or ?, print help

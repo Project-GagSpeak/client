@@ -166,8 +166,4 @@ public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf)
 public record SafewordUsedMessage : MessageBase; // for when the safeword is used.
 public record SafewordHardcoreUsedMessage : MessageBase; // for when the hardcore safeword is used.
 
-/* --------------------- COSMETICS & ACHIEVEMENTS RECORDS --------------------- */
-public record AchievementDataUpdateMessage(string base64Data) : MessageBase; // Sent from Achievement Manager to APIController for data update.
-
-
 #pragma warning restore S2094, MA0048

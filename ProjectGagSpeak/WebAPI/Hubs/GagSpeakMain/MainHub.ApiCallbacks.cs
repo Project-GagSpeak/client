@@ -127,6 +127,22 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
+    public Task Client_UserAddPairRequest(UserPairRequestDto dto)
+    {
+        Logger.LogDebug("Client_UserAddPairRequest: "+dto, LoggerType.Callbacks);
+        ExecuteSafely(() => _playerData.CurrentRequests.Add(dto));
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Only recieved as a callback from the server when a request has been rejected. Timeouts should be handled on their own.
+    /// </summary>
+    public Task Client_UserRemovePairRequest(UserPairRequestDto dto)
+    {
+        Logger.LogDebug("Client_UserRemovePairRequest: "+dto, LoggerType.Callbacks);
+        ExecuteSafely(() => _playerData.CurrentRequests.RemoveWhere(x => x.User == dto.User && x.RecipientUser == dto.RecipientUser));
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Should only be triggered if another pair is toggling on one of your existing moodles.
@@ -527,6 +543,18 @@ public partial class MainHub
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Client_UserRemoveClientPair), act);
+    }
+
+    public void OnUserAddPairRequest(Action<UserPairRequestDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserAddPairRequest), act);
+    }
+
+    public void OnUserRemovePairRequest(Action<UserPairRequestDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserRemovePairRequest), act);
     }
 
     public void OnUserApplyMoodlesByGuid(Action<ApplyMoodlesByGuidDto> act)

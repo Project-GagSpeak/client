@@ -27,7 +27,10 @@ global using MoodlesStatusInfo = (
     int Minutes,
     int Seconds,
     bool NoExpire,
-    bool AsPermanent
+    bool AsPermanent,
+    System.Guid StatusOnDispell,
+    string CustomVFXPath,
+    bool StackOnReapply
     );
 
 global using MoodlesGSpeakPairPerms = (

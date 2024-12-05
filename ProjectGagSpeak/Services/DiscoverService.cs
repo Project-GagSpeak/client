@@ -4,6 +4,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using GagSpeak.Utils.ChatLog;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Enums;
 using ImGuiNET;
 using Microsoft.Extensions.Configuration;
@@ -15,20 +16,23 @@ namespace GagSpeak.Services;
 // handles the global chat and pattern discovery social features.
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
+    private readonly MainHub _apiHubMain;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
     private readonly string _configDirectory;
     private const string _chatlogFile = "global-chat-recent.log";
     private string ChatLogFilePath => Path.Combine(_configDirectory, _chatlogFile);
     public DiscoverService(string configDirectory, ILogger<DiscoverService> logger, 
-        GagspeakMediator mediator, MainMenuTabs tabMenu, PairManager pairManager) : base(logger, mediator)
+        GagspeakMediator mediator, MainHub mainHub, MainMenuTabs tabMenu, 
+        PairManager pairManager) : base(logger, mediator)
     {
         _configDirectory = configDirectory;
+        _apiHubMain = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
 
         // Create a new chat log
-        GlobalChat = new ChatLog(Mediator);
+        GlobalChat = new ChatLog(_apiHubMain, Mediator);
 
         // Load the chat log
         LoadChatLog(GlobalChat);

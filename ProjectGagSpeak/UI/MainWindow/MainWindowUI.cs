@@ -31,6 +31,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
     private readonly MainUiHomepage _homepage;
     private readonly MainUiWhitelist _whitelist;
     private readonly MainUiPatternHub _patternHub;
+    private readonly MainUiMoodlesHub _moodlesHub;
     private readonly MainUiChat _globalChat;
     private readonly MainUiAccount _account;
     private readonly TutorialService _guides;
@@ -48,8 +49,8 @@ public class MainWindowUI : WindowMediatorSubscriberBase
     public MainWindowUI(ILogger<MainWindowUI> logger, GagspeakMediator mediator,
         UiSharedService uiShared, MainHub apiHubMain, GagspeakConfigService configService,
         PairManager pairManager, ServerConfigurationManager serverConfigs, MainUiHomepage homepage,
-        MainUiWhitelist whitelist, MainUiPatternHub patternHub, MainUiChat globalChat,
-        MainUiAccount account, MainMenuTabs tabMenu, TutorialService tutorialService,
+        MainUiWhitelist whitelist, MainUiPatternHub patternHub, MainUiMoodlesHub moodlesHub,
+        MainUiChat globalChat, MainUiAccount account, MainMenuTabs tabMenu, TutorialService tutorialService,
         IDalamudPluginInterface pi) : base(logger, mediator, "###GagSpeakMainUI")
     {
         _apiHubMain = apiHubMain;
@@ -59,6 +60,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
         _homepage = homepage;
         _whitelist = whitelist;
         _patternHub = patternHub;
+        _moodlesHub = moodlesHub;
         _globalChat = globalChat;
         _account = account;
         _guides = tutorialService;
@@ -140,8 +142,8 @@ public class MainWindowUI : WindowMediatorSubscriberBase
 
         SizeConstraints = new WindowSizeConstraints()
         {
-            MinimumSize = new Vector2(325, 420),
-            MaximumSize = new Vector2(325, 2000),
+            MinimumSize = new Vector2(380, 500),
+            MaximumSize = new Vector2(380, 2000),
         };
     }
 
@@ -244,6 +246,9 @@ public class MainWindowUI : WindowMediatorSubscriberBase
                         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize());
                     }
                     break;
+                case MainMenuTabs.SelectedTab.MoodlesHub:
+                    using (ImRaii.PushId("moodlesHubComponent")) _moodlesHub.DrawMoodlesHub();
+                    break;
                 case MainMenuTabs.SelectedTab.GlobalChat:
                     using (ImRaii.PushId("globalChatComponent")) _globalChat.DrawDiscoverySection();
                     break;
@@ -320,7 +325,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
             if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
             {
                 // call the UserAddPair function on the server with the user data transfer object
-                _ = _apiHubMain.UserAddPair(new(new(_pairToAdd)));
+                _ = _apiHubMain.UserSendPairRequest(new(new(_pairToAdd)));
                 _pairToAdd = string.Empty;
                 _addingNewUser = false;
             }

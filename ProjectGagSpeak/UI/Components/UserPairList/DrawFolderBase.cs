@@ -71,7 +71,7 @@ public abstract class DrawFolderBase : IDrawFolder
             DrawName(rightSideStart - leftSideEnd);
         }
 
-        //_wasHovered = ImGui.IsItemHovered();
+        _wasHovered = ImGui.IsItemHovered();
 
         color.Dispose();
 

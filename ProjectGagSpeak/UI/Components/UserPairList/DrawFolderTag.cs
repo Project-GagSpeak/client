@@ -33,7 +33,6 @@ public class DrawFolderTag : DrawFolderBase
 
     protected override bool RenderIfEmpty => _id switch
     {
-        TagHandler.CustomUnpairedTag => false,
         TagHandler.CustomOnlineTag => false,
         TagHandler.CustomOfflineTag => false,
         TagHandler.CustomVisibleTag => false,
@@ -43,7 +42,6 @@ public class DrawFolderTag : DrawFolderBase
 
     protected override bool RenderMenu => _id switch
     {
-        TagHandler.CustomUnpairedTag => false,
         TagHandler.CustomOnlineTag => false,
         TagHandler.CustomOfflineTag => false,
         TagHandler.CustomVisibleTag => false,
@@ -53,7 +51,6 @@ public class DrawFolderTag : DrawFolderBase
 
     private bool RenderPause => _id switch
     {
-        TagHandler.CustomUnpairedTag => false,
         TagHandler.CustomOnlineTag => false,
         TagHandler.CustomOfflineTag => false,
         TagHandler.CustomVisibleTag => false,
@@ -63,7 +60,6 @@ public class DrawFolderTag : DrawFolderBase
 
     private bool RenderCount => _id switch
     {
-        TagHandler.CustomUnpairedTag => false,
         TagHandler.CustomOnlineTag => false,
         TagHandler.CustomOfflineTag => false,
         TagHandler.CustomVisibleTag => false,
@@ -75,7 +71,6 @@ public class DrawFolderTag : DrawFolderBase
     {
         var icon = _id switch
         {
-            TagHandler.CustomUnpairedTag => FontAwesomeIcon.ArrowsLeftRight,
             TagHandler.CustomOnlineTag => FontAwesomeIcon.Link,
             TagHandler.CustomOfflineTag => FontAwesomeIcon.Unlink,
             TagHandler.CustomVisibleTag => FontAwesomeIcon.Eye,
@@ -120,14 +115,12 @@ public class DrawFolderTag : DrawFolderBase
     /// <summary>
     /// The label for each dropdown folder in the list.
     /// </summary>
-    /// <param name="width"></param>
     protected override void DrawName(float width)
     {
         ImGui.AlignTextToFramePadding();
 
         var name = _id switch
         {
-            TagHandler.CustomUnpairedTag => "One-sided Individual Pairs",
             TagHandler.CustomOnlineTag => "GagSpeak Online Users",
             TagHandler.CustomOfflineTag => "GagSpeak Offline Users",
             TagHandler.CustomVisibleTag => "Visible",

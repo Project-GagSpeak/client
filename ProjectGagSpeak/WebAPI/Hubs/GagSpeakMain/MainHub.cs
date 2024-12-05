@@ -2,6 +2,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
 using GagSpeak.GagspeakConfiguration;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.Services.ConfigurationServices;
@@ -22,6 +23,7 @@ namespace GagSpeak.WebAPI;
 public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 {
     private readonly HubFactory _hubFactory;
+    private readonly ClientData _playerData;
     private readonly PairManager _pairs;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly GagspeakConfigService _mainConfig;
@@ -32,10 +34,11 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     private CancellationTokenSource? HubHealthCTS = new();
 
     public MainHub(ILogger<MainHub> logger, GagspeakMediator mediator, HubFactory hubFactory,
-        TokenProvider tokenProvider, PairManager pairs, ServerConfigurationManager serverConfigs, 
+        ClientData playerData, TokenProvider tokenProvider, PairManager pairs, ServerConfigurationManager serverConfigs, 
         GagspeakConfigService mainConfig, ClientCallbackService callbackService, ClientMonitorService clientService,
         OnFrameworkService frameworkUtils) : base(logger, mediator, tokenProvider, clientService, frameworkUtils)
     {
+        _playerData = playerData;
         _hubFactory = hubFactory;
         _pairs = pairs;
         _serverConfigs = serverConfigs;
@@ -396,6 +399,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
         OnUserAddClientPair(dto => _ = Client_UserAddClientPair(dto));
         OnUserRemoveClientPair(dto => _ = Client_UserRemoveClientPair(dto));
+        OnUserAddPairRequest(dto => _ = Client_UserAddPairRequest(dto));
+        OnUserRemovePairRequest(dto => _ = Client_UserRemovePairRequest(dto));
+        
+        
         OnUpdateUserIndividualPairStatusDto(dto => _ = Client_UpdateUserIndividualPairStatusDto(dto));
 
         OnUserApplyMoodlesByGuid(dto => _ = Client_UserApplyMoodlesByGuid(dto));

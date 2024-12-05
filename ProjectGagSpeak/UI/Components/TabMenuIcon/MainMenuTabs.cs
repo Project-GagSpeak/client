@@ -19,6 +19,7 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
         Homepage,
         Whitelist,
         PatternHub,
+        MoodlesHub,
         GlobalChat,
         MySettings
     }
@@ -44,6 +45,9 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
         AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToPatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.PatternHub));
 
+        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!");
+            /* maybe add some tutorial for this later */
+
         AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.GlobalChat));
 
@@ -51,7 +55,7 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToAccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
     }
 
-    protected override void OnTabSelectionChanged(MainMenuTabs.SelectedTab newTab)
+    protected override void OnTabSelectionChanged(SelectedTab newTab)
     {
         _mediator.Publish(new MainWindowTabChangeMessage(newTab));
     }

@@ -17,6 +17,7 @@ using GagSpeak.Services.Events;
 using System.Diagnostics.CodeAnalysis;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Localization;
+using GagspeakAPI.Dto.UserPair;
 
 namespace GagSpeak.PlayerData.Data;
 
@@ -39,8 +40,13 @@ public class ClientData : DisposableMediatorSubscriberBase
     }
     public UserGlobalPermissions? GlobalPerms { get; set; } = null;
     public CharaAppearanceData? AppearanceData { get; set; } = null;
+    public HashSet<UserPairRequestDto> CurrentRequests { get; set; } = new();
     public CharaIPCData? LastIpcData { get; set; } = null;
     public List<CustomizeProfile> CustomizeProfiles { get; set; } = new();
+
+    public HashSet<UserPairRequestDto> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
+    public HashSet<UserPairRequestDto> IncomingRequests => CurrentRequests.Where(x => x.RecipientUser.UID == MainHub.UID).ToHashSet();
+
 
     public bool CoreDataNull => GlobalPerms is null || AppearanceData is null;
     public bool IpcDataNull => LastIpcData is null;

@@ -5,6 +5,7 @@ using GagSpeak.UI.Components.UserPairList;
 using GagSpeak.UI.Handlers;
 using GagSpeak.UI.Permissions;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Dto.UserPair;
 using System.Collections.Immutable;
 
 namespace GagSpeak.UI;
@@ -44,4 +45,7 @@ public class DrawEntityFactory
         return new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + user.UserData.UID,
             user, _apiHubMain, _uidDisplayHandler, _mediator, _cosmetics, _uiShared);
     }
+
+    public KinksterRequestEntry CreateKinsterRequest(string id, UserPairRequestDto request)
+        => new KinksterRequestEntry(id, request, _apiHubMain, _cosmetics, _uiShared);
 }

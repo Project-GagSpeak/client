@@ -334,9 +334,11 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SelectPairForTagUi>()
         .AddSingleton<TagHandler>()
         .AddSingleton<UserPairListHandler>()
+        .AddSingleton<DrawRequests>()
         .AddSingleton<MainUiHomepage>()
         .AddSingleton<MainUiWhitelist>()
         .AddSingleton<MainUiPatternHub>()
+        .AddSingleton<MainUiMoodlesHub>()
         .AddSingleton<MainUiChat>()
         .AddSingleton((s) => new MainUiAccount(s.GetRequiredService<ILogger<MainUiAccount>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
@@ -369,7 +371,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new UiFontService(pi))
         .AddSingleton<GagspeakMediator>()
         .AddSingleton((s) => new DiscoverService(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<DiscoverService>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<PairManager>()))
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(), 
+            s.GetRequiredService<PairManager>()))
         .AddSingleton<PatternHubService>()
         .AddSingleton<PermissionPresetService>()
         .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
@@ -450,12 +453,10 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, KinkPlatePreviewUI>()
         .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), s.GetRequiredService<UiSharedService>(), pi))
-        .AddScoped<WindowMediatorSubscriberBase, MainWindowUI>((s) => new MainWindowUI(s.GetRequiredService<ILogger<MainWindowUI>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<UiSharedService>(),
-            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(),
-            s.GetRequiredService<PairManager>(), s.GetRequiredService<ServerConfigurationManager>(),
-            s.GetRequiredService<MainUiHomepage>(), s.GetRequiredService<MainUiWhitelist>(),
-            s.GetRequiredService<MainUiPatternHub>(), s.GetRequiredService<MainUiChat>(), s.GetRequiredService<MainUiAccount>(),
+        .AddScoped<WindowMediatorSubscriberBase, MainWindowUI>((s) => new MainWindowUI(s.GetRequiredService<ILogger<MainWindowUI>>(), s.GetRequiredService<GagspeakMediator>(), 
+            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(), 
+            s.GetRequiredService<ServerConfigurationManager>(), s.GetRequiredService<MainUiHomepage>(), s.GetRequiredService<MainUiWhitelist>(),
+            s.GetRequiredService<MainUiPatternHub>(), s.GetRequiredService<MainUiMoodlesHub>(), s.GetRequiredService<MainUiChat>(), s.GetRequiredService<MainUiAccount>(),
             s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<TutorialService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, PopoutKinkPlateUi>()
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()

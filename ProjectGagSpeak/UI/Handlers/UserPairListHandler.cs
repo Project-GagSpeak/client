@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.GagspeakConfiguration;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components.UserPairList;
@@ -26,6 +27,7 @@ public class UserPairListHandler
     private readonly TagHandler _tagHandler;
     private readonly PairManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
+    private readonly DrawRequests _drawRequests;
     private readonly GagspeakConfigService _configService;
     private readonly UiSharedService _uiSharedService;
     private Pair? _selectedPair = null;
@@ -34,16 +36,19 @@ public class UserPairListHandler
     public UserPairListHandler(ILogger<UserPairListHandler> logger,
         GagspeakMediator mediator, TagHandler tagHandler,
         PairManager pairManager, DrawEntityFactory drawEntityFactory,
-        GagspeakConfigService configService, UiSharedService uiSharedService)
+        DrawRequests drawRequests, GagspeakConfigService configService, 
+        UiSharedService uiSharedService)
     {
         _logger = logger;
         _mediator = mediator;
         _tagHandler = tagHandler;
         _pairManager = pairManager;
         _drawEntityFactory = drawEntityFactory;
+        _drawRequests = drawRequests;
         _configService = configService;
         _uiSharedService = uiSharedService;
 
+        _drawRequests.UpdateKinksterRequests();
         UpdateDrawFoldersAndUserPairDraws();
     }
 
@@ -92,6 +97,9 @@ public class UserPairListHandler
         }
         else
         {
+            // Draw out the requests first.
+            _drawRequests.Draw();
+
             // _logger.LogTrace("Drawing {count} folders", _drawFolders.Count);
             foreach (var item in _drawFolders)
             {
@@ -199,6 +207,9 @@ public class UserPairListHandler
             UiSharedService.AttachToolTip(ib2tooltip);
         }
     }
+
+
+    public void UpdateKinksterRequests() => _drawRequests.UpdateKinksterRequests();
 
     /// <summary> 
     /// Updates our draw folders and user pair draws.
@@ -331,12 +342,6 @@ public class UserPairListHandler
                 allOfflinePairs));
 
         }
-
-        // finally, add the unpaired users to the list.
-        _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomUnpairedTag, LoggerType.UserPairDrawer);
-        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomUnpairedTag,
-            BasicSortedList(filteredPairs.Where(u => u.IsOneSidedPair)),
-            ImmutablePairList(allPairs.Where(u => u.IsOneSidedPair))));
 
         return drawFolders;
     }

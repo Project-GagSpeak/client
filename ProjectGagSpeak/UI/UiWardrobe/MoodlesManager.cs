@@ -264,12 +264,20 @@ public class MoodlesManager : MediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.TextUnformatted("Icon:");
-
             ImGui.TableNextColumn();
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
             var selinfo = _moodlesService.GetIconInfo((uint)moodle.IconID);
             string iconText = $"Icon: #{moodle.IconID} {selinfo?.Name}";
             ImGui.InputText("##iconNameParsed", ref iconText, 160, ImGuiInputTextFlags.ReadOnly);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted("Custom VFX Path:");
+            ImGui.TableNextColumn();
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            ImGui.InputText("##customPath", ref moodle.CustomVFXPath, 150, ImGuiInputTextFlags.ReadOnly);
+
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -293,36 +301,16 @@ public class MoodlesManager : MediatorSubscriberBase
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted("Applicant:");
-
-            ImGui.TableNextColumn();
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-            ImGui.InputText("##applier", ref moodle.Applier, 150, ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.AlignTextToFramePadding();
             ImGui.TextUnformatted("Category:");
 
             ImGui.TableNextColumn();
-            using (var disabledRadio = ImRaii.Disabled())
+            using (ImRaii.Disabled())
             {
                 ImGui.RadioButton("Positive", moodle.Type == StatusType.Positive);
                 ImGui.SameLine();
                 ImGui.RadioButton("Negative", moodle.Type == StatusType.Negative);
                 ImGui.SameLine();
                 ImGui.RadioButton("Special", moodle.Type == StatusType.Special);
-            }
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted("Dispellable:");
-
-            ImGui.TableNextColumn();
-            using (var disabledRadio = ImRaii.Disabled())
-            {
-                ImGui.Checkbox("##dispel", ref moodle.Dispelable);
             }
 
             ImGui.TableNextRow();
@@ -344,12 +332,31 @@ public class MoodlesManager : MediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.TextUnformatted("Persistent (Sticky):");
-
             ImGui.TableNextColumn();
-            using (var disabledRadio = ImRaii.Disabled())
-            {
-                ImGui.Checkbox("##sticky", ref moodle.AsPermanent);
-            }
+            using (ImRaii.Disabled()) ImGui.Checkbox("##sticky", ref moodle.AsPermanent);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted("Imply Dispellable:");
+            ImGui.TableNextColumn();
+            using (ImRaii.Disabled()) ImGui.Checkbox("##dispel", ref moodle.Dispelable);
+
+            // Stack on Reapply.
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted("Stack on Reapply:");
+            ImGui.TableNextColumn();
+            using (ImRaii.Disabled()) ImGui.Checkbox("##stackOnReapply", ref moodle.StackOnReapply);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted("Applicant:");
+            ImGui.TableNextColumn();
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            ImGui.InputText("##applier", ref moodle.Applier, 150, ImGuiInputTextFlags.ReadOnly);
         }
 
         if (moodle.IconID != 0 && iconPos != Vector2.Zero)

@@ -1,5 +1,7 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
@@ -14,10 +16,11 @@ namespace GagSpeak.Utils.ChatLog;
 // an instance of a chatlog.
 public class ChatLog
 {
+    private readonly MainHub _apiHubMain;
     private readonly GagspeakMediator _mediator;
 
     public readonly ChatCircularBuffer<ChatMessage> Messages = new(1000);
-    private int PreviousMessageCount = 0;
+    private int MessageCountSinceLastScroll = 0;
     private readonly Dictionary<string, Vector4> UserColors = new();
     private static Vector4 CKMistressColor = new Vector4(0.886f, 0.407f, 0.658f, 1f);
     private static Vector4 CkMistressText = new Vector4(1, 0.711f, 0.843f, 1f);
@@ -26,22 +29,28 @@ public class ChatLog
 
     // Define which users to ignore.
     public List<string> UidSilenceList = new List<string>();
+    private ChatMessage _lastInteractedMsg = new ChatMessage();
 
-    public ChatLog(GagspeakMediator mediator)
+    public ChatLog(MainHub mainHub, GagspeakMediator mediator)
     {
+        _apiHubMain = mainHub;
         _mediator = mediator;
         TimeCreated = DateTime.Now;
     }
 
     public void AddMessage(ChatMessage message)
-        => Messages.PushBack(message);
+    {
+        Messages.PushBack(message);
+        MessageCountSinceLastScroll++;
+    }
 
-    public void AddMessageRange(IEnumerable<ChatMessage> messages)
+public void AddMessageRange(IEnumerable<ChatMessage> messages)
     {
         foreach (var message in messages)
         {
             Messages.PushBack(message);
         }
+        MessageCountSinceLastScroll += messages.Count();
     }
 
     public void ClearMessages()
@@ -60,7 +69,7 @@ public class ChatLog
             RectMax = drawList.GetClipRectMax();
 
             var ySpacing = ImGui.GetStyle().ItemInnerSpacing.Y;
-            foreach (var x in Messages)
+            foreach (var x in Messages.Take(250))
             {
                 if(UidSilenceList.Contains(x.UID)) continue;
 
@@ -94,19 +103,14 @@ public class ChatLog
                 var cursorPos = ImGui.GetCursorScreenPos();
                 // Print the user name with color
                 ImGui.TextColored(UserColors[x.UID], $"[{x.Name}]");
-                // Attach tooltip and if clicked.
-                if(ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                // Attach popup if clicked.
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
-                    if(x.UID != "System") _mediator.Publish(new KinkPlateOpenStandaloneLightMessage(x.UserData));
+                    _lastInteractedMsg = x;
+                    ImGui.OpenPopup($"GlobalChatMessageActions_{x.UID}");
                 }
-                if(ImGui.IsItemClicked(ImGuiMouseButton.Middle) && KeyMonitor.ShiftPressed())
-                {
-                    if(x.UID != "System" && x.UID != MainHub.UID) UidSilenceList.Add(x.UID);
-                }
-                UiSharedService.AttachToolTip(
-                    "Sent @ " + x.TimeStamp.ToString("T", CultureInfo.CurrentCulture)
-                    + "--SEP--SHIFT+Middle-Click: Hides Global Messages from Kinkster."
-                    + "--SEP--Right-Click: View Light KinkPlate.");
+                UiSharedService.AttachToolTip("Sent @ " + x.TimeStamp.ToString("T", CultureInfo.CurrentCulture) +
+                    "--SEP--Right-Click to View Interactions");
                 ImUtf8.SameLineInner();
 
                 // Get the remaining width available in the current row
@@ -118,7 +122,7 @@ public class ChatLog
                     if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
                         UiSharedService.ColorText(x.Message, CkMistressText);
                     else
-                        ImGui.Text(x.Message);
+                        ImGui.TextUnformatted(x.Message);
                 }
                 else
                 {
@@ -133,11 +137,7 @@ public class ChatLog
                         float wordWidth = ImGui.CalcTextSize(word + " ").X;
 
                         // Check if adding this word exceeds the available width
-                        if (currentWidth + wordWidth > remainingWidth)
-                        {
-                            break; // Stop if it doesn't fit
-                        }
-
+                        if (currentWidth + wordWidth > remainingWidth) break; // Stop if it doesn't fit
                         fittingMessage += word + " ";
                         currentWidth += wordWidth;
                     }
@@ -147,7 +147,7 @@ public class ChatLog
                     if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
                         UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
                     else
-                        ImGui.Text(fittingMessage.TrimEnd());
+                        ImGui.TextUnformatted(fittingMessage.TrimEnd());
 
                     // Draw the remaining part of the message wrapped
                     string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
@@ -155,22 +155,80 @@ public class ChatLog
                     if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
                         UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
                     else
-                        ImGui.TextWrapped(wrappedMessage);
+                        UiSharedService.TextWrapped(wrappedMessage);
                 }
             }
 
             // Always scroll to the bottom after rendering messages
             // Only scroll to the bottom if auto-scroll is enabled and a new message is received
-            if (ShouldScrollToBottom || (AutoScroll && Messages.Count() != PreviousMessageCount))
+            if (ShouldScrollToBottom || (AutoScroll && MessageCountSinceLastScroll > 0))
             {
                 ShouldScrollToBottom = false;
                 ImGui.SetScrollHereY(1.0f);
-                PreviousMessageCount = Messages.Count();
+                MessageCountSinceLastScroll = 0;
             }
 
             // draw the text preview if we should.
             if (showMessagePreview && !string.IsNullOrWhiteSpace(previewMessage))
                 DrawTextWrapBox(previewMessage, drawList);
+
+            if(!_lastInteractedMsg.Equals(new ChatMessage()))
+                HandlePopup();
+        }
+    }
+
+    private void HandlePopup()
+    {
+        using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
+        using var rounding = ImRaii.PushStyle(ImGuiStyleVar.PopupRounding, 4f);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2f);
+        using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+        // Handle popup if opened.
+        if (ImGui.BeginPopup($"GlobalChatMessageActions_{_lastInteractedMsg.UID}"))
+        {
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_lastInteractedMsg.Name);
+            ImGui.Separator();
+            if (ImGui.Selectable("View Light KinkPlate"))
+            {
+                if (_lastInteractedMsg.UID != "System")
+                {
+                    _mediator.Publish(new KinkPlateOpenStandaloneLightMessage(_lastInteractedMsg.UserData));
+                    _lastInteractedMsg = new ChatMessage();
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+            UiSharedService.AttachToolTip("Opens " + _lastInteractedMsg.Name + "'s Light KinkPlate.");
+
+            using (ImRaii.Disabled(!KeyMonitor.ShiftPressed()))
+            {
+                // Display each action as a selectable
+                if (ImGui.Selectable("Send Kinkster Request"))
+                {
+                    _ = _apiHubMain.UserSendPairRequest(new(new(_lastInteractedMsg.UID)));
+                    _lastInteractedMsg = new ChatMessage();
+                    ImGui.CloseCurrentPopup();
+                }
+                if (KeyMonitor.ShiftPressed()) UiSharedService.AttachToolTip("Sends a Kinkster Request to " + _lastInteractedMsg.Name + ".");
+            }
+            if (!KeyMonitor.ShiftPressed()) UiSharedService.AttachToolTip("Must be holding SHIFT to select.");
+
+            using (ImRaii.Disabled(!KeyMonitor.CtrlPressed()))
+            {
+                if (ImGui.Selectable("Hide Messages from Kinkster"))
+                {
+                    // Prevent silencing System and Self.
+                    if (_lastInteractedMsg.UID != "System" && _lastInteractedMsg.UID != MainHub.UID)
+                    {
+                        UidSilenceList.Add(_lastInteractedMsg.UID);
+                        _lastInteractedMsg = new ChatMessage();
+                        ImGui.CloseCurrentPopup();
+                    }
+                }
+                if (KeyMonitor.CtrlPressed()) UiSharedService.AttachToolTip("Hides any other messages from this Kinkster until plugin reload/restart.");
+            }
+            if (!KeyMonitor.CtrlPressed()) UiSharedService.AttachToolTip("Must be holding CTRL to select.");
+
+            ImGui.EndPopup();
         }
     }
 
@@ -200,7 +258,7 @@ public class ChatLog
         var startPos = new Vector2(ImGui.GetCursorScreenPos().X + padding.X, RectMax.Y - boxSize.Y + padding.Y);
         ImGui.SetCursorScreenPos(startPos);
         ImGui.PushTextWrapPos(wrapWidth);
-        ImGui.TextWrapped(message);
+        ImGui.TextUnformatted(message);
         ImGui.PopTextWrapPos();
     }
 }

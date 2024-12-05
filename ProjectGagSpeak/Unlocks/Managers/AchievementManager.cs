@@ -42,7 +42,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     public static bool HadFailedAchievementDataLoad { get; private set; } = false;
 
     // Dictates if our connection occurred after an exception (within 5 minutes).
-    private bool _reconnectedAfterException => DateTime.UtcNow - _lastDisconnectTime < TimeSpan.FromMinutes(5);
+    private bool _reconnectedAfterException => _lastDisconnectTime != DateTime.MinValue;
     public AchievementManager(ILogger<AchievementManager> logger, GagspeakMediator mediator, MainHub mainHub,
         ClientConfigurationManager clientConfigs, ClientData playerData, PairManager pairManager,
         ClientMonitorService clientService, OnFrameworkService frameworkUtils, CosmeticService cosmetics, 
@@ -70,7 +70,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => OnConnection());
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ => _saveDataUpdateCTS?.Cancel());
 
-        // initial subscribe
+        // initial subscrib
         SubscribeToEvents();
     }
     protected override void Dispose(bool disposing)
@@ -203,7 +203,6 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         // Logic to send base64Data to the server
         Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
         _mainHub.UserUpdateAchievementData(new((MainHub.PlayerUserData), saveDataString)).ConfigureAwait(false);
-        Mediator.Publish(new AchievementDataUpdateMessage(saveDataString));
         return Task.CompletedTask;
     }
 
@@ -232,6 +231,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             // Update the local achievement data
             SaveData.LoadFromLightSaveDataDto(item);
             Logger.LogInformation("Achievement Data Loaded from Server", LoggerType.Achievements);
+            Logger.LogInformation("Achievement Data String Loaded:\n" + Base64saveDataToLoad);
         }
         catch (Exception ex)
         {
@@ -262,6 +262,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             if (!string.IsNullOrEmpty(MainHub.ConnectionDto.UserAchievements))
             {
                 Logger.LogInformation("Loading in AchievementData from ConnectionDto", LoggerType.Achievements);
+                Logger.LogInformation("Connected with AchievementData String:\n" + MainHub.ConnectionDto.UserAchievements);
                 LoadSaveDataDto(MainHub.ConnectionDto.UserAchievements);
             }
             else
