@@ -24,7 +24,6 @@ public class Changelog
             .RegisterMain("Send or Cancel Kinkster Requests, and Accept / Decline incoming ones.")
             .RegisterMain("Kinkster Requests can be send directly from Global Chat.")
             .RegisterFeature("A Primer for the Moodles Share Hub has been added.")
-            .RegisterFeature("There is now a preference to open the Main UI on startup instead of having it go off automatically.")
             .RegisterQol("Your 3 Letter tag is now displayed beside paired users in Global Chat.")
             .RegisterQol("The ammount of cached messages in global chat was reduced from 1000 to 250 for increased performance.");
 

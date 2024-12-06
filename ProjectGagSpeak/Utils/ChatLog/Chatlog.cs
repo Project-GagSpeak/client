@@ -69,9 +69,10 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
             RectMax = drawList.GetClipRectMax();
 
             var ySpacing = ImGui.GetStyle().ItemInnerSpacing.Y;
-            foreach (var x in Messages.Take(250))
+            var messagesToDisplay = Messages.Skip(Math.Max(0, Messages.Size - 250)).Take(250);
+            foreach (var x in messagesToDisplay)
             {
-                if(UidSilenceList.Contains(x.UID)) continue;
+                if (UidSilenceList.Contains(x.UID)) continue;
 
                 if (!UserColors.ContainsKey(x.UID))
                 {
