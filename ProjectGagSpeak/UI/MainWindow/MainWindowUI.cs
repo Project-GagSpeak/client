@@ -266,51 +266,6 @@ public class MainWindowUI : WindowMediatorSubscriberBase
             _uiShared.LastMainUIWindowPosition = pos;
             Mediator.Publish(new CompactUiChange(size, pos));
         }
-
-        HandlePairAdded();
-    }
-
-    private void HandlePairAdded()
-    {
-        // if we have configured to let the UI display a popup to set a nickname for the added UID upon adding them, then do so.
-        if (_configService.Current.OpenPopupOnAdd && _pairManager.LastAddedUser != null)
-        {
-            // set the last added user to the last added user from the pair manager
-            _lastAddedUser = _pairManager.LastAddedUser;
-            // set the pair managers one to null, so this menu wont spam itself
-            _pairManager.LastAddedUser = null;
-            // prompt the user to set the nickname via the popup
-            ImGui.OpenPopup("Set a Nickname for New User");
-            // set if we should show the modal for added user to true,
-            _showModalForUserAddition = true;
-            // and clear the last added user comment 
-            _lastAddedUserComment = string.Empty;
-        }
-
-        // the modal for setting a nickname for a newly added user, using the popup window flags in the shared service.
-        if (ImGui.BeginPopupModal("Set a Nickname for New User", ref _showModalForUserAddition, UiSharedService.PopupWindowFlags))
-        {
-            // if the last added user is null, then we should not show the modal
-            if (_lastAddedUser is null) _showModalForUserAddition = false;
-            // but if they are still present, meaning we have not yet given them a nickname, then display the modal
-            else
-            {
-                // inform the user the pair has been successfully added
-                UiSharedService.TextWrapped($"You have successfully added {_lastAddedUser.UserData.AliasOrUID}. Set a local note for the user in the field below:");
-                // display the input text field where they can input the nickname
-                ImGui.InputTextWithHint("##nicknameforuser", $"Nickname for {_lastAddedUser.UserData.AliasOrUID}", ref _lastAddedUserComment, 100);
-                if (_uiShared.IconTextButton(FontAwesomeIcon.Save, "Save Nickname"))
-                {
-                    // once we hit the save nickname button, we should update the nickname we have set for the UID
-                    _serverConfigs.SetNicknameForUid(_lastAddedUser.UserData.UID, _lastAddedUserComment);
-                    _lastAddedUser = null;
-                    _lastAddedUserComment = string.Empty;
-                    _showModalForUserAddition = false;
-                }
-            }
-            UiSharedService.SetScaledWindowSize(275);
-            ImGui.EndPopup();
-        }
     }
 
     public void DrawAddPair(float availableXWidth, float spacingX)

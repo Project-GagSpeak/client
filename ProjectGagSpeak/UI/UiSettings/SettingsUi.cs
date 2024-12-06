@@ -662,18 +662,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
         ImGui.Columns(1);
 
-        // the nicknames section
-        ImGui.Separator();
-        _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderNicks);
-        var openPopupOnAdd = _configService.Current.OpenPopupOnAdd;
-        if (ImGui.Checkbox(GSLoc.Settings.Preferences.NickPopupLabel, ref openPopupOnAdd))
-        {
-            _configService.Current.OpenPopupOnAdd = openPopupOnAdd;
-            _configService.Save();
-        }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.NickPopupTT);
-
-
         ImGui.Separator();
         _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderUiPrefs);
 

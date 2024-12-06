@@ -76,7 +76,7 @@ public class KinksterRequestEntry
     {
         ImGui.AlignTextToFramePadding();
         _uiShared.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
-        UiSharedService.AttachToolTip("Request Expires in " + TimeLeft.Hours+ "h "+ TimeLeft.Minutes +"m.");
+        UiSharedService.AttachToolTip("Request Expires in " + TimeLeft.Days + "d "+ TimeLeft.Hours+ "h "+ TimeLeft.Minutes +"m.");
         ImGui.SameLine();
     }
 

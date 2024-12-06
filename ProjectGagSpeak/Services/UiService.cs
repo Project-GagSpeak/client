@@ -213,6 +213,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             }
         });
 
+        Mediator.Subscribe<PairWasRemovedMessage>(this, (msg) => CloseExistingPairWindow());
         Mediator.Subscribe<ClosedMainUiMessage>(this, (msg) => CloseExistingPairWindow());
         Mediator.Subscribe<MainWindowTabChangeMessage>(this, (msg) => { if (msg.NewTab != MainMenuTabs.SelectedTab.Whitelist) CloseExistingPairWindow(); });
     }

@@ -32,9 +32,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     private readonly IContextMenu _contextMenu;                             // adds GagSpeak options when right clicking players.
     
     private Lazy<List<Pair>> _directPairsInternal;                          // the internal direct pairs lazy list for optimization
-    
     public List<Pair> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
-    public Pair? LastAddedUser { get; internal set; }                       // the user pair most recently added to the pair list.
 
     public PairManager(ILogger<PairManager> logger, GagspeakMediator mediator,
         PairFactory pairFactory, GagspeakConfigService mainConfig, 
@@ -49,7 +47,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<CutsceneEndMessage>(this, (_) => ReapplyPairData());
 
         _directPairsInternal = DirectPairsLazy();
-
         _contextMenu.OnMenuOpened += OnOpenPairContextMenu;
     }
 
@@ -115,27 +112,16 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     /// When this function is ran, that user will be appended to your client pairs.
     /// </para> 
     /// </summary>
-    public void AddUserPair(UserPairDto dto, bool addToLastAddedUser = true)
+    public void AddNewUserPair(UserPairDto dto)
     {
         // if we are receiving the userpair Dto for someone not yet in our client pair list, add them to the list.
         if (!_allClientPairs.ContainsKey(dto.User))
         {
-            // to add them, use our pair factory to generate a new pair object for them.
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
-        }
-        // Otherwise, the user sending us this pair Dto is already in our client pair list, so we can set addToLastAddedUser to false.
-        else
-        {
-            addToLastAddedUser = false;
         }
 
         // lets apply / update the individualPairStatus of the userpair object for this Dto in our client pair list.
         _allClientPairs[dto.User].UserPair.IndividualPairStatus = dto.IndividualPairStatus;
-        // if we should add the content to the last added user, then set the last added user to the user.
-        if (addToLastAddedUser)
-        {
-            LastAddedUser = _allClientPairs[dto.User];
-        }
         // finally, be sure to apply the last recieved data to this user's Pair object.
         _allClientPairs[dto.User].ApplyLastIpcData();
         // recreate the lazy list of direct pairs.
@@ -434,6 +420,8 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
                 _allClientPairs.TryRemove(dto.User, out _);
             }
         }
+        // fire an event to close the actions window.
+        Mediator.Publish(new PairWasRemovedMessage(dto.User));
 
         // recreate the lazy list of direct pairs.
         RecreateLazy();

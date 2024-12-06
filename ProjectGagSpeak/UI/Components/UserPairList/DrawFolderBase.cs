@@ -55,10 +55,6 @@ public abstract class DrawFolderBase : IDrawFolder
             ImGui.AlignTextToFramePadding();
             //_logger.LogInformation("Drawing folder {0}", _id);
             _uiSharedService.IconText(icon);
-            if (ImGui.IsItemClicked())
-            {
-                _tagHandler.SetTagOpen(_id, !_tagHandler.IsTagOpen(_id));
-            }
 
             ImGui.SameLine();
             var leftSideEnd = DrawIcon();
@@ -70,8 +66,11 @@ public abstract class DrawFolderBase : IDrawFolder
             ImGui.SameLine(leftSideEnd);
             DrawName(rightSideStart - leftSideEnd);
         }
-
         _wasHovered = ImGui.IsItemHovered();
+        if (ImGui.IsItemClicked())
+        {
+            _tagHandler.SetTagOpen(_id, !_tagHandler.IsTagOpen(_id));
+        }
 
         color.Dispose();
 

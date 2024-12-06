@@ -21,9 +21,6 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ButtonUsed { get; set; } = false;
     public bool AccountCreated { get; set; } = false;
 
-    // Nicks
-    public bool OpenPopupOnAdd { get; set; } = true;
-
     // DTR bar preferences
     public bool EnableDtrEntry { get; set; } = false;
     public bool ShowPrivacyRadar { get; set; } = true;

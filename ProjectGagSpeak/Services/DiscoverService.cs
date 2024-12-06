@@ -69,7 +69,8 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         if (_tabMenu.TabSelection is not MainMenuTabs.SelectedTab.GlobalChat)
             NewMessages++;
 
-        string SenderName = "Kinkster-" + msg.ChatMessage.MessageSender.UID.Substring(msg.ChatMessage.MessageSender.UID.Length - 3);
+        var userTagCode = msg.ChatMessage.MessageSender.UID.Substring(msg.ChatMessage.MessageSender.UID.Length - 3);
+        string SenderName = "Kinkster-" + userTagCode;
 
 
         // extract the user data from the message
@@ -79,10 +80,10 @@ public class DiscoverService : DisposableMediatorSubscriberBase
 
         // determine the display name
         if (msg.FromSelf) 
-            SenderName = msg.ChatMessage.MessageSender.AliasOrUID;
+            SenderName = msg.ChatMessage.MessageSender.AliasOrUID + " (" + userTagCode + ")";
 
-        if (matchedPair != null) 
-            SenderName = matchedPair.GetNickAliasOrUid();
+        if (matchedPair != null)
+            SenderName = matchedPair.GetNickAliasOrUid() + " (" + userTagCode + ")";
 
         // if the supporter role is the highest role, give them a special label.
         if (userData.SupporterTier is CkSupporterTier.KinkporiumMistress)

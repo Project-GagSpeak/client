@@ -830,10 +830,6 @@ namespace GagSpeak.Localization
         public readonly string DialectTT = Loc.Localize("Preferences_DialectTT", "Select region for GagSpeak Live Chat Garbler.");
         public readonly string HeaderPuppet = Loc.Localize("Preferences_HeaderPuppet", "Puppeteer Channels");
 
-        public readonly string HeaderNicks = Loc.Localize("Preferences_HeaderNicks", "Nicknames");
-        public readonly string NickPopupLabel = Loc.Localize("Preferences_NickPopupLabel", "Display Nickname Popup");
-        public readonly string NickPopupTT = Loc.Localize("Preferences_NickPopupTT", "Displays a popup to assign a nickname when adding a pair.");
-
         // UI Preferences Section
         public readonly string HeaderUiPrefs = Loc.Localize("Preferences_HeaderUiPrefs", "User Interface");
 

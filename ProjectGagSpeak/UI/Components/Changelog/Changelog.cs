@@ -22,10 +22,12 @@ public class Changelog
         VersionEntry(1, 0, 4, 0)
             .RegisterMain("Replaced adding Kinksters with a Kinkster Request System.")
             .RegisterMain("Send or Cancel Kinkster Requests, and Accept / Decline incoming ones.")
-            .RegisterMain("Kinkster Requests can be send directly from Global Chat.")
+            .RegisterMain("Kinkster Requests can be sent directly from Global Chat.")
             .RegisterFeature("A Primer for the Moodles Share Hub has been added.")
-            .RegisterQol("Your 3 Letter tag is now displayed beside paired users in Global Chat.")
-            .RegisterQol("The ammount of cached messages in global chat was reduced from 1000 to 250 for increased performance.");
+            .RegisterQol("Your 3 Letter tag is now displayed beside paired users in Global Chat for better clarity.")
+            .RegisterQol("The ammount of cached messages in global chat was reduced from 1000 to 350 for increased performance.")
+            .RegisterQol("Instead of using mouse keybinds to interact with users in global chat, there is a Popup menu instead." +
+            "This should help prevent accidentally performing a kinkster pair request to the wrong person if chat moves too fast.");
 
         VersionEntry(1, 0, 3, 1)
             .RegisterFeature("Added Global Alias Triggers.")

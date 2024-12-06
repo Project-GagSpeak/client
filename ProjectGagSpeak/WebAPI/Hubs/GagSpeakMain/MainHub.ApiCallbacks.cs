@@ -113,7 +113,7 @@ public partial class MainHub
     public Task Client_UserAddClientPair(UserPairDto dto)
     {
         Logger.LogDebug("Client_UserAddClientPair: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _pairs.AddUserPair(dto, addToLastAddedUser: true));
+        ExecuteSafely(() => _pairs.AddNewUserPair(dto));
         return Task.CompletedTask;
     }
 

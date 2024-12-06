@@ -56,8 +56,8 @@ public class DrawRequests : IRequestsFolder
 
     public void Draw()
     {
-/*        if (HasRequests is false) 
-            return;*/
+        if (HasRequests is false) 
+            return;
 
         // Begin drawing out the header section for the requests folder dropdown thingy.
         using var id = ImRaii.PushId("folder_" + ID);
@@ -81,11 +81,9 @@ public class DrawRequests : IRequestsFolder
             ImGui.SameLine(folderIconEndPos);
             ImGui.AlignTextToFramePadding();
             var text = _viewingMode is DrawRequestsType.Outgoing
-                ? (TotalOutgoing > 1 ? TotalOutgoing + " Outgoing Requests" : TotalOutgoing + " Outgoing Request")
-                : (TotalIncoming > 1 ? TotalIncoming + " Incoming Requests" : TotalIncoming + " Incoming Request");
+                ? (TotalOutgoing != 1 ? TotalOutgoing + " Outgoing Requests" : TotalOutgoing + " Outgoing Request")
+                : (TotalIncoming != 1 ? TotalIncoming + " Incoming Requests" : TotalIncoming + " Incoming Request");
             using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(text);
-            UiSharedService.AttachToolTip("You have " + TotalOutgoing + " requests pending to Kinksters." +
-                "--SEP--You have " + TotalIncoming + " incoming requests from other Kinksters.");
         }
         _wasHovered = ImGui.IsItemHovered();
         if(ImGui.IsItemClicked()) _isRequestFolderOpen = !_isRequestFolderOpen;
@@ -170,7 +168,7 @@ public class DrawRequests : IRequestsFolder
         var rightSideStart = windowEndX - (buttonSize + spacingX);
         ImGui.SameLine(windowEndX - buttonSize);
 
-        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
         {
             if (_uiShared.IconTextButton(icon, text, null, true, disabled))
                 _viewingMode = viewingOutgoing ? DrawRequestsType.Incoming : DrawRequestsType.Outgoing;
