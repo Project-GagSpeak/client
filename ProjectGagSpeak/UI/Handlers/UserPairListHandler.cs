@@ -90,6 +90,10 @@ public class UserPairListHandler
     public void DrawPairs()
     {
         using var child = ImRaii.Child("list", ImGui.GetContentRegionAvail(), border: false, ImGuiWindowFlags.NoScrollbar);
+
+        // Draw out the requests first.
+        _drawRequests.Draw();
+
         // display a message is no pairs are present.
         if (AllPairDrawsDistinct.Count <= 0)
         {
@@ -97,14 +101,11 @@ public class UserPairListHandler
         }
         else
         {
-            // Draw out the requests first.
-            _drawRequests.Draw();
-
-            // _logger.LogTrace("Drawing {count} folders", _drawFolders.Count);
             foreach (var item in _drawFolders)
             {
                 // draw the content
-                if (item is DrawFolderBase folderBase && folderBase.ID == TagHandler.CustomAllTag && _configService.Current.ShowOfflineUsersSeparately) continue;
+                if (item is DrawFolderBase folderBase && folderBase.ID == TagHandler.CustomAllTag && _configService.Current.ShowOfflineUsersSeparately) 
+                    continue;
                 // draw folder if not all tag.
                 item.Draw();
             }

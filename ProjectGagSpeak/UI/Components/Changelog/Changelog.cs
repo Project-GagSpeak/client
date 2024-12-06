@@ -19,6 +19,8 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 0, 4, 1)
+            .RegisterBugfix("Fixed the issue where sending requests with no pairs added displayed nothing, softlocking new users.");
         VersionEntry(1, 0, 4, 0)
             .RegisterMain("Replaced adding Kinksters with a Kinkster Request System.")
             .RegisterMain("Send or Cancel Kinkster Requests, and Accept / Decline incoming ones.")
