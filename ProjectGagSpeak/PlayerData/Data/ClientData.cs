@@ -60,6 +60,27 @@ public class ClientData : DisposableMediatorSubscriberBase
         .Select(i => AppearanceData?.GagSlots[i].GagType ?? GagType.None.GagName())
         .ToList();
 
+    public void AddPairRequest(UserPairRequestDto dto)
+    {
+        // remove the request where the dto's userUID matches the userUID and the recipientUID matches the recipientUID
+        CurrentRequests.Add(dto);
+        // log the number of elements removed.
+        Logger.LogInformation("New pair request added!", LoggerType.PairManagement);
+        // publish a refresh ui message.
+        Mediator.Publish(new RefreshUiMessage());
+    }
+
+    public void RemovePairRequest(UserPairRequestDto dto)
+    {
+        // remove the request where the dto's userUID matches the userUID and the recipientUID matches the recipientUID
+        var res = CurrentRequests.RemoveWhere(x => x.User.UID == dto.User.UID && x.RecipientUser.UID == dto.RecipientUser.UID);
+        // log the number of elements removed.
+        Logger.LogInformation("Removed " + res + " pair requests.", LoggerType.PairManagement);
+        // publish a refresh ui message.
+        Mediator.Publish(new RefreshUiMessage());
+    }
+
+
     public CharaAppearanceData CompileAppearanceToAPI() => AppearanceData?.DeepCloneData() ?? new CharaAppearanceData();
 
     public void ApplyGlobalPermChange(UserGlobalPermChangeDto changeDto, PairManager pairs)

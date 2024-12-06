@@ -13,6 +13,9 @@ using GagspeakAPI.Dto.UserPair;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using Penumbra.GameData.Gui.Debug;
+using Dalamud.Interface.Colors;
+using FFXIVClientStructs.FFXIV.Common.Lua;
+using System.Numerics;
 
 namespace GagSpeak.UI.Components.UserPairList;
 
@@ -68,7 +71,6 @@ public class DrawRequests : IRequestsFolder
 
             // toggle folder state on click
             _uiShared.IconText(icon);
-            if (ImGui.IsItemClicked()) _isRequestFolderOpen = !_isRequestFolderOpen;
 
             ImGui.SameLine();
             var folderIconEndPos = DrawFolderIcon();
@@ -78,7 +80,12 @@ public class DrawRequests : IRequestsFolder
             // draw name
             ImGui.SameLine(folderIconEndPos);
             ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted("Kinkster Requests");
+            var text = _viewingMode is DrawRequestsType.Outgoing
+                ? (TotalOutgoing > 1 ? TotalOutgoing + " Outgoing Requests" : TotalOutgoing + " Outgoing Request")
+                : (TotalIncoming > 1 ? TotalIncoming + " Incoming Requests" : TotalIncoming + " Incoming Request");
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(text);
+            UiSharedService.AttachToolTip("You have " + TotalOutgoing + " requests pending to Kinksters." +
+                "--SEP--You have " + TotalIncoming + " incoming requests from other Kinksters.");
         }
         _wasHovered = ImGui.IsItemHovered();
         if(ImGui.IsItemClicked()) _isRequestFolderOpen = !_isRequestFolderOpen;
@@ -89,15 +96,29 @@ public class DrawRequests : IRequestsFolder
         // if the folder is opened, draw the relevant list.
         if (_isRequestFolderOpen)
         {
+            // if there are no requests to display, show a message and return.
+            if (TotalOutgoing is 0 && TotalIncoming is 0)
+            {
+                // close the folder if there are no requests to display.
+                _isRequestFolderOpen = false;
+                return;
+            }
+
             using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             // draw the entries based on the type selected.
             if (_viewingMode is DrawRequestsType.Outgoing)
             {
+                // switch the tab to incoming if there are no outgoing requests.
+                if (TotalOutgoing is 0) _viewingMode = DrawRequestsType.Incoming;
+
                 foreach(var entry in _allOutgoingRequests)
                     entry.DrawRequestEntry();
             }
             else
             {
+                // switch the tab to outgoing if there are no incoming requests.
+                if (TotalIncoming is 0) _viewingMode = DrawRequestsType.Outgoing;
+
                 foreach(var entry in _allIncomingRequests)
                     entry.DrawRequestEntry();
             }
@@ -117,6 +138,14 @@ public class DrawRequests : IRequestsFolder
         _allIncomingRequests = _clientData.IncomingRequests
             .Select(request => _pairRequestFactory.CreateKinsterRequest("incoming-" + request.User.UID, request))
             .ToHashSet();
+
+        // if there are no outgoing, and we are on outgoing, switch it to incoming.
+        if (TotalOutgoing is 0 && _viewingMode is DrawRequestsType.Outgoing)
+            _viewingMode = DrawRequestsType.Incoming;
+
+        // if there are no incoming, and we are on incoming, switch it to outgoing.
+        if (TotalIncoming is 0 && _viewingMode is DrawRequestsType.Incoming)
+            _viewingMode = DrawRequestsType.Outgoing;
     }
 
 
@@ -124,41 +153,28 @@ public class DrawRequests : IRequestsFolder
     {
         ImGui.AlignTextToFramePadding();
         _uiShared.IconText(FontAwesomeIcon.Inbox);
-
-        if (HasRequests)
-        {
-            // set the spacing for this parameter that is drawn to the right of the icon.
-            using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, ImGui.GetStyle().ItemSpacing with { X = ImGui.GetStyle().ItemSpacing.X / 2f }))
-            {
-                ImGui.SameLine();
-                ImGui.AlignTextToFramePadding();
-                ImGui.TextUnformatted("[" + (TotalOutgoing + TotalIncoming) + "]");
-            }
-            UiSharedService.AttachToolTip("You have " + TotalOutgoing + " requests pending to Kinksters." +
-                "--SEP--You have " + TotalIncoming + " incoming requests from other Kinksters.");
-        }
-        // ensure sameline and return current X position.
         ImGui.SameLine();
         return ImGui.GetCursorPosX();
     }
-    private float DrawViewTypeSelection()
+    private void DrawViewTypeSelection()
     {
-        var outgoingButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonArrowUpFromLine, "Outgoing");
-        var incomingButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonArrowDownToLine, "Incoming");
+        bool viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
+        var icon = viewingOutgoing ? FontAwesomeIcon.PersonArrowUpFromLine : FontAwesomeIcon.PersonArrowDownToLine;
+        var text = viewingOutgoing ? "View Incoming ("+ TotalIncoming + ")" : "View Outgoing ("+TotalOutgoing+")";
+        var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";
+        var buttonSize = _uiShared.GetIconTextButtonSize(icon, text);
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
-        
-        // Flyout Menu
-        var rightSideStart = windowEndX - (outgoingButtonSize + incomingButtonSize + (spacingX * 2));
 
-        ImGui.SameLine(windowEndX - outgoingButtonSize - incomingButtonSize - spacingX);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonArrowUpFromLine, "Outgoing", isInPopup: true, disabled: _viewingMode == DrawRequestsType.Outgoing))
-            _viewingMode = DrawRequestsType.Outgoing;
-        // same line, draw incoming.
-        ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonArrowDownToLine, "Incoming", isInPopup: true, disabled: _viewingMode == DrawRequestsType.Incoming))
-            _viewingMode = DrawRequestsType.Incoming;
+        var disabled = viewingOutgoing ? TotalIncoming is 0 : TotalOutgoing is 0;
+        var rightSideStart = windowEndX - (buttonSize + spacingX);
+        ImGui.SameLine(windowEndX - buttonSize);
 
-        return rightSideStart;
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
+        {
+            if (_uiShared.IconTextButton(icon, text, null, true, disabled))
+                _viewingMode = viewingOutgoing ? DrawRequestsType.Incoming : DrawRequestsType.Outgoing;
+        }
+        UiSharedService.AttachToolTip(disabled ? "There are 0 entries here!" : toolTip);
     }
 }

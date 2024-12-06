@@ -130,7 +130,7 @@ public partial class MainHub
     public Task Client_UserAddPairRequest(UserPairRequestDto dto)
     {
         Logger.LogDebug("Client_UserAddPairRequest: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _playerData.CurrentRequests.Add(dto));
+        ExecuteSafely(() => _playerData.AddPairRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -140,7 +140,8 @@ public partial class MainHub
     public Task Client_UserRemovePairRequest(UserPairRequestDto dto)
     {
         Logger.LogDebug("Client_UserRemovePairRequest: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _playerData.CurrentRequests.RemoveWhere(x => x.User == dto.User && x.RecipientUser == dto.RecipientUser));
+        ExecuteSafely(() => _playerData.RemovePairRequest(dto));
+
         return Task.CompletedTask;
     }
 

@@ -40,11 +40,9 @@ public class KinksterRequestEntry
 
     private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
     public UserPairRequestDto Request => _requestEntry;
+    private TimeSpan TimeLeft => TimeSpan.FromDays(3) - (DateTime.UtcNow - _requestEntry.CreationTime);
     public void DrawRequestEntry()
     {
-        bool selected = false;
-        // get the current screen cursor pos
-        var cursorPos = ImGui.GetCursorPosX();
         using var id = ImRaii.PushId(GetType() + _id);
         using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), IsHovered))
         {
@@ -54,25 +52,20 @@ public class KinksterRequestEntry
                 // draw here the left side icon and the name that follows it.
                 ImUtf8.SameLineInner();
                 DrawLeftSide();
-                var posX = ImGui.GetCursorPosX();
+                ImGui.SameLine();
+                ImGui.AlignTextToFramePadding();
+
+                var kinksterIdTag = _viewingMode is DrawRequestsType.Outgoing
+                    ? _requestEntry.RecipientUser.UID.Substring(_requestEntry.RecipientUser.UID.Length - 3)
+                    : _requestEntry.User.UID.Substring(_requestEntry.User.UID.Length - 3);
+
+                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("Kinkster-" + kinksterIdTag);
 
                 // draw the right side based on the entry type.
-                var kinksterIdTag = "";
                 if (_viewingMode == DrawRequestsType.Outgoing)
-                {
                     DrawPendingCancel();
-                    kinksterIdTag = _requestEntry.RecipientUser.UID.Substring(_requestEntry.RecipientUser.UID.Length - 3);
-                }
                 else
-                {
                     DrawAcceptReject();
-                    kinksterIdTag = _requestEntry.RecipientUser.UID.Substring(_requestEntry.User.UID.Length - 3);
-                }
-
-                // scoot back over to the end and draw the name in monofont.
-                ImGui.SetCursorPosX(posX);
-                ImGui.AlignTextToFramePadding();
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("Kinkster-"+ kinksterIdTag);
             }
             // if the panel was hovered, show it as hovered.
             IsHovered = ImGui.IsItemHovered();
@@ -82,9 +75,8 @@ public class KinksterRequestEntry
     private void DrawLeftSide()
     {
         ImGui.AlignTextToFramePadding();
-        using var textColor = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold);
-        _uiShared.IconText(FontAwesomeIcon.PersonCircleQuestion);
-        UiSharedService.AttachToolTip("This Request is currently Pending...");
+        _uiShared.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
+        UiSharedService.AttachToolTip("Request Expires in " + TimeLeft.Hours+ "h "+ TimeLeft.Minutes +"m.");
         ImGui.SameLine();
     }
 
@@ -94,19 +86,25 @@ public class KinksterRequestEntry
         var rejectButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Reject");
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
-        var currentRightSide = windowEndX - acceptButtonSize - rejectButtonSize - spacingX;
+        var currentRightSide = windowEndX - acceptButtonSize;
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
-            _apiHubMain.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
+        {
+            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
+                _apiHubMain.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+        }
         UiSharedService.AttachToolTip("Accept the Request");
 
         currentRightSide -= acceptButtonSize + spacingX;
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
-            _apiHubMain.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
+        {
+            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
+                _apiHubMain.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+        }
         UiSharedService.AttachToolTip("Reject the Request");
     }
 
@@ -119,8 +117,11 @@ public class KinksterRequestEntry
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
-            _apiHubMain.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
+        {
+            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
+                _apiHubMain.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
+        }
         UiSharedService.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
     }
 }

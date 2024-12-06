@@ -168,6 +168,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
                 // Load in our initial pairs, then the online ones.
                 await LoadInitialPairs().ConfigureAwait(false);
                 await LoadOnlinePairs().ConfigureAwait(false);
+                await LoadKinksterRequests().ConfigureAwait(false);
 
                 // Save that this connection with this secret key was valid.
                 _serverConfigs.SetSecretKeyAsValid(secretKey);
@@ -564,6 +565,15 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
         Logger.LogDebug("Online Pairs: [" + string.Join(", ", onlinePairs.Select(x => x.User.AliasOrUID)) + "]", LoggerType.ApiCore);
         Mediator.Publish(new OnlinePairsLoadedMessage());
+    }
+
+    private async Task LoadKinksterRequests()
+    {
+        // retrieve any current kinkster requests.
+        var requests = await UserGetPairRequests().ConfigureAwait(false);
+        _playerData.CurrentRequests = requests.ToHashSet();
+        Logger.LogDebug("Kinkster Requests Recieved. Found [" + requests.Count + "]", LoggerType.ApiCore);
+        Mediator.Publish(new RefreshUiMessage());
     }
 
     /* ================ Main Hub SignalR Functions ================ */
