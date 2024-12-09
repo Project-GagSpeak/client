@@ -518,7 +518,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                     else if (cursedItem.MoodleType is IpcToggleType.MoodlesPreset)
                     {
                         var statuses = _playerData.LastIpcData!.MoodlesPresets
-                            .FirstOrDefault(p => p.Item1 == cursedItem.MoodleIdentifier).Item2;
+                            .FirstOrDefault(p => p.GUID == cursedItem.MoodleIdentifier).Statuses;
                         moodlesToRemove.UnionWith(statuses);
                     }
                 }
@@ -541,7 +541,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         if (data.AssociatedMoodlePreset != Guid.Empty)
         {
             statuses = _playerData.LastIpcData!.MoodlesPresets
-                .FirstOrDefault(p => p.Item1 == data.AssociatedMoodlePreset).Item2.ToHashSet();
+                .FirstOrDefault(p => p.GUID == data.AssociatedMoodlePreset).Statuses.ToHashSet();
         }
         // concat this list with the associated moodles.
         statuses.UnionWith(data.AssociatedMoodles);

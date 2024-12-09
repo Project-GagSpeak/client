@@ -923,24 +923,6 @@ public partial class UiSharedService
         }
     }
 
-    /// <summary>
-    /// Use with caution, as this allows null entries.
-    /// </summary>
-    public void SetSelectedComboItem<T>(string comboName, T selectedItem)
-    {
-        _selectedComboItems[comboName] = selectedItem!;
-    }
-
-    /// <summary>
-    /// Get the selected item from the combo box.
-    /// </summary>
-    public T GetSelectedComboItem<T>(string comboName)
-    {
-        return (T)_selectedComboItems[comboName];
-    }
-
-
-
     public void DrawCombo<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
         Action<T?>? onSelected = null, T? initialSelectedItem = default, bool shouldShowLabel = true,
         ImGuiComboFlags flags = ImGuiComboFlags.None, string defaultPreviewText = "Nothing Selected..")

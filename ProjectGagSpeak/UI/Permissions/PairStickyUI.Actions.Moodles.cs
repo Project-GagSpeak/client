@@ -82,7 +82,7 @@ public partial class PairStickyUI
                 (onButtonPress) =>
                 {
                     // ensure its a valid status
-                    var presetSelected = lastIpcData.MoodlesPresets.FirstOrDefault(x => x.Item1 == onButtonPress);
+                    var presetSelected = lastIpcData.MoodlesPresets.FirstOrDefault(x => x.GUID == onButtonPress);
                     if (presetSelected.Item1 != onButtonPress) return;
 
                     List<MoodlesStatusInfo> statusesToApply = lastIpcData.MoodlesStatuses.Where(x => presetSelected.Item2.Contains(x.GUID)).ToList();

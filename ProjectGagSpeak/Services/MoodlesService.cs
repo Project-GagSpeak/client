@@ -44,7 +44,7 @@ public class MoodlesService
 
 
     // Helper function to handle the combo box logic
-    private void DrawCombo(string comboLabel, float width, List<(Guid, List<Guid>)> MoodlesPresets,
+    private void DrawCombo(string comboLabel, float width, List<MoodlePresetInfo> MoodlesPresets,
         List<MoodlesStatusInfo> RelatedStatuses, Action<Guid?>? onSelected = null, Guid initialSelectedItem = default)
     {
         if (!MoodlesPresets.Any())
@@ -66,26 +66,27 @@ public class MoodlesService
             }
             else
             {
-                selectedItem = MoodlesPresets.First().Item1;
+                selectedItem = MoodlesPresets.First().GUID;
                 SelectedMoodleComboGuids[comboLabel] = selectedItem;
             }
         }
 
         // Ensure the selected item still exists in the list, otherwise reset it
-        if (!MoodlesPresets.Any(item => item.Item1 == selectedItem))
+        if (!MoodlesPresets.Any(item => item.GUID == selectedItem))
         {
-            selectedItem = MoodlesPresets.First().Item1;
+            selectedItem = MoodlesPresets.First().GUID;
             SelectedMoodleComboGuids[comboLabel] = selectedItem;
         }
 
         // Draw the combo box
         ImGui.SetNextItemWidth(width);
-        if (ImGui.BeginCombo(comboLabel, selectedItem.ToString()))
+        var previewText = MoodlesPresets.FirstOrDefault(x => x.GUID == selectedItem).Title ?? selectedItem.ToString();
+        if (ImGui.BeginCombo(comboLabel, previewText))
         {
             foreach (var item in MoodlesPresets)
             {
                 bool isSelected = item.Item1 == selectedItem;
-                if (ImGui.Selectable(item.Item1.ToString(), isSelected))
+                if (ImGui.Selectable(item.Title.ToString(), isSelected))
                 {
                     SelectedMoodleComboGuids[comboLabel] = item.Item1;
                     onSelected?.Invoke(selectedItem);
@@ -95,7 +96,7 @@ public class MoodlesService
                 if (ImGui.IsItemHovered())
                 {
                     var moodleNames = RelatedStatuses
-                        .Where(x => item.Item2.Contains(x.GUID))
+                        .Where(x => item.Statuses.Contains(x.GUID))
                         .Select(x => x.Title)
                         .ToList();
                     ImGui.SetTooltip($"This Preset Enables the Following Moodles:\n" + string.Join(Environment.NewLine, moodleNames));
@@ -115,14 +116,14 @@ public class MoodlesService
         return;
     }
 
-    public void DrawMoodlesPresetCombo(string comboLabel, float width, List<(Guid, List<Guid>)> MoodlesPresets,
+    public void DrawMoodlesPresetCombo(string comboLabel, float width, List<MoodlePresetInfo> MoodlesPresets,
         List<MoodlesStatusInfo> RelatedMoodlesStatuses, Action<Guid?>? onSelected = null, Guid initialSelectedItem = default)
     {
         DrawCombo(comboLabel, width, MoodlesPresets, RelatedMoodlesStatuses, onSelected, initialSelectedItem);
     }
 
     public void DrawMoodlesPresetComboButton(string comboLabel, string buttonLabel, float width,
-        List<(Guid, List<Guid>)> MoodlesPresets,
+        List<MoodlePresetInfo> MoodlesPresets,
         List<MoodlesStatusInfo> RelatedMoodlesStatuses,
         bool buttonDisabled = false,
         Action<Guid?>? onSelected = null,
@@ -214,7 +215,7 @@ public class MoodlesService
             SelectedMoodleComboGuids[comboLabel] = selectedItem;
         }
 
-        var statusSelected = statuses.FirstOrDefault(x => x.GUID == selectedItem).Title;
+        var statusSelected = statuses.FirstOrDefault(x => x.GUID == selectedItem).Title.StripColorTags();
         string selectedLabel = "None Selected";
         if (!statusSelected.IsNullOrEmpty())
             selectedLabel = statusSelected.StripColorTags();

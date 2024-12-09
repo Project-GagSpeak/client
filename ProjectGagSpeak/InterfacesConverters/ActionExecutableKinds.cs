@@ -111,7 +111,7 @@ public class RestraintAction : IActionGS
         var defaultItem = lightRestraintItems.FirstOrDefault(x => x.Identifier == OutputIdentifier)
                           ?? lightRestraintItems.FirstOrDefault() ?? new LightRestraintData();
 
-        uiShared.DrawCombo("ApplyRestraintSetActionCombo" + id, 200f, lightRestraintItems, (item) => item.Name, 
+        uiShared.DrawCombo("ApplyRestraintSetActionCombo" + id, 200f, lightRestraintItems, (item) => item.Name,
             (i) => OutputIdentifier = i?.Identifier ?? Guid.Empty, defaultItem, defaultPreviewText: "No Set Selected...");
         uiShared.DrawHelpText("Apply restraint set to your character when the trigger is fired.");
     }
@@ -267,7 +267,7 @@ public class SexToyAction : IActionGS
 
             ImGui.Separator();
 
-            if (TriggerAction.Count <= 0) 
+            if (TriggerAction.Count <= 0)
                 return;
 
             // draw a collapsible header for each of the selected devices.
@@ -402,6 +402,7 @@ public record MotorAction
     // (if we want to start at a certain point in the pattern.)
     public TimeSpan StartPoint { get; set; } = TimeSpan.Zero;
 }
+
 
 
 */

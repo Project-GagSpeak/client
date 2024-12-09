@@ -207,7 +207,7 @@ public class MoodlesManager : MediatorSubscriberBase
         }
 
         var length = ImGui.GetContentRegionAvail().X;
-        _uiShared.DrawComboSearchable("##PresetSelector", length, DataToDisplay!.MoodlesPresets, (preset) => preset.Item1.ToString(), false,
+        _uiShared.DrawComboSearchable("##PresetSelector", length, DataToDisplay!.MoodlesPresets, (preset) => preset.Title, false,
             (preset) => { SelectedPresetIndex = DataToDisplay.MoodlesPresets.IndexOf(preset); });
 
         ImGui.Separator();

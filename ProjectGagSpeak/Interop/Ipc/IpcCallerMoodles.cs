@@ -27,8 +27,8 @@ public sealed class IpcCallerMoodles : IIpcCaller
     // API Getter Functions
     private readonly ICallGateSubscriber<Guid, MoodlesStatusInfo> _getMoodleInfo;
     private readonly ICallGateSubscriber<List<MoodlesStatusInfo>> _getMoodlesInfo;
-    private readonly ICallGateSubscriber<Guid, (Guid, List<Guid>)> _getPresetInfo;
-    private readonly ICallGateSubscriber<List<(Guid, List<Guid>)>> _getPresetsInfo;
+    private readonly ICallGateSubscriber<Guid, MoodlePresetInfo> _getPresetInfo;
+    private readonly ICallGateSubscriber<List<MoodlePresetInfo>> _getPresetsInfo;
     private readonly ICallGateSubscriber<string> _getStatusManager;
     private readonly ICallGateSubscriber<string, string> _getStatusManagerByName;
     private readonly ICallGateSubscriber<List<MoodlesStatusInfo>> _getStatusManagerInfo;
@@ -63,8 +63,8 @@ public sealed class IpcCallerMoodles : IIpcCaller
         // API Getter Functions
         _getMoodleInfo = pi.GetIpcSubscriber<Guid, MoodlesStatusInfo>("Moodles.GetRegisteredMoodleInfo");
         _getMoodlesInfo = pi.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetRegisteredMoodlesInfo");
-        _getPresetInfo = pi.GetIpcSubscriber<Guid, (Guid, List<Guid>)>("Moodles.GetRegisteredPresetInfo");
-        _getPresetsInfo = pi.GetIpcSubscriber<List<(Guid, List<Guid>)>>("Moodles.GetRegisteredPresetsInfo");
+        _getPresetInfo = pi.GetIpcSubscriber<Guid, MoodlePresetInfo>("Moodles.GetRegisteredPresetInfo");
+        _getPresetsInfo = pi.GetIpcSubscriber<List<MoodlePresetInfo>>("Moodles.GetRegisteredPresetsInfo");
         _getStatusManager = pi.GetIpcSubscriber<string>("Moodles.GetStatusManagerLP");
         _getStatusManagerByName = pi.GetIpcSubscriber<string, string>("Moodles.GetStatusManagerByName");
         _getStatusManagerInfo = pi.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetStatusManagerInfoLP");
@@ -171,7 +171,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method gets the preset info for a provided GUID from the client. </summary>
-    public async Task<(Guid, List<Guid>)?> GetPresetInfoAsync(Guid guid)
+    public async Task<MoodlePresetInfo?> GetPresetInfoAsync(Guid guid)
     {
         if (!APIAvailable) return null; 
 
@@ -187,7 +187,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method gets the list of all our clients Presets Info </summary>
-    public async Task<List<(Guid, List<Guid>)>?> GetPresetsInfoAsync()
+    public async Task<List<MoodlePresetInfo>?> GetPresetsInfoAsync()
     {
         if (!APIAvailable) return null; 
         try
