@@ -98,7 +98,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         // draw content based on who's it is.
         if (DrawType == StickyWindowType.PairPerms)
         {
-            ImGuiUtil.Center(PairNickOrAliasOrUID + "'s Permissions for You");
+            ImGuiUtil.Center(PairNickOrAliasOrUID + "'s permissions for you");
             ImGui.Separator();
 
             // create a new child below with no border that spans the rest of the content region and has no scrollbar
@@ -110,7 +110,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         }
         else if (DrawType == StickyWindowType.ClientPermsForPair)
         {
-            ImGuiUtil.Center("Your Permissions for " + PairNickOrAliasOrUID);
+            ImGuiUtil.Center("Your permissions for " + PairNickOrAliasOrUID);
             // draw out the permission preset applied.
             var presetListWidth = 225f;
             _uiShared.SetCursorXtoCenter(presetListWidth);
@@ -127,7 +127,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         }
         else if (DrawType == StickyWindowType.PairActionFunctions)
         {
-            ImGuiUtil.Center("Actions For " + PairNickOrAliasOrUID);
+            ImGuiUtil.Center("Actions for " + PairNickOrAliasOrUID);
             if (!_currentErrorMessage.NullOrEmpty())
                 UiSharedService.ColorTextWrapped(_currentErrorMessage, ImGuiColors.DalamudRed);
 
