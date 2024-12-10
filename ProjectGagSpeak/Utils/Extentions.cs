@@ -123,6 +123,8 @@ public static class UtilsExtensions
 
     public static string StripColorTags(this string input)
     {
+        if(string.IsNullOrWhiteSpace(input)) return string.Empty;
+
         // Define a regex pattern to match any [color=...] and [/color] tags
         string pattern = @"\[\/?(color|glow)(=[^\]]*)?\]";
 

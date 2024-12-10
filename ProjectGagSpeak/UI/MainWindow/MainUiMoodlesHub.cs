@@ -133,19 +133,24 @@ public class MainUiMoodlesHub : DisposableMediatorSubscriberBase
                 _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.Stacks > 1, false, FontAwesomeIcon.LayerGroup, FontAwesomeIcon.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.Stacks > 1 ? "Has " + moodleInfo.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
 
-                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.Dispelable, true, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                ImUtf8.SameLineInner();
+                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.Dispelable, false, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
 
-                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, true, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                ImUtf8.SameLineInner();
+                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
 
-                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.Persistent, true, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                ImUtf8.SameLineInner();
+                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.Persistent, false, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
 
-                _uiShared.BooleanToColoredIcon(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath), true, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                ImUtf8.SameLineInner();
+                _uiShared.BooleanToColoredIcon(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath), false, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
-                
-                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, true, FontAwesomeIcon.SortNumericUpAlt, FontAwesomeIcon.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+
+                ImUtf8.SameLineInner();
+                _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.SortNumericUpAlt, FontAwesomeIcon.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.StackOnReapply ? "Stacks on Reapplication." : "Doesn't stack on reapplication.");
             }
 

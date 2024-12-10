@@ -185,8 +185,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         {
             var refText = profile.KinkPlateInfo.Description.IsNullOrEmpty() ? "No Description Set..." : profile.KinkPlateInfo.Description;
             var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y - ImGui.GetFrameHeightWithSpacing());
-            ImGui.InputTextMultiline("##pfpDescription", ref refText, 1000, size);
-            if (ImGui.IsItemDeactivatedAfterEdit())
+            if (ImGui.InputTextMultiline("##pfpDescription", ref refText, 1000, size))
                 profile.KinkPlateInfo.Description = refText;
         }
         if (profile.KinkPlateInfo.Disabled)

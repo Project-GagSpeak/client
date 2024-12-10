@@ -39,7 +39,7 @@ public class OrdersUI : WindowMediatorSubscriberBase
         this.SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(375, 330),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+            MaximumSize = new Vector2(550, float.MaxValue)
         };
         RespectCloseHotkey = false;
     }
