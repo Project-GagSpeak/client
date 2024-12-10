@@ -33,25 +33,25 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
         _mediator = mediator;
         _guides = guides;
 
-        AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Homepage",
+        AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Home",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
 
-        AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", () =>
+        AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Pair Whitelist", () =>
         {
             guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToWhitelistPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.Whitelist);
             guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         });
 
-        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
+        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Pattern Hub", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToPatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.PatternHub));
 
-        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!");
+        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Moodles Hub");
             /* maybe add some tutorial for this later */
 
-        AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
+        AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "GagSpeak Global Chat",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.GlobalChat));
 
-        AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account User Settings",
+        AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account Settings",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToAccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
     }
 
