@@ -227,10 +227,6 @@ public class AccountsTab
         // remove the current authentication.
         try
         {
-            // remove all patterns belonging to this account.
-            _logger.LogInformation("Removing Patterns for current character.");
-            _clientConfigs.RemoveAllPatternsFromUID(uid);
-
             _logger.LogInformation("Removing Authentication for current character.");
             _serverConfigs.CurrentServer.Authentications.Remove(account);
             if (isPrimary)

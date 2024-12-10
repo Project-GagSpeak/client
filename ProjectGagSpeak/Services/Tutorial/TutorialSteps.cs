@@ -130,26 +130,22 @@ public enum StepsPatterns
 {
     CreatingNewPatterns,
     RecordedDuration,
-    LoopButton,
     FloatButton,
+    LoopButton,
     DraggableCircle,
     RecordingButton, // let us start the recording
     StoppingRecording, // let us stop the recording.
     SavingPatternName,
-    SavingPatternAuthor,
     SavingPatternDescription,
     SavingPatternLoop,
-    SavingPatternTags,
     DiscardingPattern,
     FinalizingSave,
     ModifyingPatterns,
     EditDisplayInfo,
-    ToEditAdjustments,
     EditLoopToggle,
     EditStartPoint,
     EditPlaybackDuration,
     ApplyChanges,
-    PublishingToPatternHub,
 }
 
 public enum StepsTriggers

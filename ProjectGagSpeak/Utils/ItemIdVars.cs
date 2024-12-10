@@ -14,8 +14,22 @@ public static class ItemIdVars
     //
     // If issues arrise with the introduction of these static methods, try and find a way to manage this somehow.
     // However, these should automatically be disposed of when the service provider is disposed of.
-    private static ItemData Data = GagSpeak.ServiceProvider.GetService<ItemData>()!;
-    private static DictBonusItems BonusData = GagSpeak.ServiceProvider.GetService<DictBonusItems>()!;
+    private static Lazy<ItemData> _data = new(() =>
+    {
+        if (GagSpeak.ServiceProvider == null)
+            throw new InvalidOperationException("Service provider is not initialized or has been disposed.");
+        return GagSpeak.ServiceProvider.GetService<ItemData>()!;
+    });
+
+    private static Lazy<DictBonusItems> _bonusData = new(() =>
+    {
+        if (GagSpeak.ServiceProvider == null)
+            throw new InvalidOperationException("Service provider is not initialized or has been disposed.");
+        return GagSpeak.ServiceProvider.GetService<DictBonusItems>()!;
+    });
+
+    public static ItemData Data => _data.Value;
+    public static DictBonusItems BonusData => _bonusData.Value;
 
     public static ItemId NothingId(EquipSlot slot) // used
         => uint.MaxValue - 128 - (uint)slot.ToSlot();

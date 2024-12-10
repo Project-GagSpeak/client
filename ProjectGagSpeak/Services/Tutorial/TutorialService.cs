@@ -250,7 +250,7 @@ public class TutorialService
         .AddStep(patternsStr.Step6Title, patternsStr.Step6Desc, string.Empty)
         .AddStep(patternsStr.Step7Title, patternsStr.Step7Desc, string.Empty)
         .AddStep(patternsStr.Step8Title, patternsStr.Step8Desc, string.Empty)
-        .AddStep(patternsStr.Step9Title, patternsStr.Step9Desc, patternsStr.Step9DescExtended)
+        .AddStep(patternsStr.Step9Title, patternsStr.Step9Desc, string.Empty)
         .AddStep(patternsStr.Step10Title, patternsStr.Step10Desc, string.Empty)
         .AddStep(patternsStr.Step11Title, patternsStr.Step11Desc, string.Empty)
         .AddStep(patternsStr.Step12Title, patternsStr.Step12Desc, string.Empty)
@@ -260,10 +260,6 @@ public class TutorialService
         .AddStep(patternsStr.Step16Title, patternsStr.Step16Desc, string.Empty)
         .AddStep(patternsStr.Step17Title, patternsStr.Step17Desc, string.Empty)
         .AddStep(patternsStr.Step18Title, patternsStr.Step18Desc, string.Empty)
-        .AddStep(patternsStr.Step19Title, patternsStr.Step19Desc, string.Empty)
-        .AddStep(patternsStr.Step20Title, patternsStr.Step20Desc, string.Empty)
-        .AddStep(patternsStr.Step21Title, patternsStr.Step21Desc, string.Empty)
-        .AddStep(patternsStr.Step22Title, patternsStr.Step22Desc, patternsStr.Step22DescExtended)
         .EnsureSize(_tutorialSizes[TutorialType.Patterns]);
 
         var triggersStr = GSLoc.Tutorials.HelpTriggers;

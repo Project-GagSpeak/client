@@ -8,6 +8,7 @@ using GagSpeak.UI.UiPuppeteer;
 using GagSpeak.UI.UiRemote;
 using GagSpeak.UI.UiToybox;
 using GagSpeak.UI.UiWardrobe;
+using GagSpeak.UI.UiPublications;
 using ImGuiNET;
 using System.Numerics;
 
@@ -39,6 +40,7 @@ public class MainUiHomepage
             ("Wardrobe", FontAwesomeIcon.ToiletPortable, typeof(WardrobeUI)),
             ("Puppeteer", FontAwesomeIcon.PersonHarassing, typeof(PuppeteerUI)),
             ("Toybox", FontAwesomeIcon.BoxOpen, typeof(ToyboxUI)),
+            ("My Publications", FontAwesomeIcon.CloudUploadAlt, typeof(PublicationsUI)),
             ("Achievements", FontAwesomeIcon.Trophy, typeof(AchievementsUI)),
         };
     }

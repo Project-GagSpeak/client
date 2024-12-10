@@ -451,7 +451,7 @@ public partial class AchievementManager
         #endregion GENERIC MODULE
 
         #region SECRETS MODULE
-        SaveData.AddProgress(AchievementModuleKind.Secrets, Achievements.HiddenInPlainSight, 6, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Found", suffix: "Easter Eggs", isSecret: true);
+        SaveData.AddProgress(AchievementModuleKind.Secrets, Achievements.HiddenInPlainSight, 7, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Found", suffix: "Easter Eggs", isSecret: true);
 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
         {

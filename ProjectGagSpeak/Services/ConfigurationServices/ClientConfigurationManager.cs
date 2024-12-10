@@ -519,29 +519,6 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         Mediator.Publish(new PlayerCharStorageUpdated());
     }
 
-    public void RemoveAllPatternsFromUID(string creatorUid)
-    {
-        // remove all patterns from the storage that have the same creator UID.
-        PatternConfig.PatternStorage.Patterns.RemoveAll(x => x.CreatorUID == creatorUid);
-        _patternConfig.Save();
-
-        // iterate through the alarms to see if we need to remove patterns from any of them.
-        foreach (var alarm in AlarmConfig.AlarmStorage.Alarms)
-        {
-            if (alarm.PatternToPlay == Guid.Empty) continue;
-            if (PatternConfig.PatternStorage.Patterns.All(x => x.UniqueIdentifier != alarm.PatternToPlay))
-            {
-                alarm.PatternToPlay = Guid.Empty;
-                alarm.PatternStartPoint = TimeSpan.Zero;
-                alarm.PatternDuration = TimeSpan.Zero;
-            }
-        }
-        _alarmConfig.Save();
-
-        // publish to mediator one was removed and any potential alarms were updated.
-        Mediator.Publish(new PlayerCharStorageUpdated());
-    }
-
     public void RemovePattern(Guid identifierToRemove)
     {
         // find the pattern to remove by scanning the storage for the unique identifier.

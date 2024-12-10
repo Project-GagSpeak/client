@@ -43,6 +43,7 @@ using GagSpeak.UI.Simulation;
 using GagSpeak.UI.Tabs.WardrobeTab;
 using GagSpeak.UI.UiGagSetup;
 using GagSpeak.UI.UiOrders;
+using GagSpeak.UI.UiPublications;
 using GagSpeak.UI.UiPuppeteer;
 using GagSpeak.UI.UiRemote;
 using GagSpeak.UI.UiToybox;
@@ -327,6 +328,9 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<OrdersCreator>()
         .AddSingleton<OrdersAssigner>()
 
+        // Publications UI
+        .AddSingleton<PublicationsManager>()
+
         // UI Components
         .AddSingleton<PermActionsComponents>()
         .AddSingleton<IdDisplayHandler>()
@@ -373,7 +377,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new DiscoverService(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<DiscoverService>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(), 
             s.GetRequiredService<PairManager>()))
-        .AddSingleton<PatternHubService>()
+        .AddSingleton<ShareHubService>()
         .AddSingleton<PermissionPresetService>()
         .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
@@ -471,6 +475,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<WindowMediatorSubscriberBase, OrdersUI>()
+        .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
         .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<UiSharedService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, KinkPlateEditorUI>()

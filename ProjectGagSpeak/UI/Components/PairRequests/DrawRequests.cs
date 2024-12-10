@@ -1,21 +1,11 @@
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI.Handlers;
-using System.Collections.Immutable;
-using GagSpeak.UI;
-using OtterGui.Text;
 using GagSpeak.PlayerData.Data;
-using Dalamud.Interface.Utility;
-using OtterGui;
-using GagspeakAPI.Dto.UserPair;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using Penumbra.GameData.Gui.Debug;
-using Dalamud.Interface.Colors;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using System.Numerics;
+using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.UI.Components.UserPairList;
 
@@ -43,8 +33,8 @@ public class DrawRequests : IRequestsFolder
     public int TotalOutgoing => _clientData.OutgoingRequests.Count();
     public int TotalIncoming => _clientData.IncomingRequests.Count();
 
-    public DrawRequests(MainHub mainHub, ClientData clientData, 
-        DrawEntityFactory pairRequestFactory, CosmeticService cosmetics, 
+    public DrawRequests(MainHub mainHub, ClientData clientData,
+        DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
         UiSharedService uiSharedService)
     {
         _apiHubMain = mainHub;
@@ -56,7 +46,7 @@ public class DrawRequests : IRequestsFolder
 
     public void Draw()
     {
-        if (HasRequests is false) 
+        if (HasRequests is false)
             return;
 
         // Begin drawing out the header section for the requests folder dropdown thingy.
@@ -86,7 +76,7 @@ public class DrawRequests : IRequestsFolder
             using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(text);
         }
         _wasHovered = ImGui.IsItemHovered();
-        if(ImGui.IsItemClicked()) _isRequestFolderOpen = !_isRequestFolderOpen;
+        if (ImGui.IsItemClicked()) _isRequestFolderOpen = !_isRequestFolderOpen;
 
 
         color.Dispose();
@@ -109,7 +99,7 @@ public class DrawRequests : IRequestsFolder
                 // switch the tab to incoming if there are no outgoing requests.
                 if (TotalOutgoing is 0) _viewingMode = DrawRequestsType.Incoming;
 
-                foreach(var entry in _allOutgoingRequests)
+                foreach (var entry in _allOutgoingRequests)
                     entry.DrawRequestEntry();
             }
             else
@@ -117,7 +107,7 @@ public class DrawRequests : IRequestsFolder
                 // switch the tab to outgoing if there are no incoming requests.
                 if (TotalIncoming is 0) _viewingMode = DrawRequestsType.Outgoing;
 
-                foreach(var entry in _allIncomingRequests)
+                foreach (var entry in _allIncomingRequests)
                     entry.DrawRequestEntry();
             }
             ImGui.Separator();
@@ -158,7 +148,7 @@ public class DrawRequests : IRequestsFolder
     {
         bool viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
         var icon = viewingOutgoing ? FontAwesomeIcon.PersonArrowUpFromLine : FontAwesomeIcon.PersonArrowDownToLine;
-        var text = viewingOutgoing ? "View Incoming ("+ TotalIncoming + ")" : "View Outgoing ("+TotalOutgoing+")";
+        var text = viewingOutgoing ? "View Incoming (" + TotalIncoming + ")" : "View Outgoing (" + TotalOutgoing + ")";
         var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";
         var buttonSize = _uiShared.GetIconTextButtonSize(icon, text);
         var spacingX = ImGui.GetStyle().ItemSpacing.X;

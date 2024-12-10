@@ -15,6 +15,7 @@ using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
 using System.Numerics;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.UI.UiToybox;
 
@@ -25,18 +26,18 @@ public class ToyboxPatterns
     private readonly KinkPlateService _kinkPlates;
     private readonly UiSharedService _uiShared;
     private readonly PatternHandler _handler;
-    private readonly PatternHubService _patternHubService;
+    private readonly ShareHubService _shareHub;
     private readonly TutorialService _guides;
     public ToyboxPatterns(ILogger<ToyboxPatterns> logger, GagspeakMediator mediator,
         KinkPlateService kinkPlates, UiSharedService uiSharedService, PatternHandler patternHandler, 
-        PatternHubService patternHubService, TutorialService guides)
+        ShareHubService shareHubService, TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
         _kinkPlates = kinkPlates;
         _uiShared = uiSharedService;
         _handler = patternHandler;
-        _patternHubService = patternHubService;
+        _shareHub = shareHubService;
         _guides = guides;
     }
 
@@ -112,16 +113,9 @@ public class ToyboxPatterns
 
     private void DrawPatternEditorHeader()
     {
-        // get if social features are revoked to know if we should prevent uploads.
-        var profile = _kinkPlates.GetKinkPlate(MainHub.PlayerUserData);
-        var canPublish = !profile.KinkPlateInfo.Disabled;
-
         // use button rounding
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
-        FontAwesomeIcon publishOrTakedownIcon = _handler.ClonedPatternForEdit!.IsPublished ? FontAwesomeIcon.Ban : FontAwesomeIcon.Upload;
-        string publishOrTakedownText = _handler.ClonedPatternForEdit!.IsPublished ? "Unpublish" : "Publish";
-        var publishOrTakedownSize = _uiShared.GetIconTextButtonSize(publishOrTakedownIcon, publishOrTakedownText);
         var iconSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Plus);
         Vector2 textSize;
         using (_uiShared.UidFont.Push())
@@ -153,38 +147,12 @@ public class ToyboxPatterns
             }
 
             // now calculate it so that the cursors Yposition centers the button in the middle height of the text
-            var jumpWidth = _handler.ClonedPatternForEdit.CreatorUID == MainHub.UID
-                ? ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - publishOrTakedownSize - iconSize.X * 2 - ImGui.GetStyle().ItemSpacing.X * 3
-                : ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - iconSize.X * 2 - ImGui.GetStyle().ItemSpacing.X * 2;
-            ImGui.SameLine(jumpWidth);
+            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - iconSize.X * 2 - ImGui.GetStyle().ItemSpacing.X * 2);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerYpos);
             var currentYpos = ImGui.GetCursorPosY();
 
-            // draw out the icon button
-            if(_handler.ClonedPatternForEdit.CreatorUID == MainHub.UID)
-            {
-                var disabled = _handler.ClonedPatternForEdit.IsPublished is false && !canPublish;
-                if (_uiShared.IconTextButton(publishOrTakedownIcon, publishOrTakedownText, null, false, disabled))
-                {
-                    ImGui.OpenPopup("UploadPopup");
-                    var buttonPos = ImGui.GetItemRectMin();
-                    var buttonSize = ImGui.GetItemRectSize();
-                    ImGui.SetNextWindowPos(new Vector2(buttonPos.X, buttonPos.Y + buttonSize.Y));
-                }
-                UiSharedService.AttachToolTip(canPublish is false
-                    ? "Cannot Publish Patterns, your social features have been revoked!" : _handler.ClonedPatternForEdit.IsPublished
-                        ? "Remove Pattern from Server" : "Upload Pattern to Server");
-                _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.PublishingToPatternHub, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
-
-                // for saving contents
-                ImGui.SameLine();
-                ImGui.SetCursorPosY(currentYpos);
-            }
-
             if (_uiShared.IconButton(FontAwesomeIcon.Save))
-            {
                 _handler.SaveEditedPattern();
-            }
             UiSharedService.AttachToolTip("Save changes to Pattern & Return to Pattern List");
             _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.ApplyChanges, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
@@ -192,44 +160,8 @@ public class ToyboxPatterns
             ImGui.SameLine();
             ImGui.SetCursorPosY(currentYpos);
             if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: !KeyMonitor.ShiftPressed()))
-            {
-                HandleDelete(_handler.ClonedPatternForEdit);
-            }
+                _handler.RemovePattern(_handler.ClonedPatternForEdit.UniqueIdentifier);
             UiSharedService.AttachToolTip("Delete this Pattern--SEP--Must hold SHIFT while clicking to delete");
-
-            try
-            {
-                if (ImGui.BeginPopup("UploadPopup"))
-                {
-                    ImGui.InvisibleButton("##DummyWidth", new Vector2(ImGui.CalcTextSize("Yes I'm Sure __ Fuck, Go Back.").X, 0));
-                    string text = _handler.ClonedPatternForEdit.IsPublished ? "Remove Pattern from Server?" : "Upload Pattern to Server?";
-                    ImGuiUtil.Center(text);
-                    var width = (ImGui.GetContentRegionAvail().X / 2) - ImGui.GetStyle().ItemInnerSpacing.X;
-                    if (ImGui.Button("Yes, I'm Sure", new Vector2(width, 25f)))
-                    {
-                        if (_handler.ClonedPatternForEdit.IsPublished)
-                        {
-                            _patternHubService.RemovePatternFromServer(_handler.ClonedPatternForEdit);
-                        }
-                        else
-                        {
-                            _patternHubService.UploadPatternToServer(_handler.ClonedPatternForEdit);
-                        }
-                        ImGui.CloseCurrentPopup();
-                    }
-                    ImUtf8.SameLineInner();
-                    if (ImGui.Button("Fuck, go back", new Vector2(width, 25f)))
-                    {
-                        ImGui.CloseCurrentPopup();
-                    }
-                    ImGui.EndPopup();
-                }
-            }
-            catch (Exception ex)
-            {
-                // prevent crashes.
-                _logger.LogError(ex.ToString());
-            }
         }
     }
 
@@ -306,33 +238,10 @@ public class ToyboxPatterns
             // perform early returns to avoid crashes.
             if (ImGui.Selectable("Delete Pattern"))
             {
-                HandleDelete(FilteredPatternsList[LastHoveredIndex]);
-                ImGui.EndPopup();
-                return;
-            }
-            // perform early returns to avoid crashes.
-            if (FilteredPatternsList[LastHoveredIndex].CreatorUID == MainHub.UID)
-            {
-                if (ImGui.Selectable("Unpublish & Delete Pattern"))
-                {
-                    HandleDelete(FilteredPatternsList[LastHoveredIndex], true);
-                    ImGui.EndPopup();
-                    return;
-                }
+                _handler.RemovePattern(FilteredPatternsList[LastHoveredIndex].UniqueIdentifier);
             }
             ImGui.EndPopup();
         }
-    }
-
-    private void HandleDelete(PatternData refPattern, bool unpublish = false)
-    {
-        if(refPattern.CreatorUID == MainHub.UID && unpublish)
-        {
-            _logger.LogInformation("Unpublishing the Pattern.");
-            _patternHubService.RemovePatternFromServer(refPattern);
-        }
-        // remove it normally.
-        _handler.RemovePattern(refPattern.UniqueIdentifier);
     }
 
     private void DrawPatternSelectable(PatternData pattern, int idx)
@@ -342,17 +251,9 @@ public class ToyboxPatterns
         Vector2 tmpAlarmTextSize;
         using (_uiShared.UidFont.Push()) { tmpAlarmTextSize = ImGui.CalcTextSize(name); }
 
-        var author = pattern.Author;
-        var authorTextSize = ImGui.CalcTextSize(author);
-
         // fetch the duration of the pattern
-        var duration = pattern.Duration.Hours > 0 ? pattern.Duration.ToString("hh\\:mm\\:ss") : pattern.Duration.ToString("mm\\:ss");
-        var durationTextSize = ImGui.CalcTextSize(duration);
-
-        // fetch the list of tags.
-        var tags = pattern.Tags;
-
-        // get loop icon size
+        var durationTxt = pattern.Duration.Hours > 0 ? pattern.Duration.ToString("hh\\:mm\\:ss") : pattern.Duration.ToString("mm\\:ss");
+        var startpointTxt = pattern.StartPoint.Hours > 0 ? pattern.StartPoint.ToString("hh\\:mm\\:ss") : pattern.StartPoint.ToString("mm\\:ss");
         var loopIconSize = _uiShared.GetIconData(FontAwesomeIcon.Repeat);
 
         // Get Style sizes
@@ -362,147 +263,87 @@ public class ToyboxPatterns
         var patternToggleButtonSize = _uiShared.GetIconButtonSize(pattern.IsActive ? FontAwesomeIcon.Stop : FontAwesomeIcon.Play);
 
         // create the selectable
+        float height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), LastHoveredIndex == idx);
-        using (ImRaii.Child($"##PatternSelectable{pattern.UniqueIdentifier}", new Vector2(UiSharedService.GetWindowContentRegionWidth(), 65f)))
+        using (ImRaii.Child($"##PatternSelectable{pattern.UniqueIdentifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
-            // create a group for the bounding area
             using (var group = ImRaii.Group())
             {
-                // scooch over a bit like 5f
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
-                // get Y pos
-                var currentYpos = ImGui.GetCursorPosY();
-                _uiShared.BigText(name);
-                ImGui.SameLine();
-                ImGui.SetCursorPosY(currentYpos + ((tmpAlarmTextSize.Y - loopIconSize.Y) / 1.5f));
+                // get sizes for the likes and downloads
+                var playbackSize = _uiShared.GetIconTextButtonSize(pattern.IsActive ? FontAwesomeIcon.Stop : FontAwesomeIcon.Play, pattern.IsActive ? "Stop" : "Play");
+                var trashbinSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Trash).X;
 
-                if (pattern.ShouldLoop)
+                // display name, then display the downloads and likes on the other side.
+                _uiShared.GagspeakText(pattern.Name);
+                _uiShared.DrawHelpText("Description:--SEP--"+pattern.Description);
+
+                // playback button
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X - playbackSize - trashbinSize);
+                using (ImRaii.PushColor(ImGuiCol.Text, pattern.IsActive ? ImGuiColors.DalamudRed : ImGuiColors.HealerGreen))
                 {
-                    _uiShared.IconText(FontAwesomeIcon.Repeat, ImGuiColors.ParsedPink);
+                    if (_uiShared.IconTextButton(pattern.IsActive ? FontAwesomeIcon.Stop : FontAwesomeIcon.Play, pattern.IsActive ? "Stop" : "Play", isInPopup: true))
+                    {
+                        if (pattern.IsActive) _handler.DisablePattern(pattern);
+                        else _handler.EnablePattern(pattern);
+                    }
                 }
-                if (pattern.IsPublished)
-                {
-                    ImGui.SameLine();
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((tmpAlarmTextSize.Y - loopIconSize.Y) / 1.5f));
-                    _uiShared.IconText(FontAwesomeIcon.Globe, ImGuiColors.ParsedPink);
-                }
-            }
+                UiSharedService.AttachToolTip(pattern.IsActive ? "Stop the current pattern." : "Play this pattern.");
 
-            using (var group = ImRaii.Group())
-            {
-                // scooch over a bit like 5f
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
-                UiSharedService.ColorText(author, ImGuiColors.DalamudGrey2);
+                // Draw the delete button
                 ImGui.SameLine();
-                UiSharedService.ColorText("|  " + duration, ImGuiColors.DalamudGrey3);
-                // Below this, we should draw out the tags in a row, with a max of 5 tags. If they extend the width of the window, stop drawing.
-                var widthRef = ImGui.GetContentRegionAvail().X;
+                using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudWhite2))
+                {
+                    if (_uiShared.IconButton(FontAwesomeIcon.TrashAlt, disabled: !KeyMonitor.ShiftPressed(), inPopup: true))
+                        _handler.RemovePattern(pattern.UniqueIdentifier);
+                }
+                UiSharedService.AttachToolTip("Remove this pattern!");
             }
-
-            // now, head to the same line of the full width minus the width of the button
-            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - patternToggleButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (65f - patternToggleButtonSize.Y) / 2);
-            // draw out the icon button
-            if (_uiShared.IconButton(patternToggleButton))
+            // next line:
+            using (var group2 = ImRaii.Group())
             {
-                // set the enabled state of the pattern based on its current state so that we toggle it
-                if (pattern.IsActive)
-                    _handler.DisablePattern(pattern);
-                else
-                    _handler.EnablePattern(pattern);
-                // toggle the state & early return so we dont access the childclicked button
-                return;
+                ImGui.AlignTextToFramePadding();
+                _uiShared.IconText(FontAwesomeIcon.Clock);
+                ImUtf8.SameLineInner();
+                UiSharedService.ColorText(durationTxt, ImGuiColors.DalamudGrey);
+                UiSharedService.AttachToolTip("Total Length of the Pattern.");
+
+                ImGui.SameLine();
+                ImGui.AlignTextToFramePadding();
+                _uiShared.IconText(FontAwesomeIcon.Stopwatch20);
+                ImUtf8.SameLineInner();
+                UiSharedService.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
+                UiSharedService.AttachToolTip("Start Point of the Pattern.");
+
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - _uiShared.GetIconData(FontAwesomeIcon.Sync).X);
+                _uiShared.IconText(FontAwesomeIcon.Sync);
+                UiSharedService.AttachToolTip(pattern.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
             }
-            UiSharedService.AttachToolTip("Play / Stop this Pattern");
         }
         // if the item is clicked, set the editing pattern to this pattern
-        if (ImGui.IsItemClicked())
-        {
-            _handler.StartEditingPattern(pattern);
-        }
+        if (ImGui.IsItemClicked()) _handler.StartEditingPattern(pattern);
     }
 
-    private void DrawPatternEditor(PatternData patternToEdit)
+    private void DrawPatternEditor(PatternData pattern)
     {
-        if (ImGui.BeginTabBar("PatternEditorTabBar"))
-        {
-            var tabs = new Dictionary<string, Action>
-            {
-                { "Display Info", () => DrawDisplayInfo(patternToEdit) },
-                { "Adjustments", () => DrawAdjustments(patternToEdit) }
-            };
-
-            foreach (var tab in tabs)
-            {
-                using (var open = ImRaii.TabItem(tab.Key, _nextTabToSelect == tab.Key ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None))
-                {
-                    if (_nextTabToSelect == tab.Key) _nextTabToSelect = string.Empty;
-
-                    switch (tab.Key)
-                    {
-                        case "Display Info":
-                            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.EditDisplayInfo, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
-                            break;
-                        case "Adjustments":
-                            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.ToEditAdjustments, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _nextTabToSelect = "Adjustments");
-                            break;
-                    }
-
-                    if (open) tab.Value.Invoke();
-                }
-            }
-            ImGui.EndTabBar();
-        }
-    }
-
-    private void DrawDisplayInfo(PatternData pattern)
-    {
-        // identifier
-        UiSharedService.ColorText("Identifier", ImGuiColors.ParsedGold);
+        UiSharedService.ColorText("ID:", ImGuiColors.ParsedGold);
+        ImGui.SameLine();
         UiSharedService.ColorText(pattern.UniqueIdentifier.ToString(), ImGuiColors.DalamudGrey);
 
-        // name
-        var refName = pattern.Name;
         UiSharedService.ColorText("Pattern Name", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
+        var refName = pattern.Name;
         if (ImGui.InputTextWithHint("##PatternName", "Name Here...", ref refName, 50))
-        {
             pattern.Name = refName;
-        }
-
         _uiShared.DrawHelpText("Define the name for the Pattern.");
-        // author
-        var refAuthor = pattern.Author;
-        UiSharedService.ColorText("Author", ImGuiColors.ParsedGold);
-        using (ImRaii.Disabled(pattern.CreatorUID != MainHub.UID))
-        {
-            ImGui.SetNextItemWidth(200f);
-            if (ImGui.InputTextWithHint("##PatternAuthor", "Author Here...", ref refAuthor, 25))
-            {
-                pattern.Author = refAuthor;
-            }
-        }
-        _uiShared.DrawHelpText("Define the author for the Pattern.\n(Shown as Publisher name if uploaded)");
-
+        
         // description
         var refDescription = pattern.Description;
         UiSharedService.ColorText("Description", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
         if (UiSharedService.InputTextWrapMultiline("##PatternDescription", ref refDescription, 100, 3, 225f))
-        {
             pattern.Description = refDescription;
-        }
         _uiShared.DrawHelpText("Define the description for the Pattern.\n(Shown on tooltip hover if uploaded)");
 
-        // tags.
-        var tags = pattern.Tags;
-        UiSharedService.ColorText("Tags:", ImGuiColors.ParsedGold);
-        foreach (var tag in tags)
-            ImGui.TextUnformatted("- "+tag);
-    }
-
-    private void DrawAdjustments(PatternData pattern)
-    {
         // total duration
         ImGui.Spacing();
         UiSharedService.ColorText("Total Duration", ImGuiColors.ParsedGold);

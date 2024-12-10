@@ -46,14 +46,14 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private ICallGateProvider<string, string, List<MoodlesStatusInfo>, bool, object?>? _applyStatusesToPairRequest;
 
     /// <summary>
-    /// An action event to let other plugins know when our list is updated.
-    /// This allows them to not need to call upon the list every frame.
+    /// Create an action event that can send off a MoodleStatusInfo tuple to other plugins and inform them that our information is updated.
     /// </summary>
-    private static ICallGateProvider<object>? _listUpdated;
+    private static ICallGateProvider<MoodlesStatusInfo, object?>? GagSpeakTryMoodleStatus; // ACTION
 
-    private static ICallGateProvider<int>? GagSpeakApiVersion;
-    private static ICallGateProvider<object>? GagSpeakReady;
-    private static ICallGateProvider<object>? GagSpeakDisposing;
+    private static ICallGateProvider<int>? GagSpeakApiVersion; // FUNC 
+    private static ICallGateProvider<object>? GagSpeakListUpdated; // ACTION
+    private static ICallGateProvider<object>? GagSpeakReady; // FUNC
+    private static ICallGateProvider<object>? GagSpeakDisposing; // FUNC
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
         PairManager pairManager, OnFrameworkService frameworkUtils,
@@ -129,7 +129,9 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         _applyStatusesToPairRequest = _pi.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
         _applyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
 
-        _listUpdated = _pi.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
+        // This is an action that we send off whenever our pairs update.
+        GagSpeakListUpdated = _pi.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
+        GagSpeakTryMoodleStatus = _pi.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.TryOnMoodleStatus");
 
         _logger.LogInformation("Started IpcProviderService");
         NotifyReady();
@@ -148,7 +150,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         _handledVisiblePairs?.UnregisterFunc();
         _applyStatusesToPairRequest?.UnregisterAction();
-        _listUpdated?.UnregisterAction();
+        GagSpeakListUpdated?.UnregisterAction();
+        GagSpeakTryMoodleStatus?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
 
@@ -157,8 +160,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
     private static void NotifyReady() => GagSpeakReady?.SendMessage();
     private static void NotifyDisposing() => GagSpeakDisposing?.SendMessage();
-    private static void NotifyListChanged() => _listUpdated?.SendMessage();
-
+    private static void NotifyListChanged() => GagSpeakListUpdated?.SendMessage();
 
     private List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetVisiblePairs()
     {
@@ -207,5 +209,11 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         var dto = new ApplyMoodlesByStatusDto(pairUser, statuses, (isPreset ? IpcToggleType.MoodlesPreset : IpcToggleType.MoodlesStatus));
         Mediator.Publish(new MoodlesApplyStatusToPair(dto));
     }
+
+    /// <summary>
+    /// Used to call upon Moodles to try on a MoodleStatusInfo to the client player.
+    /// Called directly from GagSpeak's provider to prevent missuse of bypassing permissions.
+    /// </summary>
+    public void TryOnStatus(MoodlesStatusInfo status) => GagSpeakTryMoodleStatus?.SendMessage(status);
 }
 

@@ -39,6 +39,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
     private float _windowContentWidth;
     private bool _addingNewUser = false;
     public string _pairToAdd = string.Empty; // the pair to add
+    public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
 
     // Attributes related to the drawing of the whitelist / contacts / pair list
     private Pair? _lastAddedUser;
@@ -220,7 +221,6 @@ public class MainWindowUI : WindowMediatorSubscriberBase
         float menuComponentEnd = ImGui.GetCursorPosY();
 
         // if we are connected, draw out our menus based on the tab selection.
-        // if we are connected to the server
         if (MainHub.ServerStatus is ServerState.Connected)
         {
             if (_addingNewUser)
@@ -280,12 +280,16 @@ public class MainWindowUI : WindowMediatorSubscriberBase
             if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
             {
                 // call the UserAddPair function on the server with the user data transfer object
-                _ = _apiHubMain.UserSendPairRequest(new(new(_pairToAdd)));
+                _ = _apiHubMain.UserSendPairRequest(new(new(_pairToAdd), _pairToAddMessage));
                 _pairToAdd = string.Empty;
+                _pairToAddMessage = string.Empty;
                 _addingNewUser = false;
             }
         }
         UiSharedService.AttachToolTip("Pair with " + (_pairToAdd.IsNullOrEmpty() ? "other user" : _pairToAdd));
+        // draw a attached message field as well if they want.
+        ImGui.SetNextItemWidth(availableXWidth);
+        ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _pairToAddMessage, 100);        
         ImGui.Separator();
     }
 

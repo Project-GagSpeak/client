@@ -18,20 +18,69 @@ public class PatternConfigService : ConfigurationServiceBase<PatternConfig>
     {
         JObject newConfigJson;
 
-        // no migration needed
-        newConfigJson = oldConfigJson;
+        // Check the version of the config file
+        switch (readVersion)
+        {
+            case 0:
+                newConfigJson = MigrateFromV0toV1(oldConfigJson);
+                break;
+            default:
+                // no migration needed
+                newConfigJson = oldConfigJson;
+                break;
+        }
+        // return the updated config
         return newConfigJson;
     }
 
     // Safely update data for new format.
+    // Migration function to handle changes from version 1 to version 2
     private JObject MigrateFromV0toV1(JObject oldConfigJson)
     {
-        // create a new JObject to store the new config
-        JObject newConfigJson = new();
-        // set the version to 1
-        newConfigJson["Version"] = 1;
+        // Create a new JObject for the updated config
+        JObject newConfigJson = new JObject
+        {
+            ["Version"] = 1 // Set the new version number
+        };
 
-        return oldConfigJson;
+        // Ensure PatternStorage exists in the old config
+        if (oldConfigJson["PatternStorage"] is JObject oldPatternStorage)
+        {
+            // Create a new PatternStorage JObject
+            JObject newPatternStorage = new JObject();
+
+            // Ensure Patterns list exists in the old PatternStorage
+            if (oldPatternStorage["Patterns"] is JArray oldPatternsArray)
+            {
+                JArray newPatternsArray = new JArray();
+
+                foreach (var pattern in oldPatternsArray)
+                {
+                    if (pattern is JObject patternObject)
+                    {
+                        // Create a new JObject for the migrated pattern
+                        JObject newPatternObject = new JObject(patternObject);
+
+                        // Remove the fields that are no longer needed
+                        newPatternObject.Remove("Author");
+                        newPatternObject.Remove("Tags");
+                        newPatternObject.Remove("CreatedByClient");
+                        newPatternObject.Remove("IsPublished");
+
+                        // Add the migrated pattern to the new array
+                        newPatternsArray.Add(newPatternObject);
+                    }
+                }
+
+                // Add the updated Patterns array to the new PatternStorage
+                newPatternStorage["Patterns"] = newPatternsArray;
+            }
+
+            // Add the updated PatternStorage to the new config
+            newConfigJson["PatternStorage"] = newPatternStorage;
+        }
+
+        return newConfigJson;
     }
 
 

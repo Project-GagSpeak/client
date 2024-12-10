@@ -66,15 +66,6 @@ public class SavePatternPopupHandler : IPopupHandler
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternName, ImGui.GetWindowPos(), _size,
             () => CompiledPatternData.Name = "Tutorial Pattern");
 
-        // author field
-        var author = CompiledPatternData.Author.IsNullOrEmpty() ? "Anonymous Kinkster" : CompiledPatternData.Author;
-        ImGui.SetNextItemWidth(150);
-        if (ImGui.InputTextWithHint("Author", "Enter your name...", ref author, 24))
-        {
-            CompiledPatternData.Author = author;
-        }
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternAuthor, ImGui.GetWindowPos(), _size);
-
         // description field
         var description = CompiledPatternData.Description;
         if (ImGui.InputTextMultiline("Description", ref description, 256, new Vector2(150, 100)))
@@ -98,8 +89,6 @@ public class SavePatternPopupHandler : IPopupHandler
         }
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternLoop, ImGui.GetWindowPos(), _size);
 
-        // display tags
-        DrawTagField();
         // display save options
         ImGui.Separator();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Save, "Save Pattern Data", SaveWidth))
@@ -119,95 +108,6 @@ public class SavePatternPopupHandler : IPopupHandler
     }
 
     private int IndexToRemote = -1;
-    private float TagWidth = 0f;
-    private void DrawTagField()
-    {
-        // get the spacing of items
-        var iconSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Plus).X;
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-
-        if (ImGui.BeginPopup("DeleteTag"))
-        {
-            if (ImGui.Selectable("Delete"))
-            {
-                CompiledPatternData.Tags.RemoveAt(IndexToRemote);
-            }
-            ImGui.EndPopup();
-        }
-
-        using (var group = ImRaii.Group())
-        {
-            ImGui.Text($"Space left: {PopupWidth - (TagWidth + iconSize)}");
-            // store the original width 
-            TagWidth = ImGui.CalcTextSize("Tags: ").X + spacing + ImGui.GetStyle().PopupBorderSize;
-            ImGui.Text("Tags: ");
-            foreach (var tag in CompiledPatternData.Tags)
-            {
-                var newlinePushed = false;
-                // add the button size to the width
-                TagWidth += ImGui.CalcTextSize(tag).X + spacing;
-                // if there is less than 60f in the content region go to the next row
-                if (!(PopupWidth - TagWidth < 40f))
-                {
-                    ImGui.SameLine();
-                }
-                else
-                {
-                    newlinePushed = true;
-                }
-                ImGui.Button(tag);
-                // if the item is leftclicked, display a popup menu asking if they want to delete.
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    IndexToRemote = CompiledPatternData.Tags.IndexOf(tag);
-                    ImGui.OpenPopup("DeleteTag");
-                }
-                // account for newline
-                if (PopupWidth - (TagWidth + iconSize) < 35f)
-                {
-                    if (!newlinePushed)
-                    {
-                        ImGui.NewLine();
-                        TagWidth = 0f;
-                    }
-                    else
-                    {
-                        TagWidth = ImGui.CalcTextSize(tag).X + spacing;
-                    }
-                }
-            }
-            if (CompiledPatternData.Tags.Count >= 5) return;
-
-            if (AddingTag)
-            {
-                // new field width
-                var newWidth = ImGui.CalcTextSize(NewTagName).X + 35f;
-                if (!(PopupWidth - (TagWidth + 15f) < newWidth))
-                {
-                    ImGui.SameLine();
-                }
-                ImGui.SetNextItemWidth(newWidth - 10f);
-                ImGui.SetKeyboardFocusHere();
-                ImGui.InputTextWithHint("##New Tag", string.Empty, ref NewTagName, 16);
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                {
-                    CompiledPatternData.Tags.Add(NewTagName);
-                    AddingTag = false;
-                    NewTagName = string.Empty;
-                }
-            }
-            else
-            {
-                ImGui.SameLine();
-                if (_uiShared.IconButton(FontAwesomeIcon.Plus) || ImGui.IsMouseClicked(ImGuiMouseButton.Middle))
-                {
-                    AddingTag = true;
-                }
-                UiSharedService.AttachToolTip("You can press Middle Mouse to automatically open me!");
-                _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternTags, ImGui.GetWindowPos(), _size);
-            }
-        }
-    }
 
     public void Open(PatternSavePromptMessage message)
     {
@@ -220,8 +120,6 @@ public class SavePatternPopupHandler : IPopupHandler
         CompiledPatternData.PlaybackDuration = message.Duration;
         // set the pattern data
         CompiledPatternData.PatternByteData = message.StoredData;
-        // set the creator.
-        CompiledPatternData.CreatorUID = MainHub.UID;
     }
 
     public void Close()

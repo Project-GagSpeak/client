@@ -104,36 +104,13 @@ public class MigratePatterns
             UniqueIdentifier = Guid.NewGuid(),
             Name = oldPattern.Name,
             Description = oldPattern.Description,
-            Author = "(Migrated Pattern)",
-            Tags = new List<string>(),
             Duration = oldPattern.Duration.GetTimespanFromTimespanString(),
             StartPoint = TimeSpan.Zero,
             PlaybackDuration = oldPattern.Duration.GetTimespanFromTimespanString(),
             IsActive = false,
-            IsPublished = false,
-            CreatorUID = "OldMigration",
             ShouldLoop = oldPattern.Loop,
             PatternByteData = oldPattern.PatternData
         };
-
-        // adjust the name and author based on the name
-        if (newPatternToAdd.Name.Contains("[C.K.]"))
-        {
-            newPatternToAdd.Name = newPatternToAdd.Name.Replace("[C.K.] ", "");
-            newPatternToAdd.Author = "C.K.";
-        }
-        if (newPatternToAdd.Name.Contains("[CK]"))
-        {
-            newPatternToAdd.Name = newPatternToAdd.Name.Replace("[CK] ", "");
-            newPatternToAdd.Author = "C.K.";
-        }
-
-        if (newPatternToAdd.Name.Contains("[Base Pattern]"))
-        {
-            newPatternToAdd.Name = newPatternToAdd.Name.Replace("[Base Pattern] ", "");
-            newPatternToAdd.Author = "Base Pattern";
-        }
-
         // append the new Pattern data
         _clientConfigs.AddNewPattern(newPatternToAdd);
     }
@@ -169,36 +146,13 @@ public class MigratePatterns
                 UniqueIdentifier = Guid.NewGuid(),
                 Name = oldPattern.Name,
                 Description = oldPattern.Description,
-                Author = "(Migrated Pattern)",
-                Tags = new List<string>(),
                 Duration = oldPattern.Duration.GetTimespanFromTimespanString(),
                 StartPoint = TimeSpan.Zero,
                 PlaybackDuration = oldPattern.Duration.GetTimespanFromTimespanString(),
                 IsActive = false,
-                IsPublished = false,
-                CreatorUID = "OldMigration",
                 ShouldLoop = oldPattern.Loop,
                 PatternByteData = oldPattern.PatternData
             };
-
-            // adjust the name and author based on the name
-            if (newPatternToAdd.Name.Contains("[C.K.]"))
-            {
-                newPatternToAdd.Name = newPatternToAdd.Name.Replace("[C.K.] ", "");
-                newPatternToAdd.Author = "C.K.";
-            }
-            if (newPatternToAdd.Name.Contains("[CK]"))
-            {
-                newPatternToAdd.Name = newPatternToAdd.Name.Replace("[CK] ", "");
-                newPatternToAdd.Author = "C.K.";
-            }
-
-            if (newPatternToAdd.Name.Contains("[Base Pattern]"))
-            {
-                newPatternToAdd.Name = newPatternToAdd.Name.Replace("[Base Pattern] ", "");
-                newPatternToAdd.Author = "Base Pattern";
-            }
-
             newPatternList.Add(newPatternToAdd);
         }
         _clientConfigs.AddNewPatterns(newPatternList);

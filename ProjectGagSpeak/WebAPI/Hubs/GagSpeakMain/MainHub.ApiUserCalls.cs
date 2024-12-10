@@ -10,6 +10,7 @@ using GagspeakAPI.Dto.Toybox;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.Patterns;
 using GagspeakAPI.Data.Permissions;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GagSpeak.WebAPI;
 
@@ -23,11 +24,11 @@ public partial class MainHub
     /// Creates a new Kinkster Pair request for the other user we wish to pair with.
     /// Will generate a UserAddPairRequest on callback if valid.
     /// </summary>
-    public async Task UserSendPairRequest(UserDto user)
+    public async Task UserSendPairRequest(UserPairSendRequestDto request)
     {
         if (!IsConnected) return;
-        Logger.LogDebug("Pushing an outgoing kinkster request to "+user, LoggerType.ApiCore);
-        await GagSpeakHubMain!.SendAsync(nameof(UserSendPairRequest), user).ConfigureAwait(false); // wait for request to send.
+        Logger.LogDebug("Pushing an outgoing kinkster request to "+ request.User.UID, LoggerType.ApiCore);
+        await GagSpeakHubMain!.SendAsync(nameof(UserSendPairRequest), request).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task UserCancelPairRequest(UserDto user)
@@ -93,19 +94,18 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<List<UserPairRequestDto>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
     }
 
-
-    /// <summary> Grabs the search result of your specified query to the server. </summary>
-    public async Task<List<ServerPatternInfo>> SearchPatterns(PatternSearchDto patternSearchDto)
-    {
-        if (!IsConnected) return new List<ServerPatternInfo>();
-        return await GagSpeakHubMain!.InvokeAsync<List<ServerPatternInfo>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
-    }
-
-    /// <summary> Likes a pattern you see on the server. AddingLike==true means we liked it, false means we un-liked it. </summary>
-    public async Task<bool> LikePattern(Guid patternId)
+    /// <summary> Uploads your pattern to the server. </summary>
+    public async Task<bool> UploadPattern(PatternUploadDto dto)
     {
         if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikePattern), patternId).ConfigureAwait(false);
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UploadPattern), dto).ConfigureAwait(false);
+    }
+
+    /// <summary> Uploads your a new Moodle to the server. </summary>
+    public async Task<bool> UploadMoodle(MoodleUploadDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UploadMoodle), dto).ConfigureAwait(false);
     }
 
     /// <summary> Downloads a pattern from the server. </summary>
@@ -115,11 +115,18 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<string>(nameof(DownloadPattern), patternId).ConfigureAwait(false);
     }
 
-    /// <summary> Uploads your pattern to the server. </summary>
-    public async Task<bool> UploadPattern(PatternUploadDto dto)
+    /// <summary> Likes a pattern you see on the server. AddingLike==true means we liked it, false means we un-liked it. </summary>
+    public async Task<bool> LikePattern(Guid patternId)
     {
         if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UploadPattern), dto).ConfigureAwait(false);
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikePattern), patternId).ConfigureAwait(false);
+    }
+
+    /// <summary> Likes a Moodle you see on the server. AddingLike==true means we liked it, false means we un-liked it. </summary>
+    public async Task<bool> LikeMoodle(Guid moodleId)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
     }
 
     /// <summary> Deletes a pattern from the server. </summary>
@@ -135,21 +142,39 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(RemoveMoodle), moodleId).ConfigureAwait(false);
     }
 
-    public async Task<bool> LikeMoodle(Guid moodleId)
+    /// <summary> Grabs the search result of your specified query to the server. </summary>
+    public async Task<List<ServerPatternInfo>> SearchPatterns(PatternSearchDto patternSearchDto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
+        if (!IsConnected) return new List<ServerPatternInfo>();
+        return await GagSpeakHubMain!.InvokeAsync<List<ServerPatternInfo>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Sends a message to the gagspeak Global chat.
-    /// </summary>
+    /// <summary> Grabs the search result of your specified query to the server. </summary>
+    public async Task<List<ServerMoodleInfo>> SearchMoodles(MoodleSearchDto moodleSearchDto)
+    {
+        if (!IsConnected) return new List<ServerMoodleInfo>();
+        return await GagSpeakHubMain!.InvokeAsync<List<ServerMoodleInfo>>(nameof(SearchMoodles), moodleSearchDto).ConfigureAwait(false);
+    }
+
+    /// <summary> Grabs the search result of your specified query to the server. </summary>
+    public async Task<HashSet<string>> FetchSearchTags()
+    {
+        if (!IsConnected) return new HashSet<string>();
+        return await GagSpeakHubMain!.InvokeAsync<HashSet<string>>(nameof(FetchSearchTags)).ConfigureAwait(false);
+    }
+
+    /// <summary> Sends a message to the gagspeak Global chat. </summary>
     public async Task SendGlobalChat(GlobalChatMessageDto dto)
     {
-        // if we are not connected, return
         if (!IsConnected) return;
-        // if we are connected, send the message to the global chat
         await GagSpeakHubMain!.InvokeAsync(nameof(SendGlobalChat), dto).ConfigureAwait(false);
+    }
+
+    /// <summary> Sends a message to a pair spesific group chat. </summary>
+    public async Task SendPairChat(PairChatMessageDto dto)
+    {
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(SendPairChat), dto).ConfigureAwait(false);
     }
 
     public async Task UserShockActionOnPair(ShockCollarActionDto dto)
@@ -162,7 +187,25 @@ public partial class MainHub
     public async Task UserUpdateAchievementData(UserAchievementsDto dto)
     {
         if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto).ConfigureAwait(false);
+        try
+        {
+            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex)
+        {
+            // Handle the operation canceled exception
+            Logger.LogError(ex, "Operation was canceled while updating achievement data.");
+        }
+        catch (HubException ex)
+        {
+            // Handle SignalR hub exceptions
+            Logger.LogError(ex, "HubException occurred while updating achievement data.");
+        }
+        catch (Exception ex)
+        {
+            // Handle any other exceptions
+            Logger.LogError(ex, "An unexpected error occurred while updating achievement data.");
+        }
     }
 
     public async Task<UserKinkPlateDto> UserGetKinkPlate(UserDto dto)

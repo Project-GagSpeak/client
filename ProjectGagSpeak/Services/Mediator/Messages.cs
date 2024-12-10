@@ -164,6 +164,8 @@ public record BlindfoldUiTypeChange(BlindfoldType NewType) : MessageBase; // for
 
 /* -------------------- DISCOVER TAB RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
+public record PairChatMessage(PairChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
+
 public record SafewordUsedMessage : MessageBase; // for when the safeword is used.
 public record SafewordHardcoreUsedMessage : MessageBase; // for when the hardcore safeword is used.
 
