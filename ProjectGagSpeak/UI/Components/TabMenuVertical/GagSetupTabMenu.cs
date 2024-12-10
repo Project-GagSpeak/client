@@ -11,9 +11,9 @@ public class GagSetupTabMenu : TabMenuBase<GagSetupTabs.Tabs>
     {
         return tab switch
         {
-            GagSetupTabs.Tabs.ActiveGags => "Overview of current active gags, and lock info, if any.",
+            GagSetupTabs.Tabs.ActiveGags => "View information of your currently active gags and locks.",
             GagSetupTabs.Tabs.LockPicker => "A WIP Concept that is questionable on if it will ever be added.--SEP--WIP During Open Beta.",
-            GagSetupTabs.Tabs.GagStorage => "Manage how your Gags are applied in various ways.",
+            GagSetupTabs.Tabs.GagStorage => "Customize the appearance and properties of your gags.",
             _ => string.Empty,
         };
     }
