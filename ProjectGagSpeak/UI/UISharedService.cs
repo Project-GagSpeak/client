@@ -927,6 +927,7 @@ public partial class UiSharedService
         Action<T?>? onSelected = null, T? initialSelectedItem = default, bool shouldShowLabel = true,
         ImGuiComboFlags flags = ImGuiComboFlags.None, string defaultPreviewText = "Nothing Selected..")
     {
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         string comboLabel = shouldShowLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
         if (!comboItems.Any())
         {
@@ -986,6 +987,7 @@ public partial class UiSharedService
         bool showLabel = true, Action<T?>? onSelected = null, T? initialSelectedItem = default,
         string defaultPreviewText = "No Items Available...", ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         try
         {
             // Return default if there are no items to display in the combo box.

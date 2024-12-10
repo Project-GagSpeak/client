@@ -10,6 +10,8 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Patterns;
 using ImGuiNET;
+using System.Collections.Generic;
+using System.Linq;
 using Lumina.Text.ReadOnly;
 
 namespace GagSpeak.Services;
@@ -22,7 +24,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     private readonly IpcCallerMoodles _moodles;
     private readonly IpcProvider _ipcProvider;
 
-    public bool InitialSearchMade { get; private set; } = false;
     private Task? CurrentShareHubTask = null;
     public ShareHubService(ILogger<ShareHubService> logger, GagspeakMediator mediator,
         MainHub apiHubMain, ClientConfigurationManager clientConfigs,
@@ -39,7 +40,8 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             ClientPublishedPatterns = MainHub.ConnectionDto.PublishedPatterns;
             ClientPublishedMoodles = MainHub.ConnectionDto.PublishedMoodles;
 
-            if(InitialSearchMade is false) PerformPatternSearch();
+            // grab the tags.
+            FetchLatestTags().ConfigureAwait(false);
         });
     }
 
@@ -55,11 +57,14 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new();
     public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new();
 
-
+    // This makes sure that we only automatically fetch the patterns and moodles and tags once automatically.
+    // Afterwards, manual updates are requied.
+    public bool InitialPatternsCall { get; private set; } = false;
+    public bool InitialMoodlesCall { get; private set; } = false;
     public bool HasPatternResults => LatestPatternResults.Count > 0;
     public bool HasMoodleResults => LatestMoodleResults.Count > 0;
     public bool HasTags => FetchedTags.Count > 0;
-    public bool CanShareHubTask => CurrentShareHubTask is null || CurrentShareHubTask.IsCompleted;
+    public bool CanShareHubTask => MainHub.IsConnected && (CurrentShareHubTask is null || CurrentShareHubTask.IsCompleted);
 
     public void ToggleSortDirection() => SearchSort = SearchSort == SearchSort.Ascending ? SearchSort.Descending : SearchSort.Ascending;
 
@@ -123,13 +128,34 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         Logger.LogInformation("Copied moodle to clipboard.");
     }
 
+    private async Task FetchLatestTags()
+    {
+        try
+        {
+            var latestTags = await _apiHubMain.FetchSearchTags();
+            FetchedTags = latestTags.OrderBy(x => x).ToHashSet();
+            Logger.LogInformation("Retrieved tags from servers.");
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Failed to retrieve tags from servers.");
+        }
+        finally
+        {
+            CurrentShareHubTask = null;
+        }
+    }
+
     #region PatternHub Tasks
     private async Task FetchPatternsTask()
     {
         try
         {
             // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-            var tags = SearchTags.Split(',').Select(x => x.ToLower().Trim()).ToHashSet();
+            var tags = SearchTags.Split(',')
+                .Select(x => x.ToLower().Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToHashSet();
 
             // Firstly, we should compose the Dto for the search operation.
             PatternSearchDto dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
@@ -148,9 +174,8 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             {
                 Logger.LogInformation("Retrieved patterns from servers.", LoggerType.PatternHub);
                 LatestPatternResults = result;
-                // update initial search if true.
-                if(InitialSearchMade is false) InitialSearchMade = true;
             }
+            if(!InitialPatternsCall) InitialPatternsCall = true;
         }
         catch (Exception e)
         {
@@ -340,7 +365,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         try
         {
             // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-            var tags = SearchTags.Split(',').Select(x => x.ToLower().Trim()).ToHashSet();
+            var tags = SearchTags.Split(',')
+                .Select(x => x.ToLower().Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToHashSet();
 
             // Firstly, we should compose the Dto for the search operation.
             MoodleSearchDto dto = new(SearchString, tags, SearchFilter, SearchSort);
@@ -360,6 +388,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.PatternHub);
                 LatestMoodleResults = result;
             }
+            if(!InitialMoodlesCall) InitialMoodlesCall = true;
         }
         catch (Exception e)
         {

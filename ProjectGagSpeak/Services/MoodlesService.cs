@@ -1,5 +1,6 @@
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.UI;
@@ -181,6 +182,7 @@ public class MoodlesService
     private void DrawStatusComboBox(List<MoodlesStatusInfo> statuses, string comboLabel, float width,
         Action<Guid?>? onSelected = null, float sizeScaler = 1f, Guid initialSelectedItem = default)
     {
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         var height = ImGui.GetTextLineHeightWithSpacing() * 10 - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y;
 
         // if the statuses list is empty, display an empty status combo box.

@@ -19,6 +19,18 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 0, 0)
+            .RegisterMain("Moodles ShareHub is now Live!")
+            .RegisterMain("'My Publications' tab is now in the Home Page. Manage published uploads of Patterns & Moodles in one place!")
+            .RegisterFeature("Browse, Like, Un-Like, Copy, and Try-On browsed Moodles in the Moodle ShareHub!")
+            .RegisterFeature("Use the 'Try On' feature to apply moodles to your character before copying them to your status list to see how you like them!")
+            .RegisterFeature("ACHIEVEMENT SAVE DATA IS NOW OUTPUT TO YOUR LOGS EVERY TIME YOU CONNECT TO THE SERVER. IF IT SOMEHOW RESETS BEFORE I CAN FIX " +
+            "THE ISSUES, SEND ME YOUR LOGS IMMIDIATELY SO I CAN RESTORE THEM.")
+            .RegisterQol("A new interface for uploading and publishing Moodles now exists.")
+            .RegisterQol("All publication features from the pattern edit window and save window have been removed, and moved to the Publications UI.")
+            .RegisterQol("You can now like patterns and moodles once again.")
+            .RegisterBugfix("Fixed the rare issue in where loading the game after repedative crashing failed to load " +
+            "required configs from services. (or at least a band-aid fix)");
         VersionEntry(1, 0, 4, 2)
             .RegisterFeature("Support for new Moodles Preset and Stack On Reapply mare issue fixed.");
         VersionEntry(1, 0, 4, 1)

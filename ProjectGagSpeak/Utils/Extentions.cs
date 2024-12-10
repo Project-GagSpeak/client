@@ -124,7 +124,7 @@ public static class UtilsExtensions
     public static string StripColorTags(this string input)
     {
         // Define a regex pattern to match any [color=...] and [/color] tags
-        string pattern = @"\[\/?color(=[^\]]*)?\]";
+        string pattern = @"\[\/?(color|glow)(=[^\]]*)?\]";
 
         // Use Regex.Replace to remove the tags
         string result = Regex.Replace(input, pattern, string.Empty);

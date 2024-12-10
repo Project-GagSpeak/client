@@ -33,7 +33,7 @@ public class PublicationsUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(475, 450),
+            MinimumSize = new Vector2(525, 450),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
         RespectCloseHotkey = false;

@@ -18,7 +18,6 @@ public sealed class IpcCallerMoodles : IIpcCaller
     
     // Remember, all these are called only when OUR client changes. Not other pairs.
     private readonly ICallGateSubscriber<int> _moodlesApiVersion;
-    private readonly ICallGateSubscriber<object> _moodlesReady;
     
     private readonly ICallGateSubscriber<IPlayerCharacter, object> _onStatusManagerModified;
     private readonly ICallGateSubscriber<Guid, object> _onStatusSettingsModified;
@@ -58,7 +57,6 @@ public sealed class IpcCallerMoodles : IIpcCaller
         _frameworkUtil = frameworkUtils;
 
         _moodlesApiVersion = pi.GetIpcSubscriber<int>("Moodles.Version");
-        _moodlesReady = pi.GetIpcSubscriber<object>("Moodles.Ready");
 
         // API Getter Functions
         _getMoodleInfo = pi.GetIpcSubscriber<Guid, MoodlesStatusInfo>("Moodles.GetRegisteredMoodleInfo");
@@ -85,18 +83,11 @@ public sealed class IpcCallerMoodles : IIpcCaller
         _onStatusSettingsModified = pi.GetIpcSubscriber<Guid, object>("Moodles.StatusModified");
         _onPresetModified = pi.GetIpcSubscriber<Guid, object>("Moodles.PresetModified");
 
-        _moodlesReady.Subscribe(OnMoodlesReady); // fires whenever our client's moodles are ready.
         _onStatusManagerModified.Subscribe(OnStatusManagerModified); // fires whenever our client's status manager changes.
         _onStatusSettingsModified.Subscribe(OnStatusModified); // fires whenever our client's changes the settings of a Moodle.
         _onPresetModified.Subscribe(OnPresetModified); // fires whenever our client's changes the settings of a Moodle preset.
 
         CheckAPI(); // check to see if we have a valid API
-    }
-
-    private void OnMoodlesReady()
-    {
-        _logger.LogWarning("Moodles Ready Invoked!", LoggerType.IpcMoodles);
-        _mediator.Publish(new MoodlesReady());
     }
 
     /// <summary> This method is called when the moodles status list changes </summary>
@@ -121,7 +112,16 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         try
         {
-            APIAvailable = _moodlesApiVersion.InvokeFunc() >= 1;
+            var result = _moodlesApiVersion.InvokeFunc() >= 1;
+            // Handle condition where it goes from off to on.
+            if(APIAvailable is false && result is true)
+            {
+                _logger.LogInformation("IPC Connection to Moodles now Established!");
+                _mediator.Publish(new MoodlesReady());
+            }
+            // update result.
+            APIAvailable = result;
+
         }
         catch
         {
@@ -132,7 +132,6 @@ public sealed class IpcCallerMoodles : IIpcCaller
     /// <summary> This method disposes of the IPC caller moodles</summary>
     public void Dispose()
     {
-        _moodlesReady.Unsubscribe(OnMoodlesReady);
         _onStatusManagerModified.Unsubscribe(OnStatusManagerModified);
         _onStatusSettingsModified.Unsubscribe(OnStatusModified);
         _onPresetModified.Unsubscribe(OnPresetModified);

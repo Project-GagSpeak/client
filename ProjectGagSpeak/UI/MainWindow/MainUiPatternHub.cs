@@ -10,13 +10,14 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Numerics;
 
 namespace GagSpeak.UI.MainWindow;
 public class MainUiPatternHub : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ShareHubService _shareHubService;
+    private readonly ShareHubService _shareHub;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
 
@@ -26,60 +27,47 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
         TutorialService guides) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
-        _shareHubService = patternHubService;
+        _shareHub = patternHubService;
         _uiShared = uiShared;
         _guides = guides;
     }
     public void DrawPatternHub()
     {
-        // get the width of the window content region we set earlier
-        var _windowContentWidth = UiSharedService.GetWindowContentRegionWidth();
+        // Handle grabbing new info from the server if none is present.
+        if(!_shareHub.InitialPatternsCall && _shareHub.CanShareHubTask)
+            _shareHub.PerformPatternSearch();
 
-
-        // draw the search filter
-        DrawSearchFilter(_windowContentWidth);
+        DrawSearchFilter();
         ImGui.Separator();
 
         // draw the results if there are any.
-        if (_shareHubService.LatestPatternResults.Count > 0)
+        if (_shareHub.LatestPatternResults.Count <= 0)
         {
-            DisplayResults();
+            ImGui.Spacing();
+            ImGuiUtil.Center("Search something to find results!");
             return;
         }
 
-        // if they failed to draw, display that we we currently have no results!
-        ImGui.Spacing();
-        ImGuiUtil.Center("Search something to find results!");
-    }
-
-    private void DisplayResults()
-    {
-        // create a child window here. It will allow us to scroll up and dont in our pattern results search.
+        // set the scrollbar width to be shorter than normal
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         using var patternResultChild = ImRaii.Child("##PatternResultChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
-        // display a custom box icon for each search result obtained.
-        foreach (var pattern in _shareHubService.LatestPatternResults)
-        {
-            // draw a unique box for each pattern result. (SELF REMINDER CORDY, DONT CARE TOO MUCH ABOUT THE VISUALS HERE THEY WILL BE REWORKED.
+        // result styles.
+        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
+        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
+        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        // display results.
+        foreach (var pattern in _shareHub.LatestPatternResults)
             DrawPatternResultBox(pattern);
-        }
     }
 
     private void DrawPatternResultBox(ServerPatternInfo patternInfo)
     {
-        // push rounding window corners
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // create the child window.
-
         float height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##PatternResult_{patternInfo.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
 
-            using (var group = ImRaii.Group())
+            using (ImRaii.Group())
             {
                 // display name, then display the downloads and likes on the other side.
                 UiSharedService.ColorText(patternInfo.Name, ImGuiColors.DalamudWhite);
@@ -92,7 +80,7 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
                 {
                     if (_uiShared.IconTextButton(FontAwesomeIcon.Heart, patternInfo.Likes.ToString(), null, true))
                     {
-                        _shareHubService.PerformPatternLikeAction(patternInfo.Identifier);
+                        _shareHub.PerformPatternLikeAction(patternInfo.Identifier);
                     }
                     UiSharedService.AttachToolTip(patternInfo.HasLiked ? "Remove Like from this pattern." : "Like this pattern!");
                 }
@@ -102,19 +90,19 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
                     if (_uiShared.IconTextButton(FontAwesomeIcon.Download, patternInfo.Downloads.ToString(), null, true,
                         _clientConfigs.PatternExists(patternInfo.Identifier), "DownloadPattern" + patternInfo.Identifier))
                     {
-                        _shareHubService.DownloadPattern(patternInfo.Identifier);
+                        _shareHub.DownloadPattern(patternInfo.Identifier);
                     }
                     UiSharedService.AttachToolTip("Download this pattern!");
                 }
             }
             // next line:
-            using (var group2 = ImRaii.Group())
+            using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
                 _uiShared.IconText(FontAwesomeIcon.UserCircle);
                 ImUtf8.SameLineInner();
-                UiSharedService.ColorText(patternInfo.Author + 
-                    " (" + patternInfo.UploadedDate.ToLocalTime().ToString("ddMMyyyy") + ")", ImGuiColors.DalamudGrey);
+                UiSharedService.ColorText(patternInfo.Author +
+                    " (" + patternInfo.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture) + ")", ImGuiColors.DalamudGrey);
                 UiSharedService.AttachToolTip("Publisher of the Pattern");
 
 
@@ -129,7 +117,7 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
             }
 
             // next line:
-            using (var group3 = ImRaii.Group())
+            using (ImRaii.Group())
             {
                 var vibeSize = _uiShared.GetIconData(FontAwesomeIcon.Water);
                 var rotationSize = _uiShared.GetIconData(FontAwesomeIcon.GroupArrowsRotate);
@@ -158,7 +146,7 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Draws the search filter for our user pair list (whitelist) </summary>
-    public void DrawSearchFilter(float availableWidth)
+    public void DrawSearchFilter()
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(2, ImGui.GetStyle().ItemInnerSpacing.Y));
         float spacing = ImGui.GetStyle().ItemInnerSpacing.X;
@@ -166,27 +154,27 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
         float sortIconSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.SortAmountUp).X;
         float filterTypeSize = 80f;
         float durationFilterSize = 60f;
-        FontAwesomeIcon sortIcon = _shareHubService.SearchSort == SearchSort.Ascending ? FontAwesomeIcon.SortAmountUp : FontAwesomeIcon.SortAmountDown;
+        FontAwesomeIcon sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FontAwesomeIcon.SortAmountUp : FontAwesomeIcon.SortAmountDown;
 
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         using (ImRaii.Group())
         {
-            ImGui.SetNextItemWidth(availableWidth - sortIconSize - durationFilterSize - filterTypeSize - updateSize - 4 * spacing);
-            var searchString = _shareHubService.SearchString;
+            ImGui.SetNextItemWidth(UiSharedService.GetWindowContentRegionWidth() - sortIconSize - durationFilterSize - filterTypeSize - updateSize - 4 * spacing);
+            var searchString = _shareHub.SearchString;
             if (ImGui.InputTextWithHint("##patternSearchFilter", "Search for Patterns...", ref searchString, 125))
-                _shareHubService.SearchString = searchString;
+                _shareHub.SearchString = searchString;
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             ImUtf8.SameLineInner();
-            if (_uiShared.IconButton(FontAwesomeIcon.Search, disabled: !_shareHubService.CanShareHubTask))
-                _shareHubService.PerformPatternSearch();
+            if (_uiShared.IconButton(FontAwesomeIcon.Search, disabled: !_shareHub.CanShareHubTask))
+                _shareHub.PerformPatternSearch();
             UiSharedService.AttachToolTip("Update Search Results");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubUpdate, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             // Show the filter combo.
             ImUtf8.SameLineInner();
             _uiShared.DrawCombo("##patternFilterType", filterTypeSize, Enum.GetValues<ResultFilter>(), (filter) => filter.ToString(),
-                (filter) => _shareHubService.SearchFilter = filter, _shareHubService.SearchFilter, false, ImGuiComboFlags.NoArrowButton);
+                (filter) => _shareHub.SearchFilter = filter, _shareHub.SearchFilter, false, ImGuiComboFlags.NoArrowButton);
             UiSharedService.AttachToolTip("Sort Method" +
                 "--SEP--Define how results are found.");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubFilterType, ImGui.GetWindowPos(), ImGui.GetWindowSize());
@@ -194,15 +182,15 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
             // beside this, the duration filter.
             ImUtf8.SameLineInner();
             _uiShared.DrawCombo("##patternDurationFilter", durationFilterSize, Enum.GetValues<DurationLength>(), (dura) => dura.ToName(),
-                (newDura) => _shareHubService.SearchDuration = newDura, _shareHubService.SearchDuration, false, ImGuiComboFlags.NoArrowButton);
+                (newDura) => _shareHub.SearchDuration = newDura, _shareHub.SearchDuration, false, ImGuiComboFlags.NoArrowButton);
             UiSharedService.AttachToolTip("Time Range");
 
             // the sort direction.
             ImUtf8.SameLineInner();
             if (_uiShared.IconButton(sortIcon))
-                _shareHubService.ToggleSortDirection();
+                _shareHub.ToggleSortDirection();
             UiSharedService.AttachToolTip("Sort Direction" +
-                "--SEP--Current: " + _shareHubService.SearchSort + "");
+                "--SEP--Current: " + _shareHub.SearchSort + "");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => UnlocksEventManager.AchievementEvent(UnlocksEvent.TutorialCompleted));
         }
 
@@ -210,25 +198,25 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
         {
             float tagsComboWidth = 125;
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - tagsComboWidth - ImGui.GetStyle().ItemInnerSpacing.X);
-            var searchTags = _shareHubService.SearchTags;
+            var searchTags = _shareHub.SearchTags;
             if (ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref searchTags, 200))
-                _shareHubService.SearchTags = searchTags;
+                _shareHub.SearchTags = searchTags;
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(tagsComboWidth);
-            _uiShared.DrawCombo("##patternTagsFilter", tagsComboWidth, _shareHubService.FetchedTags.ToImmutableList(), (i) => i,
+            _uiShared.DrawComboSearchable("##patternTagsFilter", tagsComboWidth, _shareHub.FetchedTags.ToImmutableList(), (i) => i, false,
                 (tag) =>
                 {
                     // append the tag to the search tags if it does not exist.
-                    if (!_shareHubService.SearchTags.Contains(tag))
+                    if (!_shareHub.SearchTags.Contains(tag))
                     {
                         // if there is not a comma at the end of the string, add one.
-                        if (_shareHubService.SearchTags.Length > 0 && _shareHubService.SearchTags[^1] != ',')
-                            _shareHubService.SearchTags += ",";
+                        if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
+                            _shareHub.SearchTags += ", ";
                         // append the tag to it.
-                        _shareHubService.SearchTags += tag.ToLower();
+                        _shareHub.SearchTags += tag.ToLower();
                     }
-                }, shouldShowLabel: false, defaultPreviewText: "Add Tag..");
+                }, defaultPreviewText: "Add Tag..");
             UiSharedService.AttachToolTip("Select from an existing list of tags." +
                 "--SEP--This will help make your Pattern easier to find.");
         }

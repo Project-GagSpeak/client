@@ -28,7 +28,12 @@ public class ClientData : DisposableMediatorSubscriberBase
 {
     public ClientData(ILogger<ClientData> logger, GagspeakMediator mediator) : base(logger, mediator)
     {
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastIpcData = msg.CharaIPCData);
+        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) =>
+        {
+            LastIpcData = msg.CharaIPCData;
+            Logger.LogDebug("New Moodles Data Contains " + msg.CharaIPCData.MoodlesStatuses.Count + " Statuses" +
+                " and " + msg.CharaIPCData.MoodlesPresets.Count + " Presets.", LoggerType.IpcMoodles);
+        });
 
         Mediator.Subscribe<DalamudLogoutMessage>(this, (_) =>
         {

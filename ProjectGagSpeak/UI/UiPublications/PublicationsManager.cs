@@ -70,13 +70,28 @@ public class PublicationsManager
         UiSharedService.ColorText("Author Name", ImGuiColors.ParsedGold);
 
         ImGui.SetNextItemWidth(200);
-        ImGui.InputTextWithHint("##shareHubTags", "Attach tags split by ',' (optional)", ref _tagList, 250);
-        if(ImGui.IsItemDeactivatedAfterEdit()) _tagList = _tagList.ToLower();
+        ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref _tagList, 250);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+        {
+            _tagList = _tagList.ToLower();
+            int commaCount = _tagList.Count(c => c == ',');
+            if (commaCount > 4)
+            {
+                var tags = _tagList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                   .Select(tag => tag.Trim())
+                                   .ToArray();
+                _tagList = string.Join(", ", tags.Take(5));
+            }
+        }
+        UiSharedService.AttachToolTip("You can have a maximum of 5 tags."); 
+        
         ImUtf8.SameLineInner();
         _uiShared.DrawCombo("##patternTagsFilter", ImGui.GetContentRegionAvail().X, _shareHub.FetchedTags.ToImmutableList(), (i) => i,
             (tag) =>
             {
                 if(tag.IsNullOrEmpty()) return;
+                int commaCount = _tagList.Count(c => c == ',');
+                if (commaCount >= 4) return;
 
                 // Handle new tab
                 if (!_tagList.Contains(tag))
@@ -85,7 +100,7 @@ public class PublicationsManager
                         _tagList += ",";
                     _tagList += tag.ToLower();
                 }
-            }, shouldShowLabel: false, defaultPreviewText: "Add Tags..");
+            }, shouldShowLabel: false, defaultPreviewText: "Add Existing Tags..");
         if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X, false, _authorName.IsNullOrEmpty() || _selectedPattern is null))
         {
             if (_selectedPattern is null) return;
@@ -99,6 +114,8 @@ public class PublicationsManager
         ImGuiUtil.Center("Your Currently Published Patterns");
         ImGui.Separator();
 
+        // push the style for the more thin scrollbar.
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         // draw the displayList section.
         using var child = ImRaii.Child("##PublishedPatternsList", ImGui.GetContentRegionAvail(), false);
         DrawPublishedPatternList();
@@ -116,7 +133,7 @@ public class PublicationsManager
             // draw the create section.
             _uiShared.GagspeakBigText("Publish A Moodle");
 
-            _moodlesService.DrawMoodleStatusCombo("##MoodleSelector", 200f, _clientData.LastIpcData.MoodlesDataStatuses, (selected) =>
+            _moodlesService.DrawMoodleStatusCombo("##MoodleSelector", 200f, _clientData.LastIpcData.MoodlesStatuses, (selected) =>
             {
                 if (!_clientData.LastIpcData.MoodlesStatuses.Any(x => x.GUID == selected)) return;
                 var statusInfo = _clientData.LastIpcData.MoodlesStatuses.First(x => x.GUID == selected);
@@ -133,13 +150,28 @@ public class PublicationsManager
             UiSharedService.ColorText("Author Name", ImGuiColors.ParsedGold);
 
             ImGui.SetNextItemWidth(200);
-            ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by ',' (optional)", ref _tagList, 250);
-            if (ImGui.IsItemDeactivatedAfterEdit()) _tagList = _tagList.ToLower();
+            ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref _tagList, 250);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                _tagList = _tagList.ToLower();
+                int commaCount = _tagList.Count(c => c == ',');
+                if (commaCount > 4)
+                {
+                    var tags = _tagList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(tag => tag.Trim())
+                                       .ToArray();
+                    _tagList = string.Join(", ", tags.Take(5));
+                }
+            }
+            UiSharedService.AttachToolTip("You can have a maximum of 5 tags.");
+
             ImUtf8.SameLineInner();
             _uiShared.DrawCombo("##moodleTagsFilter", ImGui.GetContentRegionAvail().X, _shareHub.FetchedTags.ToImmutableList(), (i) => i,
                 (tag) =>
                 {
                     if (tag.IsNullOrEmpty()) return;
+                    int commaCount = _tagList.Count(c => c == ',');
+                    if (commaCount >= 4) return;
 
                     // Handle new tab
                     if (!_tagList.Contains(tag))
@@ -148,7 +180,10 @@ public class PublicationsManager
                             _tagList += ",";
                         _tagList += tag.ToLower();
                     }
-                }, shouldShowLabel: false, defaultPreviewText: "Add Tags..");
+                }, shouldShowLabel: false, defaultPreviewText: "Add Existing Tags..");
+            UiSharedService.AttachToolTip("Select an existing tag on the Server." +
+                "--SEP--This makes it easier for people to find your Moodles!");
+
             if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, false, _authorName.IsNullOrEmpty() || _selectedMoodle.GUID.IsEmptyGuid()))
             {
                 if (_selectedMoodle.GUID.IsEmptyGuid()) return;
@@ -161,6 +196,9 @@ public class PublicationsManager
             ImGuiUtil.Center("Your Currently Published Moodles");
             ImGui.Separator();
         }
+
+        // push the style for the more thin scrollbar.
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
 
         // draw the existing publications list.
         using var child = ImRaii.Child("##PublishedMoodlesList", ImGui.GetContentRegionAvail(), false);
@@ -266,11 +304,11 @@ public class PublicationsManager
                 if(ImGui.IsItemHovered())
                 {
                     if(!moodle.MoodleStatus.Description.IsNullOrEmpty()) 
-                        UiSharedService.AttachToolTip(moodle.MoodleStatus.Description);
+                        UiSharedService.AttachToolTip(moodle.MoodleStatus.Description.StripColorTags());
                 }
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText(moodle.MoodleStatus.Title, ImGuiColors.DalamudWhite);
+                UiSharedService.ColorText(moodle.MoodleStatus.Title.StripColorTags(), ImGuiColors.DalamudWhite);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
