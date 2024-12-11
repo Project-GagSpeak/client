@@ -11,11 +11,11 @@ public class ToyboxTabMenu : TabMenuBase<ToyboxTabs.Tabs>
     {
         return tab switch
         {
-            ToyboxTabs.Tabs.ToyOverview => "Manage connections to your sex toys or simulated vibrator options.",
-            ToyboxTabs.Tabs.VibeServer => "Create, invite, or join other private rooms, control other pairs sex toys live.--SEP--Under Construction during Open Beta",
-            ToyboxTabs.Tabs.PatternManager => "Manage or upload your patterns.",
-            ToyboxTabs.Tabs.TriggerManager => "Manage your triggers.",
-            ToyboxTabs.Tabs.AlarmManager => "Manage your Alarms.",
+            ToyboxTabs.Tabs.ToyOverview => "Manage your connected real or simulated sex toys.",
+            ToyboxTabs.Tabs.VibeServer => "Create, invite or join other private rooms, control other pairs sex toys live.--SEP--Under Construction during Open Beta",
+            ToyboxTabs.Tabs.PatternManager => "Create, manage and upload your patterns.",
+            ToyboxTabs.Tabs.TriggerManager => "Create and manage your triggers.",
+            ToyboxTabs.Tabs.AlarmManager => "Create and manage your alarms.",
             _ => string.Empty,
         };
     }

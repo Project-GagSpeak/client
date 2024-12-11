@@ -29,15 +29,15 @@ public class AchievementTabs : IconTabBarBase<AchievementTabs.SelectedTab>
         : base(uiSharedService)
     {
         _mediator = mediator;
-        AddDrawButton(FontAwesomeIcon.Book, SelectedTab.Generic, "Generic");
+        AddDrawButton(FontAwesomeIcon.Book, SelectedTab.Generic, "General");
         AddDrawButton(FontAwesomeIcon.ClipboardList, SelectedTab.Orders, "Orders");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Gags, "Gags");
         AddDrawButton(FontAwesomeIcon.ToiletPortable, SelectedTab.Wardrobe, "Wardrobe");
         AddDrawButton(FontAwesomeIcon.PersonHarassing, SelectedTab.Puppeteer, "Puppeteer");
         AddDrawButton(FontAwesomeIcon.BoxOpen, SelectedTab.Toybox, "Toybox");
         AddDrawButton(FontAwesomeIcon.Lock, SelectedTab.Hardcore, "Hardcore");
-        AddDrawButton(FontAwesomeIcon.Mobile, SelectedTab.Remotes, "Remotes");
-        AddDrawButton(FontAwesomeIcon.Vault, SelectedTab.Secrets, "Secrets");
+        AddDrawButton(FontAwesomeIcon.Mobile, SelectedTab.Remotes, "Sex Toy Remote");
+        AddDrawButton(FontAwesomeIcon.Vault, SelectedTab.Secrets, "Hidden");
     }
 
     protected override void OnTabSelectionChanged(SelectedTab newTab) { }

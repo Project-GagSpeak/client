@@ -10,12 +10,12 @@ public class MigrationsTabMenu : TabMenuBase<MigrationsTabs.Tabs>
     {
         return tab switch
         {
-            MigrationsTabs.Tabs.MigrateRestraints => "Migrate your created Restraints from Old GagSpeak to the new GagSpeak.",
-            MigrationsTabs.Tabs.TransferGags => "Import your Gag Data stored on another GagSpeak Profile.",
-            MigrationsTabs.Tabs.TransferRestraints => "Import your Restraints stored on another GagSpeak Profile.",
-            MigrationsTabs.Tabs.TransferCursedLoot => "Import your Cursed Loot stored on another GagSpeak Profile.",
-            MigrationsTabs.Tabs.TransferTriggers => "Import your Triggers stored on another GagSpeak Profile.",
-            MigrationsTabs.Tabs.TransferAlarms => "Import your Alarms stored on another GagSpeak Profile.",
+            MigrationsTabs.Tabs.MigrateRestraints => "Migrate Restraint Sets from old to new GagSpeak.",
+            MigrationsTabs.Tabs.TransferGags => "Import saved gag data from another GagSpeak profile.",
+            MigrationsTabs.Tabs.TransferRestraints => "Import saved restraint data from another GagSpeak profile.",
+            MigrationsTabs.Tabs.TransferCursedLoot => "Import saved Cursed Loot data from another GagSpeak profile.",
+            MigrationsTabs.Tabs.TransferTriggers => "Import saved trigger data from another GagSpeak profile.",
+            MigrationsTabs.Tabs.TransferAlarms => "Import saved alarm data from another GagSpeak profile.",
             _ => string.Empty,
         };
     }

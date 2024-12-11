@@ -13,11 +13,11 @@ public class WardrobeTabMenu : TabMenuBase<WardrobeTabs.Tabs>
     {
         return tab switch
         {
-            WardrobeTabs.Tabs.ManageSets => "Overview of current restraint sets.--SEP--Apply, Lock, Unlock, Disable, and Customize them here.",
+            WardrobeTabs.Tabs.ManageSets => "Create, customize, manage and view information of your Restraint Sets.",
             WardrobeTabs.Tabs.StruggleSim => "A WIP Concept that is questionable on if it will ever be added.--SEP--WIP During Open Beta.",
-            WardrobeTabs.Tabs.CursedLoot => "Remember those Pic Sets & Videos about dungeon Mimics\nthat make people helpless & bound in bad ends?" +
-            "--SEP--Yeah, that's effectively what this makes a reality for you.",
-            WardrobeTabs.Tabs.ManageMoodles => "See the details of your status and presets, and your pairs status and presets.",
+            WardrobeTabs.Tabs.CursedLoot => "Create, customize and manage your Cursed Loot items." +
+            "--SEP--We know you simply cannot resist and love to open those highly suspicious coffers, that's why you're here.",
+            WardrobeTabs.Tabs.ManageMoodles => "View information of your own and your pairs' Moodle templates and presets.",
             _ => string.Empty,
         };
     }
