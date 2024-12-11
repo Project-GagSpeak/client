@@ -807,7 +807,7 @@ public class PuppeteerComponents
                 }
             }
         }
-        return false;
+        return wasModified;
     }
 
     private void DrawRemoveIcon(string id, Action onClick)

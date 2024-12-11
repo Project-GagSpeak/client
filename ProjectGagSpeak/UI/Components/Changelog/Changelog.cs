@@ -19,6 +19,8 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 0, 2)
+            .RegisterBugfix("We're just not going to talk about how stupid of a fix this was.");
         VersionEntry(1, 1, 0, 0)
             .RegisterMain("Moodles ShareHub is now Live!")
             .RegisterMain("'My Publications' tab is now in the Home Page. Manage published uploads of Patterns & Moodles in one place!")

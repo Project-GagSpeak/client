@@ -481,7 +481,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         {
             _logger.LogDebug("Creating new Alias Storage for " + pair.UserData.UID);
             _clientConfigs.AliasConfig.AliasStorage[pair.UserData.UID] = new AliasStorage();
-            // perform a return so the next execution returns true.
+            _clientConfigs.SaveAlias();
             return;
         }
 
@@ -517,13 +517,20 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             {
                 if (_handler.IsEditingList)
                 {
+                    // Draw the editing Item Box.
                     if(_components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData, out bool wasRemoved))
+                    {
+                        _logger.LogDebug("Saving Alias List Changes");
                         _handler.MadeAliasChangeSinceLastEdit = true;
-                    if (wasRemoved)
-                        idToRemove = aliasItem.AliasIdentifier;
+                    }
+                    // if it was removed, mark it as the item to be removed.
+                    if (wasRemoved) idToRemove = aliasItem.AliasIdentifier;
                 }
-                // otherwise, draw the normal box.
-                _components.DrawAliasItemBox(aliasItem.AliasIdentifier.ToString(), aliasItem, lightSets, ipcData);
+                else
+                {
+                    // otherwise, draw the normal box.
+                    _components.DrawAliasItemBox(aliasItem.AliasIdentifier.ToString(), aliasItem, lightSets, ipcData);
+                }
             }
             // handle case where we removed an item from the list after we finish drawing them all so we dont run into out of bounds errors.
             if (idToRemove != Guid.Empty && _handler.ClonedAliasListForEdit is not null)
@@ -571,10 +578,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var moodlesInfo = pair.LastIpcData ?? new CharaIPCData();
 
             // Draw out the pairs list
-            for (var i = 0; i < items.Count; i++)
-            {
-                _components.DrawAliasItemBox(items[i].AliasIdentifier.ToString() + i, items[i], lightRestraints, moodlesInfo);
-            }
+            foreach(var alias in items)
+                _components.DrawAliasItemBox(alias.AliasIdentifier.ToString(), alias, lightRestraints, moodlesInfo);
         }
     }
 
