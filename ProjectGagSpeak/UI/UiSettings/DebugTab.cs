@@ -457,6 +457,7 @@ public class DebugTab
             DrawPermissionRowString("Active Set ID", wardrobe.ActiveSetId.ToString());
             DrawPermissionRowString("Active Set Enabled By", wardrobe.ActiveSetEnabledBy);
             DrawPermissionRowString("Padlock", wardrobe.Padlock);
+            DrawPermissionRowString("Password", wardrobe.Password);
             ImGuiUtil.DrawTableColumn("Expiration Time");
             ImGui.TableNextColumn();
             UiSharedService.ColorText(UiSharedService.TimeLeftFancy(wardrobe.Timer), ImGuiColors.ParsedPink);

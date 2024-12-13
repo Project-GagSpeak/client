@@ -151,7 +151,7 @@ public class MainUiMoodlesHub : DisposableMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 _uiShared.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.SortNumericUpAlt, FontAwesomeIcon.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.StackOnReapply ? "Stacks on Reapplication." : "Doesn't stack on reapplication.");
+                UiSharedService.AttachToolTip(moodleInfo.MoodleStatus.StackOnReapply ? "Stacks " + moodleInfo.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
             using (ImRaii.Group())

@@ -360,7 +360,7 @@ public class PublicationsManager
 
                 ImUtf8.SameLineInner();
                 _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.PersonCirclePlus, FontAwesomeIcon.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks on Reapplication." : "Doesn't stack on reapplication.");
+                UiSharedService.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks " + moodle.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
             try

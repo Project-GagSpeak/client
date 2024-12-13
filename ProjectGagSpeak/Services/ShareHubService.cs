@@ -116,6 +116,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             moodleStatus.StatusOnDispell,
             CustomFXPath = moodleStatus.CustomVFXPath,
             moodleStatus.StackOnReapply,
+            moodleStatus.StacksIncOnReapply,
             moodleStatus.Days,
             moodleStatus.Hours,
             moodleStatus.Minutes,

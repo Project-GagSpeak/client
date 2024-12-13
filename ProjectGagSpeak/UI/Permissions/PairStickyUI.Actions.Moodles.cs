@@ -126,6 +126,7 @@ public partial class PairStickyUI
                     var statusInfo = new List<MoodlesStatusInfo> { LastCreatedCharacterData.MoodlesStatuses.First(x => x.GUID == onButtonPress) };
                     if (!_moodlesService.ValidatePermissionForApplication(pairUniquePerms, statusInfo)) return;
 
+                    _logger.LogInformation("Applying Moodle: " + onButtonPress + " to " + PairNickOrAliasOrUID);
                     _ = _apiHubMain.UserApplyMoodlesByStatus(new(StickyPair.UserData, statusInfo, IpcToggleType.MoodlesStatus));
                     Opened = InteractionType.None;
                 });

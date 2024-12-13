@@ -19,6 +19,8 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 0, 3)
+            .RegisterMain("Update for new Moodles tuple status. Until Moodles is 1.0.0.39 expect the ShareHub and other Moodles features to be non-functional.");
         VersionEntry(1, 1, 0, 2)
             .RegisterBugfix("We're just not going to talk about how stupid of a fix this was.");
         VersionEntry(1, 1, 0, 0)

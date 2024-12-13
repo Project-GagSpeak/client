@@ -325,6 +325,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         if (!APIAvailable) return;
         try
         {
+            _logger.LogInformation("Applying Moodles Status: " + recipientNameWithWorld + " from " + applierNameWithWorld, LoggerType.IpcMoodles);
             await _frameworkUtil.RunOnFrameworkThread(() => _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, statuses)).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -363,6 +364,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         if (!APIAvailable) return;
         try
         {
+            _logger.LogInformation("Setting Moodles Status: " + playerNameWithWorld + " to " + status, LoggerType.IpcMoodles);
             await _frameworkUtil.RunOnFrameworkThread(() => 
                 _setStatusManager.InvokeAction(playerNameWithWorld, status)).ConfigureAwait(false);
         }

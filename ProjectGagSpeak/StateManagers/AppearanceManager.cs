@@ -831,11 +831,11 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             latest = await _ipcManager.Moodles.GetStatusInfoAsync().ConfigureAwait(false);
         }, 2);
 
-        HashSet<Guid> latestGuids = new HashSet<Guid>(latest.Select(x => x.GUID));
-        Logger.LogTrace("Latest Moodles  : " + string.Join(", ", latestGuids), LoggerType.IpcMoodles);
+        HashSet<MoodlesStatusInfo> latestInfos = latest.ToHashSet();
+        Logger.LogTrace("Latest Moodles  : " + string.Join(", ", latestInfos.Select(x => x.GUID)), LoggerType.IpcMoodles);
         Logger.LogTrace("Expected Moodles: " + string.Join(", ", ExpectedMoodles), LoggerType.IpcMoodles);
         // if any Guid in ExpectedMoodles are not present in latestGuids, request it to be reapplied, instead of pushing status manager update.
-        var moodlesToReapply = ExpectedMoodles.Except(latestGuids).ToList();
+        var moodlesToReapply = ExpectedMoodles.Except(latestInfos.Select(x => x.GUID)).ToList();
         Logger.LogDebug("Missing Moodles from Required: " + string.Join(", ", moodlesToReapply), LoggerType.IpcMoodles);
         if (moodlesToReapply.Any())
         {
@@ -848,9 +848,9 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         {
             if (LastIpcData is not null)
             {
-                var list = LastIpcData.MoodlesDataStatuses.Select(x => x.GUID);
                 // determine if the two lists are the same or not.
-                if (list.SequenceEqual(latestGuids))
+                if (LastIpcData.MoodlesDataStatuses.Select(x => x.GUID).SequenceEqual(latestInfos.Select(x => x.GUID)) 
+                 && LastIpcData.MoodlesDataStatuses.Select(x => x.Stacks).SequenceEqual(latestInfos.Select(x => x.Stacks)))
                     return;
             }
             Logger.LogDebug("Pushing IPC update to CacheCreation for processing", LoggerType.IpcMoodles);
