@@ -1,3 +1,4 @@
+using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
@@ -7,7 +8,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
 
@@ -60,139 +63,185 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
         Logger.LogInformation("------- Connected Message Received. Processing State Synchronization -------");
 
-        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
-        _playerData.GlobalPerms = MainHub.ConnectionDto.UserGlobalPermissions;
-        _playerData.AppearanceData = MainHub.ConnectionDto.CharaAppearanceData;
-        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData);
+        // Update Global Permissions and Appearance Data.
+        SetGlobalPermissionsAndAppearance(MainHub.ConnectionDto);
 
-        Logger.LogDebug("Setting up Update Tasks from GagSpeak Modules.", LoggerType.ClientPlayerData);
-        // update the active gags
-        _gagManager.UpdateGagLockComboSelections();
-        _gagManager.UpdateGagGarblerLogic();
+        // Update GagCombos and Garbler Logic.
+        UpdateGagSpeakModules();
 
         Logger.LogInformation("Syncing Data with Connection DTO", LoggerType.ClientPlayerData);
+
+        // Obtain Server-Side Active State Data.
         var serverData = MainHub.ConnectionDto.CharacterActiveStateData;
-        var activeSet = _clientConfigs.GetActiveSet();
-        // We should sync the active Restraint Set with the server's Active Set Name.
-        if (!serverData.ActiveSetId.IsEmptyGuid())
+        var serverExpectsActiveSet = serverData.ActiveSetId != Guid.Empty;
+        // Handle it accordingly.
+        if (serverExpectsActiveSet)
         {
-            int setIdx = _clientConfigs.GetSetIdxByGuid(serverData.ActiveSetId);
-            var restraintId = _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets[setIdx].RestraintId;
-
-            // check to see if the active set stored on the server is locked with a timer padlock.
-            if (GenericHelpers.TimerPadlocks.Contains(serverData.Padlock) && serverData.Timer < DateTimeOffset.UtcNow)
-            {
-                Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
-                // while this doesn't do anything client side, it will bump an update to the server, updating the active state data.
-                await _appearanceHandler.UnlockRestraintSet(restraintId, serverData.Assigner, false, true); // Fire the achievement if we need to unlock it.
-
-                // if we have it set to remove sets that are unlocked automatically, do so.
-                if (_clientConfigs.GagspeakConfig.DisableSetUponUnlock)
-                {
-                    Logger.LogInformation("Disabling Unlocked Set due to Config Setting.", LoggerType.Restraints);
-                    // we should also update the active state data to disable the set.
-                    await _appearanceHandler.DisableRestraintSet(restraintId, serverData.ActiveSetEnabler, false, false);
-                }
-            }
-            // if it is not a set that had its time expired, then we should re-enable it, and re-lock it if it was locked.
-            else
-            {
-                if (restraintId != _clientConfigs.GetActiveSet()?.RestraintId)
-                {
-                    Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
-                    await _appearanceHandler.EnableRestraintSet(restraintId, serverData.ActiveSetEnabler, false, false);
-                }
-                // relock it if it had a timer.
-                if (serverData.Padlock != Padlocks.None.ToName())
-                {
-                    Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
-                    await _appearanceHandler.LockRestraintSet(restraintId, serverData.Padlock.ToPadlock(), serverData.Password, serverData.Timer, serverData.Assigner, false, true);
-                }
-            }
-            // update the data. (Note, setting these to false may trigger a loophole by skipping over the monitored achievements,
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            await HandleActiveServerSet(serverData);
         }
         else
         {
-            // if the active set is empty, but we have a set that is on or locked, we should unlock and remove it.
-            activeSet = _clientConfigs.GetActiveSet();
-            if (activeSet is not null)
-            {
-                Logger.LogInformation("The Stored Restraint Set was Empty, yet you have one equipped. Unlocking and unequipping.", LoggerType.Restraints);
-                if (activeSet.LockType.ToPadlock() is not Padlocks.None)
-                    await _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
-                // disable it.
-                await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
-                // update the data. (Note, setting these to false may trigger a loophole by skipping over the monitored achievements,
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
-            }
+            await ClearActiveSet();
         }
+
+        // update the combo selections for the restraints and gags once more.
         _gagManager.UpdateGagLockComboSelections();
         _gagManager.UpdateRestraintLockSelections(false);
-        // send our updated data.
-        var activeGags = _playerData.AppearanceData.GagSlots.Where(x => x.GagType.ToGagType() is not GagType.None).Select(x => x.GagType).ToList();
 
-        // now that everything is updated, get the active set.
-        var activeSetFinal = _clientConfigs.GetActiveSet();
-        if (activeSetFinal is not null)
+        // Apply Hardcore Traits to the active set.
+        ApplyTraitsIfAny();
+
+        // Send the latest active items off for the achievement manager to run a update check on for duration achievements.
+        PublishLatestActiveItems();
+
+        // recalc if we have any alterations.
+        if (_playerData.IsPlayerGagged || _clientConfigs.HasGlamourerAlterations)
+            await _appearanceHandler.RecalcAndReload(true);
+    }
+
+    private void SetGlobalPermissionsAndAppearance(ConnectionDto dto)
+    {
+        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
+        _playerData.GlobalPerms = dto.UserGlobalPermissions;
+        _playerData.AppearanceData = dto.CharaAppearanceData;
+        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData);
+    }
+
+    private void UpdateGagSpeakModules()
+    {
+        Logger.LogDebug("Setting up Update Tasks from GagSpeak Modules.", LoggerType.ClientPlayerData);
+        _gagManager.UpdateGagLockComboSelections();
+        _gagManager.UpdateGagGarblerLogic();
+    }
+
+    private void PublishLatestActiveItems()
+    {
+        var activeGags = _playerData.AppearanceData?.GagSlots
+            .Where(x => x.GagType.ToGagType() is not GagType.None)
+            .Select(x => x.GagType)
+            .ToList() ?? new List<string>();
+        var activeSetId = _clientConfigs.GetActiveSet()?.RestraintId ?? Guid.Empty;
+        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
+    }
+
+    private async Task HandleActiveServerSet(CharaActiveStateData serverData)
+    {
+        // grab the index in our list of sets matching the expected set ID.
+        int setIdx = _clientConfigs.GetSetIdxByGuid(serverData.ActiveSetId);
+        if (setIdx < 0)
+        {
+            // if it doesnt exist, clear the active set if any and publish that change and return.
+            Logger.LogError("The Active Set ID from the server does not match any stored sets. Resyncing Data.", LoggerType.Restraints);
+            await ClearActiveSet();
+            return;
+        }
+
+        var hasExpiredTimer = GenericHelpers.TimerPadlocks.Contains(serverData.Padlock) && serverData.Timer < DateTimeOffset.UtcNow;
+        var activeClientSet = _clientConfigs.GetActiveSet();
+
+        if (activeClientSet is not null)
+        {
+            await HandleClientSet(serverData, hasExpiredTimer, activeClientSet);
+        }
+    }
+
+    private async Task HandleClientSet(CharaActiveStateData serverData, bool hasExpiredTimer, RestraintSet activeClientSet)
+    {
+        if (activeClientSet.RestraintId == serverData.ActiveSetId && hasExpiredTimer)
+        {
+            await UnlockAndDisableSet(serverData);
+            // publish a full data wardrobe update after this.
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+        }
+        else if (activeClientSet.RestraintId != serverData.ActiveSetId)
+        {
+            await EnableAndRelockSet(serverData);
+            // publish a full data wardrobe update after this.
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+        }
+    }
+
+    private async Task UnlockAndDisableSet(CharaActiveStateData serverData)
+    {
+        Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
+        await _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Assigner, false, true);
+
+        if (_clientConfigs.GagspeakConfig.DisableSetUponUnlock)
+        {
+            Logger.LogInformation("Disabling Unlocked Set due to Config Setting.", LoggerType.Restraints);
+            await _appearanceHandler.DisableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+        }
+    }
+
+    private async Task EnableAndRelockSet(CharaActiveStateData serverData)
+    {
+        Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
+        await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+
+        if (serverData.Padlock != Padlocks.None.ToName())
+        {
+            Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
+            await _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
+                serverData.Password, serverData.Timer, serverData.Assigner, false, true);
+        }
+    }
+
+    private async Task ClearActiveSet()
+    {
+        // Obtain Client-Side active Restraint Set for this UID.
+        // If any are active, unlock and remove them. (time expired / force removal)
+        var activeSet = _clientConfigs.GetActiveSet();
+        if (activeSet is not null)
+        {
+            Logger.LogWarning("The Stored Restraint Set was Empty, yet you have one equipped. Unlocking and unequipping.");
+            // Unlock Active Set
+            if (activeSet.LockType.ToPadlock() is not Padlocks.None)
+                await _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+
+            // Disable Active Set.
+            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+            // publish the changes.
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+        }
+
+    }
+
+    private void ApplyTraitsIfAny()
+    {
+        var set = _clientConfigs.GetActiveSet();
+        if (set is not null)
         {
             // Enable the Hardcore Properties by invoking the ipc call.
-            if (activeSetFinal.HasPropertiesForUser(activeSetFinal.EnabledBy))
+            if (set.HasPropertiesForUser(set.EnabledBy))
             {
-                Logger.LogDebug("Set Contains HardcoreProperties for " + activeSetFinal.EnabledBy, LoggerType.Restraints);
-                if (activeSetFinal.PropertiesEnabledForUser(activeSetFinal.EnabledBy))
+                Logger.LogDebug("Set Contains HardcoreProperties for " + set.EnabledBy, LoggerType.Restraints);
+                if (set.PropertiesEnabledForUser(set.EnabledBy))
                 {
                     Logger.LogDebug("Hardcore properties are enabled for this set!");
-                    IpcFastUpdates.InvokeHardcoreTraits(NewState.Enabled, activeSetFinal);
+                    IpcFastUpdates.InvokeHardcoreTraits(NewState.Enabled, set);
                 }
             }
         }
-        var activeSetId = activeSetFinal?.RestraintId ?? Guid.Empty;
-        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
-
-        if (_playerData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
-        {
-            Logger.LogDebug("No Reason to Recalculate!");
-            return;
-        }
-        else
-        {
-            Logger.LogDebug("IsGagged: " + _playerData.IsPlayerGagged);
-            Logger.LogDebug("ActiveSetIdx: " + _clientConfigs.GetActiveSetIdx());
-            Logger.LogDebug("Active Cursed Item Count: " + _clientConfigs.ActiveCursedItems.Count);
-            Logger.LogDebug("Recalculating Appearance Data", LoggerType.ClientPlayerData);
-        }
-
-        // Run a refresh on appearance data.
-        await _appearanceHandler.RecalcAndReload(true);
     }
 
     private async void CheckHardcore()
     {
         // Stop this if it is true.
-        if (_hardcoreHandler.IsForcedToFollow)
-            _hardcoreHandler.UpdateForcedFollow(NewState.Disabled);
+        if (_hardcoreHandler.IsForcedToFollow) _hardcoreHandler.UpdateForcedFollow(NewState.Disabled);
 
         // Re-Enable forced Sit if it is disabled.
-        if (_hardcoreHandler.IsForcedToEmote)
-            if (!string.IsNullOrEmpty(_playerData.GlobalPerms?.ForcedEmoteState))
-                _hardcoreHandler.UpdateForcedEmoteState(NewState.Enabled);
+        if (_hardcoreHandler.IsForcedToEmote && !string.IsNullOrEmpty(_playerData.GlobalPerms?.ForcedEmoteState)) _hardcoreHandler.UpdateForcedEmoteState(NewState.Enabled);
 
         // Re-Enable Forcd Stay if it was enabled.
-        if (_hardcoreHandler.IsForcedToStay)
-            _hardcoreHandler.UpdateForcedStayState(NewState.Enabled);
+        if (_hardcoreHandler.IsForcedToStay) _hardcoreHandler.UpdateForcedStayState(NewState.Enabled);
 
         // Re-Enable Blindfold if it was enabled.
-        if (_hardcoreHandler.IsBlindfolded)
-            await _hardcoreHandler.HandleBlindfoldLogic(NewState.Enabled);
+        if (_hardcoreHandler.IsBlindfolded) await _hardcoreHandler.HandleBlindfoldLogic(NewState.Enabled);
 
         // Re-Enable the chat related hardcore things.
-        if (_hardcoreHandler.IsHidingChat)
-            _hardcoreHandler.UpdateHideChatboxState(NewState.Enabled);
-        if (_hardcoreHandler.IsHidingChatInput)
-            _hardcoreHandler.UpdateHideChatInputState(NewState.Enabled);
-        if (_hardcoreHandler.IsBlockingChatInput)
-            _hardcoreHandler.UpdateChatInputBlocking(NewState.Enabled);
+        if (_hardcoreHandler.IsHidingChat) _hardcoreHandler.UpdateHideChatboxState(NewState.Enabled);
+        if (_hardcoreHandler.IsHidingChatInput) _hardcoreHandler.UpdateHideChatInputState(NewState.Enabled);
+        if (_hardcoreHandler.IsBlockingChatInput) _hardcoreHandler.UpdateChatInputBlocking(NewState.Enabled);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
