@@ -19,6 +19,12 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 1, 0)
+            .RegisterFeature("Cursed Loot should now function in Deep Dungeons.")
+            .RegisterBugfix("Fixed crash that occursed when you reconnected with an expected restraint set that no longer exists for you.")
+            .RegisterBugfix("Fixed issue where the 'Your Rubber Slut' Achievement required 4 days instead of 14 days.")
+            .RegisterBugfix("Fixed an issue where the pair requests only displayed 1 outgoing max.")
+            .RegisterBugfix("Fixed pair request messages not displaying.");
         VersionEntry(1, 1, 0, 3)
             .RegisterMain("Update for new Moodles tuple status. Until Moodles is 1.0.0.39 expect the ShareHub and other Moodles features to be non-functional.");
         VersionEntry(1, 1, 0, 2)

@@ -601,6 +601,16 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         
         var importedSets = _infoExchanger.GetRestraintSetsFromUID(uid);
         LoadedRestraints = importedSets.Where(x => _clientConfigs.GetSetIdxByGuid(x.RestraintId) == -1).ToList();
+        // Ensure that the restraint sets are not enabled and don't have an active lock.
+        foreach (var restraint in LoadedRestraints)
+        {
+            restraint.Enabled = false;
+            restraint.EnabledBy = string.Empty;
+            restraint.LockType = Padlocks.None.ToName();
+            restraint.LockPassword = string.Empty;
+            restraint.LockedUntil = DateTimeOffset.MinValue;
+            restraint.LockedBy = string.Empty;
+        }
 
         var importedCursedItems = _infoExchanger.GetCursedItemsFromUID(uid);
         LoadedCursedItems = importedCursedItems.Where(x => _clientConfigs.IsGuidInItems(x.LootId) is false).ToList();

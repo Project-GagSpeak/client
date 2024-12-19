@@ -942,6 +942,8 @@ namespace GagSpeak.Localization
     public class CursedLoot
     {
         // Add more here if people actually care for it.
+        public readonly string TreasureName = Loc.Localize("CursedLoot_TreasureName", "Treasure Coffer");
+
     }
 
     public class Moodles

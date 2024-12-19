@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
@@ -76,7 +77,9 @@ public class KinksterRequestEntry
     {
         ImGui.AlignTextToFramePadding();
         _uiShared.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
-        UiSharedService.AttachToolTip("Request Expires in " + TimeLeft.Days + "d "+ TimeLeft.Hours+ "h "+ TimeLeft.Minutes +"m.");
+        var displayText = "Request Expires in " + TimeLeft.Days + "d " + TimeLeft.Hours + "h " + TimeLeft.Minutes + "m.";
+        if(!_requestEntry.AttachedMessage.IsNullOrWhitespace()) displayText += "--SEP----COL--Message: --COL--" + _requestEntry.AttachedMessage;
+        UiSharedService.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
         ImGui.SameLine();
     }
 

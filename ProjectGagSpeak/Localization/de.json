@@ -4,11 +4,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveAPTName": {
-        "message": "Exit",
+        "message": "Ausgang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveAPTOption": {
-        "message": "Cancel",
+        "message": "Abbrechen",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveChamberFriendly": {
@@ -16,15 +16,15 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveChamberName": {
-        "message": "Exit",
+        "message": "Ausgang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveChamberLabel": {
-        "message": "What would you like to do?",
+        "message": "",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveChamberOption": {
-        "message": "Nothing.",
+        "message": "Abbrechen.",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveEstateFriendly": {
@@ -32,11 +32,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveEstateName": {
-        "message": "Exit",
+        "message": "Ausgang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveEstateLabel": {
-        "message": "Leave the estate hall?",
+        "message": "Das Gebäude verlassen?",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_LeaveEstateOption": {
@@ -48,11 +48,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterEstateName": {
-        "message": "Entrance",
+        "message": "Eingang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterEstateLabel": {
-        "message": "Enter the estate hall?",
+        "message": "Das Gebäude betreten?",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterEstateOption": {
@@ -64,11 +64,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTOneName": {
-        "message": "Apartment Building Entrance",
+        "message": "Eingang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTOneOption": {
-        "message": "Go to specified apartment",
+        "message": "Eine bestimmte Wohnung betreten (Zweck der Unterkunft einsehen)",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTTwoFriendly": {
@@ -76,7 +76,7 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTTwoName": {
-        "message": "Apartment Building Entrance",
+        "message": "Eingang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTThreeFriendly": {
@@ -84,11 +84,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTThreeName": {
-        "message": "Apartment Building Entrance",
+        "message": "Eingang",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTThreeLabel": {
-        "message": "/^Enter .+?'s room\\?$/",
+        "message": "/^Wohnung Nr .+? betreten\\?$/",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterAPTThreeOption": {
@@ -100,11 +100,11 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCOneName": {
-        "message": "Entrance to Additional Chambers",
+        "message": "Eingang zu anderen Zimmern",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCOneOption": {
-        "message": "Move to specified private chambers",
+        "message": "Ein bestimmtes Zimmer betreten (Zweck der Unterkunft einsehen)",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCTwoFriendly": {
@@ -112,7 +112,7 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCTwoName": {
-        "message": "Entrance to Additional Chambers",
+        "message": "Eingang zu anderen Zimmern",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCThreeFriendly": {
@@ -120,15 +120,20 @@
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCThreeName": {
-        "message": "Apartment Building Entrance",
+        "message": "Eingang zu anderen Zimmern",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCThreeLabel": {
-        "message": "/^Enter .+?'s room\\?$/",
+        "message": "/^Das Zimmer von .+? betreten\\?$/",
         "description": "ForcedStay..ctor"
     },
     "ForcedStay_EnterFCThreeOption": {
         "message": "Yes",
         "description": "ForcedStay..ctor"
+    },
+
+    "CursedLoot_TreasureName": {
+        "message": "Schatztruhe",
+        "description": "CursedLoot..ctor"
     }
 }

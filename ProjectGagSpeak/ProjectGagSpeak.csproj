@@ -34,6 +34,9 @@
         <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
         <OutputType>Library</OutputType>
     </PropertyGroup>
+    <ItemGroup>
+      <None Remove="Localization\jp.json" />
+    </ItemGroup>
 
     <!--Other DLL's for dalamud supporting module/components-->
     <ItemGroup>
@@ -147,6 +150,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <EmbeddedResource Include="Localization\de.json" />
+        <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
 </Project>

@@ -196,6 +196,18 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
         {
             using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_lastInteractedMsg.Name);
             ImGui.Separator();
+            if (ImGui.Selectable("View Light KinkPlate"))
+            {
+                if (_lastInteractedMsg.UID != "System")
+                {
+                    _mediator.Publish(new KinkPlateOpenStandaloneLightMessage(_lastInteractedMsg.UserData));
+                    _lastInteractedMsg = new ChatMessage();
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+            UiSharedService.AttachToolTip("Opens " + _lastInteractedMsg.Name + "'s Light KinkPlate.");
+            ImGui.Separator();
+
             using (ImRaii.Disabled(!KeyMonitor.ShiftPressed()))
             {
                 // Display each action as a selectable
@@ -211,6 +223,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
             ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _lastAttachedMessage, 100);
             ImGui.Separator();
+            
             using (ImRaii.Disabled(!KeyMonitor.CtrlPressed()))
             {
                 if (ImGui.Selectable("Hide Messages from Kinkster"))

@@ -2,6 +2,8 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.GoldSaucer;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using GagSpeak.Localization;
 using Lumina.Excel.Sheets;
 using System.Windows.Forms;
 
@@ -16,6 +18,16 @@ public static class AchievementHelpers
         var eventFramework = EventFramework.Instance();
         return eventFramework == null ? null : eventFramework->GetInstanceContentDeepDungeon();
     }
+
+    // Bronzes are already categorized as "Treasure" and need no changes to function with cursed loot.
+    // Silver and gold chests across every deep dungeon and every language share all attributes aside from name.
+    public static unsafe bool IsDeepDungeonCoffer(GameObject* obj)
+        => obj->ObjectKind is FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind.EventObj
+        && obj->SubKind is 0 
+        && obj->EventId.Id is 983600 
+        && obj->EventId.EntryId is 560
+        && obj->EventId.ContentId is FFXIVClientStructs.FFXIV.Client.Game.Event.EventHandlerType.GimmickAccessor
+        && obj->Name.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
 
     public static unsafe bool InDeepDungeon() => GetDirector() != null;
 

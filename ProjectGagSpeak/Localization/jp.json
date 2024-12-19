@@ -133,7 +133,7 @@
     },
 
     "CursedLoot_TreasureName": {
-        "message": "Coffre au trésor",
+        "message": "宝箱",
         "description": "CursedLoot..ctor"
     }
 }
