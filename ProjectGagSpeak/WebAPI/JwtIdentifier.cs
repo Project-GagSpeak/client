@@ -17,11 +17,12 @@ public abstract record JwtIdentifier(string ApiUrl, string CharaHash)
 /// <param name="ApiUrl"> The API Url of the server connected </param>
 /// <param name="CharaHash"> The hash for the current character </param>
 /// <param name="SecretKey"> The secret key for the JWT </param>
-public record SecretKeyJwtIdentifier(string ApiUrl, string CharaHash, string SecretKey) : JwtIdentifier(ApiUrl, CharaHash)
+/// <param name="IsPrimary"> Whether this is the primary Auth account </param>
+public record SecretKeyJwtIdentifier(string ApiUrl, string CharaHash, string SecretKey, bool ExpectPrimary) : JwtIdentifier(ApiUrl, CharaHash)
 {
     public override string ToString()
     {
-        return base.ToString() + ", HasSecretKey: " + !string.IsNullOrEmpty(SecretKey) + "}";
+        return base.ToString() + ", HasSecretKey: " + !string.IsNullOrEmpty(SecretKey) + ", ExpectPrimary: " + ExpectPrimary + "}";
     }
 }
 

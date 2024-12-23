@@ -30,7 +30,6 @@ public class IntroUi : WindowMediatorSubscriberBase
     private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
     private Task? _fetchAccountDetailsTask = null;
     private Task? _initialAccountCreationTask = null;
-    private string _aquiredUID = string.Empty;
     private string _secretKey = string.Empty;
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
@@ -246,93 +245,87 @@ public class IntroUi : WindowMediatorSubscriberBase
         UiSharedService.ColorTextWrapped("The Primary Account IS LINKED TO YOUR CURRENTLY LOGGED IN CHARACTER.", ImGuiColors.DalamudRed);
         ImGui.TextWrapped("If you wish have your primary account on another character, log into them first!");
         ImGui.Spacing();
+
         ImGui.AlignTextToFramePadding();
         UiSharedService.ColorText("Generate Primary Account: ", ImGuiColors.ParsedGold);
-        // display the fields for generation and creation
-        var oneTimeKeyGenButtonText = "Primary Account Generator (One-Time Use!)";
-        if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, oneTimeKeyGenButtonText, disabled: _configService.Current.ButtonUsed))
-        {
-            // toggle the account created flag to true
-            _configService.Current.ButtonUsed = true;
-            _configService.Save();
-            // generate a secret key for the user.
-            _fetchAccountDetailsTask = FetchAccountDetailsAsync();
-        }
 
-        if (_fetchAccountDetailsTask != null && !_fetchAccountDetailsTask.IsCompleted)
+        // Under the condition that we are not recovering an account, display the primary account generator:
+        if (_secretKey.IsNullOrWhitespace())
         {
-            UiSharedService.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
-        }
-
-        // if the primary account exists but does not have successful connection, load that into the information.
-        if (_serverConfigs.TryGetPrimaryAuth(out Authentication primaryAuth))
-        {
-            if(!primaryAuth.SecretKey.Key.IsNullOrEmpty() && primaryAuth.SecretKey.HasHadSuccessfulConnection is false)
+            // generate a secret key for the user and attempt initial connection when pressed.
+            if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Current.ButtonUsed))
             {
-                _aquiredUID = "RECOVERED-FROM-FAILED-CONNECTION";
-                _secretKey = primaryAuth.SecretKey.Key;
+                _configService.Current.ButtonUsed = true;
+                _configService.Save();
+                _fetchAccountDetailsTask = FetchAccountDetailsAsync();
             }
-            
+            // while we are awaiting to fetch the details and connect display a please wait text.
+            if (_fetchAccountDetailsTask != null && !_fetchAccountDetailsTask.IsCompleted)
+            {
+                UiSharedService.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
+            }
         }
 
-        // if we dont have the account details yet, early return.
-        if (_aquiredUID == string.Empty || _secretKey == string.Empty)
-            return;
-
+        // here we will draw out a seperator line.
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-        // otherwise, display them.
-        UiSharedService.ColorText("Primary Account UID: ", ImGuiColors.ParsedGold);
-        _uiShared.DrawHelpText("Click the UID text to copy it to your Clipboard!");
+
+        // Below this we will provide the user with a space to insert an existing UID & Key to
+        // log back into a account they already have if they needed to reset for any reason.
+        _uiShared.GagspeakBigText("Does your Character already have a Primary Account?");
+        UiSharedService.ColorText("Retreive the key from where you saved it, or the discord bot, and insert it below.", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * .85f);
-        ImGui.InputText("##RefNewUID", ref _aquiredUID, 64, ImGuiInputTextFlags.ReadOnly);
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText(_aquiredUID);
-            _logger.LogInformation("Copied UID to Clipboard.");
-        }
+        ImGui.InputText("Key##RefNewKey", ref _secretKey, 64);
+
         ImGui.Spacing();
-        UiSharedService.ColorText("Primary Account Key: ", ImGuiColors.ParsedGold);
-        _uiShared.DrawHelpText("Click the Secret Key text to copy it to your Clipboard! I Recommend saving it somewhere!");
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * .85f);
-        ImGui.InputText("##RefNewKey", ref _secretKey, 64, ImGuiInputTextFlags.ReadOnly);
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText(_secretKey);
-            _logger.LogInformation("Copied Secret Key to Clipboard.");
-        }
-        ImGui.NewLine();
-
         UiSharedService.ColorText("ServerState (For Debug Purposes): " + MainHub.ServerStatus, ImGuiColors.DalamudGrey);
-        UiSharedService.ColorText("Join as a new Kinkster?", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
+        UiSharedService.ColorText("Auth Exists for character (Debug): " + _serverConfigs.AuthExistsForCurrentLocalContentId(), ImGuiColors.DalamudGrey);
+        if(_secretKey.Length == 64)
         {
-            _logger.LogInformation("Creating Authentication for current character.");
-            if (!_serverConfigs.AuthExistsForCurrentLocalContentId())
+            UiSharedService.ColorText("Connect with existing Key?", ImGuiColors.ParsedGold);
+            ImGui.SameLine();
+            if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
             {
-                _logger.LogDebug("Character has no secret key, generating new auth for current character", LoggerType.ApiCore);
-                _serverConfigs.GenerateAuthForCurrentCharacter();
-            }
-            // set the key to that newly added authentication
-            SecretKey newKey = new()
-            {
-                Label = $"GagSpeak Main Account Secret Key - ({DateTime.Now:yyyy-MM-dd})",
-                Key = _secretKey,
-            };
-            // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
+                _logger.LogInformation("Creating Authentication for current character.");
+                try
+                {
+                    if (_serverConfigs.AuthExistsForCurrentLocalContentId())
+                    {
+                        throw new InvalidOperationException("Auth already exists for current character, cannot create new Primary auth if one already exists!");
+                    }
 
-            // run the create connections and set our account created to true
-            _initialAccountCreationTask = PerformFirstLoginAsync();
+                    // if the auth does not exist for the current character, we can create a new one.
+                    _serverConfigs.GenerateAuthForCurrentCharacter();
 
-            if (_initialAccountCreationTask is not null && !_initialAccountCreationTask.IsCompleted)
-            {
-                UiSharedService.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
+                    // set the key to that newly added authentication
+                    SecretKey newKey = new()
+                    {
+                        Label = $"GagSpeak Main Account Secret Key - ({DateTime.Now:yyyy-MM-dd})",
+                        Key = _secretKey,
+                    };
+
+                    // set the secret key for the character
+                    _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
+
+                    // run the create connections and set our account created to true
+                    _initialAccountCreationTask = PerformFirstLoginAsync();
+
+
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create authentication for current character.");
+                }
             }
+            UiSharedService.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
         }
-        UiSharedService.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
+
+        if (_initialAccountCreationTask is not null && !_initialAccountCreationTask.IsCompleted)
+        {
+            UiSharedService.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
+        }
     }
 
     private async Task PerformFirstLoginAsync()
@@ -365,20 +358,64 @@ public class IntroUi : WindowMediatorSubscriberBase
     {
         try
         {
+            // Begin by fetching the account details for the player. If this fails we will throw to the catch statement and perform an early return.
             var accountDetails = await _apiHubMain.FetchFreshAccountDetails();
-            _aquiredUID = accountDetails.Item1;
-            _secretKey = accountDetails.Item2;
-            _logger.LogInformation("Fetched Account Details, UID: {UID}, SecretKey: {SecretKey}", _aquiredUID, _secretKey);
-            _logger.LogDebug("_aquiredUID: " + _aquiredUID);
-            _logger.LogDebug("_secretKey: " + _secretKey);
+
+            // if we are still in the try statement by this point we have successfully retrieved our new account details.
+            // This means that we can not create the new authentication and validate our account as created.
+
+            // However, if an auth already exists for the current content ID, and we are trying to create a new primary account, this should not be possible, so early throw.
+            if (_serverConfigs.AuthExistsForCurrentLocalContentId())
+            {
+                throw new InvalidOperationException("Auth already exists for current character, cannot create new Primary auth if one already exists!");
+            }
+
+            // if the auth does not exist for the current character, we can create a new one.
+            _serverConfigs.GenerateAuthForCurrentCharacter();
+
+            // set the key to that newly added authentication
+            SecretKey newKey = new()
+            {
+                Label = $"GagSpeak Main Account Secret Key - ({DateTime.Now:yyyy-MM-dd})",
+                Key = accountDetails.Item2,
+            };
+
+            // set the secret key for the character
+            _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
+            _configService.Current.AccountCreated = true;
+            _configService.Save();
+            // Log the details.
+            _logger.LogInformation("UID: " + accountDetails.Item1);
+            _logger.LogInformation("Secret Key: " + accountDetails.Item2);
+            _logger.LogInformation("Fetched Account Details Successfully and finished creating Primary Account.");
+
         }
         catch (Exception)
         {
             // Log the error
-            _logger.LogError("Failed to fetch account details Server is likely down. Resetting Button.");
-            // Reset the button used flag
+            _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
             _configService.Current.ButtonUsed = false;
+            _configService.Current.AccountCreated = false;
             _configService.Save();
+
+            // set the task back to null and return.
+            _fetchAccountDetailsTask = null;
+            return;
+        }
+
+        // Next step is to attempt a initial connection to the server with this now primary authentication.
+        // If it suceeds then it will mark the initialConnectionSuccessful flag to true (This is done in the connection function itself)
+        try
+        {
+            _logger.LogInformation("Attempting to connect to the server for the first time.");
+            await _apiHubMain.Connect();
+            _logger.LogInformation("Connection Attempt finished.");
+
+            if (MainHub.IsConnected) _guides.StartTutorial(TutorialType.MainUi);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to the server for the first time.");
         }
         finally
         {

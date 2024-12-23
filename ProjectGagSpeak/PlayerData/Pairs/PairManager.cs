@@ -17,6 +17,8 @@ using Dalamud.Game.Gui.ContextMenu;
 using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using GagSpeak.WebAPI;
+using GagSpeak.GagspeakConfiguration.Configurations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Pairs;
 
@@ -28,6 +30,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 {
     private readonly ConcurrentDictionary<UserData, Pair> _allClientPairs;  // concurrent dictionary of all paired paired to the client.
     private readonly GagspeakConfigService _mainConfig;                     // main gagspeak config
+    private readonly ServerConfigurationManager _serverConfigs;             // for nick handling.
     private readonly PairFactory _pairFactory;                              // the pair factory for creating new pair objects
     private readonly IContextMenu _contextMenu;                             // adds GagSpeak options when right clicking players.
     
@@ -36,11 +39,12 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
     public PairManager(ILogger<PairManager> logger, GagspeakMediator mediator,
         PairFactory pairFactory, GagspeakConfigService mainConfig, 
-        IContextMenu contextMenu) : base(logger, mediator)
+        ServerConfigurationManager serverConfigs, IContextMenu contextMenu) : base(logger, mediator)
     {
         _allClientPairs = new(UserDataComparer.Instance);
         _pairFactory = pairFactory;
         _mainConfig = mainConfig;
+        _serverConfigs = serverConfigs;
         _contextMenu = contextMenu;
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearPairs());
@@ -169,6 +173,17 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
     // Fetch a user's UserData off of their UID
     public UserData? GetUserDataFromUID(string uid) => _allClientPairs.Keys.FirstOrDefault(p => p.UID == uid);
+
+    /// <summary>
+    /// Useful for cases where you have the UID but you dont have the pair object and need a way to get the nickname/alias without iterating 
+    /// through the pair objects.
+    /// </summary>
+    public bool TryGetNickAliasOrUid(string uid, [NotNullWhen(true)] out string? nickAliasUid)
+    {
+        nickAliasUid = _serverConfigs.GetNicknameForUid(uid) ?? _allClientPairs.Keys.FirstOrDefault(p => p.UID == uid)?.AliasOrUID;
+        return !string.IsNullOrWhiteSpace(nickAliasUid);
+    }
+
 
     public (MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms) GetMoodlePermsForPairByName(string nameWithWorld)
     {

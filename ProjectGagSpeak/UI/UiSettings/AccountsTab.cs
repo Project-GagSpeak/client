@@ -114,10 +114,11 @@ public class AccountsTab
                 DeleteAccountConfirmation = true;
                 ImGui.OpenPopup("Delete your account?");
             }
-            UiSharedService.AttachToolTip(!hadEstablishedConnection
+            UiSharedService.AttachToolTip("THIS BUTTON CAN BE A BIT BUGGY AND MAY REMOVE YOUR PRIMARY WITHOUT NOTICE ON ACCIDENT. LOOKING INTO WHY IN 1.1.1.0\n" +
+                (!hadEstablishedConnection
                 ? GSLoc.Settings.Accounts.DeleteButtonDisabledTT : isPrimary
                     ? GSLoc.Settings.Accounts.DeleteButtonTT + GSLoc.Settings.Accounts.DeleteButtonPrimaryTT
-                    : GSLoc.Settings.Accounts.DeleteButtonTT, color: ImGuiColors.DalamudRed);
+                    : GSLoc.Settings.Accounts.DeleteButtonTT, color: ImGuiColors.DalamudRed));
 
         }
         // next line:
@@ -159,10 +160,25 @@ public class AccountsTab
                 string key = account.SecretKey.Key;
                 if (ImGui.InputTextWithHint("##SecondaryAuthKey" + account.CharacterPlayerContentId, "Paste Secret Key Here...", ref key, 64, ImGuiInputTextFlags.EnterReturnsTrue))
                 {
-                    if (account.SecretKey.Label.IsNullOrEmpty())
-                        account.SecretKey.Label = "Alt Character Key for " + account.CharacterName + " on " + OnFrameworkService.WorldData.Value[(ushort)account.WorldId];
-                    // set the key and save the changes.
-                    account.SecretKey.Key = key;
+                    key = key.Trim(); // Trim any leading or trailing whitespace
+
+                    // Check if the key exists in any of the authentications
+                    bool keyExists = _serverConfigs.CurrentServer.Authentications
+                        .Any(auth => string.Equals(auth.SecretKey.Key, key, StringComparison.OrdinalIgnoreCase));
+
+                    if (keyExists)
+                    {
+                        _logger.LogWarning("Key " + key + " already exists in another account. Setting to blank.");
+                        account.SecretKey.Label = string.Empty;
+                        account.SecretKey.Key = string.Empty;
+                    }
+                    else
+                    {
+                        if (account.SecretKey.Label.IsNullOrEmpty())
+                            account.SecretKey.Label = "Alt Character Key for " + account.CharacterName + " on " + OnFrameworkService.WorldData.Value[(ushort)account.WorldId];
+                        account.SecretKey.Key = key;
+                    }
+
                     EditingIdx = -1;
                     _serverConfigs.Save();
                 }

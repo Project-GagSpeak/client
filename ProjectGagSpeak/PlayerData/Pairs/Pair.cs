@@ -440,7 +440,7 @@ public class Pair
         LockedSlots = result;
     }
 
-    /// <summary> Get the nicknames for the user. (still dont know how this is meant to have any value at all) </summary>
+    /// <summary> Get the nicknames for the user. </summary>
     public string? GetNickname()
     {
         return _serverConfigs.GetNicknameForUid(UserData.UID);

@@ -469,16 +469,6 @@ public partial class MainHub
     }
 
     /// <summary> 
-    /// Receive a Pair Chat Message from a 1 on 1 private chat. 
-    /// </summary>
-    public Task Client_PairChatMessage(PairChatMessageDto dto)
-    {
-        ExecuteSafely(() => Mediator.Publish(new PairChatMessage(dto, (dto.MessageSender.UID == UID))));
-        return Task.CompletedTask;
-    }
-
-
-    /// <summary> 
     /// Server has sent us a UserDto has just went offline, and is notifying all connected pairs about it.
     /// <para> 
     /// Use this info to update the UserDto in our pair manager so they are marked as offline.
@@ -685,12 +675,6 @@ public partial class MainHub
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Client_GlobalChatMessage), act);
-    }
-
-    public void OnPairChatMessage(Action<PairChatMessageDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_PairChatMessage), act);
     }
 
     public void OnUserSendOffline(Action<UserDto> act)

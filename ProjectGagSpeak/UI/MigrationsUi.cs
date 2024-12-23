@@ -1,32 +1,20 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
-using GagSpeak.Services;
-using GagSpeak.Services.Events;
-using GagSpeak.Services.Mediator;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Globalization;
-using System.Numerics;
-using GagSpeak.Services.Migrations;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
-using System.Linq;
-using OtterGui.Classes;
-using GagSpeak.UI.Components;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.Services;
+using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Migrations;
+using GagSpeak.Services.Textures;
+using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.IPC;
-using GagSpeak.Services.Textures;
-using GagSpeak.Services.Tutorial;
-using Lumina.Excel.Sheets;
-using GagSpeak.WebAPI;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.PlayerData.Data;
 using GagspeakAPI.Extensions;
-using GagSpeak.Services.ConfigurationServices;
+using ImGuiNET;
 using OtterGui.Text;
-using GagspeakAPI.Data;
+using System.Numerics;
 
 namespace GagSpeak.UI;
 
@@ -43,9 +31,9 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        SetPreviewComponent previewer, AccountInfoExchanger infoExchanger, 
-        MigratePatterns migratePatterns, MigrateRestraintSets migrateRestraintSets, 
-        ClientConfigurationManager clientConfigs, CosmeticService cosmetics, 
+        SetPreviewComponent previewer, AccountInfoExchanger infoExchanger,
+        MigratePatterns migratePatterns, MigrateRestraintSets migrateRestraintSets,
+        ClientConfigurationManager clientConfigs, CosmeticService cosmetics,
         UiSharedService uiShared) : base(logger, mediator, "GagSpeak Migrations")
     {
         _previewer = previewer;
@@ -69,7 +57,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
     private HashSet<string> CurrentAccountUids = new HashSet<string>();
     private string SelectedAccountUid = string.Empty;
-    
+
     // The temporary data storage containers that we will use to store the data we are migrating.
     private Dictionary<GagType, GagDrawData> LoadedGagData = new Dictionary<GagType, GagDrawData>();
     private List<RestraintSet> LoadedRestraints = new List<RestraintSet>();
@@ -205,7 +193,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         _uiShared.GagspeakBigText(" Transfer GagData:");
 
         IEnumerable<GagType> GagsToMigrate = LoadedGagData.Keys;
-        if(SelectedGag is GagType.None)
+        if (SelectedGag is GagType.None)
             SelectedGag = GagsToMigrate.FirstOrDefault();
 
         ImGui.SameLine();
@@ -222,7 +210,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         }
 
         ImGui.Separator();
-        if(SelectedGag != GagType.None)
+        if (SelectedGag != GagType.None)
         {
             if (ImGui.Button("Transfer " + SelectedGag.GagName() + " Data", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight())))
             {
@@ -264,7 +252,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             _uiShared.BooleanToColoredIcon(data.AssociatedMoodles.Count > 0);
         }
     }
-    
+
     private void DrawTransferRestraints()
     {
         // only display the restraint sets that we do not already have in our client config.
@@ -276,7 +264,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         DrawUidSelector();
         ImGui.Separator();
-        
+
         _uiShared.GagspeakBigText(" Transfer Restraints:");
         var size = _uiShared.CalcFontTextSize(" Transfer Restraints:", _uiShared.GagspeakLabelFont);
         var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
@@ -293,7 +281,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedCursedItems.Count == 0))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedRestraints.Count == 0))
         {
             _clientConfigs.AddNewRestraintSets(LoadedRestraints);
         }
@@ -363,7 +351,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("Cursed Loot Migration Items", 175f, CursedItemsToMigrate, (item) => item.Name, false, 
+        _uiShared.DrawComboSearchable("Cursed Loot Migration Items", 175f, CursedItemsToMigrate, (item) => item.Name, false,
             (i) => { if (i is not null) { SelectedCursedItem = i; } }, SelectedCursedItem ?? default);
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
@@ -399,7 +387,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             ImGui.Text(SelectedCursedItem.IsGag ? "Gag" : "Equip");
 
-            if(SelectedCursedItem.IsGag)
+            if (SelectedCursedItem.IsGag)
             {
                 UiSharedService.ColorText("Gag Type:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
@@ -462,7 +450,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         if (SelectedTrigger is not null)
         {
-            if (ImGui.Button("Transfer ["+SelectedTrigger.Type.ToString()+"] Trigger: " + SelectedTrigger.Name, new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight())))
+            if (ImGui.Button("Transfer [" + SelectedTrigger.Type.ToString() + "] Trigger: " + SelectedTrigger.Name, new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight())))
                 _clientConfigs.AddNewTrigger(SelectedTrigger);
             ImGui.Separator();
 
@@ -578,7 +566,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             // now calculate it so that the cursors Yposition centers the button in the middle height of the text
             ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerYpos);
-            
+
             // let them pick what account they want to have migrations for.
             _uiShared.DrawCombo("##Account UID", 175f, CurrentAccountUids, (name) => name, (selected) =>
             {
@@ -594,11 +582,11 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
     private void LoadDataForUid(string uid)
     {
-        _logger.LogDebug("Loading data for UID: "+ uid);
-        
+        _logger.LogDebug("Loading data for UID: " + uid);
+
         var gagStorage = _infoExchanger.GetGagStorageFromUID(uid);
         LoadedGagData = gagStorage.GagEquipData.Where(kvp => kvp.Value.GameItem.ItemId != ItemIdVars.NothingItem(kvp.Value.Slot).ItemId).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        
+
         var importedSets = _infoExchanger.GetRestraintSetsFromUID(uid);
         LoadedRestraints = importedSets.Where(x => _clientConfigs.GetSetIdxByGuid(x.RestraintId) == -1).ToList();
         // Ensure that the restraint sets are not enabled and don't have an active lock.
@@ -617,10 +605,10 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         var importedTriggers = _infoExchanger.GetTriggersFromUID(uid);
         LoadedTriggers = importedTriggers.Where(x => _clientConfigs.IsGuidInTriggers(x.Identifier) is false).ToList();
-        
+
         var importedAlarms = _infoExchanger.GetAlarmsFromUID(uid);
         LoadedAlarms = importedAlarms.Where(x => _clientConfigs.IsGuidInAlarms(x.Identifier) is false).ToList();
-        
+
         // reset any selected variables
         SelectedGag = GagType.None;
         SelectedRestraintSet = null;
@@ -630,8 +618,8 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     }
 
 
-#region OldMigrations
-private void DrawWardrobeMigrations()
+    #region OldMigrations
+    private void DrawWardrobeMigrations()
     {
         if (!_wardrobeMigrator.OldRestraintSetsLoaded)
         {
@@ -693,11 +681,11 @@ private void DrawWardrobeMigrations()
         else
         {
             _uiShared.BigText("Migrate Patterns (Total: " + _patternMigrator.OldPatternStorage.PatternList.Count + ")");
-            _uiShared.DrawComboSearchable("Select Pattern from Old Storage", 275f, _patternMigrator.OldPatternStorage.PatternList.Select(p => p.Name).ToList(), 
+            _uiShared.DrawComboSearchable("Select Pattern from Old Storage", 275f, _patternMigrator.OldPatternStorage.PatternList.Select(p => p.Name).ToList(),
                 (i) => i, true, (i) => _patternMigrator.SelectedPatternIdx = _patternMigrator.OldPatternStorage.PatternList.FindIndex(p => p.Name == i));
 
             ImGui.Separator();
-            
+
             // draw the pattern info:
             _uiShared.BigText(_patternMigrator.TmpOldPatternData.Name);
 
@@ -738,7 +726,7 @@ private void DrawWardrobeMigrations()
         base.OnClose();
 
         // clear out the temporary data storage containers.
-        LoadedGagData = new Dictionary<GagType, GagDrawData>(); 
+        LoadedGagData = new Dictionary<GagType, GagDrawData>();
         LoadedRestraints = new List<RestraintSet>();
         LoadedCursedItems = new List<CursedItem>();
         LoadedTriggers = new List<Trigger>();

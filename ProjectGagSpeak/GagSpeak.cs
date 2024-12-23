@@ -208,9 +208,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PairHandlerFactory>()
         .AddSingleton<ParticipantFactory>()
         .AddSingleton<PrivateRoomFactory>()
-        .AddSingleton((s) => new PairManager(s.GetRequiredService<ILogger<PairManager>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairFactory>(),
-            s.GetRequiredService<GagspeakConfigService>(), cm))
+        .AddSingleton((s) => new PairManager(s.GetRequiredService<ILogger<PairManager>>(), s.GetRequiredService<GagspeakMediator>(), 
+            s.GetRequiredService<PairFactory>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(), cm))
         .AddSingleton<PrivateRoomManager>()
         .AddSingleton<OnConnectedService>()
         .AddSingleton<ClientCallbackService>()

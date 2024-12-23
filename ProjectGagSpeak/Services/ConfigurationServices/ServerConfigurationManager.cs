@@ -46,27 +46,43 @@ public class ServerConfigurationManager
     public ServerTagStorage TagStorage => _serverTagConfig.Current.ServerTagStorage;
     public ServerNicknamesStorage NicknameStorage => _nicknamesConfig.Current.ServerNicknames;
 
+    /// <summary>
+    /// Returns the authentication for the current player.
+    /// </summary>
+    /// <returns> Returns true if found, false if not. Outputs Authentication if true. </returns>
+    public bool TryGetAuthForCharacter([NotNullWhenAttribute(true)] out Authentication auth)
+    {
+        // fetch the players local content ID (matches regardless of name or world change) and the name & worldId.
+        var LocalContentID = _clientService.ContentIdAsync().GetAwaiter().GetResult();
+        // Once we have obtained the information, check to see if the currently logged in character has a matching authentication with the same local content ID.
+        auth = CurrentServer.Authentications.FirstOrDefault(f => f.CharacterPlayerContentId == LocalContentID)!;
+        if (auth is null)
+        {
+            _logger.LogDebug("No authentication found for the current character.");
+            return false;
+        }
+
+        // update the auth for name and world change
+        UpdateAuthForNameAndWorldChange(LocalContentID);
+
+        // Return value authentication.
+        return true;
+    }
+
+
     /// <summary> Retrieves the key for the currently logged in character. Returns null if none found. </summary>
     /// <returns> The Secret Key </returns>
     public string? GetSecretKeyForCharacter()
     {
-        // fetch the players local content ID (matches regardless of name or world change) and the name & worldId.
-        var LocalContentID = _clientService.ContentIdAsync().GetAwaiter().GetResult();
-
-        // Once we have obtained the information, check to see if the currently logged in character has a matching authentication with the same local content ID.
-        Authentication? auth = CurrentServer.Authentications.Find(f => f.CharacterPlayerContentId == LocalContentID);
-
-        // If the authentication is null, return null.
-        if (auth == null)
+        if(TryGetAuthForCharacter(out var auth))
+        {
+            return auth.SecretKey.Key;
+        }
+        else
         {
             _logger.LogDebug("No authentication found for the current character.");
             return null;
         }
-
-        UpdateAuthForNameAndWorldChange(LocalContentID);
-
-        // finally, return the secret key of this authentication, since we know it to be valid.
-        return auth.SecretKey.Key;
     }
 
     public void UpdateAuthForNameAndWorldChange(ulong localContentId)
@@ -101,12 +117,6 @@ public class ServerConfigurationManager
         return CurrentServer.Authentications.Any(a => a.CharacterPlayerContentId == _clientService.ContentId && !string.IsNullOrEmpty(a.SecretKey.Key));
     }
 
-    public bool TryGetPrimaryAuth([NotNullWhenAttribute(true)] out Authentication auth)
-    {
-        auth = CurrentServer.Authentications.FirstOrDefault(a => a.IsPrimary)!;
-        return auth != null;
-    }
-
     public bool AuthExistsForCurrentLocalContentId()
     {
         return CurrentServer.Authentications.Any(a => a.CharacterPlayerContentId == _clientService.ContentId);
@@ -114,7 +124,7 @@ public class ServerConfigurationManager
 
     public void GenerateAuthForCurrentCharacter()
     {
-        _logger.LogDebug("Character has no secret key, generating new auth for current character");
+        _logger.LogDebug("Generating new auth for current character");
         // generates a new auth object for the list of authentications with no secret key.
         var auth = new Authentication
         {

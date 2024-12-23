@@ -156,7 +156,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
                 if (await ConnectionDtoAndVersionIsValid() is false)
                 {
-                    Logger.LogWarning("Connection was not valid, disconnecting.", LoggerType.ApiCore);
+                    Logger.LogWarning("Connection was not valid, disconnecting.");
                     return;
                 }
 
@@ -428,7 +428,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
         OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));
         OnGlobalChatMessage(dto => _ = Client_GlobalChatMessage(dto));
-        OnPairChatMessage(dto => _ = Client_PairChatMessage(dto));
         OnUserSendOffline(dto => _ = Client_UserSendOffline(dto));
         OnUserSendOnline(dto => _ = Client_UserSendOnline(dto));
         OnUserUpdateProfile(dto => _ = Client_UserUpdateProfile(dto));

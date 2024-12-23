@@ -1,9 +1,7 @@
 using Dalamud.Interface;
-using Dalamud.Interface.Animation.EasingFunctions;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -11,7 +9,6 @@ using GagSpeak.StateManagers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
@@ -61,7 +58,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         Vector2 bigTextSize = new Vector2(0, 0);
         using (_uiSharedService.GagspeakLabelFont.Push()) { bigTextSize = ImGui.CalcTextSize("HeightDummy"); }
         var region = ImGui.GetContentRegionAvail();
-        
+
         var gagSlots = _playerManager.AppearanceData?.GagSlots ?? new GagSlot[3];
         try
         {
@@ -71,7 +68,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
                 Padlocks currentPadlockSelection = gagSlots[i].Padlock.ToPadlock() is Padlocks.None ? GagManager.ActiveSlotPadlocks[i] : gagSlots[i].Padlock.ToPadlock();
 
                 DrawGagSlotHeader(i, bigTextSize);
-                if(i is 0) _guides.OpenTutorial(TutorialType.Gags, StepsActiveGags.LayersInfo, winPos, winSize);
+                if (i is 0) _guides.OpenTutorial(TutorialType.Gags, StepsActiveGags.LayersInfo, winPos, winSize);
                 using (ImRaii.Group())
                 {
                     DrawImage(GetGagTypePath(i));
@@ -111,7 +108,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
             DisplayTimeLeft(
                 _playerManager.AppearanceData!.GagSlots[slotNumber].Timer,
                 _playerManager.AppearanceData!.GagSlots[slotNumber].Padlock.ToPadlock(),
-                _playerManager.AppearanceData!.GagSlots[slotNumber].Assigner, 
+                _playerManager.AppearanceData!.GagSlots[slotNumber].Assigner,
                 yPos: ImGui.GetCursorPosY() + ((bigTextSize.Y - ImGui.GetTextLineHeight()) / 2) + 5f);
         }
     }
@@ -148,7 +145,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
                     // We are swapping gags, so we need to initialize a replace call.
                     if (!(_gagTypeChangeTask is not null && !_gagTypeChangeTask.IsCompleted))
                     {
-                        if(i is GagType.None)
+                        if (i is GagType.None)
                             _gagTypeChangeTask = _appearanceHandler.GagRemoved((GagLayer)idx, PrevGag);
                         else
                             _gagTypeChangeTask = _appearanceHandler.GagSwapped((GagLayer)idx, PrevGag, i);
@@ -183,11 +180,11 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, 2);
         using (ImRaii.Disabled(currentPadlockSelection is Padlocks.None))
         {
-            if (_uiSharedService.IconButton(currentlyLocked ? FontAwesomeIcon.Unlock : FontAwesomeIcon.Lock, id: "lock/unlock"+idx))
+            if (_uiSharedService.IconButton(currentlyLocked ? FontAwesomeIcon.Unlock : FontAwesomeIcon.Lock, id: "lock/unlock" + idx))
             {
                 if (_gagManager.PasswordValidated(currentPadlockSelection, idx, currentlyLocked))
                 {
-                    if(currentlyLocked)
+                    if (currentlyLocked)
                     {
                         _gagManager.PublishLockRemoved((GagLayer)idx);
                     }
@@ -224,10 +221,10 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     private void DisplayTimeLeft(DateTimeOffset endTime, Padlocks padlock, string userWhoSetLock, float yPos)
     {
         var prefixText = userWhoSetLock != MainHub.UID
-            ? userWhoSetLock +"'s " : (padlock is Padlocks.MimicPadlock ? "The Devious " : "Self-Applied ");
+            ? userWhoSetLock + "'s " : (padlock is Padlocks.MimicPadlock ? "The Devious " : "Self-Applied ");
         var gagText = padlock.ToName() + " has";
         var color = ImGuiColors.ParsedGold;
-        switch(padlock)
+        switch (padlock)
         {
             case Padlocks.MetalPadlock:
             case Padlocks.CombinationPadlock:

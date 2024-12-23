@@ -20,11 +20,15 @@ public class Changelog
     private void AddVersionData()
     {
         VersionEntry(1, 1, 1, 0)
+            .RegisterMain("Authentication issues should be almost if not completely resolved now... (I pray and hope so) Safe to say more may spawn but should be easier to patch.")
+            .RegisterFeature("Prevent duplicate keys from characters.")
+            .RegisterFeature("Prevent people from trying to connect as a primary user with an alt account.")
             .RegisterFeature("Cursed Loot should now function in Deep Dungeons.")
             .RegisterBugfix("Fixed crash that occursed when you reconnected with an expected restraint set that no longer exists for you.")
             .RegisterBugfix("Fixed issue where the 'Your Rubber Slut' Achievement required 4 days instead of 14 days.")
             .RegisterBugfix("Fixed an issue where the pair requests only displayed 1 outgoing max.")
-            .RegisterBugfix("Fixed pair request messages not displaying.");
+            .RegisterBugfix("Fixed pair request messages not displaying.")
+            .RegisterBugfix("Fixed where migrations for restraint sets were not allowing 'Transfer All' unless you had a cursed item created for some reason.");
         VersionEntry(1, 1, 0, 3)
             .RegisterMain("Update for new Moodles tuple status. Until Moodles is 1.0.0.39 expect the ShareHub and other Moodles features to be non-functional.");
         VersionEntry(1, 1, 0, 2)

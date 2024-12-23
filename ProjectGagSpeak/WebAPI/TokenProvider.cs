@@ -1,4 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -98,6 +99,8 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     Logger.LogDebug("Calling the SecretKeyJwtIdentifier", LoggerType.JwtTokens);
                     // Use the secret key for authentication
                     var secretKey = secretKeyIdentifier.SecretKey;
+                    var forceMain = secretKeyIdentifier.ExpectPrimary.ToString();
+                    Logger.LogDebug("GetNewToken: SecretKey {secretKey}", secretKey);
                     // var auth = secretKey.GetHash256(); // leaving out this because i took out double encryption to just single for now
 
                     // Set the token URI to the appropriate endpoint for secret key authentication
@@ -108,8 +111,9 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
-                        new KeyValuePair<string, string>("auth", secretKey),
                         new KeyValuePair<string, string>("charaIdent", await _frameworkUtil.GetPlayerNameHashedAsync().ConfigureAwait(false)),
+                        new KeyValuePair<string, string>("authKey", secretKey),
+                        new KeyValuePair<string, string>("forceMain", forceMain),
                     }), token).ConfigureAwait(false);
                 }
                 else if (identifier is LocalContentIDJwtIdentifier localContentIDIdentifier)
@@ -126,8 +130,8 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
-                        new KeyValuePair<string, string>("localContentID", localContentID),
                         new KeyValuePair<string, string>("charaIdent", await _frameworkUtil.GetPlayerNameHashedAsync().ConfigureAwait(false)),
+                        new KeyValuePair<string, string>("localContentID", localContentID),
                     }), token).ConfigureAwait(false);
                 }
                 else
@@ -158,7 +162,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             response = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             // ensure the response was successful
-            Logger.LogDebug("GetNewToken: Response "+response, LoggerType.JwtTokens);
+            Logger.LogDebug("GetNewToken: Response "+response);
             result.EnsureSuccessStatusCode();
             // add the response to the token cache
             _tokenCache[identifier] = response;
@@ -227,15 +231,24 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         var tempLocalContentID = _clientService.ContentIdAsync().GetAwaiter().GetResult();
         try
         {
+            var secretKey = string.Empty;
+            var expectingPrimary = false;
+            // Attempt to get the secret key and isPrimary attributes as well.
+            if (_serverManager.TryGetAuthForCharacter(out Authentication auth))
+            {
+                secretKey = auth.SecretKey.Key;
+                expectingPrimary = auth.IsPrimary;
+            }
+
+            // get the remaining attributes.
             var apiUrl = _serverManager.CurrentApiUrl;
             var charaHash = _frameworkUtil.GetPlayerNameHashedAsync().GetAwaiter().GetResult();
-            var secretKey = _serverManager.GetSecretKeyForCharacter();
             // Example logic to decide which identifier to use.
             if (!string.IsNullOrEmpty(secretKey))
             {
                 // Logger.LogDebug("GetIdentifier: SecretKey {secretKey}", secretKey);
                 // fired if the secret key exists, meaning we are registered
-                var newIdentifier = new SecretKeyJwtIdentifier(apiUrl, charaHash, secretKey);
+                var newIdentifier = new SecretKeyJwtIdentifier(apiUrl, charaHash, secretKey, expectingPrimary);
                 _lastJwtIdentifier = newIdentifier; // Safeguarding the new identifier
                 return newIdentifier;
             }
