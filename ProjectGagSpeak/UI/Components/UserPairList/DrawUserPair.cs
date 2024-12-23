@@ -143,7 +143,7 @@ public class DrawUserPair
         }
         else if (_pair.IndividualPairStatus == IndividualPairStatus.Bidirectional)
         {
-            userPairText += UiSharedService.TooltipSeparator + "You are directly Paired";
+            userPairText += UiSharedService.TooltipSeparator + "You are directly paired";
         }
 
         if (showToolTip)
@@ -179,7 +179,7 @@ public class DrawUserPair
         {
             if (Pair != null) _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.ClientPermsForPair, false));
         }
-        UiSharedService.AttachToolTip("Set your Permissions for " + _pair.UserData.AliasOrUID);
+        UiSharedService.AttachToolTip("Set your permissions for " + _pair.UserData.AliasOrUID);
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
@@ -188,7 +188,7 @@ public class DrawUserPair
             // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
             _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairPerms, false));
         }
-        UiSharedService.AttachToolTip("Inspect " + _pair.UserData.AliasOrUID + "'s permissions");
+        UiSharedService.AttachToolTip("View " + _pair.UserData.AliasOrUID + "'s permissions");
 
         return currentRightSide;
     }
