@@ -434,9 +434,19 @@ public partial class MainHub
             var pairMatch = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID);
             if (pairMatch != null) 
             {
+                var interactionType = dto.OpCode switch
+                {
+                    0 => "shocked",
+                    1 => "vibrated",
+                    2 => "beeped",
+                    _ => "unknown"
+                };
+                var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
+
                 if (!pairMatch.OwnPerms.ShockCollarShareCode.IsNullOrEmpty())
                 {
                     Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
+                    Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
                     Mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.ShockCollarShareCode, dto.OpCode, dto.Intensity, dto.Duration));
                     if(dto.OpCode is 0)
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
@@ -444,6 +454,7 @@ public partial class MainHub
                 else if (_clientCallbacks.ShockCodePresent)
                 {
                     Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
+                    Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
                     Mediator.Publish(new PiShockExecuteOperation(_clientCallbacks.GlobalPiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
                     if (dto.OpCode is 0)
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);

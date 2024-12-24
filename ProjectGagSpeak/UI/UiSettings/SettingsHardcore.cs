@@ -16,6 +16,7 @@ using OtterGui.Classes;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using Penumbra.String.Classes;
 using System.Numerics;
 
 namespace GagSpeak.UI;
@@ -79,26 +80,21 @@ public class SettingsHardcore
 
         // on the new line, lets draw out a group, containing the image, and the slot, item, and stain listings.
         var BlindfoldDrawData = _wardrobeHandler.GetBlindfoldDrawData();
-        bool DrawDataChanged = false;
-        using (var gagStorage = ImRaii.Group())
-        {
 
-            // draw out the listing for the slot, item, and stain(s). Also make sure that the bigtext it centered with the displayitem
-            try
+        // go to first column.
+        _uiShared.GagspeakBigText("Blindfold Item");
+        using (ImRaii.Group())
+        {
+            BlindfoldDrawData.GameItem.DrawIcon(_itemStainHandler.IconData, IconSize, BlindfoldDrawData.Slot);
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                BlindfoldDrawData.GameItem.DrawIcon(_itemStainHandler.IconData, IconSize, BlindfoldDrawData.Slot);
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    _logger.LogTrace($"Blindfold changed to {ItemIdVars.NothingItem(BlindfoldDrawData.Slot)} [{ItemIdVars.NothingItem(BlindfoldDrawData.Slot).ItemId}] " +
-                        $"from {BlindfoldDrawData.GameItem} [{BlindfoldDrawData.GameItem.ItemId}]");
-                    BlindfoldDrawData.GameItem = ItemIdVars.NothingItem(BlindfoldDrawData.Slot);
-                    DrawDataChanged = true;
-                }
+                _logger.LogTrace($"Blindfold changed to {ItemIdVars.NothingItem(BlindfoldDrawData.Slot)} [{ItemIdVars.NothingItem(BlindfoldDrawData.Slot).ItemId}] " +
+                    $"from {BlindfoldDrawData.GameItem} [{BlindfoldDrawData.GameItem.ItemId}]");
+                BlindfoldDrawData.GameItem = ItemIdVars.NothingItem(BlindfoldDrawData.Slot);
+                // update the draw data.
+                _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
             }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Failed to draw gag icon.");
-            }
+
             // right beside it, draw a secondary group of 3
             ImGui.SameLine(0, 6);
             using (var group = ImRaii.Group())
@@ -106,28 +102,27 @@ public class SettingsHardcore
                 // display the wardrobe slot for this gag
                 var refValue = Array.IndexOf(EquipSlotExtensions.EqdpSlots.ToArray(), BlindfoldDrawData.Slot);
                 ImGui.SetNextItemWidth(ComboLength);
-                if (ImGui.Combo(' ' + GSLoc.Settings.Hardcore.BlindfoldSlot + "##WardrobeEquipSlot", ref refValue,
-                    EquipSlotExtensions.EqdpSlots.Select(slot => slot.ToName()).ToArray(), EquipSlotExtensions.EqdpSlots.Count))
+                if (ImGui.Combo(' ' + GSLoc.Settings.Hardcore.BlindfoldSlot + "##WardrobeEquipSlot", ref refValue, EquipSlotExtensions.EqdpSlots.Select(slot => slot.ToName()).ToArray(), EquipSlotExtensions.EqdpSlots.Count))
                 {
                     // Update the selected slot when the combo box selection changes
                     BlindfoldDrawData.Slot = EquipSlotExtensions.EqdpSlots[refValue];
                     BlindfoldDrawData.GameItem = ItemIdVars.NothingItem(BlindfoldDrawData.Slot);
-                    DrawDataChanged = true;
+                    // update it.
+                    _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
                 }
 
-                DrawDataChanged = DrawEquip(BlindfoldDrawData, GameItemCombo, StainCombo, ComboLength);
+                // if data changed, update it.
+                if (DrawEquip(BlindfoldDrawData, GameItemCombo, StainCombo, ComboLength))
+                    _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
             }
-
-            // if the data has changed, update it.
-            if (DrawDataChanged)
-            {
-                _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
-            }
-
-            // beside this, draw out a checkbox to set if we should lock 1st person view while blindfolded.
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(ComboLength);
+        }
+        ImGui.SameLine(0,50);
+        using (ImRaii.Group())
+        { 
             var forceLockFirstPerson = _clientConfigs.GagspeakConfig.ForceLockFirstPerson;
+            int blindfoldOpacityPercentage = (int)(_clientConfigs.GagspeakConfig.BlindfoldOpacity * 100);
+
+            // Draw the first person selection.
             if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
             {
                 _clientConfigs.GagspeakConfig.ForceLockFirstPerson = forceLockFirstPerson;
@@ -135,25 +130,53 @@ public class SettingsHardcore
             }
             _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
 
-            ImGui.Separator();
-            _uiShared.GagspeakBigText(GSLoc.Settings.Hardcore.BlindfoldTypeHeader);
-            var selectedBlindfoldType = _clientConfigs.GagspeakConfig.BlindfoldStyle;
-            _uiShared.DrawCombo(GSLoc.Settings.Hardcore.LaceStyle, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
-                (i) => { _clientConfigs.GagspeakConfig.BlindfoldStyle = i; _clientConfigs.Save(); }, selectedBlindfoldType);
-
-            string filePath = _clientConfigs.GagspeakConfig.BlindfoldStyle switch
+            using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
-                BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
-                BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
-                _ => "INVALID_FILE",
-            };
-            var previewImage = _uiShared.GetImageFromDirectoryFile(filePath);
-            if ((previewImage is { } wrap))
-            {
-                ImGui.Image(wrap.ImGuiHandle, new(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y));
+                // draw the lace type selection
+                var selectedBlindfoldType = _clientConfigs.GagspeakConfig.BlindfoldStyle;
+                _uiShared.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
+                (i) =>
+                {
+                    _clientConfigs.GagspeakConfig.BlindfoldStyle = i;
+                    _clientConfigs.Save();
+                    _logger.LogTrace($"Blindfold Style changed to {i}");
+                }, selectedBlindfoldType);
             }
+            _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
+
+            using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
+            {
+                // draw the transparency slider, this displays on the slider a % symbol and translates to a float between 0 and 1 for the opacity.
+                ImGui.SetNextItemWidth(150f);
+                if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
+                {
+                    _clientConfigs.GagspeakConfig.BlindfoldOpacity = blindfoldOpacityPercentage / 100.0f;
+                    _clientConfigs.Save();
+                }
+            }
+            _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
+        }
+        ImGui.Separator();
+        string filePath = _clientConfigs.GagspeakConfig.BlindfoldStyle switch
+        {
+            BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
+            BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
+            _ => "INVALID_FILE",
+        };
+
+        var previewImage = _uiShared.GetImageFromDirectoryFile(filePath);
+        if (previewImage is { } wrap)
+        {
+            // calculate the height of the available region and compare it to the ImGuiHandles Y height, to get how long we should display the X.
+            // we need to do this to scale down the imagesize in the imguihandle to fit within the content region.
+            float scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
+            Vector2 finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
+            // display the image.
+            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.GagspeakConfig.BlindfoldOpacity));
+            UiSharedService.AttachToolTip("Preview of the Blindfold Style");
         }
     }
+
     private void DisplayTextButtons()
     {
         // replace disabled with ForcedStay == true

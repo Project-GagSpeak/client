@@ -24,24 +24,31 @@ public static class UtilsExtensions
     /// <summary> Draw a game icon display (not icon button or anything) </summary>
     public static void DrawIcon(this EquipItem item, TextureService textures, Vector2 size, EquipSlot slot, bool doHover = true)
     {
-        var isEmpty = item.PrimaryId.Id == 0;
-        var (ptr, textureSize, empty) = textures.GetIcon(item, slot);
-        if (empty)
+        try
         {
-            var (bgColor, tint) = isEmpty
-                ? (ImGui.GetColorU32(ImGuiCol.FrameBg), Vector4.One)
-                : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, 5 * ImGuiHelpers.GlobalScale);
-            if (ptr != nint.Zero)
-                ImGui.Image(ptr, size, Vector2.Zero, Vector2.One, tint);
+            var isEmpty = item.PrimaryId.Id == 0;
+            var (ptr, textureSize, empty) = textures.GetIcon(item, slot);
+            if (empty)
+            {
+                var (bgColor, tint) = isEmpty
+                    ? (ImGui.GetColorU32(ImGuiCol.FrameBg), Vector4.One)
+                    : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
+                var pos = ImGui.GetCursorScreenPos();
+                ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, 5 * ImGuiHelpers.GlobalScale);
+                if (ptr != nint.Zero)
+                    ImGui.Image(ptr, size, Vector2.Zero, Vector2.One, tint);
+                else
+                    ImGui.Dummy(size);
+            }
             else
-                ImGui.Dummy(size);
+            {
+                ImGui.Image(ptr, size);
+                if (doHover) ImGuiUtil.HoverIconTooltip(ptr, size, textureSize);
+            }
         }
-        else
+        catch (Exception e)
         {
-            ImGui.Image(ptr, size);
-            if (doHover) ImGuiUtil.HoverIconTooltip(ptr, size, textureSize);
+            StaticLogger.Logger.LogError(e, "Error drawing icon");
         }
     }
 

@@ -221,7 +221,7 @@ public sealed class ActionExecutor
             if (activeSet is not null)
             {
                 _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP.", LoggerType.Restraints);
-                await _appearanceManager.RestraintSwapped(restraintAction.OutputIdentifier);
+                await _appearanceManager.RestraintSwapped(restraintAction.OutputIdentifier, MainHub.UID);
                 return true;
             }
             else

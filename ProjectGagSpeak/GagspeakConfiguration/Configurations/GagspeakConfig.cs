@@ -32,6 +32,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ShowVisibleUsersSeparately { get; set; } = true;
     public bool ShowOfflineUsersSeparately { get; set; } = true;
 
+    public bool OpenMainUiOnStartup { get; set; } = true;
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;
@@ -69,9 +70,10 @@ public class GagspeakConfig : IGagspeakConfiguration
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
-    public bool UsingLegacyControls { get; set; } = GameConfig.UiControl.GetBool("MoveMode");
+    public bool UsingLegacyControls { get; set; } = true; // If on legacy. Assume true.
     public BlindfoldType BlindfoldStyle { get; set; } = BlindfoldType.Sensual; // Blindfold Format
     public bool ForceLockFirstPerson { get; set; } = false; // Force First-Person state while blindfolded.
+    public float BlindfoldOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public TextFolderNode ForcedStayPromptList { get; private set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 }

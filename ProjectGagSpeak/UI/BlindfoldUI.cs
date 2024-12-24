@@ -10,6 +10,7 @@ using GagSpeak.Toybox;
 using GagSpeak.Toybox.Debouncer;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
+using ImGuiScene;
 using System.Numerics;
 using System.Timers;
 
@@ -49,34 +50,19 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         _uiShared = uiShared;
         _pi = pi;
 
-        Flags = ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMouseInputs | ImGuiWindowFlags.NoFocusOnAppearing 
-            | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoDecoration 
-            | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoNavFocus;
+        Flags = ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoNavFocus;
 
         // set isopen to false
         IsOpen = false;
         IsWindowOpen = false;
         // do not respect close hotkey
         RespectCloseHotkey = false;
+        AllowClickthrough = true;
 
         // set the stopwatch to send an elapsed time event after 2 seconds then stop
         _TimerRecorder = new UpdateTimer(2000, ToggleWindow);
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
-
-        Mediator.Subscribe<BlindfoldUiTypeChange>(this, (msg) =>
-        {
-            if (msg.NewType == BlindfoldType.Light)
-            {
-                _clientConfigs.GagspeakConfig.BlindfoldStyle = BlindfoldType.Light;
-                _clientConfigs.Save();
-            }
-            else
-            {
-                _clientConfigs.GagspeakConfig.BlindfoldStyle = BlindfoldType.Sensual;
-                _clientConfigs.Save();
-            }
-        });
 
         Mediator.Subscribe<HardcoreRemoveBlindfoldMessage>(this, (_) => RemoveBlindfoldAndClose());
     }
@@ -154,8 +140,8 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         // start the timer to deactivate the window
         _TimerRecorder.Start();
         AnimationProgress = AnimType.DeactivateWindow;
-        alpha = 1.0f;
-        imageAlpha = 1.0f;
+        alpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
+        imageAlpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
         isShowing = false;
         IsWindowOpen = false;
     }
@@ -190,9 +176,9 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
             {
                 stopwatch.Start();
             }
-            if (stopwatch.ElapsedMilliseconds >= 100)
+            if (stopwatch.ElapsedMilliseconds >= 300)
             {
-                ImGui.SetWindowFocus();
+                BringToFront();
                 stopwatch.Reset();
             }
         }
@@ -200,6 +186,9 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         {
             stopwatch.Reset();
         }
+
+        // ensure we know our max allowed opacity
+        var maxAlpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
 
         if (AnimationProgress != AnimType.None)
         {
@@ -213,7 +202,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 midY = 0.1f * ImGui.GetIO().DisplaySize.Y;
                 if (progress < 0.7f)
                 {
-                    alpha = (1 - (float)Math.Pow(1 - (progress / 0.7f), 1.5)) / 0.7f;
+                    alpha = maxAlpha * (1 - (float)Math.Pow(1 - (progress / 0.7f), 1.5)) / 0.7f;
                     // First 80% of the animation: ease out quint from startY to midY
                     easedProgress = 1 - (float)Math.Pow(1 - (progress / 0.7f), 1.5);
                     position.Y = startY + (midY - startY) * easedProgress;
@@ -229,7 +218,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 {
                     AnimationProgress = AnimType.None;
                 }
-                imageAlpha = Math.Min(alpha, 1.0f); // Ensure the image stays at full opacity once it reaches it
+                imageAlpha = Math.Min(alpha, maxAlpha); // Ensure the image stays at full opacity once it reaches it
             }
             // or if its the deactionation one
             else if (AnimationProgress == AnimType.DeactivateWindow)
@@ -249,7 +238,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 }
                 else
                 {
-                    alpha = (progress - 0.3f) / 0.7f;
+                    alpha = maxAlpha * (progress - 0.3f) / 0.7f;
                     // Last 70% of the animation: ease out quint from midY to startY
                     easedProgress = (float)Math.Pow((progress - 0.3f) / 0.7f, 1.5);
                     position.Y = midY + (startY - midY) * easedProgress;
@@ -259,26 +248,23 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 {
                     AnimationProgress = AnimType.None;
                 }
-                imageAlpha = 1 - (alpha == 1 ? 0 : alpha); // Ensure the image stays at full opacity once it reaches it
+                imageAlpha = maxAlpha - (alpha == maxAlpha ? 0 : alpha); // Ensure the image stays at full opacity once it reaches it
             }
         }
         else
         {
             position.Y = isShowing ? 0 : startY;
+            imageAlpha = isShowing ? maxAlpha : 0;
         }
         // Set the window position
         ImGui.SetWindowPos(position);
         // get the window size
         var windowSize = ImGui.GetWindowSize();
         // Draw the image with the updated alpha value
-        if (_clientConfigs.GagspeakConfig.BlindfoldStyle == BlindfoldType.Light)
+        if (_clientConfigs.GagspeakConfig.BlindfoldStyle is BlindfoldType.Light)
         {
             var imageLight = _uiShared.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Light.png");
-            if (!(imageLight is { } wrapLight))
-            {
-                _logger.LogWarning("Failed to render image!");
-            }
-            else
+            if (imageLight is { } wrapLight)
             {
                 ImGui.Image(wrapLight!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
             }
@@ -286,11 +272,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         else
         {
             var imageSensual = _uiShared.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Sensual.png");
-            if (!(imageSensual is { } wrapSensual))
-            {
-                _logger.LogWarning("Failed to render image!");
-            }
-            else
+            if (imageSensual is { } wrapSensual)
             {
                 ImGui.Image(wrapSensual!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
             }

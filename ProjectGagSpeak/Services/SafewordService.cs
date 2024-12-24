@@ -1,3 +1,4 @@
+using Dalamud.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
@@ -41,9 +42,9 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
         _glamourFastEvent = glamourFastUpdate;
 
         // set the chat log up.
-        Mediator.Subscribe<SafewordUsedMessage>(pairManager, (msg) => SafewordUsed());
+        Mediator.Subscribe<SafewordUsedMessage>(pairManager, (msg) => SafewordUsed(msg.UID.IsNullOrWhitespace() ? string.Empty : msg.UID));
 
-        Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, (msg) => HardcoreSafewordUsed());
+        Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, (msg) => HardcoreSafewordUsed(msg.UID.IsNullOrWhitespace() ? string.Empty : msg.UID));
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (msg) => CheckCooldown());
     }
@@ -55,7 +56,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     public bool SafewordIsUsed => _playerManager.GlobalPerms == null ? false : _playerManager.GlobalPerms.SafewordUsed;
     public bool HardcoreSafewordIsUsed => _playerManager.GlobalPerms == null ? false : _playerManager.GlobalPerms.HardcoreSafewordUsed;
 
-    private async void SafewordUsed()
+    private async void SafewordUsed(string isolatedUID)
     {
         try
         {
@@ -105,21 +106,38 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             Logger.LogInformation("Everything Disabled.", LoggerType.Safeword);
 
             // Revert any pairs we have the "InHardcoreMode" permission set.
-            foreach (var pair in _pairManager.DirectPairs)
+            // Only do it for the isolated UID if it is not empty.
+            if (!isolatedUID.IsNullOrWhitespace())
             {
-                if (pair.UserPair.OwnPairPerms.InHardcore)
+                // do it for the single pair we want to.
+                var isolatedPair = _pairManager.DirectPairs.FirstOrDefault(user => string.Equals(user.UserData.UID, isolatedUID, StringComparison.OrdinalIgnoreCase));
+                if (isolatedPair != null && isolatedPair.UserPair.OwnPairPerms.InHardcore)
                 {
-                    // put us out of hardcore, and disable any active hardcore stuff.
-                    pair.OwnPerms.InHardcore = false;
+                    // put us out of hardcore, and disable any active
+                    isolatedPair.OwnPerms.InHardcore = false;
                     // send the updates to the server.
                     if (MainHub.ServerStatus is ServerState.Connected)
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(pair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
+                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(isolatedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
+                }
+            }
+            else
+            {
+                // do it for all the pairs.
+                foreach (var pair in _pairManager.DirectPairs)
+                {
+                    if (pair.UserPair.OwnPairPerms.InHardcore)
+                    {
+                        // put us out of hardcore, and disable any active hardcore stuff.
+                        pair.OwnPerms.InHardcore = false;
+                        // send the updates to the server.
+                        if (MainHub.ServerStatus is ServerState.Connected)
+                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(pair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
+                    }
                 }
             }
 
             // reverting character.
             IpcFastUpdates.InvokeGlamourer(GlamourUpdateType.Safeword);
-
             Logger.LogInformation("Character reverted.", LoggerType.Safeword);
         }
         catch (Exception ex)
@@ -129,7 +147,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
 
     }
 
-    private void HardcoreSafewordUsed()
+    private void HardcoreSafewordUsed(string isolatedUID)
     {
         if (HardcoreSafewordIsUsed)
         {
@@ -162,24 +180,47 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
         }
 
         // for each pair in our direct pairs, we should update any and all unique pair permissions to be set regarding Hardcore Status.
-        foreach (var pair in _pairManager.DirectPairs)
+        // Only do it for the isolated UID if it is not empty.
+        if (!isolatedUID.IsNullOrWhitespace())
         {
-            if (pair.UserPair.OwnPairPerms.InHardcore)
+            // do it for the single pair we want to.
+            var isolatedPair = _pairManager.DirectPairs.FirstOrDefault(user => string.Equals(user.UserData.UID, isolatedUID, StringComparison.OrdinalIgnoreCase));
+            if (isolatedPair != null && isolatedPair.UserPair.OwnPairPerms.InHardcore)
             {
-                // put us out of hardcore, and disable any active hardcore stuff.
-                pair.OwnPerms.InHardcore = false;
-                pair.OwnPerms.AllowForcedFollow = false;
-                pair.OwnPerms.AllowForcedSit = false;
-                pair.OwnPerms.AllowForcedEmote = false;
-                pair.OwnPerms.AllowForcedToStay = false;
-                pair.OwnPerms.AllowBlindfold = false;
-                pair.OwnPerms.AllowHidingChatBoxes = false;
-                pair.OwnPerms.AllowHidingChatInput = false;
-                pair.OwnPerms.AllowChatInputBlocking = false;
+                // put us out of hardcore, and disable any active
+                isolatedPair.OwnPerms.InHardcore = false;
+                isolatedPair.OwnPerms.AllowForcedFollow = false;
+                isolatedPair.OwnPerms.AllowForcedSit = false;
+                isolatedPair.OwnPerms.AllowForcedEmote = false;
+                isolatedPair.OwnPerms.AllowForcedToStay = false;
+                isolatedPair.OwnPerms.AllowBlindfold = false;
+                isolatedPair.OwnPerms.AllowHidingChatBoxes = false;
+                isolatedPair.OwnPerms.AllowHidingChatInput = false;
+                isolatedPair.OwnPerms.AllowChatInputBlocking = false;
                 // send the updates to the server.
                 if (MainHub.ServerStatus is ServerState.Connected)
+                    _ = _apiHubMain.UserPushAllUniquePerms(new(isolatedPair.UserData, MainHub.PlayerUserData, isolatedPair.UserPair.OwnPairPerms, isolatedPair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+            }
+        }
+        else
+        {
+            foreach (var pair in _pairManager.DirectPairs)
+            {
+                if (pair.UserPair.OwnPairPerms.InHardcore)
                 {
-                    _ = _apiHubMain.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+                    // put us out of hardcore, and disable any active hardcore stuff.
+                    pair.OwnPerms.InHardcore = false;
+                    pair.OwnPerms.AllowForcedFollow = false;
+                    pair.OwnPerms.AllowForcedSit = false;
+                    pair.OwnPerms.AllowForcedEmote = false;
+                    pair.OwnPerms.AllowForcedToStay = false;
+                    pair.OwnPerms.AllowBlindfold = false;
+                    pair.OwnPerms.AllowHidingChatBoxes = false;
+                    pair.OwnPerms.AllowHidingChatInput = false;
+                    pair.OwnPerms.AllowChatInputBlocking = false;
+                    // send the updates to the server.
+                    if (MainHub.ServerStatus is ServerState.Connected)
+                        _ = _apiHubMain.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
                 }
             }
         }

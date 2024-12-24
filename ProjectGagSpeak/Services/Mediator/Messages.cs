@@ -160,13 +160,12 @@ public record ReportKinkPlateMessage(UserData KinksterToReport) : MessageBase; /
 public record VerificationPopupMessage(VerificationDto VerificationCode) : MessageBase; // indicating that we have received a verification code popup.
 public record PatternSavePromptMessage(List<byte> StoredData, TimeSpan Duration) : MessageBase; // prompts the popup and passes in savedata
 public record ClosePatternSavePromptMessage : MessageBase; // closes the pattern save prompt.
-public record BlindfoldUiTypeChange(BlindfoldType NewType) : MessageBase; // for changing blindfold type.
 
 /* -------------------- DISCOVER TAB RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
 public record PairChatMessage(PairChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
 
-public record SafewordUsedMessage : MessageBase; // for when the safeword is used.
-public record SafewordHardcoreUsedMessage : MessageBase; // for when the hardcore safeword is used.
+public record SafewordUsedMessage(string UID = "") : MessageBase; // for when the safeword is used.
+public record SafewordHardcoreUsedMessage(string UID = "") : MessageBase; // for when the hardcore safeword is used.
 
 #pragma warning restore S2094, MA0048

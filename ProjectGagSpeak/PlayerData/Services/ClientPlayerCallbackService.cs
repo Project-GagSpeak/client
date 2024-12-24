@@ -292,12 +292,9 @@ public class ClientCallbackService
                 case WardrobeUpdateType.RestraintApplied:
                     // Check to see if we need to reapply.
                     var activeSet = _clientConfigs.GetActiveSet();
-                    if (activeSet is not null)
+                    if (activeSet is not null && callbackSet is not null)
                     {
-                        // grab the new set id
-                        var newSetId = _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets[callbackSetIdx].RestraintId;
-                        // reapply.
-                        await _appearanceManager.RestraintSwapped(newSetId, isSelfApplied: false, publish: false);
+                        await _appearanceManager.RestraintSwapped(callbackSet.RestraintId, callbackDto.User.UID, publish: false);
                         _logger.LogDebug($"{callbackDto.User.UID} has swapped your [{activeSet.Name}] restraint set to another set!", LoggerType.Callbacks);
                         // Log the Interaction Event
                         _mediator.Publish(new EventMessage(new(matchedPair.GetNickAliasOrUid(), matchedPair.UserData.UID, InteractionType.SwappedRestraint, "Swapped Set to: " + _clientConfigs.GetSetNameByGuid(data.ActiveSetId))));

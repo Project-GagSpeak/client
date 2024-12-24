@@ -365,7 +365,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         });
     }
 
-    public async Task RestraintSwapped(Guid newSetId, bool isSelfApplied = true, bool publish = true)
+    public async Task RestraintSwapped(Guid newSetId, string setAssignerUid, bool publish = true)
     {
         Logger.LogTrace("SET-SWAPPED Executed. Triggering DISABLE-SET, then ENABLE-SET", LoggerType.AppearanceState);
 

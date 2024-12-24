@@ -1,7 +1,9 @@
 using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using GagSpeak.GagspeakConfiguration;
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Controllers;
@@ -21,6 +23,7 @@ public sealed class CommandManager : IDisposable
     private const string SafewordHardcoreCommand = "/safewordhardcore";
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
+    private readonly PairManager _pairManager;
     private readonly GagspeakConfigService _mainConfig;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly ChatBoxMessage _chatMessages;
@@ -29,12 +32,13 @@ public sealed class CommandManager : IDisposable
     private readonly IClientState _clientState;
     private readonly ICommandManager _commands;
 
-    public CommandManager(GagspeakMediator mediator,
+    public CommandManager(GagspeakMediator mediator, PairManager pairManager,
         GagspeakConfigService mainConfig, ServerConfigurationManager serverConfigs,
         ChatBoxMessage chatMessages, DeathRollService deathRolls, 
         IChatGui chat, IClientState clientState, ICommandManager commandManager)
     {
         _mediator = mediator;
+        _pairManager = pairManager;
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _chatMessages = chatMessages;
@@ -102,30 +106,62 @@ public sealed class CommandManager : IDisposable
         }
     }
 
-    private void OnSafeword(string command, string argument)
+    private void OnSafeword(string command, string args)
     {
+        var splitArgs = args.Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
+        // splitArg[0] is the safeword
+        // splitArg[1] is the UID (optional) to restrict the clear for.
+
         // if the safeword was not provided, ask them to provide it.
-        if (string.IsNullOrWhiteSpace(argument))
-        { // If no safeword is provided
-            _chat.Print("Please provide a safeword. Usage: /gagspeak safeword [your_safeword]");
+        // if the safeword was not provided, ask them to provide it.
+        if (splitArgs.Length == 0 || string.IsNullOrWhiteSpace(splitArgs[0]))
+        { 
+            // If no safeword is provided
+            _chat.Print("Please provide a safeword. Usage: /gagspeak safeword [your_safeword] [optional_UID]");
             return;
         }
 
         // If safeword matches, invoke the safeword mediator
-        if (string.Equals(_mainConfig.Current.Safeword, argument, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_mainConfig.Current.Safeword, splitArgs[0], StringComparison.OrdinalIgnoreCase))
         {
-            _mediator.Publish(new SafewordUsedMessage());
+            if (splitArgs.Length > 1)
+            {
+                var uid = splitArgs[1];
+                var validUserData = _pairManager.GetUserDataFromUID(uid);
+                // if the UID is valid, use it.
+                if (validUserData is not null) _mediator.Publish(new SafewordUsedMessage(uid));
+                else _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+            }
+            else
+            {
+                // publish generic safeword used message.
+                _mediator.Publish(new SafewordUsedMessage());
+            }
         }
         else
         {
-            _chat.Print(new SeStringBuilder().AddYellow("Invalid Safeword Provided. Your Safeword is not '"+argument+"'").BuiltString);
+            _chat.Print(new SeStringBuilder().AddYellow("Invalid Safeword Provided.").BuiltString);
         }
     }
 
-    private void OnSafewordHardcore(string command, string argument)
+    private void OnSafewordHardcore(string command, string args)
     {
-        _chat.Print("Triggered Hardcore Safeword");
-        _mediator.Publish(new SafewordHardcoreUsedMessage());
+        var splitArgs = args.ToUpperInvariant().Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+        // if there is a first argument given, see if it matches one of our pairs.
+        if (splitArgs.Length > 0 && !splitArgs[0].IsNullOrWhitespace())
+        {
+            var uid = splitArgs[0];
+            var validUserData = _pairManager.GetUserDataFromUID(uid);
+            // if the UID is valid, use it.
+            if (validUserData is not null) _mediator.Publish(new SafewordHardcoreUsedMessage(uid));
+            else _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+        }
+        else
+        {
+            _chat.Print("Triggered Hardcore Safeword");
+            _mediator.Publish(new SafewordHardcoreUsedMessage());
+        }
     }
 
     private void OnDeathRollShortcut(string command, string args)

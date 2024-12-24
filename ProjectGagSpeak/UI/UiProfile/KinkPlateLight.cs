@@ -20,6 +20,7 @@ using GagSpeak.Utils;
 using Dalamud.Interface.Utility.Raii;
 using System.Threading;
 using GagSpeak.WebAPI;
+using Dalamud.Interface.Utility;
 
 namespace GagSpeak.UI.Profile;
 
@@ -54,23 +55,23 @@ public class KinkPlateLight
     public Vector2 RectMin { get; set; } = Vector2.Zero;
     public Vector2 RectMax { get; set; } = Vector2.Zero;
     private Vector2 PlateSize => RectMax - RectMin;
-    public Vector2 CloseButtonPos => RectMin + Vector2.One * 20f;
-    public Vector2 CloseButtonSize => Vector2.One * 24f;
-    public Vector2 ReportButtonPos => RectMin + new Vector2(17, 210);
-    private Vector2 ProfilePictureBorderPos => RectMin + Vector2.One * (PlateSize.X - ProfilePictureBorderSize.X) / 2;
-    private Vector2 ProfilePictureBorderSize => Vector2.One * 226f;
-    private Vector2 ProfilePicturePos => RectMin + Vector2.One * (6 + (PlateSize.X - ProfilePictureBorderSize.X) / 2);
-    public Vector2 ProfilePictureSize => Vector2.One * 214f;
-    private Vector2 SupporterIconBorderPos => RectMin + new Vector2(188, 16);
-    private Vector2 SupporterIconBorderSize => Vector2.One * 52f;
-    private Vector2 SupporterIconPos => RectMin + new Vector2(190, 18);
-    private Vector2 SupporterIconSize => Vector2.One * 48f;
-    private Vector2 DescriptionBorderPos => RectMin + new Vector2(12, 350);
-    private Vector2 DescriptionBorderSize => new Vector2(232, 150);
-    private Vector2 TitleLineStartPos => RectMin + new Vector2(12, 317);
-    private Vector2 TitleLineSize => new Vector2(232, 5);
-    private Vector2 StatsPos => RectMin + new Vector2(0, 326);
-    private Vector2 StatIconSize => Vector2.One * 20f;
+    public Vector2 CloseButtonPos => RectMin + ImGuiHelpers.ScaledVector2(21.25f);
+    public Vector2 CloseButtonSize => ImGuiHelpers.ScaledVector2(27f);
+    public Vector2 ReportButtonPos => RectMin + ImGuiHelpers.ScaledVector2(18.0625f, 223.125f);
+    private Vector2 ProfilePictureBorderPos => RectMin + new Vector2(PlateSize.X - ProfilePictureBorderSize.X) / 2;
+    private Vector2 ProfilePictureBorderSize => ImGuiHelpers.ScaledVector2(254.25f);
+    private Vector2 ProfilePicturePos => RectMin + new Vector2(6.75f * ImGuiHelpers.GlobalScale + (PlateSize.X - ProfilePictureBorderSize.X) / 2);
+    public Vector2 ProfilePictureSize => ImGuiHelpers.ScaledVector2(240.75f);
+    private Vector2 SupporterIconBorderPos => RectMin + ImGuiHelpers.ScaledVector2(211.5f, 18f);
+    private Vector2 SupporterIconBorderSize => ImGuiHelpers.ScaledVector2(58.5f);
+    private Vector2 SupporterIconPos => RectMin + ImGuiHelpers.ScaledVector2(213.75f, 20.25f);
+    private Vector2 SupporterIconSize => ImGuiHelpers.ScaledVector2(54f);
+    private Vector2 DescriptionBorderPos => RectMin + ImGuiHelpers.ScaledVector2(13.5f, 385f);
+    private Vector2 DescriptionBorderSize => ImGuiHelpers.ScaledVector2(261f, 177f);
+    private Vector2 TitleLineStartPos => RectMin + ImGuiHelpers.ScaledVector2(13.5f, 345f);
+    private Vector2 TitleLineSize => ImGuiHelpers.ScaledVector2(261f, 5.625f);
+    private Vector2 StatsPos => RectMin + ImGuiHelpers.ScaledVector2(0, 358f);
+    private Vector2 StatIconSize => ImGuiHelpers.ScaledVector2(22.5f);
     private static Vector4 Gold = new Vector4(1f, 0.851f, 0.299f, 1f);
 
     public bool DrawKinkPlateLight(ImDrawListPtr drawList, KinkPlate profile, string displayName, UserData userData, bool isPair, bool hoveringReport)
@@ -183,7 +184,7 @@ public class KinkPlateLight
             KinkPlateUI.AddImageRounded(drawList, descOverlay, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // draw out the description text here.
-        ImGui.SetCursorScreenPos(DescriptionBorderPos + new Vector2(12f, 8f));
+        ImGui.SetCursorScreenPos(DescriptionBorderPos + ImGuiHelpers.ScaledVector2(12f, 8f));
         if (userData.UID == MainHub.UID)
         {
             // The user is us, and we are under review, show our picture.

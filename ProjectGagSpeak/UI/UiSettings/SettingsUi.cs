@@ -665,6 +665,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Separator();
         _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderUiPrefs);
 
+        var showMainUiOnStart = _configService.Current.OpenMainUiOnStartup;
+
         var enableDtrEntry = _configService.Current.EnableDtrEntry;
         var dtrPrivacyRadar = _configService.Current.ShowPrivacyRadar;
         var dtrActionNotifs = _configService.Current.ShowActionNotifs;
@@ -677,6 +679,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var showProfiles = _configService.Current.ShowProfiles;
         var profileDelay = _configService.Current.ProfileDelay;
         var showContextMenus = _configService.Current.ShowContextMenus;
+
+        if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowMainUiOnStartLabel, ref showMainUiOnStart))
+        {
+            _configService.Current.OpenMainUiOnStartup = showMainUiOnStart;
+            _configService.Save();
+        }
+        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowMainUiOnStartTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.EnableDtrLabel, ref enableDtrEntry))
         {

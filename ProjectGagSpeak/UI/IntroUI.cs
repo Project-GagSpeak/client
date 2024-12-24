@@ -85,6 +85,8 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
+        // 
+
         // if the user has not accepted the agreement and they have not read the first page,
         // Then show the first page (everything in this if statement)
         if (!_configService.Current.AcknowledgementUnderstood && !_readFirstPage)

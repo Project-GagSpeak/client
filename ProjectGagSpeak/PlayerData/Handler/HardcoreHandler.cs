@@ -46,6 +46,9 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         _emoteMonitor = emoteMonitor;
         _targetManager = targetManager;
 
+        // Store if we are on legacy mode or not during initialization.
+        _clientConfigs.GagspeakConfig.UsingLegacyControls = GameConfig.UiControl.GetBool("MoveMode");
+
         Mediator.Subscribe<HardcoreActionMessage>(this, (msg) =>
         {
             switch (msg.type)
@@ -163,6 +166,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 _ => (uint)MovementMode.Standard
             };
             GameConfig.UiControl.Set("MoveMode", mode);
+            Logger.LogDebug("Set move mode to " + (MovementMode)mode + " due to forced follow state change");
         }
     }
 
@@ -252,20 +256,26 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     {
         Logger.LogDebug(newState is NewState.Enabled
             ? "Enabled forced blindfold for pair." : "Disabled forced blindfold for pair.", LoggerType.HardcoreMovement);
-        if (newState is NewState.Enabled && !BlindfoldUI.IsWindowOpen)
+        if (newState is NewState.Enabled)
         {
-            await _appearanceHandler.RecalcAndReload(false); // Fire and Forget
-            await HandleBlindfoldLogic(newState);
+            // apply blindfold.
+            await _appearanceHandler.RecalcAndReload(false);
+
+            // Handle window.
+            if(!BlindfoldUI.IsWindowOpen) await HandleBlindfoldLogic(newState);
+            
+            // Early return.
             return;
         }
 
-        if (newState is NewState.Disabled && BlindfoldUI.IsWindowOpen)
+        if (newState is NewState.Disabled)
         {
             // set it on client before getting change back from server.
             _playerData.GlobalPerms!.ForcedBlindfold = string.Empty; // Help to prevent getting stuff when offline.
-            await _appearanceHandler.RecalcAndReload(true); // Fire and Forget
-            await HandleBlindfoldLogic(newState);
-            return;
+            await _appearanceHandler.RecalcAndReload(true);
+
+            // Handle window.
+            if (BlindfoldUI.IsWindowOpen) await HandleBlindfoldLogic(newState);
         }
     }
 
@@ -309,6 +319,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             _playerData.GlobalPerms.ChatInputBlocked = string.Empty;
         }
     }
+
+    public bool IsBlindfoldWindowActive => BlindfoldUI.IsWindowOpen;
 
     public async Task HandleBlindfoldLogic(NewState newState)
     {

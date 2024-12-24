@@ -752,8 +752,11 @@ namespace GagSpeak.Localization
         public readonly string BlindfoldFirstPerson = Loc.Localize("Hardcore_BlindfoldFirstPerson", "Force First-Person Perspective");
         public readonly string BlindfoldFirstPersonTT = Loc.Localize("Hardcore_BlindfoldFirstPersonTT", "Forces you into first-person perspective when blindfolded.");
 
-        public readonly string BlindfoldTypeHeader = Loc.Localize("Hardcore_BlindfoldTypeHeader", "Blindfold Type");
-        public readonly string LaceStyle = Loc.Localize("Hardcore_LaceStyle", "Lace Style");
+        public readonly string BlindfoldType = Loc.Localize("Hardcore_BlindfoldType", "Lace Style");
+        public readonly string BlindfoldTypeTT = Loc.Localize("Hardcore_BlindfoldTypeTT", "Select the type of blindfold you wish to use.");
+
+        public readonly string BlindfoldOpacity = Loc.Localize("Hardcore_BlindfoldOpacity", "Opacity");
+        public readonly string BlindfoldOpacityTT = Loc.Localize("Hardcore_BlindfoldOpacityTT", "Set the opacity of the blindfold to account for variance in monitor displays.");
 
         public readonly string AddNodeLastSeenTT = Loc.Localize("Hardcore_AddNodeLastSeenTT", "Add last interacted node to list." +
             "--SEP--Note: Auto-selecting yes is not an allowed option");
@@ -817,6 +820,9 @@ namespace GagSpeak.Localization
 
         // UI Preferences Section
         public readonly string HeaderUiPrefs = Loc.Localize("Preferences_HeaderUiPrefs", "User Interface");
+
+        public readonly string ShowMainUiOnStartLabel = Loc.Localize("Preferences_ShowMainUiOnStartLabel", "Open the Main Window UI upon plugin startup.");
+        public readonly string ShowMainUiOnStartTT = Loc.Localize("Preferences_ShowMainUiOnStartTT", "Determines if the Main UI will open upon plugin startup or not.");
 
         public readonly string EnableDtrLabel = Loc.Localize("Preferences_EnableDtrEntryLabel", "Display status and visible pair count in Server Info Bar");
         public readonly string EnableDtrTT = Loc.Localize("Preferences_EnableDtrEntryTT", "Adds GagSpeak connection status and visible pair count to the Server Info Bar.");

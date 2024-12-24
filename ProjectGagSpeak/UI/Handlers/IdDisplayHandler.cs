@@ -71,7 +71,7 @@ public class IdDisplayHandler
                 if (hovered && displayNameTT)
                 {
                     ImGui.SetTooltip("Left click to switch between UID display and nick" + Environment.NewLine
-                        + "Right click to change nick for " + pair.UserData.AliasOrUID + Environment.NewLine
+                        + "Right click to change nick for " + pair.UserData.UID + Environment.NewLine
                         + "Middle Mouse Button to open their profile in a separate window");
                 }
                 else

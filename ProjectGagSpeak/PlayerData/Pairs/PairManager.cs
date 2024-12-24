@@ -172,7 +172,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     public List<string> GetOnlineUserUids() => _allClientPairs.Select(p => p.Key.UID).ToList();
 
     // Fetch a user's UserData off of their UID
-    public UserData? GetUserDataFromUID(string uid) => _allClientPairs.Keys.FirstOrDefault(p => p.UID == uid);
+    public UserData? GetUserDataFromUID(string uid) => _allClientPairs.Keys.FirstOrDefault(p => string.Equals(p.UID, uid, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Useful for cases where you have the UID but you dont have the pair object and need a way to get the nickname/alias without iterating 

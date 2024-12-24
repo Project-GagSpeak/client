@@ -1,4 +1,5 @@
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -30,8 +31,9 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         _uiShared = uiShared;
 
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar;
-        Size = new(256, 512);
+        Size = new(288, 576);
         IsOpen = true;
+        ForceMainWindow = true;
 
         _showFullUID = _pairManager.DirectPairs.Any(x => x.UserData.UID == pairUserData.UID) || pairUserData.UID == MainHub.UID;
         UserDataToDisplay = pairUserData;
@@ -46,7 +48,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         if (!ThemePushed)
         {
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f * ImGuiHelpers.GlobalScale);
 
             ThemePushed = true;
         }
@@ -97,8 +99,8 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         var closeButtonColor = HoveringCloseButton ? ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)) : ImGui.GetColorU32(ImGuiColors.ParsedPink);
 
-        drawList.AddLine(btnPos, btnPos + btnSize, closeButtonColor, 3);
-        drawList.AddLine(new Vector2(btnPos.X + btnSize.X, btnPos.Y), new Vector2(btnPos.X, btnPos.Y + btnSize.Y), closeButtonColor, 3);
+        drawList.AddLine(btnPos, btnPos + btnSize, closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
+        drawList.AddLine(new Vector2(btnPos.X + btnSize.X, btnPos.Y), new Vector2(btnPos.X, btnPos.Y + btnSize.Y), closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
 
         ImGui.SetCursorScreenPos(btnPos);
         if (ImGui.InvisibleButton($"CloseButton##KinkPlateClose" + displayName, btnSize))

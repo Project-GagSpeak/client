@@ -55,12 +55,12 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         }
 
         var position = _uiShared.LastMainUIWindowPosition;
-        position.X -= 256;
+        position.X -= 288;
         ImGui.SetNextWindowPos(position);
 
         Flags |= ImGuiWindowFlags.NoMove;
 
-        var size = new Vector2(256, 512);
+        var size = new Vector2(288, 576);
 
         ImGui.SetNextWindowSize(size);
     }

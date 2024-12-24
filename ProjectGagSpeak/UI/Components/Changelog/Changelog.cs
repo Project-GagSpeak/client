@@ -19,6 +19,20 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 1, 1)
+            .RegisterFeature("When using /safeword or /safewordhardcore, you can provide a UID at the end of the command to isolate the revert function to a single pair.")
+            .RegisterFeature("You can now adjust the opacity of the blindfold overlay.")
+            .RegisterQol("You can now adjust the opacity of the blindfold overlay.")
+            .RegisterQol("You can now click through the blindfold window.")
+            .RegisterQol("Privacy DTR bar no longer shows characters that are not controllable players (no more examine actor ghosts).")
+            .RegisterQol("Kinkplates now abide by dalamuds global scaling tool.")
+            .RegisterQol("Kinkplates have had their width expanded to account for longer titles, and the height expanded to account for the overflow line in the description.")
+            .RegisterQol("Kinkplate profile pictures are now slightly larger in light kinkplates.")
+            .RegisterQol("Sends event messages on PiShock instructions send to you from others.")
+            .RegisterQol("HOPEFULLY fix the blindfold delay?")
+            .RegisterBugfix("Fixed Devotional locks breaking blindfolds.")
+            .RegisterBugfix("Fixed movement always resetting to standard upon disabling the plugin if you had legacy prior.")
+            .RegisterBugfix("made minor bug fixes to resolve over 30+ reported other minor bugs.");
         VersionEntry(1, 1, 1, 0)
             .RegisterMain("Authentication issues should be almost if not completely resolved now... (I pray and hope so) Safe to say more may spawn but should be easier to patch.")
             .RegisterFeature("Prevent duplicate keys from characters.")
