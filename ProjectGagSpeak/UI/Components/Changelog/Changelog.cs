@@ -19,6 +19,9 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 1, 2)
+            .RegisterFeature("Quick HotFix to ensure that duration based achievements give a leeway gap for the achievement to trigger a success.")
+            .RegisterFeature("Working on deducing a perminant fix to the achievment bug is still in progress but wanted to get this out ASAP.");
         VersionEntry(1, 1, 1, 1)
             .RegisterFeature("When using /safeword or /safewordhardcore, you can provide a UID at the end of the command to isolate the revert function to a single pair.")
             .RegisterFeature("You can now adjust the opacity of the blindfold overlay.")

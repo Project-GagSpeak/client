@@ -42,7 +42,7 @@ public class TimedProgressAchievement : AchievementBase
         UnlocksEventManager.AchievementLogger.LogTrace($"Checking Timer for {Title} to update our time restricted progress.", LoggerType.AchievementInfo);
 
         // Clear out any timestamps that are older than the time to complete.
-        ProgressTimestamps.RemoveAll(x => DateTime.UtcNow - x >= TimeToComplete);
+        ProgressTimestamps.RemoveAll(x => ((DateTime.UtcNow - x) + TimeSpan.FromSeconds(10)) >= TimeToComplete);
         // Add in the range that we should.
         ProgressTimestamps.AddRange(Enumerable.Repeat(DateTime.UtcNow, amount));
         // check for completion after incrementing progress

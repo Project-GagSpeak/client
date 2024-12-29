@@ -248,7 +248,7 @@ public class UserPairListHandler
         // the alphabetical sort function of the pairs.
         string? AlphabeticalSort(Pair u)
             => !string.IsNullOrEmpty(u.PlayerName)
-                    ? _configService.Current.PreferNicknamesOverNames ? u.GetNickname() : u.PlayerName
+                    ? (_configService.Current.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
                     : u.GetNickname() ?? u.UserData.AliasOrUID;
 
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)

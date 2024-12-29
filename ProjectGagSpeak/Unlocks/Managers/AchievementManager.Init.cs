@@ -129,7 +129,7 @@ public partial class AchievementManager
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourBondageMaid, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day locked up", "Spent");
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberMaid, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.TrainedBondageSlave, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberSlut, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
+        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
 
         SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.KinkyExplorer, () => _clientConfigs.GagspeakConfig.CursedDungeonLoot, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Runs Started");

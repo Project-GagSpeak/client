@@ -119,8 +119,12 @@ public class DurationAchievement : AchievementBase
         {
             // if the item is no longer present, we should first
             // calculate the the current datetime, subtract from time added. and see if it passes the milestone duration.
+
+            // Add some wavier duration to ensure timers set for the same time as the achievment dont end up a second off.
+            var milestoneProgressReached = (DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10);
+
             // if it does, we should mark the achievement as completed.
-            if (DateTime.UtcNow - trackedItem.TimeAdded >= MilestoneDuration && uidToScan != MainHub.UID)
+            if (milestoneProgressReached >= MilestoneDuration && uidToScan != MainHub.UID)
             {
                 UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. "
                     + "Marking as finished!", LoggerType.AchievementInfo);
@@ -171,7 +175,8 @@ public class DurationAchievement : AchievementBase
             return;
 
         // if any of the active items exceed the required duration, mark the achievement as completed
-        if (ActiveItems.Any(x => DateTime.UtcNow - x.TimeAdded >= MilestoneDuration))
+        // Add some wavier duration to ensure timers set for the same time as the achievment dont end up a second off.
+        if (ActiveItems.Any(x => ((DateTime.UtcNow - x.TimeAdded) + TimeSpan.FromSeconds(10)) >= MilestoneDuration))
         {
             // Mark the achievement as completed
             UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. "

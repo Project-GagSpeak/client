@@ -81,7 +81,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
 
         if (RequiredCondition())
         {
-            if (StartPoint != DateTime.MinValue && DateTime.UtcNow - StartPoint >= MilestoneDuration)
+            if (StartPoint != DateTime.MinValue && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
                 CompleteTask();
         }
         else

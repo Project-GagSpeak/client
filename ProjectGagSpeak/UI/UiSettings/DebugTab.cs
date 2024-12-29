@@ -196,7 +196,9 @@ public class DebugTab
         using var pairData = ImRaii.TreeNode("Pair Data Listings");
         if (!pairData) return;
 
-        foreach (var pair in _pairManager.DirectPairs)
+        var orderedPairs = _pairManager.DirectPairs.OrderBy(u => u.GetNickname() ?? u.UserData.AliasOrUID).ToList();
+
+        foreach (var pair in orderedPairs)
         {
             using var listing = ImRaii.TreeNode(pair.GetNickAliasOrUid() + "'s Pair Info");
             if (!listing) continue;
@@ -412,39 +414,41 @@ public class DebugTab
         using var nodeMain = ImRaii.TreeNode("Appearance Data");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-appearance" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
-        ImGui.TableSetupColumn("##EmptyHeader");
-        ImGui.TableSetupColumn("Layer 1");
-        ImGui.TableSetupColumn("Layer 2");
-        ImGui.TableSetupColumn("Layer 3");
-        ImGui.TableHeadersRow();
-
-        ImGuiUtil.DrawTableColumn("GagType:");
-        for (int i = 0; i < 3; i++)
-            ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].GagType);
-        ImGui.TableNextRow();
-
-        ImGuiUtil.DrawTableColumn("Padlock:");
-        for (int i = 0; i < 3; i++)
-            ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Padlock);
-        ImGui.TableNextRow();
-
-        ImGuiUtil.DrawTableColumn("Password:");
-        for (int i = 0; i < 3; i++)
-            ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Password);
-        ImGui.TableNextRow();
-
-        ImGuiUtil.DrawTableColumn("Time Remaining:");
-        for (int i = 0; i < 3; i++)
+        using (ImRaii.Table("##debug-appearance" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            ImGui.TableNextColumn();
-            UiSharedService.ColorText(UiSharedService.TimeLeftFancy(appearance.GagSlots[i].Timer), ImGuiColors.ParsedPink);
-        }
-        ImGui.TableNextRow();
+            ImGui.TableSetupColumn("##EmptyHeader");
+            ImGui.TableSetupColumn("Layer 1");
+            ImGui.TableSetupColumn("Layer 2");
+            ImGui.TableSetupColumn("Layer 3");
+            ImGui.TableHeadersRow();
 
-        ImGuiUtil.DrawTableColumn("Assigner:");
-        for (int i = 0; i < 3; i++)
-            ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Assigner);
+            ImGuiUtil.DrawTableColumn("GagType:");
+            for (int i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].GagType);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Padlock:");
+            for (int i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Padlock);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Password:");
+            for (int i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Password);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Time Remaining:");
+            for (int i = 0; i < 3; i++)
+            {
+                ImGui.TableNextColumn();
+                UiSharedService.ColorText(UiSharedService.TimeLeftFancy(appearance.GagSlots[i].Timer), ImGuiColors.ParsedPink);
+            }
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Assigner:");
+            for (int i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Assigner);
+        }
     }
 
     private void DrawWardrobe(string uid, CharaWardrobeData wardrobe)
@@ -466,11 +470,11 @@ public class DebugTab
         }
 
         // draw out the list of cursed item GUID's
-        using (ImRaii.TreeNode("Active Cursed Items"))
-        {
-            foreach (var item in wardrobe.ActiveCursedItems)
-                ImGui.TextUnformatted(item.ToString());
-        }
+        using var subnodeCursedItems = ImRaii.TreeNode("Active Cursed Items");
+        if(!subnodeCursedItems) return;
+        
+        foreach (var item in wardrobe.ActiveCursedItems)
+            ImGui.TextUnformatted(item.ToString());
     }
 
     private void DrawAlias(string uid, CharaAliasData alias)
@@ -484,15 +488,17 @@ public class DebugTab
         ImGui.Text("Listener Name: '" + alias.ListenerName + "'");
         ImGui.Text("Extracted Listener Name: '" + alias.ExtractedListernerName + "'");
 
-        using var table = ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
-        ImGui.TableSetupColumn("Alias Input");
-        ImGui.TableSetupColumn("Alias Output");
-        ImGui.TableHeadersRow();
-        foreach (var aliasData in alias.AliasList)
+        using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
-            ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
-            ImGui.TableNextRow();
+            ImGui.TableSetupColumn("Alias Input");
+            ImGui.TableSetupColumn("Alias Output");
+            ImGui.TableHeadersRow();
+            foreach (var aliasData in alias.AliasList)
+            {
+                ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
+                ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
+                ImGui.TableNextRow();
+            }
         }
     }
 
@@ -502,17 +508,24 @@ public class DebugTab
         if (!nodeMain) return;
 
         ImGui.Text("Active Pattern ID: " + toybox.ActivePatternId);
-        using (ImRaii.TreeNode("Active Alarms"))
+        // alarm sub-node
+        using (var subnodeAlarm = ImRaii.TreeNode("Active Alarms"))
         {
-            foreach (var alarm in toybox.ActiveAlarms)
-                ImGui.TextUnformatted(alarm.ToString());
+            if (subnodeAlarm)
+            {
+                foreach (var alarm in toybox.ActiveAlarms)
+                    ImGui.TextUnformatted(alarm.ToString());
+            }
         }
-        // active triggers.
-        using (ImRaii.TreeNode("Active Triggers"))
-        {
-            foreach (var trigger in toybox.ActiveTriggers)
-                ImGui.TextUnformatted(trigger.ToString());
 
+        // active triggers sub-node
+        using (var subnodeTriggers = ImRaii.TreeNode("Active Triggers"))
+        {
+            if (subnodeTriggers)
+            {
+                foreach (var trigger in toybox.ActiveTriggers)
+                    ImGui.TextUnformatted(trigger.ToString());
+            }
         }
     }
 
@@ -523,103 +536,127 @@ public class DebugTab
 
         ImGui.Text("Blindfold Item Slot: " + lightStorage.BlindfoldItem.Slot);
 
-        using (ImRaii.TreeNode("Gags with Glamour's"))
+        // lightStorage subnode gags.
+        using (var subnodeGagGlamours = ImRaii.TreeNode("Gags with Glamour's"))
         {
-            using (ImRaii.Table("##debug-lightstorage-gag-glamours" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            if (subnodeGagGlamours)
             {
-                ImGui.TableSetupColumn("Gag Type");
-                ImGui.TableSetupColumn("Equip Slot");
-                ImGui.TableHeadersRow();
-
-                foreach (var gag in lightStorage.GagItems)
+                using (ImRaii.Table("##debug-lightstorage-gag-glamours" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn(gag.Key.ToString());
-                    ImGuiUtil.DrawTableColumn(gag.Value.Slot.ToString());
-                    ImGui.TableNextRow();
+                    ImGui.TableSetupColumn("Gag Type");
+                    ImGui.TableSetupColumn("Equip Slot");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var gag in lightStorage.GagItems)
+                    {
+                        ImGuiUtil.DrawTableColumn(gag.Key.ToString());
+                        ImGuiUtil.DrawTableColumn(gag.Value.Slot.ToString());
+                        ImGui.TableNextRow();
+                    }
                 }
             }
         }
 
-        using (ImRaii.TreeNode("Restraints"))
+        // lightStorage subnode restraints.
+        using (var subnodeRestraints = ImRaii.TreeNode("Restraints"))
         {
-            using (ImRaii.Table("##debug-lightstorage-gag-glamours" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            if (subnodeRestraints)
             {
-                ImGui.TableSetupColumn("Set ID");
-                ImGui.TableSetupColumn("Restraint Name");
-                ImGui.TableSetupColumn("Affected Slots");
-                ImGui.TableHeadersRow();
-                foreach (var set in lightStorage.Restraints)
+                using (ImRaii.Table("##debug-lightstorage-restraints" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn(set.Identifier.ToString());
-                    ImGuiUtil.DrawTableColumn(set.Name);
-                    ImGuiUtil.DrawTableColumn(string.Join(",", set.AffectedSlots.Select(x => x.Slot.ToString())));
-                    ImGui.TableNextRow();
+                    ImGui.TableSetupColumn("Set ID");
+                    ImGui.TableSetupColumn("Restraint Name");
+                    ImGui.TableSetupColumn("Affected Slots");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var set in lightStorage.Restraints)
+                    {
+                        ImGuiUtil.DrawTableColumn(set.Identifier.ToString());
+                        ImGuiUtil.DrawTableColumn(set.Name);
+                        ImGuiUtil.DrawTableColumn(string.Join(",", set.AffectedSlots.Select(x => ((EquipSlot)x.Slot).ToString())));
+                        ImGui.TableNextRow();
+                    }
+                }
+            }
+        }
+
+        // lightStorage subnode cursed items.
+        using (var subnodeCursedItems = ImRaii.TreeNode("Cursed Items"))
+        {
+            if (subnodeCursedItems)
+            {
+                using (ImRaii.Table("##debug-lightstorage-cursed-items" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGui.TableSetupColumn("Cursed Item ID");
+                    ImGui.TableSetupColumn("Cursed Item Name");
+                    ImGui.TableSetupColumn("Is Gag?");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var item in lightStorage.CursedItems)
+                    {
+                        ImGuiUtil.DrawTableColumn(item.Identifier.ToString());
+                        ImGuiUtil.DrawTableColumn(item.Name);
+                        ImGuiUtil.DrawTableColumn(item.IsGag.ToString());
+                        ImGui.TableNextRow();
+                    }
                 }
             }
         }
 
 
-        using (ImRaii.TreeNode("Cursed Items"))
+        // lightStorage subnode patterns.
+        using (var subnodePatterns = ImRaii.TreeNode("Patterns"))
         {
-            using (ImRaii.Table("##debug-lightstorage-cursed-items" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            if (subnodePatterns)
             {
-                ImGui.TableSetupColumn("Cursed Item ID");
-                ImGui.TableSetupColumn("Cursed Item Name");
-                ImGui.TableSetupColumn("Is Gag?");
-                ImGui.TableHeadersRow();
-
-                foreach (var item in lightStorage.CursedItems)
+                using (ImRaii.Table("##debug-lightstorage-patterns" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn(item.Identifier.ToString());
-                    ImGuiUtil.DrawTableColumn(item.Name);
-                    ImGuiUtil.DrawTableColumn(item.IsGag.ToString());
-                    ImGui.TableNextRow();
+                    ImGui.TableSetupColumn("Pattern ID");
+                    ImGui.TableSetupColumn("Name");
+                    ImGui.TableSetupColumn("Duration");
+                    ImGui.TableSetupColumn("Loops?");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var pattern in lightStorage.Patterns)
+                    {
+                        ImGuiUtil.DrawTableColumn(pattern.Identifier.ToString());
+                        ImGuiUtil.DrawTableColumn(pattern.Name);
+                        ImGuiUtil.DrawTableColumn(pattern.Duration.ToString());
+                        ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
+                        ImGui.TableNextRow();
+                    }
                 }
             }
         }
 
-        using (ImRaii.TreeNode("Patterns"))
+        // lightStorage subnode alarms.
+        using (var subnodeAlarms = ImRaii.TreeNode("Alarms"))
         {
-            using (ImRaii.Table("##debug-lightstorage-patterns" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            if (subnodeAlarms)
             {
-                ImGui.TableSetupColumn("Pattern ID");
-                ImGui.TableSetupColumn("Name");
-                ImGui.TableSetupColumn("Duration");
-                ImGui.TableSetupColumn("Loops?");
-                ImGui.TableHeadersRow();
-
-                foreach (var pattern in lightStorage.Patterns)
+                using (ImRaii.Table("##debug-lightstorage-alarms" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn(pattern.Identifier.ToString());
-                    ImGuiUtil.DrawTableColumn(pattern.Name);
-                    ImGuiUtil.DrawTableColumn(pattern.Duration.ToString());
-                    ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
-                    ImGui.TableNextRow();
+                    ImGui.TableSetupColumn("Alarm ID");
+                    ImGui.TableSetupColumn("Name");
+                    ImGui.TableSetupColumn("Alarm Time");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var alarm in lightStorage.Alarms)
+                    {
+                        ImGuiUtil.DrawTableColumn(alarm.Identifier.ToString());
+                        ImGuiUtil.DrawTableColumn(alarm.Name);
+                        ImGuiUtil.DrawTableColumn(alarm.SetTimeUTC.ToLocalTime().TimeOfDay.ToString());
+                        ImGui.TableNextRow();
+                    }
                 }
             }
         }
 
-        using (ImRaii.TreeNode("Alarms"))
+        // lightStorage subnode triggers.
+        using (var subnodeTriggers = ImRaii.TreeNode("Triggers"))
         {
-            using (ImRaii.Table("##debug-lightstorage-alarms" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-            {
-                ImGui.TableSetupColumn("Alarm ID");
-                ImGui.TableSetupColumn("Name");
-                ImGui.TableSetupColumn("Alarm Time");
-                ImGui.TableHeadersRow();
+            if (!subnodeTriggers) return;
 
-                foreach (var alarm in lightStorage.Alarms)
-                {
-                    ImGuiUtil.DrawTableColumn(alarm.Identifier.ToString());
-                    ImGuiUtil.DrawTableColumn(alarm.Name);
-                    ImGuiUtil.DrawTableColumn(alarm.SetTimeUTC.ToLocalTime().TimeOfDay.ToString());
-                    ImGui.TableNextRow();
-                }
-            }
-        }
-
-        using (ImRaii.TreeNode("Triggers"))
-        {
             using (ImRaii.Table("##debug-lightstorage-triggers" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
             {
                 ImGui.TableSetupColumn("Trigger ID");
@@ -627,6 +664,7 @@ public class DebugTab
                 ImGui.TableSetupColumn("Trigger Type");
                 ImGui.TableSetupColumn("Action Kind");
                 ImGui.TableHeadersRow();
+
                 foreach (var trigger in lightStorage.Triggers)
                 {
                     ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
