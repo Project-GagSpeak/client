@@ -70,7 +70,6 @@ public class GagspeakConfig : IGagspeakConfiguration
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
-    public bool UsingLegacyControls { get; set; } = true; // If on legacy. Assume true.
     public BlindfoldType BlindfoldStyle { get; set; } = BlindfoldType.Sensual; // Blindfold Format
     public bool ForceLockFirstPerson { get; set; } = false; // Force First-Person state while blindfolded.
     public float BlindfoldOpacity { get; set; } = 1.0f; // Blindfold Opacity

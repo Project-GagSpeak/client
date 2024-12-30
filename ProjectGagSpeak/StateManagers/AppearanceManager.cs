@@ -378,9 +378,9 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         }
 
         // First, disable the current set.
-        await DisableRestraintSet(activeSet.RestraintId, disablerUID: MainHub.UID, pushToServer: false);
+        await DisableRestraintSet(activeSet.RestraintId, disablerUID: setAssignerUid, pushToServer: false);
         // Then, enable the new set.
-        await EnableRestraintSet(newSetId, assignerUID: MainHub.UID, pushToServer: publish);
+        await EnableRestraintSet(newSetId, assignerUID: setAssignerUid, pushToServer: publish);
     }
 
     /// <summary>
@@ -492,8 +492,8 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 
                 await RecalcAndReload(false);
             }
-            if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, Padlocks.None));
+
+            if (publish) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, Padlocks.None));
         });
     }
 
@@ -525,8 +525,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 await RecalcAndReload(true, moodlesToRemove);
             }
 
-            if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemRemoved, Padlocks.MimicPadlock));
+            if (publish) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemRemoved, Padlocks.MimicPadlock));
         });
     }
 
@@ -707,19 +706,19 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             var data = _clientConfigs.GetDrawData(slot.GagType.ToGagType());
             if (data is not null && data.IsEnabled)
             {
-                ItemsToApply[data.Slot] = data;
+                // only apply the glamour item if it is not an empty item.
+                if (!data.GameItem.Equals(ItemIdVars.NothingItem(data.Slot)))
+                    ItemsToApply[data.Slot] = data;
 
                 // continue if moodles data is not present.
                 if (!_playerData.IpcDataNull)
                 {
-                    if (data.AssociatedMoodles.Count > 0)
-                        ExpectedMoodles.UnionWith(data.AssociatedMoodles);
+                    if (data.AssociatedMoodles.Count > 0) ExpectedMoodles.UnionWith(data.AssociatedMoodles);
 
                     if (data.AssociatedMoodlePreset != Guid.Empty)
                     {
                         var statuses = _playerData.LastIpcData!.MoodlesPresets.FirstOrDefault(p => p.Item1 == data.AssociatedMoodlePreset).Item2;
-                        if (statuses is not null)
-                            ExpectedMoodles.UnionWith(statuses);
+                        if (statuses is not null) ExpectedMoodles.UnionWith(statuses);
                     }
                 }
 
@@ -737,6 +736,10 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             Logger.LogDebug("We are Blindfolded!", LoggerType.AppearanceState);
             var blindfoldData = _clientConfigs.GetBlindfoldItem();
             ItemsToApply[blindfoldData.Slot] = blindfoldData;
+        }
+        else
+        {
+            Logger.LogDebug("We are not Blindfolded.", LoggerType.AppearanceState);
         }
 
         // collect the data from the cursed sets.

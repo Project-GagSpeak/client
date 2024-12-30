@@ -42,6 +42,8 @@ public class ConditionalProgressAchievement : AchievementBase
     }
 
     public override int CurrentProgress() => IsCompleted ? MilestoneGoal : Progress;
+    public override float CurrentProgressPercentage() => (float)(CurrentProgress() / MilestoneGoal);
+
     public override string ProgressString()
     {
         if(IsCompleted)

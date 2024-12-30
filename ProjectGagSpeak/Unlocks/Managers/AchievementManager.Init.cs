@@ -99,7 +99,7 @@ public partial class AchievementManager
         #endregion GAG MODULE
 
         #region WARDROBE MODULE
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe, Achievements.FirstTiemers, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
+        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.FirstTiemers, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.Cuffed19, 19, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cuffs Applied");
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TheRescuer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Unlocked");
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SelfBondageEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
@@ -440,14 +440,22 @@ public partial class AchievementManager
             return targetIsImmobile;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientService.InPvP, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
         #endregion GENERIC MODULE
 
         #region SECRETS MODULE

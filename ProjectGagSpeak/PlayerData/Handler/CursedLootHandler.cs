@@ -94,7 +94,7 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
         // activate it, then refresh.
         _clientConfigs.ActivateCursedItem(idToActivate, releaseTimeUTC);
         var item = CursedItems.FirstOrDefault(x => x.LootId == idToActivate);
-        if (item != null)
+        if (item is not null)
             await _appearanceHandler.CursedItemApplied(item, gagLayer);
     }
 
@@ -103,7 +103,7 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
         // deactivate it, then refresh.
         _clientConfigs.DeactivateCursedItem(idToDeactivate);
         var item = CursedItems.FirstOrDefault(x => x.LootId == idToDeactivate);
-        if (item != null)
+        if (item is not null) 
             await _appearanceHandler.CursedItemRemoved(item);
     }
 

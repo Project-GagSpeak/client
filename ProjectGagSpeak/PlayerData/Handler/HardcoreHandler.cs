@@ -29,6 +29,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     private readonly EmoteMonitor _emoteMonitor; // for handling the blindfold logic
     private readonly ITargetManager _targetManager; // for targeting pair on follows.
 
+    private bool UsingLegacyControls = false; // Caches what our control scheme is for movement when we need to store it.
+
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
         ClientConfigurationManager clientConfigs, ClientData playerData,
@@ -46,8 +48,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         _emoteMonitor = emoteMonitor;
         _targetManager = targetManager;
 
-        // Store if we are on legacy mode or not during initialization.
-        _clientConfigs.GagspeakConfig.UsingLegacyControls = GameConfig.UiControl.GetBool("MoveMode");
+        // Store if we are on legacy mode or not during initialization. (True == Legacy, False == Standard)
+        UsingLegacyControls = GameConfig.UiControl.GetBool("MoveMode");
 
         Mediator.Subscribe<HardcoreActionMessage>(this, (msg) =>
         {
@@ -89,8 +91,13 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     {
         base.Dispose(disposing);
 
-        if (!_clientConfigs.GagspeakConfig.UsingLegacyControls && GameConfig.UiControl.GetBool("MoveMode"))
-            GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
+        // if we are forced to follow when the plugin disabled, we need to revert the controls.
+        if (IsForcedToFollow)
+        {
+            // if we were using standard movement, but it is set to legacy at the time of closing, set it back to standard.
+            if (UsingLegacyControls is false && GameConfig.UiControl.GetBool("MoveMode"))
+                GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
+        }
     }
 
     private async Task OnSafewordUsed()
@@ -114,6 +121,10 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         // if we are enabling, adjust the lastMovementTime to now.
         if (newState is NewState.Enabled)
         {
+            // when enabling forcedFollow, cache our movement mode.
+            UsingLegacyControls = GameConfig.UiControl.GetBool("MoveMode");
+
+            // set the forced follow time to now.
             LastMovementTime = DateTimeOffset.UtcNow;
             Logger.LogDebug("Following UID: [" + _playerData.GlobalPerms?.ForcedFollow.HardcorePermUID() + "]", LoggerType.HardcoreMovement);
             // grab the pair from the pair manager to obtain its game object and begin following it.
@@ -155,8 +166,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             _moveController.DisableUnfollowHook();
         }
 
-        // toggle movement type to legacy if we are not on legacy (regardless of it being enable or disable)
-        if (!_clientConfigs.GagspeakConfig.UsingLegacyControls)
+        // if we are not using legacy controls we need to toggle our movement.
+        if (UsingLegacyControls is false)
         {
             // if forced follow is still on, dont switch it back to false
             uint mode = newState switch

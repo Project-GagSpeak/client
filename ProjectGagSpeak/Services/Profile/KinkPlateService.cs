@@ -8,6 +8,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Dto.User;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services;
 
@@ -42,6 +43,18 @@ public class KinkPlateService : MediatorSubscriberBase
 
         // Clear all profiles on disconnect
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearAllKinkPlates());
+    }
+
+    // Obtain the clients kink plate information if valid.
+    public bool TryGetClientKinkPlateContent([NotNullWhen(true)] out KinkPlateContent? clientPlateContent)
+    {
+        if (_kinkPlates.TryGetValue(MainHub.PlayerUserData, out var plate))
+        {
+            clientPlateContent = plate.KinkPlateInfo;
+            return true;
+        }
+        clientPlateContent = null;
+        return false;
     }
 
     /// <summary> Get the Gagspeak Profile data for a user. </summary>

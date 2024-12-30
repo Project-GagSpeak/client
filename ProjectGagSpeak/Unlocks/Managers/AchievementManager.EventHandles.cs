@@ -153,6 +153,7 @@ public partial class AchievementManager
                     (SaveData.Achievements[Achievements.HornyOnHigh.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
                     if (floor is 30)
                     {
+                        (SaveData.Achievements[Achievements.HornyOnHigh.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                         (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                         (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                     }
@@ -194,6 +195,9 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
             (SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         }
+
+        // check stuff for deep dungeons.
+        CheckDeepDungeonStatus();
     }
 
     private void OnDutyEnd(object? sender, ushort e)
@@ -234,6 +238,9 @@ public partial class AchievementManager
             else // if we are not in a full party, we should reset the task.
                 (SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
         }
+
+        // check stuff for deep dungeons.
+        CheckDeepDungeonStatus();
     }
 
     private void OnOrderAction(OrderInteractionKind orderKind)
@@ -340,7 +347,7 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
         (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
 
-        // Do stuff if its a restraint
+        // Checks spesific to the direction of the application.
         if (user.UID == MainHub.UID)
         {
             (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
@@ -351,6 +358,8 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
             (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
             (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
+
+            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
         }
         else
         {
@@ -377,9 +386,6 @@ public partial class AchievementManager
         // if these are started, inturrupt them so that they do not complete.
         (SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
         (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
-
-        // wah
-        (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
     }
 
     private void OnPairGagApplied(GagType gag)
@@ -950,10 +956,9 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.EverCursed.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
     }
 
-    private void OnJobChange(GlamourUpdateType changeType)
+    private void OnJobChange(uint newJobId)
     {
-        if(changeType is GlamourUpdateType.JobChange)
-            (SaveData.Achievements[Achievements.EscapingIsNotEasy.Id] as ConditionalAchievement)?.CheckCompletion();
+        (SaveData.Achievements[Achievements.EscapingIsNotEasy.Id] as ConditionalAchievement)?.CheckCompletion();
     }
 
     private void OnVibratorToggled(NewState newState)

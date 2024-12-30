@@ -49,6 +49,15 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         };
     }
 
+    public override float CurrentProgressPercentage()
+    {
+        if (IsCompleted) return 1.0f;
+
+        var elapsed = StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero;
+        float percentage = (float)(elapsed.TotalMilliseconds / MilestoneDuration.TotalMilliseconds);
+        return Math.Clamp(percentage, 0f, 1f);
+    }
+
     public override string ProgressString()
     {
         if (IsCompleted) 

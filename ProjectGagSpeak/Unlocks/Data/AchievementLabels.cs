@@ -299,7 +299,7 @@ public static class Achievements
     
     public static readonly AchievementInfo EscapingIsNotEasy = new AchievementInfo(125, "Escaping Isn't So Easy..", "Change your equipment/change job while locked in a restraint set.");
     
-    public static readonly AchievementInfo ICantBelieveYouveDoneThis = new AchievementInfo(126, "I Can't Believe You've Done This", "Get /slapped while bound.");
+    public static readonly AchievementInfo ICantBelieveYouveDoneThis = new AchievementInfo(126, "You've Done It Now", "Get /slapped while bound.");
     
     public static readonly AchievementInfo WithAKissGoodbye = new AchievementInfo(208, "With A Kiss Goodbye", "/dote a Kinkster that is immobilized.");
     public static readonly AchievementInfo ProlificPetter = new AchievementInfo(209, "Prolific Petter", "/pet an immobilized Kinkster.");

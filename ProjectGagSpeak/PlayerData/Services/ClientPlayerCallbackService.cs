@@ -271,7 +271,6 @@ public class ClientCallbackService
         }
 
         ////////// Callback was not from self past this point.
-
         var matchedPair = _pairManager.DirectPairs.FirstOrDefault(p => p.UserData.UID == callbackDto.User.UID);
         if (matchedPair is null)
         {

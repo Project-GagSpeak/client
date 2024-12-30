@@ -138,7 +138,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     {
         // We likely want to avoid pushing the style theme here if we are swapping the colors based on the state of an achievement.
         // If that is not the case. move them here.
-        var unlocks = AchievementManager.GetAchievementForModule(type);
+        var unlocks = AchievementManager.GetAchievementsForModule(type);
         if (!unlocks.Any())
             return;
 
@@ -168,7 +168,8 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 #if DEBUG 
         if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
         {
-            _achievementManager.ResetAchievementData();
+            // fire and forget.
+            _ = _achievementManager.ResetAchievementData();
         }
         UiSharedService.AttachToolTip("Reset all Achievement Progress and Data.--SEP--Must hold CTRL+SHIFT to execute.--SEP--THIS ACTION IS NOT REVERSABLE.");
         ImUtf8.SameLineInner();
@@ -298,10 +299,8 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var padding = ImGui.GetStyle().FramePadding; // padding
 
         // grab progress and milestone to help with drawing the progress bar.
-        var progress = achievement.CurrentProgress();
-        var milestone = achievement.MilestoneGoal;
-        if(progress > milestone)
-            progress = milestone;
+        var completionPercentage = achievement.CurrentProgressPercentage();
+        if(completionPercentage > 1f) completionPercentage = 1f;
 
         // Grab the displaytext for the progress bar.
         var progressBarString = achievement.ProgressString();
@@ -351,11 +350,11 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             ImDrawFlags.RoundCornersAll);
 
         // Do not draw the progress bar fill if it is less than .02% of the progress bar width.
-        if (((float)progress / milestone) >= 0.025)
+        if (completionPercentage >= 0.025)
         {
             drawList.AddRectFilled( // The progress bar fill
                 progressBarDrawStart,
-                progressBarDrawEnd with { X = progressBarDrawStart.X + ((float)((float)progress / milestone) * progressWidth) },
+                progressBarDrawEnd with { X = progressBarDrawStart.X + (float)(completionPercentage * (float)progressWidth) },
                 UiSharedService.Color(225, 104, 168, 255),
                 45f,
                 ImDrawFlags.RoundCornersAll);

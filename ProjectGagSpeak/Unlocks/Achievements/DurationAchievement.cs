@@ -51,6 +51,26 @@ public class DurationAchievement : AchievementBase
         };
     }
 
+    public override float CurrentProgressPercentage()
+    {
+        // If completed or no active items, the percentage is 100% or 0% respectively
+        if (IsCompleted)
+            return 1f;
+
+        if (!ActiveItems.Any() || !MainHub.IsConnected)
+            return 0f;
+
+        // Calculate elapsed time
+        var elapsed = DateTime.UtcNow - ActiveItems.Min(x => x.TimeAdded);
+
+        // Calculate percentage of milestone duration elapsed
+        float percentage = (float)(elapsed.TotalMilliseconds / MilestoneDuration.TotalMilliseconds);
+
+        // Ensure percentage is clamped between 0.0 and 1.0
+        return Math.Clamp(percentage, 0f, 1f);
+    }
+
+
     public override string ProgressString()
     {
         if (IsCompleted)
@@ -110,7 +130,8 @@ public class DurationAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        // determine the items to remove by taking all items in the existing list that contain the matching affecteduid, and select all from that subset that's item doesnt exist in the list of active items.
+        // determine the items to remove by taking all items in the existing list that contain the matching affecteduid.
+        // and select all from that subset that's item doesnt exist in the list of active items.
         var itemsToRemove = ActiveItems
             .Where(x => x.UIDAffected == uidToScan && !itemsStillActive.Contains(x.Item))
             .ToList();
@@ -121,20 +142,36 @@ public class DurationAchievement : AchievementBase
             // calculate the the current datetime, subtract from time added. and see if it passes the milestone duration.
 
             // Add some wavier duration to ensure timers set for the same time as the achievment dont end up a second off.
-            var milestoneProgressReached = (DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10);
-
-            // if it does, we should mark the achievement as completed.
-            if (milestoneProgressReached >= MilestoneDuration && uidToScan != MainHub.UID)
+            if ((DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10) >= MilestoneDuration && uidToScan != MainHub.UID)
             {
-                UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. "
-                    + "Marking as finished!", LoggerType.AchievementInfo);
+                // if it does, we should mark the achievement as completed.
+                UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LoggerType.AchievementInfo);
                 MarkCompleted();
-                continue;
+                // clear the list and exit.
+                ActiveItems.Clear();
+                return;
             }
 
             // otherwise, it failed to meet the expected duration, so we should remove it from tracking.
             UnlocksEventManager.AchievementLogger.LogTrace("Kinkster: "+uidToScan +" no longer has "+ trackedItem.Item +" applied, removing from tracking.", LoggerType.AchievementInfo);
             ActiveItems.Remove(trackedItem);
+        }
+
+        // for the remaining items, we should cleanup the tracking for any items that are still present but exceeded the milestone duration.
+        // For now, only do this for SELF. If we do this for others, we run into the issue of assuming they have finished it while offline.
+        var clientPlayerItems = ActiveItems.Where(x => x.UIDAffected == MainHub.UID).ToList();
+        // for any items in this subsequent list that exceed the milestone duration, we should mark the achievement as completed and remove the item from tracking.
+        foreach (var trackedItem in clientPlayerItems)
+        {
+            // Add some wavier duration to ensure timers set for the same time as the achievment dont end up a second off.
+            if ((DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10) >= MilestoneDuration)
+            {
+                UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LoggerType.AchievementInfo);
+                MarkCompleted();
+                // clear the list and exit.
+                ActiveItems.Clear();
+                return;
+            }
         }
     }
 

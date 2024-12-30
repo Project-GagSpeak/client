@@ -189,7 +189,7 @@ public partial class MainHub
         if (!IsConnected) return;
         try
         {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto).ConfigureAwait(false);
+            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto);
         }
         catch (OperationCanceledException ex)
         {
@@ -224,14 +224,16 @@ public partial class MainHub
         await GagSpeakHubMain!.InvokeAsync(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
     }
 
-
-    /// <summary> 
-    /// Sets the profile of the client user, updating it to the clients paired users and the DB.
-    /// </summary>
-    public async Task UserSetKinkPlate(UserKinkPlateDto userDescription)
+    public async Task UserSetKinkPlateContent(UserKinkPlateContentDto kinkPlateInfo)
     {
         if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlate), userDescription).ConfigureAwait(false);
+        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlateContent), kinkPlateInfo).ConfigureAwait(false);
+    }
+
+    public async Task UserSetKinkPlatePicture(UserKinkPlatePictureDto kinkPlateImage)
+    {
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlateContent), kinkPlateImage).ConfigureAwait(false);
     }
 
     /// <summary> Moodles IPC senders. </summary>

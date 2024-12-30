@@ -7,7 +7,7 @@
         <TargetFramework>net8.0-windows</TargetFramework>
         <Copyright>Copyright © 2024</Copyright>
         <LangVersion>preview</LangVersion>
-        <Version>1.1.1.2</Version>
+        <Version>1.1.2.0</Version>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Deterministic>true</Deterministic>
@@ -153,7 +153,11 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="UI\Components\Combos\ExperimentalCombos\" />
+    </ItemGroup>
 </Project>
+
 
 
 
