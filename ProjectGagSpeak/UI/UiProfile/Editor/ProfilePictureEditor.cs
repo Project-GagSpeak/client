@@ -331,7 +331,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         }
         try
         {
-            await _apiHubMain.UserSetKinkPlatePicture(new(MainHub.PlayerUserData, Convert.ToBase64String(_croppedImageData!))).ConfigureAwait(false);
+            await _apiHubMain.UserSetKinkPlatePicture(new(MainHub.PlayerUserData, Convert.ToBase64String(_croppedImageData))).ConfigureAwait(false);
             _logger.LogInformation("Image Sent to server successfully.");
         }
         catch (Exception ex)

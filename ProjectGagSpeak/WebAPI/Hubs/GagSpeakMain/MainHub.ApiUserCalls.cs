@@ -233,7 +233,7 @@ public partial class MainHub
     public async Task UserSetKinkPlatePicture(UserKinkPlatePictureDto kinkPlateImage)
     {
         if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlateContent), kinkPlateImage).ConfigureAwait(false);
+        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlatePicture), kinkPlateImage).ConfigureAwait(false);
     }
 
     /// <summary> Moodles IPC senders. </summary>
