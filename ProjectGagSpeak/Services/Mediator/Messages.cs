@@ -81,7 +81,7 @@ public record TooltipSetItemToRestraintSetMessage(EquipSlot Slot, EquipItem Item
 public record TooltipSetItemToCursedItemMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 
 ////////////// WARDROBE RELATED RECORDS //////////////
-public record HardcoreActionMessage(HardcoreAction type, NewState State) : MessageBase;
+public record HardcoreActionMessage(InteractionType type, NewState State) : MessageBase;
 public record HardcoreRemoveBlindfoldMessage : MessageBase;
 public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
 

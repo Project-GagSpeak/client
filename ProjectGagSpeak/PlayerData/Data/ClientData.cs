@@ -88,7 +88,12 @@ public class ClientData : DisposableMediatorSubscriberBase
 
     public CharaAppearanceData CompileAppearanceToAPI() => AppearanceData?.DeepCloneData() ?? new CharaAppearanceData();
 
-    public void ApplyGlobalPermChange(UserGlobalPermChangeDto changeDto, PairManager pairs)
+    /// <summary>
+    /// The function that applies a global permission change from an enactor.
+    /// </summary>
+    /// <param name="changeDto">the dto of the change.</param>
+    /// <param name="enactorPair">Defines which pair made the change. If null, it came from the client themselves.</param>
+    public void ApplyGlobalPermChange(UserGlobalPermChangeDto changeDto, Pair? enactorPair)
     {
         if (CoreDataNull) return;
 
@@ -99,11 +104,8 @@ public class ClientData : DisposableMediatorSubscriberBase
 
         if (propertyInfo is null) return;
 
-        // See if someone else did this.
-        var changedPair = pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == changeDto.Enactor.UID);
-
-        // Get the Hardcore Change Type before updating the property (if it is not valid it wont return anything but none anyways)
-        HardcoreAction hardcoreChangeType = GlobalPerms!.GetHardcoreChange(propertyName, newValue);
+        // Get the Hardcore Change Type before updating the property.
+        InteractionType hardcoreChangeType = GlobalPerms!.GetHardcoreChange(propertyName, newValue);
 
         // If the property exists and is found, update its value
         if (newValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
@@ -129,39 +131,35 @@ public class ClientData : DisposableMediatorSubscriberBase
             return;
         }
 
-        // If not a hardcore change but another perm change, publish that.
-        if (changedPair is not null && hardcoreChangeType is HardcoreAction.None)
-            Mediator.Publish(new EventMessage(new(changedPair.GetNickAliasOrUid(), changedPair.UserData.UID, InteractionType.ForcedPermChange, "Permission (" + changeDto + ") Changed")));
+        // Handle how we log and output the events / achievement sends.
+        var newState = string.IsNullOrEmpty((string)newValue) ? NewState.Disabled : NewState.Enabled;
+        var permName = hardcoreChangeType is InteractionType.None ? propertyName : hardcoreChangeType.ToString();
+        HandleHardcorePermUpdate(hardcoreChangeType, enactorPair, permName, newState);
+    }
 
-        // Handle hardcore changes here.
-        if (hardcoreChangeType is HardcoreAction.None)
+    private void HandleHardcorePermUpdate(InteractionType hardcoreChangeType, Pair? enactor, string permissionName, NewState newState)
+    {
+        // log the information regardless.
+        Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + newState, LoggerType.PairManagement);
+
+        // determine the names going into the event messages.
+        var enactorNickAliasUid = enactor?.GetNickAliasOrUid() ?? "Client";
+        var enactorUid = enactor?.UserData.UID ?? MainHub.UID;
+
+        // if the changeType is none, that means it was not a hardcore change, so we can log the generic event message and return.
+        if (hardcoreChangeType is InteractionType.None)
         {
-            Logger.LogInformation("No Hardcore Change Detected. Returning.", LoggerType.PairManagement);
+            Mediator.Publish(new EventMessage(new(enactorNickAliasUid, enactorUid, InteractionType.ForcedPermChange, "Permission (" + permissionName + ") Changed")));
             return;
         }
 
-        var newState = string.IsNullOrEmpty((string)newValue) ? NewState.Disabled : NewState.Enabled;
-        Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + newValue, LoggerType.PairManagement);
+        // If the enactor is anything else, it is a hardcore permission change, and we should execute its operation.
+        Logger.LogDebug("Change was a hardcore action. Publishing HardcoreActionMessage.", LoggerType.PairManagement);
+        Mediator.Publish(new EventMessage(new(enactorNickAliasUid, enactorUid, hardcoreChangeType, "Hardcore Action (" + hardcoreChangeType + ") is now " + newState)));
         Mediator.Publish(new HardcoreActionMessage(hardcoreChangeType, newState));
-        // If the changed Pair is not null, we should map the type and log the interaction event.
-        if (changedPair is not null)
-        {
-            var interactionType = hardcoreChangeType switch
-            {
-                HardcoreAction.ForcedFollow => InteractionType.ForcedFollow,
-                HardcoreAction.ForcedEmoteState => InteractionType.ForcedEmoteState,
-                HardcoreAction.ForcedStay => InteractionType.ForcedStay,
-                HardcoreAction.ForcedBlindfold => InteractionType.ForcedBlindfold,
-                HardcoreAction.ChatboxHiding => InteractionType.ForcedChatVisibility,
-                HardcoreAction.ChatInputHiding => InteractionType.ForcedChatInputVisibility,
-                HardcoreAction.ChatInputBlocking => InteractionType.ForcedChatInputBlock,
-                _ => InteractionType.None
-            };
-            Mediator.Publish(new EventMessage(new(changedPair.GetNickAliasOrUid(), changedPair.UserData.UID, interactionType, "Hardcore Action (" + hardcoreChangeType + ") is now " + newState)));
-        }
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreForcedPairAction, hardcoreChangeType, newState, changeDto.Enactor.UID, MainHub.UID);
+
+        // if the enactor is not null, we should send it off to the achievement manager.
+        if (enactor is not null)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, enactor.UserData.UID, MainHub.UID);
     }
-
-
-
 }

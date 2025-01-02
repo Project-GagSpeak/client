@@ -133,7 +133,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             return;
 
         // Get the Hardcore Change Type before updating the property (if it is not valid it wont return anything but none anyways)
-        HardcoreAction hardcoreChangeType = pair.PairGlobals.GetHardcoreChange(ChangedPermission, ChangedValue);
+        InteractionType hardcoreChangeType = pair.PairGlobals.GetHardcoreChange(ChangedPermission, ChangedValue);
 
         // If the property exists and is found, update its value
         if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
@@ -161,31 +161,15 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(false);
 
         // Handle hardcore changes here.
-        if (hardcoreChangeType is HardcoreAction.None)
-        {
-            Logger.LogInformation("No Hardcore Change Detected. Returning.", LoggerType.PairDataTransfer);
-            return;
-        }
+        if (hardcoreChangeType is InteractionType.None) return;
 
         // if the hardcore change is a blindfold change, we should update our slots for the pair.
-        if (hardcoreChangeType is HardcoreAction.ForcedBlindfold)
-            pair.UpdateCachedLockedSlots();
+        if (hardcoreChangeType is InteractionType.ForcedBlindfold) pair.UpdateCachedLockedSlots();
 
+        // log the new state, the hardcore change, and the new value.
         var newState = string.IsNullOrEmpty((string)ChangedValue) ? NewState.Disabled : NewState.Enabled;
         Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
-        // If the changed Pair is not null, we should map the type and log the interaction event.
-        var interactionType = hardcoreChangeType switch
-        {
-            HardcoreAction.ForcedFollow => InteractionType.ForcedFollow,
-            HardcoreAction.ForcedEmoteState => InteractionType.ForcedEmoteState,
-            HardcoreAction.ForcedStay => InteractionType.ForcedStay,
-            HardcoreAction.ForcedBlindfold => InteractionType.ForcedBlindfold,
-            HardcoreAction.ChatboxHiding => InteractionType.ForcedChatVisibility,
-            HardcoreAction.ChatInputHiding => InteractionType.ForcedChatInputVisibility,
-            HardcoreAction.ChatInputBlocking => InteractionType.ForcedChatInputBlock,
-            _ => InteractionType.None
-        };
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreForcedPairAction, hardcoreChangeType, newState, dto.Enactor.UID, pair.UserData.UID);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
     private bool IsMoodlePermission(string changedPermission)

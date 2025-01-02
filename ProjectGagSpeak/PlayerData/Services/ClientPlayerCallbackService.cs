@@ -56,7 +56,7 @@ public class ClientCallbackService
     public string GlobalPiShockShareCode => _playerData.GlobalPerms!.GlobalShockShareCode;
     public void SetGlobalPerms(UserGlobalPermissions perms) => _playerData.GlobalPerms = perms;
     public void SetAppearanceData(CharaAppearanceData appearanceData) => _playerData.AppearanceData = appearanceData;
-    public void ApplyGlobalPerm(UserGlobalPermChangeDto dto) => _playerData.ApplyGlobalPermChange(dto, _pairManager);
+    public void ApplyGlobalPerm(UserGlobalPermChangeDto dto) => _playerData.ApplyGlobalPermChange(dto, _pairManager.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID));
     private bool CanDoWardrobeInteract() => !_playerData.CoreDataNull && _playerData.GlobalPerms!.WardrobeEnabled && _playerData.GlobalPerms.RestraintSetAutoEquip;
 
     #region IPC Callbacks

@@ -11,6 +11,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
+using static System.Windows.Forms.AxHost;
 
 namespace GagSpeak.Achievements;
 public partial class AchievementManager
@@ -74,11 +75,11 @@ public partial class AchievementManager
     {
         Logger.LogTrace("Current Territory Id: " + _clientService.TerritoryId, LoggerType.AchievementEvents);
         if(_clientService.InMainCity)
-            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
         ushort territory = _clientService.TerritoryId;
 
-        // if present in diadem (for diamdem achievement)
+        // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
         if (territory is 939 && !_clientService.InPvP)
             (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         else
@@ -89,7 +90,7 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
 
         if ((SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
-            (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
+            (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
 
         if ((SaveData.Achievements[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
             (SaveData.Achievements[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -416,7 +417,7 @@ public partial class AchievementManager
     private void OnRestraintApplied(RestraintSet set, bool isEnabling, string enactorUID)
     {
         // Check this regardless.
-        (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+        (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
         // Set is being enabled.
         if (isEnabling)
@@ -639,9 +640,10 @@ public partial class AchievementManager
                     (SaveData.Achievements[Achievements.EnduranceKing.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
                     (SaveData.Achievements[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
 
-                    // motivation for restoration:
-                    if ((SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)!.TaskStarted is false)
+                    // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
+                    if(_clientService.TerritoryId is 939 && (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
                     (SaveData.Achievements[Achievements.HornyMornings.Id] as ProgressAchievement)?.IncrementProgress();
@@ -678,129 +680,195 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.TriggerHappy.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
+    private void ClientHardcoreFollowChanged(string enactorUID, NewState newState)
+    {
+        Logger.LogDebug("We just had another pair set our ForceFollow to " + newState, LoggerType.AchievementInfo);
+        // client will always be the affectedUID
+        var affectedUID = MainHub.UID;
+
+        // if the new state is enabled, we need to begin tracking on the relevant achievements.
+        if (newState is NewState.Enabled)
+        {
+            // begin tracking for the world tour. (if we dont meet all conditions it wont start anyways so dont worry about it.
+            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+
+            // Begin tracking for the walkies achievements.
+            (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+            (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+            (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+        }
+
+        // if anyone is disabling us, run a completion check. Failure to meet required time will result in resetting the task.
+        if (newState is NewState.Disabled)
+        {
+            // halt tracking for walk of shame if any requirements are no longer met.
+            if ((SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            // halt any tracking on walkies achievement.
+            if ((SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            if ((SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            if ((SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            // halt progress on being bound throughout a duty if forcedFollow is disabled at any point.
+            (SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
+        }
+    }
+
+    private void PairHardcoreFollowChanged(string enactorUID, string affectedUID, NewState newState)
+    {
+        // Check to see if we are the one toggling this or if it was someone else.
+        var enactorWasSelf = enactorUID == MainHub.UID;
+
+        // if the new state is enabled but we are not the enactor, we should ignore startTracking period.
+        if (newState is NewState.Enabled)
+        {
+            // dont allow tracking for the enabled state by any pairs that are not us.
+            if (!enactorWasSelf)
+            {
+                Logger.LogDebug("We should not be tracking hardcore achievements for any pairs that we are not directly applying hardcore actions to!", LoggerType.AchievementInfo);
+                return;
+            }
+
+            // Handle tracking for all achievements that we need to initialize the follow command on another pair for.
+            (SaveData.Achievements[Achievements.AllTheCollarsOfTheRainbow.Id] as ProgressAchievement)?.IncrementProgress();
+
+            // Handle the tracking start for the pair we just forced to follow, using our affectedUID as the item to track.
+            // (We do this so that if another pair enacts the disable we still remove it.)
+            (SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
+            (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
+        }
+
+        // if the new state is disabled
+        if (newState is NewState.Disabled)
+        {
+            // it doesn't madder who the enactor was, we should halt tracking for any progress made once that pair is disabled.
+            (SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
+            (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
+        }
+    }
+
+    private void ClientHardcoreEmoteStateChanged(string enactorUID, NewState newState)
+    {
+/*        Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LoggerType.AchievementInfo);
+        // client will always be the affectedUID
+        var affectedUID = MainHub.UID;*/
+
+        // Nothing occurs here yet.
+    }
+
+    private void PairHardcoreEmoteChanged(string enactorUID, string affectedUID, NewState newState)
+    {
+        if (newState is NewState.Enabled)
+        {
+            (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+        }
+
+        if (newState is NewState.Disabled)
+        {
+            if((SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+        }
+    }
+
+    private void ClientHardcoreStayChanged(string enactorUID, NewState newState)
+    {
+        Logger.LogDebug("We just had another pair set our ForceStay to " + newState, LoggerType.AchievementInfo);
+        // client will always be the affectedUID
+        var affectedUID = MainHub.UID;
+
+        // and we have been ordered to start being forced to stay:
+        if (newState is NewState.Enabled)
+        {
+            (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+            (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+            (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+        }
+        else if(newState is NewState.Disabled)
+        {
+            if ((SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            if ((SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            if ((SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+        }
+    }
+
+    private void PairHardcoreStayChanged(string enactorUID, string affectedUID, NewState newState)
+    {
+        // Nothing currently.
+    }
+
+    private void ClientHardcoreBlindfoldChanged(string enactorUID, NewState newState)
+    {
+        Logger.LogDebug("We just had another pair set our ForceBlindfold to " + newState, LoggerType.AchievementInfo);
+        // client will always be the affectedUID
+        var affectedUID = MainHub.UID;
+
+        if (newState is NewState.Enabled)
+        {
+            // always check if walk of shame can be started.
+            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+
+            // Check for conditional task.
+            (SaveData.Achievements[Achievements.BlindLeadingTheBlind.Id] as ConditionalAchievement)?.CheckCompletion();
+
+            // Startup timed ones.
+            (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.StartTask();
+        }
+
+        if (newState is NewState.Disabled)
+        {
+            if ((SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
+                (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+        }
+    }
+
+    private void PairHardcoreBlindfoldChanged(string enactorUID, string affectedUID, NewState newState)
+    {
+        // Nothing currently.
+    }
+
     /// <summary>
-    /// For whenever a hardcore action begins or finishes on either the client or a pair of the client.
+    /// For whenever a hardcore action is enabled or disabled. This can come from client change or pair change, so look out for differences.
     /// </summary>
     /// <param name="actionKind"> The kind of hardcore action that was performed. </param>
     /// <param name="state"> If the hardcore action began or ended. </param>
     /// <param name="affectedPairUID"> who the target of the action is. </param>
     /// <param name="enactorUID"> Who Called the action. </param>
-    private void OnHardcoreForcedPairAction(HardcoreAction actionKind, NewState state, string enactorUID, string affectedPairUID)
+    private void OnHardcoreAction(InteractionType actionKind, NewState state, string enactorUID, string affectedPairUID)
     {
-        Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementEvents);
-        switch (actionKind)
+        Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementInfo);
+        
+        var affectedPairIsSelf = affectedPairUID == MainHub.UID;
+
+        if (actionKind is InteractionType.ForcedFollow)
         {
-            case HardcoreAction.ForcedFollow:
-                // if we are the enactor and the pair is the target:
-                if (enactorUID == MainHub.UID)
-                {
-                    Logger.LogDebug("We were the enactor for forced follow", LoggerType.AchievementEvents);
-                    // if the state is enabled, begin tracking the pair we forced.
-                    if (state is NewState.Enabled)
-                    {
-                        Logger.LogDebug("Forced Follow New State is Enabled", LoggerType.AchievementEvents);
-                        (SaveData.Achievements[Achievements.AllTheCollarsOfTheRainbow.Id] as ProgressAchievement)?.IncrementProgress();
-                        (SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StartTracking(affectedPairUID, affectedPairUID);
-                        (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StartTracking(affectedPairUID, affectedPairUID);
-                    }
-                }
-                // if the affected pair is not our clients UID and the action is disabling, stop tracking for anything we started. (can ignore the enactor)
-                if (affectedPairUID != MainHub.UID && state is NewState.Disabled)
-                {
-                    Logger.LogDebug("We were not the affected pair and the new state is disabled", LoggerType.AchievementEvents);
-                    (SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StopTracking(affectedPairUID, affectedPairUID);
-                    (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StopTracking(affectedPairUID, affectedPairUID);
-                }
-
-                // if the affected pair was us:
-                if (affectedPairUID == MainHub.UID)
-                {
-                    Logger.LogDebug("We were the affected pair", LoggerType.AchievementEvents);
-                    // Check in each state
-                    (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                    // if the new state is enabled, we should begin tracking the time required completion.
-                    if (state is NewState.Enabled)
-                    {
-                        Logger.LogDebug("Forced Follow New State is Enabled", LoggerType.AchievementEvents);
-                        (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                        (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                        (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                    }
-                    else // and if our state switches to disabled, we should halt the progression.
-                    {
-                        Logger.LogDebug("Forced Follow New State is Disabled", LoggerType.AchievementEvents);
-
-                        if ((SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                        if ((SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                        if ((SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                        (SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
-
-                    }
-                }
-                break;
-            case HardcoreAction.ForcedEmoteState:
-                // if we are the affected UID:
-                // TODO: This will probably break due to us not passing in the changed string on emoteID shift.
-                if (affectedPairUID == MainHub.UID)
-                {
-                    if (state is NewState.Enabled)
-                        (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                    if (state is NewState.Disabled)
-                        if ((SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                }
-                break;
-            case HardcoreAction.ForcedStay:
-                // if we are the affected UID:
-                if (affectedPairUID == MainHub.UID)
-                {
-                    // and we have been ordered to start being forced to stay:
-                    if (state is NewState.Enabled)
-                    {
-                        (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                        (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                        (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                    }
-                    else // our forced to stay has ended
-                    {
-                        if ((SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                        if ((SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                        if ((SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                    }
-                }
-                break;
-            case HardcoreAction.ForcedBlindfold:
-                // if we are the affected UID:
-                if (affectedPairUID == MainHub.UID)
-                {
-                    // Check in each state
-                    (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                    // if we have had our blindfold set to enabled by another pair, perform the following:
-                    if (state is NewState.Enabled)
-                    {
-                        (SaveData.Achievements[Achievements.BlindLeadingTheBlind.Id] as ConditionalAchievement)?.CheckCompletion();
-                        (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                    }
-                    // if another pair is removing our blindfold, perform the following:
-                    if (state is NewState.Disabled)
-                        if ((SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                            (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-                }
-                break;
+            if (affectedPairIsSelf) ClientHardcoreFollowChanged(enactorUID, state);
+            else PairHardcoreFollowChanged(enactorUID, affectedPairUID, state);
+        }
+        else if (actionKind is InteractionType.ForcedEmoteState)
+        {
+            if (affectedPairIsSelf) ClientHardcoreEmoteStateChanged(enactorUID, state);
+            else PairHardcoreEmoteChanged(enactorUID, affectedPairUID, state);
+        }
+        else if (actionKind is InteractionType.ForcedStay)
+        {
+            if (affectedPairIsSelf) ClientHardcoreStayChanged(enactorUID, state);
+            else PairHardcoreStayChanged(enactorUID, affectedPairUID, state);
+        }
+        else if (actionKind is InteractionType.ForcedBlindfold)
+        {
+            if (affectedPairIsSelf) ClientHardcoreBlindfoldChanged(enactorUID, state);
+            else PairHardcoreBlindfoldChanged(enactorUID, affectedPairUID, state);
         }
     }
 

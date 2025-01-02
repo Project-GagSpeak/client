@@ -135,7 +135,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
         WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
 
         // Default to open if the user desires for it to be open.
-        Toggle();
+        if(_configService.Current.OpenMainUiOnStartup) Toggle();
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);

@@ -415,8 +415,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].ApplyLightStorageData(dto);
     }
 
-
-
     /// <summary> Removes a user pair from the client's pair list.</summary>
     public void RemoveUserPair(UserDto dto)
     {

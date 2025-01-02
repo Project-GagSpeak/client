@@ -19,21 +19,28 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 3, 0)
+            .RegisterFeature("Added FAQ section in the account tab of the UI")
+            .RegisterQol("The DTR bar options function with the action notifiers correctly.")
+            .RegisterQol("The option to hide the main UI actually does something now.")
+            .RegisterQol("The privacy filter DTR only displays player characters now and not NPC's")
+            .RegisterBugfix("Fixed issue where PVP kills required a vibe AND restraint set.")
+            .RegisterBugfix("Hopefully fixed most hardcore achievements.");
         VersionEntry(1, 1, 2, 0)
             .RegisterMain("The Achievement System Issue/Bug Polish Update.")
-            .RegisterFeature("Achievement Data will no longer update if you are in ANY state where your data is not either fully loaded, or any issues occured during loading state.")
-            .RegisterFeature("Duration achievements now have a leeway gap to make sure if you lock something and the achievement doesnt register it until a second later, " +
+            .RegisterFeature("Achievement Data will no longer update if you are in ANY state where your data is not either fully loaded, or any issues occurred during loading state.")
+            .RegisterFeature("Duration achievements now have a leeway gap to make sure if you lock something and the achievement doesn't register it until a second later, " +
             "you wont run into issues with losing progress.")
             .RegisterFeature("Duration Achievement Progress on self is now checked upon each connection, and automatically rewarded if you met the milestone.")
             .RegisterQol("The progress bars now update in a more dynamic manner than by a percentage based increase based on the end milestone unit.")
             .RegisterQol("To ensure that Achievement Titles fit in kinkplates, the title 'I Can't Believe You've Done This' is now 'You've Done It Now'.")
-            .RegisterBugfix("Fixed issue where the pvp kill achievements did not require you to be restrainted before. But now they do.")
+            .RegisterBugfix("Fixed issue where the pvp kill achievements did not require you to be restrained before. But now they do.")
             .RegisterBugfix("Fixed the 'Escaping Isn't So Easy' achievement.")
             .RegisterBugfix("Hopefully fixed the forced follow movement change legacy issue for most.")
             .RegisterBugfix("Prevent Gags with empty slots from being considered a valid item to store.");
         VersionEntry(1, 1, 1, 2)
             .RegisterFeature("Quick HotFix to ensure that duration based achievements give a leeway gap for the achievement to trigger a success.")
-            .RegisterFeature("Working on deducing a perminant fix to the achievment bug is still in progress but wanted to get this out ASAP.");
+            .RegisterFeature("Working on deducing a permanent fix to the achievement bug is still in progress but wanted to get this out ASAP.");
         VersionEntry(1, 1, 1, 1)
             .RegisterFeature("When using /safeword or /safewordhardcore, you can provide a UID at the end of the command to isolate the revert function to a single pair.")
             .RegisterFeature("You can now adjust the opacity of the blindfold overlay.")

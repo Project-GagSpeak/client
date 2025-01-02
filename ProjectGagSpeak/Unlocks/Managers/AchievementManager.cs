@@ -515,7 +515,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _eventManager.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _eventManager.Subscribe<HardcoreAction, NewState, string, string>(UnlocksEvent.HardcoreForcedPairAction, OnHardcoreForcedPairAction);
+        _eventManager.Subscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _eventManager.Subscribe(UnlocksEvent.RemoteOpened, () => (SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Subscribe(UnlocksEvent.VibeRoomCreated, () => (SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
@@ -589,7 +589,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _eventManager.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _eventManager.Unsubscribe<HardcoreAction, NewState, string, string>(UnlocksEvent.HardcoreForcedPairAction, OnHardcoreForcedPairAction);
+        _eventManager.Unsubscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _eventManager.Unsubscribe(UnlocksEvent.RemoteOpened, () => (SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
         _eventManager.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());

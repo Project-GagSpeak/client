@@ -55,13 +55,13 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         {
             switch (msg.type)
             {
-                case HardcoreAction.ForcedFollow: UpdateForcedFollow(msg.State); break;
-                case HardcoreAction.ForcedEmoteState: UpdateForcedEmoteState(msg.State); break;
-                case HardcoreAction.ForcedStay: UpdateForcedStayState(msg.State); break;
-                case HardcoreAction.ForcedBlindfold: UpdateBlindfoldState(msg.State); break;
-                case HardcoreAction.ChatboxHiding: UpdateHideChatboxState(msg.State); break;
-                case HardcoreAction.ChatInputHiding: UpdateHideChatInputState(msg.State); break;
-                case HardcoreAction.ChatInputBlocking: UpdateChatInputBlocking(msg.State); break;
+                case InteractionType.ForcedFollow: UpdateForcedFollow(msg.State); break;
+                case InteractionType.ForcedEmoteState: UpdateForcedEmoteState(msg.State); break;
+                case InteractionType.ForcedStay: UpdateForcedStayState(msg.State); break;
+                case InteractionType.ForcedBlindfold: UpdateBlindfoldState(msg.State); break;
+                case InteractionType.ForcedChatVisibility: UpdateHideChatboxState(msg.State); break;
+                case InteractionType.ForcedChatInputVisibility: UpdateHideChatInputState(msg.State); break;
+                case InteractionType.ForcedChatInputBlock: UpdateChatInputBlocking(msg.State); break;
             }
         });
 
@@ -255,7 +255,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
 
     public void UpdateForcedStayState(NewState newState)
     {
-        Logger.LogDebug(newState is NewState.Enabled ? "Enabled" : "Disabled" + " forced stay for pair.", LoggerType.HardcoreMovement);
+        Logger.LogDebug("A pair has " + (newState is NewState.Enabled ? "Enabled" : "Disabled") + "forced stay for you.", LoggerType.HardcoreMovement);
         if (newState is NewState.Disabled)
         {
             // set it on client before getting change back from server.
@@ -266,7 +266,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     private async void UpdateBlindfoldState(NewState newState)
     {
         Logger.LogDebug(newState is NewState.Enabled
-            ? "Enabled forced blindfold for pair." : "Disabled forced blindfold for pair.", LoggerType.HardcoreMovement);
+            ? "Pair has Enabled forced blindfold." : "Pair has Disabled forced blindfold.", LoggerType.HardcoreMovement);
         if (newState is NewState.Enabled)
         {
             // apply blindfold.

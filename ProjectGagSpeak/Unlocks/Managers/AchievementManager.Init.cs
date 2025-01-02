@@ -318,9 +318,12 @@ public partial class AchievementManager
         SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
 
         // Time for Walkies achievements
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _playerData.GlobalPerms?.IsFollowing() ?? false, DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _playerData.GlobalPerms?.IsFollowing() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _playerData.GlobalPerms?.IsFollowing() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+            DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+            DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+            DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
 
         //Part of the Furniture - Be forced to sit for 1 hour or more
         SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _playerData.GlobalPerms?.IsSitting() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
@@ -345,11 +348,15 @@ public partial class AchievementManager
 
         SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.WhatAView, () => (_playerData.GlobalPerms?.IsBlindfolded() ?? false), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_playerData.GlobalPerms?.IsBlindfolded() ?? false), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_playerData.GlobalPerms?.IsBlindfolded() ?? false), 
+            DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_playerData.GlobalPerms?.IsStaying() ?? false), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+            DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+            DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
+        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+            DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
 
         // Shock-related achievements - Give out shocks
         SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.IndulgingSparks, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
@@ -440,22 +447,22 @@ public partial class AchievementManager
             return targetIsImmobile;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive), 
-            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientService.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+            (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 
         #region SECRETS MODULE

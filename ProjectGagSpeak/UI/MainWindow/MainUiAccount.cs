@@ -141,6 +141,13 @@ public class MainUiAccount : DisposableMediatorSubscriberBase
             });
 
             ImGui.AlignTextToFramePadding();
+            DrawAccountSettingChild(FontAwesomeIcon.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
+            {
+                try { Process.Start(new ProcessStartInfo { FileName = "https://docs.google.com/document/d/1nluBM2tsLzTrRdZEZN8FnpvOSPzdPrcH9R-SL78mJdA/edit?tab=t.0", UseShellExecute = true }); }
+                catch (Exception e) { Logger.LogError($"Failed to open the google doc. {e.Message}"); }
+            });
+
+            ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FontAwesomeIcon.Wrench, "Open Configs", "Opens the Plugin Config Folder", () =>
             {
                 try
