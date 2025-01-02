@@ -661,8 +661,7 @@ public partial class AchievementManager
                 (SaveData.Achievements[Achievements.EnduranceKing.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
                 (SaveData.Achievements[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
                 // motivation for restoration:
-                if ((SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted ?? false)
-                    (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+                (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
 
                 break;
         }
@@ -702,18 +701,12 @@ public partial class AchievementManager
         if (newState is NewState.Disabled)
         {
             // halt tracking for walk of shame if any requirements are no longer met.
-            if ((SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
 
             // halt any tracking on walkies achievement.
-            if ((SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-            if ((SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-            if ((SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.TimeForWalkies.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
 
             // halt progress on being bound throughout a duty if forcedFollow is disabled at any point.
             (SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -722,6 +715,7 @@ public partial class AchievementManager
 
     private void PairHardcoreFollowChanged(string enactorUID, string affectedUID, NewState newState)
     {
+        Logger.LogDebug("You have set a pairs forcedFollow to " + newState, LoggerType.AchievementInfo);
         // Check to see if we are the one toggling this or if it was someone else.
         var enactorWasSelf = enactorUID == MainHub.UID;
 
@@ -755,15 +749,10 @@ public partial class AchievementManager
 
     private void ClientHardcoreEmoteStateChanged(string enactorUID, NewState newState)
     {
-/*        Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LoggerType.AchievementInfo);
         // client will always be the affectedUID
-        var affectedUID = MainHub.UID;*/
+        var affectedUID = MainHub.UID;
 
-        // Nothing occurs here yet.
-    }
-
-    private void PairHardcoreEmoteChanged(string enactorUID, string affectedUID, NewState newState)
-    {
         if (newState is NewState.Enabled)
         {
             (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartTask();
@@ -771,9 +760,13 @@ public partial class AchievementManager
 
         if (newState is NewState.Disabled)
         {
-            if((SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
         }
+    }
+
+    private void PairHardcoreEmoteChanged(string enactorUID, string affectedUID, NewState newState)
+    {
+        // Nothing here currently.
     }
 
     private void ClientHardcoreStayChanged(string enactorUID, NewState newState)
@@ -791,14 +784,9 @@ public partial class AchievementManager
         }
         else if(newState is NewState.Disabled)
         {
-            if ((SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-            if ((SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-            if ((SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
         }
     }
 
@@ -827,8 +815,10 @@ public partial class AchievementManager
 
         if (newState is NewState.Disabled)
         {
-            if ((SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.StartPoint != DateTime.MinValue)
-                (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
+
+            // stop walk of shame since one of its requirements are not fulfilled.
+            (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.InterruptTask();
         }
     }
 

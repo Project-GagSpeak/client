@@ -348,7 +348,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         if (changeType is StateChangeType.MaterialValue)
             return;
 
-        if (_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+        if (_clientData.IsPlayerGagged is false && _clientData.IsPlayerBlindfolded is false && _clientConfigs.HasGlamourerAlterations is false)
             return;
 
 

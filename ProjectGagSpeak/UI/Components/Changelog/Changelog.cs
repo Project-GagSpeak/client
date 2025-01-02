@@ -19,6 +19,14 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 1, 3, 1)
+            .RegisterFeature("This whole time ive been handling movement controls with Forced follow wrong. It will now read your movement mode when it starts and cache it. " +
+            "Afterwards, it will update your movement only while cached, and restore it to the cached mode afterwards. Prior to this the framework updates were changing your " +
+            "Movement prior to it being cached so it was always being set to legacy and never reverting. This should no longer occur.")
+            .RegisterBugfix("Fixed issue where time required achievements were counting down instead of up.")
+            .RegisterBugfix("fixed issue that caused automatically stopped forced follows to not halt achievement timers.")
+            .RegisterBugfix("Fixed the issue where the 6 hour interval token refreshes could return invalid auth tokens while zoning. (Extremely rare edge case).")
+            .RegisterBugfix("Added a 2 second wait time after blindfold equips to account for mares 1st person update delays until they fix it.");
         VersionEntry(1, 1, 3, 0)
             .RegisterFeature("Added FAQ section in the account tab of the UI")
             .RegisterQol("The DTR bar options function with the action notifiers correctly.")

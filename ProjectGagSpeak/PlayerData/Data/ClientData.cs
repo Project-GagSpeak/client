@@ -57,6 +57,7 @@ public class ClientData : DisposableMediatorSubscriberBase
     public bool IpcDataNull => LastIpcData is null;
     private bool CustomizeNull => CustomizeProfiles is null || CustomizeProfiles.Count == 0;
     public bool IsPlayerGagged => AppearanceData?.GagSlots.Any(x => x.GagType != GagType.None.GagName()) ?? false;
+    public bool IsPlayerBlindfolded => GlobalPerms?.IsBlindfolded() ?? false;
     public int TotalGagsEquipped => AppearanceData?.GagSlots.Count(x => x.GagType != GagType.None.GagName()) ?? 0;
 
     public bool AnyGagActive => AppearanceData?.GagSlots.Any(x => x.GagType != GagType.None.GagName()) ?? false;
@@ -134,17 +135,16 @@ public class ClientData : DisposableMediatorSubscriberBase
         // Handle how we log and output the events / achievement sends.
         var newState = string.IsNullOrEmpty((string)newValue) ? NewState.Disabled : NewState.Enabled;
         var permName = hardcoreChangeType is InteractionType.None ? propertyName : hardcoreChangeType.ToString();
-        HandleHardcorePermUpdate(hardcoreChangeType, enactorPair, permName, newState);
+        HandleHardcorePermUpdate(hardcoreChangeType, enactorPair, changeDto.Enactor.UID, permName, newState);
     }
 
-    private void HandleHardcorePermUpdate(InteractionType hardcoreChangeType, Pair? enactor, string permissionName, NewState newState)
+    private void HandleHardcorePermUpdate(InteractionType hardcoreChangeType, Pair? enactor, string enactorUid, string permissionName, NewState newState)
     {
         // log the information regardless.
         Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + newState, LoggerType.PairManagement);
 
         // determine the names going into the event messages.
-        var enactorNickAliasUid = enactor?.GetNickAliasOrUid() ?? "Client";
-        var enactorUid = enactor?.UserData.UID ?? MainHub.UID;
+        var enactorNickAliasUid = enactor?.GetNickAliasOrUid() ?? enactorUid;
 
         // if the changeType is none, that means it was not a hardcore change, so we can log the generic event message and return.
         if (hardcoreChangeType is InteractionType.None)
@@ -158,8 +158,6 @@ public class ClientData : DisposableMediatorSubscriberBase
         Mediator.Publish(new EventMessage(new(enactorNickAliasUid, enactorUid, hardcoreChangeType, "Hardcore Action (" + hardcoreChangeType + ") is now " + newState)));
         Mediator.Publish(new HardcoreActionMessage(hardcoreChangeType, newState));
 
-        // if the enactor is not null, we should send it off to the achievement manager.
-        if (enactor is not null)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, enactor.UserData.UID, MainHub.UID);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, enactorUid, MainHub.UID);
     }
 }

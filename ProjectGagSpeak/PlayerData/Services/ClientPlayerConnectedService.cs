@@ -95,7 +95,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         PublishLatestActiveItems();
 
         // recalc if we have any alterations.
-        if (_playerData.IsPlayerGagged || _clientConfigs.HasGlamourerAlterations)
+        if (_playerData.IsPlayerGagged || _playerData.IsPlayerBlindfolded || _clientConfigs.HasGlamourerAlterations)
             await _appearanceHandler.RecalcAndReload(true);
     }
 

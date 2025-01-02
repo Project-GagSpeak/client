@@ -159,10 +159,11 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         // FORCED FOLLOW LOGIC: Keep player following until idle for 6 seconds.
         if (_handler.MonitorFollowLogic)
         {
-            // Ensure our movement and unfollow hooks are active.
-            if (!GameConfig.UiControl.GetBool("MoveMode"))
+            // If cached movement mode was standard and our current setting is standard, set it to legacy.
+            if (_handler.CachedMovementMode is MovementMode.Standard && GameConfig.UiControl.GetBool("MoveMode") is false)
                 GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy);
 
+            // Enable unfollow hook.
             _MoveController.EnableUnfollowHook();
 
             // Do not account for auto-disable logic if our Offset is .MinValue.
@@ -288,7 +289,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             _MoveController.DisableMouseAutoMoveHook();
 
         // BLINDFOLDED STATE - Force Lock First Person if desired.
-        if (_clientConfigs.GagspeakConfig.ForceLockFirstPerson && _handler.IsBlindfolded)
+        if (_clientConfigs.GagspeakConfig.ForceLockFirstPerson && _handler.MonitorBlindfoldLogic)
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;

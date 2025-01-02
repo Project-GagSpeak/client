@@ -19,7 +19,7 @@ public enum CameraControlType {
 public enum MovementMode {
     Standard = 0,
     Legacy = 1,
-    Count
+    NotSet = 2
 }
 
 // This is ripped off hybrid camera for the use of this functionality to work with /follow and blindfold restrictions

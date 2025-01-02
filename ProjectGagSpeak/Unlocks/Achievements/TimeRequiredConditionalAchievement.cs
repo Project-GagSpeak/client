@@ -66,7 +66,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         if(StartPoint == DateTime.MinValue)
             return PrefixText + " 0s / " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
 
-        var elapsed = MilestoneDuration - (StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero);
+        var elapsed = StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero;
         string outputStr = "";
         if (elapsed == TimeSpan.Zero)
         {
@@ -85,6 +85,9 @@ public class TimeRequiredConditionalAchievement : AchievementBase
 
     public override void CheckCompletion()
     {
+        if (TaskStarted is false)
+            return;
+
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
