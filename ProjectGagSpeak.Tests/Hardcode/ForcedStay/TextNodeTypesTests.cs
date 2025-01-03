@@ -313,5 +313,41 @@ public class ConcreteNodeConverterTests
             var folderNodeNested = (TextFolderNode)folderNode.Children[0];
             Assert.IsType<TextEntryNode>(folderNodeNested.Children[0]);
         }
+        
+        [Fact]
+        void GivenAnOutdatedJsonTextFolder_WhenReadJsonIsCalled_ThenItShouldReturnATextFolderNode()
+        {
+            // Arrange
+            var json = """
+                       {
+                           "Enabled": true,
+                           "FriendlyName": "ForcedDeclineList",
+                           "TargetRestricted": false,
+                           "TargetNodeName": "",
+                           "Children": [
+                               {
+                                   "Enabled": true,
+                                   "FriendlyName": "[ForcedStay] Prevent Apartment Leaving",
+                                   "TargetRestricted": true,
+                                   "TargetNodeName": "Exit",
+                                   "TargetNodeLabel": "",
+                                   "TargetNodeLabelIsRegex": false,
+                                   "SelectedOptionText": "Cancel"
+                               }
+                           ]
+                       }
+                       """;
+            var sut = new ConcreteNodeConverter();
+            var serializer = new JsonSerializer();
+            var jsonReader = new JsonTextReader(new StringReader(json));
+
+            // Act
+            var res = sut.ReadJson(jsonReader, typeof(string), null, serializer);
+
+            // Expect
+            Assert.IsType<TextFolderNode>(res);
+            var folderNode = (TextFolderNode)res;
+            Assert.IsType<TextEntryNode>(folderNode.Children[0]);
+        }
     }
 }
