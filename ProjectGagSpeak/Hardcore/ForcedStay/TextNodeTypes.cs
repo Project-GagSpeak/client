@@ -300,11 +300,11 @@ public class ConcreteNodeConverter : JsonConverter
         {
             return CreateObject<TextEntryNode>(jObject, serializer);
         }
-        else if (jType == SimpleName(typeof(ChambersTextNode)))
+        if (jType == SimpleName(typeof(ChambersTextNode)))
         {
             return CreateObject<ChambersTextNode>(jObject, serializer);
         }
-        else if (jType == SimpleName(typeof(TextFolderNode)))
+        if (jType == SimpleName(typeof(TextFolderNode)))
         {
             return CreateObject<TextFolderNode>(jObject, serializer);
         }
@@ -313,10 +313,8 @@ public class ConcreteNodeConverter : JsonConverter
         {
             return CreateObject<TextFolderNode>(jObject, serializer);
         }
-        else
-        {
-            return CreateObject<TextEntryNode>(jObject, serializer);
-        }
+        
+        return CreateObject<TextEntryNode>(jObject, serializer);
     }
 
     public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
