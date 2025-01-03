@@ -127,6 +127,7 @@ public class ChambersTextNode : ITextNode
     public int ChamberListIdx { get; set; } = 0;
 }
 
+[Serializable]
 public class TextFolderNode : ITextNode
 {
     public bool Enabled { get; set; } = true;
@@ -287,12 +288,13 @@ public class ConcreteNodeConverter : JsonConverter
 
     public override bool CanWrite => true;
 
-    public override bool CanConvert(Type objectType) => objectType == typeof(ITextNode);
+    public override bool CanConvert(Type objectType) => objectType.IsAssignableTo(typeof(ITextNode));
 
     public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         var jObject = JObject.Load(reader);
-        var jType = jObject["$type"]!.Value<string>();
+        // Needs to be optional for backwards compatibility
+        var jType = jObject["$type"]?.Value<string>();
 
         if (jType == SimpleName(typeof(TextEntryNode)))
         {
@@ -302,7 +304,6 @@ public class ConcreteNodeConverter : JsonConverter
         {
             return CreateObject<ChambersTextNode>(jObject, serializer);
         }
-
         else if (jType == SimpleName(typeof(TextFolderNode)))
         {
             return CreateObject<TextFolderNode>(jObject, serializer);
