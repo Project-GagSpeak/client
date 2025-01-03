@@ -684,7 +684,7 @@ namespace GagSpeak.Localization
         public readonly string MoodlesActive = Loc.Localize("MainOptions_MoodlesActive", "Moodles Integration");
         public readonly string MoodlesActiveTT = Loc.Localize("MainOptions_MoodlesActiveTT", "Enables Moodles integration and functionality.");
 
-        public readonly string RevertSelectionLabel = Loc.Localize("MainOptions_RevertSelectionLabel", "On Safeword/Restraint Removal/Gag Removal:");
+        public readonly string RevertSelectionLabel = Loc.Localize("MainOptions_RevertSelectionLabel", "On Safeword & Restraint/Gag Removal:");
 
         public readonly string PuppeteerActive = Loc.Localize("MainOptions_PuppeteerActive", "Puppeteer Features");
         public readonly string PuppeteerActiveTT = Loc.Localize("MainOptions_PuppeteerActiveTT", "Enables Puppeteer functionality.");
@@ -712,8 +712,8 @@ namespace GagSpeak.Localization
         public readonly string ToyboxActiveTT = Loc.Localize("MainOptions_ToyboxActiveTT", "Enables Toybox functionality.");
 
         public readonly string IntifaceAutoConnect = Loc.Localize("MainOptions_IntifaceAutoConnect", "Auto-Connect to Intiface");
-        public readonly string IntifaceAutoConnectTT = Loc.Localize("MainOptions_IntifaceAutoConnectTT", "Automatically connect to the Intiface Desktop App when GagSpeak starts.");
-
+        public readonly string IntifaceAutoConnectTT = Loc.Localize("MainOptions_IntifaceAutoConnectTT", "Automatically connect to Intiface Central when GagSpeak starts.");
+        
         public readonly string IntifaceAddressTT = Loc.Localize("MainOptions_IntifaceAddressTT", "Set a custom Intiface server address." +
             "--SEP--Leave blank to use the default Intiface server address.");
 
@@ -753,10 +753,10 @@ namespace GagSpeak.Localization
         public readonly string BlindfoldFirstPersonTT = Loc.Localize("Hardcore_BlindfoldFirstPersonTT", "Forces you into first-person perspective when blindfolded.");
 
         public readonly string BlindfoldType = Loc.Localize("Hardcore_BlindfoldType", "Lace Style");
-        public readonly string BlindfoldTypeTT = Loc.Localize("Hardcore_BlindfoldTypeTT", "Select the type of blindfold you wish to use.");
+        public readonly string BlindfoldTypeTT = Loc.Localize("Hardcore_BlindfoldTypeTT", "Select the style of blindfold to use.");
 
         public readonly string BlindfoldOpacity = Loc.Localize("Hardcore_BlindfoldOpacity", "Opacity");
-        public readonly string BlindfoldOpacityTT = Loc.Localize("Hardcore_BlindfoldOpacityTT", "Set the opacity of the blindfold to account for variance in monitor displays.");
+        public readonly string BlindfoldOpacityTT = Loc.Localize("Hardcore_BlindfoldOpacityTT", "Adjust the blindfold's opacity to increase or decrease visibility.");
 
         public readonly string AddNodeLastSeenTT = Loc.Localize("Hardcore_AddNodeLastSeenTT", "Add last interacted node to list." +
             "--SEP--Note: Auto-selecting yes is not an allowed option");
@@ -806,7 +806,7 @@ namespace GagSpeak.Localization
         public readonly string EnterFCTwoName = Loc.Localize("ForcedStay_EnterFCTwoName", "Entrance to Additional Chambers");
 
         public readonly string EnterFCThreeFriendly = Loc.Localize("ForcedStay_EnterFCThreeFriendly", "[ForcedStay] Enter Selected Chamber (3/3)");
-        public readonly string EnterFCThreeName = Loc.Localize("ForcedStay_EnterFCThreeName", "Apartment Building Entrance");
+        public readonly string EnterFCThreeName = Loc.Localize("ForcedStay_EnterFCThreeName", "Entrance to Additional Chambers");
         public readonly string EnterFCThreeLabel = Loc.Localize("ForcedStay_EnterFCThreeLabel", @"/^Enter .+?'s room\\?$/");
         public readonly string EnterFCThreeOption = Loc.Localize("ForcedStay_EnterFCThreeOption", "Yes");
     }
@@ -821,8 +821,8 @@ namespace GagSpeak.Localization
         // UI Preferences Section
         public readonly string HeaderUiPrefs = Loc.Localize("Preferences_HeaderUiPrefs", "User Interface");
 
-        public readonly string ShowMainUiOnStartLabel = Loc.Localize("Preferences_ShowMainUiOnStartLabel", "Open the Main Window UI upon plugin startup.");
-        public readonly string ShowMainUiOnStartTT = Loc.Localize("Preferences_ShowMainUiOnStartTT", "Determines if the Main UI will open upon plugin startup or not.");
+        public readonly string ShowMainUiOnStartLabel = Loc.Localize("Preferences_ShowMainUiOnStartLabel", "Open GagSpeak on start-up");
+        public readonly string ShowMainUiOnStartTT = Loc.Localize("Preferences_ShowMainUiOnStartTT", "Automatically opens the GagSpeak window upon logging in.");
 
         public readonly string EnableDtrLabel = Loc.Localize("Preferences_EnableDtrEntryLabel", "Display status and visible pair count in Server Info Bar");
         public readonly string EnableDtrTT = Loc.Localize("Preferences_EnableDtrEntryTT", "Adds GagSpeak connection status and visible pair count to the Server Info Bar.");
