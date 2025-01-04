@@ -935,7 +935,17 @@ public partial class AchievementManager
 
             case 231:
                 if (emoteCallerObj.ObjectIndex is 0)
+                {
                     (SaveData.Achievements[Achievements.QuietNowDear.Id] as ConditionalAchievement)?.CheckCompletion();
+                }
+                else if (emoteCallerObj.ObjectIndex is not 0 && targetObject.ObjectIndex is 0)
+                {
+                    (SaveData.Achievements[Achievements.SilenceOfShame.Id] as ConditionalAchievement)?.CheckCompletion();
+                }
+                else
+                {
+                    break;
+                }
                 break;
 
         }
