@@ -4,6 +4,7 @@ using GagSpeak.Hardcore;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.UI;
+using Newtonsoft.Json.Converters;
 
 namespace GagSpeak.GagspeakConfiguration.Configurations;
 
@@ -73,6 +74,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public BlindfoldType BlindfoldStyle { get; set; } = BlindfoldType.Sensual; // Blindfold Format
     public bool ForceLockFirstPerson { get; set; } = false; // Force First-Person state while blindfolded.
     public float BlindfoldOpacity { get; set; } = 1.0f; // Blindfold Opacity
+    [JsonConverter(typeof(ConcreteNodeConverter))]
     public TextFolderNode ForcedStayPromptList { get; private set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 }
