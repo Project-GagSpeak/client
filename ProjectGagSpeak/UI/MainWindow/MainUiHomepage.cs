@@ -33,7 +33,8 @@ public class MainUiHomepage
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
-    public MainUiHomepage(GagspeakMediator mediator, ClientMonitorService client, OnFrameworkService framework, UiSharedService uiSharedService)
+    public MainUiHomepage(GagspeakMediator mediator, ClientMonitorService client, 
+        OnFrameworkService framework, UiSharedService uiSharedService)
     {
         _mediator = mediator;
         _client = client;

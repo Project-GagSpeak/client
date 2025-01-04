@@ -153,9 +153,6 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="UI\Components\Combos\ExperimentalCombos\" />
-    </ItemGroup>
 </Project>
 
 

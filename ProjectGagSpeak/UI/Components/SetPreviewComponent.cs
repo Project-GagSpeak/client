@@ -1,9 +1,11 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Struct;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
@@ -35,6 +37,7 @@ public class SetPreviewComponent
     // A temp storage container for the currently previewed restraint set.
     // Useful for loading in light restraint data without constantly resolving the item on every drawFrame.
     private Dictionary<EquipSlot, EquipItem> CachedPreview = new();
+    private EquipItem CachedAppliedSlotItem = ItemIdVars.NothingItem(EquipSlot.MainHand);
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
@@ -53,6 +56,13 @@ public class SetPreviewComponent
         ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + offsetX, ImGui.GetCursorPosY() + offsetY));
 
         DrawRestraintSetDisplay(set);
+    }
+
+    public void DrawAppliedSlot(AppliedSlot appliedSlot)
+    {
+        // update the cached slot item with the applied slot item.
+        CachedAppliedSlotItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+        CachedAppliedSlotItem.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
     }
 
     public void DrawRestraintOnHover(RestraintSet set)

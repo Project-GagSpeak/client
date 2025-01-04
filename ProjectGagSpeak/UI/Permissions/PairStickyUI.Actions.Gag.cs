@@ -21,15 +21,24 @@ namespace GagSpeak.UI.Permissions;
 /// </summary>
 public partial class PairStickyUI
 {
+    public void DrawGagLayerSelection(float comboWidth, string pairAliasUID)
+    {
+        using (var gagLayerGroup = ImRaii.Group())
+        {
+            ImGui.SetNextItemWidth(comboWidth);
+            ImGui.Combo("##GagLayerSelection", ref _gagLayer, new string[] { "Layer 1", "Layer 2", "Layer 3" }, 3);
+            UiSharedService.AttachToolTip("Select the layer to apply a Gag to.");
+        }
+    }
+
     private void DrawGagActions()
     {
-        if(StickyPair.LastAppearanceData == null) 
+        if(StickyPair.LastAppearanceData is null) 
             return;
-        // draw the layer
-        _permActions.DrawGagLayerSelection(ImGui.GetContentRegionAvail().X, StickyPair.UserData.UID);
 
-        var gagSlot = StickyPair.LastAppearanceData.GagSlots[_permActions.GagLayer];
+        DrawGagLayerSelection(ImGui.GetContentRegionAvail().X, StickyPair.UserData.UID);
 
+        var gagSlot = StickyPair.LastAppearanceData.GagSlots[_gagLayer];
 
         bool disableLocking = gagSlot.GagType.ToGagType() is GagType.None;
         bool disableUnlocking = gagSlot.Padlock.ToPadlock() is Padlocks.None;
@@ -39,56 +48,24 @@ public partial class PairStickyUI
         ////////// APPLY GAG //////////
         string DisplayGagText = !disableLocking ? "A " + gagSlot.GagType + " is applied." : "Apply a Gag to " + PairNickOrAliasOrUID;
         if (_uiShared.IconTextButton(FontAwesomeIcon.CommentDots, DisplayGagText, WindowMenuWidth, true, disableApplying))
-        {
             Opened = Opened == InteractionType.ApplyGag ? InteractionType.None : InteractionType.ApplyGag;
-        }
         UiSharedService.AttachToolTip("Apply a Gag to " + PairUID + ". Click to view options.");
 
         if (Opened is InteractionType.ApplyGag)
         {
-            using (var actionChild = ImRaii.Child("GagApplyChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
-            {
-                if (!actionChild) return;
-                GagType selected = _permActions.GetSelectedItem<GagType>("ApplyGagForPairPermCombo", StickyPair.UserData.UID);
-
-                _permActions.DrawGenericComboButton(StickyPair.UserData.UID, "ApplyGagForPairPermCombo", "Apply Gag",
-                WindowMenuWidth, Enum.GetValues<GagType>(), (gag) => gag.GagName(), true, selected == GagType.None, false, GagType.None,
-                FontAwesomeIcon.None, ImGuiComboFlags.None, (selected) => { _logger.LogDebug("Selected Gag: " + selected, LoggerType.Permissions); },
-                (onButtonPress) =>
-                {
-                    try
-                    {
-                        var newAppearance = StickyPair.LastAppearanceData.DeepClone();
-                        if (newAppearance == null) throw new Exception("Appearance data is null, not sending");
-
-                        newAppearance.GagSlots[_permActions.GagLayer].GagType = onButtonPress.GagName();
-                        _ = _apiHubMain.UserPushPairDataAppearanceUpdate(
-                            new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)_permActions.GagLayer, GagUpdateType.GagApplied, newAppearance.GagSlots[_permActions.GagLayer].Padlock.ToPadlock(), UpdateDir.Other));
-
-                        _logger.LogDebug("Applying Selected Gag "+onButtonPress.GagName()+" to "+StickyPair.UserData.AliasOrUID, LoggerType.Permissions);
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, onButtonPress);
-                        Opened = InteractionType.None;
-                    }
-                    catch (Exception e) { _logger.LogError("Failed to push updated appearance data: " + e.Message); }
-                });
-            }
+            using (ImRaii.Child("###GagApplyChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
+                _pairGagComboButton[_gagLayer].DrawCombo("##ApplyGagCombo-" + _gagLayer, "Select a Gag to apply", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
         ////////// LOCK GAG //////////
         string DisplayText = disableUnlocking ? "Lock "+PairNickOrAliasOrUID+"'s Gag" : "Locked with a " + gagSlot.Padlock;
-        string tooltipText = disableUnlocking
-            ? "Locks the Gag on " + PairNickOrAliasOrUID+ ". Click to view options."
-            : "This Gag is locked with a " + gagSlot.Padlock;
-        using (var color = ImRaii.PushColor(ImGuiCol.Text, disableUnlocking ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow))
-        {
+        string tooltipText = disableUnlocking ? "Locks the Gag on " + PairNickOrAliasOrUID+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
+        using (ImRaii.PushColor(ImGuiCol.Text, disableUnlocking ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow))
             if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, DisplayText, WindowMenuWidth, true, disableLocking || (!disableLocking && !disableUnlocking) || !PairPerms.GagFeatures))
-            {
                 Opened = Opened == InteractionType.LockGag ? InteractionType.None : InteractionType.LockGag;
-            }
-        }
         UiSharedService.AttachToolTip(tooltipText + ((!disableUnlocking && GenericHelpers.TimerPadlocks.Contains(gagSlot.Padlock))
-            ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(gagSlot.Timer) : ""), color: ImGuiColors.ParsedPink);
+            ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(gagSlot.Timer) : ""), color : ImGuiColors.ParsedPink);
 
         if (Opened is InteractionType.LockGag)
         {

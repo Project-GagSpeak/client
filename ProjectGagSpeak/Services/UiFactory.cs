@@ -42,6 +42,7 @@ public class UiFactory
     private readonly OnFrameworkService _frameworkUtils;
     private readonly PermissionPresetService _presetService;
     private readonly PermActionsComponents _permActionHelpers;
+    private readonly SetPreviewComponent _previews;
     private readonly TextureService _textures;
     private readonly ToyboxRemoteService _remoteService;
     private readonly UiSharedService _uiShared;
@@ -58,9 +59,9 @@ public class UiFactory
         ClientData playerManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
         KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, MoodlesService moodlesService, 
         OnFrameworkService frameworkUtils, PermissionPresetService presetService, 
-        PermActionsComponents permActionHelpers, TextureService textures, ToyboxRemoteService remoteService, 
-        UiSharedService uiShared, VibratorService vibeService, TutorialService guides, MainHub apiHubMain,
-        ToyboxHub apiHubToybox)
+        PermActionsComponents permActionHelpers, SetPreviewComponent setPreviews,
+        TextureService textures, ToyboxRemoteService remoteService, UiSharedService uiShared, 
+        VibratorService vibeService, TutorialService guides, MainHub apiHubMain, ToyboxHub apiHubToybox)
     {
         _loggerFactory = loggerFactory;
         _gagspeakMediator = gagspeakMediator;
@@ -78,6 +79,7 @@ public class UiFactory
         _frameworkUtils = frameworkUtils;
         _presetService = presetService;
         _permActionHelpers = permActionHelpers;
+        _previews = setPreviews;
         _textures = textures;
         _remoteService = remoteService;
         _uiShared = uiShared;
@@ -110,7 +112,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _gagspeakMediator, pair,
-            drawType, _displayHandler, _apiHubMain, _playerManager, _permActionHelpers, _shockProvider,
+            drawType, _previews, _apiHubMain, _playerManager, _permActionHelpers, _shockProvider,
             _pairManager, _clientConfigs, _clientService, _moodlesService, _presetService, _uiShared);
     }
 }

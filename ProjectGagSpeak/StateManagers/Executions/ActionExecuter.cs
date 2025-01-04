@@ -1,7 +1,5 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.InterfaceConverters;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
@@ -31,7 +29,7 @@ public sealed class ActionExecutor
 
     public ActionExecutor(ILogger<ActionExecutor> logger, ClientData playerData,
         AppearanceManager appearanceManager, PairManager pairs,
-        ClientConfigurationManager clientConfigs, IpcCallerMoodles moodlesIpc, 
+        ClientConfigurationManager clientConfigs, IpcCallerMoodles moodlesIpc,
         VibratorService vibeService)
     {
         _logger = logger;
@@ -94,7 +92,7 @@ public sealed class ActionExecutor
         var motions = false;
         var all = false;
         // if performer is self, use global perms, otherwise, use pair perms.
-        if(performerUID == MainHub.UID)
+        if (performerUID == MainHub.UID)
         {
             sits = _playerData.GlobalPerms?.GlobalAllowSitRequests ?? false;
             motions = _playerData.GlobalPerms?.GlobalAllowMotionRequests ?? false;

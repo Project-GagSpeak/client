@@ -10,7 +10,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
     public Func<bool> RequiredCondition;
     public DurationTimeUnit TimeUnit { get; init; }
     private CancellationTokenSource _cancellationTokenSource;
-    public bool TaskStarted = false;
+    public bool TaskStarted => StartPoint != DateTime.MinValue;
 
     public TimeRequiredConditionalAchievement(AchievementModuleKind module, AchievementInfo infoBase, TimeSpan dur, Func<bool> cond, 
         Action<int, string> onCompleted, DurationTimeUnit unit, string prefix = "", string suffix = "", bool isSecret = false) 
@@ -85,15 +85,12 @@ public class TimeRequiredConditionalAchievement : AchievementBase
 
     public override void CheckCompletion()
     {
-        if (TaskStarted is false)
-            return;
-
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
         if (RequiredCondition())
         {
-            if (StartPoint != DateTime.MinValue && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
+            if (TaskStarted && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
                 CompleteTask();
         }
         else
@@ -113,7 +110,6 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         {
             UnlocksEventManager.AchievementLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LoggerType.AchievementInfo);
             StartPoint = DateTime.UtcNow;
-            TaskStarted = true;
             StartTimer();
         }
     }
@@ -125,7 +121,6 @@ public class TimeRequiredConditionalAchievement : AchievementBase
             return;
 
         UnlocksEventManager.AchievementLogger.LogTrace($"Interrupting task for {Title}.", LoggerType.AchievementInfo);
-        TaskStarted = false;
         ResetTask();
     }
 
@@ -135,7 +130,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         UnlocksEventManager.AchievementLogger.LogTrace($"Time and condition met for {Title}. Marking as completed.", LoggerType.AchievementInfo);
         MarkCompleted();
         _cancellationTokenSource?.Cancel();
-        TaskStarted = false;
+        StartPoint = DateTime.MinValue;
     }
 
     // Starts the timer task
@@ -165,7 +160,6 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         UnlocksEventManager.AchievementLogger.LogTrace($"Did not keep active for the required time for {Title}. Resetting task.", LoggerType.AchievementInfo);
         StartPoint = DateTime.MinValue;
         _cancellationTokenSource?.Cancel();
-        TaskStarted = false;
     }
 
     public override AchievementType GetAchievementType() => AchievementType.RequiredTimeConditional;

@@ -1,6 +1,4 @@
 using Buttplug.Client;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.InterfaceConverters;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Data;
@@ -115,7 +113,7 @@ public class DeviceService : DisposableMediatorSubscriberBase
             if (IndexInDeviceListToRemove > -1)
             {
                 // log the removal and remove it
-                Logger.LogInformation($"Device "+Devices[IndexInDeviceListToRemove]+" removed from device list.", LoggerType.ToyboxDevices);
+                Logger.LogInformation($"Device " + Devices[IndexInDeviceListToRemove] + " removed from device list.", LoggerType.ToyboxDevices);
                 // create shallow copy
                 ConnectedDevice device2 = Devices[IndexInDeviceListToRemove];
                 // remove from list
@@ -128,7 +126,7 @@ public class DeviceService : DisposableMediatorSubscriberBase
         }
         catch (Exception ex)
         {
-            Logger.LogError($"Error removing device from device list. "+ex.Message, LoggerType.ToyboxDevices);
+            Logger.LogError($"Error removing device from device list. " + ex.Message, LoggerType.ToyboxDevices);
         }
     }
 
@@ -276,10 +274,10 @@ public class DeviceService : DisposableMediatorSubscriberBase
         {
             // wait for 60 seconds. The longer between checks, the better on a toys battery life.
             await Task.Delay(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
-            
+
             // log that we are checking the client health state
             Logger.LogTrace("Scheduled Battery Check on connected devices", LoggerType.ToyboxDevices);
-            
+
             // if we need to reconnect, break out of the loop
             if (!ConnectedToIntiface) break;
             // we can perform the check, so fetch battery from all devices
