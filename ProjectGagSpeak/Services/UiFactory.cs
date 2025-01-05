@@ -9,6 +9,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UI;
 using GagSpeak.UI.Components;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.UI.Permissions;
 using GagSpeak.UI.Profile;
@@ -25,13 +26,14 @@ public class UiFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _gagspeakMediator;
     private readonly PiShockProvider _shockProvider;
+    private readonly PairCombos _pairCombos;
 
     // Managers
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly GagManager _gagManager;
     private readonly PairManager _pairManager;
-    private readonly ClientData _playerManager;
+    private readonly ClientData _clientData;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -41,7 +43,6 @@ public class UiFactory
     private readonly MoodlesService _moodlesService;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly PermissionPresetService _presetService;
-    private readonly PermActionsComponents _permActionHelpers;
     private readonly SetPreviewComponent _previews;
     private readonly TextureService _textures;
     private readonly ToyboxRemoteService _remoteService;
@@ -54,23 +55,24 @@ public class UiFactory
     private readonly ToyboxHub _apiHubToybox;
 
     public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
-        PiShockProvider shockProvider, ClientConfigurationManager clientConfigs, 
-        ClientMonitorService clientService, GagManager gagManager, PairManager pairManager, 
-        ClientData playerManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
-        KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, MoodlesService moodlesService, 
-        OnFrameworkService frameworkUtils, PermissionPresetService presetService, 
-        PermActionsComponents permActionHelpers, SetPreviewComponent setPreviews,
+        PiShockProvider shockProvider, ClientData clientData, ClientMonitorService clientService, 
+        GagManager gagManager, PairManager pairManager, CosmeticService cosmetics, 
+        IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, 
+        MoodlesService moodlesService, OnFrameworkService frameworkUtils, PairCombos pairCombos,
+        PermissionPresetService presetService, SetPreviewComponent setPreviews, 
         TextureService textures, ToyboxRemoteService remoteService, UiSharedService uiShared, 
         VibratorService vibeService, TutorialService guides, MainHub apiHubMain, ToyboxHub apiHubToybox)
     {
         _loggerFactory = loggerFactory;
         _gagspeakMediator = gagspeakMediator;
         _shockProvider = shockProvider;
-        _clientConfigs = clientConfigs;
+        _pairCombos = pairCombos;
+
         _clientService = clientService;
         _gagManager = gagManager;
         _pairManager = pairManager;
-        _playerManager = playerManager;
+        _clientData = clientData;
+
         _cosmetics = cosmetics;
         _displayHandler = displayHandler;
         _kinkPlateLight = kinkPlateLight;
@@ -78,13 +80,13 @@ public class UiFactory
         _moodlesService = moodlesService;
         _frameworkUtils = frameworkUtils;
         _presetService = presetService;
-        _permActionHelpers = permActionHelpers;
         _previews = setPreviews;
         _textures = textures;
         _remoteService = remoteService;
         _uiShared = uiShared;
         _vibeService = vibeService;
         _guides = guides;
+
         _apiHubMain = apiHubMain;
         _apiHubToybox = apiHubToybox;
     }
@@ -92,7 +94,7 @@ public class UiFactory
     public RemoteController CreateControllerRemote(PrivateRoom privateRoom)
     {
         return new RemoteController(_loggerFactory.CreateLogger<RemoteController>(), _gagspeakMediator,
-            _apiHubToybox, _playerManager, _gagManager, _uiShared, _vibeService, _remoteService, 
+            _apiHubToybox, _clientData, _gagManager, _uiShared, _vibeService, _remoteService, 
             _guides, privateRoom);
     }
 
@@ -112,7 +114,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _gagspeakMediator, pair,
-            drawType, _previews, _apiHubMain, _playerManager, _permActionHelpers, _shockProvider,
-            _pairManager, _clientConfigs, _clientService, _moodlesService, _presetService, _uiShared);
+            drawType, _previews, _apiHubMain, _clientData, _pairCombos, _shockProvider,
+            _pairManager, _clientService, _moodlesService, _presetService, _uiShared);
     }
 }

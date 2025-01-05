@@ -21,11 +21,11 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
         _uiSharedService = uiSharedService;
         SizeConstraints = new()
         {
-            MinimumSize = new(550, 300),
-            MaximumSize = new(550, 450)
+            MinimumSize = new(600, 300),
+            MaximumSize = new(600, 600)
         };
 
-        Flags |= ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize;
+        Flags |= ImGuiWindowFlags.NoTitleBar;
 
         // Init changelog Data
         changelog = new Changelog();

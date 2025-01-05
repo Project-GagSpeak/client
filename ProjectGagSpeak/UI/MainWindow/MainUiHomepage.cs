@@ -85,6 +85,8 @@ public class MainUiHomepage
                 HoveredItemIndex = i;
             }
         }
+        // if itemGotHovered is false, reset the index.
+        if(!itemGotHovered) HoveredItemIndex = -1;
     }
 
 /*    private unsafe CameraManager* cameraManager => CameraManager.Instance();

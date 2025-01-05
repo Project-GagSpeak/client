@@ -314,8 +314,8 @@ public class ToyboxPatterns
                 UiSharedService.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
                 UiSharedService.AttachToolTip("Start Point of the Pattern.");
 
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - _uiShared.GetIconData(FontAwesomeIcon.Sync).X);
-                _uiShared.IconText(FontAwesomeIcon.Sync);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - _uiShared.GetIconData(FontAwesomeIcon.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
+                _uiShared.IconText(FontAwesomeIcon.Sync, pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
                 UiSharedService.AttachToolTip(pattern.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
             }
         }

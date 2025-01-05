@@ -50,32 +50,39 @@ public class PuppeteerComponents
     private UserPairPermissions PairPerms => _handler.SelectedPair?.PairPerms ?? new UserPairPermissions();
     private UserEditAccessPermissions PairEditPerms => _handler.SelectedPair?.PairPermAccess ?? new UserEditAccessPermissions();
 
-    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
+    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null,
+        Action<bool>? onAliasChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
     {
         using var group = ImRaii.Group();
 
         ImGui.AlignTextToFramePadding();
         UiSharedService.ColorText("Listening To", ImGuiColors.ParsedPink);
 
-        var remainingWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
+        var remainingWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 + ImGui.GetStyle().ItemInnerSpacing.X * 4;
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
 
         // so they let sits?
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                onSitsChange?.Invoke(!OwnPerms.AllowSitRequests);
+                onSitsChange?.Invoke(!OwnPerms.SitRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true))
-                onMotionChange?.Invoke(!OwnPerms.AllowMotionRequests);
+                onMotionChange?.Invoke(!OwnPerms.MotionRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true))
+                onAliasChange?.Invoke(!OwnPerms.AliasRequests);
+        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
-                onAllChange?.Invoke(!OwnPerms.AllowAllRequests);
+                onAllChange?.Invoke(!OwnPerms.AllRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform any command.");
 
         ImUtf8.SameLineInner();
@@ -93,7 +100,7 @@ public class PuppeteerComponents
         using var group = ImRaii.Group();
 
         // display name, then display the downloads and likes on the other side.
-        var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 4 - ImGui.GetStyle().ItemInnerSpacing.X * 3;
+        var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
         using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
         {
             var isDisabled = !_handler.SelectedPair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
@@ -105,19 +112,25 @@ public class PuppeteerComponents
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            _uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
+        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled())
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform any command.");
     }

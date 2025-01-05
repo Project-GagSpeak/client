@@ -25,7 +25,7 @@ public class GagStorage
     public Dictionary<GagType, AppliedSlot> GetAppliedSlotGagData()
     {
         return GagEquipData
-            .Where(kvp => kvp.Value.GameItem.ItemId != ItemIdVars.NothingItem(kvp.Value.Slot).ItemId)
+            .Where(kvp => kvp.Value.IsEnabled && kvp.Value.GameItem.ItemId != ItemIdVars.NothingItem(kvp.Value.Slot).ItemId)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToAppliedSlot());
     }
 }

@@ -21,7 +21,6 @@ namespace GagSpeak.UI.Permissions;
 /// </summary>
 public partial class PairStickyUI
 {
-    public InteractionType Opened = InteractionType.None;
     public void DrawPairActionFunctions()
     {
         /* ----------- GLOBAL SETTINGS ----------- */

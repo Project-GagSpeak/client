@@ -3,11 +3,9 @@ using Dalamud.Interface.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
-using GagSpeak.UI.Handlers;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -22,48 +20,42 @@ namespace GagSpeak.UI.Permissions;
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _playerManager;
-    private readonly PermActionsComponents _permActions;
-    private readonly SetPreviewComponent _previews;
+    private readonly ClientData _clientData;
+    private readonly PairCombos _pairCombos;
     private readonly PiShockProvider _shockProvider;
     private readonly PairManager _pairManager;
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly MoodlesService _moodlesService;
     private readonly PermissionPresetService _presetService;
     private readonly UiSharedService _uiShared;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
-        StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, 
-        ClientData playerManager, PermActionsComponents permActions, PiShockProvider shockProvider, 
-        PairManager pairManager, ClientConfigurationManager clientConfigs, ClientMonitorService clientService, 
-        MoodlesService moodlesService, PermissionPresetService presetService, UiSharedService uiShared) 
-        : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")
+        StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, ClientData clientDat,
+        PairCombos pairCombos, PiShockProvider shockProvider, PairManager pairManager,
+        ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetService presets,
+        UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")
     {
-
         _apiHubMain = apiHubMain;
-        _playerManager = playerManager;
-        _permActions = permActions;
-        _previews = setPreviews;
+        _clientData = clientDat;
+        _pairCombos = pairCombos;
         _shockProvider = shockProvider;
         _pairManager = pairManager;
-        _clientConfigs = clientConfigs;
         _clientService = clientService;
         _moodlesService = moodlesService;
-        _presetService = presetService;
+        _presetService = presets;
         _uiShared = uiShared;
 
         StickyPair = pairToDrawFor; // set the pair we're drawing for
         DrawType = drawType; // set the type of window we're drawing
 
-        InitCustomCombos();
+        _pairCombos.UpdateCombosForPair(StickyPair);
 
-        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar 
+        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar
             | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
         IsOpen = true; // open the window
     }
 
-    private CharaIPCData? LastCreatedCharacterData => _playerManager.LastIpcData;
+    private CharaIPCData? LastCreatedCharacterData => _clientData.LastIpcData;
     public Pair StickyPair { get; init; } // pair we're drawing the sticky permissions for.
     private UserGlobalPermissions PairGlobals => StickyPair.PairGlobals;
     private UserPairPermissions OwnPerms => StickyPair.OwnPerms;
@@ -74,13 +66,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     public float IconButtonTextWidth => WindowMenuWidth - ImGui.GetFrameHeightWithSpacing();
     public string PairNickOrAliasOrUID => StickyPair.GetNickAliasOrUid();
     public string PairUID => StickyPair.UserData.UID;
-
-    // All the custom pair combo magic.
-    private int _gagLayer = 0;
-
-    private PairGagCombo[] _pairGagComboButton = new PairGagCombo[3];
-
-
     protected override void PreDrawInternal()
     {
         var position = _uiShared.LastMainUIWindowPosition;
@@ -191,45 +176,5 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     public override void OnClose()
     {
         Mediator.Publish(new RemoveWindowMessage(this));
-    }
-
-    private void InitCustomCombos()
-    {
-        // Create an array of PairGagCombo with 3 elements
-        _pairGagComboButton = new PairGagCombo[3]
-        {
-            new PairGagCombo(_logger, _previews, _uiShared, StickyPair, "Apply Gag 1", "Apply a Gag to " + PairNickOrAliasOrUID,
-                (gag, clonedData, pairUserData) =>
-                {
-                    clonedData.GagSlots[0].GagType = gag.GagName();
-                    _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(pairUserData, MainHub.PlayerUserData, clonedData, GagLayer.UnderLayer, GagUpdateType.GagApplied, clonedData.GagSlots[0].Padlock.ToPadlock(), UpdateDir.Other));
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, gag);
-                    Opened = InteractionType.None;
-                }),
-
-            new PairGagCombo(_logger, _previews, _uiShared, StickyPair, "Apply Gag 2", "Apply a Gag to " + PairNickOrAliasOrUID,
-                (gag, clonedData, pairUserData) =>
-                {
-                    clonedData.GagSlots[1].GagType = gag.GagName();
-                    _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(pairUserData, MainHub.PlayerUserData, clonedData, GagLayer.MiddleLayer, GagUpdateType.GagApplied, clonedData.GagSlots[1].Padlock.ToPadlock(), UpdateDir.Other));
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, gag);
-                    Opened = InteractionType.None;
-                }),
-
-            new PairGagCombo(_logger, _previews, _uiShared, StickyPair, "Apply Gag 3", "Apply a Gag to " + PairNickOrAliasOrUID,
-                (gag, clonedData, pairUserData) =>
-                {
-                    clonedData.GagSlots[2].GagType = gag.GagName();
-                    _ = _apiHubMain.UserPushPairDataAppearanceUpdate(new(pairUserData, MainHub.PlayerUserData, clonedData, GagLayer.TopLayer, GagUpdateType.GagApplied, clonedData.GagSlots[2].Padlock.ToPadlock(), UpdateDir.Other));
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, gag);
-                    Opened = InteractionType.None;
-                })
-        };
-        if(StickyPair.LastAppearanceData is not null)
-        {
-            _pairGagComboButton[0].SetGagSelection(StickyPair.LastAppearanceData.GagSlots[0].GagType.ToGagType());
-            _pairGagComboButton[1].SetGagSelection(StickyPair.LastAppearanceData.GagSlots[1].GagType.ToGagType());
-            _pairGagComboButton[2].SetGagSelection(StickyPair.LastAppearanceData.GagSlots[2].GagType.ToGagType());
-        }
     }
 }

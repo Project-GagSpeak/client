@@ -1,5 +1,6 @@
 using Dalamud.Interface.Utility;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
@@ -28,6 +29,8 @@ namespace GagSpeak.UI.Components.Combos;
 public abstract class PairCustomComboBase<T>
 {
     protected readonly ILogger _logger;
+    protected readonly MainHub _mainHub;
+
     private readonly HashSet<uint> _popupState = [];
 
     /// <summary> Reference to the pair linked to the combo. This way data updates live to Pair changes. </summary>
@@ -47,9 +50,10 @@ public abstract class PairCustomComboBase<T>
     private IReadOnlyList<T> FilteredItems => (IReadOnlyList<T>)(_filter.IsEmpty
         ? Items : Items.Where(item => ToItemString(item).ToLowerInvariant().Contains(_filter)));
 
-    protected PairCustomComboBase(ILogger log, Pair pairData)
+    protected PairCustomComboBase(ILogger log, Pair pairData, MainHub mainHub)
     {
         _logger = log;
+        _mainHub = mainHub;
         _pairRef = pairData;
     }
 

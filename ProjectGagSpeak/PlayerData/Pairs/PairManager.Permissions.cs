@@ -80,12 +80,12 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
         // fetch the current actions that fire events
-        var prevMotionPerms = pair.UserPair.OwnPairPerms.AllowMotionRequests;
-        var prevAllPerms = pair.UserPair.OwnPairPerms.AllowAllRequests;
+        var prevMotionPerms = pair.UserPair.OwnPairPerms.MotionRequests;
+        var prevAllPerms = pair.UserPair.OwnPairPerms.AllRequests;
 
         // see if the states are different.
-        bool motionPermsChanged = prevMotionPerms != dto.UniquePerms.AllowMotionRequests;
-        bool allPermsChanged = prevAllPerms != dto.UniquePerms.AllowAllRequests;
+        bool motionPermsChanged = prevMotionPerms != dto.UniquePerms.MotionRequests;
+        bool allPermsChanged = prevAllPerms != dto.UniquePerms.AllRequests;
 
         // update the permissions.
         pair.UserPair.OwnPairPerms = dto.UniquePerms;
@@ -294,10 +294,10 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
         // store changes pre-apply.
-        bool motionPermsChanged = ChangedPermission is nameof(UserPairPermissions.AllowMotionRequests)
-            && (pair.UserPair.OwnPairPerms.AllowMotionRequests != (bool)ChangedValue);
-        bool allPermsChanged = ChangedPermission == nameof(UserPairPermissions.AllowAllRequests)
-            && (pair.UserPair.OwnPairPerms.AllowAllRequests != (bool)ChangedValue);
+        bool motionPermsChanged = ChangedPermission is nameof(UserPairPermissions.MotionRequests)
+            && (pair.UserPair.OwnPairPerms.MotionRequests != (bool)ChangedValue);
+        bool allPermsChanged = ChangedPermission == nameof(UserPairPermissions.AllRequests)
+            && (pair.UserPair.OwnPairPerms.AllRequests != (bool)ChangedValue);
 
 
         PropertyInfo? propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);

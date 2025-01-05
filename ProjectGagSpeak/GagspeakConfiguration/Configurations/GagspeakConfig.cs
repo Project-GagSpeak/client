@@ -29,6 +29,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ShowVibeStatus { get; set; } = true;
 
     // pair listing preferences
+    public bool PreferThreeCharaAnonName { get; set; } = false;
     public bool PreferNicknamesOverNames { get; set; } = false;
     public bool ShowVisibleUsersSeparately { get; set; } = true;
     public bool ShowOfflineUsersSeparately { get; set; } = true;

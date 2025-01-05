@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -18,6 +19,7 @@ namespace GagSpeak.UI.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUiChat : DisposableMediatorSubscriberBase
 {
+    private readonly GagspeakConfigService _mainConfig;
     private readonly MainHub _apiHubMain;
     private readonly ClientData _playerData;
     private readonly GagManager _gagManager;
@@ -26,11 +28,13 @@ public class MainUiChat : DisposableMediatorSubscriberBase
     private readonly DiscoverService _discoveryService;
     private readonly TutorialService _guides;
 
-    public MainUiChat(ILogger<MainUiChat> logger, GagspeakMediator mediator, 
-        MainHub apiHubMain, ClientData playerManager, GagManager gagManager,
+    public MainUiChat(ILogger<MainUiChat> logger, GagspeakMediator mediator,
+        GagspeakConfigService mainConfig, MainHub apiHubMain, 
+        ClientData playerManager, GagManager gagManager,
         KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {
+        _mainConfig = mainConfig;
         _apiHubMain = apiHubMain;
         _playerData = playerManager;
         _gagManager = gagManager;
@@ -110,7 +114,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
 
             // Send message to the server
             Logger.LogTrace($"Sending Message: {NextChatMessage}");
-            _apiHubMain.SendGlobalChat(new GlobalChatMessageDto(MainHub.PlayerUserData, NextChatMessage)).ConfigureAwait(false);
+            _apiHubMain.SendGlobalChat(new GlobalChatMessageDto(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
             // Clear message and trigger achievement event
             NextChatMessage = string.Empty;

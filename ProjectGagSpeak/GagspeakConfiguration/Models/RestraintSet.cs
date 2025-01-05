@@ -73,6 +73,7 @@ public record RestraintSet : IMoodlesAssociable
         {
             Identifier = RestraintId,
             Name = Name,
+            Description = Description,
             HardcoreTraits = SetTraits,
             AffectedSlots = DrawData
                 .Where(kvp => kvp.Value.IsEnabled || kvp.Value.GameItem.Id != ItemIdVars.NothingItem(kvp.Key).Id)

@@ -672,6 +672,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var dtrActionNotifs = _configService.Current.ShowActionNotifs;
         var dtrVibeStatus = _configService.Current.ShowVibeStatus;
 
+        var preferThreeCharaAnonName = _configService.Current.PreferThreeCharaAnonName;
         var preferNicknamesInsteadOfName = _configService.Current.PreferNicknamesOverNames;
         var showVisibleSeparate = _configService.Current.ShowVisibleUsersSeparately;
         var showOfflineSeparate = _configService.Current.ShowOfflineUsersSeparately;
@@ -741,6 +742,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
             Mediator.Publish(new RefreshUiMessage());
         }
         _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
+
+        if (ImGui.Checkbox(GSLoc.Settings.Preferences.PrefThreeCharaAnonName, ref preferThreeCharaAnonName))
+        {
+            _configService.Current.PreferThreeCharaAnonName = preferThreeCharaAnonName;
+            _configService.Save();
+        }
+        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.PrefThreeCharaAnonNameTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PreferNicknamesLabel, ref preferNicknamesInsteadOfName))
         {

@@ -96,6 +96,8 @@ public partial class UiSharedService
     /// </summary>
     public static void AttachToolTip(string text, float borderSize = 1f, Vector4? color = null)
     {
+        if (text.IsNullOrWhitespace()) return;
+
         // if the item is currently hovered, with the ImGuiHoveredFlags set to allow when disabled
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {

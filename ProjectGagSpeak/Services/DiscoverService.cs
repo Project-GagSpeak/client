@@ -69,7 +69,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         if (_tabMenu.TabSelection is not MainMenuTabs.SelectedTab.GlobalChat)
             NewMessages++;
 
-        var userTagCode = msg.ChatMessage.MessageSender.UID.Substring(msg.ChatMessage.MessageSender.UID.Length - 3);
+        var userTagCode = msg.ChatMessage.UserTagCode;
         string SenderName = "Kinkster-" + userTagCode;
 
 

@@ -1,8 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Localization;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
@@ -19,15 +21,13 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
 {
     private readonly SetPreviewComponent _gagPreview;
 
-    private Action<GagType, CharaAppearanceData, UserData>? OnGagSelected;
-    public PairGagCombo(ILogger log, SetPreviewComponent gagPreview, UiSharedService uiShared, Pair pairData, string bText, string bTT, 
-        Action<GagType, CharaAppearanceData, UserData>? action) : base(log, uiShared, pairData, bText, bTT)
+    public PairGagCombo(ILogger log, SetPreviewComponent gagPreview, MainHub mainHub, UiSharedService uiShared, 
+        Pair pairData, string bText, string bTT) : base(log, uiShared, mainHub, pairData, bText, bTT)
     {
         _gagPreview = gagPreview;
-        OnGagSelected = action;
+        // update current selection to the last registered gagType from that pair on construction.
+        CurrentSelection = _pairRef.LastAppearanceData?.GagSlots[PairCombos.GagLayer].GagType.ToGagType() ?? GagType.None;
     }
-
-    public void SetGagSelection(GagType gagType) => CurrentSelection = gagType;
 
     // override the method to extract items by extracting all gagTypes.
     protected override IEnumerable<GagType> ExtractItems() => Enum.GetValues<GagType>();
@@ -49,6 +49,32 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
             DrawItemTooltip(gagItem, _pairRef.GetNickAliasOrUid() + " set a Glamour for this Gag.");
         }
         return ret;
+    }
+
+    protected override bool DisableCondition()
+    {
+        if (_pairRef.LastAppearanceData is null) return true;
+        // otherwise return the condition.
+        return _pairRef.LastAppearanceData.GagSlots[PairCombos.GagLayer].GagType.ToGagType() == CurrentSelection
+            || !_pairRef.PairPerms.ApplyGags;
+    }
+
+    protected override void OnButtonPress()
+    {
+        // we need to go ahead and create a deepclone of our new appearanceData, and ensure it is valid.
+        if (_pairRef.LastAppearanceData is null) return;
+        var newAppearance = _pairRef.LastAppearanceData.DeepCloneData();
+        if (newAppearance is null) return;
+
+        // update the gag slot with the new gag.
+        newAppearance.GagSlots[PairCombos.GagLayer].GagType = CurrentSelection.GagName();
+        // push to server.
+        _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)PairCombos.GagLayer, 
+            GagUpdateType.GagApplied, newAppearance.GagSlots[PairCombos.GagLayer].Padlock.ToPadlock(), UpdateDir.Other));
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, CurrentSelection);
+        PairCombos.Opened = InteractionType.None;
+        // log success.
+        _logger.LogDebug("Applying Selected Gag " + CurrentSelection.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(GagType item, string headerText)
@@ -73,9 +99,7 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
                 for (int i = 0; i < splitText.Length; i++)
                 {
                     ImGui.TextUnformatted(splitText[i]);
-
-                    if (i != splitText.Length - 1)
-                        ImGui.Separator();
+                    if (i != splitText.Length - 1) ImGui.Separator();
                 }
             }
             else
@@ -89,35 +113,17 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
             if (_pairRef.LastLightStorage is not null && _pairRef.LastLightStorage.GagItems.TryGetValue(item, out var appliedSlot))
             {
                 ImGui.Separator();
+                _gagPreview.DrawAppliedSlot(appliedSlot);
+                ImGui.SameLine();
                 using (ImRaii.Group())
                 {
-                    _gagPreview.DrawAppliedSlot(appliedSlot);
-                    ImGui.SameLine();
-                    using (ImRaii.Group())
-                    {
-                        var equipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
-                        ImGui.Text(equipItem.Name);
-                        ImGui.Text(((EquipSlot)appliedSlot.Slot).ToName() + " Slot");
-                    }
+                    var equipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+                    ImGui.Text(equipItem.Name);
+                    ImGui.Text(((EquipSlot)appliedSlot.Slot).ToName() + " Slot");
                 }
             }
-
             ImGui.EndTooltip();
         }
-    }
-
-
-
-    protected override void OnButtonPress()
-    {
-        // we need to go ahead and create a deepclone of our new appearanceData, and ensure it is valid.
-        if (_pairRef.LastAppearanceData is null) return;
-        var newAppearance = _pairRef.LastAppearanceData.DeepCloneData();
-        if (newAppearance is null) return;
-
-        // invoke upon the action now that we know it is valid.
-        _logger.LogDebug("Applying Selected Gag " + CurrentSelection.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-        OnGagSelected?.Invoke(CurrentSelection, newAppearance, _pairRef.UserData);
     }
 }
 

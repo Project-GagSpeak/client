@@ -27,7 +27,9 @@ public abstract record Trigger : IExecutableAction
         return new LightTrigger
         {
             Identifier = Identifier,
+            Priority = Priority,
             Name = Name,
+            Description = Description,
             Type = Type,
             ActionOnTrigger = GetTypeName()
         };

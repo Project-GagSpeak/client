@@ -842,6 +842,10 @@ namespace GagSpeak.Localization
         public readonly string ShowOfflineSeparateLabel = Loc.Localize("Preferences_ShowOfflineSeparateLabel", "Show separate Offline group");
         public readonly string ShowOfflineSeparateTT = Loc.Localize("Preferences_ShowOfflineSeparateTT", "Lists offline paired players in a separate group.");
 
+        public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-###] over [Kinkster-####] in Global Chat");
+        public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
+            "--SEP--Primary intended for legacy users attached to their 3 character names.");
+
         public readonly string PreferNicknamesLabel = Loc.Localize("Preferences_PreferNicknamesLabel", "Prefer nicknames for visible pairs");
         public readonly string PreferNicknamesTT = Loc.Localize("Preferences_PreferNicknamesTT", "Displays nicknames instead of character names for paired players within render range.");
 

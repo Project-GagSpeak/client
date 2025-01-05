@@ -199,7 +199,7 @@ internal class ReportPopupHandler : IPopupHandler
         _reportedKinkster = msg.KinksterToReport;
         _reportedDisplayName = _pairs.DirectPairs.Any(x => x.UserData.UID == _reportedKinkster.UID)
             ? _reportedKinkster.AliasOrUID
-            : "Kinkster-" + _reportedKinkster.UID.Substring(_reportedKinkster.UID.Length - 3);
+            : "Kinkster-" + _reportedKinkster.UID.Substring(_reportedKinkster.UID.Length - 4);
         _reportReason = DefaultReportReason;
     }
 }

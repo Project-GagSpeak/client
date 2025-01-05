@@ -34,6 +34,7 @@ using GagSpeak.Toybox.Services;
 using GagSpeak.Toybox.SimulatedVibe;
 using GagSpeak.UI;
 using GagSpeak.UI.Components;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Components.Popup;
 using GagSpeak.UI.Components.UserPairList;
 using GagSpeak.UI.Handlers;
@@ -331,7 +332,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PublicationsManager>()
 
         // UI Components
-        .AddSingleton<PermActionsComponents>()
+        .AddSingleton<PairCombos>()
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<KinkPlateLight>()
         .AddSingleton<SelectPairForTagUi>()

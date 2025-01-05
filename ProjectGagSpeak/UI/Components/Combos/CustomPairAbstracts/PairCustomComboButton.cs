@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -14,14 +15,15 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
     protected readonly UiSharedService _uiShared;
 
     private bool _isIconButton = false;
-    private float _popupWidth = 0;
+    protected float _popupWidth = 0;
 
     private float ButtonWidth = 0;
     private FontAwesomeIcon ButtonIcon = FontAwesomeIcon.None;
     private string ButtonText = string.Empty;
     private string ButtonTooltip = string.Empty;
 
-    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, Pair pair, FontAwesomeIcon icon, string bText, string bTT) : base(log, pair)
+    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
+        FontAwesomeIcon icon, string bText, string bTT) : base(log, pair, mainHub)
     {
         _uiShared = uiShared;
         _isIconButton = true;
@@ -30,7 +32,8 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
         ButtonTooltip = bTT;
     }
 
-    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, Pair pair, string bText, string bTT) : base(log, pair)
+    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
+        string bText, string bTT) : base(log, pair, mainHub)
     {
         _uiShared = uiShared;
         _isIconButton = false;
@@ -58,12 +61,12 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
             // draw the kind of button based on the type.
             if (_isIconButton)
             {
-                if (_uiShared.IconTextButton(ButtonIcon, ButtonText, null, false, CurrentSelection is GagType.None, label + "-Button"))
+                if (_uiShared.IconTextButton(ButtonIcon, ButtonText, null, false, DisableCondition(), label + "-Button"))
                     OnButtonPress();
             }
             else
             {
-                if (ImGuiUtil.DrawDisabledButton(ButtonText, new Vector2(), string.Empty, CurrentSelection is GagType.None))
+                if (ImGuiUtil.DrawDisabledButton(ButtonText, new Vector2(), string.Empty, DisableCondition()))
                     OnButtonPress();
             }
 
@@ -77,6 +80,8 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
         }
     }
 
+    protected abstract bool DisableCondition();
+
     private float GetButtonWidth()
     {
         if (_isIconButton) return _uiShared.GetIconTextButtonSize(ButtonIcon, ButtonText);
@@ -85,5 +90,5 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
 
     protected override float GetFilterWidth() => _popupWidth - 2 * ImGui.GetStyle().FramePadding.X;
 
-    protected virtual void OnButtonPress() { }
+    protected abstract void OnButtonPress();
 }

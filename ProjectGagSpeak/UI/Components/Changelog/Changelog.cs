@@ -1,3 +1,5 @@
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+
 namespace GagSpeak.UI.Components;
 public class Changelog
 {
@@ -5,6 +7,7 @@ public class Changelog
 
     public Changelog()
     {
+
         // append the version information here.
         AddVersionData();
     }
@@ -19,6 +22,27 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 2, 0, 0)
+            .RegisterMain("HIGHLY RECOMMEND YOU SKIM THROUGH THIS")
+            .RegisterMain("Custom Pair Action Combos are now Live! See the finer details about what you apply to your pairs!")
+            .RegisterMain("A new Timer Padlock has been added, no more hope of guessing the password for you!")
+            .RegisterFeature("GagType dropdowns lets you see their enabled Gag Glamours, along with the slot and item.")
+            .RegisterFeature("Restraint dropdowns lets you preview the outfit and view any Hardcore traits applied when you equip it.")
+            .RegisterFeature("Pattern dropdowns lets you see pattern descriptions, if they loop, and how long they run for!")
+            .RegisterFeature("Alarm dropdowns let you see when they go off (scoped to your time zone), and what pattern it sets off.")
+            .RegisterFeature("Trigger dropdowns let you see trigger priority, description, its kind, and execution action type.")
+            .RegisterQol("Padlocks have now had their permission hierarchy restructured. There is now unique permissions for allowing " +
+            "permanent, owner, and devotional type locks, giving you full control over what locks can be applied, and for how long.")
+            .RegisterQol("GagStorage now properly waits for you to hit save before updating the data, and will not revert if you click off.")
+            .RegisterQol("LightStorage now also contains a few extra lightweight details about the data on pairs you store.")
+            .RegisterQol("SafewordUsed is no longer in permissions to avoid confusion.")
+            .RegisterQol("Aggressive detection for C+ is now in place, if issues persist, it is likely a customize+ issue.")
+            .RegisterQol("ForcedStay text node filters now use proper syntax for serialization (backend stuff)")
+            .RegisterQol("Preliminary support for Puppeteer AllowAliasTriggers permission level has been added, logic WIP.")
+            .RegisterQol("Pairs you have not allowed to apply your own moodles to you, will not be able to see your moodles in the wardrobe.")
+            .RegisterQol("Kinkster-### is not Kinkster-####, this can be opt-out in the config settings under preferences.")
+            .RegisterBugfix("Fixed an issue that caused ")
+            .RegisterBugfix("Achievement 'Silence of Shame' properly tracks now.");
         VersionEntry(1, 1, 3, 1)
             .RegisterFeature("This whole time ive been handling movement controls with Forced follow wrong. It will now read your movement mode when it starts and cache it. " +
             "Afterwards, it will update your movement only while cached, and restore it to the cached mode afterwards. Prior to this the framework updates were changing your " +

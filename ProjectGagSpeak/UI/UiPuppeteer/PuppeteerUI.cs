@@ -67,7 +67,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(650, 370),
+            MinimumSize = new Vector2(690, 370),
             MaximumSize = new Vector2(1000, float.MaxValue)
         };
         RespectCloseHotkey = false;

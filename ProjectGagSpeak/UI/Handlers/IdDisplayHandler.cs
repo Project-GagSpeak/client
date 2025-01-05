@@ -101,17 +101,17 @@ public class IdDisplayHandler
 
             if (canTogglePairTextDisplay)
             {
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
+                {
+                    _mediator.Publish(new KinkPlateOpenStandaloneMessage(pair));
+                }
+
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     _serverManager.SetNicknameForUid(_editEntry, _editComment, save: true);
 
                     _editComment = pair.GetNickname() ?? string.Empty;
                     _editEntry = pair.UserData.UID;
-                }
-
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
-                {
-                    _mediator.Publish(new KinkPlateOpenStandaloneMessage(pair));
                 }
             }
         }

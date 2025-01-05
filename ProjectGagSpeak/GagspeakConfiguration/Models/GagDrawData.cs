@@ -31,6 +31,25 @@ public record GagDrawData : IMoodlesAssociable, IGlamourItem
 
     public GagDrawData(EquipItem gameItem) => GameItem = gameItem;
 
+    // deep clone the data.
+    public GagDrawData DeepCloneData()
+    {
+        return new GagDrawData(GameItem)
+        {
+            IsEnabled = this.IsEnabled,
+            Slot = this.Slot,
+            GameItem = this.GameItem,
+            GameStain = this.GameStain,
+            ForceHeadgear = this.ForceHeadgear,
+            ForceVisor = this.ForceVisor,
+            AssociatedMoodles = new List<Guid>(this.AssociatedMoodles),
+            AssociatedMoodlePreset = this.AssociatedMoodlePreset,
+            CustomizePriority = this.CustomizePriority,
+            CustomizeGuid = this.CustomizeGuid,
+        };
+    }
+
+
     public AppliedSlot ToAppliedSlot()
     {
         return new AppliedSlot()

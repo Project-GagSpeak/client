@@ -36,8 +36,9 @@ public class SetPreviewComponent
     private readonly StainColorCombo StainColorCombos;
     // A temp storage container for the currently previewed restraint set.
     // Useful for loading in light restraint data without constantly resolving the item on every drawFrame.
-    private Dictionary<EquipSlot, EquipItem> CachedPreview = new();
-    private EquipItem CachedAppliedSlotItem = ItemIdVars.NothingItem(EquipSlot.MainHand);
+    private (Guid Id, Dictionary<EquipSlot, EquipItem> CachedRestraint) CachedPreview = (Guid.Empty, new Dictionary<EquipSlot, EquipItem>());
+    private DateTime LastPreviewHoverTime = DateTime.MinValue;
+    private EquipItem? CachedAppliedSlotItem = null;
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
@@ -61,8 +62,26 @@ public class SetPreviewComponent
     public void DrawAppliedSlot(AppliedSlot appliedSlot)
     {
         // update the cached slot item with the applied slot item.
-        CachedAppliedSlotItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
-        CachedAppliedSlotItem.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.BeginTooltip();
+            if(CachedAppliedSlotItem.HasValue)
+            {
+                // display data.
+                CachedAppliedSlotItem.Value.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
+            }
+            else
+            {
+                // Generate data.
+                CachedAppliedSlotItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+            }
+            ImGui.EndTooltip();
+        }
+        else
+        {
+            // set data back to null.
+            CachedAppliedSlotItem = null;
+        }
     }
 
     public void DrawRestraintOnHover(RestraintSet set)
@@ -82,11 +101,6 @@ public class SetPreviewComponent
             ImGui.BeginTooltip();
             DrawRestraintSetDisplay(lightSet);
             ImGui.EndTooltip();
-        }
-        else
-        {
-            // clear the cached preview
-            CachedPreview.Clear();
         }
     }
 
@@ -142,7 +156,7 @@ public class SetPreviewComponent
     }
     private void DrawRestraintSetDisplay(LightRestraintData lightSet)
     {
-        if (CachedPreview.IsNullOrEmpty())
+        if (CachedPreview.Id != lightSet.Identifier)
         {
             ImGui.Text("Loading...");
             LoadCacheFromLightSet(lightSet);
@@ -159,19 +173,21 @@ public class SetPreviewComponent
 
         // draw out the equipment slots (maybe add support for stains but idk lol.)
         foreach (var slot in EquipSlotExtensions.EquipmentSlots)
-            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+            CachedPreview.CachedRestraint[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
         ImGui.TableNextColumn();
         // draw out the accessory slots (maybe add support for stains but idk lol.)
         foreach (var slot in EquipSlotExtensions.AccessorySlots)
-            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+            CachedPreview.CachedRestraint[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
     }
 
     private void LoadCacheFromLightSet(LightRestraintData lightSet)
     {
+        CachedPreview.CachedRestraint.Clear();
+        CachedPreview.Id = lightSet.Identifier;
         foreach (var slot in EquipSlotExtensions.EqdpSlots)
         {
             var customIdForSlot = lightSet.AffectedSlots.FirstOrDefault(x => x.Slot == (int)slot)?.CustomItemId ?? ulong.MaxValue;
-            CachedPreview[slot] = ItemIdVars.Resolve(slot, customIdForSlot);
+            CachedPreview.CachedRestraint[slot] = ItemIdVars.Resolve(slot, customIdForSlot);
         }
     }
 

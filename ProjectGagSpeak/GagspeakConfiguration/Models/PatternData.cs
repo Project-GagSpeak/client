@@ -26,6 +26,7 @@ public record PatternData
         {
             Identifier = UniqueIdentifier,
             Name = Name,
+            Description = Description,
             Duration = Duration,
             ShouldLoop = ShouldLoop,
         };

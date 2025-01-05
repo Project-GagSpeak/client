@@ -107,7 +107,7 @@ public sealed class ActionExecutor
                 return false;
             }
 
-            matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool all2, out char startChar, out char endChar);
+            matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool alias2, out bool all2, out char startChar, out char endChar);
             sits = sits2;
             motions = motions2;
             all = all2;

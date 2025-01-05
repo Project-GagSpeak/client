@@ -201,7 +201,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
     public bool ParseOutputAndExecute(string trigger, SeString chatMessage, XivChatType type, Pair senderPair)
     {
-        senderPair.OwnPerms.PuppetPerms(out bool sits, out bool motions, out bool all, out char startChar, out char endChar);
+        senderPair.OwnPerms.PuppetPerms(out bool sits, out bool motions, out bool aliases, out bool all, out char startChar, out char endChar);
         var SenderUid = senderPair.UserData.UID;
         Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
         Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
