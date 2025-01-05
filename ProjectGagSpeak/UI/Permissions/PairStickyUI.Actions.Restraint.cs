@@ -59,8 +59,9 @@ public partial class PairStickyUI
             if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
-        UiSharedService.AttachToolTip(lockRestraintTT + ((LockHelperExtensions.IsTimerLock(StickyPair.LastWardrobeData.Padlock.ToPadlock()))
-            ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(StickyPair.LastWardrobeData.Timer) : ""), color: ImGuiColors.ParsedPink);
+        UiSharedService.AttachToolTip(lockRestraintTT + 
+            ((LockHelperExtensions.IsTimerLock(StickyPair.LastWardrobeData.Padlock.ToPadlock())) ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(StickyPair.LastWardrobeData.Timer) : "")
+            , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint
         if (PairCombos.Opened is InteractionType.LockRestraint)
@@ -93,7 +94,7 @@ public partial class PairStickyUI
         // Interaction Window for RemoveRestraint
         if (PairCombos.Opened is InteractionType.RemoveRestraint)
         {
-            using (ImRaii.Child("SetRemove", new Vector2(WindowMenuWidth, ImGui.GetFrameHeightWithSpacing())))
+            using (ImRaii.Child("SetRemove", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
             {
                 if (ImGui.Button("Remove Restraint", ImGui.GetContentRegionAvail()))
                 {

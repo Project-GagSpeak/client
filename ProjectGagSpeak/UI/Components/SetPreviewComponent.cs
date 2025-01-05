@@ -37,8 +37,7 @@ public class SetPreviewComponent
     // A temp storage container for the currently previewed restraint set.
     // Useful for loading in light restraint data without constantly resolving the item on every drawFrame.
     private (Guid Id, Dictionary<EquipSlot, EquipItem> CachedRestraint) CachedPreview = (Guid.Empty, new Dictionary<EquipSlot, EquipItem>());
-    private DateTime LastPreviewHoverTime = DateTime.MinValue;
-    private EquipItem? CachedAppliedSlotItem = null;
+    private (ulong CustomItemId, EquipItem SlotEquipItem) CachedSlotItem = (ulong.MaxValue, ItemIdVars.NothingItem(EquipSlot.Head));
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
@@ -61,27 +60,14 @@ public class SetPreviewComponent
 
     public void DrawAppliedSlot(AppliedSlot appliedSlot)
     {
-        // update the cached slot item with the applied slot item.
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if(CachedSlotItem.CustomItemId != appliedSlot.CustomItemId)
         {
-            ImGui.BeginTooltip();
-            if(CachedAppliedSlotItem.HasValue)
-            {
-                // display data.
-                CachedAppliedSlotItem.Value.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
-            }
-            else
-            {
-                // Generate data.
-                CachedAppliedSlotItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
-            }
-            ImGui.EndTooltip();
+            // update the cached slot item.
+            CachedSlotItem.CustomItemId = appliedSlot.CustomItemId;
+            CachedSlotItem.SlotEquipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+            _logger.LogInformation($"Updated CachedSlotItem with new CustomItemId: {appliedSlot.CustomItemId}");
         }
-        else
-        {
-            // set data back to null.
-            CachedAppliedSlotItem = null;
-        }
+        CachedSlotItem.SlotEquipItem.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
     }
 
     public void DrawRestraintOnHover(RestraintSet set)

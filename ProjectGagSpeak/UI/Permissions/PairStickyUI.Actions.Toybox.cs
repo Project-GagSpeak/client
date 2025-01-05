@@ -82,7 +82,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ActivatePattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.PatternCombo.DrawCombo("##ExecutePattern" + PairUID, "Execute a Pattern", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.PatternCombo.DrawCombo("##ExecutePattern" + PairUID, "Execute a Pattern", WindowMenuWidth, 1.3f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 

@@ -2,6 +2,7 @@ using Dalamud.Interface;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Raii;
@@ -17,9 +18,15 @@ public class PairPadlockGag : PairPadlockComboBase
         ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
         : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
 
-    public float PadlockUnlockWinHeight() => SelectedLock.IsTwoRowLock()
-        ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
-        : ImGui.GetFrameHeight();
+    public float PadlockUnlockWinHeight()
+    {
+        if (_pairRef.LastAppearanceData is null) return ImGui.GetFrameHeight();
+
+        // otherwise, return based on the current Padlock type.
+        return _pairRef.LastAppearanceData.GagSlots[PairCombos.GagLayer].Padlock.ToPadlock().IsPasswordLock()
+            ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
+            : ImGui.GetFrameHeight();
+    }
 
     protected override void DisplayDisabledActiveItem(float width)
     {
@@ -47,21 +54,21 @@ public class PairPadlockGag : PairPadlockComboBase
         var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
         // disable the actively selected padlock.
+        var padlock = _pairRef.LastAppearanceData.GagSlots[PairCombos.GagLayer].Padlock;
         ImGui.SetNextItemWidth(comboWidth);
         using (ImRaii.Disabled(true))
         {
-            var padlock = _pairRef.LastAppearanceData.GagSlots[PairCombos.GagLayer].Padlock;
             if (ImGui.BeginCombo("##" + comboLabelBase + "DisplayPadlockLock", padlock)) { ImGui.EndCombo(); }
             UiSharedService.AttachToolTip(tt);
         }
         // draw button thing.
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: SelectedLock is Padlocks.None, id: "##" + comboLabelBase + "-UnlockButton"))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: padlock.ToPadlock() is Padlocks.None, id: "##" + comboLabelBase + "-UnlockButton"))
             OnUnlockButtonPress();
         UiSharedService.AttachToolTip(btt);
 
         // on next line show lock fields.
-        ShowUnlockFields();
+        ShowUnlockFields(padlock.ToPadlock());
     }
 
 
@@ -97,8 +104,8 @@ public class PairPadlockGag : PairPadlockComboBase
         var appearanceData = _pairRef.LastAppearanceData.DeepCloneData();
         if (appearanceData is null) return;
 
-        _logger.LogDebug("Verifying unlock for padlock: " + SelectedLock.ToName(), LoggerType.PadlockHandling);
         var slotToUpdate = appearanceData.GagSlots[PairCombos.GagLayer];
+        _logger.LogDebug("Verifying unlock for padlock: " + slotToUpdate.Padlock, LoggerType.PadlockHandling);
 
         // safely store the preivous password in the case of success.
         var prevLock = slotToUpdate.Padlock.ToPadlock();
@@ -107,14 +114,14 @@ public class PairPadlockGag : PairPadlockComboBase
         (bool valid, string errorStr) = LockHelperExtensions.VerifyUnlock(ref slotToUpdate, _pairRef.UserData, Password, MainHub.UID, _pairRef.PairPerms);
         if (valid is false)
         {
-            _logger.LogError("Failed to lock padlock: " + SelectedLock.ToName() + " due to: " + errorStr, LoggerType.PadlockHandling);
+            _logger.LogError("Failed to lock padlock: " + slotToUpdate.Padlock + " due to: " + errorStr, LoggerType.PadlockHandling);
             return;
         }
 
         // update the appearance data with the new slot.
         appearanceData.GagSlots[PairCombos.GagLayer] = slotToUpdate;
         _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, appearanceData, (GagLayer)PairCombos.GagLayer, GagUpdateType.GagUnlocked, prevLock, UpdateDir.Other));
-        _logger.LogDebug("Unlocking Gag with GagPadlock " + SelectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        _logger.LogDebug("Unlocking Gag with GagPadlock " + slotToUpdate.Padlock + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
         PairCombos.Opened = InteractionType.None;
     }
 }

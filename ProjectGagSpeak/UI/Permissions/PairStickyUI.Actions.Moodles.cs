@@ -1,9 +1,11 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components.Combos;
+using GagSpeak.Utils;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Enums;
 using ImGuiNET;
+using OtterGui;
 using System.Numerics;
 
 namespace GagSpeak.UI.Permissions;
@@ -226,14 +228,15 @@ public partial class PairStickyUI
             {
                 if (!child) return;
 
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                if (ImGui.Button("Clear All Active Moodles##ClearStatus" + PairUID))
+                ImGui.SetNextItemWidth(WindowMenuWidth);
+                if (ImGuiUtil.DrawDisabledButton("Clear All Active Moodles##ClearStatus" + PairUID, new Vector2(), string.Empty, !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
                 {
                     _logger.LogInformation("Clearing all Moodles from " + PairNickOrAliasOrUID);
                     _ = _apiHubMain.UserClearMoodles(new(StickyPair.UserData));
                     PairCombos.Opened = InteractionType.None;
                 }
-                UiSharedService.AttachToolTip("Clear all statuses from " + PairNickOrAliasOrUID);
+                UiSharedService.AttachToolTip("Clear all statuses from " + PairNickOrAliasOrUID
+                    + "--SEP--Must be holding SHIFT & CTRL to fire!");
             }
         }
         ImGui.Separator();

@@ -120,31 +120,22 @@ public abstract class PairPadlockComboBase
         }
     }
 
-    protected void ShowUnlockFields()
+    protected void ShowUnlockFields(Padlocks padlock)
     {
-        if (SelectedLock is Padlocks.None)
+        if (!LockHelperExtensions.IsPasswordLock(padlock)) 
             return;
 
         float width = ImGui.GetContentRegionAvail().X;
-        switch (SelectedLock)
+        switch (padlock)
         {
             case Padlocks.CombinationPadlock:
                 ImGui.SetNextItemWidth(width);
                 ImGui.InputTextWithHint("##Combination_Input", "Enter 4 digit combination...", ref _password, 4);
                 break;
             case Padlocks.PasswordPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref _password, 20);
-                break;
             case Padlocks.TimerPasswordPadlock:
                 ImGui.SetNextItemWidth(width);
                 ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref _password, 20);
-                break;
-            case Padlocks.TimerPadlock:
-            case Padlocks.OwnerTimerPadlock:
-            case Padlocks.DevotionalTimerPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref _timer, 12);
                 break;
         }
     }

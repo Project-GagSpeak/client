@@ -39,13 +39,6 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         _guides = guides;
     }
     private static readonly string[] Labels = { "Inner Gag", "Central Gag", "Outer Gag" };
-
-    private static readonly HashSet<Padlocks> TwoRowLocks = new HashSet<Padlocks>
-    {
-        Padlocks.None, Padlocks.MetalPadlock, Padlocks.FiveMinutesPadlock, Padlocks.OwnerPadlock, Padlocks.OwnerTimerPadlock,
-        Padlocks.DevotionalPadlock, Padlocks.DevotionalTimerPadlock, Padlocks.MimicPadlock
-    };
-
     private string GetGagTypePath(int index) => $"GagImages\\{_playerManager.AppearanceData!.GagSlots[index].GagType}.png" ?? $"ItemMouth\\None.png";
     private string GetGagPadlockPath(int index) => $"PadlockImages\\{_playerManager.AppearanceData!.GagSlots[index].Padlock.ToPadlock()}.png" ?? $"Padlocks\\None.png";
 
@@ -77,7 +70,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
                     var GroupCursorY = ImGui.GetCursorPosY();
                     using (ImRaii.Group())
                     {
-                        if (TwoRowLocks.Contains(gagSlots[i].Padlock.ToPadlock()))
+                        if (!LockHelperExtensions.IsTwoRowLock(currentPadlockSelection))
                             ImGui.SetCursorPosY(GroupCursorY + ImGui.GetFrameHeight() / 2);
                         DrawGagLockGroup(i, region, gagSlots, currentlyLocked, currentPadlockSelection, winPos, winSize);
                     }
@@ -164,8 +157,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         // The Lock Group
         using (ImRaii.Disabled(currentlyLocked || gagTypeIsNone))
         {
-            _gagManager.DrawPadlockCombo(idx, 248 - _uiSharedService.GetIconButtonSize(FontAwesomeIcon.Lock).X,
-                GenericHelpers.NoOwnerPadlockList, (i) => GagManager.ActiveSlotPadlocks[idx] = i);
+            _gagManager.DrawPadlockCombo(idx, 248 - _uiSharedService.GetIconButtonSize(FontAwesomeIcon.Lock).X, LockHelperExtensions.ClientLocks, (i) => GagManager.ActiveSlotPadlocks[idx] = i);
         }
         if (idx is 0)
         {
@@ -230,6 +222,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
             case Padlocks.CombinationPadlock:
             case Padlocks.PasswordPadlock:
             case Padlocks.FiveMinutesPadlock:
+            case Padlocks.TimerPadlock:
             case Padlocks.TimerPasswordPadlock:
                 color = ImGuiColors.ParsedGold; break;
             case Padlocks.OwnerPadlock:

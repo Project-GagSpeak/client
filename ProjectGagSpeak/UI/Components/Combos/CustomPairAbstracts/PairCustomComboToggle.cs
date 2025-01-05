@@ -20,13 +20,13 @@ public abstract class PairCustomComboToggle<T> : PairCustomComboBase<T>
     private string _offTooltip;
 
     protected PairCustomComboToggle(ILogger log, UiSharedService uiShared, MainHub mainHub,
-        Pair pair, string onText, string offText, string onTooltip, string offTooltip)
+        Pair pair, string onText, string onTooltip, string offText, string offTooltip)
         : base(log, pair, mainHub)
     {
         _uiShared = uiShared;
         _onText = onText;
-        _offText = offText;
         _onTooltip = onTooltip;
+        _offText = offText;
         _offTooltip = offTooltip;
     }
 

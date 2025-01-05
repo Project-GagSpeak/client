@@ -113,13 +113,16 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
             if (_pairRef.LastLightStorage is not null && _pairRef.LastLightStorage.GagItems.TryGetValue(item, out var appliedSlot))
             {
                 ImGui.Separator();
-                _gagPreview.DrawAppliedSlot(appliedSlot);
-                ImGui.SameLine();
-                using (ImRaii.Group())
+                using(ImRaii.Group())
                 {
-                    var equipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
-                    ImGui.Text(equipItem.Name);
-                    ImGui.Text(((EquipSlot)appliedSlot.Slot).ToName() + " Slot");
+                    _gagPreview.DrawAppliedSlot(appliedSlot);
+                    ImGui.SameLine();
+                    using (ImRaii.Group())
+                    {
+                        var equipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+                        ImGui.Text(equipItem.Name);
+                        ImGui.Text(((EquipSlot)appliedSlot.Slot).ToName() + " Slot");
+                    }
                 }
             }
             ImGui.EndTooltip();

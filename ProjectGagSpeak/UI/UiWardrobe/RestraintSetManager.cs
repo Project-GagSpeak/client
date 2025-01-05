@@ -12,6 +12,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 using OtterGui.Classes;
@@ -582,12 +583,10 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                 var isLockedByPair = set.LockedBy != MainHub.UID && set.LockType.ToPadlock() != Padlocks.None;
                 var padlockType = set.Locked ? set.LockType.ToPadlock() : GagManager.ActiveSlotPadlocks[3];
 
-                var padlockList = isLockedByPair ? GenericHelpers.NoMimicPadlockList : GenericHelpers.NoOwnerPadlockList;
-
                 using (ImRaii.Disabled(set.Locked || set.LockType != "None"))
                 {
                     _gagManager.DrawPadlockCombo(3, (width - 1 - _uiShared.GetIconButtonSize(FontAwesomeIcon.Lock).X - ImGui.GetStyle().ItemInnerSpacing.X),
-                        padlockList, (i) => GagManager.ActiveSlotPadlocks[3] = i);
+                        LockHelperExtensions.AllLocks, (i) => GagManager.ActiveSlotPadlocks[3] = i);
                 }
                 ImUtf8.SameLineInner();
                 // draw the lock button

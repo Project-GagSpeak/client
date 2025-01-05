@@ -4,6 +4,7 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
@@ -192,89 +193,9 @@ public partial class GagManager : DisposableMediatorSubscriberBase
         for (int i = 0; i < _clientData.AppearanceData!.GagSlots.Length; i++)
         {
             var gagSlot = _clientData.AppearanceData.GagSlots[i];
-            if (GenericHelpers.TimerPadlocks.Contains(gagSlot.Padlock) && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
+            if (LockHelperExtensions.IsTimerLock(gagSlot.Padlock.ToPadlock()) && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
                 PublishLockRemoved((GagLayer)i);
         }
-    }
-
-    public bool PadlockVerifyLock<T>(T item, GagLayer layer, bool extended, bool owner, bool devotional, TimeSpan maxTime) where T : IPadlockable
-    {
-
-        var result = false;
-        switch (ActiveSlotPadlocks[(int)layer])
-        {
-            case Padlocks.None:
-                return false;
-            case Padlocks.MetalPadlock:
-                return true;
-            case Padlocks.FiveMinutesPadlock:
-                ActiveSlotTimers[(int)layer] = "5m";
-                return true;
-            case Padlocks.CombinationPadlock:
-                result = ValidateCombination(ActiveSlotPasswords[(int)layer]);
-                if (!result) Logger.LogWarning("Invalid combination entered: {Password}", ActiveSlotPasswords[(int)layer]);
-                return result;
-            case Padlocks.PasswordPadlock:
-                result = ValidatePassword(ActiveSlotPasswords[(int)layer]);
-                if (!result) Logger.LogWarning("Invalid password entered: {Password}", ActiveSlotPasswords[(int)layer]);
-                return result;
-            case Padlocks.MimicPadlock:
-                if (!TryParseTimeSpan(ActiveSlotTimers[(int)layer], out var mimicTime))
-                {
-                    Logger.LogWarning("Invalid time entered: {Timer}", ActiveSlotTimers[(int)layer]);
-                    return false;
-                }
-                return true;
-            case Padlocks.TimerPasswordPadlock:
-                if (TryParseTimeSpan(ActiveSlotTimers[(int)layer], out var pwdTimer))
-                {
-                    if ((pwdTimer > TimeSpan.FromHours(1) && !extended) || pwdTimer > maxTime)
-                    {
-                        Logger.LogWarning("Attempted to lock for more than 1 hour without permission.");
-                        return false;
-                    }
-                    result = ValidatePassword(ActiveSlotPasswords[(int)layer]) && pwdTimer > TimeSpan.Zero;
-                }
-                if (!result) Logger.LogWarning("Invalid password or time entered: {Password} {Timer}", ActiveSlotPasswords[(int)layer], ActiveSlotTimers[(int)layer]);
-                return result;
-            case Padlocks.OwnerPadlock:
-                return owner;
-            case Padlocks.OwnerTimerPadlock:
-                if (!TryParseTimeSpan(ActiveSlotTimers[(int)layer], out var ownerTime))
-                {
-                    Logger.LogWarning("Invalid time entered: {Timer}", ActiveSlotTimers[(int)layer]);
-                    return false;
-                }
-                if ((ownerTime > TimeSpan.FromHours(1) && !extended) || ownerTime > maxTime)
-                {
-                    Logger.LogWarning("Attempted to lock for more than 1 hour without permission.");
-                    return false;
-                }
-                return owner;
-            case Padlocks.DevotionalPadlock:
-                return devotional;
-            case Padlocks.DevotionalTimerPadlock:
-                if (!TryParseTimeSpan(ActiveSlotTimers[(int)layer], out var devotionalTime))
-                {
-                    Logger.LogWarning("Invalid time entered: {Timer}", ActiveSlotTimers[(int)layer]);
-                    return false;
-                }
-                // Check if the TimeSpan is longer than one hour and extended locks are not allowed
-                if ((devotionalTime > TimeSpan.FromHours(1) && !extended) || devotionalTime > maxTime)
-                {
-                    Logger.LogWarning("Attempted to lock for longer than you were allowed access for!");
-                    return false;
-                }
-                // return base case.
-                return devotional;
-        }
-        return false;
-    }
-
-    public void ResetInputs()
-    {
-        ActiveSlotTimers = new string[4] { "", "", "", "" };
-        ActiveSlotPasswords = new string[4] { "", "", "", "" };
     }
 
     public void DisplayPadlockFields(Padlocks padlock, int layer, bool unlocking = false, float totalWidth = 250)
@@ -306,7 +227,7 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                     ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref ActiveSlotTimers[layer], 12); ;
                 }
                 break;
-            case Padlocks.OwnerTimerPadlock:
+            case Padlocks.TimerPadlock:
                 ImGui.SetNextItemWidth(width);
                 ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref ActiveSlotTimers[layer], 12);
                 break;
@@ -334,6 +255,10 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                     return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
                 else
                     return ValidatePassword(ActiveSlotPasswords[slot]);
+            case Padlocks.TimerPadlock:
+                // This logic is uniquely spesific to the fact that we do this client side. We want to make sure we cant unlock it if the assigner is anyone but us.
+                if (currentlyLocked) return MainHub.UID != _clientData.AppearanceData?.GagSlots[slot].Assigner;
+                else return TryParseTimeSpan(ActiveSlotTimers[slot], out TimeSpan test);
             case Padlocks.TimerPasswordPadlock:
                 if (currentlyLocked)
                     return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
@@ -370,6 +295,10 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                 }
                 else
                     return ValidatePassword(ActiveSlotPasswords[3]);
+            case Padlocks.TimerPadlock:
+                // should just need to validate the timer.
+                if(!currentlyLocked) return TryParseTimeSpan(ActiveSlotTimers[3], out TimeSpan test);
+                return true;
             case Padlocks.TimerPasswordPadlock:
                 if (currentlyLocked)
                 {
@@ -454,9 +383,12 @@ public partial class GagManager : DisposableMediatorSubscriberBase
             // Check if the item was right-clicked. If so, reset to default value.
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                Logger.LogTrace("Right-clicked on " + comboLabel + ". Resetting to default value.", LoggerType.GagHandling);
-                ComboGags[(int)layer] = comboItems.First();
-                onSelected?.Invoke(comboItems.First());
+                if(ComboGags[(int)layer] != comboItems.First())
+                {
+                    Logger.LogTrace("Right-clicked on " + comboLabel + ". Resetting to default value.", LoggerType.GagHandling);
+                    ComboGags[(int)layer] = comboItems.First();
+                    onSelected?.Invoke(comboItems.First());
+                }
             }
         }
         catch (Exception ex)

@@ -84,7 +84,7 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
 
     private float GetButtonWidth()
     {
-        if (_isIconButton) return _uiShared.GetIconTextButtonSize(ButtonIcon, ButtonText);
+        if (_isIconButton) return _uiShared.GetIconTextButtonSize(ButtonIcon, ButtonText) - ImGui.GetStyle().ItemInnerSpacing.X;
         else return ImGuiHelpers.GetButtonSize(ButtonText).X - ImGui.GetStyle().ItemInnerSpacing.X;
     }
 

@@ -43,7 +43,11 @@ public class PairCombos
         var tempLayer = GagLayer;
         if (ImGui.Combo("##GagLayerSelection", ref tempLayer, new string[] { "Layer 1", "Layer 2", "Layer 3" }, 3))
         {
-            if (tempLayer != GagLayer) GagLayer = tempLayer;
+            if (tempLayer != GagLayer)
+            {
+                GagLayer = tempLayer;
+                Opened = InteractionType.None;
+            }
         }
         UiSharedService.AttachToolTip("Select the layer to apply a Gag to.");
     }

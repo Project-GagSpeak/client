@@ -17,7 +17,7 @@ public class PairPadlockRestraint : PairPadlockComboBase
         ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
         : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
 
-    public float PadlockUnlockWinHeight() => SelectedLock.IsTwoRowLock()
+    public float PadlockUnlockWinHeight() => (_pairRef.LastWardrobeData?.Padlock.ToPadlock() ?? SelectedLock).IsPasswordLock()
         ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
         : ImGui.GetFrameHeight();
 
@@ -50,12 +50,12 @@ public class PairPadlockRestraint : PairPadlockComboBase
 
         // draw button thing.
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: SelectedLock is Padlocks.None, id: "##" + comboLabelBase + "-UnlockButton"))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: _pairRef.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None, id: "##" + comboLabelBase + "-UnlockButton"))
             OnUnlockButtonPress();
         UiSharedService.AttachToolTip(btt);
 
         // on next line show lock fields.
-        ShowUnlockFields();
+        ShowUnlockFields(_pairRef.LastWardrobeData.Padlock.ToPadlock());
     }
 
 

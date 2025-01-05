@@ -7,6 +7,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
@@ -43,17 +44,18 @@ public sealed class PairRestraintCombo : PairCustomComboButton<LightRestraintDat
         {
             var iconWidth = _uiShared.GetIconData(FontAwesomeIcon.InfoCircle).X;
             var hasGlamour = restraintItem.AffectedSlots.Any();
-            var hasTraits = restraintItem.HardcoreTraits.TryGetValue(MainHub.UID, out var traits) && traits.AnyEnabled();
+            var hasInfo = !restraintItem.Description.IsNullOrWhitespace() 
+                ||  restraintItem.HardcoreTraits.TryGetValue(MainHub.UID, out var traits) && traits.AnyEnabled();
 
-            var shift = hasTraits ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
+            var shift = hasInfo ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
 
             // shift over to the right to draw out the icons.
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - shift);
 
-            if (hasTraits)
+            if (hasInfo)
             {
-                _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(hasTraits ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey));
-                DrawItemTooltip(restraintItem.Description, restraintItem.HardcoreTraits[MainHub.UID]);
+                _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+                DrawItemTooltip(restraintItem);
                 ImGui.SameLine();
             }
 
@@ -88,7 +90,7 @@ public sealed class PairRestraintCombo : PairCustomComboButton<LightRestraintDat
         _logger.LogDebug("Applying Restraint Set " + CurrentSelection.Name + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
 
-    private void DrawItemTooltip(string description, HardcoreTraits traits)
+    private void DrawItemTooltip(LightRestraintData setItem)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -99,16 +101,17 @@ public sealed class PairRestraintCombo : PairCustomComboButton<LightRestraintDat
 
             // begin the tooltip interface
             ImGui.BeginTooltip();
+            bool hasDescription = !setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here...");
 
-            if(!description.IsNullOrWhitespace())
+            if(hasDescription)
             {
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (description.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+                if (setItem.Description.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = description.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = setItem.Description.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (int i = 0; i < splitText.Length; i++)
                     {
@@ -118,67 +121,72 @@ public sealed class PairRestraintCombo : PairCustomComboButton<LightRestraintDat
                 }
                 else
                 {
-                    ImGui.TextUnformatted(description);
+                    ImGui.TextUnformatted(setItem.Description);
                 }
                 // finally, pop the text wrap position
                 ImGui.PopTextWrapPos();
+            }
 
+            bool traitsExist = setItem.HardcoreTraits.TryGetValue(MainHub.UID, out var traits) && traits.AnyEnabled();
+
+            if (traitsExist && !setItem.Description.IsNullOrWhitespace()) ImGui.Separator();
+
+            if (traitsExist && traits is not null)
+            {
+                ImGui.TextUnformatted("When you apply this Set," + Environment.NewLine
+                    + "the following traits are enabled:");
                 ImGui.Separator();
-            }
 
-            ImGui.TextUnformatted("When you apply this Set," + Environment.NewLine
-                + "the following traits are enabled:");
-            ImGui.Separator();
-
-            if (traits.LegsRestrained)
-            {
-                UiSharedService.ColorText("Legs Restrained:", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Actions requiring the use of legs are revoked.");
-            }
-            else if (traits.ArmsRestrained)
-            {
-                UiSharedService.ColorText("Arms Restrained:", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Actions requiring the use of arms are revoked.");
-            }
-            else if (traits.Gagged)
-            {
-                UiSharedService.ColorText("Gagged:", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Actions that use the mouth are revoked.");
-            }
-            else if (traits.Blindfolded)
-            {
-                UiSharedService.ColorText("Blindfolded:", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Sight is obscured.");
-            }
-            else if (traits.Immobile)
-            {
-                UiSharedService.ColorText("Immobilized", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Actions requiring any movement are revoked.");
-            }
-            else if (traits.Weighty)
-            {
-                UiSharedService.ColorText("Weighty", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                ImGui.TextUnformatted("Movement is restricted to walking.");
-            }
-            else if (traits.StimulationLevel != StimulationLevel.None)
-            {
-                UiSharedService.ColorText("Stimulation:", ImGuiColors.ParsedGold);
-                ImUtf8.SameLineInner();
-                var stimulationStr = traits.StimulationLevel.ToString() + " (GCD Delay +";
-                // display the GCD delay percentage.
-                ImGui.TextUnformatted(stimulationStr + traits.StimulationLevel switch
+                if (traits.LegsRestrained)
                 {
-                    StimulationLevel.Light => "12.5%",
-                    StimulationLevel.Mild => "25%",
-                    StimulationLevel.Heavy => "50%",
-                    _ => "0%"
-                } + ")");
+                    UiSharedService.ColorText("Legs Restrained:", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Actions requiring the use of legs are revoked.");
+                }
+                else if (traits.ArmsRestrained)
+                {
+                    UiSharedService.ColorText("Arms Restrained:", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Actions requiring the use of arms are revoked.");
+                }
+                else if (traits.Gagged)
+                {
+                    UiSharedService.ColorText("Gagged:", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Actions that use the mouth are revoked.");
+                }
+                else if (traits.Blindfolded)
+                {
+                    UiSharedService.ColorText("Blindfolded:", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Sight is obscured.");
+                }
+                else if (traits.Immobile)
+                {
+                    UiSharedService.ColorText("Immobilized", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Actions requiring any movement are revoked.");
+                }
+                else if (traits.Weighty)
+                {
+                    UiSharedService.ColorText("Weighty", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    ImGui.TextUnformatted("Movement is restricted to walking.");
+                }
+                else if (traits.StimulationLevel != StimulationLevel.None)
+                {
+                    UiSharedService.ColorText("Stimulation:", ImGuiColors.ParsedGold);
+                    ImUtf8.SameLineInner();
+                    var stimulationStr = traits.StimulationLevel.ToString() + " (GCD Delay +";
+                    // display the GCD delay percentage.
+                    ImGui.TextUnformatted(stimulationStr + traits.StimulationLevel switch
+                    {
+                        StimulationLevel.Light => "12.5%",
+                        StimulationLevel.Mild => "25%",
+                        StimulationLevel.Heavy => "50%",
+                        _ => "0%"
+                    } + ")");
+                }
             }
             ImGui.EndTooltip();
         }
