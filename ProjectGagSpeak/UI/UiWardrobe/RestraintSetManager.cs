@@ -588,7 +588,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                     _gagManager.DrawPadlockCombo(3, (width - 1 - _uiShared.GetIconButtonSize(FontAwesomeIcon.Lock).X - ImGui.GetStyle().ItemInnerSpacing.X),
                         LockHelperExtensions.ClientLocks, (i) => GagManager.ActiveSlotPadlocks[3] = i);
                 }
-                ImUtf8.SameLineInner(); 
+                ImUtf8.SameLineInner();
                 // draw the lock button
                 if (_uiShared.IconButton(set.Locked ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock, null, set.Name.ToString(), padlockType == Padlocks.None))
                 {
