@@ -55,12 +55,12 @@ public sealed class CommandManager : IDisposable
         });
         _commands.AddHandler(SafewordCommand, new CommandInfo(OnSafeword)
         {
-            HelpMessage = "reverts all active features. For emergency uses.",
+            HelpMessage = "reverts all active features. Use /safeword <your safeword> <Pair UID> to isolate a specific pair. For emergency uses.",
             ShowInHelp = true
         });
         _commands.AddHandler(SafewordHardcoreCommand, new CommandInfo(OnSafewordHardcore)
         {
-            HelpMessage = "reverts all hardcore settings. For emergency uses.",
+            HelpMessage = "reverts all hardcore settings. Use /safewordhardcore <Pair UID> to isolate a specific pair. For emergency uses.",
             ShowInHelp = true
         });
         _commands.AddHandler(DeathRollShortcutCommand, new CommandInfo(OnDeathRollShortcut)
