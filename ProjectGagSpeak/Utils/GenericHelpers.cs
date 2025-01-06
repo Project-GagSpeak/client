@@ -59,6 +59,7 @@ public static class GenericHelpers
     public static readonly HashSet<string> TimerPadlocks = new HashSet<string>
     {
         Padlocks.FiveMinutesPadlock.ToName(),
+        Padlocks.TimerPadlock.ToName(),
         Padlocks.TimerPasswordPadlock.ToName(),
         Padlocks.OwnerTimerPadlock.ToName(),
         Padlocks.DevotionalTimerPadlock.ToName(),

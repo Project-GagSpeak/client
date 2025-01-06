@@ -256,9 +256,12 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                 else
                     return ValidatePassword(ActiveSlotPasswords[slot]);
             case Padlocks.TimerPadlock:
-                // This logic is uniquely spesific to the fact that we do this client side. We want to make sure we cant unlock it if the assigner is anyone but us.
-                if (currentlyLocked) return MainHub.UID != _clientData.AppearanceData?.GagSlots[slot].Assigner;
-                else return TryParseTimeSpan(ActiveSlotTimers[slot], out TimeSpan test);
+                // This logic is uniquely specific to the fact that we do this client side. We want to make sure that the locked cannot unlock it, but others can.
+                // The server will set the password for locking to the UID of the cutie assigned which will need to _not_ match in order to unlock .
+                if (currentlyLocked)
+                    return MainHub.UID != _clientData.AppearanceData?.GagSlots[slot].Password;
+                else
+                    return TryParseTimeSpan(ActiveSlotTimers[slot], out TimeSpan test);
             case Padlocks.TimerPasswordPadlock:
                 if (currentlyLocked)
                     return ActiveSlotPasswords[slot] == _clientData.AppearanceData?.GagSlots[slot].Password;
@@ -296,9 +299,12 @@ public partial class GagManager : DisposableMediatorSubscriberBase
                 else
                     return ValidatePassword(ActiveSlotPasswords[3]);
             case Padlocks.TimerPadlock:
-                // should just need to validate the timer.
-                if(!currentlyLocked) return TryParseTimeSpan(ActiveSlotTimers[3], out TimeSpan test);
-                return true;
+                // This logic is uniquely specific to the fact that we do this client side. We want to make sure that the locked cannot unlock it, but others can.
+                // The server will set the password for locking to the UID of the cutie assigned which will need to _not_ match in order to unlock .
+                if (!currentlyLocked)
+                    return TryParseTimeSpan(ActiveSlotTimers[3], out TimeSpan test);
+                else
+                    return MainHub.UID != set.LockPassword;
             case Padlocks.TimerPasswordPadlock:
                 if (currentlyLocked)
                 {
