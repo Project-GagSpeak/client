@@ -224,7 +224,7 @@ public static class ActionDataCore
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
         // Repose
-        { 16565, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        { 16560, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
         // Esuna
         { 7568, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
         // Lucid Dreaming
