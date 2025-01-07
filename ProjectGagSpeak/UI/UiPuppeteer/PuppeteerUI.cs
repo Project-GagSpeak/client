@@ -300,18 +300,22 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             _components.DrawListenerClientGroup(isEditingTriggerOptions,
                 (newSits) =>
                 {
-                    _logger.LogTrace($"Updated AlowSits permission: " + newSits);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowSitRequests", newSits), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowSits permission: " + newSits);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("SitRequests", newSits), UpdateDir.Own));
                 },
                 (newMotions) =>
                 {
-                    _logger.LogTrace($"Updated AlowMotions permission: " + newMotions);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowMotionRequests", newMotions), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowMotions permission: " + newMotions);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("MotionRequests", newMotions), UpdateDir.Own));
+                },
+                (newAlias) => {
+                    _logger.LogTrace($"Updated AllowAlias permission: " + newAlias);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AliasRequests", newAlias), UpdateDir.Own));                
                 },
                 (newAll) =>
                 {
-                    _logger.LogTrace($"Updated AlowAll permission: " + newAll);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowAllRequests", newAll), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowAll permission: " + newAll);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllRequests", newAll), UpdateDir.Own));
                 },
                 (newEditState) =>
                 {

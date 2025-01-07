@@ -170,8 +170,8 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
         if (_puppeteerHandler.IsValidTriggerWord(globalTriggers, message, out string matchedTrigger))
         {
             // check permissions.
-            _playerInfo.GlobalPerms!.PuppetPerms(out bool sit, out bool emote, out bool all);
-            if (_puppeteerHandler.ParseOutputFromGlobalAndExecute(matchedTrigger, message, type, sit, emote, all))
+            _playerInfo.GlobalPerms!.PuppetPerms(out bool sit, out bool emote, out bool alias, out bool all);
+            if (_puppeteerHandler.ParseOutputFromGlobalAndExecute(matchedTrigger, message, type, sit, emote, alias, all))
                 return; // early return to prevent double trigger call.
         }
 

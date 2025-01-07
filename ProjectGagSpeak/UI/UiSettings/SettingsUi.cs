@@ -239,6 +239,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         string globalTriggerPhrase = _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase;
         bool globalAllowSitRequests = _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests;
         bool globalAllowMotionRequests = _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests;
+        bool globalAllowAliasRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests;
         bool globalAllowAllRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests;
 
         bool moodlesEnabled = _playerCharacterManager.GlobalPerms.MoodlesEnabled;
@@ -415,7 +416,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowMotionTT);
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAlias, ref globalAllowAliasRequests))
+            {
+                _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests = globalAllowAliasRequests;
+                // if this creates a race condition down the line remove the above line.
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowAliasRequests", globalAllowAliasRequests), UpdateDir.Own));
 
+            }
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAliasTT);
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAll, ref globalAllowAllRequests))
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests = globalAllowAllRequests;
