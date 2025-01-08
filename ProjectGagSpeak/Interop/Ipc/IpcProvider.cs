@@ -1,12 +1,18 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
+using FFXIVClientStructs.FFXIV.Client.LayoutEngine.Layer;
+using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI.UiWardrobe;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Dto.IPC;
+using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Interop.Ipc;
@@ -22,6 +28,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private readonly PairManager _pairManager;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly IDalamudPluginInterface _pi;
+    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly ClientData _clientData;
 
     public GagspeakMediator Mediator { get; init; }
     private GameObjectHandler? _playerObject = null;
@@ -38,6 +46,13 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     /// <para> String Stored is in format [Player Name@World] </para>
     /// </summary>
     private ICallGateProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>? _handledVisiblePairs;
+
+    private List<string>? _cachedGagTypes;
+
+    private ICallGateProvider<List<string>>? _gagTypes;
+    private ICallGateProvider<List<string>>? _wornGags;
+    private ICallGateProvider<Guid?>? _wornRestraint;
+    private ICallGateProvider<List<(string, Guid)>>? _restraintSets;
 
     /// <summary>
     /// Obtains an ApplyStatusToPair message from Moodles, and invokes the update to the player if permissions allow it.
@@ -57,13 +72,15 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
         PairManager pairManager, OnFrameworkService frameworkUtils,
-        IDalamudPluginInterface pi)
+        IDalamudPluginInterface pi, ClientConfigurationManager clientConfigs, ClientData clientData)
     {
         _logger = logger;
         _pairManager = pairManager;
         _frameworkUtils = frameworkUtils;
         _pi = pi;
         Mediator = mediator;
+        _clientConfigs = clientConfigs;
+        _clientData = clientData;
 
         Mediator.Subscribe<MoodlesReady>(this, (_) => NotifyListChanged());
 
@@ -124,6 +141,14 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         _handledVisiblePairs = _pi.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
         _handledVisiblePairs.RegisterFunc(GetVisiblePairs);
+        _gagTypes = _pi.GetIpcProvider<List<string>>("GagSpeak.GetGagTypes");
+        _gagTypes.RegisterFunc(GetGagTypes);
+        _wornGags = _pi.GetIpcProvider<List<string>>("GagSpeak.GetWornGags");
+        _wornGags.RegisterFunc(GetWornGags);
+        _wornRestraint = _pi.GetIpcProvider<Guid?>("GagSpeak.GetWornRestraint");
+        _wornRestraint.RegisterFunc(GetWornRestraint);
+        _restraintSets = _pi.GetIpcProvider<List<(string, Guid)>>("GagSpeak.GetRestraintSets");
+        _restraintSets.RegisterFunc(GetRestraintSets);
 
         // Register our action.
         _applyStatusesToPairRequest = _pi.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
@@ -149,6 +174,10 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         GagSpeakDisposing?.UnregisterFunc();
 
         _handledVisiblePairs?.UnregisterFunc();
+        _gagTypes?.UnregisterFunc();
+        _wornGags?.UnregisterFunc();
+        _wornRestraint?.UnregisterFunc();
+        _restraintSets?.UnregisterFunc();
         _applyStatusesToPairRequest?.UnregisterAction();
         GagSpeakListUpdated?.UnregisterAction();
         GagSpeakTryMoodleStatus?.UnregisterAction();
@@ -171,6 +200,27 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
             .Select(g => ((g.Item1.NameWithWorld), (g.Item2), (g.Item3)))
             .Distinct()
             .ToList();
+    }
+
+    private List<string> GetGagTypes()
+    {
+        _cachedGagTypes ??= Enum.GetValues<GagType>().Skip(1).Select((gag) => gag.GagName()).ToList(); // Retrieves names from the enum, skips over the "None" enum, and caches it.
+        return _cachedGagTypes;
+    }
+
+    private List<string> GetWornGags()
+    {
+        return _clientData.CurrentGagNames;
+    }
+
+    private Guid? GetWornRestraint()
+    {
+        return _clientConfigs.GetActiveSet()?.RestraintId;
+    }
+
+    private List<(string, Guid)> GetRestraintSets()
+    {
+        return _clientConfigs.StoredRestraintSets.Select((restraint) => (restraint.Name, restraint.RestraintId)).ToList();
     }
 
     /// <summary>

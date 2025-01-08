@@ -413,7 +413,7 @@ public static class GagSpeakServiceExtensions
 
         .AddSingleton((s) => new IpcProvider(s.GetRequiredService<ILogger<IpcProvider>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(),
-            s.GetRequiredService<OnFrameworkService>(), pi))
+            s.GetRequiredService<OnFrameworkService>(), pi, s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<ClientData>()))
         .AddSingleton((s) => new PenumbraChangedItemTooltip(s.GetRequiredService<ILogger<PenumbraChangedItemTooltip>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<IpcCallerPenumbra>(), cs,
             s.GetRequiredService<ItemData>()));
