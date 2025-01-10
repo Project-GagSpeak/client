@@ -1,7 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
-using System.Diagnostics.Eventing.Reader;
 
 namespace GagSpeak.UpdateMonitoring.Chat;
 
