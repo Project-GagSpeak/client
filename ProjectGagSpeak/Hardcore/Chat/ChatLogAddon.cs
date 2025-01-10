@@ -1,6 +1,7 @@
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
+using System.Diagnostics.Eventing.Reader;
 
 namespace GagSpeak.UpdateMonitoring.Chat;
 
@@ -74,9 +75,18 @@ public static unsafe class ChatLogAddonHelper
 
     public static unsafe void SetChatLogPanelsVisibility(bool state)
     {
-        foreach (var panel in ChatLogPanels)
-            if (panel->RootNode != null)
-                panel->RootNode->ToggleVisibility(state);
+        bool panelsSet = true;
+        foreach (var panel in ChatLogPanels) {
+            if (panel != null)
+                if (panel->RootNode != null)
+                    panel->RootNode->ToggleVisibility(state);
+                else
+                    panelsSet = false;
+        }
+        if (!panelsSet)
+        {
+            StaticLogger.Logger.LogWarning("SetChatLogPanelsVisibility: More or more chat panels were NULL.");
+        }
     }
 
 
