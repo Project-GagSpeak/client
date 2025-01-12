@@ -32,14 +32,14 @@ public static class ActionDataCore
         { 7540, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}}, // low blow
         { 7531, new AcReqProps[]{AcReqProps.None}},                             // Rampart
         { 17,   new AcReqProps[]{AcReqProps.None}},                             // Sentinel
-        { 9,    new AcReqProps[]{AcReqProps.None}},                             // Fast Blade
+        { 9,    new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}}, // Fast Blade
         { 15,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}}, // Riot Blade
         { 21,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}}, // Rage of Halone
         { 24,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement,
-                                 AcReqProps.Sight}},                            // Shield Lob
+                                 AcReqProps.Sight, AcReqProps.LegMovement}},    // Shield Lob
         { 7381, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}}, // Total Eclipse
-        { 16,   new AcReqProps[]{AcReqProps.None}},                             // Shield Bash
-        { 20,   new AcReqProps[]{AcReqProps.None}},                             // Fight or Flight
+        { 16,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}}, // Shield Bash
+        { 20,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}}, // Fight or Flight
     };
 
     // Collection for Pugilist
@@ -51,6 +51,38 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Second Wind
+        { 7541, new AcReqProps[]{AcReqProps.None}},
+        // Leg Sweep
+        { 7863, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Bloodpath
+        { 7542, new AcReqProps[]{AcReqProps.None, AcReqProps.ArmMovement}},
+        // Feint
+        { 7549, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Arm's Length
+        { 7548, new AcReqProps[]{AcReqProps.Movement}},
+        // True North
+        { 7546, new AcReqProps[]{AcReqProps.Movement}},
+        // Bootshine
+        { 53, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // True Stike
+        { 54, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Snap Punch
+        { 56, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Arm of the Destroyer
+        { 62, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Twin Snakes
+        { 61, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Demolish
+        { 66, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Dragon Kick
+        { 74, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Steeled Maditation
+        { 36940, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Steel Peak
+        { 25761, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Manta
+        { 65, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
     };
 
     // Collection for Marauder
@@ -62,6 +94,42 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Rampart
+        { 7531, new AcReqProps[]{AcReqProps.None}},
+        // Low Blow
+        { 7540, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Provoke
+        { 7533, new AcReqProps[]{AcReqProps.Sight}},
+        // Interject
+        { 7538, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Reprisal
+        { 7535, new AcReqProps[]{AcReqProps.Movement}},
+        // Arm's Length
+        { 7548, new AcReqProps[]{AcReqProps.Movement}},
+        // Shirk
+        { 7537, new AcReqProps[]{AcReqProps.Sight}},
+        // Heavy Swing
+        { 31, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Maim
+        { 37, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Storm's Path
+        { 42, new AcReqProps[]{ AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Storm's Eye
+        { 45, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Overpower
+        { 41, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Tomahawk
+        { 46, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement, AcReqProps.Sight}},
+        // Berserk
+        { 38, new AcReqProps[]{AcReqProps.Movement}},
+        // Defience
+        { 48, new AcReqProps[]{AcReqProps.None}},
+        // Thrill of Battle
+        { 40, new AcReqProps[]{AcReqProps.None}},
+        // Vengeance
+        { 44, new AcReqProps[]{AcReqProps.None}},
+        // Holmgang
+        { 43, new AcReqProps[]{AcReqProps.Sight, AcReqProps.Movement, AcReqProps.ArmMovement}},
     };
 
     // Collection for Lancer
@@ -73,6 +141,34 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Second Wind
+        { 7541, new AcReqProps[]{AcReqProps.None}},
+        // Leg Sweep
+        { 7863, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Bloodpath
+        { 7542, new AcReqProps[]{AcReqProps.None, AcReqProps.ArmMovement}},
+        // Feint
+        { 7549, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Arm's Length
+        { 7548, new AcReqProps[]{AcReqProps.Movement}},
+        // True North
+        { 7546, new AcReqProps[]{AcReqProps.Movement}},
+        // True Thrust
+        { 75, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Vorpal Thrust
+        { 78, new AcReqProps[]{AcReqProps.Movement}},
+        // Full Thrust
+        { 84, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Disembowel
+        { 87, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Chaos Thrust
+        { 88, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Piercing Talon
+        { 90, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Life Surge
+        { 83, new AcReqProps[]{AcReqProps.None}},
+        // Lance Change
+        { 85, new AcReqProps[]{AcReqProps.None}},
     };
 
     // Collection for Archer
@@ -84,6 +180,38 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Leg Graze
+        { 7554, new AcReqProps[]{AcReqProps.None}},
+        // Second Wind
+        { 7541, new AcReqProps[]{AcReqProps.None}},
+        // Foot Graze
+        { 7553, new AcReqProps[]{AcReqProps.None}},
+        // Peloton
+        { 7557, new AcReqProps[]{AcReqProps.Weighted}},
+        // Head Graze
+        { 7551, new AcReqProps[]{AcReqProps.Movement, AcReqProps.Sight}},
+        // Arm's Length
+        { 7548, new AcReqProps[]{AcReqProps.Movement}},
+        // Heavy Shot
+        { 97, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Straight Shot
+        { 98, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Venomous Bite
+        { 100, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Quick Nock
+        { 106, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Wide Volley
+        { 36974, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement, AcReqProps.ArmMovement, AcReqProps.Sight}}, // Back flips on spot and shoots from above...
+        // Windbite
+        { 113, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Raging Strikes
+        { 101, new AcReqProps[]{AcReqProps.None}},
+        // Bloodletter
+        { 110, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Repelling Shot
+        { 112, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Berrage
+        { 107, new AcReqProps[]{AcReqProps.ArmMovement}}, // There is arm movement required?
     };
 
     // Collection for Conjurer
@@ -95,6 +223,36 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Repose
+        { 16560, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Esuna
+        { 7568, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Lucid Dreaming
+        { 7562, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Swiftcase
+        { 7561, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Surecast
+        { 7559, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Rescue
+        { 7571, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Stone
+        { 119, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Stone II
+        { 127, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Cure
+        { 120, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Medica
+        { 124, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Raise
+        { 125, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Cure II
+        { 135, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Aero
+        { 121, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Aero II
+        { 132, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Medica II
+        { 133, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
     };
 
     // Collection for Thaumaturge
@@ -106,6 +264,38 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Addle
+        { 7560, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Sleep
+        { 25880, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Lucid Dreaming
+        { 7562, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Swiftcase
+        { 7561, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Surecast
+        { 7559, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Blizzard
+        { 142, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Fire
+        { 141, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Thunder
+        { 144, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Blizzard II
+        { 25793, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Scathe
+        { 156, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement, AcReqProps.Sight}},
+        // Fire II
+        { 147, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Thunder II
+        { 7447, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Fire III
+        { 152, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Transpose
+        { 149, new AcReqProps[]{AcReqProps.None}},
+        // Manaward
+        { 157, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Aetherial Manipulation
+        { 155, new AcReqProps[]{AcReqProps.Movement, AcReqProps.Sight}},
     };
 
     // Collection for Carpenter
@@ -264,6 +454,8 @@ public static class ActionDataCore
         { 15,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
         // Rage of Halone (royal athority)
         { 21,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Royal Authority
+        { 3539,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
         // Shield Lob
         { 24,   new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement, AcReqProps.Sight}},
         // Total Eclipse
@@ -733,6 +925,47 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Addle
+        { 7560, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Sleep
+        { 25880, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Lucid Dreaming
+        { 7562, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Swiftcase
+        { 7561, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Surecast
+        { 7559, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Summon Carbuncle
+        { 25798, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Physic
+        { 16230, new AcReqProps[]{AcReqProps.Speech, AcReqProps.Sight}},
+        // Aethercharge
+        { 25800, new AcReqProps[]{AcReqProps.Speech, AcReqProps.Sight}},
+        // Summon Ruby
+        { 25802, new AcReqProps[]{AcReqProps.Speech}},
+        // Gemshine
+        { 25883, new AcReqProps[]{AcReqProps.Sight}},
+        // Resurrection
+        { 173, new AcReqProps[]{AcReqProps.Sight}},
+        // Summon Topaz
+        { 25803, new AcReqProps[]{AcReqProps.Speech}},
+        // Summon Emerald
+        { 25804, new AcReqProps[]{AcReqProps.Speech}},
+        // Outburst
+        { 16511, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Presious Brilliance
+        { 258884, new AcReqProps[]{AcReqProps.Sight}},
+        // Ruin II
+        { 172, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Ruin
+        { 163, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Radiant Aegis
+        { 25799, new AcReqProps[]{AcReqProps.None}},
+        // Fester
+        { 181, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Energy Drain
+        { 16508, new AcReqProps[]{AcReqProps.Sight}},
+
     };
 
     // Collection for Summoner
@@ -878,6 +1111,36 @@ public static class ActionDataCore
         { 7,    new AcReqProps[]{AcReqProps.None}},
         // Return
         { 8,    new AcReqProps[]{AcReqProps.None}},
+        // Second Wind
+        { 7541, new AcReqProps[]{AcReqProps.None}},
+        // Leg Sweep
+        { 7863, new AcReqProps[]{AcReqProps.Movement, AcReqProps.LegMovement}},
+        // Bloodpath
+        { 7542, new AcReqProps[]{AcReqProps.None, AcReqProps.ArmMovement}},
+        // Feint
+        { 7549, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Arm's Length
+        { 7548, new AcReqProps[]{AcReqProps.Movement}},
+        // True North
+        { 7546, new AcReqProps[]{AcReqProps.Movement}},
+        // Spinning Edge
+        { 2240, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Gust Slash
+        { 2242, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Aeolian Edge
+        { 2255, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.LegMovement}},
+        // Throwing Dagger
+        { 2247, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement, AcReqProps.Sight}},
+        // Death Blossom
+        { 2254, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Shade Shift
+        { 2241, new AcReqProps[]{AcReqProps.None}},
+        // Hide
+        { 2245, new AcReqProps[]{AcReqProps.None}},
+        // Mug
+        { 2248, new AcReqProps[]{AcReqProps.Movement, AcReqProps.ArmMovement}},
+        // Trick Attack
+        { 2258, new AcReqProps[]{AcReqProps.Movement}},
     };
 
     // Collection for Ninja
@@ -1703,3 +1966,281 @@ public static class ActionDataCore
 
     };
 }
+
+/*
+// CRAFTING STUFF
+// Basic Synthesis
+{ 100001, new AcReqProps[]{AcReqProps.}},
+// Basic Touch
+{ 100002, new AcReqProps[]{AcReqProps.}},
+// Master's Mend
+{ 100003, new AcReqProps[]{AcReqProps.}},
+// Hasty Touch
+{ 100355, new AcReqProps[]{AcReqProps.}},
+// Rapid Synthesis
+{ 100363, new AcReqProps[]{AcReqProps.}},
+// Observe
+{ 100010, new AcReqProps[]{AcReqProps.}},
+// Tricks of the Trade
+{ 100371, new AcReqProps[]{AcReqProps.}},
+// Waste Not
+{ 4631, new AcReqProps[]{AcReqProps.}},
+// Veneration
+{ 19297, new AcReqProps[]{AcReqProps.}},
+// Standard Touch
+{ 100004, new AcReqProps[]{AcReqProps.}},
+// Great Strides
+{ 260, new AcReqProps[]{AcReqProps.}},
+// Innovation
+{ 19004, new AcReqProps[]{AcReqProps.}},
+// Final Apprisal
+{ 19012, new AcReqProps[]{AcReqProps.}},
+// Waste Not II
+{ 4639, new AcReqProps[]{AcReqProps.}},
+// Byregot's Blessing
+{ 100339, new AcReqProps[]{AcReqProps.}},
+// Precise Touch
+{ 100128, new AcReqProps[]{AcReqProps.}},
+// Muscle Memory
+{ 100379, new AcReqProps[]{AcReqProps.}},
+// Careful Synthesis
+{ 100203, new AcReqProps[]{AcReqProps.}},
+// Manipulation
+{ 4574, new AcReqProps[]{AcReqProps.}},
+// Prudent Touch
+{ 100227, new AcReqProps[]{AcReqProps.}},
+// Advanced Touch
+{ 100411, new AcReqProps[]{AcReqProps.}},
+// Reflect
+{ 100387, new AcReqProps[]{AcReqProps.}},
+// Prepatory Touch
+{ 100299, new AcReqProps[]{AcReqProps.}},
+// Groundwork
+{ 100403, new AcReqProps[]{AcReqProps.}},
+// Delicate Synthesis
+{ 100323, new AcReqProps[]{AcReqProps.}},
+// Intensive Synthesis
+{ 100315, new AcReqProps[]{AcReqProps.}},
+// Trained Eye
+{ 100283, new AcReqProps[]{AcReqProps.}},
+// Prudent Synthesis
+{ 100427, new AcReqProps[]{AcReqProps.}},
+// Trained Finesse
+{ 100435, new AcReqProps[]{AcReqProps.}},
+// Refined Touch
+{ 100443, new AcReqProps[]{AcReqProps.}},
+// Immaculate Mend
+{ 100467, new AcReqProps[]{AcReqProps.}},
+// Trained Perfection
+{ 100475, new AcReqProps[]{AcReqProps.}},
+// Daring Touch
+{ 100451, new AcReqProps[]{AcReqProps.}},
+
+// Careful Observation ---- Specialist
+{ 100396, new AcReqProps[]{AcReqProps.}},
+// Heart and Soul
+{ 100420, new AcReqProps[]{AcReqProps.}},
+
+Gathering role:
+// Prospect
+{ 227, new AcReqProps[]{AcReqProps.}},
+// Triangulate
+{ 210, new AcReqProps[]{AcReqProps.}},
+// Lay of the Land
+{ 228, new AcReqProps[]{AcReqProps.}},
+// Arbor Call
+{ 211, new AcReqProps[]{AcReqProps.}},
+// Lay of the Land II
+{ 291, new AcReqProps[]{AcReqProps.}},
+// Arbor Call II
+{ 290, new AcReqProps[]{AcReqProps.}},
+// Truth of Mountains
+{ 238, new AcReqProps[]{AcReqProps.}},
+// Truth of Forests
+{ 221, new AcReqProps[]{AcReqProps.}},
+// Fathom
+{ 7903, new AcReqProps[]{AcReqProps.}},
+// Shark Eye
+{ 7904, new AcReqProps[]{AcReqProps.}},
+// Shark Eye II
+{ 7905, new AcReqProps[]{AcReqProps.}},
+// Truth of Oceans
+{ 79911, new AcReqProps[]{AcReqProps.}},
+
+// -----Miner:
+// Sharp Vision
+{ 235, new AcReqProps[]{AcReqProps.}},
+// Sharp Vision II
+{ 237, new AcReqProps[]{AcReqProps.}},
+// Sneak
+{ 303, new AcReqProps[]{AcReqProps.}},
+// Sharp Vission III
+{ 295, new AcReqProps[]{AcReqProps.}},
+// Mountaineer's Gift I
+{ 21177, new AcReqProps[]{AcReqProps.}},
+// The Twelve's Bounty
+{ 280, new AcReqProps[]{AcReqProps.}},
+// Clear Vision
+{ 4072, new AcReqProps[]{AcReqProps.}},
+// Bountiful Yield
+{ 272, new AcReqProps[]{AcReqProps.}},
+// Solid Reason
+{ 232, new AcReqProps[]{AcReqProps.}},
+// King's Yield
+{ 239, new AcReqProps[]{AcReqProps.}},
+// King's Yield II
+{ 241, new AcReqProps[]{AcReqProps.}},
+// Collect
+{ 240, new AcReqProps[]{AcReqProps.}},
+// Scour
+{ 22182, new AcReqProps[]{AcReqProps.}},
+// Brazen Prospector
+{ 22183, new AcReqProps[]{AcReqProps.}},
+// Meticulous Prospector
+{ 22184, new AcReqProps[]{AcReqProps.}},
+// Scruntiny
+{ 22185, new AcReqProps[]{AcReqProps.}},
+// Mountaineer's Gift II
+{ 25589, new AcReqProps[]{AcReqProps.}},
+// Luck of the Mounaineer
+{ 4081, new AcReqProps[]{AcReqProps.}},
+// Bountiful Yield II
+{ 272, new AcReqProps[]{AcReqProps.}},
+// The Giving Land
+{ 4589, new AcReqProps[]{AcReqProps.}},
+// Nald'thal's Tidings
+{ 21203, new AcReqProps[]{AcReqProps.}},
+// Collector's Focus
+{ 21205, new AcReqProps[]{AcReqProps.}},
+// Wise to the World
+{ 26521, new AcReqProps[]{AcReqProps.}},
+// Priming Touch
+{ 34871, new AcReqProps[]{AcReqProps.}},
+
+// -----Botanist:
+// Field Mastery
+{ 218, new AcReqProps[]{AcReqProps.}},
+// Field Mastery II
+{ 220, new AcReqProps[]{AcReqProps.}},
+// SneaK
+{ 304, new AcReqProps[]{AcReqProps.}},
+// Field Mastery III
+{ 294, new AcReqProps[]{AcReqProps.}},
+// Pioneer's Gift I
+{ 21178, new AcReqProps[]{AcReqProps.}},
+// The Twelve's Bounty
+{ 282, new AcReqProps[]{AcReqProps.}},
+// Flora Mastery
+{ 4086, new AcReqProps[]{AcReqProps.}},
+// Bountiful Harvest
+{ 273, new AcReqProps[]{AcReqProps.}},
+// Ageless Words
+{ 215, new AcReqProps[]{AcReqProps.}},
+// Blessed Harvest
+{ 222, new AcReqProps[]{AcReqProps.}},
+// Blessed Harvest II
+{ 224, new AcReqProps[]{AcReqProps.}},
+// Collect
+{ 815, new AcReqProps[]{AcReqProps.}},
+// Scour
+{ 22186, new AcReqProps[]{AcReqProps.}},
+// Brazen Woodsman
+{ 22187, new AcReqProps[]{AcReqProps.}},
+// Meticulous Woodsman
+{ 22188, new AcReqProps[]{AcReqProps.}},
+// Scrutiny
+{ 22189, new AcReqProps[]{AcReqProps.}},
+// Pioneer's Gift II
+{ 25590, new AcReqProps[]{AcReqProps.}},
+// Luck of the Pioneer
+{ 4095, new AcReqProps[]{AcReqProps.}},
+// Bountiful Harvest II
+{ 273, new AcReqProps[]{AcReqProps.}},
+// The Giving Land
+{ 4590, new AcReqProps[]{AcReqProps.}},
+// Nophica's Tidings
+{ 21204, new AcReqProps[]{AcReqProps.}},
+// Collector's Focus
+{ 21206, new AcReqProps[]{AcReqProps.}},
+// Wise to the World
+{ 26522, new AcReqProps[]{AcReqProps.}},
+// Priming Touch
+{ 34872, new AcReqProps[]{AcReqProps.}},
+
+// -----Fisher:
+// Bait
+{ 288, new AcReqProps[]{AcReqProps.}},
+// Cast
+{ 289, new AcReqProps[]{AcReqProps.}},
+// Hook
+{ 296, new AcReqProps[]{AcReqProps.}},
+// Quit
+{ 299, new AcReqProps[]{AcReqProps.}},
+// Cast Light
+{ 2135, new AcReqProps[]{AcReqProps.}},
+// Rest
+{ 37047, new AcReqProps[]{AcReqProps.}},
+// Chum
+{ 4104, new AcReqProps[]{AcReqProps.}},
+// Sneak
+{ 305, new AcReqProps[]{AcReqProps.}},
+// Patience
+{ 4102, new AcReqProps[]{AcReqProps.}},
+// Powerful Hookset
+{ 4103, new AcReqProps[]{AcReqProps.}},
+// Precision Hookset
+{ 4179, new AcReqProps[]{AcReqProps.}},
+// Thaliak's Favor
+{ 26804, new AcReqProps[]{AcReqProps.}},
+// Release
+{ 300, new AcReqProps[]{AcReqProps.}},
+// Release List
+{ 19264, new AcReqProps[]{AcReqProps.}},
+// Mooch
+{ 297, new AcReqProps[]{AcReqProps.}},
+// Snagging
+{ 4100, new AcReqProps[]{AcReqProps.}},
+// Makeshift Bait
+{ 26805, new AcReqProps[]{AcReqProps.}},
+// Collect
+{ 4101, new AcReqProps[]{AcReqProps.}},
+// Fish Eyes
+{ 4105, new AcReqProps[]{AcReqProps.}},
+// Patience II
+{ 4106, new AcReqProps[]{AcReqProps.}},
+// Gig
+{ 7632, new AcReqProps[]{AcReqProps.}},
+// Mooch II
+{ 268, new AcReqProps[]{AcReqProps.}},
+// Veteran Trade
+{ 7906, new AcReqProps[]{AcReqProps.}},
+// Vital Sight
+{ 26870, new AcReqProps[]{AcReqProps.}},
+// Double Hook
+{ 269, new AcReqProps[]{AcReqProps.}},
+// Salvage
+{ 7910, new AcReqProps[]{AcReqProps.}},
+// Nature's Bounty
+{ 7909, new AcReqProps[]{AcReqProps.}},
+// Surface Slap
+{ 4595, new AcReqProps[]{AcReqProps.}},
+// Baited Breath
+{ 26871, new AcReqProps[]{AcReqProps.}},
+// Identical Cast
+{ 4596, new AcReqProps[]{AcReqProps.}},
+// Prize Catch
+{ 26806, new AcReqProps[]{AcReqProps.}},
+// Electric Current
+{ 26872, new AcReqProps[]{AcReqProps.}},
+// Triple Hook
+{ 27523, new AcReqProps[]{AcReqProps.}},
+// Spareful Hand
+{ 37045, new AcReqProps[]{AcReqProps.}},
+// Big-game Fishing
+{ 37046, new AcReqProps[]{AcReqProps.}},
+// Ambitious Lure
+{ 37594, new AcReqProps[]{AcReqProps.}},
+// Modest Lure
+{ 37595, new AcReqProps[]{AcReqProps.}},
+
+*/
