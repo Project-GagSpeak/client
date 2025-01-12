@@ -908,27 +908,27 @@ public partial class AchievementManager
     {
         switch (emoteId)
         {
-            case 22:
+            case 22: // Lookout
                 if(emoteCallerObj.ObjectIndex is 0)
                     (SaveData.Achievements[Achievements.WhatAView.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
-            case 36:
+            case 36: // Stagger
                 if (emoteCallerObj.ObjectIndex is 0)
                     (SaveData.Achievements[Achievements.VulnerableVibrations.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
-            case 105:
+            case 105: // Stroke
                 if (emoteCallerObj.ObjectIndex is 0 && targetObject.ObjectIndex is 0)
                     (SaveData.Achievements[Achievements.ProlificPetter.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
-            case 111:
+            case 111: // Slap
                 if (emoteCallerObj.ObjectIndex is not 0 && targetObject.ObjectIndex is 0)
                     (SaveData.Achievements[Achievements.ICantBelieveYouveDoneThis.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
-            case 146:
+            case 146: //Dote
                 if (emoteCallerObj.ObjectIndex is 0 && targetObject.ObjectIndex is not 0)
                     (SaveData.Achievements[Achievements.WithAKissGoodbye.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;

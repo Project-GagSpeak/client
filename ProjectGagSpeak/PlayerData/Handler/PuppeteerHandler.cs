@@ -264,6 +264,11 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         if (canAll)
         {
             Logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
+            var emote = EmoteMonitor.EmoteCommandsWithId.FirstOrDefault(e => string.Equals(message.TextValue, e.Key.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(emote.Key))
+            {
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)emote.Value);
+            }
             return true;
         }
 
