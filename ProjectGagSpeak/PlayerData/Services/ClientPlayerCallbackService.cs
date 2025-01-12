@@ -293,6 +293,7 @@ public class ClientCallbackService
                     var activeSet = _clientConfigs.GetActiveSet();
                     if (activeSet is not null && callbackSet is not null)
                     {
+                        // dont publish because it everyone else already knows the new set, only we client needs to worry about swapping.
                         await _appearanceManager.RestraintSwapped(callbackSet.RestraintId, callbackDto.User.UID, publish: false);
                         _logger.LogDebug($"{callbackDto.User.UID} has swapped your [{activeSet.Name}] restraint set to another set!", LoggerType.Callbacks);
                         // Log the Interaction Event

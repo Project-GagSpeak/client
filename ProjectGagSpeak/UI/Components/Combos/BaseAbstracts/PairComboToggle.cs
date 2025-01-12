@@ -9,7 +9,7 @@ using System.Numerics;
 namespace GagSpeak.UI.Components.Combos;
 
 // base abstract class for combos that have a button counterpart beside it.
-public abstract class PairCustomComboToggle<T> : PairCustomComboBase<T>
+public abstract class PairComboToggle<T> : PairComboBase<T>
 {
     private readonly UiSharedService _uiShared;
 
@@ -19,7 +19,7 @@ public abstract class PairCustomComboToggle<T> : PairCustomComboBase<T>
     private string _onTooltip;
     private string _offTooltip;
 
-    protected PairCustomComboToggle(ILogger log, UiSharedService uiShared, MainHub mainHub,
+    protected PairComboToggle(ILogger log, UiSharedService uiShared, MainHub mainHub,
         Pair pair, string onText, string onTooltip, string offText, string offTooltip)
         : base(log, pair, mainHub)
     {

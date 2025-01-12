@@ -66,7 +66,7 @@ public partial class PairStickyUI
         // Interaction Window for LockRestraint
         if (PairCombos.Opened is InteractionType.LockRestraint)
         {
-            using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockLockWinHeight())))
+            using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockLockWindowHeight())))
                 _pairCombos.RestraintPadlockCombos.DrawLockCombo(WindowMenuWidth, lockRestraintText, lockRestraintTT);
             ImGui.Separator();
         }
@@ -80,7 +80,7 @@ public partial class PairStickyUI
         // Interaction Window for UnlockRestraint
         if (PairCombos.Opened is InteractionType.UnlockRestraint)
         {
-            using (ImRaii.Child("SetUnlockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockUnlockWinHeight())))
+            using (ImRaii.Child("SetUnlockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockUnlockWindowHeight())))
                 _pairCombos.RestraintPadlockCombos.DrawUnlockCombo(WindowMenuWidth, unlockRestraintText, unlockRestraintTT);
             ImGui.Separator();
         }

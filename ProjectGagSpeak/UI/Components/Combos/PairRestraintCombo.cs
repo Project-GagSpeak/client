@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
-public sealed class PairRestraintCombo : PairCustomComboButton<LightRestraintData>
+public sealed class PairRestraintCombo : PairComboButton<LightRestraintData>
 {
     private readonly SetPreviewComponent _ttPreview;
 

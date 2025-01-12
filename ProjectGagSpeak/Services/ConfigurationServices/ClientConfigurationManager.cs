@@ -645,6 +645,23 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
 
     #region API Compilation
+
+    public CharaWardrobeData CompileWardrobeToAPI()
+    {
+        // attempt to locate the active restraint set
+        var activeSet = GetActiveSet();
+        return new CharaWardrobeData
+        {
+            ActiveSetId = activeSet?.RestraintId ?? Guid.Empty,
+            ActiveSetEnabledBy = activeSet?.EnabledBy ?? string.Empty,
+            Padlock = activeSet?.Padlock ?? Padlocks.None.ToName(),
+            Password = activeSet?.Password ?? "",
+            Timer = activeSet?.Timer ?? DateTimeOffset.MinValue,
+            Assigner = activeSet?.Assigner ?? "",
+            ActiveCursedItems = ActiveCursedItems
+        };
+    }
+
     public CharaToyboxData CompileToyboxToAPI()
     {
         return new CharaToyboxData

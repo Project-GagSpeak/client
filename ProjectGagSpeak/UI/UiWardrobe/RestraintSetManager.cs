@@ -1,5 +1,4 @@
 using Dalamud.Interface;
-using Dalamud.Interface.Animation.EasingFunctions;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -14,10 +13,8 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
 using OtterGui.Classes;
 using OtterGui.Text;
-using Penumbra.GameData.Enums;
 using System.Numerics;
 
 namespace GagSpeak.UI.UiWardrobe;
@@ -31,9 +28,9 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
     private readonly WardrobeHandler _handler;
     private readonly GagManager _gagManager;
     private readonly TutorialService _guides;
-    public RestraintSetManager(ILogger<RestraintSetManager> logger, GagspeakMediator mediator, 
+    public RestraintSetManager(ILogger<RestraintSetManager> logger, GagspeakMediator mediator,
         UiSharedService uiSharedService, IpcCallerGlamourer ipcGlamourer, RestraintSetEditor editor,
-        SetPreviewComponent setPreview, WardrobeHandler handler, GagManager padlockHandler, 
+        SetPreviewComponent setPreview, WardrobeHandler handler, GagManager padlockHandler,
         TutorialService guides) : base(logger, mediator)
     {
         _uiShared = uiSharedService;
@@ -51,7 +48,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
             if (_handler.ClonedSetForEdit is not null)
             {
                 _handler.ClonedSetForEdit.DrawData[msg.Slot].GameItem = msg.Item;
-                Logger.LogDebug($"Set ["+msg.Slot+"] to ["+msg.Item.Name+"] on edited set ["+_handler.ClonedSetForEdit.Name+"]", LoggerType.Restraints);
+                Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set [" + _handler.ClonedSetForEdit.Name + "]", LoggerType.Restraints);
             }
             else
             {
@@ -297,7 +294,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
 
     private void DrawRestraintSetEditorHeader()
     {
-        if(_handler.ClonedSetForEdit is null)
+        if (_handler.ClonedSetForEdit is null)
         {
             ImGui.Text("Cloned Set for Edit is Null!");
             return;
@@ -426,7 +423,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                 // if the item is right clicked, open the popup
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
-                    if(LastHoveredIndex == i && !FilteredSetList[i].Enabled)
+                    if (LastHoveredIndex == i && !FilteredSetList[i].Enabled)
                         ImGui.OpenPopup($"RestraintSetContext{i}");
                 }
             }
@@ -481,7 +478,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
         // if it is the active set, dont push the color, otherwise push the color
 
         using var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), !isActiveSet && LastHoveredIndex == idx);
-        using (ImRaii.Child($"##EditRestraintSetHeader{idx}", new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() * 2 - 5f)))
+        using (ImRaii.Child($"##RestraintSetHeader{idx}", new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() * 2 - 5f)))
         {
             var maxAllowedWidth = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - toggleSize.X - ImGui.GetStyle().ItemSpacing.X * 3;
             // create a group for the bounding area
@@ -560,13 +557,12 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
 
             }
         }
+
         if (!isActiveSet)
         {
-            if (ImGui.IsItemClicked())
-            {
-                _handler.StartEditingSet(set);
-            }
+            if (ImGui.IsItemClicked()) _handler.StartEditingSet(set);
         }
+
         // if this is the active set, draw a seperator below it
         if (isActiveSet)
         {
@@ -603,7 +599,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                         else
                         {
                             Logger.LogTrace($"Locking Restraint Set {set.Name}");
-                            _handler.LockRestraintSet(set.RestraintId, GagManager.ActiveSlotPadlocks[3], GagManager.ActiveSlotPasswords[3], 
+                            _handler.LockRestraintSet(set.RestraintId, GagManager.ActiveSlotPadlocks[3], GagManager.ActiveSlotPasswords[3],
                                 UiSharedService.GetEndTimeUTC(GagManager.ActiveSlotTimers[3]), MainHub.UID);
                         }
                     }

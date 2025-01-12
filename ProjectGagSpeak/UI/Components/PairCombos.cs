@@ -27,9 +27,9 @@ public class PairCombos
     }
 
     public PairGagCombo[] GagApplyCombos { get; private set; } = new PairGagCombo[3];
-    public PairPadlockGag[] GagPadlockCombos { get; private set; } = new PairPadlockGag[3];
+    public PadlockGagsPair[] GagPadlockCombos { get; private set; } = new PadlockGagsPair[3];
     public PairRestraintCombo RestraintApplyCombo { get; private set; } = null!;
-    public PairPadlockRestraint RestraintPadlockCombos { get; private set; } = null!;
+    public PadlockRestraintsClient RestraintPadlockCombos { get; private set; } = null!;
     public PairPatternCombo PatternCombo { get; private set; } = null!;
     public PairAlarmCombo AlarmToggleCombo { get; private set; } = null!;
     public PairTriggerCombo TriggerToggleCombo { get; private set; } = null!;
@@ -63,7 +63,7 @@ public class PairCombos
         };
 
         // Create an array of PairPadlockGag with 3 elements
-        GagPadlockCombos = new PairPadlockGag[3]
+        GagPadlockCombos = new PadlockGagsPair[3]
         {
             new PairPadlockGag(_logger, _apiHubMain, _uiShared, pair, "PadlockLock1" + pair.UserData.UID),
             new PairPadlockGag(_logger, _apiHubMain, _uiShared, pair, "PadlockLock2" + pair.UserData.UID),

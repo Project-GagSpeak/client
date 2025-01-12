@@ -7,11 +7,9 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.PrivateRooms;
 using GagSpeak.Services.Events;
-using GagSpeak.UI;
 using GagSpeak.UI.Components;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.Toybox;
@@ -70,7 +68,7 @@ public record PairWasRemovedMessage(UserData UserData) : MessageBase; // a messa
 public record OpenUserPairPermissions(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase; // fired upon request to open the permissions window for a pair
 public record TargetPairMessage(Pair Pair) : MessageBase; // called when publishing a targeted pair connection (see UI)
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
-public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a gameobject from cache creation service.
+public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
 public record AppearanceImpactingSettingChanged : MessageBase; // called whenever an appearance impacting setting is changed.
 
@@ -104,8 +102,8 @@ public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) :
 
 
 /* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-public record PlayerCharAppearanceChanged(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : MessageBase;
-public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, Padlocks PreviousLock) : MessageBase;
+public record PlayerCharAppearanceChanged(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
+public record PlayerCharWardrobeChanged(CharaWardrobeData NewData, WardrobeUpdateType UpdateKind, Padlocks PreviousLock) : MessageBase;
 public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
 public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
 public record PlayerCharStorageUpdated : MessageBase;

@@ -37,6 +37,14 @@
     <ItemGroup>
       <None Remove="Localization\jp.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\BonusItemCombo.cs" />
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboBase.cs" />
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboCache.cs" />
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboColor.cs" />
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\GameColorCombo.cs" />
+      <Compile Include="UI\Components\Combos\.GlamourerCombos\GameItemCombo.cs" />
+    </ItemGroup>
 
     <!--Other DLL's for dalamud supporting module/components-->
     <ItemGroup>

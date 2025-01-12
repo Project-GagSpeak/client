@@ -15,7 +15,7 @@ namespace GagSpeak.UI.Components.Combos;
 /// <summary>
 /// Unique GagCombo type.
 /// </summary>
-public sealed class PairPatternCombo : PairCustomComboButton<LightPattern>
+public sealed class PairPatternCombo : PairComboButton<LightPattern>
 {
     private readonly SetPreviewComponent _gagPreview;
 

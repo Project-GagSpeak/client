@@ -10,7 +10,7 @@ using System.Numerics;
 namespace GagSpeak.UI.Components.Combos;
 
 // base abstract class for combos that have a button counterpart beside it.
-public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
+public abstract class PairComboButton<T> : PairComboBase<T>
 {
     protected readonly UiSharedService _uiShared;
 
@@ -22,7 +22,7 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
     private string ButtonText = string.Empty;
     private string ButtonTooltip = string.Empty;
 
-    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
+    protected PairComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
         FontAwesomeIcon icon, string bText, string bTT) : base(log, pair, mainHub)
     {
         _uiShared = uiShared;
@@ -32,7 +32,7 @@ public abstract class PairCustomComboButton<T> : PairCustomComboBase<T>
         ButtonTooltip = bTT;
     }
 
-    protected PairCustomComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
+    protected PairComboButton(ILogger log, UiSharedService uiShared, MainHub mainHub, Pair pair, 
         string bText, string bTT) : base(log, pair, mainHub)
     {
         _uiShared = uiShared;

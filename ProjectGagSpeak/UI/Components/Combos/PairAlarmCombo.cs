@@ -12,7 +12,7 @@ using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
 
-public sealed class PairAlarmCombo : PairCustomComboToggle<LightAlarm>
+public sealed class PairAlarmCombo : PairComboToggle<LightAlarm>
 {
     private readonly UiSharedService _uiShared;
 

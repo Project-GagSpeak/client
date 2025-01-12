@@ -10,23 +10,7 @@ using System.Numerics;
 
 // taken off Otter's ModCombo.cs from the mod association tab for convince purposes
 namespace GagSpeak.UI.Components.Combos;
-
-// classes that can inherit from this are:
-// - PairCustomFolderCombo (for lists grouped in folders.) (Future Feature implemented during polishing phase)
-// - PairCustomFolderComboButton (for lists grouped in folders with a button to execute an action.) (Future Feature implemented during polishing phase)
-// - PairCustomComboButton (can support option for icons and button action to execute on click)
-// 
-// On top of PairCustomComboButton, we can add the following combo types:
-// - PairGagCombo (for gag types)
-// - PairRestraintCombo (for restraint types)
-// - PairMoodleCombo (for moodle types)
-// - PairPatternCombo (for pattern types)
-// - PairAlarmCombo (for alarm types)
-// - PairTriggerCombo (for trigger types)
-// - PairOrderCombo (for order types)
-
-
-public abstract class PairCustomComboBase<T>
+public abstract class PairComboBase<T>
 {
     protected readonly ILogger _logger;
     protected readonly MainHub _mainHub;
@@ -50,7 +34,7 @@ public abstract class PairCustomComboBase<T>
     private IReadOnlyList<T> FilteredItems => (IReadOnlyList<T>)(_filter.IsEmpty
         ? Items : Items.Where(item => ToItemString(item).ToLowerInvariant().Contains(_filter)));
 
-    protected PairCustomComboBase(ILogger log, Pair pairData, MainHub mainHub)
+    protected PairComboBase(ILogger log, Pair pairData, MainHub mainHub)
     {
         _logger = log;
         _mainHub = mainHub;

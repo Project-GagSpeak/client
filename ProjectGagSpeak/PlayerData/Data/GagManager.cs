@@ -14,6 +14,9 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak.PlayerData.Data;
 
+/// <summary>
+/// THIS CLASS IS GOING TO HAVE 80% OF ITS LOGIC BOMBED OFF THE MAP ON SUNDAY.
+/// </summary>
 public partial class GagManager : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
@@ -195,42 +198,6 @@ public partial class GagManager : DisposableMediatorSubscriberBase
             var gagSlot = _clientData.AppearanceData.GagSlots[i];
             if (LockHelperExtensions.IsTimerLock(gagSlot.Padlock.ToPadlock()) && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
                 PublishLockRemoved((GagLayer)i);
-        }
-    }
-
-    public void DisplayPadlockFields(Padlocks padlock, int layer, bool unlocking = false, float totalWidth = 250)
-    {
-        float width = totalWidth;
-        switch (padlock)
-        {
-            case Padlocks.CombinationPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Combination_Input", "Enter 4 digit combination...", ref ActiveSlotPasswords[layer], 4);
-                break;
-            case Padlocks.PasswordPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref ActiveSlotPasswords[layer], 20);
-                break;
-            case Padlocks.TimerPasswordPadlock:
-                if (unlocking)
-                {
-                    ImGui.SetNextItemWidth(width);
-                    ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref ActiveSlotPasswords[layer], 20);
-                    break;
-                }
-                else
-                {
-                    ImGui.SetNextItemWidth(width * .65f);
-                    ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref ActiveSlotPasswords[layer], 20);
-                    ImUtf8.SameLineInner();
-                    ImGui.SetNextItemWidth(width * .35f - ImGui.GetStyle().ItemInnerSpacing.X);
-                    ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref ActiveSlotTimers[layer], 12); ;
-                }
-                break;
-            case Padlocks.TimerPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref ActiveSlotTimers[layer], 12);
-                break;
         }
     }
 

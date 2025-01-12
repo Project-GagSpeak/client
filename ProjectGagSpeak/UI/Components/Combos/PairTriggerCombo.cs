@@ -13,7 +13,7 @@ using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
 
-public sealed class PairTriggerCombo : PairCustomComboToggle<LightTrigger>
+public sealed class PairTriggerCombo : PairComboToggle<LightTrigger>
 {
     private readonly UiSharedService _uiShared;
 

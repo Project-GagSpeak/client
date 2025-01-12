@@ -68,7 +68,7 @@ public partial class PairStickyUI
         // Interaction Window for LockGag
         if (PairCombos.Opened is InteractionType.LockGag)
         {
-            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockLockWinHeight())))
+            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockLockWindowHeight())))
                 _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawLockCombo(WindowMenuWidth, lockGagText, lockGagTT);
             ImGui.Separator();
         }
@@ -82,7 +82,7 @@ public partial class PairStickyUI
         // Interaction Window for UnlockGag
         if (PairCombos.Opened is InteractionType.UnlockGag)
         {
-            using (ImRaii.Child("###GagUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockUnlockWinHeight())))
+            using (ImRaii.Child("###GagUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockUnlockWindowHeight())))
                 _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawUnlockCombo(WindowMenuWidth, unlockGagTT, unlockGagText);
             ImGui.Separator();
         }

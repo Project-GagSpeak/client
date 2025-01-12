@@ -118,10 +118,10 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
 
     private void CheckLockedSet()
     {
-        if (ActiveSet == null) return;
+        if (ActiveSet is null) return;
 
         // we have an active set, but dont check if it is not locked. We should keep it on if it is simply active.
-        if (!ActiveSet.Locked) return;
+        if (ActiveSet is not null && !ActiveSet.IsLocked()) return;
 
         // check if the locked time minus the current time in UTC is less than timespan.Zero ... if it is, we should push an unlock set update.
         if (GenericHelpers.TimerPadlocks.Contains(ActiveSet.LockType) && ActiveSet.LockedUntil - DateTimeOffset.UtcNow <= TimeSpan.Zero)

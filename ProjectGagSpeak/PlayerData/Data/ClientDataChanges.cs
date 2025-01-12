@@ -60,7 +60,7 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
     {
         // make use of the various compiling methods to construct our composite data.
         CharaAppearanceData appearanceData = _data.CompileAppearanceToAPI();
-        CharaWardrobeData wardrobeData = CompileWardrobeToAPI();
+        CharaWardrobeData wardrobeData = _clientConfigs.CompileWardrobeToAPI();
 
         Dictionary<string, CharaAliasData> aliasData = _clientConfigs.GetCompiledAliasData();
         CharaToyboxData toyboxData = _clientConfigs.CompileToyboxToAPI();
@@ -74,22 +74,6 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
             AliasData = aliasData,
             ToyboxData = toyboxData,
             LightStorageData = lightStorageData
-        };
-    }
-
-    public CharaWardrobeData CompileWardrobeToAPI()
-    {
-        // attempt to locate the active restraint set
-        var activeSet = _clientConfigs.GetActiveSet();
-        return new CharaWardrobeData
-        {
-            ActiveSetId = activeSet?.RestraintId ?? Guid.Empty,
-            ActiveSetEnabledBy = activeSet?.EnabledBy ?? string.Empty,
-            Padlock = activeSet?.LockType ?? Padlocks.None.ToName(),
-            Password = activeSet?.LockPassword ?? "",
-            Timer = activeSet?.LockedUntil ?? DateTimeOffset.MinValue,
-            Assigner = activeSet?.LockedBy ?? "",
-            ActiveCursedItems = _clientConfigs.ActiveCursedItems
         };
     }
 
@@ -117,8 +101,7 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
 
     public void PushWardrobeDataToAPI(PlayerCharWardrobeChanged msg)
     {
-        CharaWardrobeData dataToPush = CompileWardrobeToAPI();
-        Mediator.Publish(new CharacterWardrobeDataCreatedMessage(dataToPush, msg.UpdateKind, msg.PreviousLock));
+        Mediator.Publish(new CharacterWardrobeDataCreatedMessage(msg.NewData, msg.UpdateKind, msg.PreviousLock));
     }
 
     public void PushAliasListDataToAPI(PlayerCharAliasChanged msg)
