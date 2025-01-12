@@ -702,7 +702,10 @@ namespace GagSpeak.Localization
         public readonly string GlobalAllowMotionTT = Loc.Localize("MainOptions_GlobalAllowKneelTT", "Allow anyone to request a motion action from you." +
             "--SEP--A motion request includes any emotes or expressions that can be found in Emotes." +
             "--SEP--This permission limits commands to emotes and expressions.");
-
+        public readonly string GlobalAllowAlias = Loc.Localize("MainOptions_GlobalAllowAlias", "Globally Allow Alias Requests");
+        public readonly string GlobalAllowAliasTT = Loc.Localize("MainOptions_GlobalAllowAliasTT", "Allows anyone to request that you use a global alias action you have configured." +
+            "--SEP--This permission includes any game and plugin commands that originate from an alias you have configured." +
+            "--SEP--WARNING: Use this responsibly and with caution as it will allow ANYONE to execute commands you have in your alias's.");
         public readonly string GlobalAllowAll = Loc.Localize("MainOptions_GlobalAllowAll", "Globally Allow All Requests");
         public readonly string GlobalAllowAllTT = Loc.Localize("MainOptions_GlobalAllowAllTT", "Allows anyone to request any action from you." +
             "--SEP--This permission includes any game and plugin commands, emotes and expressions." +

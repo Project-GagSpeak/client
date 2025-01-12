@@ -88,15 +88,13 @@ public sealed class ActionExecutor
         remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
         // verify permissions are satisfied.
         var executerUID = performerUID;
-        var sits = false;
-        var motions = false;
-        var all = false;
+        
+        var aliasAllowed = false;
         // if performer is self, use global perms, otherwise, use pair perms.
         if (performerUID == MainHub.UID)
         {
-            sits = _playerData.GlobalPerms?.GlobalAllowSitRequests ?? false;
-            motions = _playerData.GlobalPerms?.GlobalAllowMotionRequests ?? false;
-            all = _playerData.GlobalPerms?.GlobalAllowAllRequests ?? false;
+            // This method is _only called_ from an alias
+            aliasAllowed = _playerData.GlobalPerms?.GlobalAllowAliasRequests ?? false;
         }
         else
         {
@@ -108,13 +106,12 @@ public sealed class ActionExecutor
             }
 
             matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool alias2, out bool all2, out char startChar, out char endChar);
-            sits = sits2;
-            motions = motions2;
-            all = all2;
+            aliasAllowed = alias2;
         }
 
-        // only apply it if the message meets the criteria for the sender.
-        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        // Only apply this if it either originated from a trigger (or alias) 
+        // Or it it meets the various criteria for the sender.
+        if (aliasAllowed)
         {
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
             ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
