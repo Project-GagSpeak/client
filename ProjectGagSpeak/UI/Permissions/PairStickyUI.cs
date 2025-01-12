@@ -44,6 +44,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _moodlesService = moodlesService;
         _presetService = presets;
         _uiShared = uiShared;
+        PairCombos.Opened = InteractionType.None;
 
         StickyPair = pairToDrawFor; // set the pair we're drawing for
         DrawType = drawType; // set the type of window we're drawing
