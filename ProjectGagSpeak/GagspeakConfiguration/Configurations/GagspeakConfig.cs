@@ -76,7 +76,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ForceLockFirstPerson { get; set; } = false; // Force First-Person state while blindfolded.
     public float BlindfoldOpacity { get; set; } = 1.0f; // Blindfold Opacity
     [JsonConverter(typeof(ConcreteNodeConverter))]
-    public TextFolderNode ForcedStayPromptList { get; set; } = new TextFolderNode { FriendlyName = "ForcedDeclineLists" }; // ForcedToStay storage
+    public TextFolderNode ForcedStayPromptList { get; set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 }
 
