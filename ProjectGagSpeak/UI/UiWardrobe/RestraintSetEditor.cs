@@ -59,7 +59,7 @@ public class RestraintSetEditor : IMediatorSubscriber
         StainColorCombos = _itemStainHandler.ObtainStainCombos(ComboWidth);
         BonusItemCombos = _itemStainHandler.ObtainBonusItemCombos();
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
     }
 
     // Info related to the person we are inspecting.

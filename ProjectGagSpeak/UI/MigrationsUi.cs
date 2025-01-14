@@ -594,10 +594,10 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         {
             restraint.Enabled = false;
             restraint.EnabledBy = string.Empty;
-            restraint.LockType = Padlocks.None.ToName();
-            restraint.LockPassword = string.Empty;
-            restraint.LockedUntil = DateTimeOffset.MinValue;
-            restraint.LockedBy = string.Empty;
+            restraint.Padlock = Padlocks.None.ToName();
+            restraint.Password = string.Empty;
+            restraint.Timer = DateTimeOffset.MinValue;
+            restraint.Assigner = string.Empty;
         }
 
         var importedCursedItems = _infoExchanger.GetCursedItemsFromUID(uid);

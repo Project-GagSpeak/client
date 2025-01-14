@@ -476,14 +476,17 @@ namespace GagSpeak.Localization
         public readonly string Step11Desc = Loc.Localize("HelpTriggers_Step11Desc", "Fires a trigger whenever you fail a social game.");
         public readonly string Step11DescExtended = Loc.Localize("HelpTriggers_Step11DescExtended", "Currently only supports DeathRolls");
 
-        public readonly string Step12Title = Loc.Localize("HelpTriggers_Step12Title", "Saving your Trigger");
-        public readonly string Step12Desc = Loc.Localize("HelpTriggers_Step12Desc", "When you are satisfied with your trigger settings, click to create the trigger.");
+        public readonly string Step12Title = Loc.Localize("HelpTriggers_Step12Title", "Emote Triggers");
+        public readonly string Step12Desc = Loc.Localize("HelpTriggers_Step12Desc", "Fires whenever an emote is executed.");
 
-        public readonly string Step13Title = Loc.Localize("HelpTriggers_Step13Title", "The Trigger List");
-        public readonly string Step13Desc = Loc.Localize("HelpTriggers_Step13Desc", "The space where your created triggers will be listed.");
+        public readonly string Step13Title = Loc.Localize("HelpTriggers_Step13Title", "Saving your Trigger");
+        public readonly string Step13Desc = Loc.Localize("HelpTriggers_Step13Desc", "When you are satisfied with your trigger settings, click to create the trigger.");
 
-        public readonly string Step14Title = Loc.Localize("HelpTriggers_Step14Title", "Toggling Triggers");
-        public readonly string Step14Desc = Loc.Localize("HelpTriggers_Step14Desc", "Clicking this button switches the triggers between off and on.");
+        public readonly string Step14Title = Loc.Localize("HelpTriggers_Step14Title", "The Trigger List");
+        public readonly string Step14Desc = Loc.Localize("HelpTriggers_Step14Desc", "The space where your created triggers will be listed.");
+
+        public readonly string Step15Title = Loc.Localize("HelpTriggers_Step15Title", "Toggling Triggers");
+        public readonly string Step15Desc = Loc.Localize("HelpTriggers_Step15Desc", "Clicking this button switches the triggers between off and on.");
     }
 
     public class HelpAlarms

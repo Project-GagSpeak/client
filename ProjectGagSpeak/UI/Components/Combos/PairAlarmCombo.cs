@@ -12,14 +12,16 @@ using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
 
-public sealed class PairAlarmCombo : PairComboToggle<LightAlarm>
+public sealed class PairAlarmCombo : GagspeakComboToggleButtonBase<LightAlarm>
 {
-    private readonly UiSharedService _uiShared;
+    private readonly MainHub _mainHub;
+    private Pair _pairRef;
 
-    public PairAlarmCombo(ILogger log, MainHub mainHub, UiSharedService uiShared, Pair pairData, string bOnText, string bOnTT, string bOffText, string bOffTT)
-        : base(log, uiShared, mainHub, pairData, bOnText, bOnTT, bOffText, bOffTT)
+    public PairAlarmCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bOnText, 
+        string bOnTT, string bOffText, string bOffTT) : base(log, uiShared, bOnText, bOnTT, bOffText, bOffTT)
     {
-        _uiShared = uiShared;
+        _mainHub = mainHub;
+        _pairRef = pairData;
 
         // update current selection to the last registered LightAlarm from that pair on construction.
         if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
@@ -27,9 +29,10 @@ public sealed class PairAlarmCombo : PairComboToggle<LightAlarm>
     }
 
     // override the method to extract items by extracting all LightAlarms.
-    protected override IEnumerable<LightAlarm> ExtractItems() => _pairRef.LastLightStorage?.Alarms ?? new List<LightAlarm>();
-
+    protected override IReadOnlyList<LightAlarm> ExtractItems() => _pairRef.LastLightStorage?.Alarms ?? new List<LightAlarm>();
     protected override string ToItemString(LightAlarm item) => item.Name;
+    protected override bool DisableCondition() => _pairRef.PairPerms.CanToggleAlarms is false;
+
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(LightAlarm alarmItem, bool selected)
@@ -56,23 +59,25 @@ public sealed class PairAlarmCombo : PairComboToggle<LightAlarm>
         return ret;
     }
 
-    protected override void OnTogglePressed(LightAlarm item)
+    protected override void OnButtonPress()
     {
-        if (_pairRef.LastToyboxData is null) return;
+        if (_pairRef.LastToyboxData is null || CurrentSelection is null) return;
 
         // clone the toybox data.
         var newToyboxData = _pairRef.LastToyboxData.DeepClone();
         // update the interaction ID.
-        newToyboxData.InteractionId = item.Identifier;
+        newToyboxData.InteractionId = CurrentSelection.Identifier;
 
         // if it was active, deactivate it, otherwise, activate it.
-        if (newToyboxData.ActiveAlarms.Contains(item.Identifier)) newToyboxData.ActiveAlarms.Remove(item.Identifier);
-        else newToyboxData.ActiveAlarms.Add(item.Identifier);
+        if (newToyboxData.ActiveAlarms.Contains(CurrentSelection.Identifier)) 
+            newToyboxData.ActiveAlarms.Remove(CurrentSelection.Identifier);
+        else
+            newToyboxData.ActiveAlarms.Add(CurrentSelection.Identifier);
 
         // Send out the command.
         _ = _mainHub.UserPushPairDataToyboxUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.AlarmToggled, UpdateDir.Other));
         PairCombos.Opened = InteractionType.None;
-        _logger.LogDebug("Toggling Alarm " + item.Name + " on " + _pairRef.GetNickAliasOrUid() + "'s AlarmList", LoggerType.Permissions);
+        _logger.LogDebug("Toggling Alarm " + CurrentSelection.Name + " on " + _pairRef.GetNickAliasOrUid() + "'s AlarmList", LoggerType.Permissions);
     }
 
     protected override bool IsToggledOn(LightAlarm? selection)

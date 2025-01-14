@@ -26,13 +26,13 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly PairManager _pairManager;
     private readonly ClientMonitorService _clientService;
     private readonly MoodlesService _moodlesService;
-    private readonly PermissionPresetService _presetService;
+    private readonly PermissionPresetLogic _presetService;
     private readonly UiSharedService _uiShared;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
         StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, ClientData clientDat,
         PairCombos pairCombos, PiShockProvider shockProvider, PairManager pairManager,
-        ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetService presets,
+        ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetLogic presets,
         UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")
     {
         _apiHubMain = apiHubMain;

@@ -15,13 +15,16 @@ namespace GagSpeak.UI.Components.Combos;
 /// <summary>
 /// Unique GagCombo type.
 /// </summary>
-public sealed class PairPatternCombo : PairComboButton<LightPattern>
+public sealed class PairPatternCombo : GagspeakComboButtonBase<LightPattern>
 {
-    private readonly SetPreviewComponent _gagPreview;
-
-    public PairPatternCombo(ILogger log, MainHub mainHub, UiSharedService uiShared, Pair pairData, string bText, string bTT)
-        : base(log, uiShared, mainHub, pairData, FontAwesomeIcon.Female, bText, bTT)
+    private readonly MainHub _mainHub;
+    private Pair _pairRef;
+    public PairPatternCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bText, string bTT)
+        : base(log, uiShared, FontAwesomeIcon.Female, bText, bTT)
     {
+        _mainHub = mainHub;
+        _pairRef = pairData;
+
         // update current selection to the last registered LightPattern from that pair on construction.
         if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
         {
@@ -31,7 +34,7 @@ public sealed class PairPatternCombo : PairComboButton<LightPattern>
     }
 
     // override the method to extract items by extracting all LightPatterns.
-    protected override IEnumerable<LightPattern> ExtractItems() => _pairRef.LastLightStorage?.Patterns ?? new List<LightPattern>();
+    protected override IReadOnlyList<LightPattern> ExtractItems() => _pairRef.LastLightStorage?.Patterns ?? new List<LightPattern>();
 
     protected override string ToItemString(LightPattern item) => item.Name;
 

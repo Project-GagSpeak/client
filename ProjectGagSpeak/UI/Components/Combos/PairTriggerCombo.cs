@@ -13,14 +13,16 @@ using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
 
-public sealed class PairTriggerCombo : PairComboToggle<LightTrigger>
+public sealed class PairTriggerCombo : GagspeakComboToggleButtonBase<LightTrigger>
 {
-    private readonly UiSharedService _uiShared;
+    private readonly MainHub _mainHub;
+    private Pair _pairRef;
 
-    public PairTriggerCombo(ILogger log, MainHub mainHub, UiSharedService uiShared, Pair pairData, string bOnText, string bOnTT, string bOffText, string bOffTT)
-        : base(log, uiShared, mainHub, pairData, bOnText, bOnTT, bOffText, bOffTT)
+    public PairTriggerCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bOnText, string bOnTT, string bOffText, string bOffTT)
+        : base(log, uiShared, bOnText, bOnTT, bOffText, bOffTT)
     {
-        _uiShared = uiShared;
+        _mainHub = mainHub;
+        _pairRef = pairData;
 
         // update current selection to the last registered LightTrigger from that pair on construction.
         if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
@@ -28,9 +30,9 @@ public sealed class PairTriggerCombo : PairComboToggle<LightTrigger>
     }
 
     // override the method to extract items by extracting all LightTriggers.
-    protected override IEnumerable<LightTrigger> ExtractItems() => _pairRef.LastLightStorage?.Triggers ?? new List<LightTrigger>();
-
+    protected override IReadOnlyList<LightTrigger> ExtractItems() => _pairRef.LastLightStorage?.Triggers ?? new List<LightTrigger>();
     protected override string ToItemString(LightTrigger item) => item.Name;
+    protected override bool DisableCondition() => _pairRef.PairPerms.CanToggleTriggers is false;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(LightTrigger triggerItem, bool selected)
@@ -45,23 +47,25 @@ public sealed class PairTriggerCombo : PairComboToggle<LightTrigger>
         return ret;
     }
 
-    protected override void OnTogglePressed(LightTrigger item)
+    protected override void OnButtonPress()
     {
-        if (_pairRef.LastToyboxData is null) return;
+        if (_pairRef.LastToyboxData is null || CurrentSelection is null) return;
 
         // clone the toybox data.
         var newToyboxData = _pairRef.LastToyboxData.DeepClone();
         // update the interaction ID.
-        newToyboxData.InteractionId = item.Identifier;
+        newToyboxData.InteractionId = CurrentSelection.Identifier;
 
         // if it was active, deactivate it, otherwise, activate it.
-        if (newToyboxData.ActiveTriggers.Contains(item.Identifier)) newToyboxData.ActiveTriggers.Remove(item.Identifier);
-        else newToyboxData.ActiveTriggers.Add(item.Identifier);
+        if (newToyboxData.ActiveTriggers.Contains(CurrentSelection.Identifier)) 
+            newToyboxData.ActiveTriggers.Remove(CurrentSelection.Identifier);
+        else 
+            newToyboxData.ActiveTriggers.Add(CurrentSelection.Identifier);
 
         // Send out the command.
         _ = _mainHub.UserPushPairDataToyboxUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newToyboxData, ToyboxUpdateType.TriggerToggled, UpdateDir.Other));
         PairCombos.Opened = InteractionType.None;
-        _logger.LogDebug("Toggling Trigger " + item.Name + " on " + _pairRef.GetNickAliasOrUid() + "'s TriggerList", LoggerType.Permissions);
+        _logger.LogDebug("Toggling Trigger " + CurrentSelection.Name + " on " + _pairRef.GetNickAliasOrUid() + "'s TriggerList", LoggerType.Permissions);
     }
 
     protected override bool IsToggledOn(LightTrigger? selection)

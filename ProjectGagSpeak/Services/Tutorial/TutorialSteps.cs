@@ -161,6 +161,7 @@ public enum StepsTriggers
     ToRestraintTrigger,
     ToGagTrigger,
     ToSocialTrigger,
+    ToEmoteTrigger,
     SavingTriggers,
     TriggerList,
     TogglingTriggers,

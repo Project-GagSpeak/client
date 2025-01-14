@@ -1,6 +1,8 @@
 using GagSpeak.Services.Mediator;
 using Microsoft.Extensions.Hosting;
 using GagSpeak.Utils;
+using GagSpeak.PlayerData.Pairs;
+using GagSpeak.WebAPI;
 
 namespace GagSpeak.Services.Events;
 
@@ -10,6 +12,7 @@ namespace GagSpeak.Services.Events;
 public class EventAggregator : MediatorSubscriberBase, IHostedService
 {
     private readonly ILogger<EventAggregator> _logger;
+    private readonly PairManager _pairs;
     private readonly string _configDirectory;
 
     private readonly RollingList<InteractionEvent> _events = new(500);
@@ -18,9 +21,10 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
     private DateTime _currentTime;
 
     public EventAggregator(string configDirectory, ILogger<EventAggregator> logger, 
-        GagspeakMediator gagspeakMediator) : base(logger, gagspeakMediator)
+        GagspeakMediator mediator, PairManager pairs) : base(logger, mediator)
     {
         _logger = logger;
+        _pairs = pairs;
         _configDirectory = configDirectory;
         // Collect any events sent out.
         Mediator.Subscribe<EventMessage>(this, (msg) =>
@@ -28,6 +32,17 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             _lock.Wait();
             try
             {
+                // see if the interaction events nick is string.Empty; if so, attempt to fetch it from the pairs.
+                if (string.IsNullOrEmpty(msg.Event.ApplierNickAliasOrUID))
+                {
+                    if(msg.Event.ApplierUID == MainHub.UID)
+                        msg.Event.ApplierNickAliasOrUID = "Client";
+                    else if(_pairs.TryGetNickAliasOrUid(msg.Event.ApplierUID, out var nick))
+                        msg.Event.ApplierNickAliasOrUID = nick;
+                    else
+                        msg.Event.ApplierNickAliasOrUID = "UNK PAIR";
+                }
+
                 Logger.LogTrace("Received Event: "+msg.Event.ToString(), LoggerType.ActionsNotifier);
                 _events.Add(msg.Event);
                 WriteToFile(msg.Event);

@@ -73,8 +73,6 @@ public record MufflerLanguageChanged : MessageBase; // called whenever the clien
 public record AppearanceImpactingSettingChanged : MessageBase; // called whenever an appearance impacting setting is changed.
 
 /* ------------- PLAYER DATA MODULE INTERACTIONS --------- */
-public record GagTypeChanged(GagType NewGagType, GagLayer Layer, bool SelfApplied = false) : MessageBase; // called whenever the client changes their gag type.
-public record GagLockToggle(PadlockData PadlockInfo, NewState newGagLockState, bool SelfApplied = false) : MessageBase; // called whenever the client changes their padlock.
 public record TooltipSetItemToRestraintSetMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record TooltipSetItemToCursedItemMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 
@@ -102,12 +100,13 @@ public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) :
 
 
 /* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-public record PlayerCharAppearanceChanged(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
-public record PlayerCharWardrobeChanged(CharaWardrobeData NewData, WardrobeUpdateType UpdateKind, Padlocks PreviousLock) : MessageBase;
+public record PlayerCharAppearanceChanged(GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
+public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, string AffectedItem) : MessageBase;
+public record PlayerCharTimedDataChanged(OrdersUpdateType UpdateKind, Guid AffectedId) : MessageBase;
 public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
 public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
 public record PlayerCharStorageUpdated : MessageBase;
-public record PlayerLatestActiveItems(UserData User, List<string> ActiveGags, Guid ActiveRestraint) : MessageBase;
+public record PlayerLatestActiveItems(UserData User, CharaAppearanceData GagInfo, Guid ActiveRestraint) : MessageBase;
 
 
 /* ------------------ IPC HANDLER RECORDS------------------ */
@@ -126,13 +125,14 @@ public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensit
 
 
 /* ----------------- Character Cache Creation Records ----------------- */
-public record CharacterDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
-public record CharacterIpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterAppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
-public record CharacterWardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, Padlocks PreviousPadlock) : SameThreadMessage;
-public record CharacterAliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
+public record CompositeDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
+public record IpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
+public record AppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
+public record WardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
+public record OrdersDataCreatedMessage(CharaOrdersData CharaTimedData, OrdersUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
+public record AliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
+public record ToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
+public record LightStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 

@@ -19,7 +19,6 @@ public class DrawRequests : IRequestsFolder
     private readonly DrawEntityFactory _pairRequestFactory;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
-    private float _menuWidth = -1;
     private bool _wasHovered = false;
     private bool _isRequestFolderOpen = false;
     private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;

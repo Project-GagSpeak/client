@@ -115,8 +115,8 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         _glamourChanged.Disable();
         _glamourChanged?.Dispose();
 
-        // do not run this if we are closing out of the game.
-        if (_frameworkUtils.IsFrameworkUnloading)
+        // do not run this if we are closing out of the game or not logged in.
+        if (_frameworkUtils.IsFrameworkUnloading || _clientService.IsLoggedIn is false)
             return;
 
         if(_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false) 

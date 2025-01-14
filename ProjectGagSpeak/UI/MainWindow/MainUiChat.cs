@@ -22,7 +22,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
     private readonly GagspeakConfigService _mainConfig;
     private readonly MainHub _apiHubMain;
     private readonly ClientData _playerData;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly KinkPlateService _kinkPlateManager;
     private readonly UiSharedService _uiSharedService;
     private readonly DiscoverService _discoveryService;
@@ -30,14 +30,14 @@ public class MainUiChat : DisposableMediatorSubscriberBase
 
     public MainUiChat(ILogger<MainUiChat> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, MainHub apiHubMain, 
-        ClientData playerManager, GagManager gagManager,
+        ClientData playerManager, GagGarbler garbler,
         KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _apiHubMain = apiHubMain;
         _playerData = playerManager;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _kinkPlateManager = kinkPlateManager;
         _uiSharedService = uiSharedService;
         _discoveryService = discoverService;
@@ -110,7 +110,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
 
             // Process message if gagged
             if (_playerData.IsPlayerGagged && (_playerData.GlobalPerms?.LiveChatGarblerActive ?? false))
-                NextChatMessage = _gagManager.ProcessMessage(NextChatMessage);
+                NextChatMessage = _garbler.ProcessMessage(NextChatMessage);
 
             // Send message to the server
             Logger.LogTrace($"Sending Message: {NextChatMessage}");

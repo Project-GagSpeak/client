@@ -163,7 +163,8 @@ public static class GagSpeakServiceExtensions
         INotificationManager nm, IObjectTable ot, IPartyList pl, ISigScanner ss, ITargetManager tm, ITextureProvider tp)
     => services
         // Events Services
-        .AddSingleton((s) => new EventAggregator(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<EventAggregator>>(), s.GetRequiredService<GagspeakMediator>()))
+        .AddSingleton((s) => new EventAggregator(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<EventAggregator>>(), 
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>()))
         .AddSingleton<IpcFastUpdates>()
         .AddSingleton((s) => new GagSpeakLoc(s.GetRequiredService<ILogger<GagSpeakLoc>>(), s.GetRequiredService<Dalamud.Localization>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<TutorialService>(), pi))
@@ -180,7 +181,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<ChatSender>(), s.GetRequiredService<DeathRollService>(), s.GetRequiredService<TriggerService>(), cg, cs, dm))
         .AddSingleton((s) => new ChatSender(ss))
         .AddSingleton((s) => new ChatInputDetour(s.GetRequiredService<ILogger<ChatInputDetour>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
-            s.GetRequiredService<ClientData>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<EmoteMonitor>(), ss, gip))
+            s.GetRequiredService<ClientData>(), s.GetRequiredService<GagGarbler>(), s.GetRequiredService<EmoteMonitor>(), ss, gip))
 
         // Hardcore services.
         .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), s.GetRequiredService<ClientConfigurationManager>(),
@@ -190,8 +191,9 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SettingsHardcore>()
 
         // PlayerData Services
-        .AddSingleton<GagManager>()
+        .AddSingleton<GagGarbler>()
         .AddSingleton<AppearanceManager>()
+        .AddSingleton<PublishStateService>()
         .AddSingleton<ToyboxManager>()
         .AddSingleton<CursedLootHandler>()
         .AddSingleton((s) => new GameItemStainHandler(s.GetRequiredService<ILogger<GameItemStainHandler>>(), s.GetRequiredService<ItemData>(),
@@ -313,7 +315,6 @@ public static class GagSpeakServiceExtensions
         // Puppeteer UI
         .AddSingleton<PuppeteerHandler>()
         .AddSingleton<PuppeteerComponents>()
-        .AddSingleton<AliasTable>()        
 
         // Toybox UI
         .AddSingleton<ToyboxOverview>()
@@ -363,8 +364,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<Tutorial>()
         .AddSingleton<AchievementsService>()
         .AddSingleton((s) => new CursedLootService(s.GetRequiredService<ILogger<CursedLootService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<GagManager>(), s.GetRequiredService<ClientData>(),
-            s.GetRequiredService<CursedLootHandler>(), s.GetRequiredService<ClientMonitorService>(), s.GetRequiredService<OnFrameworkService>(), gip))
+            s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<ClientData>(), s.GetRequiredService<CursedLootHandler>(),
+            s.GetRequiredService<AppearanceManager>(), s.GetRequiredService<ClientMonitorService>(), s.GetRequiredService<OnFrameworkService>(), gip))
         .AddSingleton<SafewordService>()
         .AddSingleton<VibratorService>()
         .AddSingleton<ToyboxRemoteService>()
@@ -378,7 +379,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(), 
             s.GetRequiredService<PairManager>()))
         .AddSingleton<ShareHubService>()
-        .AddSingleton<PermissionPresetService>()
+        .AddSingleton<PermissionPresetLogic>()
         .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
             s.GetRequiredService<KinkPlateFactory>()))

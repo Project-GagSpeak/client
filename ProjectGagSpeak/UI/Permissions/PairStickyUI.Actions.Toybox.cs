@@ -82,7 +82,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ActivatePattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.PatternCombo.DrawCombo("##ExecutePattern" + PairUID, "Execute a Pattern", WindowMenuWidth, 1.3f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.PatternCombo.DrawComboButton("##ExecutePattern" + PairUID, "Execute a Pattern", WindowMenuWidth, 1.3f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -108,7 +108,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ToggleAlarm)
         {
             using (ImRaii.Child("AlarmToggle", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.AlarmToggleCombo.DrawCombo("##ToggleAlarm" + PairUID, "Toggle an Alarm", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.AlarmToggleCombo.DrawComboButton("##ToggleAlarm" + PairUID, "Toggle an Alarm", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -121,7 +121,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ToggleTrigger)
         {
             using (ImRaii.Child("TriggerToggle", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.TriggerToggleCombo.DrawCombo("##ToggleTrigger" + PairUID, "Toggle a Trigger", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.TriggerToggleCombo.DrawComboButton("##ToggleTrigger" + PairUID, "Toggle a Trigger", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
         }
 
         ImGui.Separator();

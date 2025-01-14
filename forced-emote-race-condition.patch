@@ -1,0 +1,95 @@
+diff --git a/ProjectGagSpeak/PlayerData/Handler/HardcoreHandler.cs b/ProjectGagSpeak/PlayerData/Handler/HardcoreHandler.cs
+index 7440c8e..c283bca 100644
+--- a/ProjectGagSpeak/PlayerData/Handler/HardcoreHandler.cs
++++ b/ProjectGagSpeak/PlayerData/Handler/HardcoreHandler.cs
+@@ -29,6 +29,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
+     private readonly EmoteMonitor _emoteMonitor; // for handling the blindfold logic
+     private readonly ITargetManager _targetManager; // for targeting pair on follows.
+ 
++    private CancellationTokenSource _forcedEmoteStateTokenSource = new();
++
+     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
+     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
+         ClientConfigurationManager clientConfigs, ClientData playerData,
+@@ -191,6 +193,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
+             // Lock Movement:
+             _moveController.EnableMovementLock();
+ 
++            // Reset cancellation token source.
++            if (!_forcedEmoteStateTokenSource.TryReset()) {
++                _forcedEmoteStateTokenSource.Dispose();
++                _forcedEmoteStateTokenSource = new();
++            }
++
+             // Step 1: Get Players current emoteId
+             ushort currentEmote = _emoteMonitor.CurrentEmoteId(); // our current emote ID.
+ 
+@@ -205,7 +213,11 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
+                 }
+ 
+                 // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
+-                await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
++                var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
++                if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateTokenSource.Token)) {
++                    Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
++                    return;
++                }
+ 
+                 // get our cycle pose.
+                 byte currentCyclePose = _emoteMonitor.CurrentCyclePose();
+@@ -233,7 +245,11 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
+                     }
+ 
+                     // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
+-                    await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
++                    var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
++                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateTokenSource.Token)) {
++                        Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
++                        return;
++                    }
+ 
+                     // Execute the desired emote.
+                     Logger.LogDebug("Forcing Emote: " + ForcedEmoteState.EmoteID + "(Current emote was: " + currentEmote + ")");
+@@ -246,6 +262,9 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
+ 
+         if (newState is NewState.Disabled)
+         {
++            // Cancel the forced emote state token source.
++            _forcedEmoteStateTokenSource.Cancel();
++
+             Logger.LogDebug("Pair has allowed you to stand again.", LoggerType.HardcoreMovement);
+             // Disable the movement lock after we set our permissions for validation.
+             _moveController.DisableMovementLock();
+diff --git a/ProjectGagSpeak/UpdateMonitoring/Emotes/EmoteMonitor.cs b/ProjectGagSpeak/UpdateMonitoring/Emotes/EmoteMonitor.cs
+index 3557f32..a583bfc 100644
+--- a/ProjectGagSpeak/UpdateMonitoring/Emotes/EmoteMonitor.cs
++++ b/ProjectGagSpeak/UpdateMonitoring/Emotes/EmoteMonitor.cs
+@@ -152,15 +152,18 @@ public class EmoteMonitor
+     /// </summary>
+     /// <param name="condition"></param>
+     /// <param name="timeoutSeconds"></param>
+-    /// <returns></returns>
+-    public async Task WaitForCondition(Func<bool> condition, int timeoutSeconds = 5)
++    /// <returns>true when the condition was fulfilled, false if timed out or cancelled</returns>
++    public async Task<bool> WaitForCondition(Func<bool> condition, int timeoutSeconds = 5, CancellationToken token = default)
+     {
+         // Create a cancellation token source with the specified timeout
+         using var timeout = new CancellationTokenSource(timeoutSeconds * 1000);
+         try
+         {
+-            while (!condition() && !timeout.Token.IsCancellationRequested)
++            // Try for condition until timeout or cancellation is requested.
++            while (!timeout.Token.IsCancellationRequested && (token == default || !token.IsCancellationRequested))
+             {
++                if (condition())
++                    return true;
+                 StaticLogger.Logger.LogTrace("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
+                 await Task.Delay(100, timeout.Token);
+             }
+@@ -169,5 +172,6 @@ public class EmoteMonitor
+         {
+             StaticLogger.Logger.LogTrace("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
+         }
++        return false;
+     }
+ }

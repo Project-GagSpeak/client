@@ -440,7 +440,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         if (item.AppliedTime != DateTimeOffset.MinValue)
         {
             ImGui.SameLine();
-            UiSharedService.ColorText(UiSharedService.TimeLeftFancy(item.ReleaseTime), ImGuiColors.HealerGreen);
+            UiSharedService.ColorText(item.ReleaseTime.ToGsRemainingTimeFancy(), ImGuiColors.HealerGreen);
         }
     }
 
@@ -481,9 +481,9 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         // Input Field for the first range
         ImGui.SetNextItemWidth(inputWidth);
         var spanLow = _handler.LowerLockLimit;
-        TempLowerTimerRange = spanLow == TimeSpan.Zero ? string.Empty : _uiShared.TimeSpanToString(spanLow);
+        TempLowerTimerRange = spanLow == TimeSpan.Zero ? string.Empty : spanLow.ToGsRemainingTime();
         if (ImGui.InputTextWithHint("##Timer_Input_Lower", "Ex: 0h2m7s", ref TempLowerTimerRange, 12, ImGuiInputTextFlags.EnterReturnsTrue))
-            if (_uiShared.TryParseTimeSpan(TempLowerTimerRange, out var timeSpan))
+            if (GsPadlockEx.TryParseTimeSpan(TempLowerTimerRange, out var timeSpan))
                 _handler.SetLowerLimit(timeSpan);
         UiSharedService.AttachToolTip("Min Cursed Lock Time.");
         // tutorial stuff
@@ -496,9 +496,9 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         // Input Field for the second range
         ImGui.SetNextItemWidth(inputWidth);
         var spanHigh = _handler.UpperLockLimit;
-        TempUpperTimerRange = spanHigh == TimeSpan.Zero ? string.Empty : _uiShared.TimeSpanToString(spanHigh);
+        TempUpperTimerRange = spanHigh == TimeSpan.Zero ? string.Empty : spanHigh.ToGsRemainingTime();
         if (ImGui.InputTextWithHint("##Timer_Input_Upper", "Ex: 0h2m7s", ref TempUpperTimerRange, 12, ImGuiInputTextFlags.EnterReturnsTrue))
-            if (_uiShared.TryParseTimeSpan(TempUpperTimerRange, out var timeSpan))
+            if (GsPadlockEx.TryParseTimeSpan(TempUpperTimerRange, out var timeSpan))
                 _handler.SetUpperLimit(timeSpan);
         UiSharedService.AttachToolTip("Max Cursed lock Time.");
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);

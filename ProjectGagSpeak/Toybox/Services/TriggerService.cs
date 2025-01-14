@@ -42,8 +42,8 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
         ActionEffectMonitor.ActionEffectEntryEvent += OnActionEffectEvent;
 
-        _eventManager.Subscribe<RestraintSet, bool, string>(UnlocksEvent.RestraintApplicationChanged, OnRestraintApply); // Apply on US
-        _eventManager.Subscribe<RestraintSet, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
+        _eventManager.Subscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintApply); // Apply on US
+        _eventManager.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateTriggerMonitors());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => UpdateTrackedPlayerHealth());
@@ -55,20 +55,20 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
     protected override void Dispose(bool disposing)
     {
-        _eventManager.Unsubscribe<RestraintSet, bool, string>(UnlocksEvent.RestraintApplicationChanged, OnRestraintApply);
-        _eventManager.Unsubscribe<RestraintSet, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock);
+        _eventManager.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintApply);
+        _eventManager.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock);
         ActionEffectMonitor.ActionEffectEntryEvent -= OnActionEffectEvent;
         base.Dispose(disposing);
     }
 
-    private void OnRestraintApply(RestraintSet set, bool isEnabling, string enactor)
+    private void OnRestraintApply(Guid restraintId, bool isEnabling, string enactor)
     {
-        if (isEnabling) CheckActiveRestraintTriggers(set.RestraintId, NewState.Enabled);
+        if (isEnabling) CheckActiveRestraintTriggers(restraintId, NewState.Enabled);
     }
 
-    private void OnRestraintLock(RestraintSet set, Padlocks padlock, bool isLocking, string enactorUID)
+    private void OnRestraintLock(Guid restraintId, Padlocks padlock, bool isLocking, string enactorUID)
     {
-        if (isLocking) CheckActiveRestraintTriggers(set.RestraintId, NewState.Locked);
+        if (isLocking) CheckActiveRestraintTriggers(restraintId, NewState.Locked);
     }
 
     private void CheckSpellActionTriggers(ActionEffectEntry actionEffect)

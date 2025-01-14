@@ -74,7 +74,7 @@ public record RestraintSet : IMoodlesAssociable, IPadlockable
             Description = Description,
             HardcoreTraits = SetTraits,
             AffectedSlots = DrawData
-                .Where(kvp => kvp.Value.IsEnabled || kvp.Value.GameItem.Id != ItemIdVars.NothingItem(kvp.Key).Id)
+                .Where(kvp => kvp.Value.IsEnabled && kvp.Value.GameItem.Id != ItemIdVars.NothingItem(kvp.Key).Id)
                 .Select(kvp => new AppliedSlot()
                 {
                     Slot = (byte)kvp.Key,

@@ -11,14 +11,18 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
-public sealed class PairRestraintCombo : PairComboButton<LightRestraintData>
+public sealed class PairRestraintCombo : GagspeakComboButtonBase<LightRestraintData>
 {
     private readonly SetPreviewComponent _ttPreview;
+    private readonly MainHub _mainHub;
+    private Pair _pairRef;
 
-    public PairRestraintCombo(ILogger log, SetPreviewComponent ttPreview, MainHub mainHub, UiSharedService uiShared,
-        Pair pairData, string bText, string bTT) : base(log, uiShared, mainHub, pairData, bText, bTT)
+    public PairRestraintCombo(Pair pairData, MainHub mainHub, ILogger log, SetPreviewComponent ttPreview, 
+        UiSharedService uiShared, string bText, string bTT) : base(log, uiShared, bText, bTT)
     {
         _ttPreview = ttPreview;
+        _mainHub = mainHub;
+        _pairRef = pairData;
 
         // update the current selection to the pairs active set if the last wardrobe & light data are not null.
         if (_pairRef.LastWardrobeData is not null && _pairRef.LastLightStorage is not null)
@@ -29,7 +33,7 @@ public sealed class PairRestraintCombo : PairComboButton<LightRestraintData>
     }
 
     // override the method to extract items by extracting all gagTypes.
-    protected override IEnumerable<LightRestraintData> ExtractItems() => _pairRef.LastLightStorage?.Restraints ?? new List<LightRestraintData>();
+    protected override IReadOnlyList<LightRestraintData> ExtractItems() => _pairRef.LastLightStorage?.Restraints ?? new List<LightRestraintData>();
 
     // we need to override the toItemString here.
     protected override string ToItemString(LightRestraintData item) => item.Name;
@@ -85,7 +89,7 @@ public sealed class PairRestraintCombo : PairComboButton<LightRestraintData>
         newWardrobe.ActiveSetId = CurrentSelection.Identifier;
         newWardrobe.ActiveSetEnabledBy = MainHub.UID;
         // push to server.
-        _ = _mainHub.UserPushPairDataWardrobeUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newWardrobe, WardrobeUpdateType.RestraintApplied, newWardrobe.Padlock.ToPadlock(), UpdateDir.Other));
+        _ = _mainHub.UserPushPairDataWardrobeUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newWardrobe, WardrobeUpdateType.RestraintApplied, newWardrobe.Padlock, UpdateDir.Other));
         PairCombos.Opened = InteractionType.None;
         _logger.LogDebug("Applying Restraint Set " + CurrentSelection.Name + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }

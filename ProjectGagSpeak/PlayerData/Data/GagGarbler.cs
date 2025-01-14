@@ -1,14 +1,35 @@
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
-using GagspeakAPI.Enums;
-using GagspeakAPI.Extensions;
 
 namespace GagSpeak.PlayerData.Data;
 
-public partial class GagManager
+public class GagGarbler
 {
+    private readonly ILogger<GagGarbler> _logger;
+    private readonly ClientData _clientData;
+    private readonly Ipa_EN_FR_JP_SP_Handler _IPAParser;
+    private readonly GagDataHandler _gagDataHandler;
+
+    public List<GagData> _activeGags;
+
+    public GagGarbler(ILogger<GagGarbler> logger, ClientData clientData,
+        GagDataHandler gagDataHandler, Ipa_EN_FR_JP_SP_Handler IPAParser)
+    {
+        _logger = logger;
+        _clientData = clientData;
+        _IPAParser = IPAParser;
+        _gagDataHandler = gagDataHandler;
+    }
+
+    public void UpdateGarblerLogic()
+    {
+        // compile the strings into a list of strings, then locate the names in the handler storage that match it.
+        _activeGags = _clientData.CurrentGagNames
+        .Where(gagType => _gagDataHandler._gagTypes.Any(gag => gag.Name == gagType))
+        .Select(gagType => _gagDataHandler._gagTypes.First(gag => gag.Name == gagType))
+        .ToList();
+    }
+
     /// <summary>
     /// Processes the input message by converting it to GagSpeak format
     /// </summary> 
@@ -19,11 +40,11 @@ public partial class GagManager
         try
         {
             outputStr = ConvertToGagSpeak(inputMessage);
-            Logger.LogTrace($"Converted message to GagSpeak: {outputStr}", LoggerType.GarblerCore);
+            _logger.LogTrace($"Converted message to GagSpeak: {outputStr}", LoggerType.GarblerCore);
         }
         catch (Exception e)
         {
-            Logger.LogError($"Error processing message: {e}");
+            _logger.LogError($"Error processing message: {e}");
         }
         return outputStr;
     }
@@ -41,7 +62,7 @@ public partial class GagManager
         }
 
         // Initialize the algorithm scoped variables 
-        Logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LoggerType.GarblerCore);
+        _logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LoggerType.GarblerCore);
         StringBuilder finalMessage = new StringBuilder(); // initialize a stringbuilder object so we dont need to make a new string each time
         bool skipTranslation = false;
         try
@@ -86,7 +107,7 @@ public partial class GagManager
                     // Add the GagSpeak to the final message
 
                     /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
-                    //Logger.LogTrace($"[GagGarbleManager] Converted [{leadingPunctuation}] + [{word}] + [{trailingPunctuation}]");
+                    //_logger.LogTrace($"[GagGarbleManager] Converted [{leadingPunctuation}] + [{word}] + [{trailingPunctuation}]");
                     finalMessage.Append(leadingPunctuation + gaggedSpeak + trailingPunctuation + " ");
                 }
                 else
@@ -102,7 +123,7 @@ public partial class GagManager
         }
         catch (Exception e)
         {
-            Logger.LogError($"[GagGarbleManager] Error converting from IPA Spaced to final output. Puncutation error or other type possible : {e.Message}");
+            _logger.LogError($"[GagGarbleManager] Error converting from IPA Spaced to final output. Puncutation error or other type possible : {e.Message}");
         }
         return finalMessage.ToString().Trim();
     }
@@ -129,7 +150,7 @@ public partial class GagManager
             }
             catch (Exception e)
             {
-                Logger.LogError($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
+                _logger.LogError($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
             }
         }
         string result = outputString.ToString();

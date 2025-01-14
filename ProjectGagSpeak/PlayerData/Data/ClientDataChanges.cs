@@ -44,7 +44,7 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PlayerCharToyboxChanged>(this, (msg) => PushToyboxDataToAPI(msg));
         Mediator.Subscribe<PlayerCharStorageUpdated>(this, _ => PushLightStorageToAPI());
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => _data.LastIpcData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => _data.LastIpcData = msg.CharaIPCData);
 
         Mediator.Subscribe<DalamudLogoutMessage>(this, (_) =>
         {
@@ -96,12 +96,14 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
 
     public void PushAppearanceDataToAPI(PlayerCharAppearanceChanged msg)
     {
-        Mediator.Publish(new CharacterAppearanceDataCreatedMessage(msg.NewData, msg.AffectedLayer, msg.UpdateType, msg.PreviousLock));
+        var dataToPush = _data.CompileAppearanceToAPI();
+        Mediator.Publish(new AppearanceDataCreatedMessage(dataToPush, msg.AffectedLayer, msg.UpdateType, msg.PreviousLock));
     }
 
     public void PushWardrobeDataToAPI(PlayerCharWardrobeChanged msg)
     {
-        Mediator.Publish(new CharacterWardrobeDataCreatedMessage(msg.NewData, msg.UpdateKind, msg.PreviousLock));
+        var dataToPush = _clientConfigs.CompileWardrobeToAPI();
+        Mediator.Publish(new WardrobeDataCreatedMessage(dataToPush, msg.UpdateKind, msg.AffectedItem));
     }
 
     public void PushAliasListDataToAPI(PlayerCharAliasChanged msg)
@@ -114,18 +116,18 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
         }
 
         var dataToPush = CompileAliasToAPI(userPair.UID);
-        Mediator.Publish(new CharacterAliasDataCreatedMessage(dataToPush, userPair, PuppeteerUpdateType.AliasListUpdated));
+        Mediator.Publish(new AliasDataCreatedMessage(dataToPush, userPair, PuppeteerUpdateType.AliasListUpdated));
     }
 
     public void PushToyboxDataToAPI(PlayerCharToyboxChanged msg)
     {
         var dataToPush = _clientConfigs.CompileToyboxToAPI();
-        Mediator.Publish(new CharacterToyboxDataCreatedMessage(dataToPush, msg.UpdateKind));
+        Mediator.Publish(new ToyboxDataCreatedMessage(dataToPush, msg.UpdateKind));
     }
 
     public void PushLightStorageToAPI()
     {
         var dataToPush = _clientConfigs.CompileLightStorageToAPI();
-        Mediator.Publish(new CharacterStorageDataCreatedMessage(dataToPush));
+        Mediator.Publish(new LightStorageDataCreatedMessage(dataToPush));
     }
 }

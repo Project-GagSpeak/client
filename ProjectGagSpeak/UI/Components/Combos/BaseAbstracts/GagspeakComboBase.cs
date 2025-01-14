@@ -8,52 +8,63 @@ using OtterGui.Raii;
 using OtterGui.Text;
 using System.Numerics;
 
-// taken off Otter's ModCombo.cs from the mod association tab for convince purposes
 namespace GagSpeak.UI.Components.Combos;
-public abstract class PairComboBase<T>
+
+/// <summary>
+/// Customized GagSpeak Combo Base. Searchable, filterable, highly configurable.
+/// This combo is designed to clear/remove the combo item on right click, and to set on selection.
+/// </summary>
+public abstract class GagspeakComboBase<T>
 {
     protected readonly ILogger _logger;
-    protected readonly MainHub _mainHub;
+    protected readonly UiSharedService _uiShared;
 
+    private string _label;
     private readonly HashSet<uint> _popupState = [];
 
-    /// <summary> Reference to the pair linked to the combo. This way data updates live to Pair changes. </summary>
-    protected readonly Pair _pairRef;
+    protected GagspeakComboBase(ILogger log, UiSharedService uiShared, string label)
+    {
+        _logger = log;
+        _uiShared = uiShared;
+        _label = label;
+    }
 
     /// <summary> Fetched items from the respective pairData. </summary>
-    public IEnumerable<T> Items => ExtractItems();
+    public IReadOnlyList<T> Items => ExtractItems();
 
     protected string _defaultPreviewText = "Select an item...";
     private bool _adjustScroll;
     private bool _closePopup;
 
-    public T? CurrentSelection { get; protected set; }
-
     private LowerString _filter = LowerString.Empty;
 
-    private IReadOnlyList<T> FilteredItems => (IReadOnlyList<T>)(_filter.IsEmpty
-        ? Items : Items.Where(item => ToItemString(item).ToLowerInvariant().Contains(_filter)));
-
-    protected PairComboBase(ILogger log, Pair pairData, MainHub mainHub)
-    {
-        _logger = log;
-        _mainHub = mainHub;
-        _pairRef = pairData;
-    }
+    private IReadOnlyList<T> FilteredItems => (_filter.IsEmpty
+        ? Items : Items.Where(item => ToItemString(item).ToLowerInvariant().Contains(_filter)).ToList());
 
     /// <summary>
     /// Virtual Method for dictating how items are fetched from the pairData. 
     /// </summary>
     /// <returns>The list of items to be used when displaying the open combo.</returns>
-    protected virtual IEnumerable<T> ExtractItems() => Enumerable.Empty<T>();
+    protected abstract IReadOnlyList<T> ExtractItems();
 
-    protected virtual void ResetSelection() => CurrentSelection = default(T);
+    /// <summary>
+    /// Gets the active item in the combo. Should always be valid. If an item can ever not be valid, not be a part of this.
+    /// </summary>
+    protected abstract T CurrentActiveItem();
 
+    /// <summary>
+    /// The action to perform on any item being selected.
+    /// </summary>
+    protected abstract void OnItemSelected(T selectedItem);
+
+    /// <summary>
+    /// what to do when we right click the combo.
+    /// </summary>
+    protected abstract void OnClearActiveItem();
 
     /// <summary>
     /// Helper method for obtaining the item name/string from the selected Item.
     /// </summary>
-    /// <param name="item">The item to get a name for.</param>
     /// <returns>The string identifying name of the passed in item.</returns>
     protected virtual string ToItemString(T item) => item?.ToString() ?? string.Empty;
 
@@ -67,7 +78,7 @@ public abstract class PairComboBase<T>
     /// Used to get the preview text that should be displayed on the combo while it is closed.
     /// </summary>
     /// <returns>The Combo Box preview text.</returns>
-    protected virtual string GetPreviewText() => CurrentSelection is not null ? ToItemString(CurrentSelection) : _defaultPreviewText;
+    protected virtual string GetPreviewText() => ToItemString(CurrentActiveItem());
 
     /// <summary>
     /// A virtual method for drawing out the tooltip that should be displayed when hovering over the combo.
@@ -75,15 +86,21 @@ public abstract class PairComboBase<T>
     protected virtual void DrawTooltip() => ImGuiUtil.HoverTooltip("", ImGuiHoveredFlags.AllowWhenDisabled);
 
     /// <summary>
+    /// The condition that if satisfied disables the combo.
+    /// </summary>
+    protected abstract bool DisableCondition();
+
+    /// <summary>
     /// The internal method used for drawing the combos which is virtual.
     /// </summary>
     public virtual bool DrawCombo(string label, string tt, float width, float popupWidthScale, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // obtain the ID for the combo that we are about to spawn.
-        var id = ImGui.GetID(label);
+        var id = ImGui.GetID(_label + label);
         // set its width to whatever the fuck we want it to be
         ImGui.SetNextItemWidth(width);
         // init the combo with ImRaii.
+        using var disabled = ImRaii.Disabled(DisableCondition());
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         using var combo = ImRaii.Combo(label, GetPreviewText(), flags | ImGuiComboFlags.HeightLarge);
 
@@ -93,7 +110,7 @@ public abstract class PairComboBase<T>
             DrawTooltip();
             // Handle right click clearing.
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                ResetSelection();
+                OnClearActiveItem();
         }
 
         // if the combo is opened up.
@@ -129,15 +146,6 @@ public abstract class PairComboBase<T>
         // scroll to it, and set keyboard focus to the filter field.
         if (ImGui.IsWindowAppearing())
         {
-            var prevSelected = CurrentSelection;
-            if(prevSelected is not null && FilteredItems.ToList().Contains(prevSelected))
-            {
-                CurrentSelection = prevSelected;
-            }
-            else
-            {
-                CurrentSelection = FilteredItems.FirstOrDefault();
-            }
             _adjustScroll = true;
             ImGui.SetKeyboardFocusHere();
         }
@@ -162,10 +170,10 @@ public abstract class PairComboBase<T>
         using var indent = ImRaii.PushIndent(ImGuiHelpers.GlobalScale);
 
         // Adjust the scroll if we should.
-        if (_adjustScroll && CurrentSelection is not null)
+        if (_adjustScroll)
         {
             // get the index of the current selection in the filtered item list, then set the scroll accordingly.
-            var selectedIdx = FilteredItems.ToList().IndexOf(CurrentSelection);
+            var selectedIdx = FilteredItems.ToList().IndexOf(CurrentActiveItem());
             ImGui.SetScrollFromPosY(selectedIdx * itemHeight - ImGui.GetScrollY());
         }
 
@@ -185,10 +193,10 @@ public abstract class PairComboBase<T>
         using var id = ImRaii.PushId(filteredIdx);
         try
         {
-            bool isSelected = EqualityComparer<T>.Default.Equals(CurrentSelection, item);
+            bool isSelected = EqualityComparer<T>.Default.Equals(CurrentActiveItem(), item);
             if (DrawSelectable(item, isSelected))
             {
-                CurrentSelection = item;
+                OnItemSelected(item);
                 _closePopup = true;
                 return true;
             }
@@ -215,11 +223,6 @@ public abstract class PairComboBase<T>
     }
 
     /// <summary>
-    /// Method to dictate how popups are handled once closed.
-    /// </summary>
-    protected virtual void OnClosePopup() { }
-
-    /// <summary>
     /// Method to close the popup.
     /// </summary>
     /// <param name="id">the id of the combo popup to close when the combo closes.</param>
@@ -233,8 +236,6 @@ public abstract class PairComboBase<T>
         _popupState.Remove(id);
         _filter = LowerString.Empty;
         _closePopup = false;
-        // handle any extra logic we wanted to add.
-        OnClosePopup();
     }
 
 

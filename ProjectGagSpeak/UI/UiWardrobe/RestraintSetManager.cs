@@ -8,7 +8,9 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.StateManagers;
 using GagSpeak.UI.Components;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
@@ -21,27 +23,32 @@ namespace GagSpeak.UI.UiWardrobe;
 
 public class RestraintSetManager : DisposableMediatorSubscriberBase
 {
-    private readonly UiSharedService _uiShared;
     private readonly IpcCallerGlamourer _ipcGlamourer;
     private readonly RestraintSetEditor _editor;
     private readonly SetPreviewComponent _setPreview;
     private readonly WardrobeHandler _handler;
-    private readonly GagManager _gagManager;
+    private readonly AppearanceManager _appearance;
+    private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
+
+    // Our padlock provider display.
+    private PadlockRestraintsClient _restraintPadlock;
+
     public RestraintSetManager(ILogger<RestraintSetManager> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService, IpcCallerGlamourer ipcGlamourer, RestraintSetEditor editor,
-        SetPreviewComponent setPreview, WardrobeHandler handler, GagManager padlockHandler,
+        IpcCallerGlamourer ipcGlamourer, RestraintSetEditor editor, SetPreviewComponent setPreview, 
+        WardrobeHandler handler, AppearanceManager appearance, UiSharedService ui, 
         TutorialService guides) : base(logger, mediator)
     {
-        _uiShared = uiSharedService;
         _ipcGlamourer = ipcGlamourer;
         _editor = editor;
-        _handler = handler;
-        _gagManager = padlockHandler;
         _setPreview = setPreview;
+        _handler = handler;
+        _appearance = appearance;
+        _uiShared = ui;
         _guides = guides;
 
-        CreatedRestraintSet = new RestraintSet();
+        // setup the padlock provider
+        _restraintPadlock = new PadlockRestraintsClient(handler, appearance, logger, ui, "Restraint Set");
 
         Mediator.Subscribe<TooltipSetItemToRestraintSetMessage>(this, (msg) =>
         {
@@ -57,7 +64,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
         });
     }
 
-    private RestraintSet CreatedRestraintSet;
+    private RestraintSet CreatedRestraintSet = new RestraintSet();
     public bool CreatingRestraintSet = false;
     private int LastHoveredIndex = -1; // -1 indicates no item is currently hovered
     private LowerString RestraintSetSearchString = LowerString.Empty;
@@ -159,9 +166,9 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                 {
                     _setPreview.DrawRestraintSetPreviewCentered(FilteredSetList[LastHoveredIndex], previewRegion);
                 }
-                else if (_handler.ActiveSet != null)
+                else if (_handler.TryGetActiveSet(out var activeSet))
                 {
-                    _setPreview.DrawRestraintSetPreviewCentered(_handler.ActiveSet, previewRegion);
+                    _setPreview.DrawRestraintSetPreviewCentered(activeSet, previewRegion);
                 }
             }
         }
@@ -461,19 +468,18 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
         // grab the description of the set
         var description = set.Description;
         // grab who the set was locked by
-        var lockedBy = set.LockedBy;
+        var lockedBy = set.Assigner;
 
         // define our sizes
         var startYpos = ImGui.GetCursorPosY();
         var toggleSize = _uiShared.GetIconButtonSize(set.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
-        var lockSize = _uiShared.GetIconButtonSize(set.Locked ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock);
+        var lockSize = _uiShared.GetIconButtonSize(set.IsLocked() ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock);
         var nameTextSize = ImGui.CalcTextSize(set.Name);
         var descriptionTextSize = ImGui.CalcTextSize(set.Description);
         var lockedByTextSize = ImGui.CalcTextSize(lockedBy);
 
         // determine the height of this selection and what kind of selection it is.
         var isActiveSet = (set.Enabled == true);
-        var isLockedSet = (set.Locked == true);
 
         // if it is the active set, dont push the color, otherwise push the color
 
@@ -491,10 +497,10 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                 ImGui.SetCursorPosY(originalCursorPos.Y + 2.5f);
                 // Draw the text with the desired color
                 UiSharedService.ColorText(name, ImGuiColors.DalamudWhite2);
-                if (GenericHelpers.TimerPadlocks.Contains(set.LockType))
+                if (set.Padlock.ToPadlock().IsTimerLock())
                 {
                     ImGui.SameLine();
-                    UiSharedService.ColorText(UiSharedService.TimeLeftFancy(set.LockedUntil), ImGuiColors.ParsedPink);
+                    UiSharedService.ColorText(set.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
                 }
                 // Restore the original cursor position
                 ImGui.SetCursorPos(originalCursorPos);
@@ -506,7 +512,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
             {
                 // scooch over a bit like 5f
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
-                if (isLockedSet)
+                if (set.IsLocked())
                 {
                     ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2.5f);
                     UiSharedService.ColorText("Locked By:", ImGuiColors.DalamudGrey2);
@@ -538,30 +544,25 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
             var currentYpos = ImGui.GetCursorPosY();
             using (var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f))
             {
-                bool disabled = FilteredSetList.Any(x => x.Locked) || !_handler.WardrobeEnabled || !_handler.RestraintSetsEnabled;
-                string ttText = set.Enabled ? (set.Locked ? "Cannot Disable a Locked Set!" : "Disable Active Restraint Set")
+                bool disabled = FilteredSetList.Any(x => x.IsLocked()) || !_handler.WardrobeEnabled || !_handler.RestraintSetsEnabled;
+                string ttText = set.Enabled ? (set.IsLocked() ? "Cannot Disable a Locked Set!" : "Disable Active Restraint Set")
                                             : (!_handler.WardrobeEnabled || !_handler.RestraintSetsEnabled) ? "Wardrobe / Restraint set Permissions not Active."
                                             : (disabled ? "Can't Enable another Set while active Set is Locked!" : "Enable Restraint Set");
                 if (_uiShared.IconButton(set.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff, null, set.Name, disabled))
                 {
                     // set the enabled state of the restraintSet based on its current state so that we toggle it
-                    if (set.Enabled)
-                        _handler.DisableRestraintSet(set.RestraintId, set.EnabledBy).ConfigureAwait(false);
-                    else
-                        _handler.EnableRestraintSet(set.RestraintId, MainHub.UID).ConfigureAwait(false);
+                    if (set.Enabled) _handler.DisableRestraintSet(set.RestraintId, MainHub.UID, true).ConfigureAwait(false);
+                    else _handler.EnableRestraintSet(set.RestraintId, MainHub.UID, true).ConfigureAwait(false);
                     // toggle the state & early return so we dont access the child clicked button
                     return;
                 }
                 UiSharedService.AttachToolTip(ttText);
                 if (idx is 0) _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.TogglingSets, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
-
             }
         }
 
-        if (!isActiveSet)
-        {
-            if (ImGui.IsItemClicked()) _handler.StartEditingSet(set);
-        }
+        if (!isActiveSet && ImGui.IsItemClicked()) 
+            _handler.StartEditingSet(set);
 
         // if this is the active set, draw a seperator below it
         if (isActiveSet)
@@ -572,49 +573,11 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
             {
                 var width = ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X;
 
-                TimeSpan remainingTime = (set.LockedUntil - DateTimeOffset.UtcNow);
+                TimeSpan remainingTime = (set.Timer - DateTimeOffset.UtcNow);
                 string remainingTimeStr = $"{remainingTime.Days}d{remainingTime.Hours}h{remainingTime.Minutes}m{remainingTime.Seconds}s";
-                var lockedDescription = set.Locked ? $"Locked for {remainingTimeStr}" : "Self-lock: XdXhXmXs format..";
+                var lockedDescription = set.IsLocked() ? $"Locked for {remainingTimeStr}" : "Self-lock: XdXhXmXs format..";
                 // draw the padlock dropdown
-                var isLockedByPair = set.LockedBy != MainHub.UID && set.LockType.ToPadlock() != Padlocks.None;
-                var padlockType = set.Locked ? set.LockType.ToPadlock() : GagManager.ActiveSlotPadlocks[3];
-
-                using (ImRaii.Disabled(set.Locked || set.LockType != "None"))
-                {
-                    _gagManager.DrawPadlockCombo(3, (width - 1 - _uiShared.GetIconButtonSize(FontAwesomeIcon.Lock).X - ImGui.GetStyle().ItemInnerSpacing.X),
-                        LockHelperExtensions.AllLocks, (i) => GagManager.ActiveSlotPadlocks[3] = i);
-                }
-                ImUtf8.SameLineInner();
-                // draw the lock button
-                if (_uiShared.IconButton(set.Locked ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock, null, set.Name.ToString(), padlockType == Padlocks.None))
-                {
-                    if (_gagManager.RestraintPasswordValidate(padlockType, set, set.Locked))
-                    {
-                        if (set.Locked)
-                        {
-                            Logger.LogTrace($"Unlocking Restraint Set {set.Name}");
-                            // allow using set.EnabledBy here because it will check against the assigner when unlocking.
-                            _handler.UnlockRestraintSet(set.RestraintId, set.EnabledBy);
-                        }
-                        else
-                        {
-                            Logger.LogTrace($"Locking Restraint Set {set.Name}");
-                            _handler.LockRestraintSet(set.RestraintId, GagManager.ActiveSlotPadlocks[3], GagManager.ActiveSlotPasswords[3],
-                                UiSharedService.GetEndTimeUTC(GagManager.ActiveSlotTimers[3]), MainHub.UID);
-                        }
-                    }
-                    else
-                    {
-                        Logger.LogDebug($"Failed to validate password for Restraint Set {set.Name}");
-                    }
-                    // reset the password and timer
-                    GagManager.ActiveSlotPasswords[3] = string.Empty;
-                    GagManager.ActiveSlotTimers[3] = string.Empty;
-                }
-                UiSharedService.AttachToolTip(padlockType is Padlocks.None ? "Select a padlock type before locking" :
-                    set.Locked is false ? "Self-Lock this Restraint Set" : "Attempt to unlock this padlock.");
-                // display associated password field for padlock type.
-                _gagManager.DisplayPadlockFields(padlockType, 3, set.Locked, width);
+                _restraintPadlock.DrawPadlockComboSection(width, string.Empty, "Lock/Unlock this restraint.");
             }
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingSets, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
             ImGui.Separator();

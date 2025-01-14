@@ -327,6 +327,18 @@ public partial class MainHub
         }
     }
 
+    public async Task UserPushDataOrders(UserCharaOrdersDataMessageDto dto)
+    {
+        try
+        {
+            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to Push character data");
+        }
+    }
+
     /// <summary>
     /// Pushes the puppeteer alias lists of the client to other recipients.
     /// </summary>
@@ -534,11 +546,10 @@ public partial class MainHub
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Appearance data"); }
     }
 
-
     /// <summary>
     /// Pushes Client's updated wardrobe data to the list of online recipients.
     /// </summary>
-    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, Padlocks prevPadlock)
+    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, string affectedItem)
     {
         if (!IsConnected) return;
 
@@ -546,12 +557,28 @@ public partial class MainHub
         {
             if(onlineCharacters.Any()) Logger.LogDebug("Pushing Character Wardrobe data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "["+updateKind+"]", LoggerType.OnlinePairs);
             else Logger.LogDebug("Updating WardrobeData to stored ActiveStateData", LoggerType.OnlinePairs);
-            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, prevPadlock)).ConfigureAwait(false);
+            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, affectedItem)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
     }
 
+    /// <summary>
+    /// Pushes Client's updated active timed Items data to the list of online recipients.
+    /// </summary>
+    public async Task PushCharacterOrdersData(CharaOrdersData data, List<UserData> onlineCharacters, OrdersUpdateType updateKind, string affectedId)
+    {
+        if (!IsConnected) return;
+
+        try // if connected, try to push the data to the server
+        {
+            if (onlineCharacters.Any()) Logger.LogDebug("Pushing TimedItems state to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
+            else Logger.LogDebug("Updating TimedItems state to other pairs", LoggerType.OnlinePairs);
+            await UserPushDataOrders(new(onlineCharacters, data, updateKind, affectedId)).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
+        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
+    }
 
     /// <summary>
     /// Pushes Client's updated alias list data to the respective recipient.

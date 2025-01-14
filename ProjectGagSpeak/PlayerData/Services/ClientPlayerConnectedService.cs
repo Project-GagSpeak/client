@@ -22,7 +22,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private readonly ClientData _playerData;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly IpcManager _ipcManager;
     private readonly WardrobeHandler _wardrobeHandler;
     private readonly HardcoreHandler _hardcoreHandler;
@@ -31,13 +31,13 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     public OnConnectedService(ILogger<OnConnectedService> logger,
         GagspeakMediator mediator, ClientData playerData,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
-        GagManager gagManager, IpcManager ipcManager, WardrobeHandler wardrobeHandler,
+        GagGarbler garbler, IpcManager ipcManager, WardrobeHandler wardrobeHandler,
         HardcoreHandler blindfold, AppearanceManager appearanceHandler) : base(logger, mediator)
     {
         _playerData = playerData;
         _clientConfigs = clientConfigs;
         _pairManager = pairManager;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _ipcManager = ipcManager;
         _wardrobeHandler = wardrobeHandler;
         _hardcoreHandler = blindfold;
@@ -64,13 +64,13 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Logger.LogInformation("------- Connected Message Received. Processing State Synchronization -------");
 
         // Update Global Permissions and Appearance Data.
-        SetGlobalPermissionsAndAppearance(MainHub.ConnectionDto);
+        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
+        _playerData.GlobalPerms = MainHub.ConnectionDto.UserGlobalPermissions;
+        _playerData.AppearanceData = MainHub.ConnectionDto.CharaAppearanceData;
+        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData); _garbler.UpdateGarblerLogic();
 
-        // Update GagCombos and Garbler Logic.
-        UpdateGagSpeakModules();
 
         Logger.LogInformation("Syncing Data with Connection DTO", LoggerType.ClientPlayerData);
-
         // Obtain Server-Side Active State Data.
         var serverData = MainHub.ConnectionDto.CharacterActiveStateData;
         var serverExpectsActiveSet = serverData.ActiveSetId != Guid.Empty;
@@ -84,10 +84,6 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             await ClearActiveSet();
         }
 
-        // update the combo selections for the restraints and gags once more.
-        _gagManager.UpdateGagLockComboSelections();
-        _gagManager.UpdateRestraintLockSelections(false);
-
         // Apply Hardcore Traits to the active set.
         ApplyTraitsIfAny();
 
@@ -99,29 +95,11 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             await _appearanceHandler.RecalcAndReload(true);
     }
 
-    private void SetGlobalPermissionsAndAppearance(ConnectionDto dto)
-    {
-        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
-        _playerData.GlobalPerms = dto.UserGlobalPermissions;
-        _playerData.AppearanceData = dto.CharaAppearanceData;
-        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData);
-    }
-
-    private void UpdateGagSpeakModules()
-    {
-        Logger.LogDebug("Setting up Update Tasks from GagSpeak Modules.", LoggerType.ClientPlayerData);
-        _gagManager.UpdateGagLockComboSelections();
-        _gagManager.UpdateGagGarblerLogic();
-    }
-
     private void PublishLatestActiveItems()
     {
-        var activeGags = _playerData.AppearanceData?.GagSlots
-            .Where(x => x.GagType.ToGagType() is not GagType.None)
-            .Select(x => x.GagType)
-            .ToList() ?? new List<string>();
+        var gagInfo = _playerData.AppearanceData ?? new CharaAppearanceData();
         var activeSetId = _clientConfigs.GetActiveSet()?.RestraintId ?? Guid.Empty;
-        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
+        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, gagInfo, activeSetId));
     }
 
     private async Task HandleActiveServerSet(CharaActiveStateData serverData)
@@ -136,7 +114,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             return;
         }
 
-        var hasExpiredTimer = GenericHelpers.TimerPadlocks.Contains(serverData.Padlock) && serverData.Timer < DateTimeOffset.UtcNow;
+        var hasExpiredTimer = serverData.Padlock.ToPadlock().IsTimerLock() && serverData.Timer < DateTimeOffset.UtcNow;
         var activeClientSet = _clientConfigs.GetActiveSet();
 
         if (activeClientSet is not null)
@@ -151,20 +129,20 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         {
             await UnlockAndDisableSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
         else if (activeClientSet.RestraintId != serverData.ActiveSetId)
         {
             await EnableAndRelockSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
     }
 
     private async Task UnlockAndDisableSet(CharaActiveStateData serverData)
     {
         Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
-        await _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Assigner, false, true);
+        _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Password, serverData.Assigner, false, true);
 
         if (_clientConfigs.GagspeakConfig.DisableSetUponUnlock)
         {
@@ -181,8 +159,8 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         if (serverData.Padlock != Padlocks.None.ToName())
         {
             Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
-            await _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
-                serverData.Password, serverData.Timer, serverData.Assigner, false, true);
+            _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
+                serverData.Password, serverData.Timer.GetEndTimeOffsetString(), serverData.Assigner, false, true);
         }
     }
 
@@ -195,13 +173,13 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         {
             Logger.LogWarning("The Stored Restraint Set was Empty, yet you have one equipped. Unlocking and unequipping.");
             // Unlock Active Set
-            if (activeSet.LockType.ToPadlock() is not Padlocks.None)
-                await _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+            if (activeSet.IsLocked())
+                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, false, true);
 
             // Disable Active Set.
-            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.Assigner, false, true);
             // publish the changes.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
 
     }

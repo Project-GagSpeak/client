@@ -15,10 +15,12 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         _pairRef = pairData;
     }
 
-    protected override IEnumerable<Padlocks> ExtractPadlocks() => LockHelperExtensions.GetLocksForPair(_pairRef.PairPerms);
+    protected override IEnumerable<Padlocks> ExtractPadlocks() => GsPadlockEx.GetLocksForPair(_pairRef.PairPerms);
     protected override Padlocks GetLatestPadlock() => _pairRef.LastAppearanceData?.GagSlots[PairCombos.GagLayer].Padlock.ToPadlock() ?? Padlocks.None;
     protected override GagSlot GetLatestActiveItem() => _pairRef.LastAppearanceData?.GagSlots[PairCombos.GagLayer] ?? new GagSlot();
     protected override string ToActiveItemString(GagSlot item) => item.GagType;
+    protected override bool DisableCondition() 
+        => _pairRef.LastAppearanceData is null || _pairRef.LastAppearanceData.GagSlots[PairCombos.GagLayer].GagType.ToGagType() is GagType.None;
 
     protected override void OnLockButtonPress()
     {
@@ -27,16 +29,16 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         // create a deep clone our of appearance data to analyze and modify.
         var newAppearanceData = _pairRef.LastAppearanceData.DeepCloneData();
 
-        _logger.LogDebug("Verifying lock for padlock: " + _selectedLock.ToName(), LoggerType.PadlockHandling);
+        _logger.LogDebug("Verifying lock for padlock: " + SelectedLock.ToName(), LoggerType.PadlockHandling);
         var slotToUpdate = newAppearanceData.GagSlots[PairCombos.GagLayer];
 
         // see if things are valid through the lock helper extensions.
-        PadlockReturnCode validationResult = LockHelperExtensions.VerifyLock(ref slotToUpdate, _selectedLock, _password, _timer, MainHub.UID, _pairRef.PairPerms);
+        PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref slotToUpdate, SelectedLock, _password, _timer, MainHub.UID, _pairRef.PairPerms);
 
         // if the validation result is anything but successful, log it and return.
         if (validationResult is not PadlockReturnCode.Success)
         {
-            _logger.LogError("Failed to lock padlock: " + _selectedLock.ToName() + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
+            _logger.LogError("Failed to lock padlock: " + SelectedLock.ToName() + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
             ResetInputs();
             return;
         }
@@ -44,7 +46,7 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         // update the appearance data with the new slot.
         newAppearanceData.GagSlots[PairCombos.GagLayer] = slotToUpdate;
         _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newAppearanceData, (GagLayer)PairCombos.GagLayer, GagUpdateType.GagLocked, Padlocks.None, UpdateDir.Other));
-        _logger.LogDebug("Locking Gag with GagPadlock " + _selectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        _logger.LogDebug("Locking Gag with GagPadlock " + SelectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
         PairCombos.Opened = InteractionType.None;
         ResetSelection();
     }
@@ -64,7 +66,7 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         var prevLock = slotToUpdate.Padlock.ToPadlock();
 
         // verify if we can unlock.
-        PadlockReturnCode validationResult = LockHelperExtensions.VerifyUnlock(ref slotToUpdate, _pairRef.UserData, _password, MainHub.UID, _pairRef.PairPerms);
+        PadlockReturnCode validationResult = GsPadlockEx.VerifyUnlock(ref slotToUpdate, _pairRef.UserData, _password, MainHub.UID, _pairRef.PairPerms);
 
         // if the validation result is anything but successful, log it and return.
         if (validationResult is not PadlockReturnCode.Success)

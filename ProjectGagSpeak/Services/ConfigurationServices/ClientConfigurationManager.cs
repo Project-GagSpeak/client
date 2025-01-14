@@ -7,12 +7,15 @@ using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.ConfigurationServices;
 
@@ -254,7 +257,11 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     /* --------------------- Gag Storage Config Methods --------------------- */
     #region Gag Storage Methods
     internal bool IsGagEnabled(GagType gagType)
-        => GagStorageConfig.GagStorage.GagEquipData.FirstOrDefault(x => x.Key == gagType).Value.IsEnabled;
+    {
+        return GagStorageConfig.GagStorage.GagEquipData.TryGetValue(gagType, out var gagData)
+            && gagData.IsEnabled && gagData.GameItem.ItemId != ItemIdVars.NothingItem(gagData.Slot).ItemId;
+    }
+
     internal GagDrawData GetDrawData(GagType gagType)
         => GagStorageConfig.GagStorage.GagEquipData[gagType];
     internal GagDrawData GetDrawDataWithHighestPriority(List<GagType> gagTypes)
@@ -295,11 +302,17 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     /// I swear to god, so not set anything inside this object through this fetch. Treat it as readonly.
     /// </summary>
     internal List<RestraintSet> StoredRestraintSets => WardrobeConfig.WardrobeStorage.RestraintSets;
+
+    internal RestraintSet? GetActiveSet() => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled)!; // this can be null.
+    internal bool TryGetActiveSet([MaybeNullWhen(false)] out RestraintSet activeSet)
+    {
+        activeSet = WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled);
+        return activeSet is not null;
+    }
+
     internal int GetActiveSetIdx() => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.Enabled);
     internal int GetSetIdxByGuid(Guid id) => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.RestraintId == id);
     internal string GetSetNameByGuid(Guid id) => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.RestraintId == id)?.Name ?? "Unknown";
-
-    internal RestraintSet? GetActiveSet() => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled)!; // this can be null.
     internal RestraintSet GetRestraintSet(int setIndex) => WardrobeConfig.WardrobeStorage.RestraintSets[setIndex];
     internal int GetRestraintSetIdxByName(string name) => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.Name == name);
 
@@ -658,7 +671,14 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
             Password = activeSet?.Password ?? "",
             Timer = activeSet?.Timer ?? DateTimeOffset.MinValue,
             Assigner = activeSet?.Assigner ?? "",
-            ActiveCursedItems = ActiveCursedItems
+        };
+    }
+
+    public CharaOrdersData CompileTimedItemDataToAPI()
+    {
+        return new CharaOrdersData
+        {
+            ActiveOrders = new HashSet<Guid>(),
         };
     }
 
@@ -705,11 +725,11 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
             ImGui.Text($"Set Id: {ActiveSet.RestraintId}");
             ImGui.Text($"Name: {ActiveSet.Name}");
             ImGui.Text($"Enabled By: {ActiveSet.EnabledBy}");
-            ImGui.Text($"Is Locked: {ActiveSet.Locked}");
-            ImGui.Text($"Lock Type: {ActiveSet.LockType}");
-            ImGui.Text($"Lock Password: {ActiveSet.LockPassword}");
-            ImGui.Text($"Locked By: {ActiveSet.LockedBy}");
-            ImGui.Text($"Locked Until Time: " + UiSharedService.TimeLeftFancy(ActiveSet.LockedUntil));
+            ImGui.Text($"Is Locked: {ActiveSet.IsLocked()}");
+            ImGui.Text($"Lock Type: {ActiveSet.Padlock}");
+            ImGui.Text($"Lock Password: {ActiveSet.Password}");
+            ImGui.Text($"Locked By: {ActiveSet.Assigner}");
+            ImGui.Text($"Locked Until Time: " + ActiveSet.Timer.ToGsRemainingTimeFancy());
             ImGui.Unindent();
         }
     }

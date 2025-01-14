@@ -17,12 +17,13 @@ public abstract class PadlockBase<T> where T : IPadlockable
     protected string _label = string.Empty;
     protected string _password = string.Empty;
     protected string _timer = string.Empty;
-    protected Padlocks _selectedLock = Padlocks.None;
+    public Padlocks SelectedLock { get; protected set; } = Padlocks.None;
 
-    protected PadlockBase(ILogger log, UiSharedService uiShared, string comboLabelBase)
+    protected PadlockBase(ILogger log, UiSharedService uiShared, string label)
     {
         _logger = log;
         _uiShared = uiShared;
+        _label = label;
     }
 
     /// <summary>
@@ -33,7 +34,7 @@ public abstract class PadlockBase<T> where T : IPadlockable
     // Resets selections and all inputs.
     public void ResetSelection()
     {
-        _selectedLock = Padlocks.None;
+        SelectedLock = Padlocks.None;
         ResetInputs();
     }
 
@@ -43,7 +44,11 @@ public abstract class PadlockBase<T> where T : IPadlockable
         _timer = string.Empty;
     }
 
-    public float PadlockLockWindowHeight() => _selectedLock.IsTwoRowLock()
+    public float PadlockLockWithActiveWindowHeight() => SelectedLock.IsTwoRowLock()
+        ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
+        : ImGui.GetFrameHeight();
+
+    public float PadlockLockWindowHeight() => SelectedLock.IsTwoRowLock()
         ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
         : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
 
@@ -60,6 +65,8 @@ public abstract class PadlockBase<T> where T : IPadlockable
         DrawLockCombo(width, tt, btt, flags);
     }
 
+    protected abstract bool DisableCondition();
+
     public virtual void DrawLockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
@@ -69,7 +76,8 @@ public abstract class PadlockBase<T> where T : IPadlockable
         // draw the combo box.
         ImGui.SetNextItemWidth(comboWidth);
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        using (var combo = ImRaii.Combo("##" + _label + "-LockCombo", _selectedLock.ToName()))
+        using var disabled = ImRaii.Disabled(DisableCondition());
+        using (var combo = ImRaii.Combo("##" + _label + "-LockCombo", SelectedLock.ToName()))
         {
             // display the tooltip for the combo with visible.
             using (ImRaii.Enabled())
@@ -84,19 +92,19 @@ public abstract class PadlockBase<T> where T : IPadlockable
             if (combo)
             {
                 foreach (var item in ComboPadlocks)
-                    if (ImGui.Selectable(item.ToName(), item == _selectedLock))
-                        _selectedLock = item;
+                    if (ImGui.Selectable(item.ToName(), item == SelectedLock))
+                        SelectedLock = item;
             }
         }
 
         // draw button thing for locking / unlocking.
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, "Lock", disabled: _selectedLock is Padlocks.None, id: "##" + _selectedLock + "-LockButton"))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
             OnLockButtonPress();
         UiSharedService.AttachToolTip(btt);
 
         // on next line show lock fields.
-        ShowLockFields();
+        ShowLockFields(width);
     }
 
     public virtual void DrawUnlockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
@@ -111,7 +119,7 @@ public abstract class PadlockBase<T> where T : IPadlockable
         using (ImRaii.Disabled(true))
         {
             ImGui.SetNextItemWidth(comboWidth);
-            if (ImGui.BeginCombo("##" + _label + "-DisplayLock", lastPadlock.ToName())) { ImGui.EndCombo(); }
+            if (ImGui.BeginCombo("##" + _label + "-UnlockCombo", lastPadlock.ToName())) { ImGui.EndCombo(); }
         }
 
         // draw button thing.
@@ -121,7 +129,7 @@ public abstract class PadlockBase<T> where T : IPadlockable
         UiSharedService.AttachToolTip(btt);
 
         // on next line show lock fields.
-        ShowUnlockFields(lastPadlock);
+        ShowUnlockFields(lastPadlock, width);
     }
 
     private void DisplayActiveItem(float width)
@@ -145,54 +153,52 @@ public abstract class PadlockBase<T> where T : IPadlockable
     protected abstract void OnLockButtonPress();
     protected abstract void OnUnlockButtonPress();
 
-    protected void ShowLockFields()
+    protected void ShowLockFields(float width)
     {
-        if (_selectedLock is Padlocks.None)
+        if (SelectedLock is Padlocks.None)
             return;
 
-        float width = ImGui.GetContentRegionAvail().X;
-        switch (_selectedLock)
+        switch (SelectedLock)
         {
             case Padlocks.CombinationPadlock:
                 ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Combination_Input", "Enter 4 digit combination...", ref _password, 4);
+                ImGui.InputTextWithHint("##Combination_Input" + _label, "Enter 4 digit combination...", ref _password, 4);
                 break;
             case Padlocks.PasswordPadlock:
                 ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref _password, 20);
+                ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref _password, 20);
                 break;
             case Padlocks.TimerPasswordPadlock:
                 ImGui.SetNextItemWidth(width * (2 / 3f));
-                ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref _password, 20);
+                ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref _password, 20);
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref _timer, 12);
+                ImGui.InputTextWithHint("##Timer_Input" + _label, "Ex: 0h2m7s", ref _timer, 12);
                 break;
             case Padlocks.TimerPadlock:
             case Padlocks.OwnerTimerPadlock:
             case Padlocks.DevotionalTimerPadlock:
                 ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Timer_Input", "Ex: 0h2m7s", ref _timer, 12);
+                ImGui.InputTextWithHint("##Timer_Input" + _label, "Ex: 0h2m7s", ref _timer, 12);
                 break;
         }
     }
 
-    protected void ShowUnlockFields(Padlocks padlock)
+    protected void ShowUnlockFields(Padlocks padlock, float width)
     {
-        if (!LockHelperExtensions.IsPasswordLock(padlock))
+        if (!GsPadlockEx.IsPasswordLock(padlock))
             return;
 
-        float width = ImGui.GetContentRegionAvail().X;
         switch (padlock)
         {
             case Padlocks.CombinationPadlock:
                 ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Combination_Input", "Enter 4 digit combination...", ref _password, 4);
+                ImGui.InputTextWithHint("##Combination_Input_Unlock" + _label, "Enter 4 digit combination...", ref _password, 4);
                 break;
             case Padlocks.PasswordPadlock:
             case Padlocks.TimerPasswordPadlock:
                 ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input", "Enter password...", ref _password, 20);
+                ImGui.InputTextWithHint("##Password_Input_Unlock" + _label, "Enter password...", ref _password, 20);
                 break;
         }
     }

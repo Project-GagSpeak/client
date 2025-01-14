@@ -93,10 +93,10 @@ public class MigrateRestraintSets
             Description = oldSet.Description,
             Enabled = oldSet.Enabled,
             EnabledBy = oldSet.WasEnabledBy,
-            LockType = Padlocks.None.ToName(),
-            LockPassword = string.Empty,
-            LockedUntil = DateTimeOffset.MinValue,
-            LockedBy = string.Empty,
+            Padlock = Padlocks.None.ToName(),
+            Password = string.Empty,
+            Timer = DateTimeOffset.MinValue,
+            Assigner = string.Empty,
             DrawData = oldSet.DrawData
                 .ToDictionary(kvp => kvp.Key, kvp => new EquipDrawData(kvp.Value.GameItem)
             {
@@ -132,18 +132,18 @@ public class MigrateRestraintSets
                 Description = oldSet.Description,
                 Enabled = oldSet.Enabled,
                 EnabledBy = oldSet.WasEnabledBy,
-                LockType = Padlocks.None.ToName(),
-                LockPassword = string.Empty,
-                LockedUntil = DateTimeOffset.MinValue,
-                LockedBy = string.Empty,
+                Padlock = Padlocks.None.ToName(),
+                Password = string.Empty,
+                Timer = DateTimeOffset.MinValue,
+                Assigner = string.Empty,
                 DrawData = oldSet.DrawData
                     .ToDictionary(kvp => kvp.Key, kvp => new EquipDrawData(kvp.Value.GameItem)
-                {
-                    IsEnabled = kvp.Value.IsEnabled,
-                    Slot = kvp.Value.Slot,
-                    GameItem = kvp.Value.GameItem,
-                    GameStain = kvp.Value.GameStain
-                })
+                    {
+                        IsEnabled = kvp.Value.IsEnabled,
+                        Slot = kvp.Value.Slot,
+                        GameItem = kvp.Value.GameItem,
+                        GameStain = kvp.Value.GameStain
+                    })
             };
 
             // add the new RestraintSet object to the RestraintSetStorage.

@@ -12,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
+using ImPlotNET;
 using OtterGui;
 
 namespace GagSpeak.StateManagers;
@@ -141,7 +142,7 @@ public sealed class ActionExecutor
             var availableSlot = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
             // apply the gag to that slot.
             _logger.LogInformation("ActionExecutorGS is applying Gag Type " + gagAction.GagType + " to layer " + (GagLayer)availableSlot, LoggerType.GagHandling);
-            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, isSelfApplied: true);
+            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, MainHub.UID, true, true);
             return true;
         }
         else if (gagAction.NewState is NewState.Disabled)
@@ -150,26 +151,22 @@ public sealed class ActionExecutor
             if (gagAction.GagType is GagType.None)
             {
                 // remove the outermost gag (target the end of the list and move to the start)
-                var outermostGagLayer = _playerData.AppearanceData.GagSlots.ToList().IndexOf(x => x.GagType.ToGagType() is GagType.None);
-                if (outermostGagLayer is not -1)
+                var idx = _playerData.AppearanceData.FindOutermostActive();
+                if (idx is not -1)
                 {
-                    // dont allow removing locked gags.
-                    if (_playerData.AppearanceData.GagSlots[outermostGagLayer].Padlock.ToPadlock() is not Padlocks.None)
-                        return false;
-
-                    _logger.LogInformation("ActionExecutorGS is removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)outermostGagLayer, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)outermostGagLayer, _playerData.AppearanceData.GagSlots[outermostGagLayer].GagType.ToGagType(), isSelfApplied: true);
+                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, true);
                     return true;
                 }
             }
             else
             {
                 // if the gagtype is not GagType.None, disable the first gagtype matching it.
-                if (_playerData.AppearanceData.GagSlots.Any(x => x.GagType.ToGagType() == gagAction.GagType))
+                var idx = _playerData.AppearanceData.FindOutermostActive(gagAction.GagType);
+                if (idx is not -1)
                 {
-                    var slotIndex = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() == gagAction.GagType);
-                    _logger.LogInformation("ActionExecutorGS is removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)slotIndex, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)slotIndex, _playerData.AppearanceData.GagSlots[slotIndex].GagType.ToGagType(), isSelfApplied: true);
+                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, true);
                     return true;
                 }
             }
@@ -192,52 +189,29 @@ public sealed class ActionExecutor
             return false;
         }
 
-        // if a set is active and already locked, do not execute, and log error.                
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is not null)
-        {
-            if (activeSet.Locked)
-            {
-                _logger.LogError("Cannot apply/remove a restraint set while current is locked!");
-                return false;
-            }
-            // This set is already enabled.
-            if (activeSet.RestraintId == restraintAction.OutputIdentifier && restraintAction.NewState is NewState.Enabled)
-            {
-                _logger.LogWarning("Set is already enabled, no need to re-enable.");
-                return false;
-            }
-        }
-
         // if enabling.
         if (restraintAction.NewState is NewState.Enabled)
         {
-            // swap if one is active, or apply if not.
-            if (activeSet is not null)
+            if(_appearanceManager.CanEnableSet(restraintAction.OutputIdentifier))
             {
-                _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP.", LoggerType.Restraints);
-                await _appearanceManager.RestraintSwapped(restraintAction.OutputIdentifier, MainHub.UID);
-                return true;
-            }
-            else
-            {
-                _logger.LogInformation("HandleRestraint ActionExecution performing set APPLY.", LoggerType.Restraints);
-                await _appearanceManager.EnableRestraintSet(restraintAction.OutputIdentifier, MainHub.UID);
+                // swap if one is active, or apply if not.
+                _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP/APPLY.", LoggerType.Restraints);
+                await _appearanceManager.SwapOrApplyRestraint(restraintAction.OutputIdentifier, MainHub.UID, true);
                 return true;
             }
         }
-
-        // if disabling.
-        if (restraintAction.NewState is NewState.Disabled)
+        else if (restraintAction.NewState is NewState.Disabled)
         {
-            // if the set is not active, return.
-            if (activeSet is null)
-                return false;
-
-            // if the set is active, and the set is the one we want to disable, disable it.
-            _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
-            await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID);
-            return true;
+            if (_clientConfigs.TryGetActiveSet(out var activeSet))
+            {
+                if (_appearanceManager.CanDisableSet(activeSet.RestraintId))
+                {
+                    // if the set is active, and the set is the one we want to disable, disable it.
+                    _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
+                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
+                    return true;
+                }
+            }
         }
 
         return false; // Failure.

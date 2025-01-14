@@ -50,7 +50,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyGag)
         {
             using (ImRaii.Child("###GagApply", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.GagApplyCombos[PairCombos.GagLayer].DrawCombo("##ApplyGag-" + PairCombos.GagLayer, "Select a Gag to apply", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.GagApplyCombos[PairCombos.GagLayer].DrawComboButton("##ApplyGag-" + PairCombos.GagLayer, "Select a Gag to apply", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -62,14 +62,14 @@ public partial class PairStickyUI
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockGag) ? InteractionType.None : InteractionType.LockGag;
         }
         UiSharedService.AttachToolTip(lockGagTT + 
-            ((LockHelperExtensions.IsTimerLock(gagSlot.Padlock.ToPadlock())) ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(gagSlot.Timer) : "")
+            ((GsPadlockEx.IsTimerLock(gagSlot.Padlock.ToPadlock())) ? "--SEP----COL--" + gagSlot.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockGag
         if (PairCombos.Opened is InteractionType.LockGag)
         {
-            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockLockWindowHeight())))
-                _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawLockCombo(WindowMenuWidth, lockGagText, lockGagTT);
+            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockLockWithActiveWindowHeight())))
+                _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawLockComboWithActive(WindowMenuWidth, lockGagText, lockGagTT);
             ImGui.Separator();
         }
 

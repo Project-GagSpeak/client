@@ -212,8 +212,7 @@ public partial class AchievementManager
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.AuctionedOff, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Auctioned Off", suffix: "Times");
 
         // Check this in the action function handler
-        SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.SoldSlave,
-            () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Sold off in Bondage ", suffix: "Times");
+        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SoldSlave, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Sold off in Bondage ", suffix: "Times");
 
         // Bondodge - Within 2 seconds of having a restraint set applied to you, remove it from yourself (might want to add a duration conditional but idk?)
         SaveData.AddTimeLimitedConditional(AchievementModuleKind.Wardrobe,Achievements.Bondodge,

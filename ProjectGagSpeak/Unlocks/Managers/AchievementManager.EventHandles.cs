@@ -8,6 +8,7 @@ using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Character;
 using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
@@ -268,85 +269,132 @@ public partial class AchievementManager
         }
     }
 
-    /// <summary>
-    /// Determines what to do once a Gag is Applied
-    /// </summary>
-    /// <param name="gagLayer"> The Layer the gag was applied to. </param>
-    /// <param name="gagType"> The type of Gag Applied. </param>
-    /// <param name="isSelfApplied"> If it was applied by the client or not. </param>
-    private void OnGagApplied(GagLayer gagLayer, GagType gagType, bool isSelfApplied)
+    private void OnGagStateChanged(bool applying, GagLayer gagLayer, GagType gagAppliedOrRemoved, string enactorUid)
     {
-        if (gagType is GagType.None) return;
+        if (gagAppliedOrRemoved is GagType.None) return;
 
-        // the gag was applied to us by ourselves.
-        if (isSelfApplied)
+        string trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();
+
+        // for enables.
+        if (applying)
         {
-            (SaveData.Achievements[Achievements.SelfApplied.Id] as ProgressAchievement)?.IncrementProgress();
+            // the gag was applied to us by ourselves.
+            if (enactorUid == MainHub.UID)
+            {
+                (SaveData.Achievements[Achievements.SelfApplied.Id] as ProgressAchievement)?.IncrementProgress();
+            }
+            // the gag was applied to us by someone else.
+            else
+            {
+                (SaveData.Achievements[Achievements.SilencedSlut.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.InDeepSilence.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.SilentObsessions.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.GoldenSilence.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.AKinkForDrool.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.ThePerfectGagSlut.Id] as ProgressAchievement)?.IncrementProgress();
+
+                (SaveData.Achievements[Achievements.ATrueGagSlut.Id] as TimedProgressAchievement)?.IncrementProgress();
+            }
+
+            // track regardless of who applied it.
+            (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.StartTracking(trackingKey, MainHub.UID);
+
+            (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
+            (SaveData.Achievements[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
+
+            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
         }
-        // the gag was applied to us by someone else.
+        // for disables.
         else
         {
-            (SaveData.Achievements[Achievements.SilencedSlut.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.InDeepSilence.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.SilentObsessions.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.GoldenSilence.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.AKinkForDrool.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.ThePerfectGagSlut.Id] as ProgressAchievement)?.IncrementProgress();
+            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
 
-            (SaveData.Achievements[Achievements.ATrueGagSlut.Id] as TimedProgressAchievement)?.IncrementProgress();
+            (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+            (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
+
+            // Halt our Silent But Deadly Progress if gag is removed mid-dungeon
+            if ((SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
+                (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
         }
-
-        (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.StartTracking(gagType.GagName(), MainHub.UID);
-
-        (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
-        (SaveData.Achievements[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
-
-        (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
     }
 
-    private void OnGagRemoval(GagLayer layer, GagType gagType, bool isSelfApplied)
+    private void OnPairGagStateChanged(bool isApplying, GagLayer layer, GagType gag, string assignerUid, string affectedUid)
     {
-        (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
+        if(isApplying)
+        {
+            if (gag is not GagType.None)
+            {
+                (SaveData.Achievements[Achievements.SilenceSlut.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.WatchYourTongue.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.TongueTamer.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.KinkyLibrarian.Id] as ProgressAchievement)?.IncrementProgress();
+                (SaveData.Achievements[Achievements.OrchestratorOfSilence.Id] as ProgressAchievement)?.IncrementProgress();
 
-        (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-        (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.StopTracking(gagType.GagName(), MainHub.UID);
-
-        // Halt our Silent But Deadly Progress if gag is removed mid-dungeon
-        if ((SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
-            (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
+                (SaveData.Achievements[Achievements.YourFavoriteNurse.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
+            }
+        }
+        else
+        {
+            // nothing for removing yet.
+        }
     }
 
-    private void OnCharaOnlineCleanupForLatest(UserData user, List<string> activeGags, Guid activeRestraint)
+    private void OnGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid)
     {
+        if (isLocking)
+        {
+            // nothing for locking yet.
+        }
+        else
+        {
+            // nothing for removing yet.
+        }
+    }
+
+    private void OnPairGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid, string affectedUid)
+    {
+        if (isLocking)
+        {
+            // nothing for locking yet.
+        }
+        else
+        {
+            // nothing for removing yet.
+        }
+    }
+
+    private void OnCharaOnlineCleanupForLatest(UserData user, CharaAppearanceData gagInfo, Guid activeRestraint)
+    {
+        var activeGagTrackingKeys = gagInfo.ActiveGagTrackingKeys();
         Logger.LogDebug("Player Character " + user.AliasOrUID + " went online and has new active data. Cleaning up expired information!", LoggerType.AchievementEvents);
         // Do stuff if its a gag type.
-        (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
-        (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGags);
+        (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.QuietedCaptive.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.MessyDrooler.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.DroolingDiva.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.EmbraceOfSilence.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.SubjugationToSilence.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.SpeechSilverSilenceGolden.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
+        (SaveData.Achievements[Achievements.TheKinkyLegend.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
 
         // Checks spesific to the direction of the application.
         if (user.UID == MainHub.UID)
@@ -389,20 +437,6 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
     }
 
-    private void OnPairGagApplied(GagType gag)
-    {
-        if (gag is not GagType.None)
-        {
-            (SaveData.Achievements[Achievements.SilenceSlut.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.WatchYourTongue.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.TongueTamer.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.KinkyLibrarian.Id] as ProgressAchievement)?.IncrementProgress();
-            (SaveData.Achievements[Achievements.OrchestratorOfSilence.Id] as ProgressAchievement)?.IncrementProgress();
-
-            (SaveData.Achievements[Achievements.YourFavoriteNurse.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
-        }
-    }
-
     private void OnRestraintSetUpdated(RestraintSet set)
     {
         // check for dyes
@@ -414,7 +448,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnRestraintApplied(RestraintSet set, bool isEnabling, string enactorUID)
+    private void OnRestraintStateChange(Guid restraintId, bool isEnabling, string enactorUID)
     {
         // Check this regardless.
         (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
@@ -454,30 +488,28 @@ public partial class AchievementManager
                 // starts the timer.
                 (SaveData.Achievements[Achievements.Bondodge.Id] as TimeLimitConditionalAchievement)?.StartTask();
 
-                // track overkill
-                (SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(set.EquippedSlotsTotal);
+                // track overkill if it is not yet completed
+                if((SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
+                {
+                    if (_clientConfigs.StoredRestraintSets.TryGetItem(x => x.RestraintId == restraintId, out var setMatch))
+                        (SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(setMatch.EquippedSlotsTotal);
+                }
 
                 // Track Bondage Bunny
                 (SaveData.Achievements[Achievements.BondageBunny.Id] as TimedProgressAchievement)?.IncrementProgress();
 
-                // see if valid for "cuffed-19"
-                if (set.DrawData.TryGetValue(EquipSlot.Hands, out var handData) && handData.GameItem.Id != ItemIdVars.NothingItem(EquipSlot.Hands).Id)
+                // see if valid for "cuffed-19" if it is not yet completed
+                if ((SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IsCompleted is false)
                 {
-                    (SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
+                    // attempt to retrieve the set from our sets.
+                    if (_clientConfigs.StoredRestraintSets.TryGetItem(x => x.RestraintId == restraintId, out var setMatch))
+                        if (setMatch.DrawData.TryGetValue(EquipSlot.Hands, out var handData) && handData.GameItem.Id != ItemIdVars.NothingItem(EquipSlot.Hands).Id)
+                            (SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
                 }
             }
         }
         else // set is being disabled
         {
-            if (enactorUID != MainHub.UID)
-            {
-                // verify that the set is being disabled by someone else.
-                if (set.LockedBy != enactorUID)
-                {
-                    // the assigner and remover were different, so you are being auctioned off.
-                    (SaveData.Achievements[Achievements.AuctionedOff.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                }
-            }
             // must be removed within limit or wont award.
             (SaveData.Achievements[Achievements.Bondodge.Id] as TimeLimitConditionalAchievement)?.CheckCompletion();
 
@@ -500,9 +532,9 @@ public partial class AchievementManager
         }
     }
 
-    private void OnRestraintLock(RestraintSet set, Padlocks padlock, bool isLocking, string enactorUID)
+    private void OnRestraintLock(Guid restraintId, Padlocks padlock, bool isLocking, string enactorUID)
     {
-        Logger.LogTrace(enactorUID + " is " + (isLocking ? "locking" : "unlocking") + " a set: " + set.Name + " that had the padlock: " + padlock.ToName());
+        Logger.LogTrace(enactorUID + " is " + (isLocking ? "locking" : "unlocking") + " a set that had the padlock: " + padlock.ToName());
         // we locked our set.
         if (isLocking)
         {
@@ -511,14 +543,14 @@ public partial class AchievementManager
                 // make sure that someone is locking us up in a set.
                 if (true /*enactorUID != MainHub.UID*/)
                 {
-                    (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
-                    (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.StartTracking(set.RestraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
+                    (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), MainHub.UID);
                 }
             }
         }
@@ -527,14 +559,14 @@ public partial class AchievementManager
             // if the set is being unlocked, stop progress regardless.
             if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
             {
-                (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
-                (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.StopTracking(set.RestraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
+                (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
             }
         }
     }
@@ -542,7 +574,7 @@ public partial class AchievementManager
     /// <summary>
     /// Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve 
     /// </summary>
-    private void OnPairRestraintApply(Guid setName, bool isEnabling, string enactorUID)
+    private void OnPairRestraintStateChange(Guid setName, bool isEnabling, string enactorUID, string affectedUID)
     {
         Logger.LogTrace(enactorUID + " is "+ (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);
         // if we enabled a set on someone else
@@ -613,19 +645,19 @@ public partial class AchievementManager
             case PatternInteractionKind.Published:
                 (SaveData.Achievements[Achievements.MyPleasantriesForAll.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.DeviousComposer.Id] as ProgressAchievement)?.IncrementProgress();
-                break;
+                return;
             case PatternInteractionKind.Downloaded:
                 (SaveData.Achievements[Achievements.TasteOfTemptation.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.SeekerOfSensations.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.CravingPleasure.Id] as ProgressAchievement)?.IncrementProgress();
-                break;
+                return;
             case PatternInteractionKind.Liked:
                 (SaveData.Achievements[Achievements.GoodVibes.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.DelightfulPleasures.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.PatternLover.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.SensualConnoisseur.Id] as ProgressAchievement)?.IncrementProgress();
                 (SaveData.Achievements[Achievements.PassionateAdmirer.Id] as ProgressAchievement)?.IncrementProgress();
-                break;
+                return;
             case PatternInteractionKind.Started:
                 if (patternGuid != Guid.Empty)
                 {
@@ -643,11 +675,10 @@ public partial class AchievementManager
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
                     if(_clientService.TerritoryId is 939 && (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
-
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
                     (SaveData.Achievements[Achievements.HornyMornings.Id] as ProgressAchievement)?.IncrementProgress();
-                break;
+                return;
             case PatternInteractionKind.Stopped:
                 if (patternGuid != Guid.Empty)
                     (SaveData.Achievements[Achievements.ALittleTease.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
@@ -662,8 +693,7 @@ public partial class AchievementManager
                 (SaveData.Achievements[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
                 // motivation for restoration:
                 (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
-
-                break;
+                return;
         }
     }
 

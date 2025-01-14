@@ -1,23 +1,13 @@
-using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Dto.Permissions;
-using System.Reflection;
-using GagspeakAPI.Extensions;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.Services.Events;
-using System.Diagnostics.CodeAnalysis;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using GagSpeak.Localization;
 using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Extensions;
+using System.Reflection;
 
 namespace GagSpeak.PlayerData.Data;
 
@@ -28,7 +18,7 @@ public class ClientData : DisposableMediatorSubscriberBase
 {
     public ClientData(ILogger<ClientData> logger, GagspeakMediator mediator) : base(logger, mediator)
     {
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) =>
         {
             LastIpcData = msg.CharaIPCData;
             Logger.LogDebug("New Moodles Data Contains " + msg.CharaIPCData.MoodlesStatuses.Count + " Statuses" +
@@ -52,19 +42,16 @@ public class ClientData : DisposableMediatorSubscriberBase
     public HashSet<UserPairRequestDto> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
     public HashSet<UserPairRequestDto> IncomingRequests => CurrentRequests.Where(x => x.RecipientUser.UID == MainHub.UID).ToHashSet();
 
-
     public bool CoreDataNull => GlobalPerms is null || AppearanceData is null;
     public bool IpcDataNull => LastIpcData is null;
     private bool CustomizeNull => CustomizeProfiles is null || CustomizeProfiles.Count == 0;
-    public bool IsPlayerGagged => AppearanceData?.GagSlots.Any(x => x.GagType != GagType.None.GagName()) ?? false;
+    public bool WardrobeEnabled => GlobalPerms is not null && GlobalPerms.WardrobeEnabled;
+    public bool IsPlayerGagged => AppearanceData?.IsGagged() ?? false; 
     public bool IsPlayerBlindfolded => GlobalPerms?.IsBlindfolded() ?? false;
-    public int TotalGagsEquipped => AppearanceData?.GagSlots.Count(x => x.GagType != GagType.None.GagName()) ?? 0;
-
-    public bool AnyGagActive => AppearanceData?.GagSlots.Any(x => x.GagType != GagType.None.GagName()) ?? false;
-    public bool AnyGagLocked => AppearanceData?.GagSlots.Any(x => x.Padlock != Padlocks.None.ToName()) ?? false;
-    public List<string> CurrentGagNames => Enumerable.Range(0, 3)
-        .Select(i => AppearanceData?.GagSlots[i].GagType ?? GagType.None.GagName())
-        .ToList();
+    public int TotalGagsEquipped => AppearanceData?.TotalGagsEquipped() ?? 0;
+    public bool AnyGagActive => AppearanceData?.AnyGagActive() ?? false;
+    public bool AnyGagLocked => AppearanceData?.AnyGagLocked() ?? false;
+    public List<string> CurrentGagNames => AppearanceData?.CurrentGagNames() ?? new();
 
     public void AddPairRequest(UserPairRequestDto dto)
     {
