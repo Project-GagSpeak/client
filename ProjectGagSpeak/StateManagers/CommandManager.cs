@@ -10,7 +10,6 @@ using GagSpeak.Toybox.Controllers;
 using GagSpeak.UI;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.Utils;
 using OtterGui.Classes;
 
 namespace GagSpeak.StateManagers;
