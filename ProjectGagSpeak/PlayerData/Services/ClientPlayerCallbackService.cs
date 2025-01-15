@@ -243,7 +243,7 @@ public class ClientCallbackService
             }
             else if (callbackDto.Type is WardrobeUpdateType.RestraintLocked)
             {
-                _logger.LogDebug("RESTRAINT LOCK Verified by Server Callback.", LoggerType.Callbacks);
+                _logger.LogDebug("RESTRAINT LOCK Verified by Server Callback. With '" + data.Timer.GetEndTimeOffsetString() + "' remaining", LoggerType.Callbacks);
                 _appearanceManager.LockRestraintSet(data.ActiveSetId, data.Padlock.ToPadlock(), data.Password, data.Timer.GetEndTimeOffsetString(), callbackDto.Enactor.UID, false, true);
                 // Log the Interaction Event.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))

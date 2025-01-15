@@ -34,20 +34,20 @@ public class PadlockRestraintsPair : PadlockBase<CharaWardrobeData>
         var newWardrobeData = _pairRef.LastWardrobeData.DeepCloneData();
 
         // see if things are valid through the lock helper extensions.
-        _logger.LogDebug("Verifying unlock for padlock: " + SelectedLock.ToName(), LoggerType.PadlockHandling);
+        _logger.LogDebug("Verifying lock for padlock: " + SelectedLock.ToName(), LoggerType.PadlockHandling);
         PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref newWardrobeData, SelectedLock, _password, _timer, MainHub.UID, _pairRef.PairPerms);
 
         // if the validation result is anything but successful, log it and return.
         if (validationResult is not PadlockReturnCode.Success)
         {
-            _logger.LogError("Failed to lock padlock: " + SelectedLock.ToName() + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
+            _logger.LogError("Failed to lock padlock: " + SelectedLock.ToName() + " due to: " + validationResult.ToFlagString());
             ResetInputs();
             return;
         }
 
         // update the wardrobe data with the new slot.
         _ = _mainHub.UserPushPairDataWardrobeUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintLocked, string.Empty, UpdateDir.Other));
-        _logger.LogDebug("Locking Restraint Set with GagPadlock " + SelectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        _logger.LogDebug("Locking Restraint Set with GagPadlock " + SelectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid());
         PairCombos.Opened = InteractionType.None;
         ResetSelection();
     }

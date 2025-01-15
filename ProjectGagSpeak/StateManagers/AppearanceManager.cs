@@ -220,6 +220,8 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         // Store a copy of the values we need before we change them.
         var prevLock = setRef.Padlock;
 
+        Logger.LogDebug("End Time String: " + endTime + "|| EndTime UTC "+ (endTime.GetEndTimeUTC() - DateTimeOffset.UtcNow), LoggerType.AppearanceState);
+
         // verify the lock.
         PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref setRef, padlock, pwd, endTime, enactorUid);
         _clientConfigs.SaveWardrobe();
