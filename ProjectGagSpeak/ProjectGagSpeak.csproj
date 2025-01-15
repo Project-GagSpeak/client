@@ -7,7 +7,7 @@
         <TargetFramework>net8.0-windows</TargetFramework>
         <Copyright>Copyright © 2024</Copyright>
         <LangVersion>preview</LangVersion>
-        <Version>1.2.0.0</Version>
+        <Version>1.2.1.0</Version>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Deterministic>true</Deterministic>

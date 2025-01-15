@@ -23,6 +23,7 @@ public class Changelog
     private void AddVersionData()
     {
         VersionEntry(1, 2, 1, 0)
+            .RegisterMain("Please be patient with me and features, i will be pivoting my attention to helping add additions to glamourer soon.")
             .RegisterMain("Fixed backend logic for client padlocks to retain same structure as padlocks, which should correct most sync issues.")
             .RegisterQol("Timer locks should now function properly.")
             .RegisterFeature("Backend structure for Orders Module is now implemented.")

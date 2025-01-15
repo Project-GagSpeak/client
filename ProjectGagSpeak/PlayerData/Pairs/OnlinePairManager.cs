@@ -58,15 +58,18 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         // Fired whenever our Appearance data updates. We then send this data to all online pairs.
         Mediator.Subscribe<AppearanceDataCreatedMessage>(this, (msg) =>
         {
+
             var newAppearanceData = msg.NewData;
             if (_lastAppearanceData == null || !Equals(newAppearanceData, _lastAppearanceData))
             {
-                _lastAppearanceData = newAppearanceData;
+                _lastAppearanceData = newAppearanceData.DeepCloneData();
                 PushCharacterAppearanceData(_pairManager.GetOnlineUserDatas(), msg.AffectedLayer, msg.UpdateType, msg.PreviousLock);
             }
             else
             {
                 Logger.LogDebug("Data was no different. Not sending data", LoggerType.OnlinePairs);
+                Logger.LogDebug("Last Appearance Data:\n " + _lastAppearanceData.ToGagString(), LoggerType.OnlinePairs);
+                Logger.LogDebug("New Appearance Data:\n " + newAppearanceData.ToGagString(), LoggerType.OnlinePairs);
             }
         });
 

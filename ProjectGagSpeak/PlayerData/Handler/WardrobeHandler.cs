@@ -1,12 +1,9 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using System.Diagnostics.CodeAnalysis;
 
@@ -55,10 +52,10 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
     }
 
     public void CancelEditingSet() => ClonedSetForEdit = null;
-    
+
     public void SaveEditedSet()
     {
-        if(ClonedSetForEdit is null) 
+        if (ClonedSetForEdit is null)
             return;
         // locate the restraint set that contains the matching guid.
         var setIdx = _clientConfigs.GetSetIdxByGuid(ClonedSetForEdit.RestraintId);
@@ -105,7 +102,10 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
             if (activeSet.Padlock.ToPadlock().IsTimerLock() && activeSet.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
             {
                 Logger.LogInformation("Active Set [" + activeSet.Name + "] has expired its lock, unlocking and removing restraint set.", LoggerType.Restraints);
-                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, true);
+                if (activeSet.Padlock.ToPadlock() is Padlocks.TimerPadlock)
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Client", true, true);
+                else
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, true);
             }
         }
     }

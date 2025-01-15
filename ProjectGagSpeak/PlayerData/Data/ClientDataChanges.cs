@@ -137,7 +137,13 @@ public class ClientDataChanges : DisposableMediatorSubscriberBase
             if (gagSlot.Padlock.ToPadlock().IsTimerLock() && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
             {
                 Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
-                _appearance.GagUnlocked((GagLayer)i, gagSlot.Password, gagSlot.Assigner, true, true);
+                {
+                    if(gagSlot.Padlock.ToPadlock() is Padlocks.TimerPadlock)
+                        _appearance.GagUnlocked((GagLayer)i, gagSlot.Password, "Client", true, true);
+                    else
+                        _appearance.GagUnlocked((GagLayer)i, gagSlot.Password, gagSlot.Assigner, true, true);
+
+                }
             }
         }
     }

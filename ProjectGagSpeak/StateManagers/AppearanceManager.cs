@@ -398,11 +398,12 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         if (!_publishService.CanLockGag(layer) || _playerData.AppearanceData is null)
             return false;
 
+        Logger.LogInformation(_playerData.AppearanceData.ToGagString());
+
         var previousPadlock = _playerData.AppearanceData.GagSlots[(int)layer].Padlock.ToPadlock();
-        var gagSlotToUpdate = _playerData.AppearanceData.GagSlots[(int)layer];
 
         // run a padlock validation to ensure we are allowed to edit it.
-        PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref gagSlotToUpdate, padlockType, password, endTimeString, assigner);
+        PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref _playerData.AppearanceData.GagSlots[(int)layer], padlockType, password, endTimeString, assigner);
 
         // if the validation result is anything but successful, log it and return.
         if (validationResult is not PadlockReturnCode.Success)
@@ -412,6 +413,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         }
 
         Logger.LogTrace("Locking Gag at layer " + layer.ToString() + " with Padlock " + padlockType.ToName(), LoggerType.PadlockHandling);
+        Logger.LogInformation(_playerData.AppearanceData.ToGagString());
 
         // Send Achievement Event
         if (triggerAchievement)

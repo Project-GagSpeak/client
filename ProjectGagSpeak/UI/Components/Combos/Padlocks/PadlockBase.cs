@@ -158,6 +158,8 @@ public abstract class PadlockBase<T> where T : IPadlockable
         if (SelectedLock is Padlocks.None)
             return;
 
+        var leftWidth = width * (2 / 3f);
+        var rightWidth = width - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
         switch (SelectedLock)
         {
             case Padlocks.CombinationPadlock:
@@ -169,10 +171,10 @@ public abstract class PadlockBase<T> where T : IPadlockable
                 ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref _password, 20);
                 break;
             case Padlocks.TimerPasswordPadlock:
-                ImGui.SetNextItemWidth(width * (2 / 3f));
+                ImGui.SetNextItemWidth(leftWidth);
                 ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref _password, 20);
                 ImUtf8.SameLineInner();
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                ImGui.SetNextItemWidth(rightWidth);
                 ImGui.InputTextWithHint("##Timer_Input" + _label, "Ex: 0h2m7s", ref _timer, 12);
                 break;
             case Padlocks.TimerPadlock:
