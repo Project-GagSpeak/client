@@ -1,4 +1,6 @@
+using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -16,8 +18,12 @@ namespace GagSpeak.PlayerData.Data;
 /// </summary>
 public class ClientData : DisposableMediatorSubscriberBase
 {
-    public ClientData(ILogger<ClientData> logger, GagspeakMediator mediator) : base(logger, mediator)
+    private readonly ClientConfigurationManager _configs;
+    public ClientData(ILogger<ClientData> logger, GagspeakMediator mediator,
+        ClientConfigurationManager configs) : base(logger, mediator)
     {
+        _configs = configs;
+
         Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) =>
         {
             LastIpcData = msg.CharaIPCData;
@@ -52,6 +58,11 @@ public class ClientData : DisposableMediatorSubscriberBase
     public bool AnyGagActive => AppearanceData?.AnyGagActive() ?? false;
     public bool AnyGagLocked => AppearanceData?.AnyGagLocked() ?? false;
     public List<string> CurrentGagNames => AppearanceData?.CurrentGagNames() ?? new();
+
+    public bool HasGlamourerAlterations => IsPlayerBlindfolded 
+        || (AnyGagActive && (GlobalPerms?.ItemAutoEquip ?? false))
+        || (_configs.GetActiveSetIdx() != -1 && (GlobalPerms?.RestraintSetAutoEquip ?? false))
+        || _configs.ActiveCursedItems.Count > 0;
 
     public void AddPairRequest(UserPairRequestDto dto)
     {

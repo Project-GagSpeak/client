@@ -523,8 +523,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
             // Send Mediator Event to grab updated settings for pair.
             Task.Run(async () =>
             {
-                if (_playerCharacterManager.CoreDataNull) return;
-                var newPerms = await _shockProvider.GetPermissionsFromCode(_playerCharacterManager.GlobalPerms!.GlobalShockShareCode);
+                if (_playerCharacterManager.GlobalPerms is null)
+                    return;
+
+                var newPerms = await _shockProvider.GetPermissionsFromCode(_playerCharacterManager.GlobalPerms.GlobalShockShareCode);
                 // set the new permissions.
                 _playerCharacterManager.GlobalPerms.AllowShocks = newPerms.AllowShocks;
                 _playerCharacterManager.GlobalPerms.AllowVibrations = newPerms.AllowVibrations;

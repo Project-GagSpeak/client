@@ -186,7 +186,7 @@ public class DebugTab
                 }
             }
         }
-        DrawToybox("Player", _playerDataChanges.CompileToyboxToAPI());
+        DrawToybox("Player", _clientConfigs.CompileToyboxToAPI());
     }
 
     private void DrawPairsDebug()

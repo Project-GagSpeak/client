@@ -237,6 +237,9 @@ public class MainUiMoodlesHub : DisposableMediatorSubscriberBase
             _uiShared.DrawComboSearchable("##moodleTagsFilter", tagsComboWidth, _shareHub.FetchedTags.ToImmutableList(), (i) => i, false,
                 (tag) =>
                 {
+                    if (tag.IsNullOrWhitespace())
+                        return;
+
                     // append the tag to the search tags if it does not exist.
                     if (!_shareHub.SearchTags.Contains(tag))
                     {

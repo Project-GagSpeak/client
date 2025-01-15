@@ -48,7 +48,7 @@ public class ClientCallbackService
         _toyboxManager = toyboxManager;
     }
 
-    public bool ShockCodePresent => _playerData.CoreDataNull && _playerData.GlobalPerms!.GlobalShockShareCode.IsNullOrEmpty();
+    public bool ShockCodePresent => _playerData.GlobalPerms is not null && _playerData.GlobalPerms.GlobalShockShareCode.IsNullOrEmpty();
     public string GlobalPiShockShareCode => _playerData.GlobalPerms!.GlobalShockShareCode;
     public void SetGlobalPerms(UserGlobalPermissions perms) => _playerData.GlobalPerms = perms;
     public void SetAppearanceData(CharaAppearanceData appearanceData) => _playerData.AppearanceData = appearanceData;
@@ -136,9 +136,10 @@ public class ClientCallbackService
 
     public async void CallbackAppearanceUpdate(OnlineUserCharaAppearanceDataDto callbackDto)
     {
-        if (_playerData.CoreDataNull) return;
+        if (_playerData.AppearanceData is null)
+            return;
 
-        var currentGagSlot = _playerData.AppearanceData!.GagSlots[(int)callbackDto.UpdatedLayer];
+        var currentGagSlot = _playerData.AppearanceData.GagSlots[(int)callbackDto.UpdatedLayer];
         var cbSlot = callbackDto.AppearanceData.GagSlots[(int)callbackDto.UpdatedLayer];
 
         _logger.LogTrace("Callback State: " + callbackDto.Type + " | Callback Layer: " + callbackDto.UpdatedLayer + " | Callback GagType: " + cbSlot.GagType
@@ -222,7 +223,7 @@ public class ClientCallbackService
                 _logger.LogDebug("SelfApplied RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
                 if(_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
-                    if ((_clientConfigs.GagspeakConfig.DisableSetUponUnlock && callbackDto.AffectedItem.ToPadlock().IsTimerLock()))
+                if ((_clientConfigs.GagspeakConfig.DisableSetUponUnlock && callbackDto.AffectedItem.ToPadlock().IsTimerLock()))
                         await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
                 }
             }
@@ -253,12 +254,12 @@ public class ClientCallbackService
                 // get the active item to obtain the password, as we already have valid access to unlock it.
                 if (_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
-                    _logger.LogDebug("RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
+                _logger.LogDebug("RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
                     _appearanceManager.UnlockRestraintSet(data.ActiveSetId, activeSet.Password, callbackDto.Enactor.UID, false, true);
-                    // Log the Interaction Event
-                    if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
-                        _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockRestraint, _clientConfigs.GetSetNameByGuid(data.ActiveSetId) + " is now unlocked")));
-                }
+                // Log the Interaction Event
+                if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
+                    _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockRestraint, _clientConfigs.GetSetNameByGuid(data.ActiveSetId) + " is now unlocked")));
+            }
                 else
                 {
                     _logger.LogError("For some reason your set was not active when you received this... desync?");

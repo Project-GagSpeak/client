@@ -366,17 +366,17 @@ public partial class MainHub
         }
     }
 
-    public Task Client_UserReceiveDataTimedItems(OnlineUserCharaOrdersDataDto dataDto)
+    public Task Client_UserReceiveDataOrders(OnlineUserCharaOrdersDataDto dataDto)
     {
         if (dataDto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Client_UserReceiveDataTimedItems:" + dataDto.User, LoggerType.Callbacks);
-            //ExecuteSafely(() => _clientCallbacks.CallbackTimedItemsUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
+            Logger.LogDebug("OWN Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
+            //ExecuteSafely(() => _clientCallbacks.CallbackOrdersUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataTimedItems:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
             //ExecuteSafely(() => _pairs.ReceiveCharaOrdersData(dataDto));
             return Task.CompletedTask;
         }
@@ -673,10 +673,10 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Client_UserReceiveDataWardrobe), act);
     }
 
-    public void OnUserRecieveDataTimedItems(Action<OnlineUserCharaOrdersDataDto> act)
+    public void OnUserReceiveDataOrders(Action<OnlineUserCharaOrdersDataDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataTimedItems), act);
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataOrders), act);
     }
 
 

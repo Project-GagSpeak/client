@@ -340,12 +340,6 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
                 // collect the list of profiles from our last received IPC data.
                 var profiles = _playerManager.CustomizeProfiles;
 
-                // Create a placeholder profile for "None"
-                var noneProfile = new CustomizeProfile(Guid.Empty, "Blank Profile");
-
-                // Insert the placeholder profile at the beginning of the list
-                profiles.Insert(0, noneProfile);
-
                 _uiShared.DrawComboSearchable("C+ Profile##GagStorageCP_Profile" + SelectedGag, 150f, profiles, (profile) => profile.ProfileName, true, 
                     (i) =>
                     {

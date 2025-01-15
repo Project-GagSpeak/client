@@ -119,7 +119,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         if (_frameworkUtils.IsFrameworkUnloading || _clientService.IsLoggedIn is false)
             return;
 
-        if(_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false) 
+        if(!_clientData.HasGlamourerAlterations) 
             return;
 
         // revert the character. (for disabling the plugin)
@@ -348,7 +348,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         if (changeType is StateChangeType.MaterialValue)
             return;
 
-        if (_clientData.IsPlayerGagged is false && _clientData.IsPlayerBlindfolded is false && _clientConfigs.HasGlamourerAlterations is false)
+        if (!_clientData.HasGlamourerAlterations)
             return;
 
 

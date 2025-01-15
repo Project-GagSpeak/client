@@ -102,7 +102,7 @@ public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) :
 /* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
 public record PlayerCharAppearanceChanged(GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
 public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, string AffectedItem) : MessageBase;
-public record PlayerCharTimedDataChanged(OrdersUpdateType UpdateKind, Guid AffectedId) : MessageBase;
+public record PlayerCharOrdersChanged(OrdersUpdateType UpdateKind, string AffectedId) : MessageBase;
 public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
 public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
 public record PlayerCharStorageUpdated : MessageBase;

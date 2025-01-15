@@ -118,16 +118,16 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     private void DrawGagSlotHeader(int slotNumber, Vector2 bigTextSize)
     {
         _uiShared.GagspeakBigText(Labels[slotNumber]);
-        if (_gagData.CoreDataNull)
+        if (_gagData.AppearanceData is null)
             return;
 
-        if (_gagData.AppearanceData!.GagSlots[slotNumber].Padlock.ToPadlock().IsTimerLock())
+        if (_gagData.AppearanceData.GagSlots[slotNumber].Padlock.ToPadlock().IsTimerLock())
         {
             ImGui.SameLine();
             DisplayTimeLeft(
-                _gagData.AppearanceData!.GagSlots[slotNumber].Timer,
-                _gagData.AppearanceData!.GagSlots[slotNumber].Padlock.ToPadlock(),
-                _gagData.AppearanceData!.GagSlots[slotNumber].Assigner,
+                _gagData.AppearanceData.GagSlots[slotNumber].Timer,
+                _gagData.AppearanceData.GagSlots[slotNumber].Padlock.ToPadlock(),
+                _gagData.AppearanceData.GagSlots[slotNumber].Assigner,
                 yPos: ImGui.GetCursorPosY() + ((bigTextSize.Y - ImGui.GetTextLineHeight()) / 2) + 5f);
         }
     }

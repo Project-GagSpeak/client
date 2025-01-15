@@ -674,7 +674,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         };
     }
 
-    public CharaOrdersData CompileTimedItemDataToAPI()
+    public CharaOrdersData CompileOrdersDataToAPI()
     {
         return new CharaOrdersData
         {
@@ -707,80 +707,4 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     }
     #endregion API Compilation
 
-    #region UI Prints
-    public void DrawWardrobeInfo()
-    {
-        ImGui.Text("Wardrobe Outfits:");
-        ImGui.Indent();
-        foreach (var item in WardrobeConfig.WardrobeStorage.RestraintSets)
-        {
-            ImGui.Text(item.Name);
-        }
-        ImGui.Unindent();
-        var ActiveSet = WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled);
-        if (ActiveSet != null)
-        {
-            ImGui.Text("Active Set Info: ");
-            ImGui.Indent();
-            ImGui.Text($"Set Id: {ActiveSet.RestraintId}");
-            ImGui.Text($"Name: {ActiveSet.Name}");
-            ImGui.Text($"Enabled By: {ActiveSet.EnabledBy}");
-            ImGui.Text($"Is Locked: {ActiveSet.IsLocked()}");
-            ImGui.Text($"Lock Type: {ActiveSet.Padlock}");
-            ImGui.Text($"Lock Password: {ActiveSet.Password}");
-            ImGui.Text($"Locked By: {ActiveSet.Assigner}");
-            ImGui.Text($"Locked Until Time: " + ActiveSet.Timer.ToGsRemainingTimeFancy());
-            ImGui.Unindent();
-        }
-    }
-
-
-    public void DrawAliasLists()
-    {
-        using var indent = ImRaii.PushIndent();
-
-        foreach (var alias in AliasConfig.AliasStorage)
-        {
-            if (ImGui.TreeNode($"Alias Data for {alias.Key}"))
-            {
-                ImGui.Text("List of Alias's For this User:");
-                // begin a table.
-                using var table = ImRaii.Table($"##table-for-{alias.Key}", 2);
-                if (!table) { return; }
-
-                using var spacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, ImGui.GetStyle().ItemInnerSpacing);
-                ImGui.TableSetupColumn("If You Say:", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 100);
-                ImGui.TableSetupColumn("They will Execute:", ImGuiTableColumnFlags.WidthStretch);
-
-                foreach (var aliasTrigger in alias.Value.AliasList)
-                {
-                    ImGui.Separator();
-                    ImGui.Text("("+aliasTrigger.Name+")");
-                    ImGui.SameLine();
-                    ImGui.Text("[INPUT TRIGGER]: ");
-                    ImGui.SameLine();
-                    ImGui.Text(aliasTrigger.InputCommand);
-                    ImGui.NewLine();
-                    ImGui.Text("[OUTPUT Handles] (WIP): ");
-                    ImGui.SameLine();
-                }
-                ImGui.TreePop();
-            }
-        }
-    }
-
-    public void DrawPatternsInfo()
-    {
-        foreach (var item in PatternConfig.PatternStorage.Patterns)
-        {
-            ImGui.Text($"Info for Pattern: {item.Name}");
-            ImGui.Indent();
-            ImGui.Text($"Description: {item.Description}");
-            ImGui.Text($"Duration: {item.Duration}");
-            ImGui.Text($"Is Active: {item.IsActive}");
-            ImGui.Text($"Should Loop: {item.ShouldLoop}");
-            ImGui.Unindent();
-        }
-    }
-    #endregion UI Prints
 }

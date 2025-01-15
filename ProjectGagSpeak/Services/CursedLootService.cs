@@ -44,8 +44,6 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
         _clientService = clientService;
         _frameworkUtils = frameworkUtils;
 
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredTimers());
-
         unsafe
         {
             ItemInteractedHook = interop.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
@@ -65,27 +63,6 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
         ItemInteractedHook?.Dispose();
         ItemInteractedHook = null!;
     }
-
-    /// <summary>
-    /// This is here as a placeholder, since cursed loot technically does cursed gag items. If there is a more optimal place to put this down the line, do so.
-    /// </summary>
-    private void CheckForExpiredTimers()
-    {
-        if (_playerData.AppearanceData is null || _playerData.AnyGagLocked is false)
-            return;
-
-        // If a gag does have a padlock, ensure it is a timer padlock
-        for (int i = 0; i < _playerData.AppearanceData.GagSlots.Length; i++)
-        {
-            var gagSlot = _playerData.AppearanceData.GagSlots[i];
-            if (gagSlot.Padlock.ToPadlock().IsTimerLock() && gagSlot.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
-            {
-                Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
-                _appearance.GagUnlocked((GagLayer)i, gagSlot.Password, gagSlot.Assigner, true, true);
-            }
-        }
-    }
-
 
     private unsafe ulong ItemInteractedDetour(TargetSystem* thisPtr, GameObject* obj, bool checkLineOfSight)
     {
@@ -272,7 +249,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
                 await _handler.ActivateCursedGag(selectedLootId, (GagLayer)availableSlot, DateTimeOffset.UtcNow.Add(lockTimeGag));
                 Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
 
-                if (!_playerData.CoreDataNull && _playerData.GlobalPerms!.LiveChatGarblerActive)
+                if (_playerData.GlobalPerms is not null && _playerData.GlobalPerms.LiveChatGarblerActive)
                 {
                     Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! " +
                         "Be cautious of chatting around strangers!", NotificationType.Warning));

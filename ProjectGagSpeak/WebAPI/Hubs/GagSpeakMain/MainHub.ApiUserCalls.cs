@@ -572,8 +572,8 @@ public partial class MainHub
 
         try // if connected, try to push the data to the server
         {
-            if (onlineCharacters.Any()) Logger.LogDebug("Pushing TimedItems state to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
-            else Logger.LogDebug("Updating TimedItems state to other pairs", LoggerType.OnlinePairs);
+            if (onlineCharacters.Any()) Logger.LogDebug("Pushing Orderss state to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
+            else Logger.LogDebug("Updating Orderss state to other pairs", LoggerType.OnlinePairs);
             await UserPushDataOrders(new(onlineCharacters, data, updateKind, affectedId)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }

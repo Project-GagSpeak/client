@@ -6,6 +6,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
+using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -27,12 +28,12 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private readonly WardrobeHandler _wardrobeHandler;
     private readonly HardcoreHandler _hardcoreHandler;
     private readonly AppearanceManager _appearanceHandler;
+    private readonly ClientMonitorService _clientService;
 
-    public OnConnectedService(ILogger<OnConnectedService> logger,
-        GagspeakMediator mediator, ClientData playerData,
-        ClientConfigurationManager clientConfigs, PairManager pairManager,
-        GagGarbler garbler, IpcManager ipcManager, WardrobeHandler wardrobeHandler,
-        HardcoreHandler blindfold, AppearanceManager appearanceHandler) : base(logger, mediator)
+    public OnConnectedService(ILogger<OnConnectedService> logger, GagspeakMediator mediator, 
+        ClientData playerData, ClientConfigurationManager clientConfigs, PairManager pairManager,
+        GagGarbler garbler, IpcManager ipcManager, WardrobeHandler wardrobeHandler, HardcoreHandler blindfold, 
+        AppearanceManager appearanceHandler, ClientMonitorService clientService) : base(logger, mediator)
     {
         _playerData = playerData;
         _clientConfigs = clientConfigs;
@@ -42,6 +43,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         _wardrobeHandler = wardrobeHandler;
         _hardcoreHandler = blindfold;
         _appearanceHandler = appearanceHandler;
+        _clientService = clientService;
 
         // Potentially move this until after all checks for validation are made to prevent invalid startups.
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => OnConnected());
@@ -51,6 +53,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Mediator.Subscribe<CustomizeReady>(this, _ => _playerData.CustomizeProfiles = _ipcManager.CustomizePlus.GetProfileList());
 
         Mediator.Subscribe<CustomizeDispose>(this, _ => _playerData.CustomizeProfiles = new List<CustomizeProfile>());
+        _clientService = clientService;
     }
 
     private async void OnConnected()
@@ -66,13 +69,14 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         // Update Global Permissions and Appearance Data.
         Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
         _playerData.GlobalPerms = MainHub.ConnectionDto.UserGlobalPermissions;
-        _playerData.AppearanceData = MainHub.ConnectionDto.CharaAppearanceData;
-        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData); _garbler.UpdateGarblerLogic();
+        _playerData.AppearanceData = MainHub.ConnectionDto.GagData;
+        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData); 
+        _garbler.UpdateGarblerLogic();
 
 
         Logger.LogInformation("Syncing Data with Connection DTO", LoggerType.ClientPlayerData);
         // Obtain Server-Side Active State Data.
-        var serverData = MainHub.ConnectionDto.CharacterActiveStateData;
+        var serverData = MainHub.ConnectionDto.ActiveRestraintData;
         var serverExpectsActiveSet = serverData.ActiveSetId != Guid.Empty;
         // Handle it accordingly.
         if (serverExpectsActiveSet)
@@ -102,8 +106,8 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, gagInfo, activeSetId));
     }
 
-    private async Task HandleActiveServerSet(CharaActiveStateData serverData)
-    {
+    private async Task HandleActiveServerSet(CharaActiveSetData serverData)
+            {
         // grab the index in our list of sets matching the expected set ID.
         int setIdx = _clientConfigs.GetSetIdxByGuid(serverData.ActiveSetId);
         if (setIdx < 0)
@@ -118,12 +122,10 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         var activeClientSet = _clientConfigs.GetActiveSet();
 
         if (activeClientSet is not null)
-        {
             await HandleClientSet(serverData, hasExpiredTimer, activeClientSet);
-        }
     }
 
-    private async Task HandleClientSet(CharaActiveStateData serverData, bool hasExpiredTimer, RestraintSet activeClientSet)
+    private async Task HandleClientSet(CharaActiveSetData serverData, bool hasExpiredTimer, RestraintSet activeClientSet)
     {
         if (activeClientSet.RestraintId == serverData.ActiveSetId && hasExpiredTimer)
         {
@@ -139,7 +141,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         }
     }
 
-    private async Task UnlockAndDisableSet(CharaActiveStateData serverData)
+    private async Task UnlockAndDisableSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
         _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Password, serverData.Assigner, false, true);
@@ -151,7 +153,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         }
     }
 
-    private async Task EnableAndRelockSet(CharaActiveStateData serverData)
+    private async Task EnableAndRelockSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
         await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
@@ -181,7 +183,6 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             // publish the changes.
             Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
-
     }
 
     private void ApplyTraitsIfAny()
@@ -204,7 +205,14 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
     private async void CheckHardcore()
     {
-        // Stop this if it is true.
+        // make 30s timeout token. and wait for player to load.
+        var token = new CancellationTokenSource(TimeSpan.FromSeconds(15)).Token;
+        while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+        {
+            Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+            await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+        }
+
         if (_hardcoreHandler.IsForcedToFollow) _hardcoreHandler.UpdateForcedFollow(NewState.Disabled);
 
         // Re-Enable forced Sit if it is disabled.

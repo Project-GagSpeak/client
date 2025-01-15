@@ -505,28 +505,26 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     /// For applying cursed items.
     /// </summary>
     /// <param name="gagLayer"> Ignore this if the cursed item's IsGag is false. </param>
-    public async Task CursedItemApplied(CursedItem cursedItem, bool publish, GagLayer gagLayer = GagLayer.UnderLayer)
+    public async Task CursedItemApplied(CursedItem cursedItem, bool publish)
     {
         await ExecuteWithApplierSlim(async () =>
         {
             Logger.LogTrace("CURSED-APPLIED Executed");
-            // If the cursed item is a gag item, handle it via the gag manager, otherwise, handle through mod toggle
+            // A cursed gag item shoudlnt be allowed to exist in this function. If it is, log error and return.
             if (cursedItem.IsGag)
             {
-                // Cursed Item was Gag, so handle it via GagApplied.
-                await GagApplyInternal(gagLayer, cursedItem.GagType, MainHub.UID, publish, true);
+                Logger.LogError("CursedItemApplied was called with a Gag CursedItem, but this function does not support gag application.", LoggerType.AppearanceState);
+                return;
             }
-            else
-            {
-                // Cursed Item was Equip, so handle attached Mod Enable and recalculation here.
-                await PenumbraModsToggle(NewState.Enabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
 
-                await RecalcAndReload(false);
-            }
+            // Cursed Item was Equip, so handle attached Mod Enable and recalculation here.
+            await PenumbraModsToggle(NewState.Enabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
+            await RecalcAndReload(false);
 
             // update achievements.
             UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
 
+            // log the cursed item application.
             if (publish) 
                 Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, cursedItem.LootId.ToString()));
         });
