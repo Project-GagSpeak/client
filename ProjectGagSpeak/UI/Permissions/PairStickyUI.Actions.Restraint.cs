@@ -98,10 +98,11 @@ public partial class PairStickyUI
                     if (newWardrobeData is null) return;
 
                     // update the data to remove the restraint set.
+                    var prevSetId = newWardrobeData.ActiveSetId;
                     newWardrobeData.ActiveSetId = Guid.Empty;
                     newWardrobeData.ActiveSetEnabledBy = string.Empty;
                     // send it off then log success.
-                    _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintDisabled, string.Empty, UpdateDir.Other));
+                    _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintDisabled, prevSetId.ToString(), UpdateDir.Other));
                     PairCombos.Opened = InteractionType.None;
                     _logger.LogDebug("Removing Restraint Set from " + PairNickOrAliasOrUID, LoggerType.Permissions);
                 }

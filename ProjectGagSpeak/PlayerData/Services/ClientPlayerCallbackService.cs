@@ -223,7 +223,7 @@ public class ClientCallbackService
                 _logger.LogDebug("SelfApplied RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
                 if(_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
-                if ((_clientConfigs.GagspeakConfig.DisableSetUponUnlock && callbackDto.AffectedItem.ToPadlock().IsTimerLock()))
+                    if ((_clientConfigs.GagspeakConfig.DisableSetUponUnlock && callbackDto.AffectedItem.ToPadlock().IsTimerLock()))
                         await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
                 }
             }
@@ -254,12 +254,12 @@ public class ClientCallbackService
                 // get the active item to obtain the password, as we already have valid access to unlock it.
                 if (_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
-                _logger.LogDebug("RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
+                    _logger.LogDebug("RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
                     _appearanceManager.UnlockRestraintSet(data.ActiveSetId, activeSet.Password, callbackDto.Enactor.UID, false, true);
-                // Log the Interaction Event
-                if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
-                    _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockRestraint, _clientConfigs.GetSetNameByGuid(data.ActiveSetId) + " is now unlocked")));
-            }
+                    // Log the Interaction Event
+                    if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
+                        _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockRestraint, _clientConfigs.GetSetNameByGuid(data.ActiveSetId) + " is now unlocked")));
+                }
                 else
                 {
                     _logger.LogError("For some reason your set was not active when you received this... desync?");
@@ -269,10 +269,14 @@ public class ClientCallbackService
             else if (callbackDto.Type is WardrobeUpdateType.RestraintDisabled)
             {
                 _logger.LogDebug($"{callbackDto.User.UID} has force disabled your restraint set!", LoggerType.Callbacks);
-                await _appearanceManager.DisableRestraintSet(Guid.Parse(callbackDto.AffectedItem), callbackDto.User.UID, false, true);
-                // Log the Interaction Event.
-                if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
-                    _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.RemoveRestraint, _clientConfigs.GetSetNameByGuid(Guid.Parse(callbackDto.AffectedItem)) + " has been removed")));
+                if (_clientConfigs.TryGetActiveSet(out var activeSet))
+                {
+                    _logger.LogDebug($"{callbackDto.User.UID} has force disabled your restraint set!", LoggerType.Callbacks);
+                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, callbackDto.Enactor.UID, false, true);
+                    // Log the Interaction Event.
+                    if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
+                        _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.RemoveRestraint, _clientConfigs.GetSetNameByGuid(Guid.Parse(callbackDto.AffectedItem)) + " has been removed")));
+                }
             }
         }
     }
