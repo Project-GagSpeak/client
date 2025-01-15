@@ -56,7 +56,7 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
         GameItemCombo = _itemStainHandler.ObtainItemCombos();
         StainCombo = _itemStainHandler.ObtainStainCombos(ComboWidth);
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
     }
 
     // Info related to the person we are inspecting.
@@ -339,12 +339,6 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
                 ImGui.Spacing();
                 // collect the list of profiles from our last received IPC data.
                 var profiles = _playerManager.CustomizeProfiles;
-
-                // Create a placeholder profile for "None"
-                var noneProfile = new CustomizeProfile(Guid.Empty, "Blank Profile");
-
-                // Insert the placeholder profile at the beginning of the list
-                profiles.Insert(0, noneProfile);
 
                 _uiShared.DrawComboSearchable("C+ Profile##GagStorageCP_Profile" + SelectedGag, 150f, profiles, (profile) => profile.ProfileName, true, 
                     (i) =>

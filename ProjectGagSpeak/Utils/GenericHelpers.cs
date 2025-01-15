@@ -6,14 +6,7 @@ namespace GagSpeak.Utils;
 /// <summary> A class for all of the UI helpers, including basic functions for drawing repetative yet unique design elements </summary>
 public static class GenericHelpers
 {
-    public static IEnumerable<Padlocks> NoOwnerPadlockList = Enum.GetValues<Padlocks>()
-        .Where(p => p is not Padlocks.OwnerPadlock && p is not Padlocks.OwnerTimerPadlock
-            && p is not Padlocks.DevotionalPadlock && p is not Padlocks.DevotionalTimerPadlock
-            && p is not Padlocks.MimicPadlock);
-
-    public static IEnumerable<Padlocks> NoMimicPadlockList = Enum.GetValues<Padlocks>()
-        .Where(p => p is not Padlocks.MimicPadlock);
-
+    // work on integrating these into a utilities pack.
     public static IEnumerable<ActionExecutionType> ActionTypesRestraint => Enum.GetValues<ActionExecutionType>()
         .Where(x => x is not ActionExecutionType.Restraint && x is not ActionExecutionType.TextOutput);
     public static IEnumerable<ActionExecutionType> ActionTypesOnGag => Enum.GetValues<ActionExecutionType>()
@@ -55,15 +48,6 @@ public static class GenericHelpers
             }
         }
     }
-
-    public static readonly HashSet<string> TimerPadlocks = new HashSet<string>
-    {
-        Padlocks.FiveMinutesPadlock.ToName(),
-        Padlocks.TimerPasswordPadlock.ToName(),
-        Padlocks.OwnerTimerPadlock.ToName(),
-        Padlocks.DevotionalTimerPadlock.ToName(),
-        Padlocks.MimicPadlock.ToName()
-    };
 
     public static void OpenCombo(string comboLabel)
     {

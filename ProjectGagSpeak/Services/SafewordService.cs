@@ -21,22 +21,19 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     private readonly ClientData _playerManager; // has our global permissions.
     private readonly PairManager _pairManager; // for accessing the permissions of each pair.
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly GagManager _gagManager; // for removing gags.
     private readonly AppearanceManager _appearanceManager;
     private readonly ToyboxManager _toyboxManager;
     private readonly IpcFastUpdates _glamourFastEvent; // for reverting character.
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
         MainHub apiHubMain, ClientData playerManager, PairManager pairManager, 
-        ClientConfigurationManager clientConfigs, GagManager gagManager, 
-        AppearanceManager appearanceManager, ToyboxManager toyboxManager, 
-        IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
+        ClientConfigurationManager clientConfigs, AppearanceManager appearanceManager, 
+        ToyboxManager toyboxManager, IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
     {
         _apiHubMain = apiHubMain;
         _playerManager = playerManager;
         _pairManager = pairManager;
         _clientConfigs = clientConfigs;
-        _gagManager = gagManager;
         _appearanceManager = appearanceManager;
         _toyboxManager = toyboxManager;
         _glamourFastEvent = glamourFastUpdate;

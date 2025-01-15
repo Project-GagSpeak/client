@@ -8,6 +8,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -173,7 +174,7 @@ public class DebugTab
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
         DrawAppearance("Player", _playerData.AppearanceData ?? new CharaAppearanceData());
-        DrawWardrobe("Player", _playerDataChanges.CompileWardrobeToAPI());
+        DrawWardrobe("Player", _clientConfigs.CompileWardrobeToAPI());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
@@ -185,7 +186,7 @@ public class DebugTab
                 }
             }
         }
-        DrawToybox("Player", _playerDataChanges.CompileToyboxToAPI());
+        DrawToybox("Player", _clientConfigs.CompileToyboxToAPI());
     }
 
     private void DrawPairsDebug()
@@ -456,7 +457,7 @@ public class DebugTab
             for (int i = 0; i < 3; i++)
             {
                 ImGui.TableNextColumn();
-                UiSharedService.ColorText(UiSharedService.TimeLeftFancy(appearance.GagSlots[i].Timer), ImGuiColors.ParsedPink);
+                UiSharedService.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             }
             ImGui.TableNextRow();
 
@@ -479,7 +480,7 @@ public class DebugTab
             DrawPermissionRowString("Password", wardrobe.Password);
             ImGuiUtil.DrawTableColumn("Expiration Time");
             ImGui.TableNextColumn();
-            UiSharedService.ColorText(UiSharedService.TimeLeftFancy(wardrobe.Timer), ImGuiColors.ParsedPink);
+            UiSharedService.ColorText(wardrobe.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             ImGui.TableNextRow();
             DrawPermissionRowString("Assigner", wardrobe.Assigner);
         }

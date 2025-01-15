@@ -27,7 +27,7 @@ public class MoodlesManager : MediatorSubscriberBase
         _pairManager = pairManager;
         _moodlesService = moodlesService;
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
     }
 
     // Private accessor vars for list management.

@@ -2,14 +2,10 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components.Combos;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagSpeak.WebAPI.Utils;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui.Text;
 using System.Numerics;
 
 namespace GagSpeak.UI.Permissions;
@@ -24,14 +20,14 @@ public partial class PairStickyUI
 {
     private void DrawWardrobeActions()
     {
-        if(StickyPair.LastWardrobeData is null || StickyPair.LastLightStorage is null) return;
+        if (StickyPair.LastWardrobeData is null || StickyPair.LastLightStorage is null) return;
 
         var applyRestraintText = "Apply Restraint Set";
         var applyRestraintTT = "Applies a Restraint Set to " + PairNickOrAliasOrUID + ". Click to select set.";
-        var lockRestraintText = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None 
+        var lockRestraintText = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None
             ? "Lock Restraint Set" : "Locked with a " + StickyPair.LastWardrobeData.Padlock;
-        var lockRestraintTT = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None 
-            ? "Locks the Restraint Set applied to " + PairNickOrAliasOrUID + ". Click to view options." 
+        var lockRestraintTT = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None
+            ? "Locks the Restraint Set applied to " + PairNickOrAliasOrUID + ". Click to view options."
             : "Set is currently locked with a " + StickyPair.LastWardrobeData.Padlock;
         var unlockRestraintText = "Unlock Restraint Set";
         var unlockRestraintTT = "Unlocks the Restraint Set applied to " + PairNickOrAliasOrUID + ". Click to view options.";
@@ -48,7 +44,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyRestraint)
         {
             using (ImRaii.Child("SetApplyChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.RestraintApplyCombo.DrawCombo("##ApplyRestraint-" + PairUID, applyRestraintText, WindowMenuWidth, 1.35f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.RestraintApplyCombo.DrawComboButton("##ApplyRestraint-" + PairUID, applyRestraintText, WindowMenuWidth, 1.35f, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -59,20 +55,22 @@ public partial class PairStickyUI
             if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
-        UiSharedService.AttachToolTip(lockRestraintTT + 
-            ((LockHelperExtensions.IsTimerLock(StickyPair.LastWardrobeData.Padlock.ToPadlock())) ? "--SEP----COL--" + UiSharedService.TimeLeftFancy(StickyPair.LastWardrobeData.Timer) : "")
+        UiSharedService.AttachToolTip(lockRestraintTT +
+            ((GsPadlockEx.IsTimerLock(StickyPair.LastWardrobeData.Padlock.ToPadlock())) ? "--SEP----COL--" + StickyPair.LastWardrobeData.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint
         if (PairCombos.Opened is InteractionType.LockRestraint)
         {
-            using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockLockWinHeight())))
+            using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockLockWithActiveWindowHeight())))
                 _pairCombos.RestraintPadlockCombos.DrawLockCombo(WindowMenuWidth, lockRestraintText, lockRestraintTT);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None || !PairPerms.UnlockRestraintSets;
+        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None 
+            || StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.MimicPadlock
+            || !PairPerms.UnlockRestraintSets;
         if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestraint) ? InteractionType.None : InteractionType.UnlockRestraint;
         UiSharedService.AttachToolTip(unlockRestraintTT);
@@ -80,7 +78,7 @@ public partial class PairStickyUI
         // Interaction Window for UnlockRestraint
         if (PairCombos.Opened is InteractionType.UnlockRestraint)
         {
-            using (ImRaii.Child("SetUnlockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockUnlockWinHeight())))
+            using (ImRaii.Child("SetUnlockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockUnlockWindowHeight())))
                 _pairCombos.RestraintPadlockCombos.DrawUnlockCombo(WindowMenuWidth, unlockRestraintText, unlockRestraintTT);
             ImGui.Separator();
         }
@@ -102,10 +100,11 @@ public partial class PairStickyUI
                     if (newWardrobeData is null) return;
 
                     // update the data to remove the restraint set.
+                    var prevSetId = newWardrobeData.ActiveSetId;
                     newWardrobeData.ActiveSetId = Guid.Empty;
                     newWardrobeData.ActiveSetEnabledBy = string.Empty;
                     // send it off then log success.
-                    _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintDisabled, Padlocks.None, UpdateDir.Other));
+                    _ = _apiHubMain.UserPushPairDataWardrobeUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newWardrobeData, WardrobeUpdateType.RestraintDisabled, prevSetId.ToString(), UpdateDir.Other));
                     PairCombos.Opened = InteractionType.None;
                     _logger.LogDebug("Removing Restraint Set from " + PairNickOrAliasOrUID, LoggerType.Permissions);
                 }

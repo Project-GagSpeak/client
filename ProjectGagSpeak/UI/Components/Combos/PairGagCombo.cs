@@ -1,12 +1,9 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Localization;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Penumbra.GameData.Enums;
@@ -14,23 +11,26 @@ using System.Numerics;
 
 namespace GagSpeak.UI.Components.Combos;
 
-/// <summary>
-/// Unique GagCombo type.
-/// </summary>
-public sealed class PairGagCombo : PairCustomComboButton<GagType>
+public sealed class GagComboPair : GagspeakComboButtonBase<GagType>
 {
     private readonly SetPreviewComponent _gagPreview;
+    private readonly MainHub _mainHub;
 
-    public PairGagCombo(ILogger log, SetPreviewComponent gagPreview, MainHub mainHub, UiSharedService uiShared, 
-        Pair pairData, string bText, string bTT) : base(log, uiShared, mainHub, pairData, bText, bTT)
+    private Pair _pairRef;
+
+    public GagComboPair(ILogger log, SetPreviewComponent gagPreview, MainHub mainHub, UiSharedService uiShared,
+        Pair pairData, string bText, string bTT) : base(log, uiShared, bText, bTT)
     {
         _gagPreview = gagPreview;
+        _mainHub = mainHub;
+        _pairRef = pairData;
+
         // update current selection to the last registered gagType from that pair on construction.
         CurrentSelection = _pairRef.LastAppearanceData?.GagSlots[PairCombos.GagLayer].GagType.ToGagType() ?? GagType.None;
     }
 
     // override the method to extract items by extracting all gagTypes.
-    protected override IEnumerable<GagType> ExtractItems() => Enum.GetValues<GagType>();
+    protected override IReadOnlyList<GagType> ExtractItems() => Enum.GetValues<GagType>();
 
     // we need to override the toItemString here.
     protected override string ToItemString(GagType item) => item.GagName();
@@ -69,10 +69,12 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
         // update the gag slot with the new gag.
         newAppearance.GagSlots[PairCombos.GagLayer].GagType = CurrentSelection.GagName();
         // push to server.
-        _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)PairCombos.GagLayer, 
+        _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)PairCombos.GagLayer,
             GagUpdateType.GagApplied, newAppearance.GagSlots[PairCombos.GagLayer].Padlock.ToPadlock(), UpdateDir.Other));
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagAction, CurrentSelection);
+
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, true, PairCombos.GagLayer, CurrentSelection, MainHub.UID, _pairRef.UserData.UID); // move this.
         PairCombos.Opened = InteractionType.None;
+
         // log success.
         _logger.LogDebug("Applying Selected Gag " + CurrentSelection.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
@@ -113,7 +115,7 @@ public sealed class PairGagCombo : PairCustomComboButton<GagType>
             if (_pairRef.LastLightStorage is not null && _pairRef.LastLightStorage.GagItems.TryGetValue(item, out var appliedSlot))
             {
                 ImGui.Separator();
-                using(ImRaii.Group())
+                using (ImRaii.Group())
                 {
                     _gagPreview.DrawAppliedSlot(appliedSlot);
                     ImGui.SameLine();

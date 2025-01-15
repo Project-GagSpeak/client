@@ -41,9 +41,8 @@ public class ToyboxPatterns
         _guides = guides;
     }
 
-    // Private accessor vars for list management.
-    private int LastHoveredIndex = -1; // -1 indicates no item is currently hovered
-    private string _nextTabToSelect = "Display Info";
+    // -1 indicates no item is currently hovered
+    private int LastHoveredIndex = -1;
     private LowerString PatternSearchString = LowerString.Empty;
     private List<PatternData> FilteredPatternsList
         => _handler.Patterns

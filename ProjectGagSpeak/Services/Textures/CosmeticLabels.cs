@@ -36,6 +36,7 @@ public static class CosmeticLabels
         { CorePluginTexture.Power, "RequiredImages\\power.png" },
         { CorePluginTexture.Play, "RequiredImages\\play.png" },
         { CorePluginTexture.Stop, "RequiredImages\\stop.png" },
+        { CorePluginTexture.CatpatSecret, "RequiredImages\\catpat.png" },
     };
 
     public static readonly Dictionary<string, string> CosmeticTextures = InitializeCosmeticTextures();

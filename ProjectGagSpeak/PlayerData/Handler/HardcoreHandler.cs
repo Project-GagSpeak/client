@@ -12,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using Lumina.Excel.Sheets;
 using System.Numerics;
 using static GagspeakAPI.Extensions.GlobalPermExtensions;
 
@@ -28,6 +29,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     private readonly ChatSender _chatSender; // for sending chat commands
     private readonly EmoteMonitor _emoteMonitor; // for handling the blindfold logic
     private readonly ITargetManager _targetManager; // for targeting pair on follows.
+    
+    private CancellationTokenSource _forcedEmoteStateCTS = new(); // For ensuring early cancelations are handled.
 
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
@@ -191,6 +194,13 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             // Lock Movement:
             _moveController.EnableMovementLock();
 
+            // Reset cancellation token source.
+            if(!_forcedEmoteStateCTS.TryReset())
+            {
+                _forcedEmoteStateCTS.Dispose();
+                _forcedEmoteStateCTS = new();
+            }
+
             // Step 1: Get Players current emoteId
             ushort currentEmote = _emoteMonitor.CurrentEmoteId(); // our current emote ID.
 
@@ -205,7 +215,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 }
 
                 // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
-                await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
+                var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
+                if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateCTS.Token))
+                {
+                    Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                    return;
+                }
 
                 // get our cycle pose.
                 byte currentCyclePose = _emoteMonitor.CurrentCyclePose();
@@ -233,7 +248,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                     }
 
                     // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
-                    await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
+                    var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateCTS.Token))
+                    {
+                        Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                        return;
+                    }
 
                     // Execute the desired emote.
                     Logger.LogDebug("Forcing Emote: " + ForcedEmoteState.EmoteID + "(Current emote was: " + currentEmote + ")");
@@ -247,7 +267,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         if (newState is NewState.Disabled)
         {
             Logger.LogDebug("Pair has allowed you to stand again.", LoggerType.HardcoreMovement);
-            // Disable the movement lock after we set our permissions for validation.
+            // cancel the token and allow movement once more.
+            _forcedEmoteStateCTS.Cancel();
             _moveController.DisableMovementLock();
         }
     }

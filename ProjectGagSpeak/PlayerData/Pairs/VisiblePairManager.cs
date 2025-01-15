@@ -39,7 +39,7 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => FrameworkOnUpdate());
 
         // Fired whenever our IPC data is updated. Sends to visible players.
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) =>
         {
             var newData = msg.CharaIPCData;
             // Send if attached data is different from last sent data.

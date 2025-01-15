@@ -17,25 +17,22 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Numerics;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.UI.UiPuppeteer;
 
 public class PuppeteerComponents
 {
     private readonly ILogger<PuppeteerComponents> _logger;
-    private readonly AliasTable _aliasTable;
     private readonly SetPreviewComponent _setPreview;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PuppeteerHandler _handler;
     private readonly UiSharedService _uiShared;
     private readonly MoodlesService _moodlesService;
-    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, AliasTable aliasTable,
-        SetPreviewComponent setPreview, ClientConfigurationManager clientConfigs,
-        PuppeteerHandler handler, UiSharedService uiShared, MoodlesService moodlesService)
+    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, SetPreviewComponent setPreview,
+        ClientConfigurationManager clientConfigs, PuppeteerHandler handler, UiSharedService uiShared,
+        MoodlesService moodlesService)
     {
         _logger = logger;
-        _aliasTable = aliasTable;
         _setPreview = setPreview;
         _clientConfigs = clientConfigs;
         _handler = handler;
@@ -124,7 +121,7 @@ public class PuppeteerComponents
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-            using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
 
@@ -267,10 +264,10 @@ public class PuppeteerComponents
             UiSharedService.AttachToolTip("The Alias Label given to help with searching and organization.");
 
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-            if(_uiShared.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
+            if (_uiShared.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
                 ExpandedAliasItems[id] = !ExpandedAliasItems[id];
             UiSharedService.AttachToolTip(ExpandedAliasItems[id] ? "Collapse the Alias Item." : "Expand the Alias Item.");
-                        
+
             // cast a seperator Line here.
             ImGui.Separator();
 
@@ -309,7 +306,7 @@ public class PuppeteerComponents
                     "--SEP--Do not include the '/' in your output.");
 
                 // End viewing the rest if we meet the condition here.
-                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize) 
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
@@ -516,7 +513,7 @@ public class PuppeteerComponents
         {
             ImGui.AlignTextToFramePadding();
             _uiShared.BooleanToColoredIcon(aliasItem.Enabled, false);
-            if(ImGui.IsItemClicked())
+            if (ImGui.IsItemClicked())
             {
                 aliasItem.Enabled = !aliasItem.Enabled;
                 wasModified = true;
@@ -526,7 +523,7 @@ public class PuppeteerComponents
 
             ImGui.SameLine();
             var tempName = aliasItem.Name;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - topRowButtonLength - itemSpacing.X*4);
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - topRowButtonLength - itemSpacing.X * 4);
             if (ImGui.InputTextWithHint("##AliasName_" + aliasItem.AliasIdentifier, "Give Alias a Label...", ref tempName, 70))
             {
                 aliasItem.Name = tempName;
@@ -569,7 +566,7 @@ public class PuppeteerComponents
             ImGui.AlignTextToFramePadding();
             _uiShared.IconText(FontAwesomeIcon.Eye);
             UiSharedService.AttachToolTip("The text to scan for (Input String)");
-            
+
             ImGui.SameLine();
             var inputCommand = aliasItem.InputCommand;
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());

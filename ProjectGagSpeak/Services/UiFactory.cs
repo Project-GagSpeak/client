@@ -29,9 +29,8 @@ public class UiFactory
     private readonly PairCombos _pairCombos;
 
     // Managers
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly PairManager _pairManager;
     private readonly ClientData _clientData;
 
@@ -42,7 +41,7 @@ public class UiFactory
     private readonly KinkPlateService _kinkPlates;
     private readonly MoodlesService _moodlesService;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly PermissionPresetService _presetService;
+    private readonly PermissionPresetLogic _presetService;
     private readonly SetPreviewComponent _previews;
     private readonly TextureService _textures;
     private readonly ToyboxRemoteService _remoteService;
@@ -55,13 +54,13 @@ public class UiFactory
     private readonly ToyboxHub _apiHubToybox;
 
     public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
-        PiShockProvider shockProvider, ClientData clientData, ClientMonitorService clientService, 
-        GagManager gagManager, PairManager pairManager, CosmeticService cosmetics, 
-        IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, 
-        MoodlesService moodlesService, OnFrameworkService frameworkUtils, PairCombos pairCombos,
-        PermissionPresetService presetService, SetPreviewComponent setPreviews, 
-        TextureService textures, ToyboxRemoteService remoteService, UiSharedService uiShared, 
-        VibratorService vibeService, TutorialService guides, MainHub apiHubMain, ToyboxHub apiHubToybox)
+        PiShockProvider shockProvider, ClientData clientData, ClientMonitorService clientService,
+        GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
+        KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, MoodlesService moodlesService, 
+        OnFrameworkService frameworkUtils, PairCombos pairCombos,PermissionPresetLogic presetService, 
+        SetPreviewComponent setPreviews, TextureService textures, ToyboxRemoteService remoteService, 
+        UiSharedService uiShared, VibratorService vibeService, TutorialService guides, 
+        MainHub apiHubMain, ToyboxHub apiHubToybox)
     {
         _loggerFactory = loggerFactory;
         _gagspeakMediator = gagspeakMediator;
@@ -69,7 +68,7 @@ public class UiFactory
         _pairCombos = pairCombos;
 
         _clientService = clientService;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _pairManager = pairManager;
         _clientData = clientData;
 
@@ -94,7 +93,7 @@ public class UiFactory
     public RemoteController CreateControllerRemote(PrivateRoom privateRoom)
     {
         return new RemoteController(_loggerFactory.CreateLogger<RemoteController>(), _gagspeakMediator,
-            _apiHubToybox, _clientData, _gagManager, _uiShared, _vibeService, _remoteService, 
+            _apiHubToybox, _clientData, _garbler, _uiShared, _vibeService, _remoteService, 
             _guides, privateRoom);
     }
 

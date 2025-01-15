@@ -430,6 +430,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
         OnUserReceiveDataAppearance(dto => _ = Client_UserReceiveDataAppearance(dto));
         OnUserReceiveDataWardrobe(dto => _ = Client_UserReceiveDataWardrobe(dto));
+        OnUserReceiveDataOrders(dto => _ = Client_UserReceiveDataOrders(dto));
         OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
         OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
         OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));

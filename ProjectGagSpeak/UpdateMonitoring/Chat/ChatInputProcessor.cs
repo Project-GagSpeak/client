@@ -28,8 +28,8 @@ public unsafe class ChatInputDetour : IDisposable
     private readonly ILogger<ChatInputDetour> _logger;
     private readonly GagspeakConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientData _playerManager;
-    private readonly GagManager _gagManager;
+    private readonly ClientData _clientData;
+    private readonly GagGarbler _garbler;
     private readonly EmoteMonitor _emoteMonitor;
 
     // define our delegates.
@@ -38,15 +38,15 @@ public unsafe class ChatInputDetour : IDisposable
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, ClientData playerManager, GagManager gagManager,
+        GagspeakConfigService config, ClientData clientData, GagGarbler garbler,
         EmoteMonitor emoteMonitor, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes
         _logger = logger;
         _mediator = mediator;
         _config = config;
-        _playerManager = playerManager;
-        _gagManager = gagManager;
+        _clientData = clientData;
+        _garbler = garbler;
         _emoteMonitor = emoteMonitor;
 
         // try to get the chat-input-interceptor delegate
@@ -62,7 +62,7 @@ public unsafe class ChatInputDetour : IDisposable
         // Put all this shit in a try-catch loop so we can catch any possible thrown exception.
         try
         {
-            if (_playerManager.GlobalPerms is null) 
+            if (_clientData.GlobalPerms is null) 
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             // Grab the original string.
@@ -83,7 +83,7 @@ public unsafe class ChatInputDetour : IDisposable
             var newSeStringBuilder = new SeStringBuilder();
 
             // If we are not meant to garble the message, then return original.
-            if (!_playerManager.GlobalPerms.LiveChatGarblerActive || !_gagManager.AnyGagActive)
+            if (!_clientData.GlobalPerms.LiveChatGarblerActive || !_clientData.AnyGagActive)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */
@@ -140,7 +140,7 @@ public unsafe class ChatInputDetour : IDisposable
                 var stringToProcess = originalText.Substring(matchedCommand.Length);
 
                 // once we have done that, garble that string, and then merge it back with the output command in front.
-                var output = matchedCommand + _gagManager.ProcessMessage(stringToProcess);
+                var output = matchedCommand + _garbler.ProcessMessage(stringToProcess);
 
                 // append this to the newSeStringBuilder.
                 newSeStringBuilder.Add(new TextPayload(output));

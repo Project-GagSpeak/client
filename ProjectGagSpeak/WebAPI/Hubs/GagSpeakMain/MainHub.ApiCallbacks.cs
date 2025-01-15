@@ -339,7 +339,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataAppearance:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
+            ExecuteSafely(() => _clientCallbacks.CallbackAppearanceUpdate(dataDto));
             return Task.CompletedTask;
         }
         else
@@ -355,13 +355,29 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
+            ExecuteSafely(() => _clientCallbacks.CallbackWardrobeUpdate(dataDto));
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug("OTHER Client_UserReceiveDataWardrobe:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaWardrobeData(dataDto));
+            return Task.CompletedTask;
+        }
+    }
+
+    public Task Client_UserReceiveDataOrders(OnlineUserCharaOrdersDataDto dataDto)
+    {
+        if (dataDto.Direction is UpdateDir.Own)
+        {
+            Logger.LogDebug("OWN Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
+            //ExecuteSafely(() => _clientCallbacks.CallbackOrdersUpdate(dataDto, dataDto.Enactor.UID == MainHub.UID));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug("OTHER Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
+            //ExecuteSafely(() => _pairs.ReceiveCharaOrdersData(dataDto));
             return Task.CompletedTask;
         }
     }
@@ -655,6 +671,12 @@ public partial class MainHub
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Client_UserReceiveDataWardrobe), act);
+    }
+
+    public void OnUserReceiveDataOrders(Action<OnlineUserCharaOrdersDataDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataOrders), act);
     }
 
 

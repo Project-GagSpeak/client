@@ -1,6 +1,3 @@
-using Dalamud.Game.ClientState.GamePad;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface.ImGuiNotification;
@@ -8,27 +5,27 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
 using OtterGui;
-using System.Numerics;
-using System.Security.Cryptography;
 using GameObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
 
 namespace GagSpeak.Services;
 public class CursedLootService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly GagManager _gagManager;
     private readonly ClientData _playerData;
     private readonly CursedLootHandler _handler;
+    private readonly AppearanceManager _appearance;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
 
@@ -36,14 +33,14 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
     internal Hook<TargetSystem.Delegates.InteractWithObject> ItemInteractedHook;
 
     public CursedLootService(ILogger<CursedLootService> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, GagManager gagManager,
-        ClientData playerData, CursedLootHandler handler, ClientMonitorService clientService, 
+        ClientConfigurationManager clientConfigs, ClientData playerData, CursedLootHandler handler, 
+        AppearanceManager appearance, ClientMonitorService clientService, 
         OnFrameworkService frameworkUtils, IGameInteropProvider interop) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
-        _gagManager = gagManager;
         _playerData = playerData;
         _handler = handler;
+        _appearance = appearance;
         _clientService = clientService;
         _frameworkUtils = frameworkUtils;
 
@@ -75,7 +72,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             Logger.LogTrace("Object Kind: " + obj->ObjectKind);
             Logger.LogTrace("Object SubKind: " + obj->SubKind);
             Logger.LogTrace("Object Name: " + obj->NameString.ToString());
-            if(obj->EventHandler is not null)
+            if (obj->EventHandler is not null)
             {
                 Logger.LogTrace("Object EventHandler ID: " + obj->EventHandler->Info.EventId.Id);
                 Logger.LogTrace("Object EventHandler Entry ID: " + obj->EventHandler->Info.EventId.EntryId);
@@ -83,7 +80,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             }
 
             // dont bother if cursed dungeon loot isnt enabled, or if there are no inactive items in the pool.
-            if (!_clientConfigs.GagspeakConfig.CursedDungeonLoot || !_handler.InactiveItemsInPool.Any() || MainHub.IsOnUnregistered)
+            if (!_clientConfigs.GagspeakConfig.CursedDungeonLoot || !_handler.InactiveItemsInPool.Any() || MainHub.IsOnUnregistered || !MainHub.IsConnected)
                 return ItemInteractedHook.Original(thisPtr, obj, checkLineOfSight);
 
             // if the object is not a treasure of event object dont worry about processing it.
@@ -105,7 +102,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
                 return ItemInteractedHook.Original(thisPtr, obj, checkLineOfSight);
 
             // The chest is a valid chest at this point, but we need to determine what type it is.
-            if(AchievementHelpers.IsDeepDungeonCoffer(obj))
+            if (AchievementHelpers.IsDeepDungeonCoffer(obj))
             {
                 // its a Deep Dungeon Coffer.
                 Logger.LogTrace("Attempting to open Deep Dungeon coffer, checking on next second", LoggerType.CursedLoot);
@@ -153,7 +150,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
                     if (valid)
                     {
                         Logger.LogTrace("we satisfy valid condition.", LoggerType.CursedLoot);
-                        if(objectInteractedWith != LastOpenedTreasureId)
+                        if (objectInteractedWith != LastOpenedTreasureId)
                         {
                             Logger.LogTrace("we just attempted to open a dungeon chest.", LoggerType.CursedLoot);
                             LastOpenedTreasureId = objectInteractedWith;
@@ -168,7 +165,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
                 }
             }).ConfigureAwait(false);
         }
-        finally 
+        finally
         {
             _openTreasureTask = null;
         }
@@ -208,7 +205,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
         // get the percent change to apply
         var percentChange = _handler.LockChance;
 
-        if(percentChange is 0)
+        if (percentChange is 0)
         {
             Logger.LogDebug("No Point in rolling with 0% chance, skipping!", LoggerType.CursedLoot);
             return;
@@ -221,7 +218,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
 
         // Obtain a randomly selected cursed item from the inactive items in the pool.
         var enabledPoolCount = _handler.InactiveItemsInPool.Count;
-        if(enabledPoolCount <= 0)
+        if (enabledPoolCount <= 0)
         {
             Logger.LogWarning("No Cursed Items are available to apply. Skipping.", LoggerType.CursedLoot);
             return;
@@ -229,7 +226,8 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
 
         Guid selectedLootId = Guid.Empty;
         var randomIndex = random.Next(0, enabledPoolCount);
-        Logger.LogDebug("Randomly selected index ["+randomIndex+"] (between 0 and " + enabledPoolCount + ") for (" + _handler.InactiveItemsInPool[randomIndex].Name + ")", LoggerType.CursedLoot);
+        Logger.LogDebug("Randomly selected index [" + randomIndex + "] (between 0 and " + enabledPoolCount + ") for (" + _handler.InactiveItemsInPool[randomIndex].Name + ")", LoggerType.CursedLoot);
+        // if the item is a gag, handle the special condition for this.
         if (_handler.InactiveItemsInPool[randomIndex].IsGag)
         {
             var availableSlot = _playerData.AppearanceData!.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
@@ -238,7 +236,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             {
                 Logger.LogDebug("A Gag Slot is available to apply and lock. Doing so now!", LoggerType.CursedLoot);
                 selectedLootId = _handler.InactiveItemsInPool[randomIndex].LootId;
-                
+
                 // Notify the client of their impending fate~
                 var item = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
                     "forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
@@ -247,27 +245,11 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
                 // generate the length they will be locked for:
                 var lockTimeGag = GetRandomTimeSpan(_handler.LowerLockLimit, _handler.UpperLockLimit, random);
 
-                // apply the gag via the gag manager at the available slot we found.
-                await _handler.ActivateCursedItem(selectedLootId, DateTimeOffset.UtcNow.Add(lockTimeGag), (GagLayer)availableSlot);
-
-                // Add a small delay to avoid race conditions (idk a better way to failsafe this yet)
-                await Task.Delay(500);
-
-                // lock the gag.
-                var padlockData = new PadlockData()
-                {
-                    Layer = (GagLayer)availableSlot,
-                    PadlockType = Padlocks.MimicPadlock,
-                    Timer = DateTimeOffset.UtcNow.Add(lockTimeGag),
-                    Assigner = MainHub.UID
-                };
-                _gagManager.PublishLockApplied((GagLayer)availableSlot, Padlocks.MimicPadlock, "", DateTimeOffset.UtcNow.Add(lockTimeGag), MainHub.UID);
+                // fire a cursedGagApplied call to auto gag and lock it.
+                await _handler.ActivateCursedGag(selectedLootId, (GagLayer)availableSlot, DateTimeOffset.UtcNow.Add(lockTimeGag));
                 Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
 
-                // send event that we are having cursed loot applied.
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
-
-                if (!_playerData.CoreDataNull && _playerData.GlobalPerms!.LiveChatGarblerActive)
+                if (_playerData.GlobalPerms is not null && _playerData.GlobalPerms.LiveChatGarblerActive)
                 {
                     Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! " +
                         "Be cautious of chatting around strangers!", NotificationType.Warning));

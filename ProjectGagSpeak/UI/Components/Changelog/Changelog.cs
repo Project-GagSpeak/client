@@ -22,6 +22,21 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 2, 1, 0)
+            .RegisterMain("Please be patient with me and features, i will be pivoting my attention to helping add additions to glamourer soon.")
+            .RegisterMain("Fixed backend logic for client padlocks to retain same structure as padlocks, which should correct most sync issues.")
+            .RegisterQol("Timer locks should now function properly.")
+            .RegisterFeature("Backend structure for Orders Module is now implemented.")
+            .RegisterFeature("Backend alignment with appearance updates is now more streamlined.")
+            .RegisterFeature("Active Restraint Sets are now stored server-side, along with gags.")
+            .RegisterFeature("Emote Trigger section has been added, but is not functional. Triggers rework update next.™")
+            .RegisterQol("Command help for /safeword and /safewordhardcore parameters have been added.")
+            .RegisterQol("GagSpeak will now wait for you to be fully present after login before reactivating hardcore states.")
+            .RegisterQol("Some achievements are not functional once more / work properly.")
+            .RegisterQol("You can now toggle client-side settings while offline.")
+            .RegisterQol("Puppeteer alias permissions are now implemented and functional.")
+            .RegisterBugfix("Prevented crash that occured while disabling the plugin in the menu after logging out.")
+            .RegisterBugfix("Fixed issue where the forced stay filters cleared on each plugin load.");
         VersionEntry(1, 2, 0, 0)
             .RegisterMain("HIGHLY RECOMMEND YOU SKIM THROUGH THIS")
             .RegisterMain("Custom Pair Action Combos are now Live! See the finer details about what you apply to your pairs!")

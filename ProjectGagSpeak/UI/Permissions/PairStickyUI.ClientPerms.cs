@@ -579,7 +579,7 @@ public partial class PairStickyUI
         else if (type == PermissionValueType.TimeSpan)
         {
             // attempt to parse the timespan value to a string.
-            string timeSpanString = _uiShared.TimeSpanToString((TimeSpan)permissionSet.GetType().GetProperty(permissionName)?.GetValue(permissionSet)!) ?? "0d0h0m0s";
+            string timeSpanString = ((TimeSpan)permissionSet.GetType().GetProperty(permissionName)?.GetValue(permissionSet)!).ToGsRemainingTime() ?? "0d0h0m0s";
 
             using (var group = ImRaii.Group())
             {
@@ -588,10 +588,10 @@ public partial class PairStickyUI
                 if (_uiShared.IconInputText(id, icon, label, "0d0h0m0s", ref timeSpanString, 32, IconButtonTextWidth * .55f, true, false)) { }
                 // Set the permission once deactivated. If invalid, set to default.
                 if (ImGui.IsItemDeactivatedAfterEdit()
-                    && timeSpanString != _uiShared.TimeSpanToString((TimeSpan)permissionSet.GetType().GetProperty(permissionName)?.GetValue(permissionSet)!))
+                    && timeSpanString != ((TimeSpan)permissionSet.GetType().GetProperty(permissionName)?.GetValue(permissionSet)!).ToGsRemainingTime())
                 {
                     // attempt to parse the string back into a valid timespan.
-                    if (_uiShared.TryParseTimeSpan(timeSpanString, out TimeSpan result))
+                    if (GsPadlockEx.TryParseTimeSpan(timeSpanString, out TimeSpan result))
                     {
                         ulong ticks = (ulong)result.Ticks;
                         SetOwnPermission(permissionType, permissionName, ticks);

@@ -54,8 +54,8 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public List<ServerPatternInfo> LatestPatternResults { get; private set; } = new List<ServerPatternInfo>();
     public List<ServerMoodleInfo> LatestMoodleResults { get; private set; } = new List<ServerMoodleInfo>();
     public HashSet<string> FetchedTags { get; private set; } = new HashSet<string>();
-    public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new();
-    public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new();
+    public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new List<PublishedPattern>();
+    public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new List<PublishedMoodle>();
 
     // This makes sure that we only automatically fetch the patterns and moodles and tags once automatically.
     // Afterwards, manual updates are requied.

@@ -26,10 +26,10 @@ public class PairCombos
         _uiShared = uiShared;
     }
 
-    public PairGagCombo[] GagApplyCombos { get; private set; } = new PairGagCombo[3];
-    public PairPadlockGag[] GagPadlockCombos { get; private set; } = new PairPadlockGag[3];
+    public GagComboPair[] GagApplyCombos { get; private set; } = new GagComboPair[3];
+    public PadlockGagsPair[] GagPadlockCombos { get; private set; } = new PadlockGagsPair[3];
     public PairRestraintCombo RestraintApplyCombo { get; private set; } = null!;
-    public PairPadlockRestraint RestraintPadlockCombos { get; private set; } = null!;
+    public PadlockRestraintsPair RestraintPadlockCombos { get; private set; } = null!;
     public PairPatternCombo PatternCombo { get; private set; } = null!;
     public PairAlarmCombo AlarmToggleCombo { get; private set; } = null!;
     public PairTriggerCombo TriggerToggleCombo { get; private set; } = null!;
@@ -55,32 +55,32 @@ public class PairCombos
     public void UpdateCombosForPair(Pair pair)
     {
         // Create an array of PairGagCombo with 3 elements
-        GagApplyCombos = new PairGagCombo[3]
+        GagApplyCombos = new GagComboPair[3]
         {
-            new PairGagCombo(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 1", "Apply a Gag to " + pair.GetNickAliasOrUid()),
-            new PairGagCombo(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 2", "Apply a Gag to " + pair.GetNickAliasOrUid()),
-            new PairGagCombo(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 3", "Apply a Gag to " + pair.GetNickAliasOrUid())
+            new GagComboPair(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 1", "Apply a Gag to " + pair.GetNickAliasOrUid()),
+            new GagComboPair(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 2", "Apply a Gag to " + pair.GetNickAliasOrUid()),
+            new GagComboPair(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply Gag 3", "Apply a Gag to " + pair.GetNickAliasOrUid())
         };
 
         // Create an array of PairPadlockGag with 3 elements
-        GagPadlockCombos = new PairPadlockGag[3]
+        GagPadlockCombos = new PadlockGagsPair[3]
         {
-            new PairPadlockGag(_logger, _apiHubMain, _uiShared, pair, "PadlockLock1" + pair.UserData.UID),
-            new PairPadlockGag(_logger, _apiHubMain, _uiShared, pair, "PadlockLock2" + pair.UserData.UID),
-            new PairPadlockGag(_logger, _apiHubMain, _uiShared, pair, "PadlockLock3" + pair.UserData.UID),
+            new PadlockGagsPair(pair, _apiHubMain, _logger, _uiShared, "PadlockLock1" + pair.UserData.UID),
+            new PadlockGagsPair(pair, _apiHubMain, _logger, _uiShared, "PadlockLock2" + pair.UserData.UID),
+            new PadlockGagsPair(pair, _apiHubMain, _logger, _uiShared, "PadlockLock3" + pair.UserData.UID),
         };
 
         // Create the Restraint Combos for the Pair.
-        RestraintApplyCombo = new PairRestraintCombo(_logger, _previews, _apiHubMain, _uiShared, pair, "Apply", "Apply a Restraint to " + pair.GetNickAliasOrUid());
-        RestraintPadlockCombos = new PairPadlockRestraint(_logger, _apiHubMain, _uiShared, pair, "PadlocksRestraint" + pair.UserData.UID);
+        RestraintApplyCombo = new PairRestraintCombo(pair, _apiHubMain, _logger, _previews, _uiShared, "Apply", "Apply a Restraint to " + pair.GetNickAliasOrUid());
+        RestraintPadlockCombos = new PadlockRestraintsPair(pair, _apiHubMain, _logger, _uiShared, "PadlocksRestraint" + pair.UserData.UID);
 
         // Create the Pattern Combo for the Pair.
-        PatternCombo = new PairPatternCombo(_logger, _apiHubMain, _uiShared, pair, "Execute", "Apply a Pattern to " + pair.GetNickAliasOrUid());
+        PatternCombo = new PairPatternCombo(pair, _apiHubMain, _logger, _uiShared, "Execute", "Apply a Pattern to " + pair.GetNickAliasOrUid());
 
         // Create the pattern Combo for alarm Toggling.
-        AlarmToggleCombo = new PairAlarmCombo(_logger, _apiHubMain, _uiShared, pair, "Enable", "Enable this Alarm for " + pair.GetNickAliasOrUid(), "Disable", "Disable this Alarm for " + pair.GetNickAliasOrUid());
+        AlarmToggleCombo = new PairAlarmCombo(pair, _apiHubMain, _logger, _uiShared, "Enable", "Enable this Alarm for " + pair.GetNickAliasOrUid(), "Disable", "Disable this Alarm for " + pair.GetNickAliasOrUid());
 
         // Create the Triggers combo for trigger toggling.
-        TriggerToggleCombo = new PairTriggerCombo(_logger, _apiHubMain, _uiShared, pair, "Enable", "Enable this Trigger for " + pair.GetNickAliasOrUid(), "Disable", "Disable this Trigger for " + pair.GetNickAliasOrUid());
+        TriggerToggleCombo = new PairTriggerCombo(pair, _apiHubMain, _logger, _uiShared, "Enable", "Enable this Trigger for " + pair.GetNickAliasOrUid(), "Disable", "Disable this Trigger for " + pair.GetNickAliasOrUid());
     }
 }

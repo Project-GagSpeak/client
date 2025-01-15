@@ -10,17 +10,16 @@ using OtterGui.Text;
 
 namespace GagSpeak.Services;
 
-// handles the global chat and pattern discovery social features.
-public class PermissionPresetService
+public class PermissionPresetLogic
 {
-    private readonly ILogger<PermissionPresetService> _logger;
+    private readonly ILogger<PermissionPresetLogic> _logger;
     private readonly MainHub _apiHubMain;
     private readonly ClientData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
-    public PermissionPresetService(ILogger<PermissionPresetService> logger,
+    public PermissionPresetLogic(ILogger<PermissionPresetLogic> logger,
         MainHub apiHubMain, ClientData playerManager,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
         UiSharedService uiShared)

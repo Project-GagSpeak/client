@@ -207,6 +207,8 @@ public class MainUiPatternHub : DisposableMediatorSubscriberBase
             _uiShared.DrawComboSearchable("##patternTagsFilter", tagsComboWidth, _shareHub.FetchedTags.ToImmutableList(), (i) => i, false,
                 (tag) =>
                 {
+                    if(string.IsNullOrWhiteSpace(tag))
+                        return;
                     // append the tag to the search tags if it does not exist.
                     if (!_shareHub.SearchTags.Contains(tag))
                     {

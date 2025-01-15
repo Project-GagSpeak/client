@@ -46,7 +46,7 @@ public class SetPreviewComponent
 
         // Determine the total width of the table.
         var totalTableWidth = columnWidth * 2 + ImGui.GetStyle().ItemSpacing.X;
-        var totalTableHeight = GameIconSize.Y * 6 + 10f;
+        var totalTableHeight = GameIconSize.Y * 6 + 5f;
 
         // Calculate the offset to center the table within the content region.
         var offsetX = (contentRegion.X - totalTableWidth) / 2;
