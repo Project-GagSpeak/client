@@ -45,12 +45,12 @@ public abstract class PadlockBase<T> where T : IPadlockable
     }
 
     public float PadlockLockWithActiveWindowHeight() => SelectedLock.IsTwoRowLock()
-        ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
-        : ImGui.GetFrameHeight();
+    ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
+    : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
 
     public float PadlockLockWindowHeight() => SelectedLock.IsTwoRowLock()
-        ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
-        : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
+        ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
+        : ImGui.GetFrameHeight();
 
     public float PadlockUnlockWindowHeight() => GetLatestPadlock().IsPasswordLock()
         ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y

@@ -107,7 +107,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     }
 
     private async Task HandleActiveServerSet(CharaActiveSetData serverData)
-            {
+    {
         // grab the index in our list of sets matching the expected set ID.
         int setIdx = _clientConfigs.GetSetIdxByGuid(serverData.ActiveSetId);
         if (setIdx < 0)

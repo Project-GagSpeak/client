@@ -591,10 +591,6 @@ public partial class AchievementManager
         // May need to figure this for pairs upon connection to validate any actions/unlocks that occured while we were away.
         Logger.LogInformation("Pair Restraint Lock Change: " + padlock.ToName() + " " + isLocking + " " + enactorUID, LoggerType.AchievementEvents);
 
-
-        // Change the achievement type of the achievement below, its currently busted.
-        (SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress();
-
         // if the pair's set is being locked and it is a timed lock.
         if (isLocking)
         {

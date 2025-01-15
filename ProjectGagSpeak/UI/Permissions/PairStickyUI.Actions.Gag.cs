@@ -74,7 +74,7 @@ public partial class PairStickyUI
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = gagSlot.Padlock.ToPadlock() is Padlocks.None || !PairPerms.UnlockGags;
+        var disableUnlockExpand = gagSlot.Padlock.ToPadlock() is Padlocks.None or Padlocks.MimicPadlock || !PairPerms.UnlockGags;
         if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, unlockGagText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockGag) ? InteractionType.None : InteractionType.UnlockGag;
         UiSharedService.AttachToolTip(unlockGagTT);

@@ -309,6 +309,10 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         activeSet = WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled);
         return activeSet is not null;
     }
+    internal bool TryGetSet(Guid id, [MaybeNullWhen(false)] out RestraintSet restraintSet)
+    {
+        return WardrobeConfig.WardrobeStorage.RestraintSets.TryGetItem(x => x.RestraintId == id, out restraintSet);
+    }
 
     internal int GetActiveSetIdx() => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.Enabled);
     internal int GetSetIdxByGuid(Guid id) => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.RestraintId == id);

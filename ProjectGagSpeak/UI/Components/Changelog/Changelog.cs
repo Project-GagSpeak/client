@@ -22,6 +22,9 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(1, 2, 1, 6)
+            .RegisterMain("Fixed all the lingering issues since 1.2.1.0 in regards to appearance updates.")
+            .RegisterMain("IF YOU HAD A PADLOCK ON PRIOR TO 1.2.1.0, YOU WILL NEED TO SAFEWORD OUT OF IT.");
         VersionEntry(1, 2, 1, 0)
             .RegisterMain("Please be patient with me and features, i will be pivoting my attention to helping add additions to glamourer soon.")
             .RegisterMain("Fixed backend logic for client padlocks to retain same structure as padlocks, which should correct most sync issues.")

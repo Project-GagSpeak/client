@@ -63,14 +63,12 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.LockRestraint)
         {
             using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombos.PadlockLockWithActiveWindowHeight())))
-                _pairCombos.RestraintPadlockCombos.DrawLockCombo(WindowMenuWidth, lockRestraintText, lockRestraintTT);
+                _pairCombos.RestraintPadlockCombos.DrawLockComboWithActive(WindowMenuWidth, lockRestraintText, lockRestraintTT);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None 
-            || StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.MimicPadlock
-            || !PairPerms.UnlockRestraintSets;
+        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None || !PairPerms.UnlockRestraintSets;
         if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestraint) ? InteractionType.None : InteractionType.UnlockRestraint;
         UiSharedService.AttachToolTip(unlockRestraintTT);

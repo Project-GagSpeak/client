@@ -499,7 +499,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
         _eventManager.Subscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
 
-        _eventManager.Subscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ConditionalAchievement)?.CheckCompletion());
+        _eventManager.Subscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Subscribe(UnlocksEvent.AuctionedOff, () => (SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _eventManager.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
@@ -573,7 +573,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestraintStateChange, OnPairRestraintStateChange);
         _eventManager.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
         _eventManager.Unsubscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
-        _eventManager.Unsubscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ConditionalAchievement)?.CheckCompletion());
+        _eventManager.Unsubscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Unsubscribe(UnlocksEvent.AuctionedOff, () => (SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _eventManager.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
