@@ -180,7 +180,7 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                     else
                     {
                         if (ImGuiUtil.DrawDisabledButton("Disable Set", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()), string.Empty, activeSet.IsLocked()))
-                            _ = _appearance.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
+                            _ = _appearance.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, false);
                     }
                     ImGui.Separator();
                     var activePreview = ImGui.GetContentRegionAvail() - ImGui.GetStyle().WindowPadding;

@@ -89,7 +89,7 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
         _clientConfigs.ActivateCursedItem(idToActivate, releaseTimeUTC);
         // then apply it if valid.
         if (CursedItems.TryGetItem(x => x.LootId == idToActivate, out var cursedItem))
-            await _appearanceHandler.CursedItemApplied(cursedItem, true);
+            await _appearanceHandler.CursedItemApplied(cursedItem);
     }
 
     public async Task ActivateCursedGag(Guid idToActivate, GagLayer gagLayer, DateTimeOffset releaseTimeUTC)
@@ -98,7 +98,7 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
         _clientConfigs.ActivateCursedItem(idToActivate, releaseTimeUTC);
         // then apply it if valid.
         if (CursedItems.TryGetItem(x => x.LootId == idToActivate, out var cursedItem))
-            await _appearanceHandler.CursedGagApplied(cursedItem, gagLayer, releaseTimeUTC, true);
+            await _appearanceHandler.CursedGagApplied(cursedItem, gagLayer, releaseTimeUTC);
     }
 
     public async Task DeactivateCursedItem(Guid idToDeactivate)

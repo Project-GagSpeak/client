@@ -142,7 +142,7 @@ public sealed class ActionExecutor
             var availableSlot = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
             // apply the gag to that slot.
             _logger.LogInformation("ActionExecutorGS is applying Gag Type " + gagAction.GagType + " to layer " + (GagLayer)availableSlot, LoggerType.GagHandling);
-            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, MainHub.UID, true, true);
+            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, MainHub.UID, true, false);
             return true;
         }
         else if (gagAction.NewState is NewState.Disabled)
@@ -155,7 +155,7 @@ public sealed class ActionExecutor
                 if (idx is not -1)
                 {
                     _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, true);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
                     return true;
                 }
             }
@@ -166,7 +166,7 @@ public sealed class ActionExecutor
                 if (idx is not -1)
                 {
                     _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, true);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
                     return true;
                 }
             }
@@ -208,7 +208,7 @@ public sealed class ActionExecutor
                 {
                     // if the set is active, and the set is the one we want to disable, disable it.
                     _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
-                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
+                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, false);
                     return true;
                 }
             }
@@ -272,7 +272,7 @@ public sealed class ActionExecutor
         }
 
         // execute the instruction with our global share code.
-        _logger.LogInformation("HandlePiShock Action is executing instruction!", LoggerType.PiShock);
+        _logger.LogInformation("HandlePiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
         _vibeService.ExecuteShockAction(_playerData.GlobalPerms.GlobalShockShareCode, piShockAction.ShockInstruction);
         return Task.FromResult(true);
     }

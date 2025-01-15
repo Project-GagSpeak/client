@@ -33,15 +33,15 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         var slotToUpdate = newAppearanceData.GagSlots[PairCombos.GagLayer];
 
         // see if things are valid through the lock helper extensions.
-        PadlockReturnCode validationResult = GsPadlockEx.VerifyLock(ref slotToUpdate, SelectedLock, _password, _timer, MainHub.UID, _pairRef.PairPerms);
-
-        // if the validation result is anything but successful, log it and return.
+        PadlockReturnCode validationResult = GsPadlockEx.ValidateLockUpdate(slotToUpdate, SelectedLock, _password, _timer, MainHub.UID, _pairRef.PairPerms);
         if (validationResult is not PadlockReturnCode.Success)
         {
             _logger.LogError("Failed to lock padlock: " + SelectedLock.ToName() + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
             ResetInputs();
             return;
         }
+        // update the padlock.
+        GsPadlockEx.PerformLockUpdate(ref slotToUpdate, SelectedLock, _password, _timer, MainHub.UID);
 
         // update the appearance data with the new slot.
         newAppearanceData.GagSlots[PairCombos.GagLayer] = slotToUpdate;
@@ -66,17 +66,16 @@ public class PadlockGagsPair : PadlockBase<GagSlot>
         var prevLock = slotToUpdate.Padlock.ToPadlock();
 
         // verify if we can unlock.
-        PadlockReturnCode validationResult = GsPadlockEx.VerifyUnlock(ref slotToUpdate, _pairRef.UserData, _password, MainHub.UID, _pairRef.PairPerms);
-
-        // if the validation result is anything but successful, log it and return.
+        PadlockReturnCode validationResult = GsPadlockEx.ValidateUnlockUpdate(slotToUpdate, _pairRef.UserData, _password, MainHub.UID, _pairRef.PairPerms);
         if (validationResult is not PadlockReturnCode.Success)
         {
             _logger.LogError("Failed to unlock padlock: " + slotToUpdate.Padlock + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
             return;
         }
-
-        // update the appearance data with the new slot.
-        appearanceData.GagSlots[PairCombos.GagLayer] = slotToUpdate;
+        
+        // update the Padlock.
+        GsPadlockEx.PerformUnlockUpdate(ref slotToUpdate);
+        // publish.
         _ = _mainHub.UserPushPairDataAppearanceUpdate(new(_pairRef.UserData, MainHub.PlayerUserData, appearanceData, (GagLayer)PairCombos.GagLayer, GagUpdateType.GagUnlocked, prevLock, UpdateDir.Other));
         _logger.LogDebug("Unlocking Gag with GagPadlock " + slotToUpdate.Padlock + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
         PairCombos.Opened = InteractionType.None;

@@ -76,7 +76,14 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         _glamourChanged.Enable();
     }
 
-    public enum MetaData { None, Hat, Visor, Both }
+    // make flags maybe?
+    public enum MetaData 
+    {
+        None, 
+        Hat, 
+        Visor, 
+        Both 
+    }
     public static bool APIAvailable { get; private set; } = false;
 
     public void CheckAPI()

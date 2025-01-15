@@ -60,7 +60,7 @@ public sealed class GagComboClient : GagspeakComboBase<GagType>
             return;
 
         // apply update
-        await _appearance.GagApplied((GagLayer)GagSlotLayer, newGagSelection, MainHub.UID, true, true);
+        await _appearance.GagApplied((GagLayer)GagSlotLayer, newGagSelection, MainHub.UID, true, false);
     }
 
     protected override async void OnClearActiveItem()
@@ -84,7 +84,7 @@ public sealed class GagComboClient : GagspeakComboBase<GagType>
             return;
 
         // otherwise, remove it.
-        await _appearance.GagRemoved((GagLayer)GagSlotLayer, MainHub.UID, true, true);
+        await _appearance.GagRemoved((GagLayer)GagSlotLayer, MainHub.UID, true, false);
     }
 }
 

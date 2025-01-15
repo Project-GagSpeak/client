@@ -41,7 +41,7 @@ public class PadlockGagsClient : PadlockBase<GagSlot>
     protected override void OnLockButtonPress()
     {
         // fire off the appearance gagLocked for publication.
-        if (!_appearance.GagLocked((GagLayer)GagSlotLayer, SelectedLock, _password, _timer, MainHub.UID, true, true))
+        if (!_appearance.GagLocked((GagLayer)GagSlotLayer, SelectedLock, _password, _timer, MainHub.UID, true, false))
             ResetInputs();
 
         ResetSelection();
@@ -49,7 +49,7 @@ public class PadlockGagsClient : PadlockBase<GagSlot>
 
     protected override void OnUnlockButtonPress()
     {
-        if (!_appearance.GagUnlocked((GagLayer)GagSlotLayer, _password, MainHub.UID, true, true))
+        if (!_appearance.GagUnlocked((GagLayer)GagSlotLayer, _password, MainHub.UID, true, false))
             ResetInputs();
 
         ResetSelection();

@@ -82,11 +82,6 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
 
     public List<RestraintSet> GetAllSetsForSearch() => _clientConfigs.StoredRestraintSets;
 
-    public async Task EnableRestraintSet(Guid restraintId, string assignerUID, bool publish)
-        => await _appearanceHandler.SwapOrApplyRestraint(restraintId, assignerUID, publish);
-    public async Task DisableRestraintSet(Guid restraintId, string assignerUID, bool pushToServer)
-        => await _appearanceHandler.DisableRestraintSet(restraintId, assignerUID, pushToServer, true);
-
     public EquipDrawData GetBlindfoldDrawData() => _clientConfigs.GetBlindfoldItem();
     public void SetBlindfoldDrawData(EquipDrawData drawData) => _clientConfigs.SetBlindfoldItem(drawData);
 
@@ -103,9 +98,9 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
             {
                 Logger.LogInformation("Active Set [" + activeSet.Name + "] has expired its lock, unlocking and removing restraint set.", LoggerType.Restraints);
                 if (activeSet.Padlock.ToPadlock() is Padlocks.TimerPadlock)
-                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Client", true, true);
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Client", true, false);
                 else
-                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, true);
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, false);
             }
         }
     }

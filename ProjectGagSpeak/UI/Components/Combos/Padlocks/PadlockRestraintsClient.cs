@@ -36,7 +36,7 @@ public class PadlockRestraintsClient : PadlockBase<RestraintSet>
     protected override void OnLockButtonPress()
     {
         // fire off the appearance gagLocked for publication.
-        if (!_appearance.LockRestraintSet(GetLatestActiveItem().RestraintId, SelectedLock, _password, _timer, MainHub.UID, true, true))
+        if (!_appearance.LockRestraintSet(GetLatestActiveItem().RestraintId, SelectedLock, _password, _timer, MainHub.UID, true, false))
             ResetInputs();
 
         ResetSelection();
@@ -45,7 +45,7 @@ public class PadlockRestraintsClient : PadlockBase<RestraintSet>
     protected override void OnUnlockButtonPress()
     {
         // fire off the appearance gagUnlocked for publication.
-        if (!_appearance.UnlockRestraintSet(GetLatestActiveItem().RestraintId, _password, MainHub.UID, true, true))
+        if (!_appearance.UnlockRestraintSet(GetLatestActiveItem().RestraintId, _password, MainHub.UID, true, false))
             ResetInputs();
 
         ResetSelection();

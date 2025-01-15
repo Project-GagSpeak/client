@@ -119,9 +119,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         }
 
         var hasExpiredTimer = serverData.Padlock.ToPadlock().IsTimerLock() && serverData.Timer < DateTimeOffset.UtcNow;
-        var activeClientSet = _clientConfigs.GetActiveSet();
-
-        if (activeClientSet is not null)
+        if(_clientConfigs.TryGetActiveSet(out var activeClientSet))
             await HandleClientSet(serverData, hasExpiredTimer, activeClientSet);
     }
 
@@ -144,25 +142,25 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private async Task UnlockAndDisableSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
-        _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Password, serverData.Assigner, false, true);
+        _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Password, serverData.Assigner, true, true);
 
         if (_clientConfigs.GagspeakConfig.DisableSetUponUnlock)
         {
             Logger.LogInformation("Disabling Unlocked Set due to Config Setting.", LoggerType.Restraints);
-            await _appearanceHandler.DisableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+            await _appearanceHandler.DisableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, true, true);
         }
     }
 
     private async Task EnableAndRelockSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
-        await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+        await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, true, true);
 
         if (serverData.Padlock != Padlocks.None.ToName())
         {
             Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
             _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
-                serverData.Password, serverData.Timer.GetEndTimeOffsetString(), serverData.Assigner, false, true);
+                serverData.Password, serverData.Timer.GetEndTimeOffsetString(), serverData.Assigner, true, true);
         }
     }
 
@@ -170,16 +168,15 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     {
         // Obtain Client-Side active Restraint Set for this UID.
         // If any are active, unlock and remove them. (time expired / force removal)
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is not null)
+        if (_clientConfigs.TryGetActiveSet(out var activeSet))
         {
             Logger.LogWarning("The Stored Restraint Set was Empty, yet you have one equipped. Unlocking and unequipping.");
             // Unlock Active Set
             if (activeSet.IsLocked())
-                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, false, true);
+                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, true);
 
             // Disable Active Set.
-            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.Assigner, false, true);
+            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.Assigner, true, true);
             // publish the changes.
             Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
@@ -187,8 +184,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
     private void ApplyTraitsIfAny()
     {
-        var set = _clientConfigs.GetActiveSet();
-        if (set is not null)
+        if (_clientConfigs.TryGetActiveSet(out var set))
         {
             // Enable the Hardcore Properties by invoking the ipc call.
             if (set.HasPropertiesForUser(set.EnabledBy))

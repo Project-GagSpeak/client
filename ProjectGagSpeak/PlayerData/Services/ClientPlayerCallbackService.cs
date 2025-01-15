@@ -161,7 +161,7 @@ public class ClientCallbackService
                     // This means the gag is still applied, so we should see if we want to auto remove it.
                     _logger.LogDebug("Gag is still applied. Previous Padlock was: [" + callbackDto.PreviousPadlock.ToName() + "]", LoggerType.Callbacks);
                     if ((_clientConfigs.GagspeakConfig.RemoveGagUponLockExpiration && callbackDto.PreviousPadlock.IsTimerLock()) || callbackDto.PreviousPadlock is Padlocks.MimicPadlock)
-                        await _appearanceManager.GagRemoved(callbackDto.UpdatedLayer, callbackDto.Enactor.UID, true, true);
+                        await _appearanceManager.GagRemoved(callbackDto.UpdatedLayer, callbackDto.Enactor.UID, true, false);
                 }
             }
             else if (callbackDto.Type is GagUpdateType.GagRemoved)
@@ -175,7 +175,7 @@ public class ClientCallbackService
             if (callbackDto.Type is GagUpdateType.GagApplied)
             {
                 _logger.LogDebug("GAG APPLIED callback from server recieved. is already applied. Swapping Gag.", LoggerType.Callbacks);
-                await _appearanceManager.SwapOrApplyGag(callbackDto.UpdatedLayer, cbSlot.GagType.ToGagType(), callbackDto.Enactor.UID, false);
+                await _appearanceManager.SwapOrApplyGag(callbackDto.UpdatedLayer, cbSlot.GagType.ToGagType(), callbackDto.Enactor.UID, true);
                 // log interaction event if it is from a pair.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                     _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.ApplyGag, cbSlot.GagType + " swapped/applied to " + callbackDto.UpdatedLayer)));
@@ -183,7 +183,7 @@ public class ClientCallbackService
             else if (callbackDto.Type is GagUpdateType.GagLocked)
             {
                 _logger.LogDebug("GAG LOCKED callback recieved from server. Expires in : " + (cbSlot.Timer - DateTime.UtcNow).TotalSeconds, LoggerType.Callbacks);
-                _appearanceManager.GagLocked(callbackDto.UpdatedLayer, cbSlot.Padlock.ToPadlock(), cbSlot.Password, cbSlot.Timer.GetEndTimeOffsetString(), callbackDto.Enactor.UID, false, true);
+                _appearanceManager.GagLocked(callbackDto.UpdatedLayer, cbSlot.Padlock.ToPadlock(), cbSlot.Password, cbSlot.Timer.GetEndTimeOffsetString(), callbackDto.Enactor.UID, true, true);
                 // Log the Interaction Event.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                     _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.LockGag, cbSlot.GagType + " locked on " + callbackDto.UpdatedLayer)));
@@ -192,14 +192,14 @@ public class ClientCallbackService
             {
                 _logger.LogDebug("GAG UNLOCKED callback from server recieved.", LoggerType.Callbacks);
                 var currentPass = _playerData.AppearanceData?.GagSlots[(int)callbackDto.UpdatedLayer].Password ?? string.Empty;
-                _appearanceManager.GagUnlocked(callbackDto.UpdatedLayer, currentPass, callbackDto.Enactor.UID, false, true);
+                _appearanceManager.GagUnlocked(callbackDto.UpdatedLayer, currentPass, callbackDto.Enactor.UID, true, true);
                 // Log the Interaction Event.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                     _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockGag, cbSlot.GagType + " unlocked on " + callbackDto.UpdatedLayer)));
             }
             else if (callbackDto.Type is GagUpdateType.GagRemoved)
             {
-                await _appearanceManager.GagRemoved(callbackDto.UpdatedLayer, callbackDto.Enactor.UID, false, true);
+                await _appearanceManager.GagRemoved(callbackDto.UpdatedLayer, callbackDto.Enactor.UID, true, true);
                 // Log the Interaction Event.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                     _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.RemoveGag, "Removed Gag from " + callbackDto.UpdatedLayer)));
@@ -224,7 +224,7 @@ public class ClientCallbackService
                 if(_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
                     if ((_clientConfigs.GagspeakConfig.DisableSetUponUnlock && callbackDto.AffectedItem.ToPadlock().IsTimerLock()))
-                        await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
+                        await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, false);
                 }
             }
             else if (callbackDto.Type is WardrobeUpdateType.RestraintDisabled)
@@ -244,7 +244,7 @@ public class ClientCallbackService
             else if (callbackDto.Type is WardrobeUpdateType.RestraintLocked)
             {
                 _logger.LogDebug("RESTRAINT LOCK Verified by Server Callback. With '" + data.Timer.GetEndTimeOffsetString() + "' remaining", LoggerType.Callbacks);
-                _appearanceManager.LockRestraintSet(data.ActiveSetId, data.Padlock.ToPadlock(), data.Password, data.Timer.GetEndTimeOffsetString(), callbackDto.Enactor.UID, false, true);
+                _appearanceManager.LockRestraintSet(data.ActiveSetId, data.Padlock.ToPadlock(), data.Password, data.Timer.GetEndTimeOffsetString(), callbackDto.Enactor.UID, true, true);
                 // Log the Interaction Event.
                 if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                     _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.LockRestraint, "Locked Set: " + _clientConfigs.GetSetNameByGuid(data.ActiveSetId))));
@@ -255,7 +255,7 @@ public class ClientCallbackService
                 if (_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
                     _logger.LogDebug("RESTRAINT UNLOCK Verified by Server Callback.", LoggerType.Callbacks);
-                    _appearanceManager.UnlockRestraintSet(data.ActiveSetId, activeSet.Password, callbackDto.Enactor.UID, false, true);
+                    _appearanceManager.UnlockRestraintSet(data.ActiveSetId, activeSet.Password, callbackDto.Enactor.UID, true, true);
                     // Log the Interaction Event
                     if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                         _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.UnlockRestraint, _clientConfigs.GetSetNameByGuid(data.ActiveSetId) + " is now unlocked")));
@@ -272,7 +272,7 @@ public class ClientCallbackService
                 if (_clientConfigs.TryGetActiveSet(out var activeSet))
                 {
                     _logger.LogDebug($"{callbackDto.User.UID} has force disabled your restraint set!", LoggerType.Callbacks);
-                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, callbackDto.Enactor.UID, false, true);
+                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, callbackDto.Enactor.UID, true, true);
                     // Log the Interaction Event.
                     if (_pairManager.TryGetNickAliasOrUid(callbackDto.Enactor.UID, out var nick))
                         _mediator.Publish(new EventMessage(new(nick, callbackDto.Enactor.UID, InteractionType.RemoveRestraint, _clientConfigs.GetSetNameByGuid(Guid.Parse(callbackDto.AffectedItem)) + " has been removed")));
