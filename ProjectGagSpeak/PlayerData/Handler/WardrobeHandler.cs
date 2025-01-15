@@ -95,7 +95,7 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
         if (_clientConfigs.TryGetActiveSet(out var activeSet))
         {
             // if the set is locked return.
-            if (activeSet.IsLocked())
+            if (!activeSet.IsLocked())
                 return;
 
             // check if the lock is expired and should be removed, if so, remove it.

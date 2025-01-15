@@ -41,12 +41,17 @@ public class SetPreviewComponent
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
-        // We should use the content region space to define how to center the content that we will draw.
-        var columnWidth = GameIconSize.X + ImGui.GetFrameHeight();
+        // Determine the number of columns and rows. Here, we keep 2 columns as before.
+        const int columns = 2;
+        const int rows = 6; // Adjust based on your needs.
 
-        // Determine the total width of the table.
-        var totalTableWidth = columnWidth * 2 + ImGui.GetStyle().ItemSpacing.X;
-        var totalTableHeight = GameIconSize.Y * 6 + 10f;
+        // Calculate the width and height of each slot dynamically based on the contentRegion size.
+        float slotWidth = (contentRegion.X - ImGui.GetStyle().ItemSpacing.X * (columns - 1)) / columns;
+        float slotHeight = (contentRegion.Y - 10f * (rows - 1)) / rows;
+
+        // Calculate the total table size.
+        var totalTableWidth = slotWidth * columns + ImGui.GetStyle().ItemSpacing.X * (columns - 1);
+        var totalTableHeight = slotHeight * rows + 10f * (rows - 1);
 
         // Calculate the offset to center the table within the content region.
         var offsetX = (contentRegion.X - totalTableWidth) / 2;
@@ -55,7 +60,8 @@ public class SetPreviewComponent
         // Apply the offset to center the table.
         ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + offsetX, ImGui.GetCursorPosY() + offsetY));
 
-        DrawRestraintSetDisplay(set);
+        // Now draw each slot based on the calculated slot size.
+        DrawRestraintSetDisplay(set, slotWidth, slotHeight);
     }
 
     public void DrawAppliedSlot(AppliedSlot appliedSlot)
@@ -75,7 +81,7 @@ public class SetPreviewComponent
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             ImGui.BeginTooltip();
-            DrawRestraintSetDisplay(set);
+            DrawRestraintSetDisplay(set, GameIconSize.X, GameIconSize.Y);
             ImGui.EndTooltip();
         }
     }
@@ -97,46 +103,36 @@ public class SetPreviewComponent
         using (var groupDraw = ImRaii.Group()) DrawStain(refData);
     }
 
-    private void DrawRestraintSetDisplay(RestraintSet set)
+    private void DrawRestraintSetDisplay(RestraintSet set, float iconWidth, float iconHeight)
     {
         // Draw the table.
-        using (var equipIconsTable = ImRaii.Table("equipIconsTable", 2, ImGuiTableFlags.RowBg))
+        using (ImRaii.Table("##equipIconsTable", 2, ImGuiTableFlags.RowBg))
         {
-            if (!equipIconsTable) return;
-            // Create the headers for the table
-            var width = GameIconSize.X + ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X;
-            // setup the columns
-            ImGui.TableSetupColumn("EquipmentSlots", ImGuiTableColumnFlags.WidthFixed, width);
+            // Set up the columns for the table
+            ImGui.TableSetupColumn("EquipmentSlots", ImGuiTableColumnFlags.WidthFixed, iconWidth);
             ImGui.TableSetupColumn("AccessorySlots", ImGuiTableColumnFlags.WidthStretch);
 
-            // draw out the equipment slots
-            ImGui.TableNextRow(); ImGui.TableNextColumn();
+            // Draw the equipment slots
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
 
             foreach (var slot in EquipSlotExtensions.EquipmentSlots)
             {
-                set.DrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+                set.DrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, new Vector2(iconWidth, iconHeight), slot);
                 ImGui.SameLine(0, 3);
-                using (var groupDraw = ImRaii.Group())
-                {
-                    DrawStain(set, slot);
-                }
+                using (ImRaii.Group()) DrawStain(set, slot);
             }
+
+            // Draw the bonus flags (if any)
             foreach (var slot in BonusExtensions.AllFlags)
-            {
-                set.BonusDrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, GameIconSize, slot);
-            }
+                set.BonusDrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, new Vector2(iconWidth, iconHeight), slot);
 
             ImGui.TableNextColumn();
-
-            //draw out the accessory slots
             foreach (var slot in EquipSlotExtensions.AccessorySlots)
             {
-                set.DrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+                set.DrawData[slot].GameItem.DrawIcon(_textureHandler.IconData, new Vector2(iconWidth, iconHeight), slot);
                 ImGui.SameLine(0, 3);
-                using (var groupDraw = ImRaii.Group())
-                {
-                    DrawStain(set, slot);
-                }
+                using (ImRaii.Group()) DrawStain(set, slot);
             }
         }
     }

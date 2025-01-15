@@ -139,7 +139,7 @@ public class RemoteController : RemoteBase
         var CurrentRegion = ImGui.GetContentRegionAvail();
 
         // create a child for the center bar
-        using (var extraDetailsSideTab = ImRaii.Child($"###ExtraDetailsDraw", CurrentRegion, false))
+        using (ImRaii.Child($"###ExtraDetailsDraw", CurrentRegion, false))
         {
             ImGuiUtil.Center("Private Room Chat");
             ImGui.Separator();
@@ -152,7 +152,7 @@ public class RemoteController : RemoteBase
             var region = new Vector2(CurrentRegion.X, chatLogHeight - inputTextHeight);
             using (var chatlogChild = ImRaii.Child($"###ChatlogChildRemote", region, false))
             {
-                PrivateRoomData.PrivateRoomChatlog.PrintChatLogHistory(showMessagePreview, NextChatMessage, region);
+                PrivateRoomData.PrivateRoomChatlog.PrintChatLogHistory(showMessagePreview, NextChatMessage, region, "Remote_Chat");
             }
 
             // Now draw out the input text field

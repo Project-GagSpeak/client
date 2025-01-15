@@ -377,7 +377,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagspeakMediator>()
         .AddSingleton((s) => new DiscoverService(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<DiscoverService>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(), 
-            s.GetRequiredService<PairManager>()))
+            s.GetRequiredService<PairManager>(), s.GetRequiredService<CosmeticService>()))
         .AddSingleton<ShareHubService>()
         .AddSingleton<PermissionPresetLogic>()
         .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
@@ -477,6 +477,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<WindowMediatorSubscriberBase, OrdersUI>()
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
+        .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
         .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<ClientConfigurationManager>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<UiSharedService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, KinkPlateEditorUI>()

@@ -2,9 +2,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using OtterGui.Text;
 using System;
@@ -18,6 +21,7 @@ public class ChatLog
 {
     private readonly MainHub _apiHubMain;
     private readonly GagspeakMediator _mediator;
+    private readonly CosmeticService _cosmetics;
 
     public readonly ChatCircularBuffer<ChatMessage> Messages = new(1000);
     private int MessageCountSinceLastScroll = 0;
@@ -32,10 +36,11 @@ public class ChatLog
     public List<string> UidSilenceList = new List<string>();
     private ChatMessage _lastInteractedMsg = new ChatMessage();
 
-    public ChatLog(MainHub mainHub, GagspeakMediator mediator)
+    public ChatLog(MainHub mainHub, GagspeakMediator mediator, CosmeticService cosmetics)
     {
         _apiHubMain = mainHub;
         _mediator = mediator;
+        _cosmetics = cosmetics;
         TimeCreated = DateTime.Now;
     }
 
@@ -61,9 +66,9 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
     private Vector2 RectMin { get; set; } = Vector2.Zero;
     private Vector2 RectMax { get; set; } = Vector2.Zero;
 
-    public void PrintChatLogHistory(bool showMessagePreview, string previewMessage, Vector2 region)
+    public void PrintChatLogHistory(bool showMessagePreview, string previewMessage, Vector2 region, string windowId)
     {
-        using (ImRaii.Child("##GlobalChatLog" + TimeCreated.ToString(), region, false, ImGuiWindowFlags.NoDecoration))
+        using (ImRaii.Child("##GlobalChatLog"+ windowId + TimeCreated.ToString(), region, false))
         {
             var drawList = ImGui.GetWindowDrawList();
             RectMin = drawList.GetClipRectMin();
@@ -121,49 +126,61 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     "--SEP--Middle-Click to open KinkPlate");
                 ImUtf8.SameLineInner();
 
-                // Get the remaining width available in the current row
-                var remainingWidth = ImGui.GetContentRegionAvail().X;
-                float msgWidth = ImGui.CalcTextSize(x.Message).X;
-                // If the total width is less than available, print in one go
-                if (msgWidth <= remainingWidth)
+                // if the message is :cat_pats: then draw the texture instead of the message.
+                if (x.Message == ":cat_pats:")
                 {
-                    if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
-                        UiSharedService.ColorText(x.Message, CkMistressText);
-                    else
-                        ImGui.TextUnformatted(x.Message);
+                    var secret = _cosmetics.CorePluginTextures[CorePluginTexture.CatpatSecret];
+                    if (secret is { } wrap)
+                    {
+                        ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetTextLineHeight(), ImGui.GetTextLineHeight()));
+                    }
                 }
                 else
                 {
-                    // Calculate how much of the message fits in the available space
-                    string fittingMessage = string.Empty;
-                    string[] words = x.Message.Split(' ');
-                    float currentWidth = 0;
-
-                    // Build the fitting message
-                    foreach (var word in words)
+                    // Get the remaining width available in the current row
+                    var remainingWidth = ImGui.GetContentRegionAvail().X;
+                    float msgWidth = ImGui.CalcTextSize(x.Message).X;
+                    // If the total width is less than available, print in one go
+                    if (msgWidth <= remainingWidth)
                     {
-                        float wordWidth = ImGui.CalcTextSize(word + " ").X;
-
-                        // Check if adding this word exceeds the available width
-                        if (currentWidth + wordWidth > remainingWidth) break; // Stop if it doesn't fit
-                        fittingMessage += word + " ";
-                        currentWidth += wordWidth;
+                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                            UiSharedService.ColorText(x.Message, CkMistressText);
+                        else
+                            ImGui.TextUnformatted(x.Message);
                     }
-
-                    // Print the fitting part of the message
-                    ImUtf8.SameLineInner();
-                    if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
-                        UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
                     else
-                        ImGui.TextUnformatted(fittingMessage.TrimEnd());
+                    {
+                        // Calculate how much of the message fits in the available space
+                        string fittingMessage = string.Empty;
+                        string[] words = x.Message.Split(' ');
+                        float currentWidth = 0;
 
-                    // Draw the remaining part of the message wrapped
-                    string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
-                    if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
-                        UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
-                    else
-                        UiSharedService.TextWrapped(wrappedMessage);
+                        // Build the fitting message
+                        foreach (var word in words)
+                        {
+                            float wordWidth = ImGui.CalcTextSize(word + " ").X;
+
+                            // Check if adding this word exceeds the available width
+                            if (currentWidth + wordWidth > remainingWidth) break; // Stop if it doesn't fit
+                            fittingMessage += word + " ";
+                            currentWidth += wordWidth;
+                        }
+
+                        // Print the fitting part of the message
+                        ImUtf8.SameLineInner();
+                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                            UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
+                        else
+                            ImGui.TextUnformatted(fittingMessage.TrimEnd());
+
+                        // Draw the remaining part of the message wrapped
+                        string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
+                        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
+                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                            UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
+                        else
+                            UiSharedService.TextWrapped(wrappedMessage);
+                    }
                 }
             }
 

@@ -16,6 +16,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
 using Penumbra.GameData.Files.ShaderStructs;
@@ -148,7 +149,6 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                 {
                     using(ImRaii.Group())
                     {
-                        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
                         var originalCursorPos = ImGui.GetCursorPos();
                         // Move the Y pos down a bit, only for drawing this text
                         ImGui.SetCursorPosY(originalCursorPos.Y + 2.5f);
@@ -163,17 +163,22 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                         if(_pairs.TryGetNickAliasOrUid(activeSet.Assigner, out var nick))
                             UiSharedService.ColorText(nick, ImGuiColors.DalamudGrey3);
                         else UiSharedService.ColorText(activeSet.Assigner, ImGuiColors.DalamudGrey3);
-                        // beside draw the remaining time.
-                        if (activeSet.Padlock.ToPadlock().IsTimerLock())
-                        {
-                            ImGui.SameLine();
-                            UiSharedService.ColorText(activeSet.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
-                        }
                     }
                     // draw the padlock dropdown
                     _restraintPadlock.DrawPadlockComboSection(regionSize.X, string.Empty, "Lock/Unlock this restraint.");
 
                     ImGui.Separator();
+                    // beside draw the remaining time.
+                    if (activeSet.Padlock.ToPadlock().IsTimerLock())
+                    {
+                        UiSharedService.ColorText("Time Remaining:", ImGuiColors.DalamudGrey2);
+                        ImGui.SameLine();
+                        UiSharedService.ColorText(activeSet.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+                    }
+                    else
+                    {
+                        ImGuiUtil.DrawDisabledButton("Disable Set", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()), string.Empty, activeSet.IsLocked());
+                    }
                     var activePreview = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X, ImGui.GetContentRegionAvail().Y);
                     _setPreview.DrawRestraintSetPreviewCentered(activeSet, activePreview);
                 }

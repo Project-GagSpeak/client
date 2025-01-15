@@ -1,5 +1,6 @@
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -13,15 +14,17 @@ namespace GagSpeak.PlayerData.PrivateRooms;
 public class PrivateRoom : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
+    private readonly CosmeticService _cosmetics;
     private readonly ParticipantFactory _participantFactory;
     private readonly ConcurrentDictionary<string, Participant> _participants; // UserUID, Participant
     // create a lazy list of the participants in the room.
     private Lazy<List<Participant>> _directParticipantsInternal;
 
-    public PrivateRoom(ILogger<PrivateRoom> logger, GagspeakMediator mediator,
-        MainHub mainHub, ParticipantFactory participantFactory, RoomInfoDto roomInfo) : base(logger, mediator)
+    public PrivateRoom(ILogger<PrivateRoom> logger, GagspeakMediator mediator, MainHub mainHub,
+        CosmeticService cosmetics, ParticipantFactory participantFactory, RoomInfoDto roomInfo) : base(logger, mediator)
     {
         _apiHubMain = mainHub;
+        _cosmetics = cosmetics;
         _participantFactory = participantFactory;
         _participants = new(StringComparer.Ordinal);
         LastReceivedRoomInfo = roomInfo;
@@ -33,7 +36,7 @@ public class PrivateRoom : DisposableMediatorSubscriberBase
         }
 
         // set the chat log up.
-        PrivateRoomChatlog = new ChatLog(_apiHubMain, Mediator);
+        PrivateRoomChatlog = new ChatLog(_apiHubMain, Mediator, _cosmetics);
 
         // add a dummy message to it.
         PrivateRoomChatlog.AddMessage(new ChatMessage(new("System"), "System", "Welcome to the room!"));
