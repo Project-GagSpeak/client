@@ -155,19 +155,21 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                         // Draw the text with the desired color
                         UiSharedService.ColorText(activeSet.Name, ImGuiColors.DalamudWhite2);
                     }
-                    using(ImRaii.Group())
+                    if(activeSet.IsLocked())
                     {
-                        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2.5f);
-                        UiSharedService.ColorText("Locked By:", ImGuiColors.DalamudGrey2);
-                        ImGui.SameLine();
-                        if(_pairs.TryGetNickAliasOrUid(activeSet.Assigner, out var nick))
-                            UiSharedService.ColorText(nick, ImGuiColors.DalamudGrey3);
-                        else UiSharedService.ColorText(activeSet.Assigner, ImGuiColors.DalamudGrey3);
+                        using (ImRaii.Group())
+                        {
+                            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2.5f);
+                            UiSharedService.ColorText("Locked By:", ImGuiColors.DalamudGrey2);
+                            ImGui.SameLine();
+                            if (_pairs.TryGetNickAliasOrUid(activeSet.Assigner, out var nick))
+                                UiSharedService.ColorText(nick, ImGuiColors.DalamudGrey3);
+                            else UiSharedService.ColorText(activeSet.Assigner, ImGuiColors.DalamudGrey3);
+                        }
                     }
                     // draw the padlock dropdown
                     _restraintPadlock.DrawPadlockComboSection(regionSize.X, string.Empty, "Lock/Unlock this restraint.");
 
-                    ImGui.Separator();
                     // beside draw the remaining time.
                     if (activeSet.Padlock.ToPadlock().IsTimerLock())
                     {
@@ -177,9 +179,11 @@ public class RestraintSetManager : DisposableMediatorSubscriberBase
                     }
                     else
                     {
-                        ImGuiUtil.DrawDisabledButton("Disable Set", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()), string.Empty, activeSet.IsLocked());
+                        if (ImGuiUtil.DrawDisabledButton("Disable Set", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()), string.Empty, activeSet.IsLocked()))
+                            _ = _appearance.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, true);
                     }
-                    var activePreview = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X, ImGui.GetContentRegionAvail().Y);
+                    ImGui.Separator();
+                    var activePreview = ImGui.GetContentRegionAvail() - ImGui.GetStyle().WindowPadding;
                     _setPreview.DrawRestraintSetPreviewCentered(activeSet, activePreview);
                 }
                 else
