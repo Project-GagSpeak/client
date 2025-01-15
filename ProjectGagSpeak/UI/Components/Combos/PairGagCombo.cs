@@ -30,7 +30,7 @@ public sealed class GagComboPair : GagspeakComboButtonBase<GagType>
     }
 
     // override the method to extract items by extracting all gagTypes.
-    protected override IReadOnlyList<GagType> ExtractItems() => Enum.GetValues<GagType>();
+    protected override IReadOnlyList<GagType> ExtractItems() => Enum.GetValues<GagType>().Except(new[] { GagType.None }).ToList();
 
     // we need to override the toItemString here.
     protected override string ToItemString(GagType item) => item.GagName();

@@ -7,7 +7,6 @@ using GagSpeak.StateManagers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.UI.Components.Combos;
 
@@ -33,7 +32,7 @@ public sealed class GagComboClient : GagspeakComboBase<GagType>
     }
 
     // override the method to extract items by extracting all gagTypes.
-    protected override IReadOnlyList<GagType> ExtractItems() => Enum.GetValues<GagType>();
+    protected override IReadOnlyList<GagType> ExtractItems() => Enum.GetValues<GagType>().Where(x => x != GagType.None).ToList();
     protected override GagType CurrentActiveItem() => _gagData.AppearanceData?.GagSlots[GagSlotLayer].GagType.ToGagType() ?? GagType.None;
     protected override string ToItemString(GagType item) => item.GagName();
 
@@ -60,7 +59,7 @@ public sealed class GagComboClient : GagspeakComboBase<GagType>
             return;
 
         // apply update
-        await _appearance.GagApplied((GagLayer)GagSlotLayer, newGagSelection, MainHub.UID, true, false);
+        await _appearance.SwapOrApplyGag((GagLayer)GagSlotLayer, newGagSelection, MainHub.UID, false);
     }
 
     protected override async void OnClearActiveItem()

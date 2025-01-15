@@ -636,14 +636,14 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         {
             Logger.LogError("Failure to obtain Data after reconnection to GagSpeakHub-Main. Reason: " + ex);
             // disconnect if a non-websocket related issue, otherwise, reconnect.
-            if (ex is not System.Net.WebSockets.WebSocketException)
-            {
-                Logger.LogWarning("Disconnecting from GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Non-Websocket Reason: " + ex);
+            if (ex is not System.Net.WebSockets.WebSocketException || ex is not TimeoutException)
+                {
+                Logger.LogWarning("Disconnecting from GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
                 await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
             }
             else
             {
-                Logger.LogWarning("Reconnecting to GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket Reason: " + ex);
+                Logger.LogWarning("Reconnecting to GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
                 await Reconnect().ConfigureAwait(false);
             }
         }

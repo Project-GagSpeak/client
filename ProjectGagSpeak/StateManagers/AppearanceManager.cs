@@ -298,7 +298,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             _clientConfigs.SaveWardrobe();
 
             // recalculate appearance and refresh.
-            await RecalcAndReload(true);
+            await RecalcAndReload(true, moodlesToRemove);
 
             // Handle achievement triggers.
             bool auctionedOffSatisfied = setRef.EnabledBy != MainHub.UID && enactor != MainHub.UID && enactor != setRef.EnabledBy;
