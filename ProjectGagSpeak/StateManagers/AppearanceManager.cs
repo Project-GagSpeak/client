@@ -583,7 +583,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     private bool UpdateStateForUnlocking<T>(T item, string pass, string enactor, bool isForced) where T : IPadlockable
     {
         // if it is not forced, require the validation process.
-        if (isForced is false)
+        if (isForced is false && enactor != "Timer")
         {
             var validationResult = GsPadlockEx.ValidateUnlockUpdate(item, MainHub.PlayerUserData, pass, enactor);
             if (validationResult is not PadlockReturnCode.Success)

@@ -97,10 +97,7 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
             if (activeSet.Padlock.ToPadlock().IsTimerLock() && activeSet.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
             {
                 Logger.LogInformation("Active Set [" + activeSet.Name + "] has expired its lock, unlocking and removing restraint set.", LoggerType.Restraints);
-                if (activeSet.Padlock.ToPadlock() is Padlocks.TimerPadlock)
-                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Client", true, false);
-                else
-                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, false);
+                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Timer", true, false);
             }
         }
     }
