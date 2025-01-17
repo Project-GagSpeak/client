@@ -231,7 +231,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 
         // Finally, we should fire to our achievement manager, if we have marked for us to.
         if (triggerAchievement)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, setRef, padlock, true, enactor);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
 
         // There will never be any case where we push publications if forceUpdate is true. Only every publish after validations.
         if (forced is false)
@@ -259,8 +259,10 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         if (triggerAchievement && soldSlaveSatisfied)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
 
+        // Actual Padlocks Enum instance for the Achievement
+        Enum.TryParse<Padlocks>(prevLock.Replace(" ", ""), true, out var prevPadlock); // Gives out Padlocks.None if not found.
         if (triggerAchievement)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, setRef, prevLock, false, enactorUid);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevPadlock, false, enactorUid);
 
         // push to server if not a callback.
         if (forced is false)
