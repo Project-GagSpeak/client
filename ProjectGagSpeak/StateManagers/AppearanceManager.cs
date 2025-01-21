@@ -259,10 +259,8 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         if (triggerAchievement && soldSlaveSatisfied)
             UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
 
-        // Actual Padlocks Enum instance for the Achievement
-        Enum.TryParse<Padlocks>(prevLock.Replace(" ", ""), true, out var prevPadlock); // Gives out Padlocks.None if not found.
         if (triggerAchievement)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevPadlock, false, enactorUid);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevLock.ToPadlock(), false, enactorUid);
 
         // push to server if not a callback.
         if (forced is false)
