@@ -199,7 +199,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             // Handle if we should perform glamour applications for these.(for now forced is included for safewords to work, and will be removed later during glamourer rework)
             if (_playerData.GlobalPerms.RestraintSetAutoEquip || forced)
             {
-                // Set associated mods.
+                // Set associated mods in penumbra.
                 await PenumbraModsToggle(NewState.Enabled, setRef.AssociatedMods);
                 // recalculate appearance and refresh.
                 await RecalcAndReload(false);
@@ -670,7 +670,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies associated mods to the client when a Restraint or Cursed Item is toggled. </summary>
-    private Task PenumbraModsToggle(NewState state, List<AssociatedMod> associatedMods)
+    public Task PenumbraModsToggle(NewState state, List<AssociatedMod> associatedMods)
     {
         try
         {
@@ -690,9 +690,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             {
                 // For each of the associated mods, if we marked it to disable when inactive, disable it.
                 foreach (var associatedMod in associatedMods)
-                    _ipcManager.Penumbra.ModifyModState(associatedMod,
-                        modState: NewState.Disabled,
-                        adjustPriorityOnly: associatedMod.DisableWhenInactive ? false : true);
+                    _ipcManager.Penumbra.ModifyModState(associatedMod, modState: NewState.Disabled);
 
                 // if any of those mods wanted us to perform a redraw, then do so now. (PlayerObjectIndex is always 0)
                 if (associatedMods.Any(x => x.RedrawAfterToggle))
