@@ -201,6 +201,8 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             {
                 // Set associated mods in penumbra.
                 await PenumbraModsToggle(NewState.Enabled, setRef.AssociatedMods);
+                // Check for cursed loot, just in case one of them is using the same mod.
+                await CheckCursedLootForMods();
                 // recalculate appearance and refresh.
                 await RecalcAndReload(false);
             }
@@ -280,6 +282,8 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 
             // Remove temporarily applied mods.
             await PenumbraModsToggle(NewState.Disabled, setRef.AssociatedMods);
+            // Check for cursed loot, just incase a restraint set disables a mod needed by cursed loot.
+            await CheckCursedLootForMods();
 
             // Remove any bound moodles to the set.
             var moodlesToRemove = RemoveMoodles(setRef);
@@ -558,6 +562,23 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         });
     }
     #endregion Updates
+
+    // <summery>
+    // Checks current cursed loot for mods that need to be applied after connection dto has been received.
+    // </summery>
+    public async Task CheckCursedLootForMods()
+    {
+        var cursedItems = _clientConfigs.CursedLootConfig.CursedLootStorage.CursedItems
+            .Where(x => x.AppliedTime != DateTimeOffset.MinValue && x.ReleaseTime > DateTimeOffset.UtcNow) // Disregard loot that has already fallen off.
+            .OrderBy(x => x.AppliedTime) // I keep this here to make sure mods settings stay as they should be during RecalculateAppearance later on
+            .ToList();
+        Logger.LogDebug("Found " + cursedItems.Count + " Cursed Loot to enable mods for.", LoggerType.AppearanceState);
+
+        foreach (var cursedItem in cursedItems)
+        {
+            await PenumbraModsToggle(NewState.Enabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
+        }
+    }
 
     #region Helpers
     private bool UpdateStateForLocking<T>(T item, Padlocks lockType, string pass, string timer, string enactor, bool isForced) where T : IPadlockable
