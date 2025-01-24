@@ -81,6 +81,10 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         // Upon connection all mods should be resynchronized with the acctive restraints/gags.
         // This is primarily to ensure that the mods can be accurately synchronized between multiple characters.
         _ipcManager.Penumbra.ClearAllTemporaryMods();
+
+        // Call AppearanceManager to reanable mods for cursed loot
+        await _appearanceHandler.CheckCursedLootForMods();
+
         // Handle it accordingly.
         if (serverExpectsActiveSet)
         {
