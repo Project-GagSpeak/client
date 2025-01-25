@@ -325,7 +325,9 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         var clonedSet = setToClone.DeepCloneSet();
         clonedSet.Name = EnsureUniqueName(clonedSet.Name, WardrobeConfig.WardrobeStorage.RestraintSets, set => set.Name);
         _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Add(clonedSet);
-        _wardrobeConfig.Save();
+        _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Sort(
+            (RestraintSet a, RestraintSet b) => return a.Name.CompareTo(b.Name)
+        );
         Logger.LogInformation("Restraint Set added to wardrobe", LoggerType.Restraints);
         // publish to mediator
         Mediator.Publish(new PlayerCharStorageUpdated());
@@ -337,7 +339,9 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         newSet.Name = EnsureUniqueName(newSet.Name, WardrobeConfig.WardrobeStorage.RestraintSets, set => set.Name);
 
         _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Add(newSet);
-        _wardrobeConfig.Save();
+        _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Sort(
+            (RestraintSet a, RestraintSet b) => return a.Name.CompareTo(b.Name)
+        );
         Logger.LogInformation("Restraint Set added to wardrobe", LoggerType.Restraints);
         // publish to mediator
         Mediator.Publish(new PlayerCharStorageUpdated());
@@ -353,8 +357,10 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
                 newSet.Name += "(copy)";
             }
             _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Add(newSet);
+            _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Sort(
+            (RestraintSet a, RestraintSet b) => return a.Name.CompareTo(b.Name)
+        );
         }
-        _wardrobeConfig.Save();
         Logger.LogInformation("Added " + newSets.Count + " Restraint Sets to wardrobe", LoggerType.Restraints);
         // publish to mediator
         Mediator.Publish(new PlayerCharStorageUpdated());
@@ -364,11 +370,16 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     internal void RemoveRestraintSet(int setIndex)
     {
         _wardrobeConfig.Current.WardrobeStorage.RestraintSets.RemoveAt(setIndex);
+        _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Sort(
+            (RestraintSet a, RestraintSet b) => return a.Name.CompareTo(b.Name)
+        );
         _wardrobeConfig.Save();
         Mediator.Publish(new PlayerCharStorageUpdated());
     }
 
-    internal void SaveWardrobe() => _wardrobeConfig.Save();
+    internal void SaveWardrobe() {
+        _wardrobeConfig.Save();
+    }
 
     internal EquipDrawData GetBlindfoldItem() => WardrobeConfig.WardrobeStorage.BlindfoldInfo.BlindfoldItem;
 
@@ -380,7 +391,13 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     internal void UpdateRestraintSet(RestraintSet updatedSet, int idxOfOriginal)
     {
+        bool name_changed = !WardrobeConfig.WardrobeStorage.RestraintSets[idxOfOriginal].Name.Equals(updatedSet.Name);
         WardrobeConfig.WardrobeStorage.RestraintSets[idxOfOriginal] = updatedSet;
+        if (name_changed) {
+            _wardrobeConfig.Current.WardrobeStorage.RestraintSets.Sort(
+                (RestraintSet a, RestraintSet b) => return a.Name.CompareTo(b.Name)
+            );
+        }
         _wardrobeConfig.Save();
         Mediator.Publish(new PlayerCharStorageUpdated());
         // Invoke the restraint updated achievement.
