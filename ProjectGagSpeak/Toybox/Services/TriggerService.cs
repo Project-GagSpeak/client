@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
 using GagSpeak.ChatMessages;
@@ -25,6 +26,10 @@ public class TriggerService : DisposableMediatorSubscriberBase
     private readonly ClientMonitorService _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly VibratorService _vibeService;
+    private const int MAX_PENDING_TRIGGERS = 10;
+    private const int TRIGGER_COOLDOWN_MS = 500;
+    private CancellationTokenSource _dispatchQueueCancellation = new();
+    private Channel<Trigger> _pendingTriggersChannel;
 
     public TriggerService(ILogger<TriggerService> logger, GagspeakMediator mediator,
         ActionExecutor actionExecuter, ToyboxFactory playerMonitorFactory,
@@ -39,6 +44,8 @@ public class TriggerService : DisposableMediatorSubscriberBase
         _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
         _vibeService = vibeService;
+        _pendingTriggersChannel = Channel.CreateUnbounded<Trigger>();
+        _ = Task.Run(DispatchPendingTriggers, _dispatchQueueCancellation.Token);
 
         ActionEffectMonitor.ActionEffectEntryEvent += OnActionEffectEvent;
 
@@ -53,11 +60,60 @@ public class TriggerService : DisposableMediatorSubscriberBase
     private bool ShouldProcessActionEffectHooks => _clientConfigs.ActiveTriggers.Any(x => x.Type is TriggerKind.SpellAction);
     public VibratorMode CurrentVibratorModeUsed => _clientConfigs.GagspeakConfig.VibratorMode;
 
+    /// <summary>
+    /// Inserts a trigger into the _pendingTriggersChannel for later dispatch by `DispatchPendingTriggers` task.
+    /// </summary>
+    /// <param name="trigger"> The trigger to be dispatched </param>
+    private void PushTrigger(Trigger trigger) {
+        Logger.LogTrace("Push Trigger: " + trigger.ToString(), LoggerType.ToyboxTriggers);
+        
+        if (_pendingTriggersChannel.Reader.CanCount && _pendingTriggersChannel.Reader.Count > MAX_PENDING_TRIGGERS)
+        {
+            // Log the too many triggers enqueued error and return
+            Logger.LogTrace("There are currently the max limit of queued items allowed, disgarding trigger", LoggerType.ToyboxTriggers);
+            return;
+        }
+        _pendingTriggersChannel.Writer.TryWrite(trigger);
+    }
+    /// <summary>
+    /// This task is used to check for and 
+    /// </summary>
+    private async void DispatchPendingTriggers()
+    {
+        Logger.LogTrace("CheckTriggerChannel started", LoggerType.ToyboxTriggers);
+        // This task should run forever asynchronously, first waiting for when the channel has data to be read, then draining the channel based on the cooldown.
+        while (!_dispatchQueueCancellation.IsCancellationRequested)
+        {
+            var has_data = await _pendingTriggersChannel.Reader.WaitToReadAsync();
+            
+            if (has_data)
+            {
+                Trigger? trigger;
+                while (_pendingTriggersChannel.Reader.TryRead(out trigger)) {
+                    Logger.LogTrace("Trigger Found dispatching", LoggerType.ToyboxTriggers);
+                    ExecuteTriggerAction(trigger!);
+                    // Internal rate limiter.
+                    await Task.Delay(TRIGGER_COOLDOWN_MS, _dispatchQueueCancellation.Token);
+                }
+            }
+            else
+            {
+                Logger.LogWarning("CheckTriggerChannel has closed and will have no further messages closing task", LoggerType.ToyboxTriggers);
+                return;
+            }
+        }
+
+        Logger.LogTrace("CheckTriggerChannel exited", LoggerType.ToyboxTriggers);
+    }
+
     protected override void Dispose(bool disposing)
     {
         _eventManager.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintApply);
         _eventManager.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock);
         ActionEffectMonitor.ActionEffectEntryEvent -= OnActionEffectEvent;
+        _dispatchQueueCancellation.Cancel();
+        _dispatchQueueCancellation.Dispose();
+        _pendingTriggersChannel.Writer.Complete();
         base.Dispose(disposing);
     }
 
@@ -128,7 +184,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
                 // Execute trigger action if all conditions are met
                 Logger.LogDebug($"{actionEffect.Type} Action Triggered", LoggerType.ToyboxTriggers);
-                ExecuteTriggerAction(trigger);
+                PushTrigger(trigger);
             }
             catch (Exception ex)
             {
@@ -155,7 +211,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
         // execute this trigger action.
         if (highestPriorityTrigger != null)
-            ExecuteTriggerAction(highestPriorityTrigger);
+            PushTrigger(highestPriorityTrigger);
     }
 
     private void CheckGagStateTriggers(GagType gagType, NewState newState)
@@ -176,7 +232,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
         // execute this trigger action.
         if (highestPriorityTrigger != null)
-            ExecuteTriggerAction(highestPriorityTrigger);
+            PushTrigger(highestPriorityTrigger);
     }
 
     public async void ExecuteTriggerAction(Trigger trigger)
@@ -293,7 +349,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
                     }
 
                     if (isValid)
-                        ExecuteTriggerAction(trigger);
+                        PushTrigger(trigger);
                 }
             }
             // update the HP regardless of change.
