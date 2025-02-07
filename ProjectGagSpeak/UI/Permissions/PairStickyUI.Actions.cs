@@ -21,7 +21,6 @@ namespace GagSpeak.UI.Permissions;
 /// </summary>
 public partial class PairStickyUI
 {
-    public InteractionType Opened = InteractionType.None;
     public void DrawPairActionFunctions()
     {
         /* ----------- GLOBAL SETTINGS ----------- */
@@ -84,7 +83,7 @@ public partial class PairStickyUI
         {
             if (_uiShared.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
             {
-                _displayHandler.OpenProfile(StickyPair);
+                Mediator.Publish(new KinkPlateOpenStandaloneMessage(StickyPair));
                 ImGui.CloseCurrentPopup();
             }
             UiSharedService.AttachToolTip("Opens the profile for this user in a new window");

@@ -41,12 +41,6 @@ public class MainWindowUI : WindowMediatorSubscriberBase
     public string _pairToAdd = string.Empty; // the pair to add
     public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
 
-    // Attributes related to the drawing of the whitelist / contacts / pair list
-    private Pair? _lastAddedUser;
-    private string _lastAddedUserComment = string.Empty;
-    // If we should draw sticky perms for the currently selected user pair.
-    private bool _showModalForUserAddition;
-
     public MainWindowUI(ILogger<MainWindowUI> logger, GagspeakMediator mediator,
         UiSharedService uiShared, MainHub apiHubMain, GagspeakConfigService configService,
         PairManager pairManager, ServerConfigurationManager serverConfigs, MainUiHomepage homepage,
@@ -135,7 +129,7 @@ public class MainWindowUI : WindowMediatorSubscriberBase
         WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
 
         // Default to open if the user desires for it to be open.
-        Toggle();
+        if(_configService.Current.OpenMainUiOnStartup) Toggle();
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);

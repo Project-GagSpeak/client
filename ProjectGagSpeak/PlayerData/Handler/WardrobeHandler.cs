@@ -1,12 +1,11 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI;
+using GagspeakAPI.Extensions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Handlers;
 /// <summary>
@@ -33,12 +32,18 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedSet());
     }
 
-    public RestraintSet? ActiveSet => _clientConfigs.GetActiveSet();
     public RestraintSet? ClonedSetForEdit { get; private set; } = null;
     public bool WardrobeEnabled => !_playerManager.CoreDataNull && _playerManager.GlobalPerms!.WardrobeEnabled;
     public bool RestraintSetsEnabled => !_playerManager.CoreDataNull && _playerManager.GlobalPerms!.RestraintSetAutoEquip;
     public int RestraintSetCount => _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets.Count;
 
+    public bool TryGetActiveSet([MaybeNullWhen(false)] out RestraintSet activeSet)
+    {
+        _clientConfigs.TryGetActiveSet(out activeSet);
+        return activeSet != null;
+    }
+
+    public RestraintSet? GetActiveSet() => _clientConfigs.GetActiveSet();
     public void StartEditingSet(RestraintSet set)
     {
         ClonedSetForEdit = set.DeepCloneSet();
@@ -47,10 +52,10 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
     }
 
     public void CancelEditingSet() => ClonedSetForEdit = null;
-    
+
     public void SaveEditedSet()
     {
-        if(ClonedSetForEdit is null) 
+        if (ClonedSetForEdit is null)
             return;
         // locate the restraint set that contains the matching guid.
         var setIdx = _clientConfigs.GetSetIdxByGuid(ClonedSetForEdit.RestraintId);
@@ -76,58 +81,27 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
     }
 
     public List<RestraintSet> GetAllSetsForSearch() => _clientConfigs.StoredRestraintSets;
-    public RestraintSet GetRestraintSet(int idx) => _clientConfigs.GetRestraintSet(idx);
 
-    public async Task EnableRestraintSet(Guid id, string assignerUID, bool pushToServer = true)
-    {
-        if (!WardrobeEnabled || !RestraintSetsEnabled) {
-            Logger.LogInformation("Wardrobe or Restraint Sets are disabled, cannot enable restraint set.", LoggerType.Restraints);
-            return;
-        }
-
-        // check to see if there is any active set currently. If there is, disable it.
-        if (ActiveSet is not null)
-        {
-            Logger.LogInformation("Disabling Active Set ["+ActiveSet.Name+"] before enabling new set.", LoggerType.Restraints);
-            await _appearanceHandler.DisableRestraintSet(ActiveSet.RestraintId, assignerUID); // maybe add push to server here to prevent double send?
-        }
-        // Enable the new set.
-        await _appearanceHandler.EnableRestraintSet(id, assignerUID, pushToServer);
-    }
-    public async Task DisableRestraintSet(Guid id, string assignerUID, bool pushToServer = true)
-    {
-        if (!WardrobeEnabled || !RestraintSetsEnabled) 
-        {
-            Logger.LogInformation("Wardrobe or Restraint Sets are disabled, cannot disable restraint set.", LoggerType.Restraints);
-            return;
-        }
-        await _appearanceHandler.DisableRestraintSet(id, assignerUID, pushToServer);
-    }
-
-    public void LockRestraintSet(Guid id, Padlocks padlock, string pwd, DateTimeOffset endLockTimeUTC, string assignerUID)
-        => _appearanceHandler.LockRestraintSet(id, padlock, pwd, endLockTimeUTC, assignerUID).ConfigureAwait(false);
-
-    public void UnlockRestraintSet(Guid id, string lockRemoverUID) 
-        => _appearanceHandler.UnlockRestraintSet(id, lockRemoverUID).ConfigureAwait(false);
-
-    public int GetActiveSetIndex() => _clientConfigs.GetActiveSetIdx();
-    public int GetRestraintSetIndexByName(string setName) => _clientConfigs.GetRestraintSetIdxByName(setName);
-    public List<Guid> GetAssociatedMoodles(int setIndex) => _clientConfigs.WardrobeConfig.WardrobeStorage.RestraintSets[setIndex].AssociatedMoodles;
     public EquipDrawData GetBlindfoldDrawData() => _clientConfigs.GetBlindfoldItem();
     public void SetBlindfoldDrawData(EquipDrawData drawData) => _clientConfigs.SetBlindfoldItem(drawData);
 
     private void CheckLockedSet()
     {
-        if (ActiveSet == null) return;
-
-        // we have an active set, but dont check if it is not locked. We should keep it on if it is simply active.
-        if (!ActiveSet.Locked) return;
-
-        // check if the locked time minus the current time in UTC is less than timespan.Zero ... if it is, we should push an unlock set update.
-        if (GenericHelpers.TimerPadlocks.Contains(ActiveSet.LockType) && ActiveSet.LockedUntil - DateTimeOffset.UtcNow <= TimeSpan.Zero)
+        if (_clientConfigs.TryGetActiveSet(out var activeSet))
         {
-            _appearanceHandler.UnlockRestraintSet(ActiveSet.RestraintId, ActiveSet.LockedBy, fromTimer: true).ConfigureAwait(false);
-            Logger.LogInformation("Active Set ["+ActiveSet.Name+"] has expired its lock, unlocking and removing restraint set.", LoggerType.Restraints);
+            // if the set is locked return.
+            if (!activeSet.IsLocked())
+                return;
+
+            // check if the lock is expired and should be removed, if so, remove it.
+            if (activeSet.Padlock.ToPadlock().IsTimerLock() && activeSet.Timer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
+            {
+                Logger.LogInformation("Active Set [" + activeSet.Name + "] has expired its lock, unlocking and removing restraint set.", LoggerType.Restraints);
+                if (activeSet.Padlock.ToPadlock() is Padlocks.TimerPadlock)
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, "Client", true, false);
+                else
+                    _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, false);
+            }
         }
     }
 }

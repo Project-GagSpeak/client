@@ -3,10 +3,9 @@ using Dalamud.Interface.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Handlers;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -20,47 +19,44 @@ namespace GagSpeak.UI.Permissions;
 
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
-    protected readonly IdDisplayHandler _displayHandler;
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _playerManager;
-    private readonly PermActionsComponents _permActions;
+    private readonly ClientData _clientData;
+    private readonly PairCombos _pairCombos;
     private readonly PiShockProvider _shockProvider;
     private readonly PairManager _pairManager;
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitorService _clientService;
     private readonly MoodlesService _moodlesService;
-    private readonly PermissionPresetService _presetService;
+    private readonly PermissionPresetLogic _presetService;
     private readonly UiSharedService _uiShared;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
-        StickyWindowType drawType, IdDisplayHandler displayHandler, MainHub apiHubMain, 
-        ClientData playerManager, PermActionsComponents permActions, 
-        PiShockProvider shockProvider, PairManager pairManager, ClientConfigurationManager clientConfigs,
-        ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetService presetService,
+        StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, ClientData clientDat,
+        PairCombos pairCombos, PiShockProvider shockProvider, PairManager pairManager,
+        ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetLogic presets,
         UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")
     {
-        _displayHandler = displayHandler;
         _apiHubMain = apiHubMain;
-        _playerManager = playerManager;
-        _permActions = permActions;
+        _clientData = clientDat;
+        _pairCombos = pairCombos;
         _shockProvider = shockProvider;
         _pairManager = pairManager;
-        _clientConfigs = clientConfigs;
         _clientService = clientService;
         _moodlesService = moodlesService;
-        _presetService = presetService;
+        _presetService = presets;
         _uiShared = uiShared;
+        PairCombos.Opened = InteractionType.None;
 
         StickyPair = pairToDrawFor; // set the pair we're drawing for
         DrawType = drawType; // set the type of window we're drawing
 
-        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar
-        | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
+        _pairCombos.UpdateCombosForPair(StickyPair);
 
+        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar
+            | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
         IsOpen = true; // open the window
     }
 
-    private CharaIPCData? LastCreatedCharacterData => _playerManager.LastIpcData;
+    private CharaIPCData? LastCreatedCharacterData => _clientData.LastIpcData;
     public Pair StickyPair { get; init; } // pair we're drawing the sticky permissions for.
     private UserGlobalPermissions PairGlobals => StickyPair.PairGlobals;
     private UserPairPermissions OwnPerms => StickyPair.OwnPerms;
@@ -69,9 +65,8 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     public StickyWindowType DrawType = StickyWindowType.None; // type of window drawn.
     public float WindowMenuWidth { get; private set; } = -1; // width of the window menu.
     public float IconButtonTextWidth => WindowMenuWidth - ImGui.GetFrameHeightWithSpacing();
-    public string PairNickOrAliasOrUID => StickyPair.GetNickname() ?? StickyPair.UserData.AliasOrUID;
+    public string PairNickOrAliasOrUID => StickyPair.GetNickAliasOrUid();
     public string PairUID => StickyPair.UserData.UID;
-
     protected override void PreDrawInternal()
     {
         var position = _uiShared.LastMainUIWindowPosition;
@@ -176,8 +171,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     }
 
     #endregion ErrorHandler
-
-
 
     protected override void PostDrawInternal() { }
 

@@ -1,7 +1,5 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.InterfaceConverters;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
@@ -14,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
+using ImPlotNET;
 using OtterGui;
 
 namespace GagSpeak.StateManagers;
@@ -31,7 +30,7 @@ public sealed class ActionExecutor
 
     public ActionExecutor(ILogger<ActionExecutor> logger, ClientData playerData,
         AppearanceManager appearanceManager, PairManager pairs,
-        ClientConfigurationManager clientConfigs, IpcCallerMoodles moodlesIpc, 
+        ClientConfigurationManager clientConfigs, IpcCallerMoodles moodlesIpc,
         VibratorService vibeService)
     {
         _logger = logger;
@@ -90,15 +89,13 @@ public sealed class ActionExecutor
         remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
         // verify permissions are satisfied.
         var executerUID = performerUID;
-        var sits = false;
-        var motions = false;
-        var all = false;
+        
+        var aliasAllowed = false;
         // if performer is self, use global perms, otherwise, use pair perms.
-        if(performerUID == MainHub.UID)
+        if (performerUID == MainHub.UID)
         {
-            sits = _playerData.GlobalPerms?.GlobalAllowSitRequests ?? false;
-            motions = _playerData.GlobalPerms?.GlobalAllowMotionRequests ?? false;
-            all = _playerData.GlobalPerms?.GlobalAllowAllRequests ?? false;
+            // This method is _only called_ from an alias
+            aliasAllowed = _playerData.GlobalPerms?.GlobalAllowAliasRequests ?? false;
         }
         else
         {
@@ -109,14 +106,13 @@ public sealed class ActionExecutor
                 return false;
             }
 
-            matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool all2, out char startChar, out char endChar);
-            sits = sits2;
-            motions = motions2;
-            all = all2;
+            matchedPair.OwnPerms.PuppetPerms(out bool sits2, out bool motions2, out bool alias2, out bool all2, out char startChar, out char endChar);
+            aliasAllowed = alias2;
         }
 
-        // only apply it if the message meets the criteria for the sender.
-        if (MeetsSettingCriteria(sits, motions, all, remainingMessage))
+        // Only apply this if it either originated from a trigger (or alias) 
+        // Or it it meets the various criteria for the sender.
+        if (aliasAllowed)
         {
             UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
             ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
@@ -146,7 +142,7 @@ public sealed class ActionExecutor
             var availableSlot = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
             // apply the gag to that slot.
             _logger.LogInformation("ActionExecutorGS is applying Gag Type " + gagAction.GagType + " to layer " + (GagLayer)availableSlot, LoggerType.GagHandling);
-            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, isSelfApplied: true);
+            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, MainHub.UID, true, false);
             return true;
         }
         else if (gagAction.NewState is NewState.Disabled)
@@ -155,26 +151,22 @@ public sealed class ActionExecutor
             if (gagAction.GagType is GagType.None)
             {
                 // remove the outermost gag (target the end of the list and move to the start)
-                var outermostGagLayer = _playerData.AppearanceData.GagSlots.ToList().IndexOf(x => x.GagType.ToGagType() is GagType.None);
-                if (outermostGagLayer is not -1)
+                var idx = _playerData.AppearanceData.FindOutermostActive();
+                if (idx is not -1)
                 {
-                    // dont allow removing locked gags.
-                    if (_playerData.AppearanceData.GagSlots[outermostGagLayer].Padlock.ToPadlock() is not Padlocks.None)
-                        return false;
-
-                    _logger.LogInformation("ActionExecutorGS is removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)outermostGagLayer, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)outermostGagLayer, _playerData.AppearanceData.GagSlots[outermostGagLayer].GagType.ToGagType(), isSelfApplied: true);
+                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
                     return true;
                 }
             }
             else
             {
                 // if the gagtype is not GagType.None, disable the first gagtype matching it.
-                if (_playerData.AppearanceData.GagSlots.Any(x => x.GagType.ToGagType() == gagAction.GagType))
+                var idx = _playerData.AppearanceData.FindOutermostActive(gagAction.GagType);
+                if (idx is not -1)
                 {
-                    var slotIndex = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() == gagAction.GagType);
-                    _logger.LogInformation("ActionExecutorGS is removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)slotIndex, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)slotIndex, _playerData.AppearanceData.GagSlots[slotIndex].GagType.ToGagType(), isSelfApplied: true);
+                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
+                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
                     return true;
                 }
             }
@@ -197,52 +189,29 @@ public sealed class ActionExecutor
             return false;
         }
 
-        // if a set is active and already locked, do not execute, and log error.                
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is not null)
-        {
-            if (activeSet.Locked)
-            {
-                _logger.LogError("Cannot apply/remove a restraint set while current is locked!");
-                return false;
-            }
-            // This set is already enabled.
-            if (activeSet.RestraintId == restraintAction.OutputIdentifier && restraintAction.NewState is NewState.Enabled)
-            {
-                _logger.LogWarning("Set is already enabled, no need to re-enable.");
-                return false;
-            }
-        }
-
         // if enabling.
         if (restraintAction.NewState is NewState.Enabled)
         {
-            // swap if one is active, or apply if not.
-            if (activeSet is not null)
+            if(_appearanceManager.CanEnableSet(restraintAction.OutputIdentifier))
             {
-                _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP.", LoggerType.Restraints);
-                await _appearanceManager.RestraintSwapped(restraintAction.OutputIdentifier, MainHub.UID);
-                return true;
-            }
-            else
-            {
-                _logger.LogInformation("HandleRestraint ActionExecution performing set APPLY.", LoggerType.Restraints);
-                await _appearanceManager.EnableRestraintSet(restraintAction.OutputIdentifier, MainHub.UID);
+                // swap if one is active, or apply if not.
+                _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP/APPLY.", LoggerType.Restraints);
+                await _appearanceManager.SwapOrApplyRestraint(restraintAction.OutputIdentifier, MainHub.UID, true);
                 return true;
             }
         }
-
-        // if disabling.
-        if (restraintAction.NewState is NewState.Disabled)
+        else if (restraintAction.NewState is NewState.Disabled)
         {
-            // if the set is not active, return.
-            if (activeSet is null)
-                return false;
-
-            // if the set is active, and the set is the one we want to disable, disable it.
-            _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
-            await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID);
-            return true;
+            if (_clientConfigs.TryGetActiveSet(out var activeSet))
+            {
+                if (_appearanceManager.CanDisableSet(activeSet.RestraintId))
+                {
+                    // if the set is active, and the set is the one we want to disable, disable it.
+                    _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
+                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, false);
+                    return true;
+                }
+            }
         }
 
         return false; // Failure.
@@ -303,7 +272,7 @@ public sealed class ActionExecutor
         }
 
         // execute the instruction with our global share code.
-        _logger.LogInformation("HandlePiShock Action is executing instruction!", LoggerType.PiShock);
+        _logger.LogInformation("HandlePiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
         _vibeService.ExecuteShockAction(_playerData.GlobalPerms.GlobalShockShareCode, piShockAction.ShockInstruction);
         return Task.FromResult(true);
     }

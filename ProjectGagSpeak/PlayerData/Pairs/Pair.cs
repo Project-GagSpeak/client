@@ -77,6 +77,7 @@ public class Pair
     public CharaIPCData? LastIpcData { get; set; }
     public CharaAppearanceData? LastAppearanceData { get; set; }
     public CharaWardrobeData? LastWardrobeData { get; set; }
+    public CharaOrdersData? LastOrdersData { get; set; }
     public CharaAliasData? LastAliasData { get; set; }
     public CharaToyboxData? LastToyboxData { get; set; }
     public CharaStorageData? LastLightStorage { get; set; }
@@ -231,7 +232,7 @@ public class Pair
 
         // depend on the EnabledBy field to know if we applied.
         if (data.Type is WardrobeUpdateType.RestraintApplied)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintApplied, data.WardrobeData.ActiveSetId, true, data.WardrobeData.ActiveSetEnabledBy);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.WardrobeData.ActiveSetId, true, data.WardrobeData.ActiveSetEnabledBy);
 
         // We can only detect the lock uid by listening for the assigner UID. Unlocks are processed via the actions tab.
         if (data.Type is WardrobeUpdateType.RestraintLocked)
@@ -243,12 +244,21 @@ public class Pair
 
         // For removal
         if (data.Type is WardrobeUpdateType.RestraintDisabled)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintApplied, previousSetId, false, data.Enactor.UID);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, previousSetId, false, data.Enactor.UID);
 
         // if the type was apply or removal, we should update the locked slots.
-        if (data.Type is WardrobeUpdateType.RestraintApplied or WardrobeUpdateType.RestraintDisabled)
+        if (data.Type is WardrobeUpdateType.RestraintApplied or WardrobeUpdateType.RestraintDisabled or WardrobeUpdateType.CursedItemApplied or WardrobeUpdateType.CursedItemRemoved)
             UpdateCachedLockedSlots();
+    }
 
+    /// <summary>
+    /// Applied updated Orders Data for the user pair. 
+    /// This is sent to all online players, not just visible.
+    /// </summary>
+    public void ApplyOrdersData(OnlineUserCharaOrdersDataDto data)
+    {
+        _logger.LogDebug("Applying updated orders data for " + data.User.UID, LoggerType.PairDataTransfer);
+        LastOrdersData = data.OrdersData;
     }
 
     /// <summary>

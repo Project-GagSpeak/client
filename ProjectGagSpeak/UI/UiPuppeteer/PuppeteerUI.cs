@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
@@ -20,17 +19,14 @@ using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Classes;
 using OtterGui.Text;
 using System.Numerics;
-using System.Reflection.Metadata;
 
 namespace GagSpeak.UI.UiPuppeteer;
 
 public class PuppeteerUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
-    private readonly AliasTable _aliasTable;
     private readonly ClientData _clientData;
     private readonly PuppeteerComponents _components;
     private readonly PuppeteerHandler _handler;
@@ -46,13 +42,12 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private enum PuppeteerMode { Global, Pairs }
 
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, AliasTable aliasTable, ClientData clientData,
-        PuppeteerComponents components, PuppeteerHandler handler, UserPairListHandler pairList, 
+        MainHub apiHubMain, ClientData clientData, PuppeteerComponents components,
+        PuppeteerHandler handler, UserPairListHandler pairList,
         ClientConfigurationManager clientConfigs, ClientMonitorService clientService,
         CosmeticService cosmetics, UiSharedService uiShared) : base(logger, mediator, "Puppeteer UI")
     {
         _apiHubMain = apiHubMain;
-        _aliasTable = aliasTable;
         _clientData = clientData;
         _components = components;
         _handler = handler;
@@ -67,7 +62,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(650, 370),
+            MinimumSize = new Vector2(690, 370),
             MaximumSize = new Vector2(1000, float.MaxValue)
         };
         RespectCloseHotkey = false;
@@ -77,7 +72,6 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     }
 
     private string AliasSearchString = string.Empty;
-    private int LastHoveredIndex = -1;
     private bool isEditingTriggerOptions = false;
     private string UnsavedTriggerPhrase = string.Empty;
     private string UnsavedNewStartChar = string.Empty;
@@ -300,18 +294,23 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             _components.DrawListenerClientGroup(isEditingTriggerOptions,
                 (newSits) =>
                 {
-                    _logger.LogTrace($"Updated AlowSits permission: " + newSits);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowSitRequests", newSits), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowSits permission: " + newSits);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("SitRequests", newSits), UpdateDir.Own));
                 },
                 (newMotions) =>
                 {
-                    _logger.LogTrace($"Updated AlowMotions permission: " + newMotions);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowMotionRequests", newMotions), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowMotions permission: " + newMotions);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("MotionRequests", newMotions), UpdateDir.Own));
+                },
+                (newAlias) =>
+                {
+                    _logger.LogTrace($"Updated AllowAlias permission: " + newAlias);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AliasRequests", newAlias), UpdateDir.Own));
                 },
                 (newAll) =>
                 {
-                    _logger.LogTrace($"Updated AlowAll permission: " + newAll);
-                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllowAllRequests", newAll), UpdateDir.Own));
+                    _logger.LogTrace($"Updated AllowAll permission: " + newAll);
+                    _ = _apiHubMain.UserUpdateOwnPairPerm(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("AllRequests", newAll), UpdateDir.Own));
                 },
                 (newEditState) =>
                 {
@@ -365,7 +364,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawPairTriggersBox()
     {
-        if(_handler.SelectedPair?.LastAliasData is null || _clientService.ClientPlayer is null)
+        if (_handler.SelectedPair?.LastAliasData is null || _clientService.ClientPlayer is null)
             return;
 
         var name = _handler.SelectedPair.UserData.UID;
@@ -396,7 +395,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             });
 
             // Draw out the listener name.
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_handler.SelectedPair.LastAliasData.HasNameStored 
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(_handler.SelectedPair.LastAliasData.HasNameStored
                 ? _clientService.ClientPlayer.GetNameWithWorld() : "Not Yet Listening!");
 
             // Draw the display for trigger phrases.
@@ -450,9 +449,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
 
             Guid aliasToRemove = Guid.Empty; // used for removing items after we finish drawing the list.
-            foreach(var globalAlias in items)
+            foreach (var globalAlias in items)
             {
-                if(EditingGlobalTriggers)
+                if (EditingGlobalTriggers)
                 {
                     if (_components.DrawAliasItemEditBox(globalAlias, lightSets, ipcData, out bool wasRemoved))
                         _clientConfigs.SaveAlias();
@@ -474,10 +473,10 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawClientAliasList(Pair? pair)
     {
-        if(pair is null) return;
+        if (pair is null) return;
 
         // if we failed to get the storage, create one.
-        if(!_clientConfigs.AliasConfig.AliasStorage.TryGetValue(pair.UserData.UID, out var storage))
+        if (!_clientConfigs.AliasConfig.AliasStorage.TryGetValue(pair.UserData.UID, out var storage))
         {
             _logger.LogDebug("Creating new Alias Storage for " + pair.UserData.UID);
             _clientConfigs.AliasConfig.AliasStorage[pair.UserData.UID] = new AliasStorage();
@@ -489,7 +488,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         {
             // Formatting.
             using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-            using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(8,5));
+            using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(8, 5));
             using var framePadding = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(4, 2));
             using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
             using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
@@ -513,12 +512,12 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var ipcData = _clientData.LastIpcData ?? new CharaIPCData();
 
             Guid idToRemove = Guid.Empty;
-            foreach(var aliasItem in items)
+            foreach (var aliasItem in items)
             {
                 if (_handler.IsEditingList)
                 {
                     // Draw the editing Item Box.
-                    if(_components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData, out bool wasRemoved))
+                    if (_components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData, out bool wasRemoved))
                     {
                         _logger.LogDebug("Saving Alias List Changes");
                         _handler.MadeAliasChangeSinceLastEdit = true;
@@ -543,7 +542,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawPairAliasList(Pair? pair)
     {
-        if(pair is null) return;
+        if (pair is null) return;
 
         // if any of our data is invalid, do not show.
         if (MainHub.ServerStatus is not ServerState.Connected || pair.LastAliasData is null)
@@ -578,12 +577,12 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             var moodlesInfo = pair.LastIpcData ?? new CharaIPCData();
 
             // Draw out the pairs list
-            foreach(var alias in items)
+            foreach (var alias in items)
                 _components.DrawAliasItemBox(alias.AliasIdentifier.ToString(), alias, lightRestraints, moodlesInfo);
         }
     }
 
-    public void DrawSearchFilter(ref string searchStr, bool showAdd, bool showEdit, bool isEditing = false, 
+    public void DrawSearchFilter(ref string searchStr, bool showAdd, bool showEdit, bool isEditing = false,
         Action? onAdd = null, Action<bool>? onEditToggle = null)
     {
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
@@ -594,18 +593,15 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         var spaceLeft = editSize + addNewSize + clearSize;
 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - spaceLeft);
-        if (ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255))
-            LastHoveredIndex = -1;
+        ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255);
+
         ImUtf8.SameLineInner();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
-        {
             AliasSearchString = string.Empty;
-            LastHoveredIndex = -1;
-        }
         UiSharedService.AttachToolTip("Clear the search filter.");
 
         // Dont show the rest if we are not editing.
-        if(showAdd)
+        if (showAdd)
         {
             ImUtf8.SameLineInner();
             if (_uiShared.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: !isEditing))
@@ -616,7 +612,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             UiSharedService.AttachToolTip("Add a new Alias to the list.");
         }
 
-        if(showEdit)
+        if (showEdit)
         {
             ImUtf8.SameLineInner();
             using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))

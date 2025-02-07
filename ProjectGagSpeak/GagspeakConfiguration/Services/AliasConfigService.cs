@@ -1,8 +1,7 @@
 using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data;
-using GagSpeak.InterfaceConverters;
+using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.GagspeakConfiguration;
 
@@ -171,7 +170,7 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
         var enabled = obj["Enabled"]?.Value<bool>() ?? false;
         var name = obj["Name"]?.Value<string>() ?? string.Empty;
         var inputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty;
-        var executions = ParseExecutions(obj["Executions"] as JObject ?? new JObject()); 
+        var executions = ParseExecutions(obj["Executions"] as JObject ?? new JObject());
 
         return new AliasTrigger
         {

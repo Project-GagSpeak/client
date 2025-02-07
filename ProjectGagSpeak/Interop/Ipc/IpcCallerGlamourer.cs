@@ -76,7 +76,14 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         _glamourChanged.Enable();
     }
 
-    public enum MetaData { None, Hat, Visor, Both }
+    // make flags maybe?
+    public enum MetaData 
+    {
+        None, 
+        Hat, 
+        Visor, 
+        Both 
+    }
     public static bool APIAvailable { get; private set; } = false;
 
     public void CheckAPI()
@@ -115,11 +122,11 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         _glamourChanged.Disable();
         _glamourChanged?.Dispose();
 
-        // do not run this if we are closing out of the game.
-        if (_frameworkUtils.IsFrameworkUnloading)
+        // do not run this if we are closing out of the game or not logged in.
+        if (_frameworkUtils.IsFrameworkUnloading || _clientService.IsLoggedIn is false)
             return;
 
-        if(_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false) 
+        if(!_clientData.HasGlamourerAlterations) 
             return;
 
         // revert the character. (for disabling the plugin)
@@ -348,7 +355,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         if (changeType is StateChangeType.MaterialValue)
             return;
 
-        if (_clientData.IsPlayerGagged is false && _clientConfigs.HasGlamourerAlterations is false)
+        if (!_clientData.HasGlamourerAlterations)
             return;
 
 

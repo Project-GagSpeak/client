@@ -7,12 +7,15 @@ using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.ConfigurationServices;
 
@@ -254,7 +257,11 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     /* --------------------- Gag Storage Config Methods --------------------- */
     #region Gag Storage Methods
     internal bool IsGagEnabled(GagType gagType)
-        => GagStorageConfig.GagStorage.GagEquipData.FirstOrDefault(x => x.Key == gagType).Value.IsEnabled;
+    {
+        return GagStorageConfig.GagStorage.GagEquipData.TryGetValue(gagType, out var gagData)
+            && gagData.IsEnabled && gagData.GameItem.ItemId != ItemIdVars.NothingItem(gagData.Slot).ItemId;
+    }
+
     internal GagDrawData GetDrawData(GagType gagType)
         => GagStorageConfig.GagStorage.GagEquipData[gagType];
     internal GagDrawData GetDrawDataWithHighestPriority(List<GagType> gagTypes)
@@ -295,11 +302,21 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     /// I swear to god, so not set anything inside this object through this fetch. Treat it as readonly.
     /// </summary>
     internal List<RestraintSet> StoredRestraintSets => WardrobeConfig.WardrobeStorage.RestraintSets;
+
+    internal RestraintSet? GetActiveSet() => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled)!; // this can be null.
+    internal bool TryGetActiveSet([MaybeNullWhen(false)] out RestraintSet activeSet)
+    {
+        activeSet = WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled);
+        return activeSet is not null;
+    }
+    internal bool TryGetSet(Guid id, [MaybeNullWhen(false)] out RestraintSet restraintSet)
+    {
+        return WardrobeConfig.WardrobeStorage.RestraintSets.TryGetItem(x => x.RestraintId == id, out restraintSet);
+    }
+
     internal int GetActiveSetIdx() => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.Enabled);
     internal int GetSetIdxByGuid(Guid id) => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.RestraintId == id);
     internal string GetSetNameByGuid(Guid id) => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.RestraintId == id)?.Name ?? "Unknown";
-
-    internal RestraintSet? GetActiveSet() => WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled)!; // this can be null.
     internal RestraintSet GetRestraintSet(int setIndex) => WardrobeConfig.WardrobeStorage.RestraintSets[setIndex];
     internal int GetRestraintSetIdxByName(string name) => WardrobeConfig.WardrobeStorage.RestraintSets.FindIndex(x => x.Name == name);
 
@@ -645,6 +662,30 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
 
     #region API Compilation
+
+    public CharaWardrobeData CompileWardrobeToAPI()
+    {
+        // attempt to locate the active restraint set
+        var activeSet = GetActiveSet();
+        return new CharaWardrobeData
+        {
+            ActiveSetId = activeSet?.RestraintId ?? Guid.Empty,
+            ActiveSetEnabledBy = activeSet?.EnabledBy ?? string.Empty,
+            Padlock = activeSet?.Padlock ?? Padlocks.None.ToName(),
+            Password = activeSet?.Password ?? "",
+            Timer = activeSet?.Timer ?? DateTimeOffset.MinValue,
+            Assigner = activeSet?.Assigner ?? "",
+        };
+    }
+
+    public CharaOrdersData CompileOrdersDataToAPI()
+    {
+        return new CharaOrdersData
+        {
+            ActiveOrders = new HashSet<Guid>(),
+        };
+    }
+
     public CharaToyboxData CompileToyboxToAPI()
     {
         return new CharaToyboxData
@@ -670,80 +711,4 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     }
     #endregion API Compilation
 
-    #region UI Prints
-    public void DrawWardrobeInfo()
-    {
-        ImGui.Text("Wardrobe Outfits:");
-        ImGui.Indent();
-        foreach (var item in WardrobeConfig.WardrobeStorage.RestraintSets)
-        {
-            ImGui.Text(item.Name);
-        }
-        ImGui.Unindent();
-        var ActiveSet = WardrobeConfig.WardrobeStorage.RestraintSets.FirstOrDefault(x => x.Enabled);
-        if (ActiveSet != null)
-        {
-            ImGui.Text("Active Set Info: ");
-            ImGui.Indent();
-            ImGui.Text($"Set Id: {ActiveSet.RestraintId}");
-            ImGui.Text($"Name: {ActiveSet.Name}");
-            ImGui.Text($"Enabled By: {ActiveSet.EnabledBy}");
-            ImGui.Text($"Is Locked: {ActiveSet.Locked}");
-            ImGui.Text($"Lock Type: {ActiveSet.LockType}");
-            ImGui.Text($"Lock Password: {ActiveSet.LockPassword}");
-            ImGui.Text($"Locked By: {ActiveSet.LockedBy}");
-            ImGui.Text($"Locked Until Time: " + UiSharedService.TimeLeftFancy(ActiveSet.LockedUntil));
-            ImGui.Unindent();
-        }
-    }
-
-
-    public void DrawAliasLists()
-    {
-        using var indent = ImRaii.PushIndent();
-
-        foreach (var alias in AliasConfig.AliasStorage)
-        {
-            if (ImGui.TreeNode($"Alias Data for {alias.Key}"))
-            {
-                ImGui.Text("List of Alias's For this User:");
-                // begin a table.
-                using var table = ImRaii.Table($"##table-for-{alias.Key}", 2);
-                if (!table) { return; }
-
-                using var spacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, ImGui.GetStyle().ItemInnerSpacing);
-                ImGui.TableSetupColumn("If You Say:", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 100);
-                ImGui.TableSetupColumn("They will Execute:", ImGuiTableColumnFlags.WidthStretch);
-
-                foreach (var aliasTrigger in alias.Value.AliasList)
-                {
-                    ImGui.Separator();
-                    ImGui.Text("("+aliasTrigger.Name+")");
-                    ImGui.SameLine();
-                    ImGui.Text("[INPUT TRIGGER]: ");
-                    ImGui.SameLine();
-                    ImGui.Text(aliasTrigger.InputCommand);
-                    ImGui.NewLine();
-                    ImGui.Text("[OUTPUT Handles] (WIP): ");
-                    ImGui.SameLine();
-                }
-                ImGui.TreePop();
-            }
-        }
-    }
-
-    public void DrawPatternsInfo()
-    {
-        foreach (var item in PatternConfig.PatternStorage.Patterns)
-        {
-            ImGui.Text($"Info for Pattern: {item.Name}");
-            ImGui.Indent();
-            ImGui.Text($"Description: {item.Description}");
-            ImGui.Text($"Duration: {item.Duration}");
-            ImGui.Text($"Is Active: {item.IsActive}");
-            ImGui.Text($"Should Loop: {item.ShouldLoop}");
-            ImGui.Unindent();
-        }
-    }
-    #endregion UI Prints
 }

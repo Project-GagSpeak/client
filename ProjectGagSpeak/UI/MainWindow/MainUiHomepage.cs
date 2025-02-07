@@ -11,6 +11,11 @@ using GagSpeak.UI.UiWardrobe;
 using GagSpeak.UI.UiPublications;
 using ImGuiNET;
 using System.Numerics;
+using GagSpeak.Hardcore.Movement;
+using GagSpeak.PlayerData.Handlers;
+using GagSpeak.UpdateMonitoring;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.UI.MainWindow;
 
@@ -21,14 +26,19 @@ namespace GagSpeak.UI.MainWindow;
 public class MainUiHomepage
 {
     private readonly GagspeakMediator _mediator;
+    private readonly ClientMonitorService _client;
+    private readonly OnFrameworkService _framework;
     private readonly UiSharedService _uiShared;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
-    public MainUiHomepage(GagspeakMediator mediator, UiSharedService uiSharedService)
+    public MainUiHomepage(GagspeakMediator mediator, ClientMonitorService client, 
+        OnFrameworkService framework, UiSharedService uiSharedService)
     {
         _mediator = mediator;
+        _client = client;
+        _framework = framework;
         _uiShared = uiSharedService;
 
         // Define all module information in a single place
@@ -75,10 +85,12 @@ public class MainUiHomepage
                 HoveredItemIndex = i;
             }
         }
-
-        if (!itemGotHovered)
-            HoveredItemIndex = -1;
+        // if itemGotHovered is false, reset the index.
+        if(!itemGotHovered) HoveredItemIndex = -1;
     }
+
+/*    private unsafe CameraManager* cameraManager => CameraManager.Instance();
+    private unsafe bool ModeIsThirdPerson => cameraManager->Camera is not null ? Marshal.ReadByte((nint)(cameraManager->Camera), 0x170) == 1 : false;*/
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
     {

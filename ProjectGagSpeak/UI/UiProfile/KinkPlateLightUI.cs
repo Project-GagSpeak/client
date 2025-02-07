@@ -73,7 +73,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         string DisplayName = _showFullUID
             ? UserDataToDisplay.AliasOrUID
-            : "Kinkster-" + UserDataToDisplay.UID.Substring(UserDataToDisplay.UID.Length - 3);
+            : "Kinkster-" + UserDataToDisplay.UID.Substring(UserDataToDisplay.UID.Length - 4);
 
         #if DEBUG
         DisplayName = UserDataToDisplay.UID;

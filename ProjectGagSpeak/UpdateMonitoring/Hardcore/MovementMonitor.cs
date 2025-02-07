@@ -159,10 +159,11 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         // FORCED FOLLOW LOGIC: Keep player following until idle for 6 seconds.
         if (_handler.MonitorFollowLogic)
         {
-            // Ensure our movement and unfollow hooks are active.
-            if (!GameConfig.UiControl.GetBool("MoveMode"))
+            // If cached movement mode was standard and our current setting is standard, set it to legacy.
+            if (_handler.CachedMovementMode is MovementMode.Standard && GameConfig.UiControl.GetBool("MoveMode") is false)
                 GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy);
 
+            // Enable unfollow hook.
             _MoveController.EnableUnfollowHook();
 
             // Do not account for auto-disable logic if our Offset is .MinValue.
@@ -207,15 +208,29 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
                     // If its a estate entrance, and we are within 3.5f, interact with it.
 
 
-                    if ((node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterEstateName || node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterAPTOneName) && distance < 3.5f)
+                    if ((node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterEstateName || node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterAPTOneName))
                     {
-                        _targetManager.Target = node;
-                        if (node.IsTargetable)
+                        // if we are not within the distance to interact with entrance nodes, attempt to execute the task.
+                        if (distance > 3.5f && distance < 7f)
                         {
-                            TargetSystem.Instance()->InteractWithObject((GameObject*)node.Address, false);
-                            break;
+                            if (_moveToChambersTask is null)
+                            {
+                                Logger.LogDebug("Moving to Large Estate Entrance", LoggerType.HardcoreMovement);
+                                _moveToChambersTask = GoToChambersEntrance(node);
+                            }
                         }
+                        if (distance <= 3.5f)
+                        {
+                            Logger.LogDebug("Entrance Node Interactable?" + node.IsTargetable);
+                            _targetManager.Target = node;
+                            if (node.IsTargetable)
+                            {
+                                TargetSystem.Instance()->InteractWithObject((GameObject*)node.Address, false);
+                            }
+                        }
+                        break;
                     }
+
                     // If its a node that is an Entrance to Additional Chambers.
                     if (node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterFCOneName && node.IsTargetable)
                     {
@@ -274,7 +289,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             _MoveController.DisableMouseAutoMoveHook();
 
         // BLINDFOLDED STATE - Force Lock First Person if desired.
-        if (_clientConfigs.GagspeakConfig.ForceLockFirstPerson && _handler.IsBlindfolded)
+        if (_clientConfigs.GagspeakConfig.ForceLockFirstPerson && _handler.MonitorBlindfoldLogic)
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;

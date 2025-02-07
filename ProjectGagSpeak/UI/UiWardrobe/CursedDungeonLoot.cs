@@ -440,7 +440,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         if (item.AppliedTime != DateTimeOffset.MinValue)
         {
             ImGui.SameLine();
-            UiSharedService.ColorText(UiSharedService.TimeLeftFancy(item.ReleaseTime), ImGuiColors.HealerGreen);
+            UiSharedService.ColorText(item.ReleaseTime.ToGsRemainingTimeFancy(), ImGuiColors.HealerGreen);
         }
     }
 
@@ -481,9 +481,9 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         // Input Field for the first range
         ImGui.SetNextItemWidth(inputWidth);
         var spanLow = _handler.LowerLockLimit;
-        TempLowerTimerRange = spanLow == TimeSpan.Zero ? string.Empty : _uiShared.TimeSpanToString(spanLow);
+        TempLowerTimerRange = spanLow == TimeSpan.Zero ? string.Empty : spanLow.ToGsRemainingTime();
         if (ImGui.InputTextWithHint("##Timer_Input_Lower", "Ex: 0h2m7s", ref TempLowerTimerRange, 12, ImGuiInputTextFlags.EnterReturnsTrue))
-            if (_uiShared.TryParseTimeSpan(TempLowerTimerRange, out var timeSpan))
+            if (GsPadlockEx.TryParseTimeSpan(TempLowerTimerRange, out var timeSpan))
                 _handler.SetLowerLimit(timeSpan);
         UiSharedService.AttachToolTip("Min Cursed Lock Time.");
         // tutorial stuff
@@ -496,9 +496,9 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         // Input Field for the second range
         ImGui.SetNextItemWidth(inputWidth);
         var spanHigh = _handler.UpperLockLimit;
-        TempUpperTimerRange = spanHigh == TimeSpan.Zero ? string.Empty : _uiShared.TimeSpanToString(spanHigh);
+        TempUpperTimerRange = spanHigh == TimeSpan.Zero ? string.Empty : spanHigh.ToGsRemainingTime();
         if (ImGui.InputTextWithHint("##Timer_Input_Upper", "Ex: 0h2m7s", ref TempUpperTimerRange, 12, ImGuiInputTextFlags.EnterReturnsTrue))
-            if (_uiShared.TryParseTimeSpan(TempUpperTimerRange, out var timeSpan))
+            if (GsPadlockEx.TryParseTimeSpan(TempUpperTimerRange, out var timeSpan))
                 _handler.SetUpperLimit(timeSpan);
         UiSharedService.AttachToolTip("Max Cursed lock Time.");
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
@@ -609,7 +609,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 
     private void SelectableMoodleSelection(CursedItem item, float width)
     {
-        if (_clientPlayerData.IpcDataNull)
+        if (_clientPlayerData.LastIpcData is null)
             return;
 
         // Define the related Moodle
@@ -626,13 +626,13 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         UiSharedService.AttachToolTip("The type of Moodle to apply with this item.");
 
         ImUtf8.SameLineInner();
-        _relatedMoodles.MoodlesStatusSelectorForCursedItem(item, _clientPlayerData.LastIpcData!, ImGui.GetContentRegionAvail().X);
+        _relatedMoodles.MoodlesStatusSelectorForCursedItem(item, _clientPlayerData.LastIpcData, ImGui.GetContentRegionAvail().X);
 
         // in new line, display the current moodle status or preset.
         var moodleText = string.Empty;
         if (item.MoodleType is IpcToggleType.MoodlesStatus)
         {
-            var title = _clientPlayerData.LastIpcData!.MoodlesStatuses.FirstOrDefault(x => x.GUID == item.MoodleIdentifier).Title;
+            var title = _clientPlayerData.LastIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == item.MoodleIdentifier).Title;
 
             moodleText = title.IsNullOrEmpty()
                 ? (item.MoodleIdentifier == Guid.Empty ? "None Selected" : "ERROR")
@@ -651,7 +651,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             else
             {
                 // get the list of friendly names for each guid in the preset
-                var test = _clientPlayerData.LastIpcData!.MoodlesPresets
+                var test = _clientPlayerData.LastIpcData.MoodlesPresets
                     .FirstOrDefault(x => x.Item1 == item.MoodleIdentifier).Item2
                     .Select(x => _clientPlayerData.LastIpcData.MoodlesStatuses
                     .FirstOrDefault(y => y.GUID == x).Title ?? "No FriendlyName Set for this Moodle") ?? new List<string>();

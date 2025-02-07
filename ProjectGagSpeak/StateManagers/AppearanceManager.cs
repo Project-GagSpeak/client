@@ -1,6 +1,7 @@
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Interop.IpcHelpers.Moodles;
+using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Services;
@@ -12,10 +13,16 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.IPC;
+using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Enums;
+using Penumbra.GameData.Interop;
+using System.Security.Cryptography.Pkcs;
+using static FFXIVClientStructs.FFXIV.Client.Graphics.Render.ModelRenderer;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.StateManagers;
 
@@ -31,33 +38,35 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientData _playerData;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly PairManager _pairManager;
     private readonly IpcManager _ipcManager;
     private readonly AppearanceService _appearanceService;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
+    private readonly PublishStateService _publishService;
 
     public AppearanceManager(ILogger<AppearanceManager> logger, GagspeakMediator mediator,
         ClientConfigurationManager clientConfigs, ClientData playerData,
-        GagManager gagManager, PairManager pairManager, IpcManager ipcManager, 
+        GagGarbler garbler, PairManager pairManager, IpcManager ipcManager, 
         AppearanceService appearanceService, ClientMonitorService clientService,
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        OnFrameworkService frameworkUtils, PublishStateService publishService) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _playerData = playerData;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _pairManager = pairManager;
         _ipcManager = ipcManager;
         _appearanceService = appearanceService;
         _clientService = clientService;
         _frameworkUtils = frameworkUtils;
+        _publishService = publishService;
 
         Mediator.Subscribe<ClientPlayerInCutscene>(this, (msg) => _ = _appearanceService.RefreshAppearance(GlamourUpdateType.ReapplyAll));
         Mediator.Subscribe<CutsceneEndMessage>(this, (msg) => _ = _appearanceService.RefreshAppearance(GlamourUpdateType.ReapplyAll));
         Mediator.Subscribe<AppearanceImpactingSettingChanged>(this, (msg) => _ = RecalcAndReload(true));
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastIpcData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => LastIpcData = msg.CharaIPCData);
 
 
         IpcFastUpdates.StatusManagerChangedEventFired += (addr) => MoodlesUpdated(addr).ConfigureAwait(false);
@@ -134,377 +143,396 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         await _appearanceService.RefreshAppearance(updateType, removeMoodles);
     }
 
+    public bool CanEnableSet(Guid restraintId) => _publishService.CanApplyRestraint(restraintId, out _);
+    public bool CanDisableSet(Guid restraintId) => _publishService.CanRemoveRestraint(restraintId, out _);
+    public bool CanGagApply(GagLayer layer) => _playerData.AppearanceData is not null && _publishService.CanApplyGag(layer);
 
-    /// <summary>
-    /// This logic will occur after a Restraint Set has been enabled via the WardrobeHandler.
-    /// </summary>
-    public async Task EnableRestraintSet(Guid restraintID, string assignerUID, bool pushToServer = true, bool triggerAchievement = true)
+    #region Updates
+    public async Task SwapOrApplyRestraint(Guid newSetId, string assignerUid, bool publishOnApply)
+    {
+        // grab the active set for comparison.
+        var activeSet = _clientConfigs.GetActiveSet();
+        if (activeSet is not null && activeSet.RestraintId == newSetId)
+        {
+            Logger.LogWarning("SwapOrApplyRestraint was called with the same set ID as the active set. " +
+                "This should technically never happen, but wont cause any bugs.", LoggerType.AppearanceState);
+            return;
+        }
+
+        // if the active set is null, simply enable the new set.
+        if (activeSet is null)
+        {
+            await EnableRestraintSet(newSetId, assignerUid, true, !publishOnApply);
+        }
+        // otherwise, we need to disable the active set, then enable the new set.
+        else
+        {
+            Logger.LogTrace("SET-SWAPPED Executed. Triggering DISABLE-SET, then ENABLE-SET", LoggerType.AppearanceState);
+            // First, disable the current set.
+            await DisableRestraintSet(activeSet.RestraintId, assignerUid, true, true);
+            // Then, enable the new set.
+            await EnableRestraintSet(newSetId, assignerUid, true, !publishOnApply);
+        }
+    }
+
+    public async Task EnableRestraintSet(Guid restraintId, string enactor, bool triggerAchievement, bool forced)
     {
         await ExecuteWithApplierSlim(async () =>
         {
-            Logger.LogTrace("ENABLE-SET Executed", LoggerType.AppearanceState);
-            if (_clientConfigs.GetActiveSet() is not null)
-            {
-                Logger.LogError("You must Disable the active Set before calling this!");
+            if (!_publishService.CanApplyRestraint(restraintId, out var setRef) || _playerData.GlobalPerms is null)
                 return;
-            }
 
-            // Enable the set. For starters we should apply the mods.
-            var setIdx = RestraintSets.FindIndex(x => x.RestraintId == restraintID);
-            if (setIdx == -1)
-            {
-                Logger.LogWarning("Attempted to enable a restraint set that does not exist.");
-                return;
-            }
-
-            var setRef = RestraintSets[setIdx];
-            Logger.LogInformation("ENABLE SET [" + RestraintSets[setIdx].Name + "] START", LoggerType.AppearanceState);
-            Logger.LogDebug("Assigner was: " + assignerUID, LoggerType.AppearanceState);
+            Logger.LogDebug("ENABLING SET [" + setRef.Name + "]", LoggerType.AppearanceState);
+            // make changes.
             setRef.Enabled = true;
-            setRef.EnabledBy = assignerUID;
+            setRef.EnabledBy = enactor;
             _clientConfigs.SaveWardrobe();
 
-            // Raise the priority of, and enable the mods bound to the active set.
-            await PenumbraModsToggle(NewState.Enabled, setRef.AssociatedMods);
-
-            // Enable the Hardcore Properties by invoking the ipc call.
+            // Enable the Hardcore Properties.
             if (setRef.HasPropertiesForUser(setRef.EnabledBy))
             {
                 Logger.LogDebug("Set Contains HardcoreProperties for " + setRef.EnabledBy, LoggerType.AppearanceState);
                 if (setRef.PropertiesEnabledForUser(setRef.EnabledBy))
-                {
-                    Logger.LogDebug("Hardcore properties are enabled for this set!", LoggerType.AppearanceState);
                     IpcFastUpdates.InvokeHardcoreTraits(NewState.Enabled, setRef);
-                }
             }
 
+            // Handle if we should perform glamour applications for these.(for now forced is included for safewords to work, and will be removed later during glamourer rework)
+            if (_playerData.GlobalPerms.RestraintSetAutoEquip || forced)
+            {
+                // Set associated mods in penumbra.
+                await PenumbraModsToggle(NewState.Enabled, setRef.AssociatedMods);
+                // recalculate appearance and refresh.
+                await RecalcAndReload(false);
+            }
+
+            // log completion.
+            Logger.LogDebug("Set: " + setRef.Name + " has been applied by: " + enactor, LoggerType.AppearanceState);
+
             if (triggerAchievement)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintApplicationChanged, setRef, true, assignerUID);
-            Logger.LogInformation("ENABLE SET [" + setRef.Name + "] END", LoggerType.AppearanceState);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, restraintId, true, enactor);
 
-            await RecalcAndReload(false);
-
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintApplied, setRef.LockType.ToPadlock()));
-
-            // Finally, we should let our trigger controller know that we just enabled a restraint set.
-            //_triggerController.CheckActiveRestraintTriggers(restraintID, NewState.Enabled);
+            if (forced is false) 
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintApplied, restraintId.ToString()));
         });
     }
 
-    public async Task DisableRestraintSet(Guid restraintID, string disablerUID, bool pushToServer = true, bool triggerAchievement = true)
+    public bool LockRestraintSet(Guid restraintId, Padlocks padlock, string pwd, string endTime, string enactor, bool triggerAchievement, bool forced)
+    {
+        if (!_publishService.CanLockRestraint(restraintId, out var setRef))
+            return false;
+
+        Logger.LogDebug("LOCKING SET [" + setRef.Name + "]", LoggerType.AppearanceState);
+        // Store a copy of the values we need before we change them.
+        var prevLock = setRef.Padlock;
+
+        // perform the update for the lock state. If it fails to update, it will return false, thus we should return false.
+        if(!UpdateStateForLocking(setRef, padlock, pwd, endTime, enactor, forced))
+            return false;
+
+        // Finally, we should fire to our achievement manager, if we have marked for us to.
+        if (triggerAchievement)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
+
+        // There will never be any case where we push publications if forceUpdate is true. Only every publish after validations.
+        if (forced is false)
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintLocked, prevLock));
+
+        return true;
+    }
+
+    public bool UnlockRestraintSet(Guid restraintId, string guessedPass, string enactorUid, bool triggerAchievement, bool forced)
+    {
+        if (!_publishService.CanUnlockRestraint(restraintId, out var setRef))
+            return false;
+
+        Logger.LogDebug("UNLOCKING SET [" + setRef.Name + "]", LoggerType.AppearanceState);
+        // Store a copy of the values we need before we change them.
+        var prevLock = setRef.Padlock;
+        var prevAssigner = setRef.Assigner;
+
+        // perform the update for the lock state. If it fails to update, it will return false, thus we should return false.
+        if (!UpdateStateForUnlocking(setRef, guessedPass, enactorUid, forced))
+            return false;
+
+        // Handle achievements.
+        bool soldSlaveSatisfied = (prevAssigner != MainHub.UID) && (enactorUid != MainHub.UID) && (enactorUid != prevAssigner);
+        if (triggerAchievement && soldSlaveSatisfied)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
+
+        if (triggerAchievement)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevLock.ToPadlock(), false, enactorUid);
+
+        // push to server if not a callback.
+        if (forced is false)
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintUnlocked, prevLock));
+
+        return true;
+    }
+
+    public async Task DisableRestraintSet(Guid restraintId, string enactor, bool triggerAchievement, bool forced)
     {
         await ExecuteWithApplierSlim(async () =>
         {
-            Logger.LogTrace("DISABLE-SET Executed", LoggerType.AppearanceState);
-            var setIdx = RestraintSets.FindIndex(x => x.RestraintId == restraintID);
-            if (setIdx == -1) { Logger.LogWarning("Set Does not Exist, Skipping."); return; }
+            if (!_publishService.CanRemoveRestraint(restraintId, out var setRef))
+                return;
 
-            var setRef = RestraintSets[setIdx];
-            if (!setRef.Enabled || setRef.Locked) { Logger.LogWarning(setRef.Name + " is already disabled or locked. Skipping!"); return; }
+            Logger.LogDebug("DISABLING SET [" + setRef.Name + "]", LoggerType.AppearanceState);
 
-            Logger.LogInformation("DISABLE SET [" + setRef.Name + "] START", LoggerType.AppearanceState);
-
-            // Lower the priority of, and if desired, disable, the mods bound to the active set.
+            // Remove temporarily applied mods.
             await PenumbraModsToggle(NewState.Disabled, setRef.AssociatedMods);
 
-            // This simply removes it from the list of expected, not the actual moodles call. This occurs in the service.
+            // Remove any bound moodles to the set.
             var moodlesToRemove = RemoveMoodles(setRef);
 
-            // Disable the Hardcore Properties by invoking the ipc call.
+            // Attach hardcore properties.
             if (setRef.HasPropertiesForUser(setRef.EnabledBy))
             {
                 Logger.LogDebug("Set Contains HardcoreProperties for " + setRef.EnabledBy, LoggerType.AppearanceState);
                 if (setRef.PropertiesEnabledForUser(setRef.EnabledBy))
-                {
-                    Logger.LogDebug("Hardcore properties are enabled for this set, so disabling them!", LoggerType.AppearanceState);
                     IpcFastUpdates.InvokeHardcoreTraits(NewState.Disabled, setRef);
-                }
             }
 
-            // see if we qualify for the achievement Auctioned off, and if so, fire it.
-            bool auctionedOffSatisfied = setRef.EnabledBy != MainHub.UID && disablerUID != MainHub.UID;
-            if (triggerAchievement && (setRef.EnabledBy != disablerUID) && auctionedOffSatisfied)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
-
-            if (triggerAchievement)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintApplicationChanged, setRef, false, disablerUID);
+            // fire changes now that the traits have been handled.
             setRef.Enabled = false;
             setRef.EnabledBy = string.Empty;
             _clientConfigs.SaveWardrobe();
-            // Update our active Set monitor.
 
-            Logger.LogInformation("DISABLE SET [" + setRef.Name + "] END", LoggerType.AppearanceState);
+            // recalculate appearance and refresh.
             await RecalcAndReload(true, moodlesToRemove);
 
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintDisabled, setRef.LockType.ToPadlock()));
+            // Handle achievement triggers.
+            bool auctionedOffSatisfied = setRef.EnabledBy != MainHub.UID && enactor != MainHub.UID && enactor != setRef.EnabledBy;
+            if (triggerAchievement && auctionedOffSatisfied) // To Satisfy Auctioned off, set must be applied by one person, and removed by another.
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
 
-            // Finally, we should let our trigger controller know that we just enabled a restraint set.
-            //_triggerController.CheckActiveRestraintTriggers(restraintID, NewState.Disabled);
-        });
-    }
-
-    public async Task LockRestraintSet(Guid id, Padlocks padlock, string pwd, DateTimeOffset endTime, string assigner, bool pushToServer = true, bool triggerAchievement = true)
-    {
-        await ExecuteWithApplierSlim(() =>
-        {
-            Logger.LogTrace("LOCKING SET START", LoggerType.AppearanceState);
-            var setIdx = RestraintSets.FindIndex(x => x.RestraintId == id);
-            if (setIdx == -1)
-            {
-                Logger.LogWarning("Set Does not Exist, Skipping.");
-                return Task.CompletedTask;
-            }
-            // if the set is not the active set, log that this is invalid, as we should only be locking / unlocking the active set.
-            if (setIdx != _clientConfigs.GetActiveSetIdx())
-            {
-                Logger.LogWarning("Attempted to lock a set that is not the active set. Skipping.");
-                return Task.CompletedTask;
-            }
-
-            // Grab the set reference.
-            var setRef = RestraintSets[setIdx];
-            if (setRef.Locked)
-            {
-                Logger.LogDebug(setRef.Name + " is already locked. Skipping!", LoggerType.AppearanceState);
-                return Task.CompletedTask;
-            }
-
-            // Assign the lock information to the set.
-            var prevLock = setRef.LockType.ToPadlock();
-            setRef.LockType = padlock.ToName();
-            setRef.LockPassword = pwd;
-            setRef.LockedUntil = endTime;
-            setRef.LockedBy = assigner;
-            _clientConfigs.SaveWardrobe();
-            // Set this so that when we go to unlock we can ref for auto removal.
-            _gagManager.UpdateRestraintLockSelections(false);
-
-
-            Logger.LogDebug("Set: " + setRef.Name + " Locked by: " + assigner + " with a Padlock of Type: " + padlock.ToName()
-                + " with: " + (endTime - DateTimeOffset.UtcNow) + " by: " + assigner, LoggerType.AppearanceState);
-
-            // After this, we should push our changes to the server, if we have marked for us to.
-            if (pushToServer) Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintLocked, prevLock));
-
-            // Finally, we should fire to our achievement manager, if we have marked for us to.
             if (triggerAchievement)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, setRef, padlock, true, assigner);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, restraintId, false, enactor);
 
-            Logger.LogInformation("LOCKING SET END", LoggerType.AppearanceState);
-
-            // Finally, we should let our trigger controller know that we just enabled a restraint set.
-            //_triggerController.CheckActiveRestraintTriggers(id, NewState.Locked);
-            return Task.CompletedTask;
+            if (forced is false)
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintDisabled, restraintId.ToString()));
         });
     }
 
-    public async Task UnlockRestraintSet(Guid id, string lockRemover, bool pushToServer = true, bool triggerAchievement = true, bool fromTimer = false)
+    public async Task SwapOrApplyGag(GagLayer layer, GagType newGag, string enactor, bool forced)
     {
-        await ExecuteWithApplierSlim(() =>
-        {
-            Logger.LogTrace("UNLOCKING SET START", LoggerType.AppearanceState);
-            var setIdx = RestraintSets.FindIndex(x => x.RestraintId == id);
-            if (setIdx == -1)
-            {
-                Logger.LogWarning("Set Does not Exist, Skipping.");
-                return Task.CompletedTask;
-            }
-            // if the set is not the active set, log that this is invalid, as we should only be locking / unlocking the active set.
-            if (setIdx != _clientConfigs.GetActiveSetIdx())
-            {
-                Logger.LogWarning("Attempted to unlock a set that is not the active set. Skipping.");
-                return Task.CompletedTask;
-            }
-
-            // Grab the set reference.
-            var setRef = RestraintSets[setIdx];
-            if (!setRef.Locked)
-            {
-                Logger.LogDebug(setRef.Name + " is not even locked. Skipping!", LoggerType.AppearanceState);
-                return Task.CompletedTask;
-            }
-
-            // Store a copy of the values we need before we change them.
-            var previousLock = setRef.LockType;
-            var previousAssigner = setRef.LockedBy;
-
-            // Assign the lock information to the set.
-            var prevLock = setRef.LockType.ToPadlock();
-            setRef.LockType = Padlocks.None.ToName();
-            setRef.LockPassword = string.Empty;
-            setRef.LockedUntil = DateTimeOffset.MinValue;
-            setRef.LockedBy = string.Empty;
-            _clientConfigs.SaveWardrobe();
-
-            // reset this ONLY if wasTimer was false, otherwise keep it as is so we have a valid reference after unlock callback.
-            if (!fromTimer)
-            {
-                Logger.LogTrace("Not Setting GagManager.ActiveSlotPadlocks to None, as this was not from a timer.", LoggerType.AppearanceState);
-                GagManager.ActiveSlotPadlocks[3] = Padlocks.None;
-            }
-
-            Logger.LogDebug("Set: " + setRef.Name + " Unlocked by: " + lockRemover, LoggerType.AppearanceState);
-
-            // After this, we should push our changes to the server, if we have marked for us to.
-            if (pushToServer)
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.RestraintUnlocked, prevLock));
-
-            // If we should fire the sold slave achievement, fire it.
-            bool soldSlaveSatisfied = (previousAssigner != MainHub.UID && previousAssigner != MainHub.UID) && (lockRemover != MainHub.UID && lockRemover != MainHub.UID);
-            if (triggerAchievement && (previousAssigner != lockRemover) && soldSlaveSatisfied)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
-
-            // Finally, we should fire to our achievement manager, if we have marked for us to.
-            if (triggerAchievement)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, setRef, previousLock.ToPadlock(), false, lockRemover);
-
-            Logger.LogInformation("UNLOCKING SET END", LoggerType.AppearanceState);
-            // Finally, we should let our trigger controller know that we just enabled a restraint set.
-            //_triggerController.CheckActiveRestraintTriggers(id, NewState.Unlocked);
-            return Task.CompletedTask;
-        });
-    }
-
-    public async Task RestraintSwapped(Guid newSetId, string setAssignerUid, bool publish = true)
-    {
-        Logger.LogTrace("SET-SWAPPED Executed. Triggering DISABLE-SET, then ENABLE-SET", LoggerType.AppearanceState);
-
-        // We just do this for extra security overhead even though we could just pass it in.
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is null)
-        {
-            Logger.LogWarning("No Active Set to swap from. Skipping.");
+        if(_playerData.AppearanceData is null)
             return;
-        }
 
-        // First, disable the current set.
-        await DisableRestraintSet(activeSet.RestraintId, disablerUID: MainHub.UID, pushToServer: false);
-        // Then, enable the new set.
-        await EnableRestraintSet(newSetId, assignerUID: MainHub.UID, pushToServer: publish);
-    }
+        // grab the current gagtype on the layer.
+        var currentGag = _playerData.AppearanceData!.GagSlots[(int)layer].GagType.ToGagType();
 
-    /// <summary>
-    /// When a gag is applied, because its data has already been adjusted, we will simply
-    /// need to do a refresh for appearance. The only thing that needs to be adjusted here is C+ Profile.
-    /// </summary>
-    public async Task GagApplied(GagLayer layer, GagType gagType, bool publishApply = true, bool isSelfApplied = true, bool triggerAchievement = true)
-    {
-        await ExecuteWithApplierSlim(async () => { await GagApplyInternal(layer, gagType, isSelfApplied, publishApply, triggerAchievement); });
-    }
+        // if the new gag is the same as the current, do nothing.
+        if (currentGag == newGag)
+            return;
 
-    private async Task GagApplyInternal(GagLayer layer, GagType gagType, bool isSelfApplied = true, bool publishApply = true, bool triggerAchievement = true)
-    {
-        Logger.LogDebug("GAG-APPLIED triggered on slot [" + layer.ToString() + "] with a [" + gagType.GagName() + "]", LoggerType.AppearanceState);
-
-        _gagManager.ApplyGag(layer, gagType);
-
-        // if publishing, publish it.
-        if (publishApply)
+        // if the current gag is not GagType.None, perform a swap, otherwise, perform an apply.
+        if (currentGag is GagType.None)
         {
-            Logger.LogInformation("WE ARE PUBLISHING");
-            _gagManager.PublishGagApplied(layer);
+            Logger.LogTrace("GAG-APPLIED Executed", LoggerType.AppearanceState);
+            await GagApplied(layer, newGag, enactor, true, forced);
         }
+        // otherwise, we need to disable the active set, then enable the new set.
+        else
+        {
+            Logger.LogTrace("GAG-SWAPPED Executed. Triggering GAG-REMOVE, then GAG-APPLIED", LoggerType.AppearanceState);
+            // First, remove the current gag.
+            await GagRemoved(layer, enactor, true, true);
+            // Then, apply the new gag.
+            await GagApplied(layer, newGag, enactor, true, forced);
+        }
+    }
+
+    public async Task GagApplied(GagLayer layer, GagType gagType, string enactor, bool triggerAchievement, bool forced)
+    {
+        await ExecuteWithApplierSlim(async () => { await GagApplyInternal(layer, gagType, enactor, triggerAchievement, forced); });
+    }
+
+    private async Task GagApplyInternal(GagLayer layer, GagType gagType, string enactor, bool triggerAchievement, bool forced)
+    {
+        if(!_publishService.CanApplyGag(layer) || _playerData.AppearanceData is null || _playerData.GlobalPerms is null)
+            return;
+
+        Logger.LogDebug("GAG-APPLIED triggered on slot [" + layer.ToString() + "] with a [" + gagType.GagName() + "]", LoggerType.AppearanceState);
+        // update the gag slot information for this layer.
+        _playerData.AppearanceData.GagSlots[(int)layer].GagType = gagType.GagName();
+        // update garbler logic.
+        _garbler.UpdateGarblerLogic();
+
+        // Apply appearance changes if enabled.(for now forced is included for safewords to work, and will be removed later during glamourer rework)
+        if (_playerData.GlobalPerms.ItemAutoEquip || forced)
+        {
+            await RecalcAndReload(false);
+            // Update C+ Profile if applicable
+            var drawData = _clientConfigs.GetDrawData(gagType);
+            if (drawData.CustomizeGuid != Guid.Empty)
+                _ipcManager.CustomizePlus.EnableProfile(drawData.CustomizeGuid);
+        }
+
+        // handle achievements.
+        if (triggerAchievement)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, gagType, enactor);
+
+        // publish the changes to the mediator.
+        if (forced is false)
+            Mediator.Publish(new PlayerCharAppearanceChanged(layer, GagUpdateType.GagApplied, Padlocks.None));
+    }
+
+    public bool GagLocked(GagLayer layer, Padlocks lockType, string pass, string endTime, string enactor, bool triggerAchievement, bool forced)
+    {
+        if (!_publishService.CanLockGag(layer) || _playerData.AppearanceData is null)
+            return false;
+
+        Logger.LogInformation(_playerData.AppearanceData.ToGagString());
+
+        var previousPadlock = _playerData.AppearanceData.GagSlots[(int)layer].Padlock.ToPadlock();
+
+        if(!UpdateStateForLocking(_playerData.AppearanceData.GagSlots[(int)layer], lockType, pass, endTime, enactor, forced))
+            return false;
 
         // Send Achievement Event
         if (triggerAchievement)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.GagAction, layer, gagType, isSelfApplied);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, lockType, enactor);
 
-        // If the Gag is not Enabled, or our auto equip is disabled, dont do anything else and return.
-        if (!_clientConfigs.IsGagEnabled(gagType) || !_playerData.GlobalPerms!.ItemAutoEquip)
-        {
-            Logger.LogDebug("Either this gag was not set to be enabled, or item auto equip is off, skipping appearnace altaring changes!", LoggerType.GagHandling);
-            return;
-        }
+        // publish the changes to the mediator.
+        if(forced is false)
+            Mediator.Publish(new PlayerCharAppearanceChanged(layer, GagUpdateType.GagLocked, previousPadlock));
 
-        await RecalcAndReload(false);
-
-        // Update C+ Profile if applicable
-        var drawData = _clientConfigs.GetDrawData(gagType);
-        if (drawData.CustomizeGuid != Guid.Empty)
-            _ipcManager.CustomizePlus.EnableProfile(drawData.CustomizeGuid);
+        return true;
     }
 
-    /// <summary>
-    /// When a gag is removed, because its data has already been adjusted, we will simply
-    /// need to do a refresh for appearance. The only thing that needs to be adjusted here is C+ Profile.
-    /// </summary>
-    public async Task GagRemoved(GagLayer layer, GagType gagType, bool publishRemoval = true, bool isSelfApplied = true, bool triggerAchievement = true)
+    public bool GagUnlocked(GagLayer layer, string guessedPass, string enactorUid, bool triggerAchievement, bool forced)
+    {
+        // return early if we are not allowed to apply.
+        if (!_publishService.CanUnlockGag(layer) || _playerData.AppearanceData is null)
+            return false;
+
+        // store the previous information.
+        var padlockRemoved = _playerData.AppearanceData.GagSlots[(int)layer].Padlock.ToPadlock();
+
+        if (!UpdateStateForUnlocking(_playerData.AppearanceData.GagSlots[(int)layer], guessedPass, enactorUid, forced))
+            return false;
+
+        // Send Achievement Event
+        if (triggerAchievement)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, padlockRemoved, enactorUid);
+
+        // publish the changes to the mediator.
+        if (forced is false)
+            Mediator.Publish(new PlayerCharAppearanceChanged(layer, GagUpdateType.GagUnlocked, padlockRemoved));
+
+        return true;
+    }
+
+    public async Task GagRemoved(GagLayer layer, string enactorUid, bool triggerAchievement, bool forced)
     {
         await ExecuteWithApplierSlim(async () =>
         {
-            Logger.LogDebug("GAG-REMOVE triggered on slot [" + layer.ToString() + "] with a [" + gagType.GagName() + "]", LoggerType.AppearanceState);
-
-            // if we aren't even making a change dont push anything.
-            if (_playerData.AppearanceData?.GagSlots[(int)layer].GagType.ToGagType() is GagType.None)
+            if(!_publishService.CanRemoveGag(layer) || _playerData.AppearanceData is null || _playerData.GlobalPerms is null)
                 return;
 
-            bool changeOccured = _gagManager.RemoveGag(layer);
+            var gagRemoved = _playerData.AppearanceData.GagSlots[(int)layer].GagType.ToGagType();
 
-            // Once it's been set to inactive, we should also remove our moodles.
-            var gagSettings = _clientConfigs.GetDrawData(gagType);
-            var moodlesToRemove = RemoveMoodles(gagSettings);
+            Logger.LogDebug("GAG-REMOVE triggered on slot [" + layer.ToString() + "], removing your [" + gagRemoved.GagName() + "]", LoggerType.AppearanceState);
 
-            await RecalcAndReload(true, moodlesToRemove);
+            // update the data and the garbler logic.
+            _playerData.AppearanceData.GagSlots[(int)layer].GagType = GagType.None.GagName();
+            _garbler.UpdateGarblerLogic();
 
-            // Remove the CustomizePlus Profile if applicable
-            if (gagSettings.CustomizeGuid != Guid.Empty)
-                _ipcManager.CustomizePlus.DisableProfile(gagSettings.CustomizeGuid);
 
-            if (publishRemoval && changeOccured)
-                _gagManager.PublishGagRemoved(layer);
+            // Apply appearance changes if enabled.(for now forced is included for safewords to work, and will be removed later during glamourer rework)
+            if (_playerData.GlobalPerms.ItemAutoEquip || forced)
+            {
+                // Once it's been set to inactive, we should also remove our moodles.
+                var gagSettings = _clientConfigs.GetDrawData(gagRemoved);
+                var moodlesToRemove = RemoveMoodles(gagSettings);
 
-            // Send Achievement Event
+                await RecalcAndReload(true, moodlesToRemove);
+
+                // Remove the CustomizePlus Profile if applicable
+                if (gagSettings.CustomizeGuid != Guid.Empty)
+                    _ipcManager.CustomizePlus.DisableProfile(gagSettings.CustomizeGuid);
+            }
+
+            // handle achievement sending
             if (triggerAchievement)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.GagRemoval, layer, gagType, isSelfApplied);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, gagRemoved, enactorUid);
+
+            // publish the changes to the mediator.
+            if (forced is false)
+                Mediator.Publish(new PlayerCharAppearanceChanged(layer, GagUpdateType.GagRemoved, Padlocks.None));
         });
-    }
-
-    public async Task GagSwapped(GagLayer layer, GagType curGag, GagType newGag, bool isSelfApplied = true, bool publish = true)
-    {
-        Logger.LogTrace("GAG-SWAPPED Executed. Triggering GAG-REMOVE, then GAG-APPLIED", LoggerType.AppearanceState);
-
-        // First, remove the current gag.
-        await GagRemoved(layer, curGag, publishRemoval: false, isSelfApplied: isSelfApplied);
-
-        // Then, apply the new gag.
-        await GagApplied(layer, newGag, publishApply: publish, isSelfApplied: isSelfApplied);
     }
 
     /// <summary>
     /// For applying cursed items.
     /// </summary>
     /// <param name="gagLayer"> Ignore this if the cursed item's IsGag is false. </param>
-    public async Task CursedItemApplied(CursedItem cursedItem, GagLayer gagLayer = GagLayer.UnderLayer, bool publish = true)
+    public async Task CursedItemApplied(CursedItem cursedItem)
     {
         await ExecuteWithApplierSlim(async () =>
         {
             Logger.LogTrace("CURSED-APPLIED Executed");
-            // If the cursed item is a gag item, handle it via the gag manager, otherwise, handle through mod toggle
+            // A cursed gag item shoudlnt be allowed to exist in this function. If it is, log error and return.
             if (cursedItem.IsGag)
             {
-                // Cursed Item was Gag, so handle it via GagApplied.
-                await GagApplyInternal(gagLayer, cursedItem.GagType);
+                Logger.LogError("CursedItemApplied was called with a Gag CursedItem, but this function does not support gag application.", LoggerType.AppearanceState);
+                return;
             }
-            else
-            {
-                // Cursed Item was Equip, so handle attached Mod Enable and recalculation here.
-                await PenumbraModsToggle(NewState.Enabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
 
-                await RecalcAndReload(false);
-            }
-            if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, Padlocks.None));
+            // Cursed Item was Equip, so handle attached Mod Enable and recalculation here.
+            await PenumbraModsToggle(NewState.Enabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
+            await RecalcAndReload(false);
+
+            // update achievements and push
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, cursedItem.LootId.ToString()));
         });
     }
 
-    public async Task CursedItemRemoved(CursedItem cursedItem, bool publish = true)
+    /// <summary>
+    /// Variant of normal cursed item intended for gagtypes.
+    /// </summary>
+    public async Task CursedGagApplied(CursedItem cursedItem, GagLayer layer, DateTimeOffset releaseTimeUTC)
+    {
+        await ExecuteWithApplierSlim(async () =>
+        {
+            // return if we cannot apply a gag to the slot.
+            Logger.LogTrace("CURSED-APPLIED Executed", LoggerType.AppearanceState);
+
+            // validate we can apply gags to this slot.
+            if (!_publishService.CanApplyGag(layer) || _playerData.AppearanceData is null)
+                return;
+
+            // perform the apply operation without publishing, but fire achievements.
+            await GagApplyInternal(layer, cursedItem.GagType, MainHub.UID, true, true);
+            _playerData.AppearanceData.GagSlots[(int)layer].Padlock = Padlocks.MimicPadlock.ToName();
+            _playerData.AppearanceData.GagSlots[(int)layer].Timer = releaseTimeUTC;
+            _playerData.AppearanceData.GagSlots[(int)layer].Assigner = MainHub.UID;
+            // fire lock related achievements.
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, Padlocks.MimicPadlock, MainHub.UID);
+
+            // now we need to log that we have applied the cursed item.
+            Logger.LogDebug("CURSED ITEM [" + cursedItem.Name + "] APPLIED TO GAG SLOT [" + layer.ToString() + "]", LoggerType.AppearanceState);
+
+            // Update achievements and publish.
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+            Mediator.Publish(new PlayerCharAppearanceChanged(layer, GagUpdateType.MimicGagApplied, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemApplied, cursedItem.LootId.ToString()));
+        });
+    }
+
+
+    /// <summary>
+    /// Easy incorrect assumption to make is that this only disables the associations for said items
+    /// if NOT a gag. If it is a gag, it will need to be removed manually.
+    /// </summary>
+    public async Task CursedItemRemoved(CursedItem cursedItem, bool forced)
     {
         await ExecuteWithApplierSlim(async () =>
         {
             Logger.LogTrace("CURSED-REMOVED Executed", LoggerType.AppearanceState);
-            // If the Cursed Item is a GagItem, it will be handled automatically by lock expiration. 
-            // However, it also means none of the below will process, so we should return if it is.
-            if (!cursedItem.IsGag)
+            // Only process the removal of things if not a gag cursed item.
+            if (cursedItem.IsGag is false)
             {
                 // We are removing a Equip-based CursedItem
                 await PenumbraModsToggle(NewState.Disabled, new List<AssociatedMod>() { cursedItem.AssociatedMod });
@@ -525,10 +553,52 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 await RecalcAndReload(true, moodlesToRemove);
             }
 
-            if (publish)
-                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemRemoved, Padlocks.MimicPadlock));
+            if (forced is false) 
+                Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.CursedItemRemoved, cursedItem.LootId.ToString()));
         });
     }
+    #endregion Updates
+
+    #region Helpers
+    private bool UpdateStateForLocking<T>(T item, Padlocks lockType, string pass, string timer, string enactor, bool isForced) where T : IPadlockable
+    {
+        // if it is not forced, require the validation process.
+        if (isForced is false)
+        {
+            var validationResult = GsPadlockEx.ValidateLockUpdate(item, lockType, pass, timer, enactor);
+            if (validationResult is not PadlockReturnCode.Success)
+            {
+                Logger.LogDebug("Failed to lock padlock: " + item.Padlock + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
+                return false;
+            }
+        }
+        // otherwise, update the values directly. (no need for else statement, if validation is true, we set it anyways.
+        GsPadlockEx.PerformLockUpdate(ref item, lockType, pass, timer, enactor);
+        _clientConfigs.SaveWardrobe();
+        Logger.LogDebug("Item was locked with Padlock: " + lockType +
+            " for: " + (timer.GetEndTimeUTC() - DateTimeOffset.UtcNow) + " by: " + enactor, LoggerType.AppearanceState);
+        return true;
+    }
+
+    private bool UpdateStateForUnlocking<T>(T item, string pass, string enactor, bool isForced) where T : IPadlockable
+    {
+        // if it is not forced, require the validation process.
+        if (isForced is false)
+        {
+            var validationResult = GsPadlockEx.ValidateUnlockUpdate(item, MainHub.PlayerUserData, pass, enactor);
+            if (validationResult is not PadlockReturnCode.Success)
+            {
+                Logger.LogDebug("Failed to unlock padlock: " + item.Padlock + " due to: " + validationResult.ToFlagString(), LoggerType.PadlockHandling);
+                return false;
+            }
+        }
+        // otherwise, update the values directly. (no need for else statement, if validation is true, we set it anyways.
+        GsPadlockEx.PerformUnlockUpdate(ref item);
+        _clientConfigs.SaveWardrobe();
+        Logger.LogDebug("Item was unlocked by: " + enactor, LoggerType.AppearanceState);
+        return true;
+    }
+    #endregion Helpers
 
     private HashSet<Guid> RemoveMoodles(IMoodlesAssociable data)
     {
@@ -567,42 +637,40 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 // check to see if the gag is currently active.
                 if (gagSlot.GagType.ToGagType() is not GagType.None)
                 {
-                    _gagManager.UnlockGag((GagLayer)i); // (doesn't fire any achievements so should be fine)
+                    GagUnlocked((GagLayer)i, gagSlot.Password, gagSlot.Assigner, true, true); // (doesn't fire any achievements so should be fine)
                     // then we should remove it, but not publish it to the mediator just yet.
-                    await GagRemoved((GagLayer)i, gagSlot.GagType.ToGagType(), publishRemoval: false, isSelfApplied: gagSlot.Assigner == MainHub.UID);
+                    await GagRemoved((GagLayer)i, MainHub.UID, true, true);
                 }
             }
+
             Logger.LogInformation("Active gags disabled.", LoggerType.Safeword);
-            // finally, push the gag change for the safeword.
-            Mediator.Publish(new PlayerCharAppearanceChanged(new CharaAppearanceData(), GagLayer.UnderLayer, GagUpdateType.Safeword, Padlocks.None));
+            Mediator.Publish(new PlayerCharAppearanceChanged(GagLayer.UnderLayer, GagUpdateType.Safeword, Padlocks.None));
         }
 
         // if an active set exists we need to unlock and disable it.
-        if (_clientConfigs.GetActiveSet() is not null)
+        if (_clientConfigs.TryGetActiveSet(out var set))
         {
-            var activeIdx = _clientConfigs.GetActiveSetIdx();
-            var set = RestraintSets[activeIdx];
             Logger.LogInformation("Unlocking and Disabling Active Set [" + set.Name + "] due to Safeword.", LoggerType.Safeword);
 
             // unlock the set, dont push changes yet.
-            await UnlockRestraintSet(set.RestraintId, set.LockedBy);
-
+            UnlockRestraintSet(set.RestraintId, set.Password, set.Assigner, true, true);
             // Disable the set, turning off any mods moodles ext and refreshing appearance.            
-            await DisableRestraintSet(set.RestraintId, MainHub.UID);
+            await DisableRestraintSet(set.RestraintId, MainHub.UID, true, true);
         }
 
         // Disable all Cursed Items.
-        var activeCursedItems = CursedItems.Where(x => x.AppliedTime != DateTimeOffset.MinValue).ToList();
         Logger.LogInformation("Disabling all active Cursed Items due to Safeword.", LoggerType.Safeword);
-        foreach (var cursedItem in activeCursedItems)
+        foreach (var cursedItem in CursedItems.Where(x => x.AppliedTime != DateTimeOffset.MinValue).ToList())
         {
             _clientConfigs.DeactivateCursedItem(cursedItem.LootId);
-            await CursedItemRemoved(cursedItem);
+            await CursedItemRemoved(cursedItem, true);
         }
+        // push appearance update.
+        Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.Safeword, string.Empty));
     }
 
     /// <summary> Applies associated mods to the client when a Restraint or Cursed Item is toggled. </summary>
-    private Task PenumbraModsToggle(NewState state, List<AssociatedMod> associatedMods)
+    public Task PenumbraModsToggle(NewState state, List<AssociatedMod> associatedMods)
     {
         try
         {
@@ -622,9 +690,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             {
                 // For each of the associated mods, if we marked it to disable when inactive, disable it.
                 foreach (var associatedMod in associatedMods)
-                    _ipcManager.Penumbra.ModifyModState(associatedMod,
-                        modState: NewState.Disabled,
-                        adjustPriorityOnly: associatedMod.DisableWhenInactive ? false : true);
+                    _ipcManager.Penumbra.ModifyModState(associatedMod, modState: NewState.Disabled);
 
                 // if any of those mods wanted us to perform a redraw, then do so now. (PlayerObjectIndex is always 0)
                 if (associatedMods.Any(x => x.RedrawAfterToggle))
@@ -639,10 +705,6 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Syncronizes the data to be updated with most recent information.
-    /// </summary>
-    /// <param name="fetchMoodlesManually"> If true, will fetch moodles manually via IPC call for true latest data. </param>
     public async Task RecalculateAppearance()
     {
         // Return if the core data is null.
@@ -662,8 +724,7 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
         // store the data to apply from the active set.
         Logger.LogInformation("Wardrobe is Enabled, Collecting Data from Active Set.", LoggerType.AppearanceState);
         // we need to store a reference to the active sets draw data.
-        var activeSetRef = _clientConfigs.GetActiveSet();
-        if (activeSetRef is not null)
+        if (_clientConfigs.TryGetActiveSet(out var activeSetRef))
         {
             foreach (var item in activeSetRef.DrawData)
             {
@@ -674,13 +735,14 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
                 ItemsToApply[item.Key] = item.Value;
             }
             // Add the moodles from the active set.
-            if (!_playerData.IpcDataNull)
+            if (_playerData.LastIpcData is not null)
             {
                 if (activeSetRef.AssociatedMoodles.Count > 0)
                     ExpectedMoodles.UnionWith(activeSetRef.AssociatedMoodles);
                 if (activeSetRef.AssociatedMoodlePreset != Guid.Empty)
                 {
-                    var statuses = _playerData.LastIpcData!.MoodlesPresets.FirstOrDefault(p => p.Item1 == activeSetRef.AssociatedMoodlePreset).Item2;
+                    var statuses = _playerData.LastIpcData.MoodlesPresets
+                        .FirstOrDefault(p => p.Item1 == activeSetRef.AssociatedMoodlePreset).Item2;
                     if (statuses is not null)
                         ExpectedMoodles.UnionWith(statuses);
                 }
@@ -707,19 +769,19 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             var data = _clientConfigs.GetDrawData(slot.GagType.ToGagType());
             if (data is not null && data.IsEnabled)
             {
-                ItemsToApply[data.Slot] = data;
+                // only apply the glamour item if it is not an empty item.
+                if (!data.GameItem.Equals(ItemIdVars.NothingItem(data.Slot)))
+                    ItemsToApply[data.Slot] = data;
 
                 // continue if moodles data is not present.
-                if (!_playerData.IpcDataNull)
+                if (_playerData.LastIpcData is not null)
                 {
-                    if (data.AssociatedMoodles.Count > 0)
-                        ExpectedMoodles.UnionWith(data.AssociatedMoodles);
+                    if (data.AssociatedMoodles.Count > 0) ExpectedMoodles.UnionWith(data.AssociatedMoodles);
 
                     if (data.AssociatedMoodlePreset != Guid.Empty)
                     {
-                        var statuses = _playerData.LastIpcData!.MoodlesPresets.FirstOrDefault(p => p.Item1 == data.AssociatedMoodlePreset).Item2;
-                        if (statuses is not null)
-                            ExpectedMoodles.UnionWith(statuses);
+                        var statuses = _playerData.LastIpcData.MoodlesPresets.FirstOrDefault(p => p.Item1 == data.AssociatedMoodlePreset).Item2;
+                        if (statuses is not null) ExpectedMoodles.UnionWith(statuses);
                     }
                 }
 
@@ -737,6 +799,10 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             Logger.LogDebug("We are Blindfolded!", LoggerType.AppearanceState);
             var blindfoldData = _clientConfigs.GetBlindfoldItem();
             ItemsToApply[blindfoldData.Slot] = blindfoldData;
+        }
+        else
+        {
+            Logger.LogDebug("We are not Blindfolded.", LoggerType.AppearanceState);
         }
 
         // collect the data from the cursed sets.
@@ -778,14 +844,14 @@ public sealed class AppearanceManager : DisposableMediatorSubscriberBase
             }
 
             // add in the moodle if it exists.
-            if (!_playerData.IpcDataNull)
+            if (_playerData.LastIpcData is not null)
             {
                 if (cursedItem.MoodleType is IpcToggleType.MoodlesStatus && cursedItem.MoodleIdentifier != Guid.Empty)
                     ExpectedMoodles.UnionWith(new List<Guid>() { cursedItem.MoodleIdentifier });
 
                 else if (cursedItem.MoodleType is IpcToggleType.MoodlesPreset && cursedItem.MoodleIdentifier != Guid.Empty)
                     ExpectedMoodles
-                        .UnionWith(_playerData.LastIpcData!.MoodlesPresets
+                        .UnionWith(_playerData.LastIpcData.MoodlesPresets
                             .Where(p => p.Item1 == cursedItem.MoodleIdentifier)
                             .SelectMany(p => p.Item2));
             }

@@ -316,7 +316,8 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         _allClientPairs[dto.User].ApplyLightStorageData(new(dto.User, dto.User, dto.CompositeData.LightStorageData, UpdateDir.Own));
         _allClientPairs[dto.User].ApplyAppearanceData(new(dto.User, dto.User, dto.CompositeData.AppearanceData, GagLayer.UnderLayer, GagUpdateType.FullDataUpdate, Padlocks.None, UpdateDir.Own));
-        _allClientPairs[dto.User].ApplyWardrobeData(new(dto.User, dto.User, dto.CompositeData.WardrobeData, WardrobeUpdateType.FullDataUpdate, Padlocks.None, UpdateDir.Own));
+        _allClientPairs[dto.User].ApplyWardrobeData(new(dto.User, dto.User, dto.CompositeData.WardrobeData, WardrobeUpdateType.FullDataUpdate, string.Empty, UpdateDir.Own));
+        _allClientPairs[dto.User].ApplyOrdersData(new(dto.User, dto.User, dto.CompositeData.OrdersData, OrdersUpdateType.FullDataUpdate, string.Empty, UpdateDir.Own));
         _allClientPairs[dto.User].ApplyToyboxData(new(dto.User, dto.User, dto.CompositeData.ToyboxData, ToyboxUpdateType.FullDataUpdate, UpdateDir.Own));
 
         // first see if our clientUID exists as a key in dto.CompositeData.AliasData. If it does not, define it as an empty data.
@@ -335,8 +336,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateCachedLockedSlots();
 
         // publish a mediator message that is listened to by the achievement manager for duration cleanup.
-        var activeGags = dto.CompositeData.AppearanceData.GagSlots.Where(x => x.GagType.ToGagType() is not GagType.None).Select(x => x.GagType).ToList();
-        Mediator.Publish(new PlayerLatestActiveItems(pair.UserData, activeGags, dto.CompositeData.WardrobeData.ActiveSetId));
+        Mediator.Publish(new PlayerLatestActiveItems(pair.UserData, dto.CompositeData.AppearanceData, dto.CompositeData.WardrobeData.ActiveSetId));
     }
 
     /// <summary> Method similar to compositeData, but this will only update the IPC data of the user pair. </summary>
@@ -414,8 +414,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         Logger.LogInformation("Received Character Light Storage Data Update from" + (pair.GetNickname() ?? pair.UserData.AliasOrUID), LoggerType.PairDataTransfer);
         _allClientPairs[dto.User].ApplyLightStorageData(dto);
     }
-
-
 
     /// <summary> Removes a user pair from the client's pair list.</summary>
     public void RemoveUserPair(UserDto dto)

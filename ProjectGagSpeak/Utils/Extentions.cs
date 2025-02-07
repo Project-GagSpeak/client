@@ -7,16 +7,57 @@ using ImGuiNET;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.Utils;
 
+public static class CkTypeExtentions
+{
+    /// <summary> Attempts to retrieve the first element from the list that matches the specified predicate. </summary>
+    /// <typeparam name="T">The type of elements in the list.</typeparam>
+    /// <param name="list">The list to search for an element that matches the predicate.</param>
+    /// <param name="predicate">A function to test each element for a condition.</param>
+    /// <param name="item">
+    /// When this method returns, contains the first element from the list that matches the predicate, if found; 
+    /// otherwise, the default value of <typeparamref name="T" />.
+    /// </param>
+    /// <returns> <see langword="true"/> if an element that matches the predicate is found; otherwise, <see langword="false"/>. </returns>
+    public static bool TryGetItem<T>(this List<T> list, Func<T, bool> predicate, [MaybeNullWhen(false)] out T item)
+    {
+        item = list.FirstOrDefault(predicate);
+        return item is not null;
+    }
+
+    /// <summary> Attempts to retrieve the first element from the list that matches the specified predicate. </summary>
+    /// <typeparam name="TKey"> The type of the keys in the dictionary. </typeparam>
+    /// <typeparam name="TValue"> The type of the values in the dictionary. </typeparam>
+    /// <param name="dictionary"> The dictionary to search for an element that matches the predicate. </param>
+    /// <param name="key"> The key to search for. </param>
+    /// <param name="value"> When this method returns, contains the value associated with the specified key, if the key is found; otherwise, the default value of <typeparamref name="TValue" />. </param>
+    /// <returns> <see langword="true"/> if the dictionary contains an element with the specified key; otherwise, <see langword="false"/>. </returns>
+    public static bool TryGetValueOrFirst<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, [MaybeNullWhen(false)] out TValue value)
+    {
+        if (dictionary.TryGetValue(key, out value))
+            return true;
+
+        if (dictionary.Count > 0)
+        {
+            value = dictionary.First().Value;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+}
+
+
+
 public static class UtilsExtensions
 {
-    public static bool IsTimerLock(this Padlocks padlock) =>
-        padlock is Padlocks.FiveMinutesPadlock or Padlocks.TimerPasswordPadlock or Padlocks.OwnerTimerPadlock or Padlocks.DevotionalTimerPadlock or Padlocks.MimicPadlock;
     public static string ComboEmoteName(this Lumina.Excel.Sheets.Emote emote)
     {
         return emote.Name.ExtractText().Replace("\u00AD", "") + "(" + emote.RowId + ")";

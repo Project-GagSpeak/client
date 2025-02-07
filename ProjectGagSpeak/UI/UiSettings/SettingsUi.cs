@@ -239,6 +239,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         string globalTriggerPhrase = _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase;
         bool globalAllowSitRequests = _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests;
         bool globalAllowMotionRequests = _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests;
+        bool globalAllowAliasRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests;
         bool globalAllowAllRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests;
 
         bool moodlesEnabled = _playerCharacterManager.GlobalPerms.MoodlesEnabled;
@@ -415,7 +416,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowMotionTT);
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAlias, ref globalAllowAliasRequests))
+            {
+                _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests = globalAllowAliasRequests;
+                // if this creates a race condition down the line remove the above line.
+                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowAliasRequests", globalAllowAliasRequests), UpdateDir.Own));
 
+            }
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAliasTT);
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAll, ref globalAllowAllRequests))
             {
                 _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests = globalAllowAllRequests;
@@ -515,8 +523,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
             // Send Mediator Event to grab updated settings for pair.
             Task.Run(async () =>
             {
-                if (_playerCharacterManager.CoreDataNull) return;
-                var newPerms = await _shockProvider.GetPermissionsFromCode(_playerCharacterManager.GlobalPerms!.GlobalShockShareCode);
+                if (_playerCharacterManager.GlobalPerms is null)
+                    return;
+
+                var newPerms = await _shockProvider.GetPermissionsFromCode(_playerCharacterManager.GlobalPerms.GlobalShockShareCode);
                 // set the new permissions.
                 _playerCharacterManager.GlobalPerms.AllowShocks = newPerms.AllowShocks;
                 _playerCharacterManager.GlobalPerms.AllowVibrations = newPerms.AllowVibrations;
@@ -672,6 +682,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var dtrActionNotifs = _configService.Current.ShowActionNotifs;
         var dtrVibeStatus = _configService.Current.ShowVibeStatus;
 
+        var preferThreeCharaAnonName = _configService.Current.PreferThreeCharaAnonName;
         var preferNicknamesInsteadOfName = _configService.Current.PreferNicknamesOverNames;
         var showVisibleSeparate = _configService.Current.ShowVisibleUsersSeparately;
         var showOfflineSeparate = _configService.Current.ShowOfflineUsersSeparately;
@@ -741,6 +752,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
             Mediator.Publish(new RefreshUiMessage());
         }
         _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
+
+        if (ImGui.Checkbox(GSLoc.Settings.Preferences.PrefThreeCharaAnonName, ref preferThreeCharaAnonName))
+        {
+            _configService.Current.PreferThreeCharaAnonName = preferThreeCharaAnonName;
+            _configService.Save();
+        }
+        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.PrefThreeCharaAnonNameTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PreferNicknamesLabel, ref preferNicknamesInsteadOfName))
         {

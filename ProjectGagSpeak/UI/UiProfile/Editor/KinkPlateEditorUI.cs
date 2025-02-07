@@ -110,7 +110,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 if (_uiShared.IconTextButton(FontAwesomeIcon.Save, "Save Changes"))
-                    _ = _apiHubMain.UserSetKinkPlate(new UserKinkPlateDto(new UserData(MainHub.UID), profile.KinkPlateInfo, profile.Base64ProfilePicture));
+                    _ = _apiHubMain.UserSetKinkPlateContent(new UserKinkPlateContentDto(new UserData(MainHub.UID), profile.KinkPlateInfo));
                 UiSharedService.AttachToolTip("Updates your stored profile with latest information");
                 
                 ImUtf8.SameLineInner();

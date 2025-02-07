@@ -1,6 +1,4 @@
 using GagSpeak.GagspeakConfiguration.Configurations;
-using GagSpeak.InterfaceConverters;
-using GagSpeak.WebAPI;
 
 namespace GagSpeak.GagspeakConfiguration;
 
@@ -129,23 +127,28 @@ public abstract class ConfigurationServiceBase<T> : IDisposable where T : IGagsp
             return; // Exit early to prevent saving
         }
 
-        var existingConfigs = PerCharacterConfigPath && !string.IsNullOrEmpty(_currentUid)
+        var existingConfigs = (PerCharacterConfigPath && !string.IsNullOrEmpty(_currentUid)
                             ? Directory.EnumerateFiles(Path.Combine(ConfigurationDirectory, _currentUid), ConfigurationName + ".bak.*").Select(c => new FileInfo(c))
-                            : Directory.EnumerateFiles(ConfigurationDirectory, ConfigurationName + ".bak.*").Select(c => new FileInfo(c))
+                            : Directory.EnumerateFiles(ConfigurationDirectory, ConfigurationName + ".bak.*").Select(c => new FileInfo(c)))
             .OrderByDescending(c => c.LastWriteTime).ToList();
-        if (existingConfigs.Skip(1).Any())
-        {
-            foreach (var config in existingConfigs.Skip(1).ToList())
-            {
-                config.Delete();
-            }
-        }
 
-        try
+        var lastitem = existingConfigs.FirstOrDefault();
+        if (lastitem != null && lastitem.LastWriteTime.AddHours(2) <= DateTime.Now)
         {
-            File.Copy(ConfigurationPath, ConfigurationPath + ".bak." + DateTime.Now.ToString("yyyyMMddHHmmss"), overwrite: true);
+            if (existingConfigs.Skip(1).Any())
+            {
+                foreach (var config in existingConfigs.Skip(1).ToList())
+                {
+                    config.Delete();
+                }
+            }
+
+            try
+            {
+                File.Copy(ConfigurationPath, ConfigurationPath + ".bak." + DateTime.Now.ToString("yyyyMMddHHmmss"), overwrite: true);
+            }
+            catch {  /* Consume */ }
         }
-        catch {  /* Consume */ }
 
         var temp = ConfigurationPath + ".tmp";
         string json = "";

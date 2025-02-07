@@ -41,22 +41,14 @@ public class TriggerConfigService : ConfigurationServiceBase<TriggerConfig>
     // Safely update data for new format.
     private JObject MigrateFromV0toV1(JObject oldConfigJson)
     {
-        // Create a new JObject to store the new config
-        JObject newConfigJson = new JObject
-        {
-            ["Version"] = 1
-        };
-
-        // Extract the old triggers
-        JArray oldTriggers = oldConfigJson["Triggers"] as JArray ?? new JArray();
-
         // Add the new triggers to the config
-        newConfigJson["TriggerStorage"] = new JObject
+        oldConfigJson["TriggerStorage"] = new JObject
         {
             ["Triggers"] = new JArray()
         };
 
-        return newConfigJson;
+        oldConfigJson["Version"] = 1;
+        return oldConfigJson;
     }
 
     protected override TriggerConfig DeserializeConfig(JObject configJson)
@@ -88,6 +80,7 @@ public class TriggerConfigService : ConfigurationServiceBase<TriggerConfig>
                         TriggerKind.RestraintSet => triggerToken.ToObject<RestraintTrigger>() ?? new RestraintTrigger(),
                         TriggerKind.GagState => triggerToken.ToObject<GagTrigger>() ?? new GagTrigger(),
                         TriggerKind.SocialAction => triggerToken.ToObject<SocialTrigger>() ?? new SocialTrigger(),
+                        TriggerKind.EmoteAction => triggerToken.ToObject<EmoteTrigger>() ?? new EmoteTrigger(),
                         _ => throw new Exception("Invalid Trigger Type")
                     };
                     // Safely parse the integer to ActionExecutionType

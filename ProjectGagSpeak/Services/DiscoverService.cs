@@ -1,6 +1,7 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using GagSpeak.Utils.ChatLog;
@@ -19,20 +20,22 @@ public class DiscoverService : DisposableMediatorSubscriberBase
     private readonly MainHub _apiHubMain;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
+    private readonly CosmeticService _cosmetics;
     private readonly string _configDirectory;
     private const string _chatlogFile = "global-chat-recent.log";
     private string ChatLogFilePath => Path.Combine(_configDirectory, _chatlogFile);
-    public DiscoverService(string configDirectory, ILogger<DiscoverService> logger, 
-        GagspeakMediator mediator, MainHub mainHub, MainMenuTabs tabMenu, 
-        PairManager pairManager) : base(logger, mediator)
+    public DiscoverService(string configDirectory, ILogger<DiscoverService> logger,
+        GagspeakMediator mediator, MainHub mainHub, MainMenuTabs tabMenu,
+        PairManager pairManager, CosmeticService cosmetics) : base(logger, mediator)
     {
         _configDirectory = configDirectory;
         _apiHubMain = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
+        _cosmetics = cosmetics;
 
         // Create a new chat log
-        GlobalChat = new ChatLog(_apiHubMain, Mediator);
+        GlobalChat = new ChatLog(_apiHubMain, Mediator, _cosmetics);
 
         // Load the chat log
         LoadChatLog(GlobalChat);
@@ -69,7 +72,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         if (_tabMenu.TabSelection is not MainMenuTabs.SelectedTab.GlobalChat)
             NewMessages++;
 
-        var userTagCode = msg.ChatMessage.MessageSender.UID.Substring(msg.ChatMessage.MessageSender.UID.Length - 3);
+        var userTagCode = msg.ChatMessage.UserTagCode;
         string SenderName = "Kinkster-" + userTagCode;
 
 

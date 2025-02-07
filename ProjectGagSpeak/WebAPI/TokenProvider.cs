@@ -71,6 +71,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
 
     /// <summary>
     /// Gets a new token from the server, either by requesting a new token or renewing an existing token.
+    /// This should only occur once every 6 hours.
     /// </summary>
     /// <param name="isRenewal">if the token is a renewal</param>
     /// <param name="identifier">the identifier requesting a new token</param>
@@ -83,6 +84,22 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         Uri tokenUri;
         string response = string.Empty;
         HttpResponseMessage result;
+
+        // If for some god awful reason we have horrible timing and our character happens to be zoning during this 6 hourly interval, wait.
+        try
+        {
+            while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+            {
+                Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+                await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            if (token.IsCancellationRequested) Logger.LogWarning("GetOrUpdateToken: Timeout reached while waiting for player to load in");
+            // if we somehow reach a timeout here we should almost certainly throw.
+            throw new GagspeakAuthFailureException("You had a 30 second timeout while zoning and attempting to fetch a new key!");
+        }
 
         // now, lets try and get our new token
         try
@@ -178,12 +195,12 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             {
                 // if it was a renewal, log the notification message
                 if (isRenewal)
-                    Mediator.Publish(new NotificationMessage("Error refreshing token", "Your authentication token could not be renewed. Try reconnecting to Gagspeak manually.",
-                    NotificationType.Error));
+                    Mediator.Publish(new NotificationMessage("Error refreshing token", "Your authentication token could not be renewed. " +
+                        "Try reconnecting to Gagspeak manually.", NotificationType.Error));
                 // otherwise, log the notification that it errored while generating the token.
                 else
-                    Mediator.Publish(new NotificationMessage("Error generating token", "Your authentication token could not be generated. Check Gagspeak's main UI to see the error message.",
-                    NotificationType.Error));
+                    Mediator.Publish(new NotificationMessage("Error generating token", "Your authentication token could not be generated. " +
+                        "Check GagSpeak's main UI to see the error message.", NotificationType.Error));
 
                 // publish a disconnected message and throw an exception.
                 Mediator.Publish(new MainHubDisconnectedMessage());

@@ -27,6 +27,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
     // Store the most recently sent component of our API formats from our player character
     private CharaAppearanceData? _lastAppearanceData;
     private CharaWardrobeData? _lastWardrobeData;
+    private CharaOrdersData? _lastOrdersData;
     private CharaAliasData? _lastAliasData;
     private CharaToyboxData? _lastToyboxData;
     private CharaStorageData? _lastLightStorage;
@@ -55,13 +56,31 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PairWentOnlineMessage>(this, (msg) => _newOnlinePairs.Add(msg.UserData));
 
         // Fired whenever our Appearance data updates. We then send this data to all online pairs.
-        Mediator.Subscribe<CharacterAppearanceDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<AppearanceDataCreatedMessage>(this, (msg) =>
         {
+
             var newAppearanceData = msg.NewData;
             if (_lastAppearanceData == null || !Equals(newAppearanceData, _lastAppearanceData))
             {
-                _lastAppearanceData = newAppearanceData;
+                _lastAppearanceData = newAppearanceData.DeepCloneData();
                 PushCharacterAppearanceData(_pairManager.GetOnlineUserDatas(), msg.AffectedLayer, msg.UpdateType, msg.PreviousLock);
+            }
+            else
+            {
+                Logger.LogDebug("Data was no different. Not sending data", LoggerType.OnlinePairs);
+                Logger.LogDebug("Last Appearance Data:\n " + _lastAppearanceData.ToGagString(), LoggerType.OnlinePairs);
+                Logger.LogDebug("New Appearance Data:\n " + newAppearanceData.ToGagString(), LoggerType.OnlinePairs);
+            }
+        });
+
+        // Fired whenever our Wardrobe data updates. We then send this data to all online pairs.
+        Mediator.Subscribe<WardrobeDataCreatedMessage>(this, (msg) =>
+        {
+            var newWardrobeData = msg.CharaWardrobeData;
+            if (_lastWardrobeData == null || !Equals(newWardrobeData, _lastWardrobeData))
+            {
+                _lastWardrobeData = newWardrobeData;
+                PushCharacterWardrobeData(_pairManager.GetOnlineUserDatas(), msg.UpdateKind, msg.AffectedItem);
             }
             else
             {
@@ -69,14 +88,13 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             }
         });
 
-        // Fired whenever our Wardrobe data updates. We then send this data to all online pairs.
-        Mediator.Subscribe<CharacterWardrobeDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<OrdersDataCreatedMessage>(this, (msg) =>
         {
-            var newWardrobeData = msg.CharaWardrobeData;
-            if (_lastWardrobeData == null || !Equals(newWardrobeData, _lastWardrobeData))
+            var newOrdersData = msg.CharaTimedData;
+            if (_lastOrdersData == null || !Equals(newOrdersData, _lastOrdersData))
             {
-                _lastWardrobeData = newWardrobeData;
-                PushCharacterWardrobeData(_pairManager.GetOnlineUserDatas(), msg.UpdateKind, msg.PreviousPadlock);
+                _lastOrdersData = newOrdersData;
+                PushCharacterOrdersData(_pairManager.GetOnlineUserDatas(), msg.UpdateKind, msg.AffectedItem);
             }
             else
             {
@@ -85,7 +103,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         });
 
         // Fired whenever our Alias data updates. We then send this data to all online pairs.
-        Mediator.Subscribe<CharacterAliasDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<AliasDataCreatedMessage>(this, (msg) =>
         {
             var newAliasData = msg.CharaAliasData;
             if (_lastAliasData == null || !Equals(newAliasData, _lastAliasData))
@@ -100,7 +118,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         });
 
         // Fired whenever our Toybox data updates. We then send this data to all online pairs.
-        Mediator.Subscribe<CharacterToyboxDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<ToyboxDataCreatedMessage>(this, (msg) =>
         {
             var newToyboxData = msg.CharaToyboxData;
             if (_lastToyboxData == null || !Equals(newToyboxData, _lastToyboxData))
@@ -115,7 +133,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         });
 
         // Fired whenever our Alias data updates. We then send this data to all online pairs.
-        Mediator.Subscribe<CharacterStorageDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<LightStorageDataCreatedMessage>(this, (msg) =>
         {
             var newLightStorageData = msg.CharacterStorageData;
             if (_lastLightStorage == null || !Equals(newLightStorageData, _lastLightStorage))
@@ -175,18 +193,33 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Pushes the character wardrobe data to the server for the visible players </summary>
-    private void PushCharacterWardrobeData(List<UserData> onlinePlayers, WardrobeUpdateType updateKind, Padlocks prevPadlock)
+    private void PushCharacterWardrobeData(List<UserData> onlinePlayers, WardrobeUpdateType updateKind, string affectedItem)
     {
         if (_lastWardrobeData != null)
         {
             _ = Task.Run(async () =>
             {
-                await _apiHubMain.PushCharacterWardrobeData(_lastWardrobeData, onlinePlayers, updateKind, prevPadlock).ConfigureAwait(false);
+                await _apiHubMain.PushCharacterWardrobeData(_lastWardrobeData, onlinePlayers, updateKind, affectedItem).ConfigureAwait(false);
             });
         }
         else
         {
             Logger.LogWarning("No Wardrobe data to push to online players");
+        }
+    }
+
+    private void PushCharacterOrdersData(List<UserData> onlinePlayers, OrdersUpdateType updateKind, string affectedId)
+    {
+        if (_lastOrdersData != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                await _apiHubMain.PushCharacterOrdersData(_lastOrdersData, onlinePlayers, updateKind, affectedId).ConfigureAwait(false);
+            });
+        }
+        else
+        {
+            Logger.LogWarning("No Timed Items data to push to online players");
         }
     }
 

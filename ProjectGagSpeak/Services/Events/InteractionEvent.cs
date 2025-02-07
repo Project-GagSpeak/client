@@ -15,7 +15,7 @@ public record InteractionEvent
     /// <summary>
     /// Who sent this update to you
     /// </summary>
-    public string ApplierNickAliasOrUID { get; }
+    public string ApplierNickAliasOrUID { get; set; }
     
     /// <summary>
     /// Store the Raw UID so we can search it regardless. This is grouped with ApplyerNickAliasOrUID when in a filter.
@@ -31,6 +31,15 @@ public record InteractionEvent
     /// Additional Information about the content update.
     /// </summary>
     public string InteractionContent { get; }
+
+    public InteractionEvent(string applierUID, InteractionType type, string details)
+    {
+        EventTime = DateTime.Now;
+        ApplierNickAliasOrUID = string.Empty;
+        ApplierUID = applierUID;
+        InteractionType = type;
+        InteractionContent = details;
+    }
 
     public InteractionEvent(string applierNickAliasOrUID, string applierUID, InteractionType type, string details)
     {

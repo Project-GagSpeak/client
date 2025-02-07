@@ -50,6 +50,19 @@ public class TimeLimitConditionalAchievement : AchievementBase
         };
     }
 
+    public override float CurrentProgressPercentage()
+    {
+        if (IsCompleted) return 1.0f;
+        if (StartPoint == DateTime.MinValue) return 0.0f;
+
+        // Calculate elapsed time
+        var elapsed = DateTime.UtcNow - StartPoint;
+
+        // Calculate percentage of milestone duration elapsed
+        float percentage = (float)(elapsed.TotalMilliseconds / MilestoneDuration.TotalMilliseconds);
+        return Math.Clamp(percentage, 0f, 1f);
+    }
+
     public override string ProgressString()
     {
         if (IsCompleted) 

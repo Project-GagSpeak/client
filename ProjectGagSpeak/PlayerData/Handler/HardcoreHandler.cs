@@ -12,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using Lumina.Excel.Sheets;
 using System.Numerics;
 using static GagspeakAPI.Extensions.GlobalPermExtensions;
 
@@ -28,6 +29,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     private readonly ChatSender _chatSender; // for sending chat commands
     private readonly EmoteMonitor _emoteMonitor; // for handling the blindfold logic
     private readonly ITargetManager _targetManager; // for targeting pair on follows.
+    
+    private CancellationTokenSource _forcedEmoteStateCTS = new(); // For ensuring early cancelations are handled.
 
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
@@ -46,20 +49,17 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         _emoteMonitor = emoteMonitor;
         _targetManager = targetManager;
 
-        // Store if we are on legacy mode or not during initialization.
-        _clientConfigs.GagspeakConfig.UsingLegacyControls = GameConfig.UiControl.GetBool("MoveMode");
-
         Mediator.Subscribe<HardcoreActionMessage>(this, (msg) =>
         {
             switch (msg.type)
             {
-                case HardcoreAction.ForcedFollow: UpdateForcedFollow(msg.State); break;
-                case HardcoreAction.ForcedEmoteState: UpdateForcedEmoteState(msg.State); break;
-                case HardcoreAction.ForcedStay: UpdateForcedStayState(msg.State); break;
-                case HardcoreAction.ForcedBlindfold: UpdateBlindfoldState(msg.State); break;
-                case HardcoreAction.ChatboxHiding: UpdateHideChatboxState(msg.State); break;
-                case HardcoreAction.ChatInputHiding: UpdateHideChatInputState(msg.State); break;
-                case HardcoreAction.ChatInputBlocking: UpdateChatInputBlocking(msg.State); break;
+                case InteractionType.ForcedFollow: UpdateForcedFollow(msg.State); break;
+                case InteractionType.ForcedEmoteState: UpdateForcedEmoteState(msg.State); break;
+                case InteractionType.ForcedStay: UpdateForcedStayState(msg.State); break;
+                case InteractionType.ForcedBlindfold: UpdateBlindfoldState(msg.State); break;
+                case InteractionType.ForcedChatVisibility: UpdateHideChatboxState(msg.State); break;
+                case InteractionType.ForcedChatInputVisibility: UpdateHideChatInputState(msg.State); break;
+                case InteractionType.ForcedChatInputBlock: UpdateChatInputBlocking(msg.State); break;
             }
         });
 
@@ -80,17 +80,27 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     public bool MonitorFollowLogic => IsForcedToFollow;
     public bool MonitorEmoteLogic => IsForcedToEmote;
     public bool MonitorStayLogic => IsForcedToStay;
-    public bool MonitorBlindfoldLogic => IsBlindfolded;
+    public bool MonitorBlindfoldLogic => IsBlindfolded && InitialBlindfoldRedrawMade;
     public DateTimeOffset LastMovementTime { get; set; } = DateTimeOffset.Now;
     public Vector3 LastPosition { get; set; } = Vector3.Zero;
     public double StimulationMultiplier { get; set; } = 1.0;
+
+    // Cache the Movement Mode of our player during ForcedFollow
+    public MovementMode CachedMovementMode = MovementMode.NotSet;
+    // Extra overhead variable needed to ensure we push blindfold update for Mare before going first person, since our model isn't valid then.
+    public bool InitialBlindfoldRedrawMade = false; 
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
 
-        if (!_clientConfigs.GagspeakConfig.UsingLegacyControls && GameConfig.UiControl.GetBool("MoveMode"))
-            GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
+        // if we are forced to follow when the plugin disabled, we need to revert the controls.
+        if (IsForcedToFollow)
+        {
+            // if we were using standard movement, but it is set to legacy at the time of closing, set it back to standard.
+            if (CachedMovementMode is MovementMode.Standard && GameConfig.UiControl.GetBool("MoveMode") is true)
+                GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
+        }
     }
 
     private async Task OnSafewordUsed()
@@ -114,6 +124,11 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         // if we are enabling, adjust the lastMovementTime to now.
         if (newState is NewState.Enabled)
         {
+            // upon starting the forced follow, we can cache the current movement mode. in our settings.
+            CachedMovementMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
+            Logger.LogDebug("Cached MoveMode: " + CachedMovementMode, LoggerType.HardcoreMovement);
+
+            // set the forced follow time to now.
             LastMovementTime = DateTimeOffset.UtcNow;
             Logger.LogDebug("Following UID: [" + _playerData.GlobalPerms?.ForcedFollow.HardcorePermUID() + "]", LoggerType.HardcoreMovement);
             // grab the pair from the pair manager to obtain its game object and begin following it.
@@ -138,8 +153,6 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             // If we are still following someone when this triggers it means we were idle long enough for it to disable.
             if (_playerData.GlobalPerms?.IsFollowing() ?? false)
             {
-                // set the client first before push to prevent getting stuck while disconnected
-                _playerData.GlobalPerms!.ForcedFollow = string.Empty;
                 Logger.LogInformation("ForceFollow Disable was triggered manually before it naturally disabled. Forcibly shutting down.");
                 _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(new(MainHub.UID), MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", string.Empty), UpdateDir.Own));
 
@@ -147,7 +160,6 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             else
             {
                 // set the client first before push to prevent getting stuck while disconnected
-                _playerData.GlobalPerms!.ForcedFollow = string.Empty;
                 Logger.LogInformation("Disabled forced follow for pair.", LoggerType.HardcoreMovement);
             }
 
@@ -155,8 +167,8 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             _moveController.DisableUnfollowHook();
         }
 
-        // toggle movement type to legacy if we are not on legacy (regardless of it being enable or disable)
-        if (!_clientConfigs.GagspeakConfig.UsingLegacyControls)
+        // If the cached movement mode is Standard, we should switch to legacy on enable and back to standard on disable.
+        if (CachedMovementMode is MovementMode.Standard)
         {
             // if forced follow is still on, dont switch it back to false
             uint mode = newState switch
@@ -167,6 +179,9 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             };
             GameConfig.UiControl.Set("MoveMode", mode);
             Logger.LogDebug("Set move mode to " + (MovementMode)mode + " due to forced follow state change");
+
+            // if we are disabling the forced follow, we should set the cached mode to not set.
+            if (newState is NewState.Disabled) CachedMovementMode = MovementMode.NotSet;
         }
     }
 
@@ -178,6 +193,13 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             Logger.LogDebug("Enabled forced Emote State for pair.", LoggerType.HardcoreMovement);
             // Lock Movement:
             _moveController.EnableMovementLock();
+
+            // Reset cancellation token source.
+            if(!_forcedEmoteStateCTS.TryReset())
+            {
+                _forcedEmoteStateCTS.Dispose();
+                _forcedEmoteStateCTS = new();
+            }
 
             // Step 1: Get Players current emoteId
             ushort currentEmote = _emoteMonitor.CurrentEmoteId(); // our current emote ID.
@@ -193,7 +215,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 }
 
                 // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
-                await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
+                var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
+                if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateCTS.Token))
+                {
+                    Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                    return;
+                }
 
                 // get our cycle pose.
                 byte currentCyclePose = _emoteMonitor.CurrentCyclePose();
@@ -221,7 +248,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                     }
 
                     // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
-                    await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(ForcedEmoteState.EmoteID), 5);
+                    var emoteID = ForcedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the ForcedEmoteState getter multiple times.
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _forcedEmoteStateCTS.Token))
+                    {
+                        Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                        return;
+                    }
 
                     // Execute the desired emote.
                     Logger.LogDebug("Forcing Emote: " + ForcedEmoteState.EmoteID + "(Current emote was: " + currentEmote + ")");
@@ -235,47 +267,44 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         if (newState is NewState.Disabled)
         {
             Logger.LogDebug("Pair has allowed you to stand again.", LoggerType.HardcoreMovement);
-            // set it on client before getting change back from server.
-            _playerData.GlobalPerms!.ForcedEmoteState = string.Empty;
-            // Disable the movement lock after we set our permissions for validation.
+            // cancel the token and allow movement once more.
+            _forcedEmoteStateCTS.Cancel();
             _moveController.DisableMovementLock();
         }
     }
 
     public void UpdateForcedStayState(NewState newState)
     {
-        Logger.LogDebug(newState is NewState.Enabled ? "Enabled" : "Disabled" + " forced stay for pair.", LoggerType.HardcoreMovement);
-        if (newState is NewState.Disabled)
-        {
-            // set it on client before getting change back from server.
-            _playerData.GlobalPerms!.ForcedStay = string.Empty;
-        }
+        Logger.LogDebug("A pair has " + (newState is NewState.Enabled ? "Enabled" : "Disabled") + "forced stay for you.", LoggerType.HardcoreMovement);
     }
 
     private async void UpdateBlindfoldState(NewState newState)
     {
         Logger.LogDebug(newState is NewState.Enabled
-            ? "Enabled forced blindfold for pair." : "Disabled forced blindfold for pair.", LoggerType.HardcoreMovement);
+            ? "Pair has Enabled forced blindfold." : "Pair has Disabled forced blindfold.", LoggerType.HardcoreMovement);
         if (newState is NewState.Enabled)
         {
+            // set this back to false as a failsafe encase this happened after reconnection.
+            InitialBlindfoldRedrawMade = false;
+
             // apply blindfold.
             await _appearanceHandler.RecalcAndReload(false);
+            await Task.Delay(1500); // temp fix until mare's perspective issue is fixed?
+            InitialBlindfoldRedrawMade = true;
 
             // Handle window.
             if(!BlindfoldUI.IsWindowOpen) await HandleBlindfoldLogic(newState);
-            
+
             // Early return.
             return;
         }
-
-        if (newState is NewState.Disabled)
+        else if (newState is NewState.Disabled)
         {
-            // set it on client before getting change back from server.
-            _playerData.GlobalPerms!.ForcedBlindfold = string.Empty; // Help to prevent getting stuff when offline.
-            await _appearanceHandler.RecalcAndReload(true);
-
             // Handle window.
             if (BlindfoldUI.IsWindowOpen) await HandleBlindfoldLogic(newState);
+
+            await _appearanceHandler.RecalcAndReload(true);
+            InitialBlindfoldRedrawMade = false;
         }
     }
 
@@ -320,23 +349,19 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    public bool IsBlindfoldWindowActive => BlindfoldUI.IsWindowOpen;
-
     public async Task HandleBlindfoldLogic(NewState newState)
     {
         // toggle our window based on conditions
         if (newState is NewState.Enabled)
         {
             // if the window isnt open, open it.
-            if (!BlindfoldUI.IsWindowOpen)
-                Mediator.Publish(new UiToggleMessage(typeof(BlindfoldUI), ToggleType.Show));
+            if (!BlindfoldUI.IsWindowOpen) Mediator.Publish(new UiToggleMessage(typeof(BlindfoldUI), ToggleType.Show));
             // go in for camera voodoo.
             DoCameraVoodoo(newState);
         }
         else
         {
-            if (BlindfoldUI.IsWindowOpen)
-                Mediator.Publish(new HardcoreRemoveBlindfoldMessage());
+            if (BlindfoldUI.IsWindowOpen) Mediator.Publish(new HardcoreRemoveBlindfoldMessage());
             // wait a bit before doing the camera voodoo
             await Task.Delay(2000);
             DoCameraVoodoo(newState);

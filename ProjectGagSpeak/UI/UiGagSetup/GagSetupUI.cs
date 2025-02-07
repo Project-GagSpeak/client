@@ -112,8 +112,8 @@ public class GagSetupUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(700, 415),
-            MaximumSize = new Vector2(744, 415)
+            MinimumSize = new Vector2(700, 430),
+            MaximumSize = new Vector2(744, 430)
         };
         RespectCloseHotkey = false;
     }

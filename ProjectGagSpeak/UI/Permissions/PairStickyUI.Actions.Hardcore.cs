@@ -3,6 +3,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -30,8 +31,7 @@ public partial class PairStickyUI
     private int SelectedCPose = 0;
     private void DrawHardcoreActions()
     {
-        if(_playerManager.GlobalPerms is null)
-            return;
+        if(_clientData.GlobalPerms is null) return;
 
         if(MainHub.UID is null)
         {
@@ -122,10 +122,10 @@ public partial class PairStickyUI
             //////////////////// DRAW OUT FOR FORCING EMOTE STATE HERE /////////////////////
             if (_uiShared.IconTextButton(forceEmoteIcon, forceEmoteText, WindowMenuWidth, true, disableForceSit && disableForceEmoteState, "##ForcedEmoteAction"))
             {
-                Opened = Opened == InteractionType.ForcedEmoteState ? InteractionType.None : InteractionType.ForcedEmoteState;
+                PairCombos.Opened = PairCombos.Opened == InteractionType.ForcedEmoteState ? InteractionType.None : InteractionType.ForcedEmoteState;
             }
             UiSharedService.AttachToolTip("Force " + PairNickOrAliasOrUID + "To Perform any Looped Emote State.");
-            if (Opened is InteractionType.ForcedEmoteState)
+            if (PairCombos.Opened is InteractionType.ForcedEmoteState)
             {
                 using (var actionChild = ImRaii.Child("ForcedEmoteStateActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), false))
                 {
@@ -158,7 +158,7 @@ public partial class PairStickyUI
                             string newStr = MainHub.UID + "|" + SelectedEmote?.RowId.ToString() + "|" + SelectedCPose.ToString() + (PairPerms.DevotionalStatesForPair ? Globals.DevotedString : string.Empty);
                             _logger.LogDebug("Sending EmoteState update for emote: " + (SelectedEmote?.Name.ToString()));
                             _ = _apiHubMain.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr), UpdateDir.Other));
-                            Opened = InteractionType.None;
+                            PairCombos.Opened = InteractionType.None;
                         }
                     }
                     catch (Exception e) { _logger.LogError("Failed to push EmoteState Update: " + e.Message); }
@@ -185,11 +185,11 @@ public partial class PairStickyUI
 
         if (_uiShared.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PairNickOrAliasOrUID + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
         {
-            Opened = Opened == InteractionType.ShockAction ? InteractionType.None : InteractionType.ShockAction;
+            PairCombos.Opened = PairCombos.Opened == InteractionType.ShockAction ? InteractionType.None : InteractionType.ShockAction;
         }
         UiSharedService.AttachToolTip("Perform a Shock action to " + PairUID + "'s Shock Collar.");
 
-        if (Opened is InteractionType.ShockAction)
+        if (PairCombos.Opened is InteractionType.ShockAction)
         {
             using (var actionChild = ImRaii.Child("ShockCollarActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), false))
             {
@@ -213,7 +213,7 @@ public partial class PairStickyUI
                         _logger.LogDebug("Sending Shock to Shock Collar with duration: " + newMaxDuration + "(milliseconds)");
                         _ = _apiHubMain.UserShockActionOnPair(new ShockCollarActionDto(StickyPair.UserData, 0, Intensity, newMaxDuration));
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockSent);
-                        Opened = InteractionType.None;
+                        PairCombos.Opened = InteractionType.None;
                     }
                 }
                 catch (Exception e) { _logger.LogError("Failed to push ShockCollar Shock message: " + e.Message); }
@@ -223,11 +223,11 @@ public partial class PairStickyUI
 
         if (_uiShared.IconTextButton(FontAwesomeIcon.WaveSquare, "Vibrate " + PairNickOrAliasOrUID + "'s Shock Collar", WindowMenuWidth, true, false))
         {
-            Opened = Opened == InteractionType.VibrateAction ? InteractionType.None : InteractionType.VibrateAction;
+            PairCombos.Opened = PairCombos.Opened == InteractionType.VibrateAction ? InteractionType.None : InteractionType.VibrateAction;
         }
         UiSharedService.AttachToolTip("Perform a Vibrate action to " + PairUID + "'s Shock Collar.");
 
-        if (Opened is InteractionType.VibrateAction)
+        if (PairCombos.Opened is InteractionType.VibrateAction)
         {
             using (var actionChild = ImRaii.Child("VibrateCollarActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), false))
             {
@@ -251,7 +251,7 @@ public partial class PairStickyUI
 
                         _logger.LogDebug("Sending Vibration to Shock Collar with duration: " + newMaxDuration + "(milliseconds)");
                         _ = _apiHubMain.UserShockActionOnPair(new ShockCollarActionDto(StickyPair.UserData, 1, VibrateIntensity, newMaxDuration));
-                        Opened = InteractionType.None;
+                        PairCombos.Opened = InteractionType.None;
                     }
                 }
                 catch (Exception e) { _logger.LogError("Failed to push ShockCollar Vibrate message: " + e.Message); }
@@ -261,11 +261,11 @@ public partial class PairStickyUI
 
         if (_uiShared.IconTextButton(FontAwesomeIcon.LandMineOn, "Beep " + PairNickOrAliasOrUID + "'s Shock Collar", WindowMenuWidth, true, !AllowBeeps))
         {
-            Opened = Opened == InteractionType.BeepAction ? InteractionType.None : InteractionType.BeepAction;
+            PairCombos.Opened = PairCombos.Opened == InteractionType.BeepAction ? InteractionType.None : InteractionType.BeepAction;
         }
         UiSharedService.AttachToolTip("Beep " + PairUID + "'s Shock Collar.");
 
-        if (Opened is InteractionType.BeepAction)
+        if (PairCombos.Opened is InteractionType.BeepAction)
         {
             using (var actionChild = ImRaii.Child("BeepCollarActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
             {
@@ -286,7 +286,7 @@ public partial class PairStickyUI
                         else { newMaxDuration = (int)(VibeDuration * 1000); }
                         _logger.LogDebug("Sending Beep to Shock Collar with duration: " + newMaxDuration + "(note that values between 1 and 15 are full seconds)");
                         _ = _apiHubMain.UserShockActionOnPair(new ShockCollarActionDto(StickyPair.UserData, 2, Intensity, newMaxDuration));
-                        Opened = InteractionType.None;
+                        PairCombos.Opened = InteractionType.None;
                     }
                 }
                 catch (Exception e) { _logger.LogError("Failed to push ShockCollar Beep message: " + e.Message); }

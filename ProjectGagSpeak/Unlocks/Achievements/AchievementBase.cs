@@ -42,6 +42,11 @@ public abstract class AchievementBase : IAchievementItem
     public abstract int CurrentProgress();
 
     /// <summary>
+    /// Force a requirement that all achievement types must report their progress % completed
+    /// </summary>
+    public abstract float CurrentProgressPercentage();
+
+    /// <summary>
     /// The string representation of our Progress. Used for Achievement Display.
     /// </summary>
     public abstract string ProgressString();

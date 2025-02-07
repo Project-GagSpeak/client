@@ -1,9 +1,11 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Struct;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
@@ -34,7 +36,8 @@ public class SetPreviewComponent
     private readonly StainColorCombo StainColorCombos;
     // A temp storage container for the currently previewed restraint set.
     // Useful for loading in light restraint data without constantly resolving the item on every drawFrame.
-    private Dictionary<EquipSlot, EquipItem> CachedPreview = new();
+    private (Guid Id, Dictionary<EquipSlot, EquipItem> CachedRestraint) CachedPreview = (Guid.Empty, new Dictionary<EquipSlot, EquipItem>());
+    private (ulong CustomItemId, EquipItem SlotEquipItem) CachedSlotItem = (ulong.MaxValue, ItemIdVars.NothingItem(EquipSlot.Head));
 
     public void DrawRestraintSetPreviewCentered(RestraintSet set, Vector2 contentRegion)
     {
@@ -43,7 +46,7 @@ public class SetPreviewComponent
 
         // Determine the total width of the table.
         var totalTableWidth = columnWidth * 2 + ImGui.GetStyle().ItemSpacing.X;
-        var totalTableHeight = GameIconSize.Y * 6 + 10f;
+        var totalTableHeight = GameIconSize.Y * 6 + 5f;
 
         // Calculate the offset to center the table within the content region.
         var offsetX = (contentRegion.X - totalTableWidth) / 2;
@@ -53,6 +56,18 @@ public class SetPreviewComponent
         ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + offsetX, ImGui.GetCursorPosY() + offsetY));
 
         DrawRestraintSetDisplay(set);
+    }
+
+    public void DrawAppliedSlot(AppliedSlot appliedSlot)
+    {
+        if(CachedSlotItem.CustomItemId != appliedSlot.CustomItemId)
+        {
+            // update the cached slot item.
+            CachedSlotItem.CustomItemId = appliedSlot.CustomItemId;
+            CachedSlotItem.SlotEquipItem = ItemIdVars.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
+            _logger.LogInformation($"Updated CachedSlotItem with new CustomItemId: {appliedSlot.CustomItemId}");
+        }
+        CachedSlotItem.SlotEquipItem.DrawIcon(_textureHandler.IconData, GameIconSize, (EquipSlot)appliedSlot.Slot);
     }
 
     public void DrawRestraintOnHover(RestraintSet set)
@@ -72,11 +87,6 @@ public class SetPreviewComponent
             ImGui.BeginTooltip();
             DrawRestraintSetDisplay(lightSet);
             ImGui.EndTooltip();
-        }
-        else
-        {
-            // clear the cached preview
-            CachedPreview.Clear();
         }
     }
 
@@ -132,7 +142,7 @@ public class SetPreviewComponent
     }
     private void DrawRestraintSetDisplay(LightRestraintData lightSet)
     {
-        if (CachedPreview.IsNullOrEmpty())
+        if (CachedPreview.Id != lightSet.Identifier)
         {
             ImGui.Text("Loading...");
             LoadCacheFromLightSet(lightSet);
@@ -149,19 +159,21 @@ public class SetPreviewComponent
 
         // draw out the equipment slots (maybe add support for stains but idk lol.)
         foreach (var slot in EquipSlotExtensions.EquipmentSlots)
-            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+            CachedPreview.CachedRestraint[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
         ImGui.TableNextColumn();
         // draw out the accessory slots (maybe add support for stains but idk lol.)
         foreach (var slot in EquipSlotExtensions.AccessorySlots)
-            CachedPreview[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
+            CachedPreview.CachedRestraint[slot].DrawIcon(_textureHandler.IconData, GameIconSize, slot);
     }
 
     private void LoadCacheFromLightSet(LightRestraintData lightSet)
     {
+        CachedPreview.CachedRestraint.Clear();
+        CachedPreview.Id = lightSet.Identifier;
         foreach (var slot in EquipSlotExtensions.EqdpSlots)
         {
             var customIdForSlot = lightSet.AffectedSlots.FirstOrDefault(x => x.Slot == (int)slot)?.CustomItemId ?? ulong.MaxValue;
-            CachedPreview[slot] = ItemIdVars.Resolve(slot, customIdForSlot);
+            CachedPreview.CachedRestraint[slot] = ItemIdVars.Resolve(slot, customIdForSlot);
         }
     }
 

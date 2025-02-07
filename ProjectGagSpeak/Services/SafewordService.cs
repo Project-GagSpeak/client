@@ -21,22 +21,19 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     private readonly ClientData _playerManager; // has our global permissions.
     private readonly PairManager _pairManager; // for accessing the permissions of each pair.
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly GagManager _gagManager; // for removing gags.
     private readonly AppearanceManager _appearanceManager;
     private readonly ToyboxManager _toyboxManager;
     private readonly IpcFastUpdates _glamourFastEvent; // for reverting character.
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
         MainHub apiHubMain, ClientData playerManager, PairManager pairManager, 
-        ClientConfigurationManager clientConfigs, GagManager gagManager, 
-        AppearanceManager appearanceManager, ToyboxManager toyboxManager, 
-        IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
+        ClientConfigurationManager clientConfigs, AppearanceManager appearanceManager, 
+        ToyboxManager toyboxManager, IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
     {
         _apiHubMain = apiHubMain;
         _playerManager = playerManager;
         _pairManager = pairManager;
         _clientConfigs = clientConfigs;
-        _gagManager = gagManager;
         _appearanceManager = appearanceManager;
         _toyboxManager = toyboxManager;
         _glamourFastEvent = glamourFastUpdate;
@@ -51,17 +48,15 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
 
     private DateTime TimeOfLastSafewordUsed = DateTime.MinValue;
     private DateTime TimeOfLastHardcoreSafewordUsed = DateTime.MinValue;
-
-    // May want to set this to true by default so things are disabled? Idk.
-    public bool SafewordIsUsed => _playerManager.GlobalPerms == null ? false : _playerManager.GlobalPerms.SafewordUsed;
-    public bool HardcoreSafewordIsUsed => _playerManager.GlobalPerms == null ? false : _playerManager.GlobalPerms.HardcoreSafewordUsed;
+    public static bool SafewordOnCD = false;
+    public static bool HardcoreSafewordOnCD = false;
 
     private async void SafewordUsed(string isolatedUID)
     {
         try
         {
             // return if it has not yet been 5 minutes since the last use.
-            if (SafewordIsUsed)
+            if (SafewordOnCD)
             {
                 Logger.LogWarning("Hardcore Safeword was used too soon after the last use. Must wait 5 minutes.", LoggerType.Safeword);
                 return;
@@ -86,7 +81,6 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             // do direct updates so they apply first client side, then push to the server. The callback can validate these changes.
             if (_playerManager.GlobalPerms is not null)
             {
-                _playerManager.GlobalPerms.SafewordUsed = true;
                 _playerManager.GlobalPerms.LiveChatGarblerActive = false;
                 _playerManager.GlobalPerms.LiveChatGarblerLocked = false;
                 _playerManager.GlobalPerms.WardrobeEnabled = false;
@@ -149,7 +143,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
 
     private void HardcoreSafewordUsed(string isolatedUID)
     {
-        if (HardcoreSafewordIsUsed)
+        if (HardcoreSafewordOnCD)
         {
             Logger.LogWarning("Hardcore Safeword was used too soon after the last use Wait 1m before using again.");
             return;
@@ -161,7 +155,6 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
         // do direct updates so they apply first client side, then push to the server. The callback can validate these changes.
         if (_playerManager.GlobalPerms is not null)
         {
-            _playerManager.GlobalPerms.HardcoreSafewordUsed = true;
             _playerManager.GlobalPerms.ForcedFollow = string.Empty;
             _playerManager.GlobalPerms.ForcedEmoteState = string.Empty;
             _playerManager.GlobalPerms.ForcedStay = string.Empty;
@@ -170,7 +163,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             _playerManager.GlobalPerms.ChatInputHidden = string.Empty;
             _playerManager.GlobalPerms.ChatInputBlocked = string.Empty;
 
-            // if we are connected, push update serverside.
+            // if we are connected, push update server side.
             if(MainHub.IsServerAlive)
             {
                 Logger.LogInformation("Pushing Global updates to the server.", LoggerType.Safeword);
@@ -228,17 +221,9 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
 
     private void CheckCooldown()
     {
-        // check if it has been 5 minutes since the last safeword was used.
-        if (SafewordIsUsed && TimeOfLastSafewordUsed.AddMinutes(5) < DateTime.Now)
-        {
-            if (_playerManager.GlobalPerms != null) _playerManager.GlobalPerms.SafewordUsed = false;
-        }
+        if (SafewordOnCD && TimeOfLastSafewordUsed.AddMinutes(5) < DateTime.Now) SafewordOnCD = false;
 
-        // check if it has been 5 minutes since the last hardcore safeword was used.
-        if (HardcoreSafewordIsUsed && TimeOfLastHardcoreSafewordUsed.AddMinutes(1) < DateTime.Now)
-        {
-            if (_playerManager.GlobalPerms != null) _playerManager.GlobalPerms.HardcoreSafewordUsed = false;
-        }
+        if (HardcoreSafewordOnCD && TimeOfLastHardcoreSafewordUsed.AddMinutes(1) < DateTime.Now) HardcoreSafewordOnCD = false;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

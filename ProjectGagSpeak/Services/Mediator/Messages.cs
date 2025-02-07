@@ -7,11 +7,9 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.PrivateRooms;
 using GagSpeak.Services.Events;
-using GagSpeak.UI;
 using GagSpeak.UI.Components;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.Toybox;
@@ -70,18 +68,16 @@ public record PairWasRemovedMessage(UserData UserData) : MessageBase; // a messa
 public record OpenUserPairPermissions(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase; // fired upon request to open the permissions window for a pair
 public record TargetPairMessage(Pair Pair) : MessageBase; // called when publishing a targeted pair connection (see UI)
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
-public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a gameobject from cache creation service.
+public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
 public record AppearanceImpactingSettingChanged : MessageBase; // called whenever an appearance impacting setting is changed.
 
 /* ------------- PLAYER DATA MODULE INTERACTIONS --------- */
-public record GagTypeChanged(GagType NewGagType, GagLayer Layer, bool SelfApplied = false) : MessageBase; // called whenever the client changes their gag type.
-public record GagLockToggle(PadlockData PadlockInfo, NewState newGagLockState, bool SelfApplied = false) : MessageBase; // called whenever the client changes their padlock.
 public record TooltipSetItemToRestraintSetMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record TooltipSetItemToCursedItemMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 
 ////////////// WARDROBE RELATED RECORDS //////////////
-public record HardcoreActionMessage(HardcoreAction type, NewState State) : MessageBase;
+public record HardcoreActionMessage(InteractionType type, NewState State) : MessageBase;
 public record HardcoreRemoveBlindfoldMessage : MessageBase;
 public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
 
@@ -104,12 +100,13 @@ public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) :
 
 
 /* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-public record PlayerCharAppearanceChanged(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : MessageBase;
-public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, Padlocks PreviousLock) : MessageBase;
+public record PlayerCharAppearanceChanged(GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
+public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, string AffectedItem) : MessageBase;
+public record PlayerCharOrdersChanged(OrdersUpdateType UpdateKind, string AffectedId) : MessageBase;
 public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
 public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
 public record PlayerCharStorageUpdated : MessageBase;
-public record PlayerLatestActiveItems(UserData User, List<string> ActiveGags, Guid ActiveRestraint) : MessageBase;
+public record PlayerLatestActiveItems(UserData User, CharaAppearanceData GagInfo, Guid ActiveRestraint) : MessageBase;
 
 
 /* ------------------ IPC HANDLER RECORDS------------------ */
@@ -128,13 +125,14 @@ public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensit
 
 
 /* ----------------- Character Cache Creation Records ----------------- */
-public record CharacterDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
-public record CharacterIpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterAppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
-public record CharacterWardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, Padlocks PreviousPadlock) : SameThreadMessage;
-public record CharacterAliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
-public record CharacterStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
+public record CompositeDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
+public record IpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
+public record AppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
+public record WardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
+public record OrdersDataCreatedMessage(CharaOrdersData CharaTimedData, OrdersUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
+public record AliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
+public record ToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
+public record LightStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 

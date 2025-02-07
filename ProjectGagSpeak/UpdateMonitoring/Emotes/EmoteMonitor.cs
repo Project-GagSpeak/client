@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.UpdateMonitoring.Triggers;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using ClientStructFramework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
@@ -23,7 +24,7 @@ public class EmoteMonitor
         _gameData = dataManager;
         EmoteDataAll = _gameData.GetExcelSheet<Emote>();
         EmoteDataLoops = EmoteDataAll.Where(x => x.RowId is (50 or 52) || x.EmoteMode.Value.ConditionMode is 3).ToDictionary(x => x.RowId, x => x).AsReadOnly();
-
+        ValidEmotes = EmoteDataAll.Where(x => x.EmoteCategory.IsValid && x.EmoteCategory.Value.RowId is not 3).ToDictionary(x => x.RowId, x => x).AsReadOnly();
         // Generate Emote List.
         EmoteCommandsWithId = EmoteDataAll
         .Where(x => x.EmoteCategory.IsValid && x.EmoteCategory.Value.RowId is not 3)
@@ -55,9 +56,14 @@ public class EmoteMonitor
     public static readonly ushort[] StandIdleList = new ushort[] { 0, 91, 92, 107, 108, 218, 219 };
     public static readonly ushort[] SitIdList = new ushort[] { 50, 95, 96, 254, 255 };
     public static readonly ushort[] GroundSitIdList = new ushort[] { 52, 97, 98, 117 };
+    // Generic full accessor storage.
     public static ExcelSheet<Emote> EmoteDataAll = null!;
-    public static ReadOnlyDictionary<uint, Emote> EmoteDataLoops = null!;
-    public static Dictionary<string, uint> EmoteCommandsWithId = null!;
+    // Container only storing emotes that loop.
+    public static IReadOnlyDictionary<uint, Emote> EmoteDataLoops = null!;
+    public static IReadOnlyDictionary<uint, Emote> ValidEmotes = null!;
+    // The full list of emote commands, containing their emote id's
+    public static IDictionary<string, uint> EmoteCommandsWithId = null!;
+    // just the plain strings for the commands of the above dictionary. The YesNo accepted is to validate chat alteration overrides.
     public static HashSet<string> EmoteCommands => EmoteCommandsWithId.Keys.ToHashSet();
     public static HashSet<string> EmoteCommandsYesNoAccepted = [];
 
@@ -66,7 +72,7 @@ public class EmoteMonitor
     public static IEnumerable<Emote> EmoteComboList => EmoteDataLoops.Values.ToArray();
     public static string GetEmoteName(uint emoteId)
     {
-        if (EmoteDataLoops.TryGetValue(emoteId, out var emote)) return emote.Name.ExtractText().Replace("\u00AD", "") ?? $"Emote#{emoteId}";
+        if (ValidEmotes.TryGetValue(emoteId, out var emote)) return emote.Name.ExtractText().Replace("\u00AD", "") ?? $"Emote#{emoteId}";
         return $"Emote#{emoteId}";
     }
 
@@ -150,17 +156,19 @@ public class EmoteMonitor
     /// <summary>
     /// Await for emote execution to be allowed again
     /// </summary>
-    /// <param name="condition"></param>
-    /// <param name="timeoutSeconds"></param>
-    /// <returns></returns>
-    public async Task WaitForCondition(Func<bool> condition, int timeoutSeconds = 5)
+    /// <returns>true when the condition was fulfilled, false if timed out or cancelled</returns>
+    public async Task<bool> WaitForCondition(Func<bool> condition, int timeoutSeconds = 5, CancellationToken token = default)
     {
         // Create a cancellation token source with the specified timeout
         using var timeout = new CancellationTokenSource(timeoutSeconds * 1000);
         try
         {
-            while (!condition() && !timeout.Token.IsCancellationRequested)
+            // Try for condition until timeout or cancellation is requested.
+            while (!timeout.Token.IsCancellationRequested && (token == default || !token.IsCancellationRequested))
             {
+                if (condition()) 
+                    return true;
+
                 StaticLogger.Logger.LogTrace("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
                 await Task.Delay(100, timeout.Token);
             }
@@ -169,5 +177,6 @@ public class EmoteMonitor
         {
             StaticLogger.Logger.LogTrace("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
         }
+        return false;
     }
 }

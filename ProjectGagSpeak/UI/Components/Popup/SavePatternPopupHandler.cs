@@ -23,9 +23,8 @@ public class SavePatternPopupHandler : IPopupHandler
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     private PatternData CompiledPatternData = new PatternData(); // compile a new pattern to save
+
     // tag management
-    private bool AddingTag = false;
-    private string NewTagName = string.Empty;
     private float SaveWidth;
     private float RevertWidth;
     private const float PopupWidth = 270;
@@ -106,8 +105,6 @@ public class SavePatternPopupHandler : IPopupHandler
         var height = ImGui.GetCursorPosY() - start;
         _size = _size with { Y = height };
     }
-
-    private int IndexToRemote = -1;
 
     public void Open(PatternSavePromptMessage message)
     {

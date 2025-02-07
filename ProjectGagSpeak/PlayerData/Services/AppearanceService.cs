@@ -192,7 +192,7 @@ public class AppearanceService : DisposableMediatorSubscriberBase
     /// </summary>
     private async Task ReapplyAppearance(HashSet<Guid> removeMoodles)
     {
-        if (_playerManager.CoreDataNull) 
+        if (_playerManager.GlobalPerms is null)
             return;
 
         Logger.LogDebug("Refreshing Appearance", LoggerType.ClientPlayerData);
@@ -203,7 +203,7 @@ public class AppearanceService : DisposableMediatorSubscriberBase
         var tasks = new List<Task>();
 
         // Queue the task to apply glamour items and metadata.
-        if (ItemsToApply.Any() && _playerManager.GlobalPerms!.WardrobeEnabled && _playerManager.GlobalPerms!.RestraintSetAutoEquip)
+        if (ItemsToApply.Any() && _playerManager.GlobalPerms.WardrobeEnabled && _playerManager.GlobalPerms!.RestraintSetAutoEquip)
             tasks.Add(UpdateGlamour());
 
         // Queue the task to apply moodles.
@@ -251,7 +251,7 @@ public class AppearanceService : DisposableMediatorSubscriberBase
 
     public async Task UpdateMoodles(HashSet<Guid> removeMoodles)
     {
-        if (_playerManager.IpcDataNull || !IpcCallerMoodles.APIAvailable) return;
+        if (_playerManager.LastIpcData is null || !IpcCallerMoodles.APIAvailable) return;
         // Fetch the current list of moodles on our character
         var currentMoodles = AppearanceManager.LatestClientMoodleStatusList.Select(x => x.GUID).ToHashSet();
         Logger.LogTrace("Current Status Manager Moodles: " + string.Join(", ", currentMoodles), LoggerType.ClientPlayerData);

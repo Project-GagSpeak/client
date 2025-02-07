@@ -283,6 +283,7 @@ public class TutorialService
         .AddStep(triggersStr.Step12Title, triggersStr.Step12Desc, string.Empty)
         .AddStep(triggersStr.Step13Title, triggersStr.Step13Desc, string.Empty)
         .AddStep(triggersStr.Step14Title, triggersStr.Step14Desc, string.Empty)
+        .AddStep(triggersStr.Step15Title, triggersStr.Step15Desc, string.Empty)
         .EnsureSize(_tutorialSizes[TutorialType.Triggers]);
 
         var alarmsStr = GSLoc.Tutorials.HelpAlarms;

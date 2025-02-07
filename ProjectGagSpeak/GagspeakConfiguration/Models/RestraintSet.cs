@@ -3,7 +3,7 @@ using GagSpeak.Interop.IpcHelpers.Moodles;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI.Utils;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.Struct;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -14,7 +14,7 @@ namespace GagSpeak.GagspeakConfiguration.Models;
 /// A basic authentication class to validate that the information from the client when they attempt to connect is correct.
 /// </summary>
 [Serializable]
-public record RestraintSet : IMoodlesAssociable
+public record RestraintSet : IMoodlesAssociable, IPadlockable
 {
     public RestraintSet()
     {
@@ -29,17 +29,14 @@ public record RestraintSet : IMoodlesAssociable
 
     public Guid RestraintId { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "New Restraint Set";
-    public string Description { get; set; } = "Enter Description Here...";
+    public string Description { get; set; } = string.Empty;
     public bool Enabled { get; set; } = false;
     public string EnabledBy { get; set; } = string.Empty;
 
-    [JsonIgnore]
-    public bool Locked => LockType != Padlocks.None.ToName();
-
-    public string LockType { get; set; } = Padlocks.None.ToName();
-    public string LockPassword { get; set; } = string.Empty;
-    public DateTimeOffset LockedUntil { get; set; } = DateTimeOffset.MinValue;
-    public string LockedBy { get; set; } = string.Empty;
+    public string Padlock { get; set; } = Padlocks.None.ToName();
+    public string Password { get; set; } = string.Empty;
+    public DateTimeOffset Timer { get; set; } = DateTimeOffset.MinValue;
+    public string Assigner { get; set; } = string.Empty;
     public bool ForceHeadgear { get; set; } = false;
     public bool ForceVisor { get; set; } = false;
     public bool ApplyCustomizations { get; set; } = false;
@@ -62,23 +59,25 @@ public record RestraintSet : IMoodlesAssociable
     /// If any properties for a key are enabled, they are applied when enabled by that pair.
     /// </summary>
     public Dictionary<string, HardcoreTraits> SetTraits { get; set; } = new Dictionary<string, HardcoreTraits>();
-
+    
+    public bool IsLocked() => Padlock != Padlocks.None.ToName();
+    public bool HasTimerExpired() => Timer < DateTimeOffset.UtcNow;
     public int EquippedSlotsTotal => DrawData.Count(kvp => kvp.Value.GameItem.ItemId != ItemIdVars.NothingItem(kvp.Key).ItemId);
     public bool HasPropertiesForUser(string uid) => SetTraits.ContainsKey(uid);
     public bool PropertiesEnabledForUser(string uid) => HasPropertiesForUser(uid) && SetTraits[uid].AnyEnabled();
-
     public LightRestraintData ToLightData()
     {
         return new LightRestraintData()
         {
             Identifier = RestraintId,
             Name = Name,
+            Description = Description,
             HardcoreTraits = SetTraits,
             AffectedSlots = DrawData
-                .Where(kvp => kvp.Value.IsEnabled || kvp.Value.GameItem.Id != ItemIdVars.NothingItem(kvp.Key).Id)
-                .Select(kvp => new AppliedSlot() 
-                { 
-                    Slot = (byte)kvp.Key, 
+                .Where(kvp => kvp.Value.IsEnabled && kvp.Value.GameItem.Id != ItemIdVars.NothingItem(kvp.Key).Id)
+                .Select(kvp => new AppliedSlot()
+                {
+                    Slot = (byte)kvp.Key,
                     CustomItemId = kvp.Value.GameItem.Id.Id,
                     Tooltip = "This Slot is Locked! --SEP--An active Restraint set is occupying this slot as part of its set!",
                 })
@@ -96,10 +95,10 @@ public record RestraintSet : IMoodlesAssociable
             Description = this.Description,
             Enabled = this.Enabled,
             EnabledBy = this.EnabledBy,
-            LockType = this.LockType,
-            LockPassword = this.LockPassword,
-            LockedUntil = this.LockedUntil,
-            LockedBy = this.LockedBy,
+            Padlock = this.Padlock,
+            Password = this.Password,
+            Timer = this.Timer,
+            Assigner = this.Assigner,
             ForceHeadgear = this.ForceHeadgear,
             ForceVisor = this.ForceVisor,
             ApplyCustomizations = this.ApplyCustomizations,
@@ -170,7 +169,7 @@ public record RestraintSet : IMoodlesAssociable
         // serialize each item in it
         var setPropertiesObject = JObject.FromObject(SetTraits);
 
-        // Ensure Customize & Paramaters are correctly serialized
+        // Ensure Customize & Parameters are correctly serialized
 
         return new JObject()
         {
@@ -179,11 +178,10 @@ public record RestraintSet : IMoodlesAssociable
             ["Description"] = Description,
             ["Enabled"] = Enabled,
             ["EnabledBy"] = EnabledBy,
-            ["Locked"] = Locked,
-            ["LockType"] = LockType,
-            ["LockPassword"] = LockPassword,
-            ["LockedUntil"] = LockedUntil.UtcDateTime.ToString("o"),
-            ["LockedBy"] = LockedBy,
+            ["Padlock"] = Padlock,
+            ["Password"] = Password,
+            ["Timer"] = Timer.UtcDateTime.ToString("o"),
+            ["Assigner"] = Assigner,
             ["ForceHeadgear"] = ForceHeadgear,
             ["ForceVisor"] = ForceVisor,
             ["ApplyCustomizations"] = ApplyCustomizations,
@@ -206,14 +204,14 @@ public record RestraintSet : IMoodlesAssociable
         Description = jsonObject["Description"]?.Value<string>() ?? string.Empty;
         Enabled = jsonObject["Enabled"]?.Value<bool>() ?? false;
         EnabledBy = jsonObject["EnabledBy"]?.Value<string>() ?? string.Empty;
-        LockType = jsonObject["LockType"]?.Value<string>() ?? "None";
-        if (LockType.IsNullOrEmpty()) LockType = "None"; // correct lockType if it is null or empty
-        LockPassword = jsonObject["LockPassword"]?.Value<string>() ?? string.Empty;
+        Padlock = jsonObject["Padlock"]?.Value<string>() ?? Padlocks.None.ToName();
+        if (Padlock.IsNullOrEmpty()) Padlock = Padlocks.None.ToName(); ; // correct lockType if it is null or empty
+        Password = jsonObject["Password"]?.Value<string>() ?? string.Empty;
 
-        var dateTime = jsonObject["LockedUntil"]?.Value<DateTime>() ?? DateTime.MinValue;
-        LockedUntil = new DateTimeOffset(dateTime, TimeSpan.Zero); // Zero indicates UTC
+        var dateTime = jsonObject["Timer"]?.Value<DateTime>() ?? DateTime.MinValue;
+        Timer = new DateTimeOffset(dateTime, TimeSpan.Zero); // Zero indicates UTC
 
-        LockedBy = jsonObject["LockedBy"]?.Value<string>() ?? string.Empty;
+        Assigner = jsonObject["Assigner"]?.Value<string>() ?? string.Empty;
         ForceHeadgear = jsonObject["ForceHeadgear"]?.Value<bool>() ?? false;
         ForceVisor = jsonObject["ForceVisor"]?.Value<bool>() ?? false;
         ApplyCustomizations = jsonObject["ApplyCustomizations"]?.Value<bool>() ?? false;

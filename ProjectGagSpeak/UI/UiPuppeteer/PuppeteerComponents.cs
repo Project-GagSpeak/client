@@ -17,25 +17,22 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Numerics;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.UI.UiPuppeteer;
 
 public class PuppeteerComponents
 {
     private readonly ILogger<PuppeteerComponents> _logger;
-    private readonly AliasTable _aliasTable;
     private readonly SetPreviewComponent _setPreview;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PuppeteerHandler _handler;
     private readonly UiSharedService _uiShared;
     private readonly MoodlesService _moodlesService;
-    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, AliasTable aliasTable,
-        SetPreviewComponent setPreview, ClientConfigurationManager clientConfigs,
-        PuppeteerHandler handler, UiSharedService uiShared, MoodlesService moodlesService)
+    public PuppeteerComponents(ILogger<PuppeteerComponents> logger, SetPreviewComponent setPreview,
+        ClientConfigurationManager clientConfigs, PuppeteerHandler handler, UiSharedService uiShared,
+        MoodlesService moodlesService)
     {
         _logger = logger;
-        _aliasTable = aliasTable;
         _setPreview = setPreview;
         _clientConfigs = clientConfigs;
         _handler = handler;
@@ -50,32 +47,39 @@ public class PuppeteerComponents
     private UserPairPermissions PairPerms => _handler.SelectedPair?.PairPerms ?? new UserPairPermissions();
     private UserEditAccessPermissions PairEditPerms => _handler.SelectedPair?.PairPermAccess ?? new UserEditAccessPermissions();
 
-    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
+    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null,
+        Action<bool>? onAliasChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
     {
         using var group = ImRaii.Group();
 
         ImGui.AlignTextToFramePadding();
         UiSharedService.ColorText("Listening To", ImGuiColors.ParsedPink);
 
-        var remainingWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
+        var remainingWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 + ImGui.GetStyle().ItemInnerSpacing.X * 4;
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
 
         // so they let sits?
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                onSitsChange?.Invoke(!OwnPerms.AllowSitRequests);
+                onSitsChange?.Invoke(!OwnPerms.SitRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true))
-                onMotionChange?.Invoke(!OwnPerms.AllowMotionRequests);
+                onMotionChange?.Invoke(!OwnPerms.MotionRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            if (_uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true))
+                onAliasChange?.Invoke(!OwnPerms.AliasRequests);
+        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
-                onAllChange?.Invoke(!OwnPerms.AllowAllRequests);
+                onAllChange?.Invoke(!OwnPerms.AllRequests);
         UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform any command.");
 
         ImUtf8.SameLineInner();
@@ -93,7 +97,7 @@ public class PuppeteerComponents
         using var group = ImRaii.Group();
 
         // display name, then display the downloads and likes on the other side.
-        var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 4 - ImGui.GetStyle().ItemInnerSpacing.X * 3;
+        var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
         using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
         {
             var isDisabled = !_handler.SelectedPair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
@@ -105,19 +109,25 @@ public class PuppeteerComponents
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowSitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowMotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllowAllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+            _uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
+        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled())
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
         UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform any command.");
     }
@@ -254,10 +264,10 @@ public class PuppeteerComponents
             UiSharedService.AttachToolTip("The Alias Label given to help with searching and organization.");
 
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-            if(_uiShared.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
+            if (_uiShared.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
                 ExpandedAliasItems[id] = !ExpandedAliasItems[id];
             UiSharedService.AttachToolTip(ExpandedAliasItems[id] ? "Collapse the Alias Item." : "Expand the Alias Item.");
-                        
+
             // cast a seperator Line here.
             ImGui.Separator();
 
@@ -296,7 +306,7 @@ public class PuppeteerComponents
                     "--SEP--Do not include the '/' in your output.");
 
                 // End viewing the rest if we meet the condition here.
-                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize) 
+                if (!ExpandedAliasItems[id] && totalDisplayed >= storedOutputSize)
                     return;
                 totalDisplayed++;
             }
@@ -503,7 +513,7 @@ public class PuppeteerComponents
         {
             ImGui.AlignTextToFramePadding();
             _uiShared.BooleanToColoredIcon(aliasItem.Enabled, false);
-            if(ImGui.IsItemClicked())
+            if (ImGui.IsItemClicked())
             {
                 aliasItem.Enabled = !aliasItem.Enabled;
                 wasModified = true;
@@ -513,7 +523,7 @@ public class PuppeteerComponents
 
             ImGui.SameLine();
             var tempName = aliasItem.Name;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - topRowButtonLength - itemSpacing.X*4);
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - topRowButtonLength - itemSpacing.X * 4);
             if (ImGui.InputTextWithHint("##AliasName_" + aliasItem.AliasIdentifier, "Give Alias a Label...", ref tempName, 70))
             {
                 aliasItem.Name = tempName;
@@ -556,7 +566,7 @@ public class PuppeteerComponents
             ImGui.AlignTextToFramePadding();
             _uiShared.IconText(FontAwesomeIcon.Eye);
             UiSharedService.AttachToolTip("The text to scan for (Input String)");
-            
+
             ImGui.SameLine();
             var inputCommand = aliasItem.InputCommand;
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());

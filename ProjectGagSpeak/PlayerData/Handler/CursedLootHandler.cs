@@ -4,6 +4,7 @@ using GagSpeak.PlayerData.Services;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
+using GagSpeak.Utils;
 
 namespace GagSpeak.PlayerData.Handlers;
 
@@ -11,16 +12,14 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientData _playerData;
-    private readonly GagManager _gagManager;
     private readonly AppearanceManager _appearanceHandler;
 
     public CursedLootHandler(ILogger<CursedLootHandler> logger, GagspeakMediator mediator,
         ClientConfigurationManager clientConfigs, ClientData playerData,
-        GagManager gagManager, AppearanceManager handler) : base(logger, mediator)
+        AppearanceManager handler) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _playerData = playerData;
-        _gagManager = gagManager;
         _appearanceHandler = handler;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
@@ -34,11 +33,6 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
     public int LockChance => Data.LockChance;
 
 
-    /// <summary>
-    /// The currently active cursed items on the player. 
-    /// Holds up to a maximum of 6 items. 
-    /// Any Extras are discarded.
-    /// </summary>
     public List<CursedItem> ActiveItems => Data.CursedItems
         .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
         .OrderBy(x => x.AppliedTime)
@@ -89,22 +83,31 @@ public class CursedLootHandler : DisposableMediatorSubscriberBase
     public void RemoveItem(Guid idToRemove)
         => _clientConfigs.RemoveCursedItem(idToRemove);
 
-    public async Task ActivateCursedItem(Guid idToActivate, DateTimeOffset releaseTimeUTC, GagLayer gagLayer = GagLayer.UnderLayer)
+    public async Task ActivateCursedItem(Guid idToActivate, DateTimeOffset releaseTimeUTC)
     {
-        // activate it, then refresh.
+        // activate it,
         _clientConfigs.ActivateCursedItem(idToActivate, releaseTimeUTC);
-        var item = CursedItems.FirstOrDefault(x => x.LootId == idToActivate);
-        if (item != null)
-            await _appearanceHandler.CursedItemApplied(item, gagLayer);
+        // then apply it if valid.
+        if (CursedItems.TryGetItem(x => x.LootId == idToActivate, out var cursedItem))
+            await _appearanceHandler.CursedItemApplied(cursedItem);
+    }
+
+    public async Task ActivateCursedGag(Guid idToActivate, GagLayer gagLayer, DateTimeOffset releaseTimeUTC)
+    {
+        // activate it,
+        _clientConfigs.ActivateCursedItem(idToActivate, releaseTimeUTC);
+        // then apply it if valid.
+        if (CursedItems.TryGetItem(x => x.LootId == idToActivate, out var cursedItem))
+            await _appearanceHandler.CursedGagApplied(cursedItem, gagLayer, releaseTimeUTC);
     }
 
     public async Task DeactivateCursedItem(Guid idToDeactivate)
     {
-        // deactivate it, then refresh.
+        // deactivate it.
         _clientConfigs.DeactivateCursedItem(idToDeactivate);
-        var item = CursedItems.FirstOrDefault(x => x.LootId == idToDeactivate);
-        if (item != null)
-            await _appearanceHandler.CursedItemRemoved(item);
+        // then remove it if valid.
+        if (CursedItems.TryGetItem(x => x.LootId == idToDeactivate, out var cursedItem))
+            await _appearanceHandler.CursedItemRemoved(cursedItem, true);
     }
 
     public void Save() => _clientConfigs.SaveCursedLoot();

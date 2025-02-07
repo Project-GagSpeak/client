@@ -57,8 +57,8 @@ public class KinksterRequestEntry
                 ImGui.AlignTextToFramePadding();
 
                 var kinksterIdTag = _viewingMode is DrawRequestsType.Outgoing
-                    ? _requestEntry.RecipientUser.UID.Substring(_requestEntry.RecipientUser.UID.Length - 3)
-                    : _requestEntry.User.UID.Substring(_requestEntry.User.UID.Length - 3);
+                    ? _requestEntry.RecipientUser.UID.Substring(_requestEntry.RecipientUser.UID.Length - 4)
+                    : _requestEntry.User.UID.Substring(_requestEntry.User.UID.Length - 4);
 
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("Kinkster-" + kinksterIdTag);
 

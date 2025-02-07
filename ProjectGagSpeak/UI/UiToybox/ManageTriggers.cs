@@ -2,10 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.ChatMessages;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.InterfaceConverters;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
@@ -22,10 +19,10 @@ using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using Lumina.Extensions;
 using OtterGui.Classes;
 using OtterGui.Text;
 using System.Numerics;
-using static FFXIVClientStructs.FFXIV.Client.Graphics.Scene.CharacterBase;
 
 namespace GagSpeak.UI.UiToybox;
 
@@ -75,7 +72,6 @@ public class ToyboxTriggerManager
     private LowerString TriggerSearchString = LowerString.Empty;
     private uint SelectedJobId = 1;
     private string SelectedDeviceName = LowerString.Empty;
-    private int SelectedMoodleIdx = 0;
 
     public void DrawTriggersPanel()
     {
@@ -263,26 +259,34 @@ public class ToyboxTriggerManager
     {
         if (CreatedTrigger is null) return;
 
-        ImGui.SetNextItemWidth(availableWidth);
-        _uiShared.DrawCombo("##TriggerTypeSelector", availableWidth, Enum.GetValues<TriggerKind>(), (triggerType) => triggerType.TriggerKindToString(),
-        (i) =>
+        try
         {
-            switch (i)
+            ImGui.SetNextItemWidth(availableWidth);
+            _uiShared.DrawCombo("##TriggerTypeSelector", availableWidth, Enum.GetValues<TriggerKind>(), (triggerType) => triggerType.TriggerKindToString(),
+            (i) =>
             {
-                case TriggerKind.SpellAction: CreatedTrigger = new SpellActionTrigger(); break;
-                case TriggerKind.HealthPercent: CreatedTrigger = new HealthPercentTrigger(); break;
-                case TriggerKind.RestraintSet: CreatedTrigger = new RestraintTrigger(); break;
-                case TriggerKind.GagState: CreatedTrigger = new GagTrigger(); break;
-                case TriggerKind.SocialAction: CreatedTrigger = new SocialTrigger(); break;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }, CreatedTrigger.Type);
-        _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.SelectingTriggerType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
-        { 
-            CreatedTrigger = new SpellActionTrigger();
-            _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.SpellAction;
-            _setNextTab = "ChatText"; 
-        });
+                switch (i)
+                {
+                    case TriggerKind.SpellAction: CreatedTrigger = new SpellActionTrigger(); break;
+                    case TriggerKind.HealthPercent: CreatedTrigger = new HealthPercentTrigger(); break;
+                    case TriggerKind.RestraintSet: CreatedTrigger = new RestraintTrigger(); break;
+                    case TriggerKind.GagState: CreatedTrigger = new GagTrigger(); break;
+                    case TriggerKind.SocialAction: CreatedTrigger = new SocialTrigger(); break;
+                    case TriggerKind.EmoteAction: CreatedTrigger = new EmoteTrigger(); break;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }, CreatedTrigger.Type);
+            _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.SelectingTriggerType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
+            {
+                CreatedTrigger = new SpellActionTrigger();
+                _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.SpellAction;
+                _setNextTab = "ChatText";
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error drawing trigger type selector.");
+        }
     }
 
     /// <summary> Draws the search filter for the triggers. </summary>
@@ -449,6 +453,8 @@ public class ToyboxTriggerManager
                 tabs["GagState"] = () => DrawGagTriggerEditor((GagTrigger)triggerToCreate);
             else if (triggerToCreate is SocialTrigger)
                 tabs["Social"] = () => DrawSocialTriggerEditor((SocialTrigger)triggerToCreate);
+            else if (triggerToCreate is EmoteTrigger)
+                tabs["Emote"] = () => DrawEmoteTriggerEditor((EmoteTrigger)triggerToCreate);
 
             // Loop through the tabs and draw them
             foreach (var tab in tabs)
@@ -468,30 +474,31 @@ public class ToyboxTriggerManager
                             break;
                         case "ChatText":
                             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToChatText, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
-                            { 
-                                CreatedTrigger = new SpellActionTrigger(); 
+                            {
+                                CreatedTrigger = new SpellActionTrigger();
                                 _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.SpellAction;
-                                _setNextTab = "Spells/Action"; 
+                                _setNextTab = "Spells/Action";
                             });
                             break;
                         case "Spells/Action":
                             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToActionTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
-                            { 
+                            {
                                 CreatedTrigger = new HealthPercentTrigger();
                                 _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.HealthPercent;
-                                _setNextTab = "Health %"; });
+                                _setNextTab = "Health %";
+                            });
                             break;
                         case "Health %":
                             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToHealthTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
                             {
-                                CreatedTrigger = new RestraintTrigger(); 
+                                CreatedTrigger = new RestraintTrigger();
                                 _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.RestraintSet;
-                                _setNextTab = "RestraintState"; 
+                                _setNextTab = "RestraintState";
                             });
                             break;
                         case "RestraintState":
                             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToRestraintTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
-                            { 
+                            {
                                 CreatedTrigger = new GagTrigger();
                                 _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.GagState;
                                 _setNextTab = "GagState";
@@ -499,14 +506,22 @@ public class ToyboxTriggerManager
                             break;
                         case "GagState":
                             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToGagTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
-                            { 
-                                CreatedTrigger = new SocialTrigger(); 
+                            {
+                                CreatedTrigger = new SocialTrigger();
                                 _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.SocialAction;
                                 _setNextTab = "Social";
                             });
                             break;
                         case "Social":
-                            _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToSocialTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
+                            _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToSocialTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
+                            {
+                                CreatedTrigger = new EmoteTrigger();
+                                _uiShared._selectedComboItems["##TriggerTypeSelector"] = TriggerKind.EmoteAction;
+                                _setNextTab = "Emote";
+                            });
+                            break;
+                        case "Emote":
+                            _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.ToEmoteTrigger, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
                             break;
                     }
 
@@ -725,7 +740,16 @@ public class ToyboxTriggerManager
         ImGui.SetNextItemWidth(200f);
         _uiShared.DrawCombo("SocialActionToMonitor", 200f, Enum.GetValues<SocialActionType>(), (action) => action.ToString(),
             (i) => socialTrigger.SocialType = i, socialTrigger.SocialType, false, ImGuiComboFlags.None, "Select a Social Type..");
+    }
 
+    private void DrawEmoteTriggerEditor(EmoteTrigger emoteTrigger)
+    {
+        UiSharedService.ColorText("Emote to Monitor", ImGuiColors.ParsedGold);
+        ImGui.SetNextItemWidth(200f);
+        _uiShared.DrawCombo("EmoteToMonitor", 200f, EmoteMonitor.ValidEmotes, (e) => e.Value.ComboEmoteName(),
+            (i) => emoteTrigger.EmoteID = i.Key, default, false, ImGuiComboFlags.None, "Select an Emote..");
+
+        UiSharedService.ColorText("Currently under construction.\nExpect trigger rework with UI soon?", ImGuiColors.ParsedGold);
     }
 
     private void DrawTriggerActions(Trigger trigger)
@@ -734,9 +758,9 @@ public class ToyboxTriggerManager
         _uiShared.DrawHelpText("The kind of action to perform when the trigger is activated.");
 
         // Prevent Loopholes
-        var allowedKinds = trigger is RestraintTrigger 
+        var allowedKinds = trigger is RestraintTrigger
             ? GenericHelpers.ActionTypesRestraint
-            : trigger is GagTrigger 
+            : trigger is GagTrigger
                 ? GenericHelpers.ActionTypesOnGag
                 : GenericHelpers.ActionTypesTrigger;
 
@@ -808,13 +832,13 @@ public class ToyboxTriggerManager
         }
 
         UiSharedService.ColorText("Moodle Application Type", ImGuiColors.ParsedGold);
-        _uiShared.DrawCombo("##CursedItemMoodleType" + id, 90f, Enum.GetValues<IpcToggleType>(), (clicked) => clicked.ToName(),
+        _uiShared.DrawCombo("##CursedItemMoodleType" + id, 150f, Enum.GetValues<IpcToggleType>(), (clicked) => clicked.ToName(),
         (i) =>
         {
             moodleAction.MoodleType = i;
             if (i is IpcToggleType.MoodlesStatus && _clientData.LastIpcData.MoodlesStatuses.Any())
                 moodleAction.Identifier = _clientData.LastIpcData.MoodlesStatuses.First().GUID;
-            else if (i is IpcToggleType.MoodlesPreset && _clientData.LastIpcData.MoodlesPresets.Any()) 
+            else if (i is IpcToggleType.MoodlesPreset && _clientData.LastIpcData.MoodlesPresets.Any())
                 moodleAction.Identifier = _clientData.LastIpcData.MoodlesPresets.First().Item1;
             else moodleAction.Identifier = Guid.Empty;
         }, moodleAction.MoodleType);
@@ -840,7 +864,7 @@ public class ToyboxTriggerManager
             ImGui.SetNextItemWidth(200f);
 
             _moodlesService.DrawMoodlesPresetCombo("##MoodlePresetTriggerAction" + id, ImGui.GetContentRegionAvail().X,
-                _clientData.LastIpcData.MoodlesPresets, _clientData.LastIpcData.MoodlesStatuses, 
+                _clientData.LastIpcData.MoodlesPresets, _clientData.LastIpcData.MoodlesStatuses,
                 (i) => moodleAction.Identifier = i ?? Guid.Empty);
             _uiShared.DrawHelpText("This Moodle Preset will be applied when the trigger is fired.");
         }
@@ -851,7 +875,7 @@ public class ToyboxTriggerManager
         UiSharedService.ColorText("Shock Collar Action", ImGuiColors.ParsedGold);
         _uiShared.DrawHelpText("What kind of action to inflict on the shock collar.");
 
-        _uiShared.DrawCombo("ShockCollarActionType" + id, 100f, Enum.GetValues<ShockMode>(), (shockMode) => shockMode.ToString(),
+        _uiShared.DrawCombo("##ShockCollarActionType" + id, 100f, Enum.GetValues<ShockMode>(), (shockMode) => shockMode.ToString(),
             (i) => shockAction.ShockInstruction.OpCode = i, shockAction.ShockInstruction.OpCode, defaultPreviewText: "Select Action...");
 
         if (shockAction.ShockInstruction.OpCode is not ShockMode.Beep)
@@ -914,7 +938,7 @@ public class ToyboxTriggerManager
 
             UiSharedService.ColorText("Select and Add a Device", ImGuiColors.ParsedGold);
 
-            _uiShared.DrawCombo("VibeDeviceTriggerSelector" + id, width, deviceNames, (device) => device, (i) => 
+            _uiShared.DrawCombo("VibeDeviceTriggerSelector" + id, width, deviceNames, (device) => device, (i) =>
                 _logger.LogTrace("Device Selected: " + i, LoggerType.ToyboxDevices), shouldShowLabel: false, defaultPreviewText: "No Devices Connected");
             ImUtf8.SameLineInner();
             // try and get the current device.

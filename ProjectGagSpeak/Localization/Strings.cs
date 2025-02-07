@@ -476,14 +476,17 @@ namespace GagSpeak.Localization
         public readonly string Step11Desc = Loc.Localize("HelpTriggers_Step11Desc", "Fires a trigger whenever you fail a social game.");
         public readonly string Step11DescExtended = Loc.Localize("HelpTriggers_Step11DescExtended", "Currently only supports DeathRolls");
 
-        public readonly string Step12Title = Loc.Localize("HelpTriggers_Step12Title", "Saving your Trigger");
-        public readonly string Step12Desc = Loc.Localize("HelpTriggers_Step12Desc", "When you are satisfied with your trigger settings, click to create the trigger.");
+        public readonly string Step12Title = Loc.Localize("HelpTriggers_Step12Title", "Emote Triggers");
+        public readonly string Step12Desc = Loc.Localize("HelpTriggers_Step12Desc", "Fires whenever an emote is executed.");
 
-        public readonly string Step13Title = Loc.Localize("HelpTriggers_Step13Title", "The Trigger List");
-        public readonly string Step13Desc = Loc.Localize("HelpTriggers_Step13Desc", "The space where your created triggers will be listed.");
+        public readonly string Step13Title = Loc.Localize("HelpTriggers_Step13Title", "Saving your Trigger");
+        public readonly string Step13Desc = Loc.Localize("HelpTriggers_Step13Desc", "When you are satisfied with your trigger settings, click to create the trigger.");
 
-        public readonly string Step14Title = Loc.Localize("HelpTriggers_Step14Title", "Toggling Triggers");
-        public readonly string Step14Desc = Loc.Localize("HelpTriggers_Step14Desc", "Clicking this button switches the triggers between off and on.");
+        public readonly string Step14Title = Loc.Localize("HelpTriggers_Step14Title", "The Trigger List");
+        public readonly string Step14Desc = Loc.Localize("HelpTriggers_Step14Desc", "The space where your created triggers will be listed.");
+
+        public readonly string Step15Title = Loc.Localize("HelpTriggers_Step15Title", "Toggling Triggers");
+        public readonly string Step15Desc = Loc.Localize("HelpTriggers_Step15Desc", "Clicking this button switches the triggers between off and on.");
     }
 
     public class HelpAlarms
@@ -702,7 +705,10 @@ namespace GagSpeak.Localization
         public readonly string GlobalAllowMotionTT = Loc.Localize("MainOptions_GlobalAllowKneelTT", "Allow anyone to request a motion action from you." +
             "--SEP--A motion request includes any emotes or expressions that can be found in Emotes." +
             "--SEP--This permission limits commands to emotes and expressions.");
-
+        public readonly string GlobalAllowAlias = Loc.Localize("MainOptions_GlobalAllowAlias", "Globally Allow Alias Requests");
+        public readonly string GlobalAllowAliasTT = Loc.Localize("MainOptions_GlobalAllowAliasTT", "Allows anyone to request that you use a global alias action you have configured." +
+            "--SEP--This permission includes any game and plugin commands that originate from an alias you have configured." +
+            "--SEP--WARNING: Use this responsibly and with caution as it will allow ANYONE to execute commands you have in your alias's.");
         public readonly string GlobalAllowAll = Loc.Localize("MainOptions_GlobalAllowAll", "Globally Allow All Requests");
         public readonly string GlobalAllowAllTT = Loc.Localize("MainOptions_GlobalAllowAllTT", "Allows anyone to request any action from you." +
             "--SEP--This permission includes any game and plugin commands, emotes and expressions." +
@@ -841,6 +847,10 @@ namespace GagSpeak.Localization
 
         public readonly string ShowOfflineSeparateLabel = Loc.Localize("Preferences_ShowOfflineSeparateLabel", "Show separate Offline group");
         public readonly string ShowOfflineSeparateTT = Loc.Localize("Preferences_ShowOfflineSeparateTT", "Lists offline paired players in a separate group.");
+
+        public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-###] over [Kinkster-####] in Global Chat");
+        public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
+            "--SEP--Primary intended for legacy users attached to their 3 character names.");
 
         public readonly string PreferNicknamesLabel = Loc.Localize("Preferences_PreferNicknamesLabel", "Prefer nicknames for visible pairs");
         public readonly string PreferNicknamesTT = Loc.Localize("Preferences_PreferNicknamesTT", "Displays nicknames instead of character names for paired players within render range.");

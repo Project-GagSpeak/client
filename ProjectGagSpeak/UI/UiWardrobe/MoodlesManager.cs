@@ -27,7 +27,7 @@ public class MoodlesManager : MediatorSubscriberBase
         _pairManager = pairManager;
         _moodlesService = moodlesService;
 
-        Mediator.Subscribe<CharacterIpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
+        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) => LastCreatedCharacterData = msg.CharaIPCData);
     }
 
     // Private accessor vars for list management.
@@ -75,6 +75,7 @@ public class MoodlesManager : MediatorSubscriberBase
             ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - statusesSize - presetsSize - 175f - ImGui.GetStyle().ItemSpacing.X * 4);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerYpos);
             var PairList = _pairManager.GetOnlineUserPairs()
+                .Where(pair => pair.PairPerms.PairCanApplyYourMoodlesToYou is true) // forbid people not allowed to apply a pairs moodles from seeing them.
                 .Where(pair => pair.LastIpcData != null
                 && (string.IsNullOrEmpty(PairSearchString)
                 || pair.UserData.AliasOrUID.Contains(PairSearchString, StringComparison.OrdinalIgnoreCase)

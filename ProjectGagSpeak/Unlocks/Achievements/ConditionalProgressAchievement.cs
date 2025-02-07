@@ -42,6 +42,8 @@ public class ConditionalProgressAchievement : AchievementBase
     }
 
     public override int CurrentProgress() => IsCompleted ? MilestoneGoal : Progress;
+    public override float CurrentProgressPercentage() => (float)(CurrentProgress() / MilestoneGoal);
+
     public override string ProgressString()
     {
         if(IsCompleted)
@@ -61,10 +63,10 @@ public class ConditionalProgressAchievement : AchievementBase
             return;
 
         // wait the delayed time before checking the conditional task.
-        if (secondsDelayBeforeCheck > 0)
+        if (secondsDelayBeforeCheck > 0) 
             await Task.Delay(secondsDelayBeforeCheck * 1000);
 
-        if (!RequiredCondition())
+        if (!RequiredCondition()) 
             return;
 
         UnlocksEventManager.AchievementLogger.LogTrace($"Beginning Conditional Task for {Title}", LoggerType.AchievementInfo);
@@ -86,9 +88,12 @@ public class ConditionalProgressAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Achievement {Title} Requires conditional Begin & End, but we inturrupted before reaching end. Starting Over!", LoggerType.AchievementInfo);
-        ConditionalTaskBegun = false;
-        ConditionalTaskFinished = false;
+        if(RequireTaskBeginAndFinish is true && ConditionalTaskBegun is true)
+        {
+            UnlocksEventManager.AchievementLogger.LogTrace($"Achievement {Title} Requires conditional Begin & End, but we inturrupted before reaching end. Starting Over!", LoggerType.AchievementInfo);
+            ConditionalTaskBegun = false;
+            ConditionalTaskFinished = false;
+        }
     }
 
     public void CheckTaskProgress(int amountToIncOnSuccess = 1)

@@ -19,6 +19,8 @@ public class ConditionalAchievement : AchievementBase
 
     public override int CurrentProgress() => IsCompleted ? 1 : 0;
 
+    public override float CurrentProgressPercentage() => (float)CurrentProgress();
+
     public override string ProgressString() => PrefixText + " " + (IsCompleted ? "1" : "0" + " / 1") + " " + SuffixText;
 
     public override void CheckCompletion()

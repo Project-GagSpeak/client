@@ -229,10 +229,18 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     public override async Task Disconnect(ServerState disconnectionReason, bool saveAchievements = true)
     {
         // If our current state was Connected, be sure to fire, or at least attempt to fire, a final achievement save prior to disconnection.
-        if (ServerStatus is ServerState.Connected && AchievementManager.HadFailedAchievementDataLoad is false && saveAchievements)
+        if (ServerStatus is ServerState.Connected && saveAchievements)
         {
-            Logger.LogInformation("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
-            await UserUpdateAchievementData(new(new(UID), AchievementManager.GetSaveDataDtoString()));
+            // only perform the following if SaveData is in a valid state for uploading on Disconnect.
+            if(AchievementManager.CanUploadSaveData)
+            {
+                Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
+                await UserUpdateAchievementData(new(new(UID), AchievementManager.GetSaveDataDtoString()));
+            }
+            else
+            {
+                Logger.LogWarning("CanUploadSaveData was false during disconnect. Skipping final save on disconnect.", LoggerType.Achievements);
+            }
         }
 
         // Set new state to Disconnecting.
@@ -422,6 +430,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
         OnUserReceiveDataAppearance(dto => _ = Client_UserReceiveDataAppearance(dto));
         OnUserReceiveDataWardrobe(dto => _ = Client_UserReceiveDataWardrobe(dto));
+        OnUserReceiveDataOrders(dto => _ = Client_UserReceiveDataOrders(dto));
         OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
         OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
         OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
@@ -600,10 +609,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         if (arg is System.Net.WebSockets.WebSocketException)
         {
             Logger.LogInformation("System closed unexpectedly, flagging Achievement Manager to not set data on reconnection.");
-            AchievementManager._lastDisconnectTime = DateTime.UtcNow;
+            AchievementManager.LastUnhandledDisconnect = DateTime.UtcNow;
         }
 
-        Logger.LogWarning("Connection to " + _serverConfigs.CurrentServer.ServerName + " Closed... Reconnecting. (Reason: " + arg, LoggerType.ApiCore);
+        Logger.LogWarning("Connection to " + _serverConfigs.CurrentServer.ServerName + " Closed... Reconnecting. (Reason: " + arg);
     }
 
     protected override async Task HubInstanceOnReconnected()
@@ -626,7 +635,17 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         catch (Exception ex) // Failed to connect, to stop connection.
         {
             Logger.LogError("Failure to obtain Data after reconnection to GagSpeakHub-Main. Reason: " + ex);
-            await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+            // disconnect if a non-websocket related issue, otherwise, reconnect.
+            if (ex is not System.Net.WebSockets.WebSocketException || ex is not TimeoutException)
+                {
+                Logger.LogWarning("Disconnecting from GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
+                await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+            }
+            else
+            {
+                Logger.LogWarning("Reconnecting to GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
+                await Reconnect().ConfigureAwait(false);
+            }
         }
     }
 

@@ -6,6 +6,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
+using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
@@ -22,26 +23,27 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private readonly ClientData _playerData;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly IpcManager _ipcManager;
     private readonly WardrobeHandler _wardrobeHandler;
     private readonly HardcoreHandler _hardcoreHandler;
     private readonly AppearanceManager _appearanceHandler;
+    private readonly ClientMonitorService _clientService;
 
-    public OnConnectedService(ILogger<OnConnectedService> logger,
-        GagspeakMediator mediator, ClientData playerData,
-        ClientConfigurationManager clientConfigs, PairManager pairManager,
-        GagManager gagManager, IpcManager ipcManager, WardrobeHandler wardrobeHandler,
-        HardcoreHandler blindfold, AppearanceManager appearanceHandler) : base(logger, mediator)
+    public OnConnectedService(ILogger<OnConnectedService> logger, GagspeakMediator mediator, 
+        ClientData playerData, ClientConfigurationManager clientConfigs, PairManager pairManager,
+        GagGarbler garbler, IpcManager ipcManager, WardrobeHandler wardrobeHandler, HardcoreHandler blindfold, 
+        AppearanceManager appearanceHandler, ClientMonitorService clientService) : base(logger, mediator)
     {
         _playerData = playerData;
         _clientConfigs = clientConfigs;
         _pairManager = pairManager;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _ipcManager = ipcManager;
         _wardrobeHandler = wardrobeHandler;
         _hardcoreHandler = blindfold;
         _appearanceHandler = appearanceHandler;
+        _clientService = clientService;
 
         // Potentially move this until after all checks for validation are made to prevent invalid startups.
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => OnConnected());
@@ -51,6 +53,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Mediator.Subscribe<CustomizeReady>(this, _ => _playerData.CustomizeProfiles = _ipcManager.CustomizePlus.GetProfileList());
 
         Mediator.Subscribe<CustomizeDispose>(this, _ => _playerData.CustomizeProfiles = new List<CustomizeProfile>());
+        _clientService = clientService;
     }
 
     private async void OnConnected()
@@ -64,16 +67,20 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         Logger.LogInformation("------- Connected Message Received. Processing State Synchronization -------");
 
         // Update Global Permissions and Appearance Data.
-        SetGlobalPermissionsAndAppearance(MainHub.ConnectionDto);
+        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
+        _playerData.GlobalPerms = MainHub.ConnectionDto.UserGlobalPermissions;
+        _playerData.AppearanceData = MainHub.ConnectionDto.GagData;
+        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData); 
+        _garbler.UpdateGarblerLogic();
 
-        // Update GagCombos and Garbler Logic.
-        UpdateGagSpeakModules();
 
         Logger.LogInformation("Syncing Data with Connection DTO", LoggerType.ClientPlayerData);
-
         // Obtain Server-Side Active State Data.
-        var serverData = MainHub.ConnectionDto.CharacterActiveStateData;
+        var serverData = MainHub.ConnectionDto.ActiveRestraintData;
         var serverExpectsActiveSet = serverData.ActiveSetId != Guid.Empty;
+        // Upon connection all mods should be resynchronized with the acctive restraints/gags.
+        // This is primarily to ensure that the mods can be accurately synchronized between multiple characters.
+        _ipcManager.Penumbra.ClearAllTemporaryMods();
         // Handle it accordingly.
         if (serverExpectsActiveSet)
         {
@@ -84,10 +91,6 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             await ClearActiveSet();
         }
 
-        // update the combo selections for the restraints and gags once more.
-        _gagManager.UpdateGagLockComboSelections();
-        _gagManager.UpdateRestraintLockSelections(false);
-
         // Apply Hardcore Traits to the active set.
         ApplyTraitsIfAny();
 
@@ -95,36 +98,18 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         PublishLatestActiveItems();
 
         // recalc if we have any alterations.
-        if (_playerData.IsPlayerGagged || _clientConfigs.HasGlamourerAlterations)
+        if (_playerData.IsPlayerGagged || _playerData.IsPlayerBlindfolded || _clientConfigs.HasGlamourerAlterations)
             await _appearanceHandler.RecalcAndReload(true);
-    }
-
-    private void SetGlobalPermissionsAndAppearance(ConnectionDto dto)
-    {
-        Logger.LogDebug("Setting Global Perms & Appearance from Server.", LoggerType.ClientPlayerData);
-        _playerData.GlobalPerms = dto.UserGlobalPermissions;
-        _playerData.AppearanceData = dto.CharaAppearanceData;
-        Logger.LogDebug("Data Set", LoggerType.ClientPlayerData);
-    }
-
-    private void UpdateGagSpeakModules()
-    {
-        Logger.LogDebug("Setting up Update Tasks from GagSpeak Modules.", LoggerType.ClientPlayerData);
-        _gagManager.UpdateGagLockComboSelections();
-        _gagManager.UpdateGagGarblerLogic();
     }
 
     private void PublishLatestActiveItems()
     {
-        var activeGags = _playerData.AppearanceData?.GagSlots
-            .Where(x => x.GagType.ToGagType() is not GagType.None)
-            .Select(x => x.GagType)
-            .ToList() ?? new List<string>();
+        var gagInfo = _playerData.AppearanceData ?? new CharaAppearanceData();
         var activeSetId = _clientConfigs.GetActiveSet()?.RestraintId ?? Guid.Empty;
-        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, activeGags, activeSetId));
+        Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, gagInfo, activeSetId));
     }
 
-    private async Task HandleActiveServerSet(CharaActiveStateData serverData)
+    private async Task HandleActiveServerSet(CharaActiveSetData serverData)
     {
         // grab the index in our list of sets matching the expected set ID.
         int setIdx = _clientConfigs.GetSetIdxByGuid(serverData.ActiveSetId);
@@ -136,53 +121,53 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             return;
         }
 
-        var hasExpiredTimer = GenericHelpers.TimerPadlocks.Contains(serverData.Padlock) && serverData.Timer < DateTimeOffset.UtcNow;
-        var activeClientSet = _clientConfigs.GetActiveSet();
-
-        if (activeClientSet is not null)
-        {
+        var hasExpiredTimer = serverData.Padlock.ToPadlock().IsTimerLock() && serverData.Timer < DateTimeOffset.UtcNow;
+        if(_clientConfigs.TryGetActiveSet(out var activeClientSet))
             await HandleClientSet(serverData, hasExpiredTimer, activeClientSet);
-        }
     }
 
-    private async Task HandleClientSet(CharaActiveStateData serverData, bool hasExpiredTimer, RestraintSet activeClientSet)
+    private async Task HandleClientSet(CharaActiveSetData serverData, bool hasExpiredTimer, RestraintSet activeClientSet)
     {
         if (activeClientSet.RestraintId == serverData.ActiveSetId && hasExpiredTimer)
         {
             await UnlockAndDisableSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
         else if (activeClientSet.RestraintId != serverData.ActiveSetId)
         {
             await EnableAndRelockSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
+        }
+        // In every other case, we have an active set that matches the server set, so we want to be sure to re-enable the temporary mods.
+        else {
+            await _appearanceHandler.PenumbraModsToggle(NewState.Enabled, activeClientSet.AssociatedMods);
         }
     }
 
-    private async Task UnlockAndDisableSet(CharaActiveStateData serverData)
+    private async Task UnlockAndDisableSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("The stored active Restraint Set is locked with a Timer Padlock. Unlocking Set.", LoggerType.Restraints);
-        await _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Assigner, false, true);
+        _appearanceHandler.UnlockRestraintSet(serverData.ActiveSetId, serverData.Password, serverData.Assigner, true, true);
 
         if (_clientConfigs.GagspeakConfig.DisableSetUponUnlock)
         {
             Logger.LogInformation("Disabling Unlocked Set due to Config Setting.", LoggerType.Restraints);
-            await _appearanceHandler.DisableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+            await _appearanceHandler.DisableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, true, true);
         }
     }
 
-    private async Task EnableAndRelockSet(CharaActiveStateData serverData)
+    private async Task EnableAndRelockSet(CharaActiveSetData serverData)
     {
         Logger.LogInformation("Re-Enabling the stored active Restraint Set", LoggerType.Restraints);
-        await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, false, false);
+        await _appearanceHandler.EnableRestraintSet(serverData.ActiveSetId, serverData.ActiveSetEnabler, true, true);
 
         if (serverData.Padlock != Padlocks.None.ToName())
         {
             Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
-            await _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
-                serverData.Password, serverData.Timer, serverData.Assigner, false, true);
+            _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
+                serverData.Password, serverData.Timer.GetEndTimeOffsetString(), serverData.Assigner, true, true);
         }
     }
 
@@ -190,26 +175,23 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     {
         // Obtain Client-Side active Restraint Set for this UID.
         // If any are active, unlock and remove them. (time expired / force removal)
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is not null)
+        if (_clientConfigs.TryGetActiveSet(out var activeSet))
         {
             Logger.LogWarning("The Stored Restraint Set was Empty, yet you have one equipped. Unlocking and unequipping.");
             // Unlock Active Set
-            if (activeSet.LockType.ToPadlock() is not Padlocks.None)
-                await _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+            if (activeSet.IsLocked())
+                _appearanceHandler.UnlockRestraintSet(activeSet.RestraintId, activeSet.Password, activeSet.Assigner, true, true);
 
             // Disable Active Set.
-            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.LockedBy, false, true);
+            await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.Assigner, true, true);
             // publish the changes.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, Padlocks.None));
+            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
         }
-
     }
 
     private void ApplyTraitsIfAny()
     {
-        var set = _clientConfigs.GetActiveSet();
-        if (set is not null)
+        if (_clientConfigs.TryGetActiveSet(out var set))
         {
             // Enable the Hardcore Properties by invoking the ipc call.
             if (set.HasPropertiesForUser(set.EnabledBy))
@@ -226,7 +208,14 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
     private async void CheckHardcore()
     {
-        // Stop this if it is true.
+        // make 30s timeout token. and wait for player to load.
+        var token = new CancellationTokenSource(TimeSpan.FromSeconds(15)).Token;
+        while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+        {
+            Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+            await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+        }
+
         if (_hardcoreHandler.IsForcedToFollow) _hardcoreHandler.UpdateForcedFollow(NewState.Disabled);
 
         // Re-Enable forced Sit if it is disabled.

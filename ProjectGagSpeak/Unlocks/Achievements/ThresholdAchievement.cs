@@ -18,6 +18,7 @@ public class ThresholdAchievement : AchievementBase
     }
 
     public override int CurrentProgress() => IsCompleted ? MilestoneGoal : LastRecordedThreshold;
+    public override float CurrentProgressPercentage() => (float)(CurrentProgress() / MilestoneGoal);
 
     public override string ProgressString() => PrefixText + " " + (CurrentProgress() + " / " + MilestoneGoal) + " " + SuffixText;
 

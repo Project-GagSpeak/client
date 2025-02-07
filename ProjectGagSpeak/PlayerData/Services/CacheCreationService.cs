@@ -79,7 +79,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 _playerIpcData.MoodlesStatuses.Clear();
                 _playerIpcData.MoodlesPresets.Clear();
                 Logger.LogDebug("Clearing cache for " + msg.ObjectToCreateFor, LoggerType.ClientPlayerData);
-                Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, IpcUpdateType.MoodlesCleared));
+                Mediator.Publish(new IpcDataCreatedMessage(_playerIpcData, IpcUpdateType.MoodlesCleared));
                 // If we are in a cutscene, we should publish a mediator event to let our appearance handler know we need to redraw.
                 // This is a safe workaround from executing things on cutscene start because glamourer takes precedence first.
                 // However, this toggle consistently occurs after Glamourer finishes its draws.
@@ -94,7 +94,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
 
             await FetchLatestMoodlesDataAsync().ConfigureAwait(false);
             Logger.LogDebug("Moodles is now ready, fetching latest info and pushing to all visible pairs", LoggerType.IpcMoodles);
-            Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, IpcUpdateType.UpdateVisible));
+            Mediator.Publish(new IpcDataCreatedMessage(_playerIpcData, IpcUpdateType.UpdateVisible));
         });
 
         Mediator.Subscribe<MoodlesStatusManagerUpdate>(this, (msg) =>
@@ -174,7 +174,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 try
                 {
                     await BuildCharacterData(_playerIpcData, toCreate, _cts.Token).ConfigureAwait(false);
-                    Mediator.Publish(new CharacterIpcDataCreatedMessage(_playerIpcData, (IpcUpdateType)toCreate.UpdateKind));
+                    Mediator.Publish(new IpcDataCreatedMessage(_playerIpcData, (IpcUpdateType)toCreate.UpdateKind));
                 }
                 catch (Exception ex)
                 {

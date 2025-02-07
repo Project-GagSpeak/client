@@ -41,9 +41,8 @@ public class ToyboxPatterns
         _guides = guides;
     }
 
-    // Private accessor vars for list management.
-    private int LastHoveredIndex = -1; // -1 indicates no item is currently hovered
-    private string _nextTabToSelect = "Display Info";
+    // -1 indicates no item is currently hovered
+    private int LastHoveredIndex = -1;
     private LowerString PatternSearchString = LowerString.Empty;
     private List<PatternData> FilteredPatternsList
         => _handler.Patterns
@@ -314,8 +313,8 @@ public class ToyboxPatterns
                 UiSharedService.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
                 UiSharedService.AttachToolTip("Start Point of the Pattern.");
 
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - _uiShared.GetIconData(FontAwesomeIcon.Sync).X);
-                _uiShared.IconText(FontAwesomeIcon.Sync);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - _uiShared.GetIconData(FontAwesomeIcon.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
+                _uiShared.IconText(FontAwesomeIcon.Sync, pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
                 UiSharedService.AttachToolTip(pattern.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
             }
         }

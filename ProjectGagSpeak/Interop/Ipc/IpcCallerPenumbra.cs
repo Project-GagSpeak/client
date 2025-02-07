@@ -20,6 +20,9 @@ using Lumina.Excel.Sheets;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.StateManagers;
+using GagspeakAPI.Extensions;
+using Microsoft.VisualBasic.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.Interop.Ipc;
 
@@ -49,6 +52,14 @@ public readonly record struct ModSettings(Dictionary<string, List<string>> Setti
 // the penumbra service that we will use to interact with penumbra
 public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 {
+    // ID displayed in penumbra when the mod settings are set.
+    private const string GAGSPEAK_ID = "GagSpeak";
+    // Key used to associate with glamourer
+    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3) 
+    // If no lock is desired, make negative.
+    private const int GAGSPEAK_KEY = 5723478;
+    // Note the Player ObjectId is __always__ 0
+    private const int PLAYER_ID = 0;
     /* ------- Class Attributes ---------- */
     private readonly IDalamudPluginInterface _pi;
     private readonly OnFrameworkService _frameworkService;
@@ -68,9 +79,10 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
     private GetModList? _getMods;                      // gets the mod list for our table
     private GetCollection? _currentCollection;         // gets the current collection of our character (0)
     private GetCurrentModSettings? _getCurrentSettings;// we shouldnt need this necessarily  
-    private TrySetMod? _setMod;                        // set the mod to be enabled or disabled
-    private TrySetModPriority? _setModPriority;        // change the mod priority while active to that it overrides other things
-    private ApiVersion _penumbraApiVersion;            // Version of penumbra's API
+    private SetTemporaryModSettingsPlayer? _setTempMod;             // set the mod to be enabled or disabled
+    private RemoveTemporaryModSettingsPlayer? _removeTempMod;       // Removes the temporary mods
+    private RemoveAllTemporaryModSettingsPlayer? _removeAllTempMod; // change the mod priority while active to that it overrides other things
+    private ApiVersion _penumbraApiVersion;                         // Version of penumbra's API
 
     public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, 
         IDalamudPluginInterface pi, OnFrameworkService frameworkService, 
@@ -219,15 +231,22 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
         }
     }
 
-    public (Guid Id, string Name) CurrentCollection
-        => APIAvailable ? _currentCollection!.Invoke(ApiCollectionType.Current)!.Value : (Guid.Empty, "<Unavailable>"); // gets the current collection type
-
+    /// <summary>
+    /// Used to clear the temporary mod settings managed by GagSpeak
+    /// </summary>
+    /// <returns> NothingChanged if IPC API is not available, penumbra status code otherwise </returns>
+    public PenumbraApiEc ClearAllTemporaryMods() {
+        if (!APIAvailable) 
+            return PenumbraApiEc.NothingChanged;
+        else
+            return _removeAllTempMod!.Invoke(PLAYER_ID, GAGSPEAK_KEY);
+    }
     /// <summary>
     /// Used to modify the priority and enable/disable state of a given mod within the current collection.
     /// </summary>
     /// <param name="AssociatedMod">The mod to modify.</param>
     /// <param name="modState">The new state of the mod. (ENABLED or DISABLED) </param>
-    public PenumbraApiEc ModifyModState(AssociatedMod AssociatedMod, NewState modState = NewState.Enabled, bool adjustPriorityOnly = false)
+    public PenumbraApiEc ModifyModState(AssociatedMod AssociatedMod, NewState modState = NewState.Enabled)
     {
         if (!APIAvailable) 
             return PenumbraApiEc.NothingChanged;
@@ -237,46 +256,37 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
         try
         {
             // get the collection of our character
-            var collection = _currentCollection!.Invoke(ApiCollectionType.Current)!.Value.Id;
-
             // If we wanted to Enable the mod, and we are not only adjusting priority, enable it.
-            if (modState is NewState.Enabled && !adjustPriorityOnly)
+            if (modState is NewState.Enabled)
             {
-                errorCode = _setMod!.Invoke(collection, AssociatedMod.Mod.DirectoryName, true, AssociatedMod.Mod.Name);
+                errorCode = _setTempMod!.Invoke(PLAYER_ID,
+                    AssociatedMod.Mod.DirectoryName,
+                    false,
+                    true,
+                    AssociatedMod.ModSettings.Priority + 50,
+                    AssociatedMod.ModSettings.Settings.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value),
+                    GAGSPEAK_ID,
+                    // Magic number found in the settings, used to lock, will need to decide if we want a key or not.
+                    GAGSPEAK_KEY,
+                    AssociatedMod.Mod.Name);
                 switch (errorCode)
                 {
                     case PenumbraApiEc.ModMissing: return PenumbraApiEc.ModMissing;
                     case PenumbraApiEc.CollectionMissing: return PenumbraApiEc.CollectionMissing;
                 }
 
-                // Toggle was successfull, so we can now raise the priority of the mod
-                errorCode = _setModPriority!.Invoke(collection, AssociatedMod.Mod.DirectoryName, AssociatedMod.ModSettings.Priority + 50, AssociatedMod.Mod.Name);
-                if (errorCode is not PenumbraApiEc.Success and not PenumbraApiEc.NothingChanged)
-                    return PenumbraApiEc.UnknownError;
-            }
-
+            } 
             // If we wanted to disable the mod, and we are not only adjusting priority, disable it.
-            if (modState is NewState.Disabled)
+            else if (modState is NewState.Disabled)
             {
-                // disable the mod, but ONLY if disabledMods is true
-                if (!adjustPriorityOnly)
-                {
-                    errorCode = _setMod!.Invoke(collection, AssociatedMod.Mod.DirectoryName, false, AssociatedMod.Mod.Name);
-                    switch (errorCode)
-                    {
-                        case PenumbraApiEc.ModMissing: return PenumbraApiEc.ModMissing;
-                        case PenumbraApiEc.CollectionMissing: return PenumbraApiEc.CollectionMissing;
-                    }
-                }
-
                 // Adjust the priority of the mod back to its original value
-                errorCode = _setModPriority!.Invoke(collection, AssociatedMod.Mod.DirectoryName, AssociatedMod.ModSettings.Priority, AssociatedMod.Mod.Name);
+                errorCode = _removeTempMod!.Invoke(PLAYER_ID,
+                    AssociatedMod.Mod.DirectoryName,
+                    GAGSPEAK_KEY,
+                    AssociatedMod.Mod.Name);
+                
                 if (errorCode is not PenumbraApiEc.Success and not PenumbraApiEc.NothingChanged)
                     return PenumbraApiEc.UnknownError;
-
-                // If we wanted to only adjust priority, return here.
-                if (adjustPriorityOnly)
-                    return errorCode;
             }
         }
         catch (Exception ex)
@@ -304,9 +314,9 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
             _getMods            = new GetModList(_pi);
             _currentCollection  = new GetCollection(_pi);
             _getCurrentSettings = new GetCurrentModSettings(_pi);
-            _setMod             = new TrySetMod(_pi);
-            _setModPriority     = new TrySetModPriority(_pi);
-
+            _setTempMod         = new SetTemporaryModSettingsPlayer(_pi);
+            _removeTempMod      = new RemoveTemporaryModSettingsPlayer(_pi);
+            _removeAllTempMod   = new RemoveAllTemporaryModSettingsPlayer(_pi);
             _mediator.Publish(new PenumbraInitializedMessage());
         }
         catch (Exception e)
@@ -332,7 +342,7 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
     {
         // call disposal of IPC subscribers
         base.Dispose(disposing);
-
+        ClearAllTemporaryMods();
         // call the penumbra dispose to disable the enabled the API Event subscribers
         PenumbraDisposed();
         // dispose of the penumbra event subscribers

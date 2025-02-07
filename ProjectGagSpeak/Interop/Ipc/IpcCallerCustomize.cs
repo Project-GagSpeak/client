@@ -12,12 +12,6 @@ using GagspeakAPI.Data.Struct;
 
 namespace GagSpeak.Interop;
 
-// NOTICE: THE LOGIC FOR THIS IS INCOMPLETE, BUT AT LEAST FUNCTIONAL
-
-
-/// <summary>
-/// Create a sealed class for our interop manager.
-/// </summary>
 public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcCaller
 {
     /* ------------- Class Attributes ------------- */

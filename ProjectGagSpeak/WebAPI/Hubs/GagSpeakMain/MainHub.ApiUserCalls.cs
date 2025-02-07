@@ -189,7 +189,7 @@ public partial class MainHub
         if (!IsConnected) return;
         try
         {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto).ConfigureAwait(false);
+            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto);
         }
         catch (OperationCanceledException ex)
         {
@@ -224,14 +224,16 @@ public partial class MainHub
         await GagSpeakHubMain!.InvokeAsync(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
     }
 
-
-    /// <summary> 
-    /// Sets the profile of the client user, updating it to the clients paired users and the DB.
-    /// </summary>
-    public async Task UserSetKinkPlate(UserKinkPlateDto userDescription)
+    public async Task UserSetKinkPlateContent(UserKinkPlateContentDto kinkPlateInfo)
     {
         if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlate), userDescription).ConfigureAwait(false);
+        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlateContent), kinkPlateInfo).ConfigureAwait(false);
+    }
+
+    public async Task UserSetKinkPlatePicture(UserKinkPlatePictureDto kinkPlateImage)
+    {
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlatePicture), kinkPlateImage).ConfigureAwait(false);
     }
 
     /// <summary> Moodles IPC senders. </summary>
@@ -318,6 +320,18 @@ public partial class MainHub
         try
         {
             await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataWardrobe), dto).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to Push character data");
+        }
+    }
+
+    public async Task UserPushDataOrders(UserCharaOrdersDataMessageDto dto)
+    {
+        try
+        {
+            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -532,11 +546,10 @@ public partial class MainHub
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Appearance data"); }
     }
 
-
     /// <summary>
     /// Pushes Client's updated wardrobe data to the list of online recipients.
     /// </summary>
-    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, Padlocks prevPadlock)
+    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, string affectedItem)
     {
         if (!IsConnected) return;
 
@@ -544,12 +557,28 @@ public partial class MainHub
         {
             if(onlineCharacters.Any()) Logger.LogDebug("Pushing Character Wardrobe data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "["+updateKind+"]", LoggerType.OnlinePairs);
             else Logger.LogDebug("Updating WardrobeData to stored ActiveStateData", LoggerType.OnlinePairs);
-            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, prevPadlock)).ConfigureAwait(false);
+            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, affectedItem)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
         catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
     }
 
+    /// <summary>
+    /// Pushes Client's updated active timed Items data to the list of online recipients.
+    /// </summary>
+    public async Task PushCharacterOrdersData(CharaOrdersData data, List<UserData> onlineCharacters, OrdersUpdateType updateKind, string affectedId)
+    {
+        if (!IsConnected) return;
+
+        try // if connected, try to push the data to the server
+        {
+            if (onlineCharacters.Any()) Logger.LogDebug("Pushing Orderss state to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
+            else Logger.LogDebug("Updating Orderss state to other pairs", LoggerType.OnlinePairs);
+            await UserPushDataOrders(new(onlineCharacters, data, updateKind, affectedId)).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
+        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
+    }
 
     /// <summary>
     /// Pushes Client's updated alias list data to the respective recipient.

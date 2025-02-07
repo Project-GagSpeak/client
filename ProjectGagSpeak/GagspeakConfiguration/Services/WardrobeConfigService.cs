@@ -12,24 +12,52 @@ public class WardrobeConfigService : ConfigurationServiceBase<WardrobeConfig>
     protected override string ConfigurationName => ConfigName;
     protected override bool PerCharacterConfigPath => PerCharacterConfig;
 
-    // apply an override for migrations off the baseconfigservice
+    // apply an override for migrations off the base config service
     protected override JObject MigrateConfig(JObject oldConfigJson, int readVersion)
     {
-        JObject newConfigJson;
+        if (readVersion < 1)
+        {
+            oldConfigJson = MigrateFromV0toV1(oldConfigJson);
+        }
 
-        // no migration needed
-        newConfigJson = oldConfigJson;
-        return newConfigJson;
+        return oldConfigJson;
     }
 
-    // Safely update data for new format.
     private JObject MigrateFromV0toV1(JObject oldConfigJson)
     {
-        // create a new JObject to store the new config
-        JObject newConfigJson = new();
-        // set the version to 1
-        newConfigJson["Version"] = 1;
+        var restraintSetsArray = oldConfigJson["WardrobeStorage"]?["RestraintSets"]?.Value<JArray>();
+        if (restraintSetsArray != null)
+        {
+            foreach (var item in restraintSetsArray)
+            {
+                var itemValue = item.Value<JObject>();
+                if (itemValue != null)
+                {
+                    if (itemValue["LockType"] != null)
+                    {
+                        itemValue["Padlock"] = itemValue["LockType"];
+                        itemValue.Remove("LockType");
+                    }
+                    if (itemValue["LockPassword"] != null)
+                    {
+                        itemValue["Password"] = itemValue["LockPassword"];
+                        itemValue.Remove("LockPassword");
+                    }
+                    if (itemValue["LockedUntil"] != null)
+                    {
+                        itemValue["Timer"] = itemValue["LockedUntil"];
+                        itemValue.Remove("LockedUntil");
+                    }
+                    if (itemValue["LockedBy"] != null)
+                    {
+                        itemValue["Assigner"] = itemValue["LockedBy"];
+                        itemValue.Remove("LockedBy");
+                    }
+                }
+            }
+        }
 
+        oldConfigJson["Version"] = 1;
         return oldConfigJson;
     }
 

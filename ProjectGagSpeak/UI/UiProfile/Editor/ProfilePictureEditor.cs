@@ -135,7 +135,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 _uploadedImageToShow = null;
                 _croppedImageToShow = null;
                 _useCompressedImage = false;
-                _ = _apiHubMain.UserSetKinkPlate(new UserKinkPlateDto(new UserData(MainHub.UID), profile.KinkPlateInfo, string.Empty));
+                _ = _apiHubMain.UserSetKinkPlatePicture(new UserKinkPlatePictureDto(new UserData(MainHub.UID), string.Empty));
             }
             UiSharedService.AttachToolTip("Clear your currently uploaded profile picture--SEP--Must be holding SHIFT to clear.");
 
@@ -331,7 +331,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         }
         try
         {
-            await _apiHubMain.UserSetKinkPlate(new(MainHub.PlayerUserData, profile.KinkPlateInfo, Convert.ToBase64String(_croppedImageData!))).ConfigureAwait(false);
+            await _apiHubMain.UserSetKinkPlatePicture(new(MainHub.PlayerUserData, Convert.ToBase64String(_croppedImageData))).ConfigureAwait(false);
             _logger.LogInformation("Image Sent to server successfully.");
         }
         catch (Exception ex)

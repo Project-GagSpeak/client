@@ -87,7 +87,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             return;
 
         PrivacyEntry.Shown = _mainConfig.Current.ShowPrivacyRadar;
-        UpdateMessagesEntry.Shown = _mainConfig.Current.ShowActionNotifs;
+        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Current.ShowActionNotifs;
         VibratorEntry.Shown = _mainConfig.Current.ShowVibeStatus;
 
         if (PrivacyEntry.Shown)
@@ -97,7 +97,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             // get players not included in our gagspeak pairs.
             var playersNotInPairs = _frameworkUtils.GetObjectTablePlayers()
                 .Where(player => player != _clientService.ClientPlayer && !visiblePairGameObjects.Contains(player))
-                .Where(o => o.ObjectIndex < 400)
+                .Where(o => o.ObjectIndex < 200)
                 .ToList();
 
             // Store the list of visible players
@@ -118,8 +118,6 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             PrivacyEntry.Text = new SeString(new IconPayload(DisplayIcon), new TextPayload(TextDisplay));
             PrivacyEntry.Tooltip = new SeString(new TextPayload(TooltipDisplay));
         }
-
-        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : true;
 
         if (UpdateMessagesEntry.Shown)
         {

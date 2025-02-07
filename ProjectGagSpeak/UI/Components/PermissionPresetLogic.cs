@@ -10,17 +10,16 @@ using OtterGui.Text;
 
 namespace GagSpeak.Services;
 
-// handles the global chat and pattern discovery social features.
-public class PermissionPresetService
+public class PermissionPresetLogic
 {
-    private readonly ILogger<PermissionPresetService> _logger;
+    private readonly ILogger<PermissionPresetLogic> _logger;
     private readonly MainHub _apiHubMain;
     private readonly ClientData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
-    public PermissionPresetService(ILogger<PermissionPresetService> logger,
+    public PermissionPresetLogic(ILogger<PermissionPresetLogic> logger,
         MainHub apiHubMain, ClientData playerManager,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
         UiSharedService uiShared)
@@ -148,51 +147,11 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = false,
-            ExtendedLockTimes = false,
-            MaxLockTime = new TimeSpan(0, 30, 0),
-            InHardcore = false,
-
-            ApplyRestraintSets = false,
-            LockRestraintSets = false,
-            MaxAllowedRestraintTime = TimeSpan.Zero,
-            UnlockRestraintSets = false,
-            RemoveRestraintSets = false,
-
-            TriggerPhrase = "",
-            StartChar = '(',
-            EndChar = ')',
-            AllowSitRequests = false,
-            AllowMotionRequests = false,
-            AllowAllRequests = false,
-
-            AllowPositiveStatusTypes = false,
-            AllowNegativeStatusTypes = false,
-            AllowSpecialStatusTypes = false,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = false,
-            MaxMoodleTime = TimeSpan.Zero,
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = false,
-
-            CanToggleToyState = false,
-            CanUseVibeRemote = false,
-            CanToggleAlarms = false,
-            CanSendAlarms = false,
-            CanExecutePatterns = false,
-            CanStopPatterns = false,
-            CanToggleTriggers = false,
-
-            DevotionalStatesForPair = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = false,
-            AllowForcedToStay = false,
-            AllowBlindfold = false,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
+            ApplyGags = true,
+            LockGags = false,
+            MaxGagTime = new TimeSpan(0, 30, 0),
+            UnlockGags = false,
+            RemoveGags = true,
         };
         var pairAccess = new UserEditAccessPermissions();
         return new(pairPerms, pairAccess);
@@ -202,25 +161,17 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = false,
-            ExtendedLockTimes = false,
-            MaxLockTime = new TimeSpan(1, 0, 0),
-            InHardcore = false,
+            ApplyGags = true,
+            LockGags = true,
+            MaxGagTime = new TimeSpan(1, 0, 0),
+            UnlockGags = true,
+            RemoveGags = true,
 
             ApplyRestraintSets = true,
             LockRestraintSets = false,
             MaxAllowedRestraintTime = new TimeSpan(1, 0, 0),
             UnlockRestraintSets = false,
-            RemoveRestraintSets = false,
-
-            TriggerPhrase = "",
-            StartChar = '(',
-            EndChar = ')',
-            AllowSitRequests = false,
-            AllowMotionRequests = false,
-            AllowAllRequests = false,
+            RemoveRestraintSets = true,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -230,23 +181,6 @@ public class PermissionPresetService
             MaxMoodleTime = new TimeSpan(1, 0, 0),
             AllowPermanentMoodles = false,
             AllowRemovingMoodles = false,
-
-            CanToggleToyState = false,
-            CanUseVibeRemote = false,
-            CanToggleAlarms = false,
-            CanSendAlarms = false,
-            CanExecutePatterns = false,
-            CanStopPatterns = false,
-            CanToggleTriggers = false,
-
-            DevotionalStatesForPair = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = false,
-            AllowForcedToStay = false,
-            AllowBlindfold = false,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -257,25 +191,22 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
+            PermanentLocks = true,
             OwnerLocks = false,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(1, 30, 0),
-            InHardcore = false,
+            DevotionalLocks = false,
 
-            ApplyRestraintSets = true,
-            LockRestraintSets = true,
+            ApplyGags = true,
+            LockGags = true,
             MaxAllowedRestraintTime = new TimeSpan(1, 30, 0),
-            UnlockRestraintSets = false,
-            RemoveRestraintSets = false,
+            UnlockGags = true,
+            RemoveGags = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = false,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = false,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -285,23 +216,6 @@ public class PermissionPresetService
             MaxMoodleTime = new TimeSpan(1, 30, 0),
             AllowPermanentMoodles = false,
             AllowRemovingMoodles = false,
-
-            CanToggleToyState = false,
-            CanUseVibeRemote = false,
-            CanToggleAlarms = false,
-            CanSendAlarms = false,
-            CanExecutePatterns = false,
-            CanStopPatterns = false,
-            CanToggleTriggers = false,
-
-            DevotionalStatesForPair = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = false,
-            AllowForcedToStay = false,
-            AllowBlindfold = false,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -313,24 +227,23 @@ public class PermissionPresetService
         var pairPerms = new UserPairPermissions()
         {
             IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = false,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(1, 30, 0),
-            InHardcore = false,
 
-            ApplyRestraintSets = true,
-            LockRestraintSets = true,
-            MaxAllowedRestraintTime = new TimeSpan(1, 30, 0),
-            UnlockRestraintSets = false,
-            RemoveRestraintSets = true,
+            PermanentLocks = true,
+            OwnerLocks = false,
+            DevotionalLocks = false,
+
+            ApplyGags = true,
+            LockGags = true,
+            MaxAllowedRestraintTime = new TimeSpan(2, 30, 0),
+            UnlockGags = true,
+            RemoveGags = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -347,15 +260,6 @@ public class PermissionPresetService
             CanExecutePatterns = true,
             CanStopPatterns = true,
             CanToggleTriggers = false,
-
-            DevotionalStatesForPair = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = false,
-            AllowForcedToStay = false,
-            AllowBlindfold = true,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -366,25 +270,22 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = true,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(3, 0, 0),
-            InHardcore = false,
+            PermanentLocks = true,
+            OwnerLocks = false,
+            DevotionalLocks = false,
 
-            ApplyRestraintSets = true,
-            LockRestraintSets = true,
+            ApplyGags = true,
+            LockGags = true,
             MaxAllowedRestraintTime = new TimeSpan(3, 0, 0),
-            UnlockRestraintSets = true,
-            RemoveRestraintSets = true,
+            UnlockGags = true,
+            RemoveGags = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -402,15 +303,6 @@ public class PermissionPresetService
             CanExecutePatterns = true,
             CanStopPatterns = true,
             CanToggleTriggers = false,
-
-            DevotionalStatesForPair = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = true,
-            AllowForcedToStay = false,
-            AllowBlindfold = true,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -421,25 +313,22 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = true,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(12, 0, 0),
-            InHardcore = false,
+            PermanentLocks = true,
+            OwnerLocks = false,
+            DevotionalLocks = false,
 
-            ApplyRestraintSets = true,
-            LockRestraintSets = true,
+            ApplyGags = true,
+            LockGags = true,
             MaxAllowedRestraintTime = new TimeSpan(12, 0, 0),
-            UnlockRestraintSets = true,
-            RemoveRestraintSets = true,
+            UnlockGags = true,
+            RemoveGags = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -458,6 +347,7 @@ public class PermissionPresetService
             CanStopPatterns = true,
             CanToggleTriggers = true,
 
+            InHardcore = false,
             DevotionalStatesForPair = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
@@ -476,25 +366,28 @@ public class PermissionPresetService
     {
         var pairPerms = new UserPairPermissions()
         {
-            IsPaused = false,
-            GagFeatures = true,
-            OwnerLocks = false,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(1, 30, 0),
-            InHardcore = false,
+            PermanentLocks = true,
+            OwnerLocks = true,
+            DevotionalLocks = false,
+
+            ApplyGags = true,
+            LockGags = true,
+            MaxGagTime = new TimeSpan(3, 0, 0),
+            UnlockGags = true,
+            RemoveGags = true,
 
             ApplyRestraintSets = true,
             LockRestraintSets = true,
-            MaxAllowedRestraintTime = new TimeSpan(1, 30, 0),
+            MaxAllowedRestraintTime = new TimeSpan(3, 0, 0),
             UnlockRestraintSets = false,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -513,6 +406,7 @@ public class PermissionPresetService
             CanStopPatterns = true,
             CanToggleTriggers = false,
 
+            InHardcore = false,
             DevotionalStatesForPair = false,
             AllowForcedFollow = false,
             AllowForcedSit = false,
@@ -526,10 +420,16 @@ public class PermissionPresetService
         {
             LiveChatGarblerActiveAllowed = true,
             LiveChatGarblerLockedAllowed = false,
-            GagFeaturesAllowed = true,
+
+            PermanentLocksAllowed = false,
             OwnerLocksAllowed = true,
-            ExtendedLockTimesAllowed = false,
-            MaxLockTimeAllowed = false,
+            DevotionalLocksAllowed = false,
+
+            ApplyGagsAllowed = true,
+            LockGagsAllowed = false,
+            MaxGagTimeAllowed = false,
+            UnlockGagsAllowed = true,
+            RemoveGagsAllowed = true,
 
             WardrobeEnabledAllowed = false,
             ItemAutoEquipAllowed = false,
@@ -541,9 +441,10 @@ public class PermissionPresetService
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            AllowSitRequestsAllowed = true,
-            AllowMotionRequestsAllowed = false,
-            AllowAllRequestsAllowed = false,
+            SitRequestsAllowed = true,
+            MotionRequestsAllowed = false,
+            AliasRequestsAllowed = false,
+            AllRequestsAllowed = false,
 
             MoodlesEnabledAllowed = false,
             AllowPositiveStatusTypesAllowed = true,
@@ -574,11 +475,16 @@ public class PermissionPresetService
         var pairPerms = new UserPairPermissions()
         {
             IsPaused = false,
-            GagFeatures = true,
+
+            PermanentLocks = true,
             OwnerLocks = true,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(3, 0, 0),
-            InHardcore = false,
+            DevotionalLocks = false,
+
+            ApplyGags = true,
+            LockGags = true,
+            MaxGagTime = new TimeSpan(3, 0, 0),
+            UnlockGags = true,
+            RemoveGags = true,
 
             ApplyRestraintSets = true,
             LockRestraintSets = true,
@@ -589,9 +495,9 @@ public class PermissionPresetService
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -610,6 +516,7 @@ public class PermissionPresetService
             CanStopPatterns = true,
             CanToggleTriggers = false,
 
+            InHardcore = false,
             DevotionalStatesForPair = false,
             AllowForcedFollow = false,
             AllowForcedSit = true,
@@ -623,10 +530,16 @@ public class PermissionPresetService
         {
             LiveChatGarblerActiveAllowed = true,
             LiveChatGarblerLockedAllowed = true,
-            GagFeaturesAllowed = true,
+
+            PermanentLocksAllowed = true,
             OwnerLocksAllowed = true,
-            ExtendedLockTimesAllowed = true,
-            MaxLockTimeAllowed = false,
+            DevotionalLocksAllowed = false,
+
+            ApplyGagsAllowed = true,
+            LockGagsAllowed = true,
+            MaxGagTimeAllowed = false,
+            UnlockGagsAllowed = true,
+            RemoveGagsAllowed = true,
 
             WardrobeEnabledAllowed = false,
             ItemAutoEquipAllowed = false,
@@ -638,9 +551,10 @@ public class PermissionPresetService
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            AllowSitRequestsAllowed = true,
-            AllowMotionRequestsAllowed = true,
-            AllowAllRequestsAllowed = false,
+            SitRequestsAllowed = true,
+            MotionRequestsAllowed = true,
+            AliasRequestsAllowed = false,
+            AllRequestsAllowed = false,
 
             MoodlesEnabledAllowed = false,
             AllowPositiveStatusTypesAllowed = true,
@@ -671,11 +585,16 @@ public class PermissionPresetService
         var pairPerms = new UserPairPermissions()
         {
             IsPaused = false,
-            GagFeatures = true,
+
+            PermanentLocks = true,
             OwnerLocks = true,
-            ExtendedLockTimes = true,
-            MaxLockTime = new TimeSpan(12, 0, 0),
-            InHardcore = false,
+            DevotionalLocks = true,
+
+            ApplyGags = true,
+            LockGags = true,
+            MaxGagTime = new TimeSpan(12, 0, 0),
+            UnlockGags = true,
+            RemoveGags = true,
 
             ApplyRestraintSets = true,
             LockRestraintSets = true,
@@ -686,9 +605,9 @@ public class PermissionPresetService
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            AllowSitRequests = true,
-            AllowMotionRequests = true,
-            AllowAllRequests = false,
+            SitRequests = true,
+            MotionRequests = true,
+            AllRequests = false,
 
             AllowPositiveStatusTypes = true,
             AllowNegativeStatusTypes = true,
@@ -707,6 +626,7 @@ public class PermissionPresetService
             CanStopPatterns = true,
             CanToggleTriggers = true,
 
+            InHardcore = false,
             DevotionalStatesForPair = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
@@ -720,10 +640,16 @@ public class PermissionPresetService
         {
             LiveChatGarblerActiveAllowed = true,
             LiveChatGarblerLockedAllowed = true,
-            GagFeaturesAllowed = true,
+
+            PermanentLocksAllowed = true,
             OwnerLocksAllowed = true,
-            ExtendedLockTimesAllowed = true,
-            MaxLockTimeAllowed = true,
+            DevotionalLocksAllowed = true,
+
+            ApplyGagsAllowed = true,
+            LockGagsAllowed = true,
+            MaxGagTimeAllowed = true,
+            UnlockGagsAllowed = true,
+            RemoveGagsAllowed = true,
 
             WardrobeEnabledAllowed = false,
             ItemAutoEquipAllowed = true,
@@ -735,9 +661,9 @@ public class PermissionPresetService
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            AllowSitRequestsAllowed = true,
-            AllowMotionRequestsAllowed = true,
-            AllowAllRequestsAllowed = true,
+            SitRequestsAllowed = true,
+            MotionRequestsAllowed = true,
+            AllRequestsAllowed = true,
 
             MoodlesEnabledAllowed = false,
             AllowPositiveStatusTypesAllowed = true,

@@ -17,6 +17,7 @@ public class ProgressAchievement : AchievementBase
     }
 
     public override int CurrentProgress() => IsCompleted ? MilestoneGoal : Progress;
+    public override float CurrentProgressPercentage() => IsCompleted ? 1 : (float)Progress / MilestoneGoal;
 
     public override string ProgressString() => PrefixText + " " + (CurrentProgress() + " / " + MilestoneGoal) + " " + SuffixText;
 

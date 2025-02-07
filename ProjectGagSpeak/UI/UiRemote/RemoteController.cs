@@ -29,19 +29,18 @@ public class RemoteController : RemoteBase
 {
     private readonly ToyboxHub _apiHubToybox;
     private readonly ClientData _playerManager;
-    private readonly GagManager _gagManager;
+    private readonly GagGarbler _garbler;
     private readonly UiSharedService _uiShared;
     private readonly VibratorService _vibeService;
     private readonly ToyboxRemoteService _remoteService;
     public RemoteController(ILogger<RemoteController> logger, GagspeakMediator mediator, 
-        ToyboxHub apiHubToybox, ClientData playerManager, GagManager gagManager, 
+        ToyboxHub apiHubToybox, ClientData playerManager, GagGarbler garbler, 
         UiSharedService uiShared, VibratorService vibeService, ToyboxRemoteService remoteService, 
-        TutorialService guides, PrivateRoom privateRoom) 
-        : base(logger, mediator, uiShared, vibeService, remoteService, guides, privateRoom.RoomName)
+        TutorialService guides, PrivateRoom privateRoom) : base(logger, mediator, uiShared, vibeService, remoteService, guides, privateRoom.RoomName)
     {
         // grab the shared services
         _playerManager = playerManager;
-        _gagManager = gagManager;
+        _garbler = garbler;
         _uiShared = uiShared;
         _vibeService = vibeService;
         _remoteService = remoteService;
@@ -140,7 +139,7 @@ public class RemoteController : RemoteBase
         var CurrentRegion = ImGui.GetContentRegionAvail();
 
         // create a child for the center bar
-        using (var extraDetailsSideTab = ImRaii.Child($"###ExtraDetailsDraw", CurrentRegion, false))
+        using (ImRaii.Child($"###ExtraDetailsDraw", CurrentRegion, false))
         {
             ImGuiUtil.Center("Private Room Chat");
             ImGui.Separator();
@@ -153,7 +152,7 @@ public class RemoteController : RemoteBase
             var region = new Vector2(CurrentRegion.X, chatLogHeight - inputTextHeight);
             using (var chatlogChild = ImRaii.Child($"###ChatlogChildRemote", region, false))
             {
-                PrivateRoomData.PrivateRoomChatlog.PrintChatLogHistory(showMessagePreview, NextChatMessage, region);
+                PrivateRoomData.PrivateRoomChatlog.PrintChatLogHistory(showMessagePreview, NextChatMessage, region, "Remote_Chat");
             }
 
             // Now draw out the input text field
@@ -175,7 +174,7 @@ public class RemoteController : RemoteBase
 
                 // Process message if gagged
                 if (_playerManager.IsPlayerGagged)
-                    NextChatMessage = _gagManager.ProcessMessage(NextChatMessage);
+                    NextChatMessage = _garbler.ProcessMessage(NextChatMessage);
 
                 // Send the message to the server
                 _logger.LogInformation($"Sending Message: {NextChatMessage}");

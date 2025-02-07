@@ -66,41 +66,50 @@ public class RoomSelectPrompt : BasePrompt
         // return if less than 5 seconds from last interaction to avoid infinite loop spam.
         await Task.Delay(750);
 
-        unsafe
+        // get the name
+        var target = _targets.Target;
+        var targetName = target != null ? target.Name.ExtractText() : string.Empty;
+        _clientConfigs.LastSeenNodeName = targetName;
+        _logger.LogDebug("Node Name: " + targetName);
+
+        // Try and locate if we have a match.
+        var nodes = _clientConfigs.GetAllNodes().OfType<ChambersTextNode>();
+        foreach (var node in nodes)
         {
-            AtkUnitBase* addon = addonInfo.Base();
-            // get the name
-            var target = _targets.Target;
-            var targetName = target != null ? target.Name.ExtractText() : string.Empty;
-            _clientConfigs.LastSeenNodeName = targetName;
-            _logger.LogDebug("Node Name: " + targetName);
+            // If the node does not have the chamber room set, do not process it.
+            if (!node.Enabled || node.ChamberRoomSet < 0)
+                continue;
 
-            // Try and locate if we have a match.
-            var nodes = _clientConfigs.GetAllNodes().OfType<ChambersTextNode>();
-            foreach (var node in nodes)
+            // If we are only doing it on a spesific node and the names dont match, skip it.
+            if (node.TargetRestricted && !_clientConfigs.LastSeenNodeName.Contains(node.TargetNodeName))
+                continue;
+
+            // If we have a match, fire the event.
+            _logger.LogDebug("RoomSelectPrompt: Matched on " + node.TargetNodeName + " for SetIdx(" + node.ChamberListIdx + ") RoomListIdx(" + node.ChamberRoomSet + ")");
+            // if we want to select another list index, change it now.
+            if (node.ChamberRoomSet is not 0)
             {
-                // If the node does not have the chamber room set, do not process it.
-                if (!node.Enabled || node.ChamberRoomSet < 0)
-                    continue;
-
-                // If we are only doing it on a spesific node and the names dont match, skip it.
-                if (node.TargetRestricted && !_clientConfigs.LastSeenNodeName.Contains(node.TargetNodeName))
-                    continue;
-
-                // If we have a match, fire the event.
-                _logger.LogDebug("RoomSelectPrompt: Matched on " + node.TargetNodeName + " for SetIdx(" + node.ChamberListIdx + ") RoomListIdx(" + node.ChamberRoomSet + ")");
-                // if we want to select another list index, change it now.
-                if (node.ChamberRoomSet is not 0)
+                _logger.LogDebug("We need to switch room sets first to setlistIdx " + node.ChamberRoomSet);
+                unsafe
                 {
-                    _logger.LogDebug("We need to switch room sets first to setlistIdx " + node.ChamberRoomSet);
+                    AtkUnitBase* addon = addonInfo.Base();
                     ForcedStayCallback.Fire(addon, true, 1, node.ChamberRoomSet);
-
                 }
-                // after we have switched to the set we want, fire a callback to select the room.
-                _logger.LogDebug("Selecting room " + node.ChamberListIdx);
-                ForcedStayCallback.Fire(addon, true, 0, node.ChamberListIdx);
-                LastSelectionTime = DateTime.UtcNow;
             }
+
+            // wait delay before selecting the room.
+            await Task.Delay(750);
+
+            // after we have switched to the set we want, fire a callback to select the room.
+            _logger.LogDebug("Selecting room " + node.ChamberListIdx);
+            unsafe
+            {
+                AtkUnitBase* addon = addonInfo.Base();
+                ForcedStayCallback.Fire(addon, true, 0, node.ChamberListIdx);
+            }
+            LastSelectionTime = DateTime.UtcNow;
+            // exit the loop.
+            break;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace GagSpeak.GagspeakConfiguration.Models;
 [Serializable]
 public record GagDrawData : IMoodlesAssociable, IGlamourItem
 {
-    public bool IsEnabled { get; set; } = true;
+    public bool IsEnabled { get; set; } = false;
     public EquipSlot Slot { get; set; } = EquipSlot.Head;
     public EquipItem GameItem { get; set; }
     public StainIds GameStain { get; set; } = StainIds.None;
@@ -30,6 +30,25 @@ public record GagDrawData : IMoodlesAssociable, IGlamourItem
     // Spatial Audio type to use while gagged. (May not use since will just have one type?)
 
     public GagDrawData(EquipItem gameItem) => GameItem = gameItem;
+
+    // deep clone the data.
+    public GagDrawData DeepCloneData()
+    {
+        return new GagDrawData(GameItem)
+        {
+            IsEnabled = this.IsEnabled,
+            Slot = this.Slot,
+            GameItem = this.GameItem,
+            GameStain = this.GameStain,
+            ForceHeadgear = this.ForceHeadgear,
+            ForceVisor = this.ForceVisor,
+            AssociatedMoodles = new List<Guid>(this.AssociatedMoodles),
+            AssociatedMoodlePreset = this.AssociatedMoodlePreset,
+            CustomizePriority = this.CustomizePriority,
+            CustomizeGuid = this.CustomizeGuid,
+        };
+    }
+
 
     public AppliedSlot ToAppliedSlot()
     {

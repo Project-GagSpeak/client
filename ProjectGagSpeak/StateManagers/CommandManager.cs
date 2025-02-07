@@ -10,7 +10,6 @@ using GagSpeak.Toybox.Controllers;
 using GagSpeak.UI;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.Utils;
 using OtterGui.Classes;
 
 namespace GagSpeak.StateManagers;
@@ -117,7 +116,8 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0 || string.IsNullOrWhiteSpace(splitArgs[0]))
         { 
             // If no safeword is provided
-            _chat.Print("Please provide a safeword. Usage: /gagspeak safeword [your_safeword] [optional_UID]");
+            _chat.Print(new SeStringBuilder().AddYellow("Please provide a safeword.").BuiltString);
+            PrintSafewordHelp();
             return;
         }
 
@@ -130,7 +130,11 @@ public sealed class CommandManager : IDisposable
                 var validUserData = _pairManager.GetUserDataFromUID(uid);
                 // if the UID is valid, use it.
                 if (validUserData is not null) _mediator.Publish(new SafewordUsedMessage(uid));
-                else _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+                else
+                {
+                    _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+                    PrintSafewordHelp();
+                }
             }
             else
             {
@@ -141,6 +145,7 @@ public sealed class CommandManager : IDisposable
         else
         {
             _chat.Print(new SeStringBuilder().AddYellow("Invalid Safeword Provided.").BuiltString);
+            PrintSafewordHelp();
         }
     }
 
@@ -155,7 +160,11 @@ public sealed class CommandManager : IDisposable
             var validUserData = _pairManager.GetUserDataFromUID(uid);
             // if the UID is valid, use it.
             if (validUserData is not null) _mediator.Publish(new SafewordHardcoreUsedMessage(uid));
-            else _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+            else
+            {
+                _chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}, /safewordhardcore does not require your actual safeword.").BuiltString);
+                PrintSafewordHardcoreHelp();
+            }
         }
         else
         {
@@ -210,6 +219,15 @@ public sealed class CommandManager : IDisposable
         _chat.Print(new SeStringBuilder().AddCommand("/safeword", "Cries out your safeword, disabling any active restrictions.").BuiltString);
         _chat.Print(new SeStringBuilder().AddCommand("/safewordhardcore", "Cries out your hardcore safeword, disabling any hardcore restrictions.").BuiltString);
         _chat.Print(new SeStringBuilder().AddCommand("/dr", "Begins a DeathRoll. '/dr r' responds to the last seen or interacted DeathRoll").BuiltString);
+    }
+
+    private void PrintSafewordHelp()
+    {
+        _chat.Print(new SeStringBuilder().AddYellow("Usage: /safeword [safeword] [optional_UID]").BuiltString);
+    }
+    private void PrintSafewordHardcoreHelp()
+    {
+        _chat.Print(new SeStringBuilder().AddYellow("Usage: /safewordhardcore [optional_UID]").BuiltString);
     }
 }
 

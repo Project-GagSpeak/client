@@ -8,6 +8,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.ConfigurationServices;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -173,7 +174,7 @@ public class DebugTab
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
         DrawAppearance("Player", _playerData.AppearanceData ?? new CharaAppearanceData());
-        DrawWardrobe("Player", _playerDataChanges.CompileWardrobeToAPI());
+        DrawWardrobe("Player", _clientConfigs.CompileWardrobeToAPI());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
@@ -185,7 +186,7 @@ public class DebugTab
                 }
             }
         }
-        DrawToybox("Player", _playerDataChanges.CompileToyboxToAPI());
+        DrawToybox("Player", _clientConfigs.CompileToyboxToAPI());
     }
 
     private void DrawPairsDebug()
@@ -242,12 +243,10 @@ public class DebugTab
         ImGui.TableSetupColumn("Value");
         ImGui.TableHeadersRow();
 
-        DrawPermissionRowBool("Safeword Used", perms.SafewordUsed);
-        DrawPermissionRowBool("Hardcore Safeword Userd", perms.HardcoreSafewordUsed);
         DrawPermissionRowBool("Live Chat Garbler", perms.LiveChatGarblerActive);
         DrawPermissionRowBool("Live Chat Garbler Locked", perms.LiveChatGarblerLocked);
-        DrawPermissionRowBool("Gag Glamours", perms.ItemAutoEquip);
         ImGui.TableNextRow();
+        DrawPermissionRowBool("Gag Glamours", perms.ItemAutoEquip);
         DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
         DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetAutoEquip);
         DrawPermissionRowBool("Moodles Active", perms.MoodlesEnabled);
@@ -256,6 +255,7 @@ public class DebugTab
         DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
         DrawPermissionRowBool("Allow Sit", perms.GlobalAllowSitRequests);
         DrawPermissionRowBool("Allow Motion", perms.GlobalAllowMotionRequests);
+        DrawPermissionRowBool("Allow Alias", perms.GlobalAllowAliasRequests);
         DrawPermissionRowBool("Allow All", perms.GlobalAllowAllRequests);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
@@ -291,12 +291,16 @@ public class DebugTab
         ImGui.TableHeadersRow();
 
         DrawPermissionRowBool("Is Paused", perms.IsPaused);
-        DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
-        DrawPermissionRowBool("Allows Gag Features", perms.GagFeatures);
+        ImGui.TableNextRow();
+        DrawPermissionRowBool("Allows Permanent Locks", perms.PermanentLocks);
         DrawPermissionRowBool("Allows Owner Locks", perms.OwnerLocks);
         DrawPermissionRowBool("Allows Devotional Locks", perms.DevotionalLocks);
-        DrawPermissionRowBool("Lock > 12hours?", perms.ExtendedLockTimes);
-        DrawPermissionRowString("Max Gag Padlock Timer", perms.MaxLockTime.ToString());
+        ImGui.TableNextRow();
+        DrawPermissionRowBool("Apply Gags", perms.ApplyGags);
+        DrawPermissionRowBool("Lock Gags", perms.LockGags);
+        DrawPermissionRowString("Max Gag Time", perms.MaxGagTime.ToString());
+        DrawPermissionRowBool("Unlock Gags", perms.UnlockGags);
+        DrawPermissionRowBool("Remove Gags", perms.RemoveGags);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSets);
         DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSets);
@@ -307,9 +311,10 @@ public class DebugTab
         DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowString("Start Char", perms.StartChar.ToString());
         DrawPermissionRowString("End Char", perms.EndChar.ToString());
-        DrawPermissionRowBool("Allow Sit Requests", perms.AllowSitRequests);
-        DrawPermissionRowBool("Allow Motion Requests", perms.AllowMotionRequests);
-        DrawPermissionRowBool("Allow All Requests", perms.AllowAllRequests);
+        DrawPermissionRowBool("Allow Sit Requests", perms.SitRequests);
+        DrawPermissionRowBool("Allow Motion Requests", perms.MotionRequests);
+        DrawPermissionRowBool("Allow Alias Requests", perms.AliasRequests);
+        DrawPermissionRowBool("Allow All Requests", perms.AllRequests);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Allow Positive Moodles", perms.AllowPositiveStatusTypes);
         DrawPermissionRowBool("Allow Negative Moodles", perms.AllowNegativeStatusTypes);
@@ -328,6 +333,7 @@ public class DebugTab
         DrawPermissionRowBool("Can Send Alarms", perms.CanSendAlarms);
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggers);
         ImGui.TableNextRow();
+        DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
         DrawPermissionRowBool("Devotional States For Pair", perms.DevotionalStatesForPair);
         DrawPermissionRowBool("Allow Forced Follow", perms.AllowForcedFollow);
         DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
@@ -359,11 +365,20 @@ public class DebugTab
         // Live Chat Permissions
         DrawPermissionRowBool("Live Chat Garbler Active", perms.LiveChatGarblerActiveAllowed);
         DrawPermissionRowBool("Live Chat Garbler Locked", perms.LiveChatGarblerLockedAllowed);
-        DrawPermissionRowBool("Allows Gag Features", perms.GagFeaturesAllowed);
+        ImGui.TableNextRow();
+
+        // Padlock permissions
+        DrawPermissionRowBool("Allows Permanent Locks", perms.PermanentLocksAllowed);
         DrawPermissionRowBool("Allows Owner Locks", perms.OwnerLocksAllowed);
         DrawPermissionRowBool("Allows Devotional Locks", perms.DevotionalLocksAllowed);
-        DrawPermissionRowBool("Extended Lock Times Allowed", perms.ExtendedLockTimesAllowed);
-        DrawPermissionRowBool("Allows Max Lock Time", perms.MaxLockTimeAllowed);
+        ImGui.TableNextRow();
+
+        // Gag permissions
+        DrawPermissionRowBool("Allows Applying Gags", perms.ApplyGagsAllowed);
+        DrawPermissionRowBool("Allows Locking Gags", perms.LockGagsAllowed);
+        DrawPermissionRowBool("Max Gag Time", perms.MaxGagTimeAllowed);
+        DrawPermissionRowBool("Allows Unlocking Gags", perms.UnlockGagsAllowed);
+        DrawPermissionRowBool("Allows Removing Gags", perms.RemoveGagsAllowed);
         ImGui.TableNextRow();
 
         // Wardrobe Permissions
@@ -379,9 +394,10 @@ public class DebugTab
 
         // Puppeteer Permissions
         DrawPermissionRowBool("Puppeteer Enabled", perms.PuppeteerEnabledAllowed);
-        DrawPermissionRowBool("Allow Sit Requests", perms.AllowSitRequestsAllowed);
-        DrawPermissionRowBool("Allow Motion Requests", perms.AllowMotionRequestsAllowed);
-        DrawPermissionRowBool("Allow All Requests", perms.AllowAllRequestsAllowed);
+        DrawPermissionRowBool("Allow Sit Requests", perms.SitRequestsAllowed);
+        DrawPermissionRowBool("Allow Motion Requests", perms.MotionRequestsAllowed);
+        DrawPermissionRowBool("Allow Alias Requests", perms.AliasRequestsAllowed);
+        DrawPermissionRowBool("Allow All Requests", perms.AllRequestsAllowed);
         ImGui.TableNextRow();
 
         // Moodle Permissions
@@ -441,7 +457,7 @@ public class DebugTab
             for (int i = 0; i < 3; i++)
             {
                 ImGui.TableNextColumn();
-                UiSharedService.ColorText(UiSharedService.TimeLeftFancy(appearance.GagSlots[i].Timer), ImGuiColors.ParsedPink);
+                UiSharedService.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             }
             ImGui.TableNextRow();
 
@@ -464,7 +480,7 @@ public class DebugTab
             DrawPermissionRowString("Password", wardrobe.Password);
             ImGuiUtil.DrawTableColumn("Expiration Time");
             ImGui.TableNextColumn();
-            UiSharedService.ColorText(UiSharedService.TimeLeftFancy(wardrobe.Timer), ImGuiColors.ParsedPink);
+            UiSharedService.ColorText(wardrobe.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             ImGui.TableNextRow();
             DrawPermissionRowString("Assigner", wardrobe.Assigner);
         }
