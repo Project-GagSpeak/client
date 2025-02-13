@@ -27,14 +27,14 @@ public class PublicationsManager
 {
     private readonly ILogger<PublicationsManager> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly MoodlesService _moodlesService;
     private readonly ShareHubService _shareHub;
     private readonly UiSharedService _uiShared;
 
     public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        ClientData clientData, ClientConfigurationManager clientConfigs, MoodlesService moodlesService,
+        GlobalData clientData, ClientConfigurationManager clientConfigs, MoodlesService moodlesService,
         ShareHubService shareHub, UiSharedService uiSharedService)
     {
         _logger = logger;
@@ -46,7 +46,7 @@ public class PublicationsManager
         _uiShared = uiSharedService;
     }
 
-    private PatternData? _selectedPattern = null;
+    private Pattern? _selectedPattern = null;
     private MoodlesStatusInfo _selectedMoodle = new MoodlesStatusInfo();
     private string _authorName = string.Empty;
     private string _tagList = string.Empty;
@@ -121,7 +121,7 @@ public class PublicationsManager
         DrawPublishedPatternList();
     }
 
-    public void DrawMoodlesManager()
+    public void DrawRestrictionsManager()
     {
         // start by selecting the pattern.
         if (_clientData.LastIpcData is null)

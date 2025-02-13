@@ -9,5 +9,4 @@ public class ServerTagConfigService : ConfigurationServiceBase<ServerTagConfig>
 
     protected override string ConfigurationName => ConfigName;
     protected override bool PerCharacterConfigPath => PerCharacterConfig;
-
 }

@@ -29,6 +29,7 @@ namespace GagSpeak;
 
 public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
+    private readonly OnFrameworkService _frameworkUtils;
     private readonly ClientMonitorService _clientService;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly ServerConfigurationManager _serverConfigs;
@@ -36,11 +37,16 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeak> logger, GagspeakMediator mediator,
+        OnFrameworkService frameworkUtils,
         ClientConfigurationManager clientConfigs, ServerConfigurationManager serverConfigs,
         ClientMonitorService clientService, IServiceScopeFactory scopeFactory)
         : base(logger, mediator)
     {
+        // Initialize the static logger.
+        StaticLogger.Logger = logger;
+
         // set the services
+        _frameworkUtils = frameworkUtils;
         _clientService = clientService;
         _clientConfigs = clientConfigs;
         _serverConfigs = serverConfigs;

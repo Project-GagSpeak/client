@@ -8,5 +8,5 @@ public class TriggerConfig : IGagspeakConfiguration
     public int Version { get; set; } = CurrentVersion;
 
     /// <summary> The Trigger Storage for the toybox. </summary>
-    public TriggerStorage TriggerStorage { get; set; } = new TriggerStorage();
+    public TriggerStorage Storage { get; set; } = new TriggerStorage();
 }

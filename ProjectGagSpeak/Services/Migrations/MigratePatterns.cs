@@ -99,7 +99,7 @@ public class MigratePatterns
         }
 
 
-        PatternData newPatternToAdd = new PatternData
+        Pattern newPatternToAdd = new Pattern
         {
             UniqueIdentifier = Guid.NewGuid(),
             Name = oldPattern.Name,
@@ -117,7 +117,7 @@ public class MigratePatterns
 
     public void AppendAllOldPatternsToPatternStorage()
     {
-        var newPatternList = new List<PatternData>();
+        var newPatternList = new List<Pattern>();
         foreach (var oldPattern in OldPatternStorage.PatternList)
         {
             if (oldPattern.Duration.Contains("d") || oldPattern.Duration.Contains("h") ||
@@ -141,7 +141,7 @@ public class MigratePatterns
                 }
             }
 
-            var newPatternToAdd = new PatternData
+            var newPatternToAdd = new Pattern
             {
                 UniqueIdentifier = Guid.NewGuid(),
                 Name = oldPattern.Name,

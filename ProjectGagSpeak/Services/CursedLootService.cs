@@ -23,8 +23,8 @@ namespace GagSpeak.Services;
 public class CursedLootService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ClientData _playerData;
-    private readonly CursedLootHandler _handler;
+    private readonly GlobalData _playerData;
+    private readonly CursedLootManager _handler;
     private readonly AppearanceManager _appearance;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
@@ -33,7 +33,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
     internal Hook<TargetSystem.Delegates.InteractWithObject> ItemInteractedHook;
 
     public CursedLootService(ILogger<CursedLootService> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, ClientData playerData, CursedLootHandler handler, 
+        ClientConfigurationManager clientConfigs, GlobalData playerData, CursedLootManager handler, 
         AppearanceManager appearance, ClientMonitorService clientService, 
         OnFrameworkService frameworkUtils, IGameInteropProvider interop) : base(logger, mediator)
     {
@@ -235,7 +235,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
             if (availableSlot is not -1)
             {
                 Logger.LogDebug("A Gag Slot is available to apply and lock. Doing so now!", LoggerType.CursedLoot);
-                selectedLootId = _handler.InactiveItemsInPool[randomIndex].LootId;
+                selectedLootId = _handler.InactiveItemsInPool[randomIndex].Identifier;
 
                 // Notify the client of their impending fate~
                 var item = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
@@ -270,7 +270,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
 
                 var randomIndexNoGag = random.Next(0, inactiveSetsWithoutGags.Count);
                 Logger.LogDebug("Selected Index: " + randomIndexNoGag + " (" + inactiveSetsWithoutGags[randomIndexNoGag].Name + ")", LoggerType.CursedLoot);
-                selectedLootId = inactiveSetsWithoutGags[randomIndexNoGag].LootId;
+                selectedLootId = inactiveSetsWithoutGags[randomIndexNoGag].Identifier;
 
                 // Notify the client of their impending fate~
                 Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
@@ -290,7 +290,7 @@ public class CursedLootService : DisposableMediatorSubscriberBase, IHostedServic
         }
         else
         {
-            selectedLootId = _handler.InactiveItemsInPool[randomIndex].LootId;
+            selectedLootId = _handler.InactiveItemsInPool[randomIndex].Identifier;
 
             // Notify the client of their impending fate~
             Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +

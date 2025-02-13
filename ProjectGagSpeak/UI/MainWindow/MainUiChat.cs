@@ -22,7 +22,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _mainConfig;
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly GagGarbler _garbler;
     private readonly KinkPlateService _kinkPlateManager;
     private readonly UiSharedService _uiSharedService;
@@ -31,7 +31,7 @@ public class MainUiChat : DisposableMediatorSubscriberBase
 
     public MainUiChat(ILogger<MainUiChat> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, MainHub apiHubMain, 
-        ClientData playerManager, GagGarbler garbler,
+        GlobalData playerManager, GagGarbler garbler,
         KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {

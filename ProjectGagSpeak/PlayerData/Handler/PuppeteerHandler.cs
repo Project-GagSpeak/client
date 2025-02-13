@@ -1,6 +1,5 @@
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
@@ -13,8 +12,6 @@ using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
-using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.PlayerData.Handlers;
@@ -22,7 +19,7 @@ namespace GagSpeak.PlayerData.Handlers;
 public class PuppeteerHandler : DisposableMediatorSubscriberBase
 {
     private readonly ActionExecutor _actionExecuter;
-    private readonly ClientData _playerChara;
+    private readonly GlobalData _playerChara;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
 
@@ -33,7 +30,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
     public PuppeteerHandler(ILogger<PuppeteerHandler> logger, GagspeakMediator mediator,
-        ActionExecutor actionExecuter, ClientData playerChara, ClientConfigurationManager clientConfiguration, 
+        ActionExecutor actionExecuter, GlobalData playerChara, ClientConfigurationManager clientConfiguration, 
         PairManager pairManager) : base(logger, mediator)
     {
         _actionExecuter = actionExecuter;
@@ -93,15 +90,14 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
             return aliasStorage.HasNameStored ? aliasStorage.CharacterNameWithWorld : "Not Yet Listening!";
         return "Not Yet Listening!";
     }
-    public List<string> GetPlayersToListenFor() => _clientConfigs.GetPlayersToListenFor();
     public Pair? GetPairOfUid(string uid) => _pairManager.DirectPairs.FirstOrDefault(p => p.UserData.UID == uid);
 
     public void OnClientMessageContainsPairTrigger(string msg)
     {
         foreach (var pair in _pairManager.DirectPairs)
         {
-            string[] triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-            string? foundTrigger = triggers.FirstOrDefault(trigger => msg.Contains(trigger));
+            var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+            var foundTrigger = triggers.FirstOrDefault(trigger => msg.Contains(trigger));
 
             if (!string.IsNullOrEmpty(foundTrigger))
             {
@@ -143,7 +139,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
         }
 
         matchedTrigger = string.Empty;
-        foreach (string triggerWord in triggerPhrases)
+        foreach (var triggerWord in triggerPhrases)
         {
             if (string.IsNullOrWhiteSpace(triggerWord)) continue;
 
@@ -210,7 +206,7 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
 
     public bool ParseOutputAndExecute(string trigger, SeString chatMessage, XivChatType type, Pair senderPair)
     {
-        senderPair.OwnPerms.PuppetPerms(out bool sits, out bool motions, out bool aliases, out bool all, out char startChar, out char endChar);
+        senderPair.OwnPerms.PuppetPerms(out var sits, out var motions, out var aliases, out var all, out var startChar, out var endChar);
         var SenderUid = senderPair.UserData.UID;
         Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
         Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
@@ -314,13 +310,13 @@ public class PuppeteerHandler : DisposableMediatorSubscriberBase
     /// </summary>
     public bool ConvertAliasCommandsIfAny(SeString messageWithAlias, List<AliasTrigger> AliasItems, string SenderUid)
     {
-        bool wasAnAlias = false;
+        var wasAnAlias = false;
         Logger.LogTrace("Found " + AliasItems.Count + " alias triggers for this user", LoggerType.Puppeteer);
 
         // sort by descending length so that shorter equivalents to not override longer variants.
         var sortedAliases = AliasItems.OrderByDescending(alias => alias.InputCommand.Length);
         // see if our message contains any of the alias strings. For it to match, it must match the full alias string.
-        foreach (AliasTrigger alias in AliasItems)
+        foreach (var alias in AliasItems)
         {
             // if the alias is not enabled, skip!
             if (!alias.Enabled) 

@@ -15,7 +15,7 @@ namespace GagSpeak.UI.Components.UserPairList;
 public class DrawRequests : IRequestsFolder
 {
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly DrawEntityFactory _pairRequestFactory;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
@@ -32,7 +32,7 @@ public class DrawRequests : IRequestsFolder
     public int TotalOutgoing => _clientData.OutgoingRequests.Count();
     public int TotalIncoming => _clientData.IncomingRequests.Count();
 
-    public DrawRequests(MainHub mainHub, ClientData clientData,
+    public DrawRequests(MainHub mainHub, GlobalData clientData,
         DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
         UiSharedService uiSharedService)
     {

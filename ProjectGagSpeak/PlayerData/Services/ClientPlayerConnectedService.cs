@@ -20,7 +20,7 @@ namespace GagSpeak.PlayerData.Services;
 // A class intended to help execute any actions that should be performed by the client upon initial connection.
 public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager;
     private readonly GagGarbler _garbler;
@@ -31,7 +31,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
     private readonly ClientMonitorService _clientService;
 
     public OnConnectedService(ILogger<OnConnectedService> logger, GagspeakMediator mediator, 
-        ClientData playerData, ClientConfigurationManager clientConfigs, PairManager pairManager,
+        GlobalData playerData, ClientConfigurationManager clientConfigs, PairManager pairManager,
         GagGarbler garbler, IpcManager ipcManager, WardrobeHandler wardrobeHandler, HardcoreHandler blindfold, 
         AppearanceManager appearanceHandler, ClientMonitorService clientService) : base(logger, mediator)
     {
@@ -47,13 +47,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
         // Potentially move this until after all checks for validation are made to prevent invalid startups.
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => OnConnected());
-
         Mediator.Subscribe<OnlinePairsLoadedMessage>(this, _ => CheckHardcore());
-
-        Mediator.Subscribe<CustomizeReady>(this, _ => _playerData.CustomizeProfiles = _ipcManager.CustomizePlus.GetProfileList());
-
-        Mediator.Subscribe<CustomizeDispose>(this, _ => _playerData.CustomizeProfiles = new List<CustomizeProfile>());
-        _clientService = clientService;
     }
 
     private async void OnConnected()
@@ -101,7 +95,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
 
     private void PublishLatestActiveItems()
     {
-        var gagInfo = _playerData.AppearanceData ?? new CharaAppearanceData();
+        var gagInfo = _playerData.AppearanceData ?? new CharaGagData();
         var activeSetId = _clientConfigs.GetActiveSet()?.RestraintId ?? Guid.Empty;
         Mediator.Publish(new PlayerLatestActiveItems(MainHub.PlayerUserData, gagInfo, activeSetId));
     }
@@ -129,13 +123,13 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         {
             await UnlockAndDisableSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
+            Mediator.Publish(new PlayerCharWardrobeChanged(ActiveSetUpdateType.FullDataUpdate, string.Empty));
         }
         else if (activeClientSet.RestraintId != serverData.ActiveSetId)
         {
             await EnableAndRelockSet(serverData);
             // publish a full data wardrobe update after this.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
+            Mediator.Publish(new PlayerCharWardrobeChanged(ActiveSetUpdateType.FullDataUpdate, string.Empty));
         }
     }
 
@@ -178,7 +172,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             // Disable Active Set.
             await _appearanceHandler.DisableRestraintSet(activeSet.RestraintId, activeSet.Assigner, true, true);
             // publish the changes.
-            Mediator.Publish(new PlayerCharWardrobeChanged(WardrobeUpdateType.FullDataUpdate, string.Empty));
+            Mediator.Publish(new PlayerCharWardrobeChanged(ActiveSetUpdateType.FullDataUpdate, string.Empty));
         }
     }
 

@@ -11,6 +11,7 @@ using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.Patterns;
 using GagspeakAPI.Data.Permissions;
 using Microsoft.AspNetCore.SignalR;
+using GagspeakAPI.Dto;
 
 namespace GagSpeak.WebAPI;
 
@@ -27,28 +28,28 @@ public partial class MainHub
     public async Task UserSendPairRequest(UserPairSendRequestDto request)
     {
         if (!IsConnected) return;
-        Logger.LogDebug("Pushing an outgoing kinkster request to "+ request.User.UID, LoggerType.ApiCore);
+        Logger.LogDebug("Pushing an outgoing kinkster request to " + request.User.UID, LoggerType.ApiCore);
         await GagSpeakHubMain!.SendAsync(nameof(UserSendPairRequest), request).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task UserCancelPairRequest(UserDto user)
     {
         if (!IsConnected) return;
-        Logger.LogDebug("Cancelling an outgoing kinkster request to "+user, LoggerType.ApiCore);
+        Logger.LogDebug("Cancelling an outgoing kinkster request to " + user, LoggerType.ApiCore);
         await GagSpeakHubMain!.SendAsync(nameof(UserCancelPairRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task UserAcceptIncPairRequest(UserDto user)
     {
         if (!IsConnected) return;
-        Logger.LogDebug("Accepting an incoming kinkster request from "+user, LoggerType.ApiCore);
+        Logger.LogDebug("Accepting an incoming kinkster request from " + user, LoggerType.ApiCore);
         await GagSpeakHubMain!.SendAsync(nameof(UserAcceptIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task UserRejectIncPairRequest(UserDto user)
     {
         if (!IsConnected) return;
-        Logger.LogDebug("Rejecting an incoming kinkster request from "+user, LoggerType.ApiCore);
+        Logger.LogDebug("Rejecting an incoming kinkster request from " + user, LoggerType.ApiCore);
         await GagSpeakHubMain!.SendAsync(nameof(UserRejectIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
@@ -67,7 +68,7 @@ public partial class MainHub
     /// </summary>
     public async Task UserDelete()
     {
-        CheckConnection();
+        if (!IsConnected) return;
         await GagSpeakHubMain!.SendAsync(nameof(UserDelete)).ConfigureAwait(false);
     }
 
@@ -170,13 +171,6 @@ public partial class MainHub
         await GagSpeakHubMain!.InvokeAsync(nameof(SendGlobalChat), dto).ConfigureAwait(false);
     }
 
-    /// <summary> Sends a message to a pair spesific group chat. </summary>
-    public async Task SendPairChat(PairChatMessageDto dto)
-    {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(SendPairChat), dto).ConfigureAwait(false);
-    }
-
     public async Task UserShockActionOnPair(ShockCollarActionDto dto)
     {
         if (!IsConnected) return;
@@ -218,9 +212,7 @@ public partial class MainHub
 
     public async Task UserReportKinkPlate(UserKinkPlateReportDto userProfileDto)
     {
-        // if we are not connected, return
         if (!IsConnected) return;
-        // if we are connected, send the report to the server
         await GagSpeakHubMain!.InvokeAsync(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
     }
 
@@ -261,432 +253,160 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserClearMoodles), dto).ConfigureAwait(false);
     }
 
-
-    /// <summary>
-    /// Pushes the composite user data of a a character to other recipients.
-    /// (This is called upon by PushCharacterDataInternal, see bottom)
-    /// </summary>
-    public async Task UserPushData(UserCharaCompositeDataMessageDto dto)
+    public async Task<bool> VibeRoomCreate(string roomName, string password)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushData), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomCreate), roomName, password).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Pushes the IPC data from the client character to other recipients.
-    /// </summary>
-    public async Task UserPushDataIpc(UserCharaIpcDataMessageDto dto)
+    public async Task<bool> SendRoomInvite(VibeRoomInviteDto dto)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataIpc), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(SendRoomInvite), dto).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Pushes the composite user data of a a character to other recipients.
-    /// </summary>
-    public async Task UserPushDataAppearance(UserCharaAppearanceDataMessageDto dto)
+    public async Task<bool> ChangeRoomPassword(string roomName, string newPassword)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataAppearance), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(ChangeRoomPassword), roomName, newPassword).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Pushes the wardrobe data of the client to other recipients.
-    /// </summary>
-    public async Task UserPushDataWardrobe(UserCharaWardrobeDataMessageDto dto)
+    public async Task<List<VibeRoomKinksterFullDto>> VibeRoomJoin(string roomName, string password, VibeRoomKinkster dto)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataWardrobe), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return new List<VibeRoomKinksterFullDto>();
+        return await GagSpeakHubMain!.InvokeAsync<List<VibeRoomKinksterFullDto>>(nameof(VibeRoomJoin), roomName, password, dto).ConfigureAwait(false);
     }
 
-    public async Task UserPushDataOrders(UserCharaOrdersDataMessageDto dto)
+    public async Task<bool> VibeRoomLeave()
     {
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomLeave)).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Pushes the puppeteer alias lists of the client to other recipients.
-    /// </summary>
-    public async Task UserPushDataAlias(UserCharaAliasDataMessageDto dto)
+    public async Task<bool> VibeRoomGrantAccess(UserDto allowedUser)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataAlias), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomGrantAccess), allowedUser).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Pushes the toybox pattern & trigger information of the client to other recipients.
-    /// </summary>
-    public async Task UserPushDataToybox(UserCharaToyboxDataMessageDto dto)
+    public async Task<bool> VibeRoomRevokeAccess(UserDto allowedUser)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomRevokeAccess), allowedUser).ConfigureAwait(false);
     }
 
-
-    /// <summary>
-    /// Pushes the toybox pattern & trigger information of the client to other recipients.
-    /// </summary>
-    public async Task UserPushDataLightStorage(UserCharaLightStorageMessageDto dto)
+    public async Task VibeRoomPushDeviceUpdate(DeviceInfo info)
     {
-        // try and push the character data dto to the server
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to Push character data");
-        }
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomPushDeviceUpdate), info).ConfigureAwait(false);
     }
 
-    public async Task UserPushAllGlobalPerms(UserPairUpdateAllGlobalPermsDto allGlobalPerms)
+    public async Task VibeRoomSendDataStream(SexToyDataStreamDto dataStream)
     {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllGlobalPerms), allGlobalPerms).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to push all Global Permissions");
-        }
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomSendDataStream), dataStream).ConfigureAwait(false);
     }
 
-    public async Task UserPushAllUniquePerms(UserPairUpdateAllUniqueDto allUniquePermsForPair)
+    public async Task VibeRoomSendChat(string roomName, string message)
     {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllUniquePerms), allUniquePermsForPair).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to push all Unique Permissions for a Pair.");
-        }
+        if (!IsConnected) return;
+        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomSendChat), message).ConfigureAwait(false);
     }
 
-    /// <summary> Pushes to server a request to modify a global permissions of the client. </summary>
+    /* --------------------- Push Updates of Client Character Data --------------------- */
+    public async Task UserPushData(PushCompositeDataMessageDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushData), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataIpc(PushIpcDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataIpc), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataGags(PushGagDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataGags), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataRestraint(PushRestraintDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataRestraint), dto).ConfigureAwait(false); });
+
+    public async Task<bool> UserPushDataCursedLoot(PushCursedLootDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
+    }
+
+    public async Task UserPushDataOrders(PushOrdersDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataOrders), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataAlias(PushAliasDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataAlias), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataToybox(PushToyboxDataUpdateDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataToybox), dto).ConfigureAwait(false); });
+
+    public async Task UserPushDataLightStorage(PushLightStorageMessageDto dto)
+        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false); });
+
+
+    /* --------------------- Permission Updates --------------------- */
+    public async Task UserPushAllGlobalPerms(BulkUpdatePermsGlobalDto allGlobalPerms)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllGlobalPerms), allGlobalPerms));
+
+    public async Task UserPushAllUniquePerms(BulkUpdatePermsUniqueDto allUniquePermsForPair)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllUniquePerms), allUniquePermsForPair));
+
     public async Task UserUpdateOwnGlobalPerm(UserGlobalPermChangeDto userPermissions)
-    {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnGlobalPerm), userPermissions).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to set own global permission");
-        }
-    }
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnGlobalPerm), userPermissions));
 
-
-    /// <summary> Pushes to server a request to modify a global permissions of the client. </summary>
     public async Task UserUpdateOtherGlobalPerm(UserGlobalPermChangeDto userPermissions)
-    {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherGlobalPerm), userPermissions).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to set other userpair global permission");
-        }
-    }
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherGlobalPerm), userPermissions));
 
-    /// <summary> Pushes to server a request to modify a unique userpair related permission of the client. </summary>
     public async Task UserUpdateOwnPairPerm(UserPairPermChangeDto userPermissions)
-    {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPerm), userPermissions).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to update clients permission for a userpair.");
-        }
-    }
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPerm), userPermissions));
 
-    /// <summary> Pushes to server a request to modify a permission on one of the clients userPairs pair permissions  </summary>
     public async Task UserUpdateOtherPairPerm(UserPairPermChangeDto userPermissions)
-    {
-        CheckConnection();
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherPairPerm), userPermissions).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Failed to update a pair permission belonging to one of the clients userpairs.");
-        }
-    }
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherPairPerm), userPermissions));
 
-    /// <summary>
-    /// pushes a request to update your edit access permissions for one of your userPairs.
-    /// </summary>
     public async Task UserUpdateOwnPairPermAccess(UserPairAccessChangeDto userPermissions)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPermAccess), userPermissions));
+
+    // handle later.
+    public async Task PushClientIpcData(CharaIPCData data, List<UserData> visibleCharacters, DataUpdateType updateKind)
     {
-        CheckConnection();
+        Logger.LogDebug("Pushing Character IPC data to " + string.Join(", ", visibleCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.VisiblePairs);
+        await UserPushDataIpc(new(visibleCharacters, data, updateKind)).ConfigureAwait(false);
+    }
+
+    // ----------------- Update Pair Data ---------------
+    public async Task UserPushPairDataGags(PushPairGagDataUpdateDto dto)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataGags), dto));
+
+    public async Task UserPushPairDataRestrictions(PushPairRestrictionDataUpdateDto dto)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataRestrictions), dto));
+
+    public async Task UserPushPairDataRestraint(PushPairRestraintDataUpdateDto dto)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataRestraint), dto));
+
+    public async Task UserPushPairDataAliasStorage(PushPairAliasDataUpdateDto dto)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataAliasStorage), dto));
+
+    public async Task UserPushPairDataToybox(PushPairToyboxDataUpdateDto dto)
+        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataToybox), dto));
+
+    private async Task ExecuteSafelyAsync(Func<Task> pushAction)
+    {
+        if (!IsConnected) return;
         try
         {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPermAccess), userPermissions).ConfigureAwait(false);
+            await pushAction().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            Logger.LogCritical("Failed to execute async call. The Operation was cancelled!");
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Failed to update your edit access permission for one of your userPairs");
-        }
-    }
-
-
-    /* --------------------- Character Data Handling --------------------- */
-
-    /// <summary> 
-    /// This will call upon characterDataInternal, which will handle the assignments and the recipients, storing them into the Dto
-    /// </summary>
-    public async Task PushCharacterCompositeData(CharaCompositeData data, List<UserData> onlineCharacters)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            Logger.LogDebug("Pushing Character Composite data to "+string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)), LoggerType.OnlinePairs);
-            await UserPushData(new(onlineCharacters, data)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogDebug("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of composite data"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated IPC data to the list of visible recipients.
-    /// </summary>
-    public async Task PushCharacterIpcData(CharaIPCData data, List<UserData> visibleCharacters, IpcUpdateType updateKind)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            Logger.LogDebug("Pushing Character IPC data to "+string.Join(", ", visibleCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.VisiblePairs);
-            await UserPushDataIpc(new(visibleCharacters, data, updateKind)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of IPC data"); }
-    }
-
-
-    /// <summary>
-    /// Pushes Client's updated appearance data to the list of online recipients.
-    /// </summary>
-    public async Task PushCharacterAppearanceData(CharaAppearanceData data, List<UserData> onlineCharacters, GagLayer affectedType, GagUpdateType type, Padlocks prevPadlock)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            if (onlineCharacters.Any())
-            {
-                Logger.LogDebug("Pushing Character Appearance data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + type + "]", LoggerType.OnlinePairs);
-            }
-            else
-            {
-                Logger.LogDebug("Updating AppearanceData to stored ActiveStateData", LoggerType.OnlinePairs);
-            }
-            await UserPushDataAppearance(new(onlineCharacters, data, affectedType, type, prevPadlock)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Appearance data"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated wardrobe data to the list of online recipients.
-    /// </summary>
-    public async Task PushCharacterWardrobeData(CharaWardrobeData data, List<UserData> onlineCharacters, WardrobeUpdateType updateKind, string affectedItem)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            if(onlineCharacters.Any()) Logger.LogDebug("Pushing Character Wardrobe data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "["+updateKind+"]", LoggerType.OnlinePairs);
-            else Logger.LogDebug("Updating WardrobeData to stored ActiveStateData", LoggerType.OnlinePairs);
-            await UserPushDataWardrobe(new(onlineCharacters, data, updateKind, affectedItem)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated active timed Items data to the list of online recipients.
-    /// </summary>
-    public async Task PushCharacterOrdersData(CharaOrdersData data, List<UserData> onlineCharacters, OrdersUpdateType updateKind, string affectedId)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            if (onlineCharacters.Any()) Logger.LogDebug("Pushing Orderss state to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.OnlinePairs);
-            else Logger.LogDebug("Updating Orderss state to other pairs", LoggerType.OnlinePairs);
-            await UserPushDataOrders(new(onlineCharacters, data, updateKind, affectedId)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Wardrobe data"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated alias list data to the respective recipient.
-    /// </summary>
-    public async Task PushCharacterAliasListData(CharaAliasData data, UserData onlineCharacter, PuppeteerUpdateType updateKind)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            Logger.LogDebug("Pushing Character Alias data to "+string.Join(", ", onlineCharacter.AliasOrUID) + "[" + updateKind + "]", LoggerType.OnlinePairs);
-            await UserPushDataAlias(new(onlineCharacter, data, updateKind)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Alias List data"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated pattern information to the list of online recipients.
-    /// </summary>
-    public async Task PushCharacterToyboxData(CharaToyboxData data, List<UserData> onlineCharacters, ToyboxUpdateType updateKind)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            if(onlineCharacters.Any()) Logger.LogDebug("Pushing Character PatternInfo to "+string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.VisiblePairs);
-            else Logger.LogDebug("Updating ToyboxData to stored ActiveStateData", LoggerType.OnlinePairs);
-            await UserPushDataToybox(new(onlineCharacters, data, updateKind)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Pattern Information"); }
-    }
-
-    /// <summary>
-    /// Pushes Client's updated Light Storage Data to the list of online recipients.
-    /// </summary>
-    public async Task PushCharacterLightStorageData(CharaStorageData data, List<UserData> onlineCharacters)
-    {
-        if (!IsConnected) return;
-
-        try // if connected, try to push the data to the server
-        {
-            if (onlineCharacters.Any()) 
-                Logger.LogDebug("Pushing LightStorage Data to " + string.Join(", ", onlineCharacters.Select(v => v.AliasOrUID)) + "[Light Storage Update]", LoggerType.VisiblePairs);
-            
-            await UserPushDataLightStorage(new(onlineCharacters, data)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { Logger.LogWarning("Upload operation was cancelled"); }
-        catch (Exception ex) { Logger.LogWarning(ex, "Error during upload of Pattern Information"); }
-    }
-
-
-
-    /// <summary>
-    /// Updates another pairs appearance data with the new changes you've made to them.
-    /// </summary>
-    public async Task UserPushPairDataAppearanceUpdate(OnlineUserCharaAppearanceDataDto dto)
-    {
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataAppearanceUpdate), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, $"Failed to Push an update to {dto.User.UID}'s Appearance data");
-        }
-    }
-
-    /// <summary>
-    /// Updates another pairs wardrobe data with the new changes you've made to them.
-    /// </summary>
-    public async Task UserPushPairDataWardrobeUpdate(OnlineUserCharaWardrobeDataDto dto)
-    {
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataWardrobeUpdate), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, $"Failed to Push an update to {dto.User.UID}'s Wardrobe data");
-        }
-    }
-
-    public async Task UserPushPairDataAliasStorageUpdate(OnlineUserCharaAliasDataDto dto)
-    {
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataAliasStorageUpdate), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, $"Failed to Push an update to {dto.User.UID}'s Alias data");
-        }
-    }
-
-    /// <summary>
-    /// Updates another pairs toybox info data with the new changes you've made to them.
-    /// </summary>
-    public async Task UserPushPairDataToyboxUpdate(OnlineUserCharaToyboxDataDto dto)
-    {
-        try
-        {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataToyboxUpdate), dto).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, $"Failed to Push an update to {dto.User.UID}'s Toybox data");
+            Logger.LogCritical("Failed to safely execute async function! :" + ex);
         }
     }
 }

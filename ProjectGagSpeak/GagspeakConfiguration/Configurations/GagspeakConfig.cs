@@ -1,16 +1,20 @@
 using GagSpeak.ChatMessages;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Hardcore;
 using GagSpeak.Hardcore.ForcedStay;
-using GagSpeak.Hardcore.Movement;
+using GagSpeak.Services;
 using GagSpeak.UI;
-using Newtonsoft.Json.Converters;
 
 namespace GagSpeak.GagspeakConfiguration.Configurations;
 
 [Serializable]
 public class GagspeakConfig : IGagspeakConfiguration
 {
+    public GagspeakConfig() // Forcibly set the recommended filters if none exist.
+    {
+        if (LoggerFilters.Count is 0 || LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
+            LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
+    }
+
     // Internal data used for account checking and changelogs.
     public static int CurrentVersion => 0;
     public int Version { get; set; } = CurrentVersion;
@@ -38,8 +42,7 @@ public class GagspeakConfig : IGagspeakConfiguration
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;
-    public HashSet<ChatChannel.Channels> ChannelsGagSpeak { get; set; } = new HashSet<ChatChannel.Channels>();
-    public HashSet<ChatChannel.Channels> ChannelsPuppeteer { get; set; } = new HashSet<ChatChannel.Channels>();
+    public int PuppeteerChannelsBitfield { get; set; } = 0;
 
     // logging (debug)
     public bool LiveGarblerZoneChangeWarn { get; set; } = true;
@@ -58,16 +61,13 @@ public class GagspeakConfig : IGagspeakConfiguration
     public string Language { get; set; } = "English"; // MuffleCore
     public string LanguageDialect { get; set; } = "IPA_US"; // MuffleCore
     public bool CursedDungeonLoot { get; set; } = false; // CursedDungeonLoot
-    public bool RemoveGagUponLockExpiration { get; set; } = false; // Auto-Remove Gags
-    public RevertStyle RevertStyle { get; set; } = RevertStyle.RevertToAutomation; // How to revert Character when reset
-    public bool DisableSetUponUnlock { get; set; } = false; // Auto-Remove Restraint Sets
+    public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
 
     // GLOBAL VIBRATOR SETTINGS
     public VibratorMode VibratorMode { get; set; } = VibratorMode.Actual;       // if the user is using a simulated vibrator
     public VibeSimType VibeSimAudio { get; set; } = VibeSimType.Quiet;          // the audio settings for the simulated vibrator
     public bool IntifaceAutoConnect { get; set; } = false;                      // if we should auto-connect to intiface
     public string IntifaceConnectionSocket { get; set; } = "ws://localhost:12345"; // connection link from plugin to intiface
-    public bool VibeServerAutoConnect { get; set; } = false;                    // if we should auto-connect to the vibe server
 
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.

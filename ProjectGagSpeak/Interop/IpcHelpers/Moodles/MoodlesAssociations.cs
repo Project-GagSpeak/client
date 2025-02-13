@@ -199,12 +199,12 @@ public class MoodlesAssociations : DisposableMediatorSubscriberBase
     {
         if (cursedItem.MoodleType is IpcToggleType.MoodlesStatus)
         {
-            _moodlesService.DrawMoodleStatusCombo("##CursedItemMoodleStatusSelector" + cursedItem.LootId, width, ipcData.MoodlesStatuses,
+            _moodlesService.DrawMoodleStatusCombo("##CursedItemMoodleStatusSelector" + cursedItem.Identifier, width, ipcData.MoodlesStatuses,
                 (i) => cursedItem.MoodleIdentifier = i ?? Guid.Empty, 1.25f);
         }
         else
         {
-            _moodlesService.DrawMoodlesPresetCombo("##CursedItemMoodlePresetSelector" + cursedItem.LootId, width, ipcData.MoodlesPresets,
+            _moodlesService.DrawMoodlesPresetCombo("##CursedItemMoodlePresetSelector" + cursedItem.Identifier, width, ipcData.MoodlesPresets,
                 ipcData.MoodlesStatuses, (i) => cursedItem.MoodleIdentifier = i ?? Guid.Empty);
         }
     }

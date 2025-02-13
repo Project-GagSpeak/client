@@ -20,7 +20,7 @@ namespace GagSpeak.UI.Permissions;
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly PairCombos _pairCombos;
     private readonly PiShockProvider _shockProvider;
     private readonly PairManager _pairManager;
@@ -30,7 +30,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly UiSharedService _uiShared;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
-        StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, ClientData clientDat,
+        StickyWindowType drawType, SetPreviewComponent setPreviews, MainHub apiHubMain, GlobalData clientDat,
         PairCombos pairCombos, PiShockProvider shockProvider, PairManager pairManager,
         ClientMonitorService clientService, MoodlesService moodlesService, PermissionPresetLogic presets,
         UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")

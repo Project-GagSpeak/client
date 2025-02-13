@@ -89,7 +89,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             SenderName = matchedPair.GetNickAliasOrUid() + " (" + userTagCode + ")";
 
         // if the supporter role is the highest role, give them a special label.
-        if (userData.SupporterTier is CkSupporterTier.KinkporiumMistress)
+        if (userData.Tier is CkSupporterTier.KinkporiumMistress)
             SenderName = $"Mistress Cordy";
 
         // construct the chat message struct to add.

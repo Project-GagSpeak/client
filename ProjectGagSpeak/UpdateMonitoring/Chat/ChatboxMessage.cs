@@ -13,7 +13,6 @@ using GagSpeak.Toybox.Controllers;
 using GagSpeak.Toybox.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using Territory = FFXIVClientStructs.FFXIV.Client.Game.UI.TerritoryInfo;
 
 namespace GagSpeak.UpdateMonitoring.Chat;
 
@@ -27,7 +26,8 @@ namespace GagSpeak.UpdateMonitoring.Chat;
 public class ChatBoxMessage : DisposableMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _mainConfig;
-    private readonly ClientData _playerInfo;
+    private readonly AliasConfigService _aliasConfig;
+    private readonly GlobalData _playerInfo;
     private readonly PuppeteerHandler _puppeteerHandler;
     private readonly ChatSender _chatSender;
     private readonly DeathRollService _deathRolls;
@@ -39,12 +39,13 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
 
     /// <summary> This is the constructor for the OnChatMsgManager class. </summary>
     public ChatBoxMessage(ILogger<ChatBoxMessage> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, ClientData playerInfo,
+        GagspeakConfigService mainConfig, AliasConfigService aliasConfig, GlobalData playerInfo,
         PuppeteerHandler puppeteerHandler, ChatSender chatSender,
         DeathRollService deathRolls, TriggerService triggers, IChatGui clientChat,
         IClientState clientState, IDataManager dataManager) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
+        _aliasConfig = aliasConfig;
         _playerInfo = playerInfo;
         _chatSender = chatSender;
         _puppeteerHandler = puppeteerHandler;
@@ -61,34 +62,27 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
 
-        Mediator.Subscribe<UpdateChatListeners>(this, (msg) => OnUpdateChatListeners());
+        Mediator.Subscribe<UpdateChatListeners>(this, (msg) => PlayersToListenFor = msg.Names);
 
-        // load in the initial list of chat listeners
-        OnUpdateChatListeners();
+        // generate the list upon initialization.
+        PlayersToListenFor = _aliasConfig.Current.AliasStorage
+            .Where(x => x.Value.CharacterNameWithWorld != string.Empty)
+            .Select(x => x.Value.CharacterNameWithWorld);
     }
 
-    public static Queue<string> MessageQueue; // the messages to send to the server.
-    public static List<string> PlayersToListenFor; // players to listen to messages from. (Format of NameWithWorld)
+    // the messages to send to the server.
+    public static Queue<string> MessageQueue;
+    // players to listen to messages from. (Format of NameWithWorld)
+    public static IEnumerable<string> PlayersToListenFor;
 
     /// <summary> This is the disposer for the OnChatMsgManager class. </summary>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-
         _chat.ChatMessage -= Chat_OnChatMessage;
     }
 
-    public static void EnqueueMessage(string message)
-    {
-        MessageQueue.Enqueue(message);
-    }
-
-    private void OnUpdateChatListeners()
-    {
-        Logger.LogDebug("Updating Chat Listeners", LoggerType.ToyboxTriggers);
-        PlayersToListenFor = _puppeteerHandler.GetPlayersToListenFor();
-    }
-
+    public static void EnqueueMessage(string message) => MessageQueue.Enqueue(message);
     private void Chat_OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         // Don't process messages if we are not visible or connected.
@@ -129,9 +123,9 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
         }
 
         // get the player payload of the sender. If we are sending the message, this is null.
-        PlayerPayload? senderPlayerPayload = sender.Payloads.SingleOrDefault(x => x is PlayerPayload) as PlayerPayload;
-        string senderName = "";
-        string senderWorld = "";
+        var senderPlayerPayload = sender.Payloads.SingleOrDefault(x => x is PlayerPayload) as PlayerPayload;
+        var senderName = "";
+        var senderWorld = "";
         if (senderPlayerPayload == null)
         {
             senderName = _clientState.LocalPlayer.Name.TextValue;
@@ -167,21 +161,21 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
 
         // check for global puppeteer triggers
         var globalTriggers = _playerInfo.GlobalPerms.GlobalTriggerPhrase.Split('|').ToList() ?? new List<string>();
-        if (_puppeteerHandler.IsValidTriggerWord(globalTriggers, message, out string matchedTrigger))
+        if (_puppeteerHandler.IsValidTriggerWord(globalTriggers, message, out var matchedTrigger))
         {
             // check permissions.
-            _playerInfo.GlobalPerms.PuppetPerms(out bool sit, out bool emote, out bool alias, out bool all);
+            _playerInfo.GlobalPerms.PuppetPerms(out var sit, out var emote, out var alias, out var all);
             if (_puppeteerHandler.ParseOutputFromGlobalAndExecute(matchedTrigger, message, type, sit, emote, alias, all))
                 return; // early return to prevent double trigger call.
         }
 
         // check for puppeteer pair triggers
-        if (SenderIsInPuppeteerListeners(senderName, senderWorld, out Pair pair))
+        if (SenderIsInPuppeteerListeners(senderName, senderWorld, out var pair))
         {
             // get our triggers for the pair.
             var pairTriggers = pair.OwnPerms.TriggerPhrase.Split('|').ToList();
             // check if the message contains our trigger phrase.
-            if (_puppeteerHandler.IsValidTriggerWord(pairTriggers, message, out string matchedPairTrigger))
+            if (_puppeteerHandler.IsValidTriggerWord(pairTriggers, message, out var matchedPairTrigger))
             {
                 // log success
                 Logger.LogInformation(senderName + " used your pair trigger phrase to make you execute a message!");
@@ -193,7 +187,7 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
     private bool SenderIsInPuppeteerListeners(string name, string world, out Pair matchedPair)
     {
         matchedPair = null!;
-        string nameWithWorld = name + "@" + world;
+        var nameWithWorld = name + "@" + world;
         // make sure we are listening for this player.
         if (!PlayersToListenFor.Contains(nameWithWorld))
             return false;
@@ -227,10 +221,7 @@ public class ChatBoxMessage : DisposableMediatorSubscriberBase
         }
     }
 
-    /// <summary>
-    /// This function will handle the framework update, 
-    /// and will send messages to the server if there are any in the queue.
-    /// </summary>
+    /// <summary> Sends messages to the server if there are any in the queue. </summary>
     private void FrameworkUpdate()
     {
         if (MessageQueue.Count <= 0 || _chatSender is null) return;

@@ -72,7 +72,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public void PerformPatternSearch() { if (CanShareHubTask) CurrentShareHubTask = FetchPatternsTask(); }
     public void DownloadPattern(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = DownloadPatternTask(patternId); }
     public void PerformPatternLikeAction(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = LikePatternActionTask(patternId); }
-    public void UploadPattern(PatternData pattern, string authorName, HashSet<string> tags)
+    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags)
     { 
         if (CanShareHubTask) CurrentShareHubTask = PatternUploadTask(pattern, authorName, tags); 
     }
@@ -188,7 +188,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
 
-    private async Task PatternUploadTask(PatternData pattern, string authorName, HashSet<string> tags)
+    private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
     {
         try
         {
@@ -280,7 +280,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                     decompressed = patternObject.ToString();
                 }
                 // Deserialize the string back to pattern data
-                PatternData pattern = JsonConvert.DeserializeObject<PatternData>(decompressed) ?? new PatternData();
+                Pattern pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
 
                 // Set the active pattern
                 _clientConfigs.AddNewPattern(pattern);

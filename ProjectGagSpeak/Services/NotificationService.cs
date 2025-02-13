@@ -2,25 +2,30 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
 
-/// <summary>
-/// Service responsible for displaying any sent notifications out to the user.
-/// </summary>
+public enum NotificationLocation
+{
+    Nowhere,
+    Chat,
+    Toast,
+    Both
+}
+
+/// <summary> Service responsible for displaying any sent notifications out to the user. </summary>
 public class NotificationService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly GagspeakConfigService _mainConfig;
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly INotificationManager _notifications;
     private readonly IChatGui _chat;
 
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, ClientData playerData, IChatGui chat,
+        GagspeakConfigService mainConfig, GlobalData playerData, IChatGui chat,
         INotificationManager notifications) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
@@ -41,19 +46,19 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
 
     private void PrintErrorChat(string? message)
     {
-        SeStringBuilder se = new SeStringBuilder().AddText("[Gagspeak] Error: " + message);
+        var se = new SeStringBuilder().AddText("[Gagspeak] Error: " + message);
         _chat.PrintError(se.BuiltString);
     }
 
     private void PrintInfoChat(string? message)
     {
-        SeStringBuilder se = new SeStringBuilder().AddText("[Gagspeak] Info: ").AddItalics(message ?? string.Empty);
+        var se = new SeStringBuilder().AddText("[Gagspeak] Info: ").AddItalics(message ?? string.Empty);
         _chat.Print(se.BuiltString);
     }
 
     private void PrintWarnChat(string? message)
     {
-        SeStringBuilder se = new SeStringBuilder().AddText("[Gagspeak] ").AddUiForeground("Warning: " + (message ?? string.Empty), 31).AddUiForegroundOff();
+        var se = new SeStringBuilder().AddText("[Gagspeak] ").AddUiForeground("Warning: " + (message ?? string.Empty), 31).AddUiForegroundOff();
         _chat.Print(se.BuiltString);
     }
 

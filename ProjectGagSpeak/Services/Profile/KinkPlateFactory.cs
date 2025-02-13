@@ -11,12 +11,12 @@ public class KinkPlateFactory
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
 
     public KinkPlateFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
-        ClientData playerData, CosmeticService cosmetics, UiSharedService uiShared)
+        GlobalData playerData, CosmeticService cosmetics, UiSharedService uiShared)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;

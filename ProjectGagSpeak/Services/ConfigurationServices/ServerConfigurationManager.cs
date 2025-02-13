@@ -4,9 +4,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
-namespace GagSpeak.Services.ConfigurationServices;
+namespace GagSpeak.Services.Configs;
 
 /// <summary>
 /// This configuration manager helps manage the various interactions with all config files related to server-end activity.
@@ -88,7 +87,7 @@ public class ServerConfigurationManager
     public void UpdateAuthForNameAndWorldChange(ulong localContentId)
     {
         // locate the auth with the matching local content ID, and update the name and world if they do not match.
-        Authentication? auth = CurrentServer.Authentications.Find(f => f.CharacterPlayerContentId == localContentId);
+        var auth = CurrentServer.Authentications.Find(f => f.CharacterPlayerContentId == localContentId);
         if (auth == null) return;
 
         // fetch the players name and world ID.
@@ -143,7 +142,7 @@ public class ServerConfigurationManager
     public void SetSecretKeyForCharacter(ulong localContentID, SecretKey keyToAdd)
     {
         // Check if the currently logged-in character has a matching authentication with the same local content ID.
-        Authentication? auth = CurrentServer.Authentications.Find(f => f.CharacterPlayerContentId == localContentID);
+        var auth = CurrentServer.Authentications.Find(f => f.CharacterPlayerContentId == localContentID);
 
         // If the authentication is null, throw an exception.
         if (auth == null) throw new Exception("No authentication found for the current character.");
@@ -157,7 +156,7 @@ public class ServerConfigurationManager
     public void SetSecretKeyAsValid(string secretKey)
     {
         // locate the authentication with the matching key.
-        Authentication? auth = CurrentServer.Authentications.Find(f => f.SecretKey.Key == secretKey);
+        var auth = CurrentServer.Authentications.Find(f => f.SecretKey.Key == secretKey);
         if (auth == null) return;
 
         // set the authentication as having had a successful connection.

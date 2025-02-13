@@ -22,7 +22,7 @@ public class SavePatternPopupHandler : IPopupHandler
     private readonly PatternHandler _patternHandler;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
-    private PatternData CompiledPatternData = new PatternData(); // compile a new pattern to save
+    private Pattern CompiledPatternData = new Pattern(); // compile a new pattern to save
 
     // tag management
     private float SaveWidth;
@@ -97,7 +97,7 @@ public class SavePatternPopupHandler : IPopupHandler
         ImGui.SameLine();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
         {
-            CompiledPatternData = new PatternData();
+            CompiledPatternData = new Pattern();
             ImGui.CloseCurrentPopup();
         }
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DiscardingPattern, ImGui.GetWindowPos(), _size);
@@ -109,7 +109,7 @@ public class SavePatternPopupHandler : IPopupHandler
     public void Open(PatternSavePromptMessage message)
     {
         // compile a fresh pattern object
-        CompiledPatternData = new PatternData();
+        CompiledPatternData = new Pattern();
         // create new GUID for it
         CompiledPatternData.UniqueIdentifier = Guid.NewGuid();
         // set the duration

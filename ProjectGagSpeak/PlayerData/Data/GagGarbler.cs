@@ -6,13 +6,13 @@ namespace GagSpeak.PlayerData.Data;
 public class GagGarbler
 {
     private readonly ILogger<GagGarbler> _logger;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly Ipa_EN_FR_JP_SP_Handler _IPAParser;
     private readonly GagDataHandler _gagDataHandler;
 
     public List<GagData> _activeGags;
 
-    public GagGarbler(ILogger<GagGarbler> logger, ClientData clientData,
+    public GagGarbler(ILogger<GagGarbler> logger, GlobalData clientData,
         GagDataHandler gagDataHandler, Ipa_EN_FR_JP_SP_Handler IPAParser)
     {
         _logger = logger;

@@ -1,6 +1,6 @@
 using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagspeakAPI.Data;
+using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.GagspeakConfiguration;
@@ -15,25 +15,134 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
     protected override string ConfigurationName => ConfigName;
     protected override bool PerCharacterConfigPath => PerCharacterConfig;
 
-    protected override JObject MigrateConfig(JObject oldConfigJson, int readVersion)
+    protected override JObject MigrateConfig(JObject oldConfigJson)
     {
-        JObject newConfigJson;
+        var readVersion = oldConfigJson["Version"]?.Value<int>() ?? 0;
 
-        // check the version of the config file
-        switch (readVersion)
+        // migrate to v1 if we are on v0
+        if (readVersion < 1)
+            oldConfigJson = MigrateFromV0toV1(oldConfigJson);
+
+        // Perform any migrations necessary.
+        return oldConfigJson;
+    }
+
+    protected override AliasConfig DeserializeConfig(JObject configJson)
+    {
+        var aliasConfig = new AliasConfig();
+
+        // Parse Version
+        aliasConfig.Version = configJson["Version"]?.Value<int>() ?? AliasConfig.CurrentVersion;
+
+        // parse the GlobalAliasList
+        var globalAliasListArray = configJson["GlobalAliasList"] as JArray;
+        aliasConfig.GlobalAliasList = new List<AliasTrigger>();
+        if (globalAliasListArray is not null)
         {
-            case 0:
-                newConfigJson = MigrateFromV0toV1(oldConfigJson);
-                break;
-            case 1:
-                // no migration needed
-                newConfigJson = oldConfigJson;
-                break;
-            default:
-                throw new Exception($"Unknown config version {readVersion}");
+            foreach (var item in globalAliasListArray)
+            {
+                if (item is JObject aliasObject)
+                {
+                    var aliasTrigger = ParseAliasTrigger(aliasObject);
+                    aliasConfig.GlobalAliasList.Add(aliasTrigger);
+                }
+            }
         }
 
-        return newConfigJson;
+        // Parse AliasStorage
+        var aliasStorageObj = configJson["AliasStorage"] as JObject;
+        if (aliasStorageObj != null)
+        {
+            foreach (var property in aliasStorageObj.Properties())
+            {
+                var key = property.Name;
+                var aliasStorageValue = property.Value as JObject;
+                if (aliasStorageValue is not null)
+                {
+                    var aliasStorage = ParseAliasStorage(aliasStorageValue);
+                    if (aliasStorage is not null)
+                        aliasConfig.AliasStorage[key] = aliasStorage;
+                }
+            }
+        }
+
+        return aliasConfig;
+    }
+
+    private static AliasStorage ParseAliasStorage(JObject obj)
+    {
+        var aliasStorage = new AliasStorage
+        {
+            // Append the CharaNameWorld if one is present for us.
+            CharacterNameWithWorld = obj["CharacterNameWithWorld"]?.Value<string>() ?? string.Empty
+        };
+
+        // Parse AliasList
+        var aliasListArray = obj["AliasList"] as JArray;
+        aliasStorage.AliasList = new List<AliasTrigger>();
+        if (aliasListArray is not null)
+        {
+            foreach (var item in aliasListArray)
+            {
+                if (item is JObject aliasObject)
+                {
+                    var aliasTrigger = ParseAliasTrigger(aliasObject);
+                    aliasStorage.AliasList.Add(aliasTrigger);
+                }
+            }
+        }
+        return aliasStorage;
+    }
+
+    private static AliasTrigger ParseAliasTrigger(JObject obj)
+    {
+        var identifier = Guid.TryParse(obj["AliasIdentifier"]?.Value<string>(), out var guid) ? guid : Guid.Empty;
+        var enabled = obj["Enabled"]?.Value<bool>() ?? false;
+        var label = obj["Label"]?.Value<string>() ?? string.Empty;
+        var inputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty;
+        var executions = ParseExecutions(obj["Executions"] as JObject ?? new JObject());
+
+        return new AliasTrigger
+        {
+            Identifier = identifier,
+            Enabled = enabled,
+            Label = label,
+            InputCommand = inputCommand,
+            Executions = executions
+        };
+    }
+
+    private static Dictionary<ActionExecutionType, IActionGS> ParseExecutions(JObject obj)
+    {
+        var executions = new Dictionary<ActionExecutionType, IActionGS>();
+
+        if (obj == null) return executions;
+
+        foreach (var property in obj.Properties())
+        {
+            if (Enum.TryParse(property.Name, out ActionExecutionType executionType))
+            {
+                var executionObj = property.Value as JObject;
+                if (executionObj == null) continue;
+
+                IActionGS action = executionType switch
+                {
+                    ActionExecutionType.TextOutput => executionObj.ToObject<TextAction>() ?? new TextAction(),
+                    ActionExecutionType.Gag => executionObj.ToObject<GagAction>() ?? new GagAction(),
+                    ActionExecutionType.Restraint => executionObj.ToObject<RestraintAction>() ?? new RestraintAction(),
+                    ActionExecutionType.Moodle => executionObj.ToObject<MoodleAction>() ?? new MoodleAction(),
+                    ActionExecutionType.ShockCollar => executionObj.ToObject<PiShockAction>() ?? new PiShockAction(),
+                    ActionExecutionType.SexToy => executionObj.ToObject<SexToyAction>() ?? new SexToyAction(),
+                    _ => throw new NotImplementedException()
+                };
+
+                if (action is not null)
+                {
+                    executions[executionType] = action;
+                }
+            }
+        }
+        return executions;
     }
 
     // Safely update data for new format.
@@ -41,7 +150,6 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
     {
         // create a new JObject to store the new config
         JObject newConfigJson = new();
-        // set the version to 1
         newConfigJson["Version"] = 1;
 
         // Migrate AliasStorage
@@ -51,8 +159,8 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
             JObject newAliasStorage = new();
             foreach (var property in oldAliasStorage.Properties())
             {
-                string key = property.Name;
-                JObject? oldAliasStorageValue = property.Value as JObject;
+                var key = property.Name;
+                var oldAliasStorageValue = property.Value as JObject;
                 if (oldAliasStorageValue is not null)
                 {
                     JObject newAliasStorageValue = new();
@@ -95,124 +203,5 @@ public class AliasConfigService : ConfigurationServiceBase<AliasConfig>
         }
 
         return newConfigJson;
-    }
-
-    protected override AliasConfig DeserializeConfig(JObject configJson)
-    {
-        var aliasConfig = new AliasConfig();
-
-        // Parse Version
-        aliasConfig.Version = configJson["Version"]?.Value<int>() ?? AliasConfig.CurrentVersion;
-
-        // parse the GlobalAliasList
-        var globalAliasListArray = configJson["GlobalAliasList"] as JArray;
-        aliasConfig.GlobalAliasList = new List<AliasTrigger>();
-        if (globalAliasListArray is not null)
-        {
-            foreach (var item in globalAliasListArray)
-            {
-                if (item is JObject aliasObject)
-                {
-                    var aliasTrigger = ParseAliasTrigger(aliasObject);
-                    aliasConfig.GlobalAliasList.Add(aliasTrigger);
-                }
-            }
-        }
-
-        // Parse AliasStorage
-        var aliasStorageObj = configJson["AliasStorage"] as JObject;
-        if (aliasStorageObj != null)
-        {
-            foreach (var property in aliasStorageObj.Properties())
-            {
-                string key = property.Name;
-                JObject? aliasStorageValue = property.Value as JObject;
-                if (aliasStorageValue is not null)
-                {
-                    var aliasStorage = ParseAliasStorage(aliasStorageValue);
-                    if (aliasStorage is not null)
-                        aliasConfig.AliasStorage[key] = aliasStorage;
-                }
-            }
-        }
-
-        return aliasConfig;
-    }
-
-    private static AliasStorage ParseAliasStorage(JObject obj)
-    {
-        var aliasStorage = new AliasStorage
-        {
-            // Append the CharaNameWorld if one is present for us.
-            CharacterNameWithWorld = obj["CharacterNameWithWorld"]?.Value<string>() ?? string.Empty
-        };
-
-        // Parse AliasList
-        var aliasListArray = obj["AliasList"] as JArray;
-        aliasStorage.AliasList = new List<AliasTrigger>();
-        if (aliasListArray is not null)
-        {
-            foreach (var item in aliasListArray)
-            {
-                if (item is JObject aliasObject)
-                {
-                    var aliasTrigger = ParseAliasTrigger(aliasObject);
-                    aliasStorage.AliasList.Add(aliasTrigger);
-                }
-            }
-        }
-        return aliasStorage;
-    }
-
-    private static AliasTrigger ParseAliasTrigger(JObject obj)
-    {
-        var identifier = Guid.TryParse(obj["AliasIdentifier"]?.Value<string>(), out var guid) ? guid : Guid.Empty;
-        var enabled = obj["Enabled"]?.Value<bool>() ?? false;
-        var name = obj["Name"]?.Value<string>() ?? string.Empty;
-        var inputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty;
-        var executions = ParseExecutions(obj["Executions"] as JObject ?? new JObject());
-
-        return new AliasTrigger
-        {
-            AliasIdentifier = identifier,
-            Enabled = enabled,
-            Name = name,
-            InputCommand = inputCommand,
-            Executions = executions
-        };
-    }
-
-    private static Dictionary<ActionExecutionType, IActionGS> ParseExecutions(JObject obj)
-    {
-        var executions = new Dictionary<ActionExecutionType, IActionGS>();
-
-        if (obj == null) return executions;
-
-        foreach (var property in obj.Properties())
-        {
-            if (Enum.TryParse(property.Name, out ActionExecutionType executionType))
-            {
-                var executionObj = property.Value as JObject;
-                if (executionObj == null) continue;
-
-                IActionGS action = executionType switch
-                {
-                    ActionExecutionType.TextOutput => executionObj.ToObject<TextAction>() ?? new TextAction(),
-                    ActionExecutionType.Gag => executionObj.ToObject<GagAction>() ?? new GagAction(),
-                    ActionExecutionType.Restraint => executionObj.ToObject<RestraintAction>() ?? new RestraintAction(),
-                    ActionExecutionType.Moodle => executionObj.ToObject<MoodleAction>() ?? new MoodleAction(),
-                    ActionExecutionType.ShockCollar => executionObj.ToObject<PiShockAction>() ?? new PiShockAction(),
-                    ActionExecutionType.SexToy => executionObj.ToObject<SexToyAction>() ?? new SexToyAction(),
-                    _ => throw new NotImplementedException()
-                };
-
-                if (action is not null)
-                {
-                    executions[executionType] = action;
-                }
-            }
-        }
-
-        return executions;
     }
 }

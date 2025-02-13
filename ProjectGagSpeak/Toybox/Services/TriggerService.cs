@@ -88,7 +88,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
         {
             try
             {
-                Logger.LogDebug("Checking Trigger: " + trigger.Name, LoggerType.ToyboxTriggers);
+                Logger.LogDebug("Checking Trigger: " + trigger.Label, LoggerType.ToyboxTriggers);
                 // Determine if the direction matches
                 var isSourcePlayer = _clientMonitor.ObjectId == actionEffect.SourceID;
                 var isTargetPlayer = _clientMonitor.ObjectId == actionEffect.TargetID;
@@ -181,7 +181,7 @@ public class TriggerService : DisposableMediatorSubscriberBase
 
     public async void ExecuteTriggerAction(Trigger trigger)
     {
-        Logger.LogInformation("Your Trigger With Name " + trigger.Name + " and priority " + trigger.Priority + " triggering action "
+        Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
             + trigger.GetTypeName().ToName(), LoggerType.ToyboxTriggers);
 
         switch (trigger.GetTypeName())

@@ -14,12 +14,12 @@ namespace GagSpeak.PlayerData.Handlers;
 public class PatternHandler : MediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ClientData _playerManager;
+    private readonly GlobalData _playerManager;
     private readonly ToyboxManager _toyboxStateManager;
 
     public PatternHandler(ILogger<PatternHandler> logger,
         GagspeakMediator mediator, ClientConfigurationManager clientConfigs,
-        ClientData playerManager, ToyboxManager toyboxStateManager)
+        GlobalData playerManager, ToyboxManager toyboxStateManager)
         : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
@@ -27,12 +27,12 @@ public class PatternHandler : MediatorSubscriberBase
         _toyboxStateManager = toyboxStateManager;
     }
 
-    public List<PatternData> Patterns => _clientConfigs.PatternConfig.PatternStorage.Patterns;
+    public List<Pattern> Patterns => _clientConfigs.PatternConfig.PatternStorage.Patterns;
     public int PatternCount => _clientConfigs.PatternConfig.PatternStorage.Patterns.Count;
 
-    public PatternData? ClonedPatternForEdit { get; private set; } = null;
+    public Pattern? ClonedPatternForEdit { get; private set; } = null;
 
-    public void StartEditingPattern(PatternData pattern)
+    public void StartEditingPattern(Pattern pattern)
     {
         Logger.LogDebug("Editing Pattern.", LoggerType.ToyboxPatterns);
         ClonedPatternForEdit = pattern.DeepCloneData();
@@ -64,17 +64,17 @@ public class PatternHandler : MediatorSubscriberBase
         ClonedPatternForEdit = null;
     }
 
-    public void AddNewPattern(PatternData newPattern) => _clientConfigs.AddNewPattern(newPattern);
+    public void AddNewPattern(Pattern newPattern) => _clientConfigs.AddNewPattern(newPattern);
     public void RemovePattern(Guid idToRemove)
     {
         _clientConfigs.RemovePattern(idToRemove);
         CancelEditingPattern();
     }
 
-    public void EnablePattern(PatternData pattern)
+    public void EnablePattern(Pattern pattern)
         => _toyboxStateManager.EnablePattern(pattern.UniqueIdentifier, MainHub.UID);
 
-    public void DisablePattern(PatternData pattern)
+    public void DisablePattern(Pattern pattern)
         => _toyboxStateManager.DisablePattern(pattern.UniqueIdentifier);
 }
 

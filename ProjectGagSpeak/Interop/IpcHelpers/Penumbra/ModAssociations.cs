@@ -144,7 +144,7 @@ public class ModAssociations : DisposableMediatorSubscriberBase
         "Inspect current mod status", false, true);
         if (ImGui.IsItemHovered())
         {
-            var (_, newSettings) = _penumbra.GetMods().FirstOrDefault(m => m.Mod == currentMod.Mod);
+            var (_, newSettings) = _penumbra.GetModInfos().FirstOrDefault(m => m.Mod == currentMod.Mod);
             if (ImGui.IsItemClicked())
             {
                 updatedMod.UpdatedMod.ModSettings = newSettings;
@@ -251,7 +251,7 @@ public class ModAssociations : DisposableMediatorSubscriberBase
         // Get the current mod selection from the mod combo
         var currentName = _modCombo.CurrentSelection.Mod.Name;
 
-        _modCombo.Draw("##modSelect"+cursedItem.LootId, currentName.IsNullOrEmpty() ? "Select Mod..." : currentName, string.Empty, width, ImGui.GetTextLineHeight());
+        _modCombo.Draw("##modSelect"+cursedItem.Identifier, currentName.IsNullOrEmpty() ? "Select Mod..." : currentName, string.Empty, width, ImGui.GetTextLineHeight());
 
         if (ImGui.IsItemHovered())
             UiSharedService.AttachToolTip("Select a Mod to bind to this Cursed Item");

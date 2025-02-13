@@ -1,8 +1,5 @@
-using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.PrivateRooms;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -13,7 +10,6 @@ using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.UI.Permissions;
 using GagSpeak.UI.Profile;
-using GagSpeak.UI.UiRemote;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -32,7 +28,7 @@ public class UiFactory
     private readonly ClientMonitorService _clientService;
     private readonly GagGarbler _garbler;
     private readonly PairManager _pairManager;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -44,23 +40,20 @@ public class UiFactory
     private readonly PermissionPresetLogic _presetService;
     private readonly SetPreviewComponent _previews;
     private readonly TextureService _textures;
-    private readonly ToyboxRemoteService _remoteService;
     private readonly UiSharedService _uiShared;
     private readonly VibratorService _vibeService;
     private readonly TutorialService _guides;
 
     // API Hubs
     private readonly MainHub _apiHubMain;
-    private readonly ToyboxHub _apiHubToybox;
 
     public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
-        PiShockProvider shockProvider, ClientData clientData, ClientMonitorService clientService,
+        PiShockProvider shockProvider, GlobalData clientData, ClientMonitorService clientService,
         GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
         KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, MoodlesService moodlesService, 
         OnFrameworkService frameworkUtils, PairCombos pairCombos,PermissionPresetLogic presetService, 
-        SetPreviewComponent setPreviews, TextureService textures, ToyboxRemoteService remoteService, 
-        UiSharedService uiShared, VibratorService vibeService, TutorialService guides, 
-        MainHub apiHubMain, ToyboxHub apiHubToybox)
+        SetPreviewComponent setPreviews, TextureService textures, UiSharedService uiShared, 
+        VibratorService vibeService, TutorialService guides, MainHub apiHubMain)
     {
         _loggerFactory = loggerFactory;
         _gagspeakMediator = gagspeakMediator;
@@ -81,20 +74,11 @@ public class UiFactory
         _presetService = presetService;
         _previews = setPreviews;
         _textures = textures;
-        _remoteService = remoteService;
         _uiShared = uiShared;
         _vibeService = vibeService;
         _guides = guides;
 
         _apiHubMain = apiHubMain;
-        _apiHubToybox = apiHubToybox;
-    }
-
-    public RemoteController CreateControllerRemote(PrivateRoom privateRoom)
-    {
-        return new RemoteController(_loggerFactory.CreateLogger<RemoteController>(), _gagspeakMediator,
-            _apiHubToybox, _clientData, _garbler, _uiShared, _vibeService, _remoteService, 
-            _guides, privateRoom);
     }
 
     public KinkPlateUI CreateStandaloneKinkPlateUi(Pair pair)

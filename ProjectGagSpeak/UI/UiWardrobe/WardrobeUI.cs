@@ -18,17 +18,17 @@ public class WardrobeUI : WindowMediatorSubscriberBase
 {
     private readonly WardrobeTabMenu _tabMenu;
     private readonly WardrobeHandler _handler;
-    private readonly RestraintSetManager _overviewPanel;
+    private readonly RestraintSetPanel _overviewPanel;
     private readonly StruggleSim _struggleSimPanel;
     private readonly CursedDungeonLoot _cursedLootPanel;
-    private readonly MoodlesManager _moodlesPanel;
+    private readonly RestrictionsManager _moodlesPanel;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     public WardrobeUI(ILogger<WardrobeUI> logger, GagspeakMediator mediator, 
-        WardrobeHandler handler, RestraintSetManager restraintOverview, 
+        WardrobeHandler handler, RestraintSetPanel restraintOverview, 
         StruggleSim struggleSim, CursedDungeonLoot cursedLoot,
-        MoodlesManager moodlesManager, CosmeticService cosmetics,
+        RestrictionsManager moodlesManager, CosmeticService cosmetics,
         UiSharedService uiSharedService, TutorialService guides) : base(logger, mediator, "Wardrobe UI")
     {
         _handler = handler;
@@ -210,7 +210,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                             _cursedLootPanel.DrawCursedLootPanel();
                             break;
                         case WardrobeTabs.Tabs.ManageMoodles:
-                            _moodlesPanel.DrawMoodlesManager(cellPadding);
+                            _moodlesPanel.DrawRestrictionsManager(cellPadding);
                             break;
                         default:
                             break;

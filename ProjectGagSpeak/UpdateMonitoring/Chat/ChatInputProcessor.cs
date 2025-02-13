@@ -28,7 +28,7 @@ public unsafe class ChatInputDetour : IDisposable
     private readonly ILogger<ChatInputDetour> _logger;
     private readonly GagspeakConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly GagGarbler _garbler;
     private readonly EmoteMonitor _emoteMonitor;
 
@@ -38,7 +38,7 @@ public unsafe class ChatInputDetour : IDisposable
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, ClientData clientData, GagGarbler garbler,
+        GagspeakConfigService config, GlobalData clientData, GagGarbler garbler,
         EmoteMonitor emoteMonitor, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes

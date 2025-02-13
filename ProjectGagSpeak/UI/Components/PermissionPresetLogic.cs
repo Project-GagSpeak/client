@@ -14,13 +14,13 @@ public class PermissionPresetLogic
 {
     private readonly ILogger<PermissionPresetLogic> _logger;
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _playerManager;
+    private readonly GlobalData _playerManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
     public PermissionPresetLogic(ILogger<PermissionPresetLogic> logger,
-        MainHub apiHubMain, ClientData playerManager,
+        MainHub apiHubMain, GlobalData playerManager,
         ClientConfigurationManager clientConfigs, PairManager pairManager,
         UiSharedService uiShared)
     {

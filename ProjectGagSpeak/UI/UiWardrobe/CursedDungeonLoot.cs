@@ -13,7 +13,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Classes;
@@ -25,19 +24,19 @@ namespace GagSpeak.UI.UiWardrobe;
 
 public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 {
-    private readonly ClientData _clientPlayerData;
+    private readonly GlobalData _clientPlayerData;
     private readonly SetPreviewComponent _drawDataHelper;
     private readonly ModAssociations _relatedMods;
     private readonly MoodlesAssociations _relatedMoodles;
-    private readonly CursedLootHandler _handler;
+    private readonly CursedLootManager _handler;
     private readonly GagspeakConfigService _mainConfig;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
 
     public CursedDungeonLoot(ILogger<CursedDungeonLoot> logger,
-        GagspeakMediator mediator, ClientData clientPlayerData,
+        GagspeakMediator mediator, GlobalData clientPlayerData,
         SetPreviewComponent drawDataHelper, ModAssociations relatedMods,
-        MoodlesAssociations relatedMoodles, CursedLootHandler handler,
+        MoodlesAssociations relatedMoodles, CursedLootManager handler,
         GagspeakConfigService mainConfig, UiSharedService uiShared,
         TutorialService guides) : base(logger, mediator)
     {
@@ -49,7 +48,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         _mainConfig = mainConfig;
         _uiShared = uiShared;
         _guides = guides;
-
+/*
         Mediator.Subscribe<TooltipSetItemToCursedItemMessage>(this, (msg) =>
         {
             // Identify what window is expanded and add the item to that.
@@ -70,7 +69,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
                     Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on expanded item [" + FilteredItemList[ExpandedItemIndex].Name + "]", LoggerType.CursedLoot);
                 }
             }
-        });
+        });*/
     }
 
     // private vars used for searches or temp storage for handling hovers and value changes.
@@ -152,12 +151,12 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     {
         if (_handler.CursedItems.Count <= 0) return;
 
-        bool itemGotHovered = false;
+        var itemGotHovered = false;
         // print out the items in the list.
-        for (int i = 0; i < FilteredItemList.Count; i++)
+        for (var i = 0; i < FilteredItemList.Count; i++)
         {
             var item = FilteredItemList[i];
-            bool isHovered = i == HoveredItemIndex;
+            var isHovered = i == HoveredItemIndex;
 
             // draw the selectable item.
             CursedItemSelectable(item, i, hovered: i == HoveredItemIndex, expanded: i == ExpandedItemIndex,
@@ -193,7 +192,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     {
         if (_handler.ActiveItemsDecending.Count <= 0) return;
 
-        for (int i = 0; i < _handler.ActiveItemsDecending.Count; i++)
+        for (var i = 0; i < _handler.ActiveItemsDecending.Count; i++)
             EnabledItemSelectable(_handler.ActiveItemsDecending[i], i);
     }
 
@@ -201,8 +200,8 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     {
         if (_handler.InactiveItemsInPool.Count <= 0) return;
 
-        bool activeCursedItemGotHovered = false;
-        for (int i = 0; i < _handler.InactiveItemsInPool.Count; i++)
+        var activeCursedItemGotHovered = false;
+        for (var i = 0; i < _handler.InactiveItemsInPool.Count; i++)
         {
             EnabledItemSelectable(_handler.InactiveItemsInPool[i], i, hovered: i == HoveredCursedPoolIdx, ShowButton: true,
                 onButton: (disabled) => { _handler.InactiveItemsInPool[i].InPool = disabled; _handler.Save(); });
@@ -238,7 +237,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
                 (ImGui.GetFrameHeight() * (NewItem.IsGag ? 2 : 9) + ImGui.GetStyle().ItemSpacing.Y * (NewItem.IsGag ? 1 : 11) + ImGui.GetStyle().WindowPadding.Y * 2))
             : new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + ImGui.GetStyle().WindowPadding.Y * 2);
 
-        using var child = ImRaii.Child($"##NewItemWindow" + NewItem.LootId, selectableSize, true);
+        using var child = ImRaii.Child($"##NewItemWindow" + NewItem.Identifier, selectableSize, true);
         using var group = ImRaii.Group();
         var yPos = ImGui.GetCursorPosY();
         var width = ImGui.GetContentRegionAvail().X;
@@ -249,7 +248,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             ImGui.SetCursorPosY(yPos + ((ImGui.GetFrameHeight() - 23) / 2) + 0.5f); // 23 is the input text box height
             ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
             var itemName = NewItem.Name;
-            if (ImGui.InputTextWithHint("##ItemName" + NewItem.LootId, "Item Name...", ref itemName, 36))
+            if (ImGui.InputTextWithHint("##ItemName" + NewItem.Identifier, "Item Name...", ref itemName, 36))
                 NewItem.Name = itemName;
             _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.NamingCursedItems, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
 
@@ -304,7 +303,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         {
             if (NewItem.IsGag)
             {
-                _uiShared.DrawCombo("##AttachGagtoCursedItem" + NewItem.LootId, width, Enum.GetValues<GagType>(),
+                _uiShared.DrawCombo("##AttachGagtoCursedItem" + NewItem.Identifier, width, Enum.GetValues<GagType>(),
                 (gag) => gag.GagName(), (i) => NewItem.GagType = i, initialSelectedItem: NewItem.GagType);
                 UiSharedService.AttachToolTip("Select the type of Gag this Cursed Item will apply!");
                 return;
@@ -326,7 +325,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
                 (ImGui.GetFrameHeight() * (item.IsGag ? 2 : 9) + ImGui.GetStyle().ItemSpacing.Y * (item.IsGag ? 1 : 11) + ImGui.GetStyle().WindowPadding.Y * 2))
             : new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + ImGui.GetStyle().WindowPadding.Y * 2);
 
-        using var child = ImRaii.Child($"##CursedItemListing" + item.LootId, selectableSize, true);
+        using var child = ImRaii.Child($"##CursedItemListing" + item.Identifier, selectableSize, true);
         using var group = ImRaii.Group();
         var yPos = ImGui.GetCursorPosY();
 
@@ -341,7 +340,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             ImGui.SetCursorPosY(yPos + ((ImGui.GetFrameHeight() - 23) / 2) + 0.5f); // 23 is the input text box height
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - width - ImGui.GetStyle().ItemSpacing.X);
             var itemName = item.Name;
-            if (ImGui.InputTextWithHint("##ItemName" + item.LootId, "Item Name...", ref itemName, 36, ImGuiInputTextFlags.EnterReturnsTrue))
+            if (ImGui.InputTextWithHint("##ItemName" + item.Identifier, "Item Name...", ref itemName, 36, ImGuiInputTextFlags.EnterReturnsTrue))
                 item.Name = itemName;
         }
         else
@@ -371,7 +370,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         {
             if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: item.InPool || !KeyMonitor.ShiftPressed(), inPopup: true))
             {
-                _handler.RemoveItem(item.LootId);
+                _handler.RemoveItem(item.Identifier);
                 Logger.LogInformation("Removing " + item.Name + " from cursed item list.");
             }
             UiSharedService.AttachToolTip("Remove this Cursed Item from your storage!--SEP--" +
@@ -394,7 +393,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
         {
             if (item.IsGag)
             {
-                _uiShared.DrawCombo("##AttachGagtoCursedItem" + item.LootId, ImGui.GetContentRegionAvail().X, Enum.GetValues<GagType>(),
+                _uiShared.DrawCombo("##AttachGagtoCursedItem" + item.Identifier, ImGui.GetContentRegionAvail().X, Enum.GetValues<GagType>(),
                 (gag) => gag.GagName(), (i) => item.GagType = i, initialSelectedItem: item.GagType);
                 UiSharedService.AttachToolTip("Select the type of Gag this Cursed Item will apply!");
                 return;
@@ -418,7 +417,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             ? ImGui.GetFrameHeight() + ImGui.GetStyle().WindowPadding.Y * 2
             : ImGui.GetFrameHeight() + ImGui.GetStyle().WindowPadding.Y * 2));// ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2));
 
-        using var child = ImRaii.Child($"##EnabledSelectable" + item.LootId, selectableSize, true);
+        using var child = ImRaii.Child($"##EnabledSelectable" + item.Identifier, selectableSize, true);
         using var group = ImRaii.Group();
 
         ImGui.AlignTextToFramePadding();
@@ -476,7 +475,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
     public void DrawLockRangesAndChance(float availableWidth)
     {
         // Define the widths for input fields and the slider
-        float inputWidth = (availableWidth - _uiShared.GetIconData(FontAwesomeIcon.HourglassHalf).X - ImGui.GetStyle().ItemInnerSpacing.X * 2 - ImGui.CalcTextSize("100.9%  ").X) / 2;
+        var inputWidth = (availableWidth - _uiShared.GetIconData(FontAwesomeIcon.HourglassHalf).X - ImGui.GetStyle().ItemInnerSpacing.X * 2 - ImGui.CalcTextSize("100.9%  ").X) / 2;
 
         // Input Field for the first range
         ImGui.SetNextItemWidth(inputWidth);
@@ -530,7 +529,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("Very Highmmm").X);
         var precedence = item.OverridePrecedence;
-        _uiShared.DrawCombo("##ItemPrecedence" + item.LootId, ImGui.CalcTextSize("Very Highmmm").X, Enum.GetValues<Precedence>(),
+        _uiShared.DrawCombo("##ItemPrecedence" + item.Identifier, ImGui.CalcTextSize("Very Highmmm").X, Enum.GetValues<Precedence>(),
             (clicked) => clicked.ToName(),
             onSelected: (i) =>
             {
@@ -613,7 +612,7 @@ public class CursedDungeonLoot : DisposableMediatorSubscriberBase
             return;
 
         // Define the related Moodle
-        _uiShared.DrawCombo("##CursedItemMoodleType" + item.LootId, 90f, Enum.GetValues<IpcToggleType>(),
+        _uiShared.DrawCombo("##CursedItemMoodleType" + item.Identifier, 90f, Enum.GetValues<IpcToggleType>(),
             (clicked) => clicked.ToName(),
             onSelected: (i) =>
             {

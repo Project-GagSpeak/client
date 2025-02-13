@@ -21,8 +21,7 @@ namespace GagSpeak.PlayerData.Handlers;
 public class HardcoreHandler : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ClientData _playerData;
-    private readonly AppearanceManager _appearanceHandler;
+    private readonly GlobalData _playerData;
     private readonly PairManager _pairManager;
     private readonly MainHub _apiHubMain; // for sending the updates.
     private readonly MoveController _moveController; // for movement logic
@@ -34,14 +33,13 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
 
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, ClientData playerData,
-        AppearanceManager appearanceHandler, PairManager pairManager, MainHub apiHubMain,
+        ClientConfigurationManager clientConfigs, GlobalData playerData,
+        PairManager pairManager, MainHub apiHubMain,
         MoveController moveController, ChatSender chatSender, EmoteMonitor emoteMonitor,
         ITargetManager targetManager) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _playerData = playerData;
-        _appearanceHandler = appearanceHandler;
         _pairManager = pairManager;
         _apiHubMain = apiHubMain;
         _moveController = moveController;
@@ -56,7 +54,6 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 case InteractionType.ForcedFollow: UpdateForcedFollow(msg.State); break;
                 case InteractionType.ForcedEmoteState: UpdateForcedEmoteState(msg.State); break;
                 case InteractionType.ForcedStay: UpdateForcedStayState(msg.State); break;
-                case InteractionType.ForcedBlindfold: UpdateBlindfoldState(msg.State); break;
                 case InteractionType.ForcedChatVisibility: UpdateHideChatboxState(msg.State); break;
                 case InteractionType.ForcedChatInputVisibility: UpdateHideChatInputState(msg.State); break;
                 case InteractionType.ForcedChatInputBlock: UpdateChatInputBlocking(msg.State); break;
@@ -71,7 +68,6 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     public bool IsForcedToFollow => _playerData.GlobalPerms?.IsFollowing() ?? false;
     public bool IsForcedToEmote => !(_playerData.GlobalPerms?.ForcedEmoteState.NullOrEmpty() ?? true); // This is the inverse I think?
     public bool IsForcedToStay => _playerData.GlobalPerms?.IsStaying() ?? false;
-    public bool IsBlindfolded => _playerData.GlobalPerms?.IsBlindfolded() ?? false;
     public bool IsHidingChat => _playerData.GlobalPerms?.IsChatHidden() ?? false;
     public bool IsHidingChatInput => _playerData.GlobalPerms?.IsChatInputHidden() ?? false;
     public bool IsBlockingChatInput => _playerData.GlobalPerms?.IsChatInputBlocked() ?? false;
@@ -80,7 +76,6 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
     public bool MonitorFollowLogic => IsForcedToFollow;
     public bool MonitorEmoteLogic => IsForcedToEmote;
     public bool MonitorStayLogic => IsForcedToStay;
-    public bool MonitorBlindfoldLogic => IsBlindfolded && InitialBlindfoldRedrawMade;
     public DateTimeOffset LastMovementTime { get; set; } = DateTimeOffset.Now;
     public Vector3 LastPosition { get; set; } = Vector3.Zero;
     public double StimulationMultiplier { get; set; } = 1.0;
@@ -381,30 +376,5 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             if (cameraManager is not null && cameraManager->Camera is not null && cameraManager->Camera->Mode is (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.ThirdPerson;
         }
-    }
-
-    public void ApplyMultiplier()
-    {
-        var activeSet = _clientConfigs.GetActiveSet();
-        if (activeSet is null)
-            return;
-
-        var stimulationLvl = activeSet.SetTraits[activeSet.EnabledBy].StimulationLevel;
-        StimulationMultiplier = stimulationLvl switch
-        {
-            StimulationLevel.None => 1.0,
-            StimulationLevel.Light => 1.125,
-            StimulationLevel.Mild => 1.25,
-            StimulationLevel.Heavy => 1.5,
-            _ => 1.0
-        };
-        Logger.LogDebug(stimulationLvl switch
-        {
-            StimulationLevel.None => "No Stimulation Multiplier applied from set, defaulting to 1.0x!",
-            StimulationLevel.Light => "Light Stimulation Multiplier applied from set with factor of 1.125x!",
-            StimulationLevel.Mild => "Mild Stimulation Multiplier applied from set with factor of 1.25x!",
-            StimulationLevel.Heavy => "Heavy Stimulation Multiplier applied from set with factor of 1.5x!",
-            _ => "No Stimulation Multiplier applied from set"
-        }, LoggerType.HardcoreActions);
     }
 }

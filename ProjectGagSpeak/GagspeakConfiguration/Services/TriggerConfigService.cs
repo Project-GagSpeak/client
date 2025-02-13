@@ -1,9 +1,6 @@
 using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.GagspeakConfiguration.Models;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Data.IPC;
-using GagspeakAPI.Enums;
 
 namespace GagSpeak.GagspeakConfiguration;
 
@@ -16,26 +13,15 @@ public class TriggerConfigService : ConfigurationServiceBase<TriggerConfig>
     protected override string ConfigurationName => ConfigName;
     protected override bool PerCharacterConfigPath => PerCharacterConfig;
 
-    // apply an override for migrations off the baseconfigservice
-    protected override JObject MigrateConfig(JObject oldConfigJson, int readVersion)
+    // apply an override for migrations off the base config service
+    protected override JObject MigrateConfig(JObject oldConfigJson)
     {
-        JObject newConfigJson;
+        var readVersion = oldConfigJson["Version"]?.Value<int>() ?? 0;
 
-        // check the version of the config file
-        switch (readVersion)
-        {
-            case 0:
-                newConfigJson = MigrateFromV0toV1(oldConfigJson);
-                break;
-            case 1:
-                // no migration needed
-                newConfigJson = oldConfigJson;
-                break;
-            default:
-                throw new Exception($"Unknown config version {readVersion}");
-        }
+        if(readVersion < 1)
+            oldConfigJson = MigrateFromV0toV1(oldConfigJson);
 
-        return newConfigJson;
+        return oldConfigJson;
     }
 
     // Safely update data for new format.

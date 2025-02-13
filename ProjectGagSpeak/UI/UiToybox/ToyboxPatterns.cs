@@ -44,7 +44,7 @@ public class ToyboxPatterns
     // -1 indicates no item is currently hovered
     private int LastHoveredIndex = -1;
     private LowerString PatternSearchString = LowerString.Empty;
-    private List<PatternData> FilteredPatternsList
+    private List<Pattern> FilteredPatternsList
         => _handler.Patterns
             .Where(pattern => pattern.Name.Contains(PatternSearchString, StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -243,7 +243,7 @@ public class ToyboxPatterns
         }
     }
 
-    private void DrawPatternSelectable(PatternData pattern, int idx)
+    private void DrawPatternSelectable(Pattern pattern, int idx)
     {
         // fetch the name of the pattern, and its text size
         var name = pattern.Name;
@@ -322,7 +322,7 @@ public class ToyboxPatterns
         if (ImGui.IsItemClicked()) _handler.StartEditingPattern(pattern);
     }
 
-    private void DrawPatternEditor(PatternData pattern)
+    private void DrawPatternEditor(Pattern pattern)
     {
         UiSharedService.ColorText("ID:", ImGuiColors.ParsedGold);
         ImGui.SameLine();
@@ -393,7 +393,7 @@ public class ToyboxPatterns
             var version = bytes[0];
             version = bytes.DecompressToString(out var decompressed);
             // Deserialize the string back to pattern data
-            PatternData pattern = JsonConvert.DeserializeObject<PatternData>(decompressed) ?? new PatternData();
+            Pattern pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
             // Set the active pattern
             _logger.LogInformation("Set pattern data from clipboard");
             _handler.AddNewPattern(pattern);

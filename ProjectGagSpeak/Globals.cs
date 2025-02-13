@@ -6,6 +6,7 @@ global using System.Collections.Concurrent;
 global using System.Collections;
 global using System.Diagnostics;
 global using System.Text;
+global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
 
@@ -15,7 +16,7 @@ global using MoodlesStatusInfo = (
     int IconID,
     string Title,
     string Description,
-    GagspeakAPI.Data.IPC.StatusType Type,
+    GagspeakAPI.Enums.StatusType Type,
     string Applier,
     bool Dispelable,
     int Stacks,
@@ -35,7 +36,7 @@ global using MoodlesStatusInfo = (
 global using MoodlePresetInfo = (
     System.Guid GUID,
     System.Collections.Generic.List<System.Guid> Statuses,
-    GagspeakAPI.Data.IPC.PresetApplicationType ApplicationType,
+    GagspeakAPI.Enums.PresetApplicationType ApplicationType,
     string Title
 );
 

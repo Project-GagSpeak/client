@@ -17,11 +17,11 @@ public class WardrobeHandler : DisposableMediatorSubscriberBase
 {
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly AppearanceManager _appearanceHandler;
-    private readonly ClientData _playerManager;
+    private readonly GlobalData _playerManager;
     private readonly PairManager _pairManager;
 
     public WardrobeHandler(ILogger<WardrobeHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfiguration, ClientData playerManager,
+        ClientConfigurationManager clientConfiguration, GlobalData playerManager,
         AppearanceManager appearanceHandler, PairManager pairManager) : base(logger, mediator)
     {
         _clientConfigs = clientConfiguration;

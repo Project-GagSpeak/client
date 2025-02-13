@@ -10,6 +10,7 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -29,10 +30,10 @@ namespace GagSpeak.UI;
 
 public class SettingsUi : WindowMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly AccountsTab _accountsTab;
     private readonly DebugTab _debugTab;
-    private readonly ClientData _playerCharacterManager;
+    private readonly GlobalData _global;
     private readonly IpcManager _ipcManager;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly GagspeakConfigService _configService;
@@ -49,16 +50,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator,
         MainHub apiHubMain, AccountsTab accounts, DebugTab debug,
         GagspeakConfigService configService, PairManager pairManager, 
-        ClientData playerCharacterManager, ClientConfigurationManager clientConfigs, 
+        GlobalData global, ClientConfigurationManager clientConfigs, 
         PiShockProvider shockProvider, AvfxManager avfxManager, VfxSpawns vfxSpawns, 
         ServerConfigurationManager serverConfigs, IpcManager ipcManager, 
         SettingsHardcore hardcoreSettingsUI, UiSharedService uiShared,
         OnFrameworkService frameworkUtil) : base(logger, mediator, "GagSpeak Settings")
     {
-        _apiHubMain = apiHubMain;
+        _hub = apiHubMain;
         _accountsTab = accounts;
         _debugTab = debug;
-        _playerCharacterManager = playerCharacterManager;
+        _global = global;
         _configService = configService;
         _pairManager = pairManager;
         _clientConfigs = clientConfigs;
@@ -224,64 +225,55 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private DateTime _lastRefresh = DateTime.MinValue;
     private void DrawGlobalSettings()
     {
-        bool liveChatGarblerActive = _playerCharacterManager.GlobalPerms!.LiveChatGarblerActive;
-        bool liveChatGarblerLocked = _playerCharacterManager.GlobalPerms.LiveChatGarblerLocked;
+        bool liveChatGarblerActive = _global.GlobalPerms!.ChatGarblerActive;
+        bool liveChatGarblerLocked = _global.GlobalPerms.ChatGarblerLocked;
         bool removeGagOnLockExpiration = _clientConfigs.GagspeakConfig.RemoveGagUponLockExpiration;
 
-        bool wardrobeEnabled = _playerCharacterManager.GlobalPerms.WardrobeEnabled;
-        bool itemAutoEquip = _playerCharacterManager.GlobalPerms.ItemAutoEquip;
-        bool restraintSetAutoEquip = _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip;
+        bool wardrobeEnabled = _global.GlobalPerms.WardrobeEnabled;
+        bool gagVisuals = _global.GlobalPerms.GagVisuals;
+        bool restrictionVisuals = _global.GlobalPerms.RestrictionVisuals;
+        bool restraintSetVisuals = _global.GlobalPerms.RestraintSetVisuals;
         bool restraintSetDisableWhenUnlocked = _clientConfigs.GagspeakConfig.DisableSetUponUnlock;
         bool cursedDungeonLoot = _clientConfigs.GagspeakConfig.CursedDungeonLoot;
         RevertStyle RevertState = _clientConfigs.GagspeakConfig.RevertStyle;
 
-        bool puppeteerEnabled = _playerCharacterManager.GlobalPerms.PuppeteerEnabled;
-        string globalTriggerPhrase = _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase;
-        bool globalAllowSitRequests = _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests;
-        bool globalAllowMotionRequests = _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests;
-        bool globalAllowAliasRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests;
-        bool globalAllowAllRequests = _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests;
+        bool puppeteerEnabled = _global.GlobalPerms.PuppeteerEnabled;
+        string globalTriggerPhrase = _global.GlobalPerms.GlobalTriggerPhrase;
+        bool globalSitRequests = _global.GlobalPerms.GlobalSitRequests;
+        bool globalMotionRequests = _global.GlobalPerms.GlobalMotionRequests;
+        bool globalAliasRequests = _global.GlobalPerms.GlobalAliasRequests;
+        bool globalAllRequests = _global.GlobalPerms.GlobalAllRequests;
 
-        bool moodlesEnabled = _playerCharacterManager.GlobalPerms.MoodlesEnabled;
-
-        bool toyboxEnabled = _playerCharacterManager.GlobalPerms.ToyboxEnabled;
+        bool toyboxEnabled = _global.GlobalPerms.ToyboxEnabled;
         bool intifaceAutoConnect = _clientConfigs.GagspeakConfig.IntifaceAutoConnect;
         string intifaceConnectionAddr = _clientConfigs.GagspeakConfig.IntifaceConnectionSocket;
         bool vibeServerAutoConnect = _clientConfigs.GagspeakConfig.VibeServerAutoConnect;
-        bool spatialVibratorAudio = _playerCharacterManager.GlobalPerms.SpatialVibratorAudio; // set here over client so that other players can reference if they should listen in or not.
+        bool spatialVibratorAudio = _global.GlobalPerms.SpatialAudio;
 
         // pishock stuff.
         string piShockApiKey = _clientConfigs.GagspeakConfig.PiShockApiKey;
         string piShockUsername = _clientConfigs.GagspeakConfig.PiShockUsername;
 
-        string globalShockCollarShareCode = _playerCharacterManager.GlobalPerms.GlobalShockShareCode;
-        bool allowGlobalShockShockCollar = _playerCharacterManager.GlobalPerms.AllowShocks;
-        bool allowGlobalVibrateShockCollar = _playerCharacterManager.GlobalPerms.AllowVibrations;
-        bool allowGlobalBeepShockCollar = _playerCharacterManager.GlobalPerms.AllowBeeps;
-        int maxGlobalShockCollarIntensity = _playerCharacterManager.GlobalPerms.MaxIntensity;
-        TimeSpan maxGlobalShockDuration = _playerCharacterManager.GlobalPerms.GetTimespanFromDuration();
-        int maxGlobalVibrateDuration = (int)_playerCharacterManager.GlobalPerms.GlobalShockVibrateDuration.TotalSeconds;
+        string globalShockCollarShareCode = _global.GlobalPerms.GlobalShockShareCode;
+        bool allowGlobalShockShockCollar = _global.GlobalPerms.AllowShocks;
+        bool allowGlobalVibrateShockCollar = _global.GlobalPerms.AllowVibrations;
+        bool allowGlobalBeepShockCollar = _global.GlobalPerms.AllowBeeps;
+        int maxGlobalShockCollarIntensity = _global.GlobalPerms.MaxIntensity;
+        TimeSpan maxGlobalShockDuration = _global.GlobalPerms.GetTimespanFromDuration();
+        int maxGlobalVibrateDuration = (int)_global.GlobalPerms.GlobalShockVibrateDuration.TotalSeconds;
 
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderGags);
         using (ImRaii.Disabled(liveChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
-            {
-                // Perform a mediator call that we have updated a permission.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("LiveChatGarblerActive", liveChatGarblerActive), UpdateDir.Own));
-
-            }
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ChatGarblerActive), liveChatGarblerActive), UpdateDir.Own)).ConfigureAwait(false);
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
         }
 
-        if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref itemAutoEquip))
-        {
-            _playerCharacterManager.GlobalPerms.ItemAutoEquip = itemAutoEquip;
-            // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ItemAutoEquip", itemAutoEquip), UpdateDir.Own));
-            // perform recalculations to our cache.
-            Mediator.Publish(new AppearanceImpactingSettingChanged());
-        }
+        if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GagVisuals), gagVisuals), UpdateDir.Own)).ConfigureAwait(false);
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GagGlamoursTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagPadlockTimer, ref removeGagOnLockExpiration))
@@ -296,16 +288,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
-            _playerCharacterManager.GlobalPerms.WardrobeEnabled = wardrobeEnabled;
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("WardrobeEnabled", wardrobeEnabled), UpdateDir.Own));
-
-            // if this creates a race condition down the line remove the above line.
+            _ = _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.WardrobeEnabled), wardrobeEnabled), UpdateDir.Own));
             if (wardrobeEnabled is false)
             {
-                // turn off all respective children as well and push the update.
-                _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = false;
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("RestraintSetAutoEquip", false), UpdateDir.Own));
-                // disable other options respective to it.
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestrictionVisuals), false), UpdateDir.Own)).ConfigureAwait(false);
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestraintSetVisuals), false), UpdateDir.Own)).ConfigureAwait(false);
                 _clientConfigs.GagspeakConfig.DisableSetUponUnlock = false;
                 _clientConfigs.GagspeakConfig.CursedDungeonLoot = false;
                 _clientConfigs.Save();
@@ -315,15 +305,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         using (ImRaii.Disabled(!wardrobeEnabled))
         {
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetAutoEquip))
-            {
-                _playerCharacterManager.GlobalPerms.RestraintSetAutoEquip = restraintSetAutoEquip;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-                MainHub.PlayerUserData, new KeyValuePair<string, object>("RestraintSetAutoEquip", restraintSetAutoEquip), UpdateDir.Own));
-                // perform recalculations to our cache.
-                Mediator.Publish(new AppearanceImpactingSettingChanged());
-            }
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restrictionVisuals))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestrictionVisuals), restrictionVisuals), UpdateDir.Own)).ConfigureAwait(false);
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
+
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestraintSetVisuals), restraintSetVisuals), UpdateDir.Own)).ConfigureAwait(false);
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintPadlockTimer, ref restraintSetDisableWhenUnlocked))
@@ -341,48 +330,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.CursedLootActiveTT);
         }
 
-
-        if (ImGui.Checkbox(GSLoc.Settings.MainOptions.MoodlesActive, ref moodlesEnabled))
-        {
-            _playerCharacterManager.GlobalPerms.MoodlesEnabled = moodlesEnabled;
-            // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("MoodlesEnabled", moodlesEnabled), UpdateDir.Own));
-            // perform recalculations to our cache.
-            Mediator.Publish(new AppearanceImpactingSettingChanged());
-
-        }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.MoodlesActiveTT);
-
-        // draw out revert style selection
-        ImGui.Spacing();
-        ImGui.TextUnformatted(GSLoc.Settings.MainOptions.RevertSelectionLabel);
-        // Draw radio buttons for each RevertStyle enum value
-        foreach (RevertStyle style in Enum.GetValues(typeof(RevertStyle)))
-        {
-            string label = (style is RevertStyle.RevertToGame or RevertStyle.RevertToAutomation) ? "Revert" : "Reapply";
-
-            bool isSelected = _clientConfigs.GagspeakConfig.RevertStyle == style;
-            if (ImGui.RadioButton(label + "##" + style.ToString(), isSelected))
-            {
-                _clientConfigs.GagspeakConfig.RevertStyle = style;
-                _clientConfigs.Save();
-            }
-            ImUtf8.SameLineInner();
-            ImGui.TextUnformatted(style.ToName());
-            _uiShared.DrawHelpText(style.ToHelpText());
-        }
-
-
-        ImGui.Separator();
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);
-
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.PuppeteerActive, ref puppeteerEnabled))
-        {
-            _playerCharacterManager.GlobalPerms.PuppeteerEnabled = puppeteerEnabled;
-            // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("PuppeteerEnabled", puppeteerEnabled), UpdateDir.Own));
-
-        }
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppeteerEnabled), puppeteerEnabled), UpdateDir.Own)).ConfigureAwait(false);
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
 
         using (ImRaii.Disabled(!puppeteerEnabled))
@@ -391,47 +342,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
             if (ImGui.InputText(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, ref globalTriggerPhrase, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-            {
-                _playerCharacterManager.GlobalPerms.GlobalTriggerPhrase = globalTriggerPhrase;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalTriggerPhrase", globalTriggerPhrase), UpdateDir.Own));
-
-            }
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalTriggerPhrase), globalTriggerPhrase), UpdateDir.Own)).ConfigureAwait(false);
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowSit, ref globalAllowSitRequests))
-            {
-                _playerCharacterManager.GlobalPerms.GlobalAllowSitRequests = globalAllowSitRequests;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowSitRequests", globalAllowSitRequests), UpdateDir.Own));
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref globalSitRequests))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalSitRequests), globalSitRequests), UpdateDir.Own)).ConfigureAwait(false);
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
 
-            }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowSitTT);
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref globalMotionRequests))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalMotionRequests), globalMotionRequests), UpdateDir.Own)).ConfigureAwait(false);
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowMotion, ref globalAllowMotionRequests))
-            {
-                _playerCharacterManager.GlobalPerms.GlobalAllowMotionRequests = globalAllowMotionRequests;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowMotionRequests", globalAllowMotionRequests), UpdateDir.Own));
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref globalAliasRequests))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalAliasRequests), globalAliasRequests), UpdateDir.Own)).ConfigureAwait(false);
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
 
-            }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowMotionTT);
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAlias, ref globalAllowAliasRequests))
-            {
-                _playerCharacterManager.GlobalPerms.GlobalAllowAliasRequests = globalAllowAliasRequests;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowAliasRequests", globalAllowAliasRequests), UpdateDir.Own));
-
-            }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAliasTT);
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAllowAll, ref globalAllowAllRequests))
-            {
-                _playerCharacterManager.GlobalPerms.GlobalAllowAllRequests = globalAllowAllRequests;
-                // if this creates a race condition down the line remove the above line.
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalAllowAllRequests", globalAllowAllRequests), UpdateDir.Own));
-
-            }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllowAllTT);
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref globalAllRequests))
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalAllRequests), globalAllRequests), UpdateDir.Own)).ConfigureAwait(false);
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
         }
 
 
@@ -439,13 +372,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.ToyboxActive, ref toyboxEnabled))
-        {
-            _playerCharacterManager.GlobalPerms.ToyboxEnabled = toyboxEnabled;
-            // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData,
-            MainHub.PlayerUserData, new KeyValuePair<string, object>("ToyboxEnabled", toyboxEnabled), UpdateDir.Own));
-
-        }
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ToyboxEnabled), toyboxEnabled), UpdateDir.Own)).ConfigureAwait(false);
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
 
 
@@ -482,12 +410,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.VibeServerAutoConnectTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.SpatialAudioActive, ref spatialVibratorAudio))
-        {
-            _playerCharacterManager.GlobalPerms.SpatialVibratorAudio = spatialVibratorAudio;
-            // if this creates a race condition down the line remove the above line.
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("SpatialVibratorAudio", spatialVibratorAudio), UpdateDir.Own));
-        }
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.SpatialAudio), spatialVibratorAudio), UpdateDir.Own)).ConfigureAwait(false);
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
         ImGui.Spacing();
@@ -511,11 +435,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
         if (ImGui.InputText("##Global PiShock Share Code", ref globalShockCollarShareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-        {
-            _playerCharacterManager.GlobalPerms.GlobalShockShareCode = globalShockCollarShareCode;
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockShareCode), globalShockCollarShareCode), UpdateDir.Own)).ConfigureAwait(false);
 
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("GlobalShockShareCode", globalShockCollarShareCode), UpdateDir.Own));
-        }
         ImUtf8.SameLineInner();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
         {
@@ -523,18 +445,20 @@ public class SettingsUi : WindowMediatorSubscriberBase
             // Send Mediator Event to grab updated settings for pair.
             Task.Run(async () =>
             {
-                if (_playerCharacterManager.GlobalPerms is null)
+                if (_global.GlobalPerms is null)
                     return;
 
-                var newPerms = await _shockProvider.GetPermissionsFromCode(_playerCharacterManager.GlobalPerms.GlobalShockShareCode);
-                // set the new permissions.
-                _playerCharacterManager.GlobalPerms.AllowShocks = newPerms.AllowShocks;
-                _playerCharacterManager.GlobalPerms.AllowVibrations = newPerms.AllowVibrations;
-                _playerCharacterManager.GlobalPerms.AllowBeeps = newPerms.AllowBeeps;
-                _playerCharacterManager.GlobalPerms.MaxDuration = newPerms.MaxDuration;
-                _playerCharacterManager.GlobalPerms.MaxIntensity = newPerms.MaxIntensity;
-                // update the permissions.
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerCharacterManager.GlobalPerms, UpdateDir.Own));
+                var newPerms = await _shockProvider.GetPermissionsFromCode(_global.GlobalPerms.GlobalShockShareCode);
+                // set the new permissions, without affecting the original.
+                var newGlobalPerms = _global.GlobalPerms with
+                {
+                    AllowShocks = newPerms.AllowShocks,
+                    AllowVibrations = newPerms.AllowVibrations,
+                    AllowBeeps = newPerms.AllowBeeps,
+                    MaxDuration = newPerms.MaxDuration,
+                    MaxIntensity = newPerms.MaxIntensity,
+                };
+                await _hub.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, newGlobalPerms, UpdateDir.Own));
             });
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
@@ -546,14 +470,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
         if (ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxGlobalVibrateDuration, 0, 30))
         {
-            _playerCharacterManager.GlobalPerms.GlobalShockVibrateDuration = TimeSpan.FromSeconds(maxGlobalVibrateDuration);
+            _global.GlobalPerms.GlobalShockVibrateDuration = TimeSpan.FromSeconds(maxGlobalVibrateDuration);
         }
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             // Convert TimeSpan to ticks and send as UInt64
-            ulong ticks = (ulong)_playerCharacterManager.GlobalPerms.GlobalShockVibrateDuration.Ticks;
-            _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-            new KeyValuePair<string, object>("GlobalShockVibrateDuration", ticks), UpdateDir.Own));
+            ulong ticks = (ulong)_global.GlobalPerms.GlobalShockVibrateDuration.Ticks;
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockVibrateDuration), ticks), UpdateDir.Own)).ConfigureAwait(false);
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
@@ -581,28 +505,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     private void DrawChannelPreferences()
     {
+        // do not draw the preferences if the globalpermissions are null.
+        if(_global.GlobalPerms is null)
+            return;
+
         float width = ImGui.GetContentRegionAvail().X / 2;
         ImGui.Columns(2, "PreferencesColumns", true);
         ImGui.SetColumnWidth(0, width);
-        // go to first column.
+
         _uiShared.GagspeakBigText("Live Chat Garbler");
         using (ImRaii.Group())
         {
-            // display the channels
             var i = 0;
             foreach (var e in ChatChannel.GetOrderedChannels())
             {
-                // See if it is already enabled by default
-                var enabled = _configService.Current.ChannelsGagSpeak.Contains(e);
-                // Create a new line after every 4 columns
+                var enabled = e.IsChannelEnabled(_global.GlobalPerms.ChatGarblerChannelsBitfield);
                 if (i != 0 && (i == 4 || i == 7 || i == 11 || i == 15 || i == 19))
                     ImGui.NewLine();
 
                 if (ImGui.Checkbox($"{e}", ref enabled))
                 {
-                    if (enabled) _configService.Current.ChannelsGagSpeak.Add(e);
-                    else _configService.Current.ChannelsGagSpeak.Remove(e);
-                    _configService.Save();
+                    var newBitfield = e.SetChannelState(_global.GlobalPerms.ChatGarblerChannelsBitfield, enabled);
+                    _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>
+                        (nameof(_global.GlobalPerms.ChatGarblerChannelsBitfield), newBitfield), UpdateDir.Own)).ConfigureAwait(false);
                 }
 
                 ImGui.SameLine();
@@ -613,6 +538,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.AlignTextToFramePadding();
             ImGui.Text(GSLoc.Settings.Preferences.LangDialectLabel);
             ImGui.SameLine();
+
+            // voodoo magic from old code i cant be asked to polish.
             _uiShared.DrawCombo("##Language", 65, LanguagesDialects.Keys.ToArray(), (item) => item, (i) =>
             {
                 if (i is null || i == _configService.Current.Language) return;
@@ -641,28 +568,17 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderPuppet);
         using (ImRaii.Group())
         {
-            // display the channels
             var j = 0;
             foreach (var e in ChatChannel.GetOrderedChannels())
             {
-                // See if it is already enabled by default
-                var enabled = _configService.Current.ChannelsPuppeteer.Contains(e);
-
-                // Create a new line after every 4 columns
+                var enabled = e.IsChannelEnabled(_configService.Current.PuppeteerChannelsBitfield);
                 if (j != 0 && (j == 4 || j == 7 || j == 11 || j == 15 || j == 19))
                     ImGui.NewLine();
 
                 if (ImGui.Checkbox($"{e}##{e}puppeteer", ref enabled))
                 {
-                    if (enabled)
-                    {
-                        if (!_configService.Current.ChannelsPuppeteer.Contains(e))
-                            _configService.Current.ChannelsPuppeteer.Add(e);
-                    }
-                    else
-                    {
-                        _configService.Current.ChannelsPuppeteer.Remove(e);
-                    }
+                    var newBitfield = e.SetChannelState(_configService.Current.PuppeteerChannelsBitfield, enabled);
+                    _configService.Current.PuppeteerChannelsBitfield = newBitfield;
                     _configService.Save();
                 }
 

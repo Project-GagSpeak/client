@@ -17,17 +17,15 @@ using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.Services.ConfigurationServices;
+namespace GagSpeak.Services.Configs;
 
-/// <summary>
-/// This configuration manager helps manage the various interactions with all config files related to server-end activity.
-/// <para> It provides a comprehensive interface for configuring servers, managing tags and nicknames, and handling authentication keys. </para>
-/// </summary>
+
+// TODO: REMOVE THIS COMPLETELY.
 public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 {
-    private readonly OnFrameworkService _frameworkUtils;            // a utilities class with methods that work with the Dalamud framework
+    private readonly OnFrameworkService _frameworkUtils;
     private readonly GagspeakConfigService _configService;          // the primary gagspeak config service.
-    private readonly GagStorageConfigService _gagStorageConfig;     // the config for the gag storage service (gag storage)
+    private readonly GagRestrictionsConfigService _gagStorageConfig;     // the config for the gag storage service (gag storage)
     private readonly WardrobeConfigService _wardrobeConfig;         // the config for the wardrobe service (restraint sets)
     private readonly CursedLootConfigService _cursedLootConfig;     // the config for the cursed loot service (cursed loot storage)
     private readonly AliasConfigService _aliasConfig;               // the config for the alias lists (puppeteer stuff)
@@ -37,7 +35,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     public ClientConfigurationManager(ILogger<ClientConfigurationManager> logger,
         GagspeakMediator GagspeakMediator, OnFrameworkService onFrameworkService,
-        GagspeakConfigService configService, GagStorageConfigService gagStorageConfig,
+        GagspeakConfigService configService, GagRestrictionsConfigService gagStorageConfig,
         WardrobeConfigService wardrobeConfig, CursedLootConfigService cursedLootConfig,
         AliasConfigService aliasConfig, PatternConfigService patternConfig,
         AlarmConfigService alarmConfig, TriggerConfigService triggersConfig) : base(logger, GagspeakMediator)
@@ -133,15 +131,6 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     /* -------------------- Update Monitoring & Hardcore Methods -------------------- */
     #region Update Monitoring And Hardcore
-    public List<string> GetPlayersToListenFor()
-    {
-        // select from the aliasStorages, the character name and world where the values are not string.empty.
-        return AliasConfig.AliasStorage
-            .Where(x => x.Value.CharacterNameWithWorld != string.Empty)
-            .Select(x => x.Value.CharacterNameWithWorld)
-            .ToList();
-    }
-
     public IEnumerable<ITextNode> GetAllNodes()
     {
         return new ITextNode[] { GagspeakConfig.ForcedStayPromptList }
@@ -247,12 +236,6 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
         return newName;
     }
-
-
-    public bool HasGlamourerAlterations => GetActiveSetIdx() != -1 || ActiveCursedItems.Count > 0;
-
-
-
 
     /* --------------------- Gag Storage Config Methods --------------------- */
     #region Gag Storage Methods
@@ -394,10 +377,10 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     internal List<Guid> ActiveCursedItems => CursedLootConfig.CursedLootStorage.CursedItems
         .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
         .OrderByDescending(x => x.AppliedTime) // reverse this if wrong order.
-        .Select(x => x.LootId)
+        .Select(x => x.Identifier)
         .ToList();
 
-    internal bool IsGuidInItems(Guid lootId) => CursedLootConfig.CursedLootStorage.CursedItems.Any(x => x.LootId == lootId);
+    internal bool IsGuidInItems(Guid lootId) => CursedLootConfig.CursedLootStorage.CursedItems.Any(x => x.Identifier == lootId);
 
     internal void AddCursedItem(CursedItem newItem)
     {
@@ -408,14 +391,14 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     internal void RemoveCursedItem(Guid lootIdToRemove)
     {
-        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.LootId == lootIdToRemove);
+        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.Identifier == lootIdToRemove);
         CursedLootConfig.CursedLootStorage.CursedItems.RemoveAt(idx);
         _cursedLootConfig.Save();
     }
 
     internal void ActivateCursedItem(Guid lootId, DateTimeOffset endTimeUtc)
     {
-        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.LootId == lootId);
+        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.Identifier == lootId);
         if (idx != -1)
         {
             CursedLootConfig.CursedLootStorage.CursedItems[idx].AppliedTime = DateTimeOffset.UtcNow;
@@ -426,7 +409,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     internal void DeactivateCursedItem(Guid lootId)
     {
-        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.LootId == lootId);
+        var idx = CursedLootConfig.CursedLootStorage.CursedItems.FindIndex(x => x.Identifier == lootId);
         if (idx != -1)
         {
             CursedLootConfig.CursedLootStorage.CursedItems[idx].AppliedTime = DateTimeOffset.MinValue;
@@ -469,13 +452,13 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
         {
             AliasConfig.AliasStorage[userId] = new AliasStorage() { AliasList = aliasList };
             _aliasConfig.Save();
-            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppetUpdateType.AliasListUpdated));
         }
         else
         {
             AliasConfig.AliasStorage[userId].AliasList = aliasList;
             _aliasConfig.Save();
-            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppeteerUpdateType.AliasListUpdated));
+            Mediator.Publish(new PlayerCharAliasChanged(userId, PuppetUpdateType.AliasListUpdated));
         }
     }
 
@@ -504,12 +487,12 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     /// <summary> Fetches the currently Active Alarm to have as a reference accessor. Can be null. </summary>
     public bool AnyPatternIsPlaying => PatternConfig.PatternStorage.Patterns.Any(p => p.IsActive);
-    public PatternData FetchPattern(int idx) => PatternConfig.PatternStorage.Patterns[idx];
-    public PatternData? FetchPatternById(Guid id) => PatternConfig.PatternStorage.Patterns.FirstOrDefault(p => p.UniqueIdentifier == id);
+    public Pattern FetchPattern(int idx) => PatternConfig.PatternStorage.Patterns[idx];
+    public Pattern? FetchPatternById(Guid id) => PatternConfig.PatternStorage.Patterns.FirstOrDefault(p => p.UniqueIdentifier == id);
     public bool PatternExists(Guid id) => PatternConfig.PatternStorage.Patterns.Any(p => p.UniqueIdentifier == id);
     public Guid ActivePatternGuid() => PatternConfig.PatternStorage.Patterns.Where(p => p.IsActive).Select(p => p.UniqueIdentifier).FirstOrDefault();
 
-    public void AddNewPattern(PatternData newPattern)
+    public void AddNewPattern(Pattern newPattern)
     {
         // esure uniqueness.
         newPattern.Name = EnsureUniqueName(newPattern.Name, PatternConfig.PatternStorage.Patterns, pattern => pattern.Name);
@@ -521,7 +504,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
     }
 
     // Bulk variant.
-    public void AddNewPatterns(List<PatternData> newPattern)
+    public void AddNewPatterns(List<Pattern> newPattern)
     {
         foreach (var pattern in newPattern)
         {
@@ -560,7 +543,7 @@ public class ClientConfigurationManager : DisposableMediatorSubscriberBase
 
     }
 
-    public void UpdatePattern(PatternData pattern, int idx)
+    public void UpdatePattern(Pattern pattern, int idx)
     {
         PatternConfig.PatternStorage.Patterns[idx] = pattern;
         _patternConfig.Save();

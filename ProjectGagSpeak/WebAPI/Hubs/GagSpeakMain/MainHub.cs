@@ -22,28 +22,40 @@ namespace GagSpeak.WebAPI;
 /// </summary>
 public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 {
+    private readonly GlobalData _globals;
     private readonly HubFactory _hubFactory;
-    private readonly ClientData _playerData;
+    private readonly VisualStateListener _visualListener;
+    private readonly ToyboxStateListener _kinkListener;
     private readonly PairManager _pairs;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly GagspeakConfigService _mainConfig;
-    private readonly ClientCallbackService _clientCallbacks;
 
     // Cancellation Token Sources
     private CancellationTokenSource HubConnectionCTS;
     private CancellationTokenSource? HubHealthCTS = new();
+    private const string MainServer = "GagSpeak Main";
+    private const string MainServiceUri = "wss://gagspeak.kinkporium.studio";
 
-    public MainHub(ILogger<MainHub> logger, GagspeakMediator mediator, HubFactory hubFactory,
-        ClientData playerData, TokenProvider tokenProvider, PairManager pairs, ServerConfigurationManager serverConfigs, 
-        GagspeakConfigService mainConfig, ClientCallbackService callbackService, ClientMonitorService clientService,
-        OnFrameworkService frameworkUtils) : base(logger, mediator, tokenProvider, clientService, frameworkUtils)
+    public MainHub(
+        ILogger<MainHub> logger,
+        GagspeakMediator mediator,
+        TokenProvider tokenProvider,
+        ClientMonitorService clientService,
+        OnFrameworkService frameworkUtils,
+        GlobalData globals,
+        HubFactory hubFactory,
+        VisualStateListener visualListener,
+        ToyboxStateListener kinkListener,
+        PairManager pairs,
+        ServerConfigurationManager serverConfigs,
+        GagspeakConfigService mainConfig)
+        : base(logger, mediator, tokenProvider, clientService, frameworkUtils)
     {
-        _playerData = playerData;
+        _globals = globals;
         _hubFactory = hubFactory;
         _pairs = pairs;
         _serverConfigs = serverConfigs;
         _mainConfig = mainConfig;
-        _clientCallbacks = callbackService;
 
         // Create our CTS for the hub connection
         HubConnectionCTS = new CancellationTokenSource();
@@ -100,7 +112,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     public override async Task Connect()
     {
         Logger.LogInformation("Client Wished to Connect to the server", LoggerType.ApiCore);
-        if (!ShouldClientConnect(out string? secretKey))
+        if (!ShouldClientConnect(out var secretKey))
         {
             Logger.LogInformation("Client was not in a valid state to connect to the server.", LoggerType.ApiCore);
             HubConnectionCTS?.Cancel();
@@ -118,7 +130,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         HubConnectionCTS?.Cancel();
         HubConnectionCTS?.Dispose();
         HubConnectionCTS = new CancellationTokenSource();
-        CancellationToken connectionToken = HubConnectionCTS.Token;
+        var connectionToken = HubConnectionCTS.Token;
 
         // While we are still waiting to connect to the server, do the following:
         while (ServerStatus is not ServerState.Connected && !connectionToken.IsCancellationRequested)
@@ -248,7 +260,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         Logger.LogInformation("Disposing of GagSpeakHub-Main's Hub Instance", LoggerType.ApiCore);
 
         // Obliterate the GagSpeakHub-Main into the ground, erase it out of existence .
-        await _hubFactory.DisposeHubAsync(HubType.MainHub).ConfigureAwait(false);
+        await _hubFactory.DisposeHubAsync().ConfigureAwait(false);
 
         // If our hub was already initialized by the time we call this, reset all values monitoring it.
         // After this connection revision this should technically ALWAYS be true, so if it isnt log it as an error.
@@ -314,7 +326,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
             // Obtain the fresh account details.
             Logger.LogDebug("Calling OneTimeUseAccountGeneration.", LoggerType.ApiCore);
-            (string, string) accountDetails = await GagSpeakHubMain.InvokeAsync<(string, string)>("OneTimeUseAccountGeneration");
+            var accountDetails = await GagSpeakHubMain.InvokeAsync<(string, string)>("OneTimeUseAccountGeneration");
 
             Logger.LogInformation("New Account Details Fetched.", LoggerType.ApiCore);
             return accountDetails;
@@ -410,9 +422,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         OnUserRemoveClientPair(dto => _ = Client_UserRemoveClientPair(dto));
         OnUserAddPairRequest(dto => _ = Client_UserAddPairRequest(dto));
         OnUserRemovePairRequest(dto => _ = Client_UserRemovePairRequest(dto));
-        
-        
-        OnUpdateUserIndividualPairStatusDto(dto => _ = Client_UpdateUserIndividualPairStatusDto(dto));
 
         OnUserApplyMoodlesByGuid(dto => _ = Client_UserApplyMoodlesByGuid(dto));
         OnUserApplyMoodlesByStatus(dto => _ = Client_UserApplyMoodlesByStatus(dto));
@@ -428,14 +437,24 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
         OnUserReceiveDataComposite(dto => _ = Client_UserReceiveDataComposite(dto));
         OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
-        OnUserReceiveDataAppearance(dto => _ = Client_UserReceiveDataAppearance(dto));
-        OnUserReceiveDataWardrobe(dto => _ = Client_UserReceiveDataWardrobe(dto));
+        OnUserReceiveDataGags(dto => _ = Client_UserReceiveDataGags(dto));
+        OnUserReceiveDataRestrictions(dto => _ = Client_UserReceiveDataRestrictions(dto));
+        OnUserReceiveDataRestraint(dto => _ = Client_UserReceiveDataRestraint(dto));
         OnUserReceiveDataOrders(dto => _ = Client_UserReceiveDataOrders(dto));
         OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
         OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
         OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
 
         OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));
+
+        OnRoomJoin(dto => _ = Client_RoomJoin(dto));
+        OnRoomLeave(dto => _ = Client_RoomLeave(dto));
+        OnRoomReceiveDeviceUpdate((dto, data) => _ = Client_RoomReceiveDeviceUpdate(dto, data));
+        OnRoomReceiveDataStream(dto => _ = Client_RoomReceiveDataStream(dto));
+        OnRoomUserAccessGranted(dto => _ = Client_RoomUserAccessGranted(dto));
+        OnRoomUserAccessRevoked(dto => _ = Client_RoomUserAccessRevoked(dto));
+        OnRoomReceiveChatMessage((dto, message) => _ = Client_RoomReceiveChatMessage(dto, message));
+
         OnGlobalChatMessage(dto => _ = Client_GlobalChatMessage(dto));
         OnUserSendOffline(dto => _ = Client_UserSendOffline(dto));
         OnUserSendOnline(dto => _ = Client_UserSendOnline(dto));
@@ -500,7 +519,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
                 Logger.LogTrace("Checking Main Server Client Health State", LoggerType.Health);
 
                 // Refresh and update our token, checking for if we will need to reconnect.
-                bool requireReconnect = await RefreshToken(ct).ConfigureAwait(false);
+                var requireReconnect = await RefreshToken(ct).ConfigureAwait(false);
 
                 // If we do need to reconnect, it means we have just disconnected from the server.
                 // Thus, this check is no longer valid and we should break out of the health check loop.
@@ -570,7 +589,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     {
         var onlinePairs = await UserGetOnlinePairs().ConfigureAwait(false);
         foreach (var entry in onlinePairs)
-            _pairs.MarkPairOnline(entry, sendNotif: false);
+            _pairs.MarkPairOnline(entry, sendNotification: false);
 
         Logger.LogDebug("Online Pairs: [" + string.Join(", ", onlinePairs.Select(x => x.User.AliasOrUID)) + "]", LoggerType.ApiCore);
         Mediator.Publish(new OnlinePairsLoadedMessage());
@@ -580,7 +599,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetPairRequests().ConfigureAwait(false);
-        _playerData.CurrentRequests = requests.ToHashSet();
+        _globals.CurrentRequests = requests.ToHashSet();
         Logger.LogDebug("Kinkster Requests Recieved. Found [" + requests.Count + "]", LoggerType.ApiCore);
         Mediator.Publish(new RefreshUiMessage());
     }
@@ -646,28 +665,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
                 Logger.LogWarning("Reconnecting to GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
                 await Reconnect().ConfigureAwait(false);
             }
-        }
-    }
-
-    protected override void CheckConnection()
-    {
-        if (ServerStatus is not (ServerState.Connected or ServerState.Connecting or ServerState.Reconnecting))
-            throw new InvalidDataException("GagSpeakHub-Toybox Not connected");
-    }
-
-    /// <summary> 
-    /// A helper method to ensure the action is executed safely, and if an exception is thrown, it is logged.
-    /// </summary>
-    /// <param name="act">the action to execute</param>
-    private void ExecuteSafely(Action act)
-    {
-        try
-        {
-            act();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogCritical(ex, "Error on executing safely");
         }
     }
 }

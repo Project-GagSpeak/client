@@ -7,6 +7,7 @@ using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Services;
+using GagSpeak.Restrictions;
 using GagSpeak.Services;
 using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
@@ -26,7 +27,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _mainHub;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly PairManager _pairManager;
     private readonly ClientMonitorService _clientService;
     private readonly OnFrameworkService _frameworkUtils;
@@ -45,7 +46,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     public static AchievementSaveData SaveData { get; private set; } = new AchievementSaveData();
 
     public AchievementManager(ILogger<AchievementManager> logger, GagspeakMediator mediator, 
-        MainHub mainHub, ClientConfigurationManager clientConfigs, ClientData playerData, 
+        MainHub mainHub, ClientConfigurationManager clientConfigs, GlobalData playerData, 
         PairManager pairManager, ClientMonitorService clientService, OnFrameworkService frameworkUtils, 
         CosmeticService cosmetics, KinkPlateService kinkPlateService, VibratorService vibeService, 
         UnlocksEventManager eventManager, INotificationManager notifs, IDutyState dutyState) : base(logger, mediator)
@@ -487,11 +488,17 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     {
         Logger.LogInformation("Player Logged In, Subscribing to Events!");
         _eventManager.Subscribe<OrderInteractionKind>(UnlocksEvent.OrderAction, OnOrderAction);
-        _eventManager.Subscribe<bool, GagLayer, GagType, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _eventManager.Subscribe<bool, GagLayer, GagType, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
-        _eventManager.Subscribe<bool, GagLayer, Padlocks, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
-        _eventManager.Subscribe<bool, GagLayer, Padlocks, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _eventManager.Subscribe<GagLayer, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _eventManager.Subscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _eventManager.Subscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _eventManager.Subscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _eventManager.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+
+        _eventManager.Subscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
+        _eventManager.Subscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
+        _eventManager.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestrictionLockStateChange, OnRestrictionLock); // Lock on US
+        _eventManager.Subscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestrictionLockStateChange, OnPairRestrictionLockChange);
+
 
         _eventManager.Subscribe<RestraintSet>(UnlocksEvent.RestraintUpdated, OnRestraintSetUpdated);
         _eventManager.Subscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintStateChange); // Apply on US
@@ -537,7 +544,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Subscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
         _eventManager.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
 
-        Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagInfo, msg.ActiveRestraint));
+        Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, _ => OnPairVisible());
         Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
         Mediator.Subscribe<PlaybackStateToggled>(this, (msg) => (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -562,11 +569,16 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private void UnsubscribeFromEvents()
     {
         _eventManager.Unsubscribe<OrderInteractionKind>(UnlocksEvent.OrderAction, OnOrderAction);
-        _eventManager.Unsubscribe<bool, GagLayer, GagType, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _eventManager.Unsubscribe<bool, GagLayer, GagType, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
-        _eventManager.Unsubscribe<bool, GagLayer, Padlocks, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
-        _eventManager.Unsubscribe<bool, GagLayer, Padlocks, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _eventManager.Unsubscribe<GagLayer, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _eventManager.Unsubscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _eventManager.Unsubscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _eventManager.Unsubscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _eventManager.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+
+        _eventManager.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
+        _eventManager.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
+        _eventManager.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestrictionLockStateChange, OnRestrictionLock); // Lock on US
+        _eventManager.Unsubscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestrictionLockStateChange, OnPairRestrictionLockChange);
 
         _eventManager.Unsubscribe<RestraintSet>(UnlocksEvent.RestraintUpdated, OnRestraintSetUpdated);
         _eventManager.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintStateChange); // Apply on US

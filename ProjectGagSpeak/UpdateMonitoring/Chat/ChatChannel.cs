@@ -216,4 +216,20 @@ public static class ChatChannel
         // return the order of the channel, or if it doesnt have one, return the max value
         return attribute?.Order ?? int.MaxValue;
     }
+
+    // static helper method to check the bitfield int of the ordered channels and see if it is enabled.
+    public static bool IsChannelEnabled(this Channels channel, int associatedBitfield)
+    {
+        return (associatedBitfield & (1 << GetOrder(channel))) != 0;
+    }
+
+    /// <summary> Helper method to set the state of a bitfield at a defined channel.
+    /// <remarks> This accounts for the ordered channels. </remarks>
+    /// <returns> The updated bitfield. </returns>
+    public static int SetChannelState(this Channels channel, int currentBitfield, bool state)
+    {
+        return state
+            ? currentBitfield | (1 << GetOrder(channel))
+            : currentBitfield & ~(1 << GetOrder(channel));
+    }
 }

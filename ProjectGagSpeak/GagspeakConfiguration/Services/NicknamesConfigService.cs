@@ -2,7 +2,7 @@ using GagSpeak.GagspeakConfiguration.Configurations;
 
 namespace GagSpeak.GagspeakConfiguration;
 
-public class NicknamesConfigService : ConfigurationServiceBase<UidNicknamesConfig>
+public class NicknamesConfigService : ConfigurationServiceBase<NicknamesConfig>
 {
     public const string ConfigName = "nicknames.json";
     public const bool PerCharacterConfig = false;

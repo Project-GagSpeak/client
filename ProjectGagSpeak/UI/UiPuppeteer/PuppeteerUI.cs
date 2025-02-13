@@ -27,7 +27,7 @@ namespace GagSpeak.UI.UiPuppeteer;
 public class PuppeteerUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _apiHubMain;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly PuppeteerComponents _components;
     private readonly PuppeteerHandler _handler;
     private readonly UserPairListHandler _pairList;
@@ -42,7 +42,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private enum PuppeteerMode { Global, Pairs }
 
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, ClientData clientData, PuppeteerComponents components,
+        MainHub apiHubMain, GlobalData clientData, PuppeteerComponents components,
         PuppeteerHandler handler, UserPairListHandler pairList,
         ClientConfigurationManager clientConfigs, ClientMonitorService clientService,
         CosmeticService cosmetics, UiSharedService uiShared) : base(logger, mediator, "Puppeteer UI")
@@ -390,7 +390,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                     HasNameStored = true,
                     ListenerName = name + "@" + worldName,
                 };
-                _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppeteerUpdateType.PlayerNameRegistered, UpdateDir.Own));
+                _ = _apiHubMain.UserPushPairDataAliasStorageUpdate(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppetUpdateType.PlayerNameRegistered, UpdateDir.Own));
                 _logger.LogDebug("Sent Puppeteer Name to " + _handler.SelectedPair.GetNickAliasOrUid(), LoggerType.Permissions);
             });
 

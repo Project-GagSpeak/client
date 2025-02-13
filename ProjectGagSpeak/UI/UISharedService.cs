@@ -364,6 +364,26 @@ public partial class UiSharedService
         return result;
     }
 
+    public static void DrawGrouped(Action imguiDrawAction, float? width = null, float height = 0, float rounding = 5f, Vector4 color = default)
+    {
+        var cursorPos = ImGui.GetCursorPos();
+        using (ImRaii.Group())
+        {
+            if (width != null)
+            {
+                ImGuiHelpers.ScaledDummy(width.Value, height);
+                ImGui.SetCursorPos(cursorPos);
+            }
+            imguiDrawAction.Invoke();
+        }
+
+        ImGui.GetWindowDrawList().AddRect(
+            ImGui.GetItemRectMin() - ImGui.GetStyle().ItemInnerSpacing,
+            ImGui.GetItemRectMax() + ImGui.GetStyle().ItemInnerSpacing,
+            Color(color), rounding);
+    }
+
+
     /// <summary> The additional param for an ID is optional. if not provided, the id will be the text. </summary>
     public bool IconButton(FontAwesomeIcon icon, float? height = null, string? id = null, bool disabled = false, bool inPopup = false)
     {

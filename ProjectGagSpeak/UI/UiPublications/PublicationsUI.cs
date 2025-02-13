@@ -118,7 +118,7 @@ public class PublicationsUI : WindowMediatorSubscriberBase
                         _publicationsPanel.DrawPatternManager();
                         break;
                     case PublicationsTabs.Tabs.ManageMoodles:
-                        _publicationsPanel.DrawMoodlesManager();
+                        _publicationsPanel.DrawRestrictionsManager();
                         break;
                     default:
                         break;

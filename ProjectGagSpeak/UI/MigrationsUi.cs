@@ -601,7 +601,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         }
 
         var importedCursedItems = _infoExchanger.GetCursedItemsFromUID(uid);
-        LoadedCursedItems = importedCursedItems.Where(x => _clientConfigs.IsGuidInItems(x.LootId) is false).ToList();
+        LoadedCursedItems = importedCursedItems.Where(x => _clientConfigs.IsGuidInItems(x.Identifier) is false).ToList();
 
         var importedTriggers = _infoExchanger.GetTriggersFromUID(uid);
         LoadedTriggers = importedTriggers.Where(x => _clientConfigs.IsGuidInTriggers(x.Identifier) is false).ToList();

@@ -12,17 +12,15 @@ public class AlarmConfigService : ConfigurationServiceBase<AlarmConfig>
     protected override string ConfigurationName => ConfigName;
     protected override bool PerCharacterConfigPath => PerCharacterConfig;
 
-    // apply an override for migrations off the baseconfigservice
-    protected override JObject MigrateConfig(JObject oldConfigJson, int readVersion)
+    protected override JObject MigrateConfig(JObject oldConfigJson)
     {
-        JObject newConfigJson;
+        var readVersion = oldConfigJson["Version"]?.Value<int>() ?? 0;
 
-        // no migration needed
-        newConfigJson = oldConfigJson;
-        return newConfigJson;
+        // Perform any migrations necessary.
+        return oldConfigJson;
     }
 
-    // Safely update data for new format.
+    // Safely update data for new format. (Whenever we need it)
     private JObject MigrateFromV0toV1(JObject oldConfigJson)
     {
         // create a new JObject to store the new config
@@ -32,4 +30,6 @@ public class AlarmConfigService : ConfigurationServiceBase<AlarmConfig>
 
         return oldConfigJson;
     }
+
+    // already does deserialization and serialization for us.
 }

@@ -17,11 +17,11 @@ public class ToyboxUI : WindowMediatorSubscriberBase
 {
     private readonly ToyboxTabMenu _tabMenu;
     private readonly ToyboxOverview _toysOverview;
-    private readonly ToyboxPrivateRooms _vibeServer;
+    private readonly ToyboxVibeRooms _vibeServer;
     private readonly ToyboxPatterns _patterns;
     private readonly ToyboxTriggerManager _triggerManager;
     private readonly ToyboxAlarmManager _alarmManager;
-    private readonly PatternPlayback _patternPlayback;
+    private readonly PlaybackDisplay _playback;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
@@ -36,9 +36,9 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     };
 
     public ToyboxUI(ILogger<ToyboxUI> logger, GagspeakMediator mediator,
-        ToyboxOverview toysOverview, ToyboxPrivateRooms vibeServer, ToyboxPatterns patterns,
+        ToyboxOverview toysOverview, ToyboxVibeRooms vibeServer, ToyboxPatterns patterns,
         ToyboxTriggerManager triggerManager, ToyboxAlarmManager alarmManager,
-        PatternPlayback playback, CosmeticService cosmetics, UiSharedService uiShared,
+        PlaybackDisplay playback, CosmeticService cosmetics, UiSharedService uiShared,
         TutorialService guides) : base(logger, mediator, "Toybox UI")
     {
         _toysOverview = toysOverview;
@@ -46,7 +46,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         _patterns = patterns;
         _triggerManager = triggerManager;
         _alarmManager = alarmManager;
-        _patternPlayback = playback;
+        _playback = playback;
         _cosmetics = cosmetics;
         _uiShared = uiShared;
         _guides = guides;
@@ -197,7 +197,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                     _tabMenu.DrawSelectableTabMenu();
 
                     ImGui.SetCursorPosY(region.Y - 80f);
-                    _patternPlayback.DrawPlaybackDisplay();
+                    _playback.DrawPlaybackDisplay();
                 }
                 // pop pushed style variables and draw next column.
                 ImGui.PopStyleVar();

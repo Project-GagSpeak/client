@@ -31,7 +31,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
 
     public bool Zoning => _clientService.IsZoning;
     public static short LastCommendationsCount = 0;
-    public static bool GlamourChangeEventsDisabled = false; // prevents glamourer hell
     public static Lazy<Dictionary<ushort, string>> WorldData { get; private set; }
     public bool IsFrameworkUnloading => _framework.IsFrameworkUnloading;
 
@@ -245,13 +244,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         }
 
         foreach (var notUpdatedChara in _notUpdatedCharas)
-        {
             _playerCharas.Remove(notUpdatedChara);
-        }
 
         // clear the list of not updated characters
         _notUpdatedCharas.Clear();
-
 
         // check if we are in the middle of a delayed framework update
         var isNormalFrameworkUpdate = DateTime.Now < _delayedFrameworkUpdateCheck.AddSeconds(1);

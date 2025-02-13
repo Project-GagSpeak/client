@@ -17,13 +17,13 @@ namespace GagSpeak.UI.UiGagSetup;
 
 public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 {
-    private readonly ClientData _gagData; // for grabbing lock data
+    private readonly GlobalData _gagData; // for grabbing lock data
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly AppearanceManager _appearance;
     private readonly TutorialService _guides;
     private readonly UiSharedService _uiShared;
 
-    public ActiveGagsPanel(ILogger<ActiveGagsPanel> logger, GagspeakMediator mediator, ClientData gagData,
+    public ActiveGagsPanel(ILogger<ActiveGagsPanel> logger, GagspeakMediator mediator, GlobalData gagData,
         ClientConfigurationManager clientConfigs, AppearanceManager appearance,
         TutorialService guides, UiSharedService uiShared) : base(logger, mediator)
     {

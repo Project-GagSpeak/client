@@ -37,13 +37,13 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
 {
     private const float ComboWidth = 225f;
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ClientData _playerManager;
+    private readonly GlobalData _playerManager;
     private readonly MoodlesAssociations _relatedMoodles;
     private readonly GameItemStainHandler _itemStainHandler;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     public GagStoragePanel(ILogger<GagStoragePanel> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, ClientData playerManager,
+        ClientConfigurationManager clientConfigs, GlobalData playerManager,
         GameItemStainHandler itemStainHandler, MoodlesAssociations relatedMoodles, 
         UiSharedService uiShared, TutorialService guides) : base(logger, mediator)
     {
@@ -79,7 +79,7 @@ public class GagStoragePanel : DisposableMediatorSubscriberBase
         var saveSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Save, "Save");
         var centerYpos = (textSize.Y - ImGui.GetFrameHeight());
 
-        using (ImRaii.Child("MoodlesManagerHeader", new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + (centerYpos - startYpos) * 2)))
+        using (ImRaii.Child("RestrictionsManagerHeader", new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + (centerYpos - startYpos) * 2)))
         {
             // now next to it we need to draw the header text
             ImGui.SameLine(ImGui.GetStyle().ItemSpacing.X);

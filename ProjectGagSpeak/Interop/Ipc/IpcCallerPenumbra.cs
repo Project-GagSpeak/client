@@ -1,28 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.Services;
-using Penumbra.Api;
+using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.PlayerData.Services;
+using GagSpeak.Restrictions;
+using GagSpeak.Services.Mediator;
+using GagSpeak.StateManagers;
+using GagSpeak.UpdateMonitoring;
 using Penumbra.Api.Enums;
 using Penumbra.Api.Helpers;
-using Penumbra.GameData.Interop;
-using Penumbra.GameData.Structs;
 using Penumbra.Api.IpcSubscribers;
-using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.GagspeakConfiguration.Models;
-using Lumina.Excel.Sheets;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.StateManagers;
 
 namespace GagSpeak.Interop.Ipc;
-
 
 /// <summary> reads/gets the name and directory name of the mod. </summary>
 public readonly record struct Mod(string Name, string DirectoryName) : IComparable<Mod>
@@ -37,175 +25,182 @@ public readonly record struct Mod(string Name, string DirectoryName) : IComparab
     }
 }
 
-/// <summary> gets the settings for the mod, including all details about it. </summary>
-public readonly record struct ModSettings(Dictionary<string, List<string>> Settings, int Priority, bool Enabled)
+/// <summary> gets the settings for the mod that are currently selected/chosen. </summary>
+/// <remarks> The ForceInherit and Remove inputs currently have unknown purpose / effect. </remarks>
+public readonly record struct ModSettings(Dictionary<string, List<string>> Settings, int Priority, bool Enabled, bool ForceInherit, bool Remove)
 {
-    public ModSettings() : this(new Dictionary<string, List<string>>(), 0, false) { }
+    public ModSettings() : this(new Dictionary<string, List<string>>(), 0, false, false, false) { }
 
-    public static ModSettings Empty
-        => new();
+    public static ModSettings Empty => new();
 }
 
-// the penumbra service that we will use to interact with penumbra
-public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
+/// <summary> The Storage of all a Mods Groups and options for each group of the mod. </summary>
+/// <remarks> Useful for obtaining when we want to edit what our temporary mod settings will be. </remarks>
+public readonly record struct ModSettingOptions(IReadOnlyDictionary<string, (string[] Options, GroupType GroupType)> Options)
 {
-    /* ------- Class Attributes ---------- */
-    private readonly IDalamudPluginInterface _pi;
-    private readonly OnFrameworkService _frameworkService;
-    private readonly GagspeakMediator _mediator;
+    public ModSettingOptions() : this(new Dictionary<string, (string[] Options, GroupType GroupType)>()) { }
+
+    public static ModSettingOptions Empty => new();
+}
+
+public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
+{
+    private int API_CurrentMajor = 0;
+    private int API_CurrentMinor = 0;
+    private const int RequiredBreakingVersion = 5;
+    private const int RequiredFeatureVersion = 3;
+
+    // ID displayed in penumbra when the mod settings are set.
+    private const string GAGSPEAK_ID = "ProjectGagSpeak";
+    // Key used to associate with glamourer
+    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3) 
+    private const int GAGSPEAK_KEY = 5723478;
+    private const int PLAYER_OBJECT_IDX = 0;
+
     private bool _shownPenumbraUnavailable = false; // safety net to prevent notification spam.
 
-    /* ------- Penumbra API Event Subscribers ---------- */
-    private readonly EventSubscriber _penumbraInitialized;
-    private readonly EventSubscriber _penumbraDisposed;
-    private readonly EventSubscriber<ChangedItemType, uint> _tooltipSubscriber;
-    private readonly EventSubscriber<MouseButton, ChangedItemType, uint> _clickSubscriber;
-    private readonly EventSubscriber<nint, int> _penumbraObjectRedrawnSubscriber;
+    private readonly EventSubscriber                                     OnInitialized;
+    private readonly EventSubscriber                                     OnDisposed;
+    private readonly EventSubscriber<ChangedItemType, uint>              TooltipSubscriber;
+    private readonly EventSubscriber<MouseButton, ChangedItemType, uint> ItemClickedSubscriber;
+    private readonly EventSubscriber<nint, int>                          OnRedrawFinished;
+    public EventSubscriber<string, string>                               OnModMoved; // Fires when mod directory changes. Handled by CustomModSettingManager.
 
+    private ApiVersion                          Version;               // Obtains the current version of Penumbra's API.
+    private RedrawObject                        RedrawClient;          // Can force the client to Redraw.
+    private GetModList                          GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
+    private GetCollection                       GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
+    private GetAvailableModSettings             GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
+    private GetCurrentModSettings               GetModSettingsCurrent; // Obtains the currently chosen options for a mod.
+    private SetTemporaryModSettingsPlayer       SetOrUpdateTempMod;    // Temporarily sets and locks a Mod with defined settings. Can be updated.
+    private RemoveTemporaryModSettingsPlayer    RemoveTempMod;         // Removes a temporary mod we set. Used for cleanup.
+    private RemoveAllTemporaryModSettingsPlayer RemoveAllTempMod;      // Removes all temporary mods we set. Used for cleanup.
 
-    /* -------- Penumbra IPC Event Subscribers */
-    private RedrawObject? _redrawSubscriber;           // when a target redraws
-    private GetModList? _getMods;                      // gets the mod list for our table
-    private GetCollection? _currentCollection;         // gets the current collection of our character (0)
-    private GetCurrentModSettings? _getCurrentSettings;// we shouldnt need this necessarily  
-    private TrySetMod? _setMod;                        // set the mod to be enabled or disabled
-    private TrySetModPriority? _setModPriority;        // change the mod priority while active to that it overrides other things
-    private ApiVersion _penumbraApiVersion;            // Version of penumbra's API
-
-    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, 
-        IDalamudPluginInterface pi, OnFrameworkService frameworkService, 
-        GagspeakMediator mediator) : base(logger, mediator)
+    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator,
+        OnFrameworkService frameworkUtils, IDalamudPluginInterface pi) : base(logger, mediator)
     {
-        _pi = pi;
-        _frameworkService = frameworkService;
-        _mediator = mediator;
+        OnInitialized = Initialized.Subscriber(pi, () => 
+        {
+            APIAvailable = true;
+            Mediator.Publish(new PenumbraInitializedMessage());
+        });
+        OnDisposed = Disposed.Subscriber(pi, () => Mediator.Publish(new PenumbraDisposedMessage()));
 
+        TooltipSubscriber = ChangedItemTooltip.Subscriber(pi);
+        ItemClickedSubscriber = ChangedItemClicked.Subscriber(pi);
+        OnRedrawFinished = GameObjectRedrawn.Subscriber(pi, ObjectRedrawnEvent);
 
-        _penumbraInitialized = Initialized.Subscriber(pi, PenumbraInitialized);
-        _penumbraDisposed = Disposed.Subscriber(pi, PenumbraDisposed);
-        _penumbraObjectRedrawnSubscriber = GameObjectRedrawn.Subscriber(pi, ObjectRedrawnEvent);
-
-
-        _tooltipSubscriber = ChangedItemTooltip.Subscriber(pi);
-        _clickSubscriber = ChangedItemClicked.Subscriber(pi);
-
-        _penumbraApiVersion = new ApiVersion(pi);
+        Version = new ApiVersion(pi);
+        RedrawClient = new RedrawObject(pi);
+        GetModList = new GetModList(pi);
+        GetActiveCollection = new GetCollection(pi);
+        GetModSettingsAll = new GetAvailableModSettings(pi);
+        GetModSettingsCurrent = new GetCurrentModSettings(pi);
+        SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(pi);
+        RemoveTempMod = new RemoveTemporaryModSettingsPlayer(pi);
+        RemoveAllTempMod = new RemoveAllTemporaryModSettingsPlayer(pi);
 
         CheckAPI();
-        // possibly remove this. 
-        PenumbraInitialized();
     }
 
     public static bool APIAvailable { get; private set; } = false;
-    public int API_CurrentMajor { get; private set; }
-    public int API_CurrentMinor { get; private set; }
-    public const int RequiredPenumbraAPIBreakingVersion = 5;
-    public const int RequiredPenumbraAPIFeatureVersion = 0;
 
     public void CheckAPI()
     {
         try
         {
-            try
-            {
-                (API_CurrentMajor, API_CurrentMinor) = _penumbraApiVersion.Invoke();
-            }
-            catch
-            {
-                try
-                {
-                    (API_CurrentMajor, API_CurrentMinor) = new global::Penumbra.Api.IpcSubscribers.Legacy.ApiVersions(_pi).Invoke();
-                }
-                catch
-                {
-                    API_CurrentMajor = 0;
-                    API_CurrentMinor = 0;
-                    throw;
-                }
-            }
-            // if its broken, dont reattach
-            if (API_CurrentMajor != RequiredPenumbraAPIBreakingVersion || API_CurrentMinor < RequiredPenumbraAPIFeatureVersion)
-            {
-                throw new Exception(
-                    $"Invalid Version {API_CurrentMajor}.{API_CurrentMinor:D4}, required major " +
-                    $"Version {RequiredPenumbraAPIBreakingVersion} with feature greater or equal to {RequiredPenumbraAPIFeatureVersion}.");
-            }
-            // API check sucessful.
-            APIAvailable = true;
-            _shownPenumbraUnavailable = _shownPenumbraUnavailable && !APIAvailable;
+            (API_CurrentMajor, API_CurrentMinor) = Version.Invoke();
         }
-        catch // caught by the exception thrown if not compatible.
+        catch
         {
-            if (!APIAvailable && !_shownPenumbraUnavailable)
-            {
-                _shownPenumbraUnavailable = true;
+            API_CurrentMajor = 0; API_CurrentMinor = 0;
+        }
 
-                _mediator.Publish(new NotificationMessage("Penumbra inactive", "Features using Penumbra will not function properly.", NotificationType.Error));
-            }
+        // State in which version is invalid.
+        if (API_CurrentMajor != RequiredBreakingVersion || API_CurrentMinor < RequiredFeatureVersion)
+        {
+            Logger.LogError($"Invalid Version {API_CurrentMajor}.{API_CurrentMinor:D4}, required major " +
+                $"Version {RequiredBreakingVersion} with feature greater or equal to {RequiredFeatureVersion}.");
+            APIAvailable = false;
+        }
+        else APIAvailable = true;
+        // the penumbra unavailable flag
+        _shownPenumbraUnavailable = _shownPenumbraUnavailable && !APIAvailable;
+
+        if (!APIAvailable && !_shownPenumbraUnavailable)
+        {
+            _shownPenumbraUnavailable = true;
+            Mediator.Publish(new NotificationMessage("Penumbra inactive", "Features using Penumbra will not function properly.", NotificationType.Error));
         }
     }
 
-
     public event Action<MouseButton, ChangedItemType, uint> Click
     {
-        add => _clickSubscriber.Event += value;
-        remove => _clickSubscriber.Event -= value;
+        add => ItemClickedSubscriber.Event += value;
+        remove => ItemClickedSubscriber.Event -= value;
     }
 
     public event Action<ChangedItemType, uint> Tooltip
     {
-        add => _tooltipSubscriber.Event += value;
-        remove => _tooltipSubscriber.Event -= value;
+        add => TooltipSubscriber.Event += value;
+        remove => TooltipSubscriber.Event -= value;
     }
-
-    /// <summary> 
-    /// Try to redraw the given actor. 
-    /// We force this method to trigger a immediate redraw from Mare, so it can redraw a player the moment their changes are applied.
-    /// This allows animation mods to be updated instantly.
-    /// </summary>
-    public void RedrawObject(int objectIndex, RedrawType settings)
-    {
-        Logger.LogInformation("Redrawing ClientPlayer object due to set toggle!", LoggerType.IpcPenumbra);
-        // Let us know that we are manually invoking a redraw.
-        if(objectIndex is 0)
-            AppearanceManager.ManualRedrawProcessing = true;
-        // Invoke the subscriber
-        _redrawSubscriber!.Invoke(objectIndex, settings);
-    }
-
 
     private void ObjectRedrawnEvent(IntPtr objectAddress, int objectTableIndex)
     {
-        // if the object index is 0, perform a reapply all
-        if (objectTableIndex is 0)
-        {
-            Logger.LogInformation("Redrawing Called via command or has finished a redraw", LoggerType.IpcPenumbra);
-            AppearanceManager.ManualRedrawProcessing = false;
-            // Invoke a reapply all here. This will ensure that we reapply all information once we are valid.
-            IpcFastUpdates.InvokeGlamourer(GlamourUpdateType.ReapplyAll);
-        }
+        // We can do something here when the object is the client player (0), but unknown yet.
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        // call disposal of IPC subscribers
+        base.Dispose(disposing);
+
+        // clear all temporary mods.
+        ClearAllTemporaryMods();
+
+        OnDisposed.Dispose();
+        OnInitialized.Dispose();
+        TooltipSubscriber.Dispose();
+        ItemClickedSubscriber.Dispose();
+        OnRedrawFinished.Dispose();
+        OnModMoved.Dispose();
+    }
+
+    /// <summary> Attempts to perform a manual redraw on the client. </summary>
+    /// <remarks> This can also trick mare into receiving updated animations & immediately redrawing, so others see it first time. </remarks>
+    public void RedrawObject()
+    {
+        Logger.LogInformation("Manually redrawing the client!", LoggerType.IpcPenumbra);
+        RedrawClient.Invoke(0, RedrawType.Redraw);
+    }
+
+    public IReadOnlyList<Mod> GetMods()
+    {
+        if(!APIAvailable)
+            return Array.Empty<Mod>();
+        var allMods = GetModList.Invoke();
+        return allMods.Select(m => new Mod(m.Value, m.Key)).ToList();
     }
 
 
-
-
     // for our get mod list for the table
-    public IReadOnlyList<(Mod Mod, ModSettings Settings)> GetMods()
+    public IReadOnlyList<(Mod Mod, ModSettings Settings)> GetModInfos()
     {
         if (!APIAvailable)
             return Array.Empty<(Mod Mod, ModSettings Settings)>();
 
         try
         {
-            var allMods = _getMods!.Invoke();
-            var collection = _currentCollection!.Invoke(ApiCollectionType.Current);
+            var allMods = GetModList.Invoke();
+            var collection = GetActiveCollection.Invoke(ApiCollectionType.Current);
             return allMods
-                .Select(m => (m.Key, m.Value, _getCurrentSettings!.Invoke(collection!.Value.Id, m.Key)))
+                .Select(m => (m.Key, m.Value, GetModSettingsCurrent.Invoke(collection!.Value.Id, m.Key)))
                 .Where(t => t.Item3.Item1 is PenumbraApiEc.Success)
                 .Select(t => (new Mod(t.Item2, t.Item1),
                     !t.Item3.Item2.HasValue
                         ? ModSettings.Empty
-                        : new ModSettings(t.Item3.Item2!.Value.Item3, t.Item3.Item2!.Value.Item2, t.Item3.Item2!.Value.Item1)))
+                        : new ModSettings(t.Item3.Item2!.Value.Item3, t.Item3.Item2!.Value.Item2, t.Item3.Item2!.Value.Item1, false, false)))
                 .OrderByDescending(p => p.Item2.Enabled)
                 .ThenBy(p => p.Item1.Name)
                 .ThenBy(p => p.Item1.DirectoryName)
@@ -219,127 +214,53 @@ public unsafe class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCa
         }
     }
 
-    public (Guid Id, string Name) CurrentCollection
-        => APIAvailable ? _currentCollection!.Invoke(ApiCollectionType.Current)!.Value : (Guid.Empty, "<Unavailable>"); // gets the current collection type
-
-    /// <summary>
-    /// Used to modify the priority and enable/disable state of a given mod within the current collection.
-    /// </summary>
-    /// <param name="AssociatedMod">The mod to modify.</param>
-    /// <param name="modState">The new state of the mod. (ENABLED or DISABLED) </param>
-    public PenumbraApiEc ModifyModState(AssociatedMod AssociatedMod, NewState modState = NewState.Enabled, bool adjustPriorityOnly = false)
+    public ModSettingOptions GetAllOptionsForMod(Mod mod)
     {
-        if (!APIAvailable) 
+        if (!APIAvailable)
+            return ModSettingOptions.Empty;
+
+        // grab the settings for the mod.
+        var res = GetModSettingsAll.Invoke(mod.DirectoryName);
+        return (res is null) ? ModSettingOptions.Empty : new ModSettingOptions(res);
+    }
+
+    /// <summary> Used for Setting or updating the settings of a mod, binding it to GagSpeak as a temporary mod. </summary>
+    /// <remarks> While active, these mods settings will be locked in penumbra to ensure further helplessness. </remarks>
+    public PenumbraApiEc SetOrUpdateTemporaryMod(ModAssociation HandledMod)
+    {
+        if (!APIAvailable)
             return PenumbraApiEc.NothingChanged;
 
-        // create error code, assume success
-        var errorCode = PenumbraApiEc.Success;
-        try
-        {
-            // get the collection of our character
-            var collection = _currentCollection!.Invoke(ApiCollectionType.Current)!.Value.Id;
-
-            // If we wanted to Enable the mod, and we are not only adjusting priority, enable it.
-            if (modState is NewState.Enabled && !adjustPriorityOnly)
-            {
-                errorCode = _setMod!.Invoke(collection, AssociatedMod.Mod.DirectoryName, true, AssociatedMod.Mod.Name);
-                switch (errorCode)
-                {
-                    case PenumbraApiEc.ModMissing: return PenumbraApiEc.ModMissing;
-                    case PenumbraApiEc.CollectionMissing: return PenumbraApiEc.CollectionMissing;
-                }
-
-                // Toggle was successfull, so we can now raise the priority of the mod
-                errorCode = _setModPriority!.Invoke(collection, AssociatedMod.Mod.DirectoryName, AssociatedMod.ModSettings.Priority + 50, AssociatedMod.Mod.Name);
-                if (errorCode is not PenumbraApiEc.Success and not PenumbraApiEc.NothingChanged)
-                    return PenumbraApiEc.UnknownError;
-            }
-
-            // If we wanted to disable the mod, and we are not only adjusting priority, disable it.
-            if (modState is NewState.Disabled)
-            {
-                // disable the mod, but ONLY if disabledMods is true
-                if (!adjustPriorityOnly)
-                {
-                    errorCode = _setMod!.Invoke(collection, AssociatedMod.Mod.DirectoryName, false, AssociatedMod.Mod.Name);
-                    switch (errorCode)
-                    {
-                        case PenumbraApiEc.ModMissing: return PenumbraApiEc.ModMissing;
-                        case PenumbraApiEc.CollectionMissing: return PenumbraApiEc.CollectionMissing;
-                    }
-                }
-
-                // Adjust the priority of the mod back to its original value
-                errorCode = _setModPriority!.Invoke(collection, AssociatedMod.Mod.DirectoryName, AssociatedMod.ModSettings.Priority, AssociatedMod.Mod.Name);
-                if (errorCode is not PenumbraApiEc.Success and not PenumbraApiEc.NothingChanged)
-                    return PenumbraApiEc.UnknownError;
-
-                // If we wanted to only adjust priority, return here.
-                if (adjustPriorityOnly)
-                    return errorCode;
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError($"Error modifying mod state in Penumbra:\n{ex}");
-            return PenumbraApiEc.UnknownError;
-        }
-        // Default return.
-        return errorCode;
+        // set, or update, the temporary mod settings for the mod.
+        return SetOrUpdateTempMod.Invoke(PLAYER_OBJECT_IDX,
+            HandledMod.ModInfo.DirectoryName,
+            false,
+            true,
+            HandledMod.Settings.Priority + 25,
+            HandledMod.Settings.Settings.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value),
+            GAGSPEAK_ID,
+            GAGSPEAK_KEY,
+            HandledMod.ModInfo.Name);
     }
 
-    /// <summary> Reattach to the currently running Penumbra IPC provider. Unattaches before if necessary. </summary>
-    public void PenumbraInitialized()
+    /// <summary> Used for removing a temporary mod from the client. </summary>
+    /// <returns> The penumbra status code of success. </returns>
+    public PenumbraApiEc RemoveTemporaryMod(ModAssociation AssociatedMod)
     {
-        try
-        {
-            // unattach from the current penumbra to reset subscribers.
-            PenumbraDisposed();
+        if (!APIAvailable)
+            return PenumbraApiEc.NothingChanged;
 
-            CheckAPI();
-            // attach to the penumbra
-            _tooltipSubscriber.Enable();
-            _clickSubscriber.Enable();
-            _redrawSubscriber   = new RedrawObject(_pi);
-            _getMods            = new GetModList(_pi);
-            _currentCollection  = new GetCollection(_pi);
-            _getCurrentSettings = new GetCurrentModSettings(_pi);
-            _setMod             = new TrySetMod(_pi);
-            _setModPriority     = new TrySetModPriority(_pi);
-
-            _mediator.Publish(new PenumbraInitializedMessage());
-        }
-        catch (Exception e)
-        {
-            Logger.LogDebug($"Could not attach to Penumbra:\n{e}");
-        }
+        // Remove the temporary mod we set. This also undoes the priority shift we set for it.
+        return RemoveTempMod.Invoke(PLAYER_OBJECT_IDX, AssociatedMod.ModInfo.DirectoryName, GAGSPEAK_KEY, AssociatedMod.ModInfo.Name);
     }
 
-    /// <summary> Unattach from the currently running Penumbra IPC provider. </summary>
-    private void PenumbraDisposed()
+    /// <summary> Used to clear the temporary mod settings managed by GagSpeak upon plugin shutdown or logout. </summary>
+    /// <returns> NothingChanged if IPC API is not available, penumbra status code otherwise </returns>
+    public PenumbraApiEc ClearAllTemporaryMods()
     {
-        _tooltipSubscriber.Disable();
-        _clickSubscriber.Disable();
-        if (APIAvailable)
-        {
-            APIAvailable = false;
-            _mediator.Publish(new PenumbraDisposedMessage());
-        }
-    }
-
-
-    protected override void Dispose(bool disposing)
-    {
-        // call disposal of IPC subscribers
-        base.Dispose(disposing);
-
-        // call the penumbra dispose to disable the enabled the API Event subscribers
-        PenumbraDisposed();
-        // dispose of the penumbra event subscribers
-        _tooltipSubscriber.Dispose();
-        _clickSubscriber.Dispose();
-        _penumbraInitialized.Dispose();
-        _penumbraDisposed.Dispose();
-        _penumbraObjectRedrawnSubscriber.Dispose();
+        if (!APIAvailable)
+            return PenumbraApiEc.NothingChanged;
+        // Remove all temporary mods we set.
+        return RemoveAllTempMod.Invoke(PLAYER_OBJECT_IDX, GAGSPEAK_KEY);
     }
 }

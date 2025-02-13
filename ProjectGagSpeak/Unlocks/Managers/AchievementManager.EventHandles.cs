@@ -3,6 +3,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Localization;
+using GagSpeak.Restrictions;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
@@ -269,7 +270,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagStateChanged(bool applying, GagLayer gagLayer, GagType gagAppliedOrRemoved, string enactorUid)
+    private void OnGagStateChanged(GagLayer gagLayer, GagType gagAppliedOrRemoved, bool applying, string enactorUid)
     {
         if (gagAppliedOrRemoved is GagType.None) return;
 
@@ -335,7 +336,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnPairGagStateChanged(bool isApplying, GagLayer layer, GagType gag, string assignerUid, string affectedUid)
+    private void OnPairGagStateChanged(GagLayer layer, GagType gag, bool applying, string assignerUid, string affectedUid)
     {
         if(isApplying)
         {
@@ -356,7 +357,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid)
+    private void OnGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid)
     {
         if (isLocking)
         {
@@ -368,7 +369,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnPairGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid, string affectedUid)
+    private void OnPairGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid, string affectedUid)
     {
         if (isLocking)
         {
@@ -380,7 +381,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnCharaOnlineCleanupForLatest(UserData user, CharaAppearanceData gagInfo, Guid activeRestraint)
+    private void OnCharaOnlineCleanupForLatest(UserData user, CharaActiveGags gagInfo, CharaActiveRestrictions restrictionsInfo, CharaActiveRestraint restraintInfo)
     {
         var activeGagTrackingKeys = gagInfo.ActiveGagTrackingKeys();
         Logger.LogDebug("Player Character " + user.AliasOrUID + " went online and has new active data. Cleaning up expired information!", LoggerType.AchievementEvents);
@@ -399,25 +400,25 @@ public partial class AchievementManager
         // Checks spesific to the direction of the application.
         if (user.UID == MainHub.UID)
         {
-            (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
+            (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
 
-            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
+            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(gagInfo.TotalGagsEquipped());
         }
         else
         {
-            (SaveData.Achievements[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.SuitsYouBitch.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.TiesThatBind.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.SlaveTrainer.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.CeremonyOfEternalBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
+            (SaveData.Achievements[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.SuitsYouBitch.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.TiesThatBind.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.SlaveTrainer.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.CeremonyOfEternalBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
         }
 
         // Do stuff if it is a pattern.
@@ -437,6 +438,27 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
     }
 
+    private void OnRestrictionStateChange(Guid restrictionId, bool isEnabling, string enactorUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnRestrictionLock(Guid restrictionId, Padlocks padlock, bool isLocking, string enactorUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnPairRestrictionStateChange(Guid restrictionId, bool isLocking, string enactorUID, string affectedUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnPairRestrictionLockChange(Guid restrictionId, Padlocks padlock, bool isLocking, string enactorUID, string affectedUID)
+    {
+        // Nothing yet.
+    }
+
+
     private void OnRestraintSetUpdated(RestraintSet set)
     {
         // check for dyes
@@ -447,7 +469,6 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.DyeHard.Id] as ProgressAchievement)?.IncrementProgress();
         }
     }
-
     private void OnRestraintStateChange(Guid restraintId, bool isEnabling, string enactorUID)
     {
         // Check this regardless.
@@ -571,9 +592,7 @@ public partial class AchievementManager
         }
     }
 
-    /// <summary>
-    /// Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve 
-    /// </summary>
+    /// <summary> Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve  </summary>
     private void OnPairRestraintStateChange(Guid setName, bool isEnabling, string enactorUID, string affectedUID)
     {
         Logger.LogTrace(enactorUID + " is "+ (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);

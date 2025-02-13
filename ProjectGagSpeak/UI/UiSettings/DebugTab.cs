@@ -34,12 +34,12 @@ public class DebugTab
         { "WebAPI", new[] { LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens } }
     };
 
-    private readonly ClientData _playerData;
+    private readonly GlobalData _playerData;
     private readonly ClientDataChanges _playerDataChanges;
     private readonly PairManager _pairManager;
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly UiSharedService _uiShared;
-    public DebugTab(PairManager pairManager, ClientData playerData, ClientDataChanges playerDataChanges,
+    public DebugTab(PairManager pairManager, GlobalData playerData, ClientDataChanges playerDataChanges,
         ClientConfigurationManager clientConfigs, UiSharedService uiShared)
     {
         _playerData = playerData;
@@ -173,7 +173,7 @@ public class DebugTab
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
-        DrawAppearance("Player", _playerData.AppearanceData ?? new CharaAppearanceData());
+        DrawAppearance("Player", _playerData.AppearanceData ?? new CharaGagData());
         DrawWardrobe("Player", _clientConfigs.CompileWardrobeToAPI());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
@@ -209,7 +209,7 @@ public class DebugTab
             DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
             DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
             DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
-            DrawAppearance(pair.UserData.UID, pair.LastAppearanceData ?? new CharaAppearanceData());
+            DrawAppearance(pair.UserData.UID, pair.LastAppearanceData ?? new CharaGagData());
             DrawWardrobe(pair.UserData.UID, pair.LastWardrobeData ?? new CharaWardrobeData());
             DrawAlias(pair.UserData.UID, pair.LastAliasData ?? new CharaAliasData());
             DrawToybox(pair.UserData.UID, pair.LastToyboxData ?? new CharaToyboxData());
@@ -249,7 +249,6 @@ public class DebugTab
         DrawPermissionRowBool("Gag Glamours", perms.ItemAutoEquip);
         DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
         DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetAutoEquip);
-        DrawPermissionRowBool("Moodles Active", perms.MoodlesEnabled);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
@@ -425,7 +424,7 @@ public class DebugTab
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
     }
 
-    private void DrawAppearance(string uid, CharaAppearanceData appearance)
+    private void DrawAppearance(string uid, CharaGagData appearance)
     {
         using var nodeMain = ImRaii.TreeNode("Appearance Data");
         if (!nodeMain) return;

@@ -12,7 +12,7 @@ namespace GagSpeak.Interop.IpcHelpers.Penumbra;
 public sealed class CustomModCombo : CustomFilterComboCache<(Mod Mod, ModSettings Settings)>
 {
     public CustomModCombo(IpcCallerPenumbra penumbra, ILogger log)
-        : base(penumbra.GetMods, MouseWheelType.None, log)
+        : base(penumbra.GetModInfos, MouseWheelType.None, log)
     {
         SearchByParts = false;
     }

@@ -687,8 +687,6 @@ namespace GagSpeak.Localization
         public readonly string MoodlesActive = Loc.Localize("MainOptions_MoodlesActive", "Moodles Integration");
         public readonly string MoodlesActiveTT = Loc.Localize("MainOptions_MoodlesActiveTT", "Enables Moodles integration and functionality.");
 
-        public readonly string RevertSelectionLabel = Loc.Localize("MainOptions_RevertSelectionLabel", "On Safeword/Restraint Removal/Gag Removal:");
-
         public readonly string PuppeteerActive = Loc.Localize("MainOptions_PuppeteerActive", "Puppeteer Features");
         public readonly string PuppeteerActiveTT = Loc.Localize("MainOptions_PuppeteerActiveTT", "Enables Puppeteer functionality.");
 
@@ -696,21 +694,21 @@ namespace GagSpeak.Localization
         public readonly string GlobalTriggerPhraseTT = Loc.Localize("MainOptions_GlobalTriggerPhraseTT", "Sets a global trigger phrase for Puppeteer." +
             "--SEP--This trigger phrase will work when said by ANYONE.");
 
-        public readonly string GlobalAllowSit = Loc.Localize("MainOptions_GlobalAllowSit", "Globally Allow Sit Requests");
-        public readonly string GlobalAllowSitTT = Loc.Localize("MainOptions_GlobalAllowSitTT", "Allows anyone to request a sit from you." +
+        public readonly string GlobalSit = Loc.Localize("MainOptions_GlobalSit", "Globally Allow Sit Requests");
+        public readonly string GlobalSitTT = Loc.Localize("MainOptions_GlobalSitTT", "Allows anyone to request a sit from you." +
             "--SEP--This permission limits commands to /groundsit, /sit and /changepose (/cpose). ");
 
 
-        public readonly string GlobalAllowMotion = Loc.Localize("MainOptions_GlobalAllowMotion", "Globally Allow Motion Requests");
-        public readonly string GlobalAllowMotionTT = Loc.Localize("MainOptions_GlobalAllowKneelTT", "Allow anyone to request a motion action from you." +
+        public readonly string GlobalMotion = Loc.Localize("MainOptions_GlobalMotion", "Globally Allow Motion Requests");
+        public readonly string GlobalMotionTT = Loc.Localize("MainOptions_GlobalKneelTT", "Allow anyone to request a motion action from you." +
             "--SEP--A motion request includes any emotes or expressions that can be found in Emotes." +
             "--SEP--This permission limits commands to emotes and expressions.");
-        public readonly string GlobalAllowAlias = Loc.Localize("MainOptions_GlobalAllowAlias", "Globally Allow Alias Requests");
-        public readonly string GlobalAllowAliasTT = Loc.Localize("MainOptions_GlobalAllowAliasTT", "Allows anyone to request that you use a global alias action you have configured." +
+        public readonly string GlobalAlias = Loc.Localize("MainOptions_GlobalAlias", "Globally Allow Alias Requests");
+        public readonly string GlobalAliasTT = Loc.Localize("MainOptions_GlobalAliasTT", "Allows anyone to request that you use a global alias action you have configured." +
             "--SEP--This permission includes any game and plugin commands that originate from an alias you have configured." +
             "--SEP--WARNING: Use this responsibly and with caution as it will allow ANYONE to execute commands you have in your alias's.");
-        public readonly string GlobalAllowAll = Loc.Localize("MainOptions_GlobalAllowAll", "Globally Allow All Requests");
-        public readonly string GlobalAllowAllTT = Loc.Localize("MainOptions_GlobalAllowAllTT", "Allows anyone to request any action from you." +
+        public readonly string GlobalAll = Loc.Localize("MainOptions_GlobalAll", "Globally Allow All Requests");
+        public readonly string GlobalAllTT = Loc.Localize("MainOptions_GlobalAllTT", "Allows anyone to request any action from you." +
             "--SEP--This permission includes any game and plugin commands, emotes and expressions." +
             "--SEP--WARNING: Use this responsibly and with caution as it will allow ANYONE to interact with your character and game client (e.g /logout).");
 
