@@ -72,6 +72,9 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         // Obtain Server-Side Active State Data.
         var serverData = MainHub.ConnectionDto.ActiveRestraintData;
         var serverExpectsActiveSet = serverData.ActiveSetId != Guid.Empty;
+        // Upon connection all mods should be resynchronized with the acctive restraints/gags.
+        // This is primarily to ensure that the mods can be accurately synchronized between multiple characters.
+        _ipcManager.Penumbra.ClearAllTemporaryMods();
         // Handle it accordingly.
         if (serverExpectsActiveSet)
         {
@@ -130,6 +133,10 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             await EnableAndRelockSet(serverData);
             // publish a full data wardrobe update after this.
             Mediator.Publish(new PlayerCharWardrobeChanged(ActiveSetUpdateType.FullDataUpdate, string.Empty));
+        }
+        // In every other case, we have an active set that matches the server set, so we want to be sure to re-enable the temporary mods.
+        else {
+            await _appearanceHandler.PenumbraModsToggle(NewState.Enabled, activeClientSet.AssociatedMods);
         }
     }
 
