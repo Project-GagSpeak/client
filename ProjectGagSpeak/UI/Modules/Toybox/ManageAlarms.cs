@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
@@ -39,7 +40,7 @@ public class ToyboxAlarmManager
     private int LastHoveredIndex = -1; // -1 indicates no item is currently hovered
     private List<Alarm> FilteredAlarmsList
     => _handler.Alarms
-        .Where(alarm => alarm.Name.Contains(AlarmSearchString, StringComparison.OrdinalIgnoreCase))
+        .Where(alarm => alarm.Label.Contains(AlarmSearchString, StringComparison.OrdinalIgnoreCase))
         .ToList();
 
     public void DrawAlarmManagerPanel()
@@ -116,7 +117,7 @@ public class ToyboxAlarmManager
         Vector2 textSize;
         using (_uiShared.UidFont.Push())
         {
-            textSize = ImGui.CalcTextSize($"Creating Alarm: {CreatedAlarm.Name}");
+            textSize = ImGui.CalcTextSize($"Creating Alarm: {CreatedAlarm.Label}");
         }
         var centerYpos = (textSize.Y - iconSize.Y);
         using (ImRaii.Child("EditAlarmHeader", new Vector2(UiSharedService.GetWindowContentRegionWidth(), iconSize.Y + (centerYpos - startYpos) * 2)))
@@ -137,7 +138,7 @@ public class ToyboxAlarmManager
             ImGui.SetCursorPosY(startYpos);
             using (_uiShared.UidFont.Push())
             {
-                UiSharedService.ColorText(CreatedAlarm.Name, ImGuiColors.ParsedPink);
+                UiSharedService.ColorText(CreatedAlarm.Label, ImGuiColors.ParsedPink);
             }
 
             // now calculate it so that the cursors Yposition centers the button in the middle height of the text
@@ -284,7 +285,7 @@ public class ToyboxAlarmManager
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
         var toggleSize = _uiShared.GetIconButtonSize(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
-        var nameTextSize = ImGui.CalcTextSize(alarm.Name);
+        var nameTextSize = ImGui.CalcTextSize(alarm.Label);
         Vector2 alarmTextSize;
         var frequencyTextSize = ImGui.CalcTextSize(_handler.GetAlarmFrequencyString(alarm.RepeatFrequency));
         var patternNameSize = ImGui.CalcTextSize(patternName);
@@ -304,7 +305,7 @@ public class ToyboxAlarmManager
                 _uiShared.BigText($"{localTime}");
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((alarmTextSize.Y - nameTextSize.Y) / 2) + 5f);
-                UiSharedService.ColorText(alarm.Name, ImGuiColors.DalamudGrey2);
+                UiSharedService.ColorText(alarm.Label, ImGuiColors.DalamudGrey2);
             }
 
             // now draw the lower section out.
@@ -419,12 +420,12 @@ public class ToyboxAlarmManager
         ImGui.Spacing();
 
         // Input field for the Alarm name
-        var name = alarmToCreate.Name;
+        var name = alarmToCreate.Label;
         ImGui.SetNextItemWidth(UiSharedService.GetWindowContentRegionWidth() / 2);
         ImGui.InputText("Alarm Name", ref name, 32);
         if (ImGui.IsItemDeactivatedAfterEdit())
-            alarmToCreate.Name = name;
-        _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmName, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => alarmToCreate.Name = "Tutorial Alarm");
+            alarmToCreate.Label = name;
+        _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmName, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => alarmToCreate.Label = "Tutorial Alarm");
 
         // Input field for the pattern the alarm will play
         var pattern = alarmToCreate.PatternToPlay;

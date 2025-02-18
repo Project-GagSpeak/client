@@ -339,7 +339,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new CosmeticService(s.GetRequiredService<ILogger<CosmeticService>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<OnFrameworkService>(), pi, tp))
         .AddSingleton((s) => new NotificationService(s.GetRequiredService<ILogger<NotificationService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), cg, nm));
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagRestrictionManager>(), cg, nm));
     #endregion GenericServices
 
     #region IpcServices

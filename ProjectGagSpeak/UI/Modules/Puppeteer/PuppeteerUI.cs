@@ -3,11 +3,10 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Handlers;
@@ -16,7 +15,6 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -29,9 +27,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly GlobalData _clientData;
     private readonly PuppeteerComponents _components;
-    private readonly PuppeteerHandler _handler;
+    private readonly PuppeteerManager _handler;
     private readonly UserPairListHandler _pairList;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _clientConfigs;
     private readonly ClientMonitor _clientMonitor;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
@@ -43,8 +41,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
         MainHub hub, GlobalData clientData, PuppeteerComponents components,
-        PuppeteerHandler handler, UserPairListHandler pairList,
-        ClientConfigurationManager clientConfigs, ClientMonitor clientMonitor,
+        PuppeteerManager handler, UserPairListHandler pairList,
+        GagspeakConfigService clientConfigs, ClientMonitor clientMonitor,
         CosmeticService cosmetics, UiSharedService uiShared) : base(logger, mediator, "Puppeteer UI")
     {
         _hub = hub;
@@ -390,7 +388,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                     HasNameStored = true,
                     ListenerName = name + "@" + worldName,
                 };
-                _ = _hub.UserPushPairDataAliasStorageUpdate(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppetUpdateType.PlayerNameRegistered, UpdateDir.Own));
+                _ = _hub.UserPushPairDataAliasStorage(new(_handler.SelectedPair.UserData, MainHub.PlayerUserData, dataToPush, PuppetUpdateType.PlayerNameRegistered, UpdateDir.Own));
                 _logger.LogDebug("Sent Puppeteer Name to " + _handler.SelectedPair.GetNickAliasOrUid(), LoggerType.Permissions);
             });
 

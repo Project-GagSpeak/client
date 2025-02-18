@@ -1,14 +1,15 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.Toybox;
+using GagspeakAPI.Extensions;
+using GagspeakAPI.Dto;
 using ImGuiNET;
 using Lumina.Text.ReadOnly;
 using OtterGui;
@@ -23,6 +24,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     private readonly GagspeakConfigService _mainConfig;
     private readonly MainHub _hub;
     private readonly GlobalData _playerData;
+    private readonly GagRestrictionManager _gagManager;
     private readonly GagGarbler _garbler;
     private readonly KinkPlateService _kinkPlateManager;
     private readonly UiSharedService _uiSharedService;
@@ -31,13 +33,14 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
     public GlobalChatTab(ILogger<GlobalChatTab> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, MainHub hub, 
-        GlobalData playerManager, GagGarbler garbler,
+        GlobalData playerManager, GagRestrictionManager gagManager, GagGarbler garbler,
         KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _hub = hub;
         _playerData = playerManager;
+        _gagManager = gagManager;
         _garbler = garbler;
         _kinkPlateManager = kinkPlateManager;
         _uiSharedService = uiSharedService;
@@ -117,7 +120,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
                 return;
 
             // Process message if gagged
-            if (_playerData.IsGagged && (_playerData.GlobalPerms?.LiveChatGarblerActive ?? false))
+            if ((_gagManager.ActiveGagsData?.IsGagged() ?? true) && (_playerData.GlobalPerms?.ChatGarblerActive ?? false))
                 NextChatMessage = _garbler.ProcessMessage(NextChatMessage);
 
             // Send message to the server

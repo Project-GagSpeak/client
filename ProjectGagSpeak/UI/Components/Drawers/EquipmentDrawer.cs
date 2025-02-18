@@ -53,10 +53,10 @@ public class EquipmentDrawer
 
     /// <summary> Public provider for stain color combo data. </summary>
     /// <param name="comboWidth"> The Width of the color stain combo. </param>
-    /// <returns> A StainColorCombo object. </returns>
+    /// <returns> A GameStainCombo object. </returns>
     /// <remarks> We obtain instead of create so we can define the width of the combo. </remarks>
-    public StainColorCombo ObtainStainCombos(float comboWidth)
-        => new StainColorCombo(comboWidth - 20, _stains, _logger);
+    public GameStainCombo ObtainStainCombos(float comboWidth)
+        => new GameStainCombo(comboWidth - 20, _stains, _logger);
 
     /// <summary> Attempts to get the stain data for the stainId passed in. </summary>
     /// <param name="stain">StainId to check</param>
@@ -189,19 +189,19 @@ public class EquipmentDrawer
             using var id = ImUtf8.PushId(index);
             var found = _itemStainHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo.
-            var change = StainColorCombos.Draw($"##stain{refRestraintSet.DrawData[slot].Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, widthStains);
+            var change = GameStainCombos.Draw($"##stain{refRestraintSet.DrawData[slot].Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, widthStains);
             if (index < refRestraintSet.DrawData[slot].GameStain.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one if there are two stains
 
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (_itemStainHandler.TryGetStain(StainColorCombos.CurrentSelection.Key, out stain))
+                if (_itemStainHandler.TryGetStain(GameStainCombos.CurrentSelection.Key, out stain))
                 {
                     // if changed, change it.
                     refRestraintSet.DrawData[slot].GameStain = refRestraintSet.DrawData[slot].GameStain.With(index, stain.RowIndex);
                 }
-                else if (StainColorCombos.CurrentSelection.Key == Stain.None.RowIndex)
+                else if (GameStainCombos.CurrentSelection.Key == Stain.None.RowIndex)
                 {
                     // if set to none, reset it to default
                     refRestraintSet.DrawData[slot].GameStain = refRestraintSet.DrawData[slot].GameStain.With(index, Stain.None.RowIndex);

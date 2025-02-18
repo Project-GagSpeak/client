@@ -1,4 +1,5 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak.Localization;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;

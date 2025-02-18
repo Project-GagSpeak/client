@@ -1,3 +1,4 @@
+using GagSpeak.PlayerState.Controllers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.SimulatedVibe;
 using GagSpeak.Utils;
@@ -7,20 +8,20 @@ namespace GagSpeak.Toybox.Services;
 // handles the management of the connected devices or simulated vibrator.
 public class SexToyManager : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly IntifaceService _deviceHandler; // handles the actual connected devices.
+    private readonly GagspeakConfigService _clientConfigs;
+    private readonly IntifaceController _deviceHandler; // handles the actual connected devices.
     private readonly VibeSimAudio _vibeSimAudio; // handles the simulated vibrator
 
     public SexToyManager(ILogger<SexToyManager> logger,
-        GagspeakMediator mediator, ClientConfigurationManager clientConfigs,
-        IntifaceService deviceHandler, VibeSimAudio vibeSimAudio) : base(logger, mediator)
+        GagspeakMediator mediator, GagspeakConfigService clientConfigs,
+        IntifaceController deviceHandler, VibeSimAudio vibeSimAudio) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _deviceHandler = deviceHandler;
         _vibeSimAudio = vibeSimAudio;
 
         // restore the chosen simulated audio type from the config
-        _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(_clientConfigs.GagspeakConfig.VibeSimAudio));
+        _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(_clientConfigs.Config.VibeSimAudio));
 
         if (UsingSimulatedVibe)
         {
@@ -30,7 +31,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
-            if (_clientConfigs.GagspeakConfig.IntifaceAutoConnect && !_deviceHandler.ConnectedToIntiface)
+            if (_clientConfigs.Config.IntifaceAutoConnect && !_deviceHandler.ConnectedToIntiface)
             {
                 if (ToyboxHelper.AppPath == string.Empty)
                 {
@@ -43,7 +44,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
     }
 
     // public accessors here.
-    public VibratorEnums CurrentVibratorModeUsed => _clientConfigs.GagspeakConfig.VibratorMode;
+    public VibratorEnums CurrentVibratorModeUsed => _clientConfigs.Config.VibratorMode;
     public bool UsingSimulatedVibe => CurrentVibratorModeUsed == VibratorEnums.Simulated;
     public bool UsingRealVibe => CurrentVibratorModeUsed == VibratorEnums.Actual;
     public bool ConnectedToyActive => (CurrentVibratorModeUsed == VibratorEnums.Actual) ? _deviceHandler.ConnectedToIntiface && _deviceHandler.AnyDeviceConnected : VibeSimAudioPlaying;
@@ -58,7 +59,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
 
 
     // Grab device handler via toyboxvibeService.
-    public IntifaceService DeviceHandler => _deviceHandler;
+    public IntifaceController DeviceHandler => _deviceHandler;
     public VibeSimAudio VibeSimAudio => _vibeSimAudio;
 
     protected override void Dispose(bool disposing)
@@ -80,7 +81,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
 
     public void UpdateVibeSimAudioType(VibeSimType newType)
     {
-        _clientConfigs.GagspeakConfig.VibeSimAudio = newType;
+        _clientConfigs.Config.VibeSimAudio = newType;
         _clientConfigs.Save();
 
         _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(newType));

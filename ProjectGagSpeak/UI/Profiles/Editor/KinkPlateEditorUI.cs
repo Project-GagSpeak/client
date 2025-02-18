@@ -8,7 +8,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Dto.User;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;

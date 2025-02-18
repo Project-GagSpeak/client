@@ -2,11 +2,11 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
@@ -24,8 +24,8 @@ namespace GagSpeak.UI;
 public class SettingsHardcore
 {
     private readonly ILogger<SettingsHardcore> _logger;
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly GameItemStainHandler _itemStainHandler;
+    private readonly GagspeakConfigService _clientConfigs;
+    private readonly GameStain _itemStainHandler;
     private readonly WardrobeHandler _wardrobeHandler;
     private readonly HardcoreHandler _hardcoreHandler;
     private readonly UiSharedService _uiShared;
@@ -34,11 +34,14 @@ public class SettingsHardcore
     private Vector2 IconSize;
     private float ComboLength;
     private readonly GameItemCombo[] GameItemCombo;
-    private readonly StainColorCombo StainCombo;
+    private readonly GameStainCombo StainCombo;
 
     public SettingsHardcore(ILogger<SettingsHardcore> logger,
-        ClientConfigurationManager clientConfigs, GameItemStainHandler itemStainHandler,
-        WardrobeHandler wardrobeHandler, HardcoreHandler hardcoreHandler, UiSharedService uiShared)
+        GagspeakConfigService clientConfigs,
+        GameItemStainHandler itemStainHandler,
+        WardrobeHandler wardrobeHandler,
+        HardcoreHandler hardcoreHandler,
+        UiSharedService uiShared)
     {
         _logger = logger;
         _clientConfigs = clientConfigs;
@@ -64,7 +67,7 @@ public class SettingsHardcore
             {
                 DisplayTextButtons();
                 ImGui.Spacing();
-                foreach (var node in _clientConfigs.GagspeakConfig.ForcedStayPromptList.Children.ToArray())
+                foreach (var node in _clientConfigs.Config.ForcedStayPromptList.Children.ToArray())
                     DisplayTextEntryNode(node);
                 ImGui.EndTabItem();
             }
@@ -119,13 +122,13 @@ public class SettingsHardcore
         ImGui.SameLine(0,50);
         using (ImRaii.Group())
         { 
-            var forceLockFirstPerson = _clientConfigs.GagspeakConfig.ForceLockFirstPerson;
-            int blindfoldOpacityPercentage = (int)(_clientConfigs.GagspeakConfig.BlindfoldOpacity * 100);
+            var forceLockFirstPerson = _clientConfigs.Config.ForceLockFirstPerson;
+            int blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldOpacity * 100);
 
             // Draw the first person selection.
             if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
             {
-                _clientConfigs.GagspeakConfig.ForceLockFirstPerson = forceLockFirstPerson;
+                _clientConfigs.Config.ForceLockFirstPerson = forceLockFirstPerson;
                 _clientConfigs.Save();
             }
             _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
@@ -133,11 +136,11 @@ public class SettingsHardcore
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
                 // draw the lace type selection
-                var selectedBlindfoldType = _clientConfigs.GagspeakConfig.BlindfoldStyle;
+                var selectedBlindfoldType = _clientConfigs.Config.BlindfoldStyle;
                 _uiShared.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
                 (i) =>
                 {
-                    _clientConfigs.GagspeakConfig.BlindfoldStyle = i;
+                    _clientConfigs.Config.BlindfoldStyle = i;
                     _clientConfigs.Save();
                     _logger.LogTrace($"Blindfold Style changed to {i}");
                 }, selectedBlindfoldType);
@@ -150,14 +153,14 @@ public class SettingsHardcore
                 ImGui.SetNextItemWidth(150f);
                 if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
                 {
-                    _clientConfigs.GagspeakConfig.BlindfoldOpacity = blindfoldOpacityPercentage / 100.0f;
+                    _clientConfigs.Config.BlindfoldOpacity = blindfoldOpacityPercentage / 100.0f;
                     _clientConfigs.Save();
                 }
             }
             _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
         }
         ImGui.Separator();
-        string filePath = _clientConfigs.GagspeakConfig.BlindfoldStyle switch
+        string filePath = _clientConfigs.Config.BlindfoldStyle switch
         {
             BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
             BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
@@ -172,7 +175,7 @@ public class SettingsHardcore
             float scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
             Vector2 finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
             // display the image.
-            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.GagspeakConfig.BlindfoldOpacity));
+            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldOpacity));
             UiSharedService.AttachToolTip("Preview of the Blindfold Style");
         }
     }
@@ -202,10 +205,10 @@ public class SettingsHardcore
         ImGui.SameLine();
         using (ImRaii.Disabled(_hardcoreHandler.IsForcedToStay))
         {
-            bool enterChambersRef = _clientConfigs.GagspeakConfig.MoveToChambersInEstates;
+            bool enterChambersRef = _clientConfigs.Config.MoveToChambersInEstates;
             if (ImGui.Checkbox("Auto-Move to Chambers", ref enterChambersRef))
             {
-                _clientConfigs.GagspeakConfig.MoveToChambersInEstates = enterChambersRef;
+                _clientConfigs.Config.MoveToChambersInEstates = enterChambersRef;
                 _clientConfigs.Save();
             }
         }
@@ -241,7 +244,7 @@ public class SettingsHardcore
         }
 
         // If the node is one we should disable
-        var disableElement = _clientConfigs.GagspeakConfig.ForcedStayPromptList.Children.Take(10).Contains(node);
+        var disableElement = _clientConfigs.Config.ForcedStayPromptList.Children.Take(10).Contains(node);
         TextNodePopup(node, disableElement);
     }
 

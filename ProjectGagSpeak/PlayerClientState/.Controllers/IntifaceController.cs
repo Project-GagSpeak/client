@@ -343,7 +343,7 @@ public class IntifaceController : DisposableMediatorSubscriberBase
             return;
         }
         // send the vibration to all devices on all motors
-        foreach (var device in Devices)
+        foreach (var device in ConnectedDevices)
         {
             if (device.CanVibrate)
                 device.SendVibration(intensity);

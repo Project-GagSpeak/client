@@ -9,7 +9,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using GagSpeak.UI.Tabs.WardrobeTab;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 using System.Numerics;

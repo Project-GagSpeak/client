@@ -1,6 +1,5 @@
 using Dalamud.Game;
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
 using System.Runtime.InteropServices;

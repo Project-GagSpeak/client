@@ -7,6 +7,7 @@ using GagSpeak.Hardcore;
 using GagSpeak.Hardcore.Hotbar;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.Chat;

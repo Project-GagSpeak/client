@@ -2,15 +2,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Migrations;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
@@ -25,7 +22,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     private readonly AccountInfoExchanger _infoExchanger;
     private readonly MigratePatterns _patternMigrator;
     private readonly MigrateRestraintSets _wardrobeMigrator;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _clientConfigs;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
     private bool ThemePushed = false;
@@ -33,7 +30,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
         SetPreviewComponent previewer, AccountInfoExchanger infoExchanger,
         MigratePatterns migratePatterns, MigrateRestraintSets migrateRestraintSets,
-        ClientConfigurationManager clientConfigs, CosmeticService cosmetics,
+        GagspeakConfigService clientConfigs, CosmeticService cosmetics,
         UiSharedService uiShared) : base(logger, mediator, "GagSpeak Migrations")
     {
         _previewer = previewer;

@@ -3,9 +3,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.VibeLobby;
@@ -23,12 +22,12 @@ public class ToyboxVibeRooms : DisposableMediatorSubscriberBase
     private readonly UiSharedService _uiShared;
     private readonly PairManager _pairManager;
     private readonly GagspeakConfigService _configService;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigService _serverConfigs;
 
     public ToyboxVibeRooms(ILogger<ToyboxVibeRooms> logger,
         GagspeakMediator mediator, VibeRoomManager roomManager,
         UiSharedService uiShared, PairManager pairManager,
-        GagspeakConfigService mainConfig, ServerConfigurationManager serverConfigs)
+        GagspeakConfigService mainConfig, ServerConfigService serverConfigs)
         : base(logger, mediator)
     {
         _roomManager = roomManager;

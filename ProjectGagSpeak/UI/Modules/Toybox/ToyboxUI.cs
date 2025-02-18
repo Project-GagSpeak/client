@@ -6,7 +6,6 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 using System.Numerics;
