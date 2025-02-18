@@ -2,21 +2,21 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerState.Controllers;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox.Controllers;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Lumina.Extensions;
@@ -32,19 +32,19 @@ public class ToyboxTriggerManager
     private readonly GagspeakMediator _mediator;
     private readonly UiSharedService _uiShared;
     private readonly PairManager _pairManager;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _clientConfigs;
     private readonly GlobalData _clientData;
-    private readonly IntifaceService _deviceController;
-    private readonly TriggerHandler _handler;
-    private readonly PatternHandler _patternHandler;
+    private readonly IntifaceController _deviceController;
+    private readonly TriggerManager _triggerManager;
+    private readonly PatternManager _patternHandler;
     private readonly ClientMonitor _clientMonitor;
-    private readonly MoodlesService _moodlesService;
+    private readonly RestrictionManager _moodlesService;
     private readonly TutorialService _guides;
 
     public ToyboxTriggerManager(ILogger<ToyboxTriggerManager> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService, PairManager pairManager, ClientConfigurationManager clientConfigs,
-        GlobalData playerManager, IntifaceService deviceController, TriggerHandler handler,
-        PatternHandler patternHandler, ClientMonitor clientMonitor, MoodlesService moodlesService,
+        UiSharedService uiSharedService, PairManager pairManager, GagspeakConfigService clientConfigs,
+        GlobalData playerManager, IntifaceController deviceController, TriggerManager triggerManager,
+        PatternManager patternHandler, ClientMonitor clientMonitor, RestrictionManager moodlesService,
         TutorialService guides)
     {
         _logger = logger;
@@ -54,7 +54,7 @@ public class ToyboxTriggerManager
         _clientConfigs = clientConfigs;
         _clientData = playerManager;
         _deviceController = deviceController;
-        _handler = handler;
+        _triggerManager = triggerManager;
         _patternHandler = patternHandler;
         _clientMonitor = clientMonitor;
         _moodlesService = moodlesService;
@@ -64,8 +64,8 @@ public class ToyboxTriggerManager
     private Trigger? CreatedTrigger = new SpellActionTrigger();
     public bool CreatingTrigger = false;
     private List<Trigger> FilteredTriggerList
-        => _handler.Triggers
-            .Where(pattern => pattern.Name.Contains(TriggerSearchString, StringComparison.OrdinalIgnoreCase))
+        => _triggerManager.Storage
+            .Where(pattern => pattern.Label.Contains(TriggerSearchString, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
     private int LastHoveredIndex = -1; // -1 indicates no item is currently hovered
@@ -88,25 +88,25 @@ public class ToyboxTriggerManager
             return; // perform early returns so we dont access other methods
         }
 
-        if (_handler.ClonedTriggerForEdit is null)
+        if (_triggerManager.ClonedTriggerForEdit is null)
         {
             DrawCreateTriggerHeader();
             ImGui.Separator();
             DrawSearchFilter(regionSize.X, ImGui.GetStyle().ItemInnerSpacing.X);
             ImGui.Separator();
-            if (_handler.TriggerCount > 0)
+            if (_triggerManager.Storage.Count > 0)
                 DrawTriggerSelectableMenu();
 
             return; // perform early returns so we dont access other methods
         }
 
         // if we are editing an trigger
-        if (_handler.ClonedTriggerForEdit is not null)
+        if (_triggerManager.ClonedTriggerForEdit is not null)
         {
             DrawTriggerEditorHeader();
             ImGui.Separator();
-            if (_handler.TriggerCount > 0 && _handler.ClonedTriggerForEdit is not null)
-                DrawTriggerEditor(_handler.ClonedTriggerForEdit);
+            if (_triggerManager.Storage.Count > 0 && _triggerManager.ClonedTriggerForEdit is not null)
+                DrawTriggerEditor(_triggerManager.ClonedTriggerForEdit);
         }
     }
 
@@ -187,7 +187,7 @@ public class ToyboxTriggerManager
             if (_uiShared.IconButton(FontAwesomeIcon.Save, null, null, CreatedTrigger is null))
             {
                 // add the newly created trigger to the list of triggers
-                _handler.AddNewTrigger(CreatedTrigger!);
+                _triggerManager.AddNewTrigger(CreatedTrigger!);
                 // reset to default and turn off creating status.
                 CreatedTrigger = new SpellActionTrigger();
                 CreatingTrigger = false;
@@ -195,7 +195,7 @@ public class ToyboxTriggerManager
             UiSharedService.AttachToolTip(CreatedTrigger == null ? "Must choose trigger type before saving!" : "Save Trigger");
             _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.SavingTriggers, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () =>
             {
-                _handler.AddNewTrigger(CreatedTrigger!);
+                _triggerManager.AddNewTrigger(CreatedTrigger!);
                 CreatedTrigger = new SpellActionTrigger();
                 CreatingTrigger = false;
             });
@@ -220,7 +220,7 @@ public class ToyboxTriggerManager
             // the "fuck go back" button.
             if (_uiShared.IconButton(FontAwesomeIcon.ArrowLeft))
             {
-                _handler.CancelEditingTrigger();
+                _triggerManager.CancelEditingTrigger();
                 return;
             }
             // now next to it we need to draw the header text
@@ -239,7 +239,7 @@ public class ToyboxTriggerManager
             if (_uiShared.IconButton(FontAwesomeIcon.Save))
             {
                 // reset the createdTrigger to a new trigger, and set editing trigger to true
-                _handler.SaveEditedTrigger();
+                _triggerManager.SaveEditedTrigger();
             }
             UiSharedService.AttachToolTip("Save changes to Pattern & Return to Pattern List");
 
@@ -249,7 +249,7 @@ public class ToyboxTriggerManager
             if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: !KeyMonitor.ShiftPressed()))
             {
                 // reset the createdPattern to a new pattern, and set editing pattern to true
-                _handler.RemoveTrigger(_handler.ClonedTriggerForEdit!);
+                _triggerManager.RemoveTrigger(_triggerManager.ClonedTriggerForEdit!);
             }
             UiSharedService.AttachToolTip("Delete Trigger--SEP--Must be holding SHIFT");
         }
@@ -343,7 +343,7 @@ public class ToyboxTriggerManager
                 {
                     if (ImGui.Selectable("Delete Trigger") && FilteredTriggerList[LastHoveredIndex] is not null)
                     {
-                        _handler.RemoveTrigger(FilteredTriggerList[LastHoveredIndex]);
+                        _triggerManager.RemoveTrigger(FilteredTriggerList[LastHoveredIndex]);
                     }
                     ImGui.EndPopup();
                 }
@@ -366,7 +366,7 @@ public class ToyboxTriggerManager
         };
 
         // store the trigger name to store beside it
-        string triggerName = trigger.Name;
+        string triggerName = trigger.Label;
 
         // display priority of trigger.
         string priority = "Priority: " + trigger.Priority.ToString();
@@ -377,7 +377,7 @@ public class ToyboxTriggerManager
         var toggleSize = _uiShared.GetIconButtonSize(trigger.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
 
         Vector2 triggerTypeTextSize;
-        var nameTextSize = ImGui.CalcTextSize(trigger.Name);
+        var nameTextSize = ImGui.CalcTextSize(trigger.Label);
         var priorityTextSize = ImGui.CalcTextSize(priority);
         using (_uiShared.UidFont.Push()) { triggerTypeTextSize = ImGui.CalcTextSize(triggerType); }
 
@@ -411,16 +411,16 @@ public class ToyboxTriggerManager
             {
                 // set the enabled state of the trigger based on its current state so that we toggle it
                 if (trigger.Enabled)
-                    _handler.DisableTrigger(trigger);
+                    _triggerManager.DisableTrigger(trigger.Identifier);
                 else
-                    _handler.EnableTrigger(trigger);
+                    _triggerManager.EnableTrigger(trigger.Identifier);
                 // toggle the state & early return so we dont access the child clicked button
                 return;
             }
             if (idx is 0) _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.TogglingTriggers, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
         }
         if (ImGui.IsItemClicked())
-            _handler.StartEditingTrigger(trigger);
+            _triggerManager.StartEditingTrigger(trigger);
     }
 
     // create a new timespan object that is set to 60seconds.
@@ -535,12 +535,12 @@ public class ToyboxTriggerManager
     private void DrawInfoSettings(Trigger triggerToCreate)
     {
         // draw out the details for the base of the abstract type.
-        string name = triggerToCreate.Name;
+        string name = triggerToCreate.Label;
         UiSharedService.ColorText("Name", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(225f);
         if (ImGui.InputTextWithHint("##NewTriggerName", "Enter Trigger Name", ref name, 40))
         {
-            triggerToCreate.Name = name;
+            triggerToCreate.Label = name;
         }
 
         string desc = triggerToCreate.Description;
@@ -577,8 +577,8 @@ public class ToyboxTriggerManager
 
         using (var disabled = ImRaii.Disabled(anyChecked))
         {
-            _uiShared.DrawComboSearchable("##ActionJobSelectionCombo", 85f, _clientMonitor.BattleClassJobs,
-            (job) => job.Name.ToString(), false, (i) =>
+            _uiShared.DrawComboSearchable("##ActionJobSelectionCombo", 85f, ClientMonitor.BattleClassJobs,
+            (job) => job.Abbreviation.ToString(), false, (i) =>
             {
                 _logger.LogTrace($"Selected Job ID for Trigger: {i.RowId}");
                 SelectedJobId = i.RowId;
@@ -586,9 +586,9 @@ public class ToyboxTriggerManager
             }, flags: ImGuiComboFlags.NoArrowButton);
 
             ImUtf8.SameLineInner();
-            var loadedActions = _clientMonitor.LoadedActions[SelectedJobId];
+            var loadedActions = ClientMonitor.LoadedActions[(int)SelectedJobId];
             _uiShared.DrawComboSearchable("##ActionToListenTo" + SelectedJobId, 150f, loadedActions, (action) => action.Name.ToString(),
-            false, (i) => spellActionTrigger.ActionID = i.RowId, defaultPreviewText: "Select Job Action..");
+            false, (i) => spellActionTrigger.ActionID = (uint)i.RowId, defaultPreviewText: "Select Job Action..");
         }
 
         // Determine how we draw out the rest of this based on the action type:
@@ -710,7 +710,7 @@ public class ToyboxTriggerManager
         var defaultSet = setList.FirstOrDefault(x => x.Identifier == restraintTrigger.RestraintSetId)
             ?? setList.FirstOrDefault() ?? new LightRestraintData();
 
-        _uiShared.DrawCombo("EditRestraintSetCombo" + restraintTrigger.Identifier, 200f, setList, (setItem) => setItem.Name,
+        _uiShared.DrawCombo("EditRestraintSetCombo" + restraintTrigger.Identifier, 200f, setList, (setItem) => setItem.Label,
             (i) => restraintTrigger.RestraintSetId = i?.Identifier ?? Guid.Empty, defaultSet, false, ImGuiComboFlags.None, "No Set Selected...");
 
         UiSharedService.ColorText("Restraint State that fires Trigger", ImGuiColors.ParsedGold);
@@ -769,30 +769,30 @@ public class ToyboxTriggerManager
             {
                 switch (i)
                 {
-                    case InvokableActionType.Gag: trigger.ExecutableAction = new GagAction(); break;
-                    case InvokableActionType.Restraint: trigger.ExecutableAction = new RestraintAction(); break;
-                    case InvokableActionType.Moodle: trigger.ExecutableAction = new MoodleAction(); break;
-                    case InvokableActionType.ShockCollar: trigger.ExecutableAction = new PiShockAction(); break;
-                    case InvokableActionType.SexToy: trigger.ExecutableAction = new SexToyAction(); break;
+                    case InvokableActionType.Gag: trigger.InvokableAction = new GagAction(); break;
+                    case InvokableActionType.Restraint: trigger.InvokableAction = new RestraintAction(); break;
+                    case InvokableActionType.Moodle: trigger.InvokableAction = new MoodleAction(); break;
+                    case InvokableActionType.ShockCollar: trigger.InvokableAction = new PiShockAction(); break;
+                    case InvokableActionType.SexToy: trigger.InvokableAction = new SexToyAction(); break;
                     default: throw new NotImplementedException("Action Type not implemented.");
                 };
-            }, trigger.GetTypeName(), false);
+            }, trigger.ActionType.ToName(), false);
         _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.InvokableActionType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         ImGui.Separator();
-        if (trigger.ExecutableAction is GagAction gagAction)
+        if (trigger.InvokableAction is GagAction gagAction)
             DrawGagSettings(trigger.Identifier, gagAction);
 
-        else if (trigger.ExecutableAction is RestraintAction restraintAction)
+        else if (trigger.InvokableAction is RestraintAction restraintAction)
             DrawRestraintSettings(trigger.Identifier, restraintAction);
 
-        else if (trigger.ExecutableAction is MoodleAction moodleAction)
+        else if (trigger.InvokableAction is MoodleAction moodleAction)
             DrawMoodlesSettings(trigger.Identifier, moodleAction);
 
-        else if (trigger.ExecutableAction is PiShockAction shockAction)
+        else if (trigger.InvokableAction is PiShockAction shockAction)
             DrawShockSettings(trigger.Identifier, shockAction);
 
-        else if (trigger.ExecutableAction is SexToyAction sexToyAction)
+        else if (trigger.InvokableAction is SexToyAction sexToyAction)
             DrawSexToyActions(trigger.Identifier, sexToyAction);
     }
 
@@ -818,7 +818,7 @@ public class ToyboxTriggerManager
         var defaultItem = lightRestraintItems.FirstOrDefault(x => x.Identifier == restraintAction.OutputIdentifier)
                           ?? lightRestraintItems.FirstOrDefault() ?? new LightRestraintData();
 
-        _uiShared.DrawCombo("ApplyRestraintSetActionCombo" + id, 200f, lightRestraintItems, (item) => item.Name,
+        _uiShared.DrawCombo("ApplyRestraintSetActionCombo" + id, 200f, lightRestraintItems, (item) => item.Label,
             (i) => restraintAction.OutputIdentifier = i?.Identifier ?? Guid.Empty, defaultItem, defaultPreviewText: "No Set Selected...");
         _uiShared.DrawHelpText("Apply restraint set to your character when the trigger is fired.");
     }
@@ -932,7 +932,7 @@ public class ToyboxTriggerManager
 
             // concatinate the currently stored device names with the list of connected devices so that we dont delete unconnected devices.
             HashSet<string> unionDevices = new HashSet<string>(_deviceController.ConnectedDevices?.Select(device => device.DeviceName) ?? new List<string>())
-                .Union(sexToyAction.TriggerAction.Select(device => device.DeviceName)).ToHashSet();
+                .Union(sexToyAction.DeviceActions.Select(device => device.DeviceName)).ToHashSet();
 
             var deviceNames = new HashSet<string>(_deviceController.ConnectedDevices?.Select(device => device.DeviceName) ?? new List<string>());
 
@@ -954,20 +954,20 @@ public class ToyboxTriggerManager
                 // attempt to find the device by its name.
                 var connectedDevice = _deviceController.GetDeviceByName(SelectedDeviceName);
                 if (connectedDevice is not null)
-                    sexToyAction.TriggerAction.Add(new(connectedDevice.DeviceName, connectedDevice.VibeMotors, connectedDevice.RotateMotors));
+                    sexToyAction.DeviceActions.Add(new(connectedDevice.DeviceName, connectedDevice.VibeMotors, connectedDevice.RotateMotors));
             }
 
             ImGui.Separator();
 
-            if (sexToyAction.TriggerAction.Count <= 0)
+            if (sexToyAction.DeviceActions.Count <= 0)
                 return;
 
             // draw a collapsible header for each of the selected devices.
-            for (var i = 0; i < sexToyAction.TriggerAction.Count; i++)
+            for (var i = 0; i < sexToyAction.DeviceActions.Count; i++)
             {
-                if (ImGui.CollapsingHeader("Settings for Device: " + sexToyAction.TriggerAction[i].DeviceName))
+                if (ImGui.CollapsingHeader("Settings for Device: " + sexToyAction.DeviceActions[i].DeviceName))
                 {
-                    DrawDeviceActions(sexToyAction.TriggerAction[i]);
+                    DrawDeviceActions(sexToyAction.DeviceActions[i]);
                 }
             }
         }
@@ -1047,7 +1047,7 @@ public class ToyboxTriggerManager
         else
         {
             _uiShared.DrawComboSearchable("PatternSelector" + deviceAction.DeviceName + motorIdx, ImGui.GetContentRegionAvail().X, _patternHandler.Patterns,
-                pattern => pattern.Name, false, (i) =>
+                pattern => pattern.Label, false, (i) =>
                 {
                     motor.PatternIdentifier = i?.UniqueIdentifier ?? Guid.Empty;
                     motor.StartPoint = i?.StartPoint ?? TimeSpan.Zero;

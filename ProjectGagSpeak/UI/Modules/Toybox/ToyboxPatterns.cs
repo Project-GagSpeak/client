@@ -4,6 +4,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -25,11 +27,11 @@ public class ToyboxPatterns
     private readonly GagspeakMediator _mediator;
     private readonly KinkPlateService _kinkPlates;
     private readonly UiSharedService _uiShared;
-    private readonly PatternHandler _handler;
+    private readonly PatternManager _handler;
     private readonly ShareHubService _shareHub;
     private readonly TutorialService _guides;
     public ToyboxPatterns(ILogger<ToyboxPatterns> logger, GagspeakMediator mediator,
-        KinkPlateService kinkPlates, UiSharedService uiSharedService, PatternHandler patternHandler, 
+        KinkPlateService kinkPlates, UiSharedService uiSharedService, PatternManager patternHandler, 
         ShareHubService shareHubService, TutorialService guides)
     {
         _logger = logger;
@@ -45,8 +47,8 @@ public class ToyboxPatterns
     private int LastHoveredIndex = -1;
     private LowerString PatternSearchString = LowerString.Empty;
     private List<Pattern> FilteredPatternsList
-        => _handler.Patterns
-            .Where(pattern => pattern.Name.Contains(PatternSearchString, StringComparison.OrdinalIgnoreCase))
+        => _handler.Storage
+            .Where(pattern => pattern.Label.Contains(PatternSearchString, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
     public void DrawPatternManagerPanel()
@@ -159,7 +161,7 @@ public class ToyboxPatterns
             ImGui.SameLine();
             ImGui.SetCursorPosY(currentYpos);
             if (_uiShared.IconButton(FontAwesomeIcon.Trash, disabled: !KeyMonitor.ShiftPressed()))
-                _handler.RemovePattern(_handler.ClonedPatternForEdit.UniqueIdentifier);
+                _handler.RemovePattern(_handler.ClonedPatternForEdit.Identifier);
             UiSharedService.AttachToolTip("Delete this Pattern--SEP--Must hold SHIFT while clicking to delete");
         }
     }
@@ -237,7 +239,7 @@ public class ToyboxPatterns
             // perform early returns to avoid crashes.
             if (ImGui.Selectable("Delete Pattern"))
             {
-                _handler.RemovePattern(FilteredPatternsList[LastHoveredIndex].UniqueIdentifier);
+                _handler.Delete(FilteredPatternsList[LastHoveredIndex]);
             }
             ImGui.EndPopup();
         }
@@ -246,7 +248,7 @@ public class ToyboxPatterns
     private void DrawPatternSelectable(Pattern pattern, int idx)
     {
         // fetch the name of the pattern, and its text size
-        var name = pattern.Name;
+        var name = pattern.Label;
         Vector2 tmpAlarmTextSize;
         using (_uiShared.UidFont.Push()) { tmpAlarmTextSize = ImGui.CalcTextSize(name); }
 
@@ -264,7 +266,7 @@ public class ToyboxPatterns
         // create the selectable
         float height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), LastHoveredIndex == idx);
-        using (ImRaii.Child($"##PatternSelectable{pattern.UniqueIdentifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child($"##PatternSelectable{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
             using (var group = ImRaii.Group())
             {
@@ -273,7 +275,7 @@ public class ToyboxPatterns
                 var trashbinSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Trash).X;
 
                 // display name, then display the downloads and likes on the other side.
-                _uiShared.GagspeakText(pattern.Name);
+                _uiShared.GagspeakText(pattern.Label);
                 _uiShared.DrawHelpText("Description:--SEP--"+pattern.Description);
 
                 // playback button
@@ -293,7 +295,7 @@ public class ToyboxPatterns
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudWhite2))
                 {
                     if (_uiShared.IconButton(FontAwesomeIcon.TrashAlt, disabled: !KeyMonitor.ShiftPressed(), inPopup: true))
-                        _handler.RemovePattern(pattern.UniqueIdentifier);
+                        _handler.RemovePattern(pattern.Identifier);
                 }
                 UiSharedService.AttachToolTip("Remove this pattern!");
             }
@@ -326,13 +328,13 @@ public class ToyboxPatterns
     {
         UiSharedService.ColorText("ID:", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        UiSharedService.ColorText(pattern.UniqueIdentifier.ToString(), ImGuiColors.DalamudGrey);
+        UiSharedService.ColorText(pattern.Identifier.ToString(), ImGuiColors.DalamudGrey);
 
         UiSharedService.ColorText("Pattern Name", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
-        var refName = pattern.Name;
+        var refName = pattern.Label;
         if (ImGui.InputTextWithHint("##PatternName", "Name Here...", ref refName, 50))
-            pattern.Name = refName;
+            pattern.Label = refName;
         _uiShared.DrawHelpText("Define the name for the Pattern.");
         
         // description

@@ -3,10 +3,10 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.PlayerState.Controllers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox.Controllers;
 using GagSpeak.Toybox.Data;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UI.UiRemote;
@@ -22,14 +22,14 @@ public class ToyboxOverview
     private readonly GagspeakMediator _mediator;
     private readonly UiSharedService _uiShared;
     private readonly GlobalData _playerManager;
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly GagspeakConfigService _clientConfigs;
+    private readonly ServerConfigService _serverConfigs;
     private readonly SexToyManager _vibeService;
     private readonly TutorialService _guides;
 
     public ToyboxOverview(ILogger<ToyboxOverview> logger, GagspeakMediator mediator,
         UiSharedService uiSharedService, GlobalData playerData,
-        ClientConfigurationManager clientConfigs, ServerConfigurationManager serverConfigs,
+        GagspeakConfigService clientConfigs, ServerConfigService serverConfigs,
         SexToyManager vibeService, TutorialService guides)
     {
         _logger = logger;
@@ -51,27 +51,27 @@ public class ToyboxOverview
         // draw the top display field for Intiface connectivity, similar to our other servers.
         DrawIntifaceConnectionStatus();
         // special case for the intiface connection, where if it is empty, we reset it to the default address.
-        if (string.IsNullOrEmpty(_clientConfigs.GagspeakConfig.IntifaceConnectionSocket))
+        if (string.IsNullOrEmpty(_clientConfigs.Config.IntifaceConnectionSocket))
         {
-            _clientConfigs.GagspeakConfig.IntifaceConnectionSocket = "ws://localhost:12345";
+            _clientConfigs.Config.IntifaceConnectionSocket = "ws://localhost:12345";
             _clientConfigs.Save();
         }
 
         // display a dropdown for the type of vibrator to use
         ImGui.SetNextItemWidth(125f);
-        if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.GagspeakConfig.VibratorMode.ToString()))
+        if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.Config.VibratorMode.ToString()))
         {
             foreach (VibratorEnums mode in Enum.GetValues(typeof(VibratorEnums)))
             {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.GagspeakConfig.VibratorMode))
+                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Config.VibratorMode))
                 {
-                    _clientConfigs.GagspeakConfig.VibratorMode = mode;
+                    _clientConfigs.Config.VibratorMode = mode;
                     _clientConfigs.Save();
                 }
             }
             ImGui.EndCombo();
         }
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.SelectingVibratorType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.GagspeakConfig.VibratorMode = VibratorEnums.Simulated);
+        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.SelectingVibratorType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.Config.VibratorMode = VibratorEnums.Simulated);
 
         // display the wide list of connected devices, along with if they are active or not, below some scanner options
         if (_uiShared.IconTextButton(FontAwesomeIcon.TabletAlt, "Personal Remote", 125f))
@@ -83,14 +83,14 @@ public class ToyboxOverview
         ImGui.Text("Open Personal Remote");
 
         if (_playerManager.GlobalPerms is not null)
-            ImGui.Text("Active Toys State: " + (_playerManager.GlobalPerms.ToyIsActive ? "Active" : "Inactive"));
+            ImGui.Text("Active Toys State: " + (_playerManager.GlobalPerms.ToysAreActive ? "Active" : "Inactive"));
 
         ImGui.Text("ConnectedToyActive: " + _vibeService.ConnectedToyActive);
 
         // draw out the list of devices
         ImGui.Separator();
         _uiShared.BigText("Connected Device(s)");
-        if (_clientConfigs.GagspeakConfig.VibratorMode == VibratorEnums.Simulated)
+        if (_clientConfigs.Config.VibratorMode == VibratorEnums.Simulated)
         {
             DrawSimulatedVibeInfo();
         }
@@ -104,12 +104,12 @@ public class ToyboxOverview
     private void DrawSimulatedVibeInfo()
     {
         ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        var vibeType = _clientConfigs.GagspeakConfig.VibeSimAudio;
-        if (ImGui.BeginCombo("Vibe Sim Audio##SimVibeAudioType", _clientConfigs.GagspeakConfig.VibeSimAudio.ToString()))
+        var vibeType = _clientConfigs.Config.VibeSimAudio;
+        if (ImGui.BeginCombo("Vibe Sim Audio##SimVibeAudioType", _clientConfigs.Config.VibeSimAudio.ToString()))
         {
             foreach (VibeSimType mode in Enum.GetValues(typeof(VibeSimType)))
             {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.GagspeakConfig.VibeSimAudio))
+                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Config.VibeSimAudio))
                 {
                     _vibeService.UpdateVibeSimAudioType(mode);
                 }
@@ -136,7 +136,7 @@ public class ToyboxOverview
             ImGui.EndCombo();
         }
         UiSharedService.AttachToolTip("Select the audio device to play the simulated vibrator sound to.");
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.PlaybackAudioDevice, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.GagspeakConfig.VibratorMode = VibratorEnums.Actual);
+        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.PlaybackAudioDevice, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.Config.VibratorMode = VibratorEnums.Actual);
     }
 
     public void DrawDevicesTable()
@@ -171,7 +171,7 @@ public class ToyboxOverview
         }
     }
 
-    private void DrawDeviceInfo(ButtplugDevice Device)
+    private void DrawDeviceInfo(ButtPlugDevice Device)
     {
         if (Device == null) { ImGui.Text("Device is null for this index."); return; }
 
@@ -219,7 +219,7 @@ public class ToyboxOverview
         var intifaceIconSize = _uiShared.GetIconButtonSize(intifaceOpenIcon);
         var connectedIcon = !_vibeService.IntifaceConnected ? FontAwesomeIcon.Link : FontAwesomeIcon.Unlink;
         var buttonSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Link);
-        var buttplugServerAddr = IntifaceService.IntifaceClientName;
+        var buttplugServerAddr = IntifaceController.IntifaceClientName;
         var addrSize = ImGui.CalcTextSize(buttplugServerAddr);
 
         string intifaceConnectionStr = "Intiface Central Connection";

@@ -9,7 +9,6 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;

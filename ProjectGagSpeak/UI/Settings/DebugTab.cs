@@ -243,12 +243,12 @@ public class DebugTab
         ImGui.TableSetupColumn("Value");
         ImGui.TableHeadersRow();
 
-        DrawPermissionRowBool("Live Chat Garbler", perms.LiveChatGarblerActive);
-        DrawPermissionRowBool("Live Chat Garbler Locked", perms.LiveChatGarblerLocked);
+        DrawPermissionRowBool("Live Chat Garbler", perms.ChatGarblerActive);
+        DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLocked);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Gag Glamours", perms.ItemAutoEquip);
+        DrawPermissionRowBool("Gag Glamours", perms.GagVisuals);
         DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
-        DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetAutoEquip);
+        DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetVisuals);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
@@ -259,8 +259,8 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
-        DrawPermissionRowBool("Sex Toy Active", perms.ToyIsActive);
-        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialVibratorAudio);
+        DrawPermissionRowBool("Sex Toy Active", perms.ToysAreActive);
+        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
         ImGui.TableNextRow();
         DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
         DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
@@ -303,7 +303,7 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSets);
         DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSets);
-        DrawPermissionRowString("Max Restraint Lock Time", perms.MaxAllowedRestraintTime.ToString());
+        DrawPermissionRowString("Max Restraint Lock Time", perms.MaxRestraintTime.ToString());
         DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSets);
         DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSets);
         ImGui.TableNextRow();
@@ -325,11 +325,11 @@ public class DebugTab
         DrawPermissionRowBool("Allow Removing Moodles", perms.AllowRemovingMoodles);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyState);
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseVibeRemote);
+        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToys);
         DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatterns);
         DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatterns);
         DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarms);
-        DrawPermissionRowBool("Can Send Alarms", perms.CanSendAlarms);
+        DrawPermissionRowBool("Can Send Alarms", perms.CanToggleAlarms);
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggers);
         ImGui.TableNextRow();
         DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
@@ -362,8 +362,8 @@ public class DebugTab
         ImGui.TableHeadersRow();
 
         // Live Chat Permissions
-        DrawPermissionRowBool("Live Chat Garbler Active", perms.LiveChatGarblerActiveAllowed);
-        DrawPermissionRowBool("Live Chat Garbler Locked", perms.LiveChatGarblerLockedAllowed);
+        DrawPermissionRowBool("Live Chat Garbler Active", perms.ChatGarblerActiveAllowed);
+        DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLockedAllowed);
         ImGui.TableNextRow();
 
         // Padlock permissions
@@ -382,11 +382,11 @@ public class DebugTab
 
         // Wardrobe Permissions
         DrawPermissionRowBool("Wardrobe Enabled", perms.WardrobeEnabledAllowed);
-        DrawPermissionRowBool("Auto Equip Items", perms.ItemAutoEquipAllowed);
-        DrawPermissionRowBool("Auto Equip Restraints", perms.RestraintSetAutoEquipAllowed);
+        DrawPermissionRowBool("Auto Equip Items", perms.GagVisualsAllowed);
+        DrawPermissionRowBool("Auto Equip Restraints", perms.RestraintSetVisualsAllowed);
         DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSetsAllowed);
         DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSetsAllowed);
-        DrawPermissionRowBool("Max Restraint Lock Time", perms.MaxAllowedRestraintTimeAllowed);
+        DrawPermissionRowBool("Max Restraint Lock Time", perms.MaxRestraintTimeAllowed);
         DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSetsAllowed);
         DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSetsAllowed);
         ImGui.TableNextRow();
@@ -401,30 +401,30 @@ public class DebugTab
 
         // Moodle Permissions
         DrawPermissionRowBool("Moodles Enabled", perms.MoodlesEnabledAllowed);
-        DrawPermissionRowBool("Allow Positive Moodles", perms.AllowPositiveStatusTypesAllowed);
-        DrawPermissionRowBool("Allow Negative Moodles", perms.AllowNegativeStatusTypesAllowed);
-        DrawPermissionRowBool("Allow Special Moodles", perms.AllowSpecialStatusTypesAllowed);
+        DrawPermissionRowBool("Allow Positive Moodles", perms.PositiveStatusTypesAllowed);
+        DrawPermissionRowBool("Allow Negative Moodles", perms.NegativeStatusTypesAllowed);
+        DrawPermissionRowBool("Allow Special Moodles", perms.SpecialStatusTypesAllowed);
         DrawPermissionRowBool("Apply Own Moodles", perms.PairCanApplyOwnMoodlesToYouAllowed);
         DrawPermissionRowBool("Apply Your Moodles", perms.PairCanApplyYourMoodlesToYouAllowed);
         DrawPermissionRowBool("Max Moodle Time", perms.MaxMoodleTimeAllowed);
-        DrawPermissionRowBool("Allow Permanent Moodles", perms.AllowPermanentMoodlesAllowed);
-        DrawPermissionRowBool("Allow Removing Moodles", perms.AllowRemovingMoodlesAllowed);
+        DrawPermissionRowBool("Allow Permanent Moodles", perms.PermanentMoodlesAllowed);
+        DrawPermissionRowBool("Allow Removing Moodles", perms.RemovingMoodlesAllowed);
         ImGui.TableNextRow();
 
         // Toybox Permissions
         DrawPermissionRowBool("Toybox Enabled", perms.ToyboxEnabledAllowed);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUIAllowed);
-        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialVibratorAudioAllowed);
+        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
         DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyStateAllowed);
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseVibeRemoteAllowed);
+        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToysAllowed);
         DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatternsAllowed);
         DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatternsAllowed);
         DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Send Alarms", perms.CanSendAlarmsAllowed);
+        DrawPermissionRowBool("Can Send Alarms", perms.CanToggleAlarmsAllowed);
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
     }
 
-    private void DrawAppearance(string uid, CharaGagData appearance)
+    private void DrawAppearance(string uid, GagData appearance)
     {
         using var nodeMain = ImRaii.TreeNode("Appearance Data");
         if (!nodeMain) return;
@@ -501,7 +501,7 @@ public class DebugTab
         _uiShared.BooleanToColoredIcon(alias.HasNameStored, true);
 
         ImGui.Text("Listener Name: '" + alias.ListenerName + "'");
-        ImGui.Text("Extracted Listener Name: '" + alias.ExtractedListernerName + "'");
+        ImGui.Text("Extracted Listener Name: '" + alias.ExtractedListenerName + "'");
 
         using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
@@ -522,7 +522,7 @@ public class DebugTab
         using var nodeMain = ImRaii.TreeNode("Toybox Data");
         if (!nodeMain) return;
 
-        ImGui.Text("Active Pattern ID: " + toybox.ActivePatternId);
+        ImGui.Text("Active Pattern ID: " + toybox.ActivePattern);
         // alarm sub-node
         using (var subnodeAlarm = ImRaii.TreeNode("Active Alarms"))
         {

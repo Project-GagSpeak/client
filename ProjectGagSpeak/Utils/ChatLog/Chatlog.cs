@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using OtterGui.Text;
 using System;

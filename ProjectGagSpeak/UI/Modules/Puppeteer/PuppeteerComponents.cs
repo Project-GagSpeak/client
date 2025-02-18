@@ -4,14 +4,13 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -24,28 +23,28 @@ public class PuppeteerComponents
 {
     private readonly ILogger<PuppeteerComponents> _logger;
     private readonly SetPreviewComponent _setPreview;
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly PuppeteerHandler _handler;
+    private readonly GagspeakConfigService _clientConfigs;
+    private readonly PuppeteerManager _puppeteerManager;
     private readonly UiSharedService _uiShared;
-    private readonly MoodlesService _moodlesService;
+    private readonly RestrictionManager _moodlesService;
     public PuppeteerComponents(ILogger<PuppeteerComponents> logger, SetPreviewComponent setPreview,
-        ClientConfigurationManager clientConfigs, PuppeteerHandler handler, UiSharedService uiShared,
-        MoodlesService moodlesService)
+        ClientConfigurationManager clientConfigs, PuppeteerManager puppeteerManager, UiSharedService uiShared,
+        RestrictionManager moodlesService)
     {
         _logger = logger;
         _setPreview = setPreview;
         _clientConfigs = clientConfigs;
-        _handler = handler;
+        _puppeteerManager = puppeteerManager;
         _uiShared = uiShared;
         _moodlesService = moodlesService;
     }
 
     public Dictionary<string, bool> ExpandedAliasItems { get; set; } = new();
 
-    private UserPairPermissions OwnPerms => _handler.SelectedPair?.OwnPerms ?? new UserPairPermissions();
-    private UserEditAccessPermissions OwnEditPerms => _handler.SelectedPair?.OwnPermAccess ?? new UserEditAccessPermissions();
-    private UserPairPermissions PairPerms => _handler.SelectedPair?.PairPerms ?? new UserPairPermissions();
-    private UserEditAccessPermissions PairEditPerms => _handler.SelectedPair?.PairPermAccess ?? new UserEditAccessPermissions();
+    private UserPairPermissions OwnPerms => _puppeteerManager.SelectedPair?.OwnPerms ?? new UserPairPermissions();
+    private UserEditAccessPermissions OwnEditPerms => _puppeteerManager.SelectedPair?.OwnPermAccess ?? new UserEditAccessPermissions();
+    private UserPairPermissions PairPerms => _puppeteerManager.SelectedPair?.PairPerms ?? new UserPairPermissions();
+    private UserEditAccessPermissions PairEditPerms => _puppeteerManager.SelectedPair?.PairPermAccess ?? new UserEditAccessPermissions();
 
     public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null,
         Action<bool>? onAliasChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
@@ -59,28 +58,28 @@ public class PuppeteerComponents
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
 
         // so they let sits?
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                onSitsChange?.Invoke(!OwnPerms.SitRequests);
-        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
+                onSitsChange?.Invoke(!OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
+        UiSharedService.AttachToolTip("Allows " + _puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true))
-                onMotionChange?.Invoke(!OwnPerms.MotionRequests);
-        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
+                onEmotesChange?.Invoke(!OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
+        UiSharedService.AttachToolTip("Allows " + _puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true))
-                onAliasChange?.Invoke(!OwnPerms.AliasRequests);
-        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
+                onAliasChange?.Invoke(!OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
+        UiSharedService.AttachToolTip("Allows " + _puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
-                onAllChange?.Invoke(!OwnPerms.AllRequests);
-        UiSharedService.AttachToolTip("Allows " + _handler.SelectedPair?.GetNickAliasOrUid() + " to make you perform any command.");
+                onAllChange?.Invoke(!OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.All));
+        UiSharedService.AttachToolTip("Allows " + _puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " to make you perform any command.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudGrey))
@@ -91,16 +90,16 @@ public class PuppeteerComponents
 
     public void DrawListenerPairGroup(Action? onSendName = null)
     {
-        if (_handler.SelectedPair?.LastAliasData is null)
+        if (_puppeteerManager.SelectedPair?.LastAliasData is null)
             return;
-        bool pairHasName = _handler.SelectedPair.LastAliasData.HasNameStored;
+        bool pairHasName = _puppeteerManager.SelectedPair.LastAliasData.HasNameStored;
         using var group = ImRaii.Group();
 
         // display name, then display the downloads and likes on the other side.
         var ButtonWidth = _uiShared.GetIconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
         using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
         {
-            var isDisabled = !_handler.SelectedPair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
+            var isDisabled = !_puppeteerManager.SelectedPair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
             if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, isDisabled))
                 onSendName?.Invoke();
         }
@@ -109,27 +108,27 @@ public class PuppeteerComponents
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.SitRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true);
-        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
+        UiSharedService.AttachToolTip(_puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.MotionRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true);
-        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
+        UiSharedService.AttachToolTip(_puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AliasRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
-        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
+        UiSharedService.AttachToolTip(_puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.AllRequests ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
-        UiSharedService.AttachToolTip(_handler.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform any command.");
+        UiSharedService.AttachToolTip(_puppeteerManager.SelectedPair?.GetNickAliasOrUid() + " allows you to make them perform any command.");
     }
 
     public void DrawEditingTriggersWindow(ref string tempTriggers, ref string tempSartChar, ref string tempEndChar)
@@ -246,7 +245,7 @@ public class PuppeteerComponents
         var winFramePadHeight = ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().FramePadding.Y * 2;
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
 
-        using var child = ImRaii.Child("##PatternResult_" + aliasItem.AliasIdentifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow | ImGuiWindowFlags.NoScrollbar);
+        using var child = ImRaii.Child("##PatternResult_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow | ImGuiWindowFlags.NoScrollbar);
         if (!child) return;
 
         using (ImRaii.Group())
@@ -281,7 +280,7 @@ public class PuppeteerComponents
             {
                 string txt = aliasItem.InputCommand.IsNullOrEmpty() ? "<Undefined Input!>" : aliasItem.InputCommand;
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.InputText("##InputPreview_" + aliasItem.AliasIdentifier, ref txt, 128, ImGuiInputTextFlags.ReadOnly);
+                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.InputText("##InputPreview_" + aliasItem.Identifier, ref txt, 128, ImGuiInputTextFlags.ReadOnly);
             }
             UiSharedService.AttachToolTip("The text to scan for (Input String)");
 
@@ -506,7 +505,7 @@ public class PuppeteerComponents
         var topRowButtonLength = deleteButtonSize.X + addTypeButtonSize.X + comboSize + itemSpacing.X;
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
 
-        using var child = ImRaii.Child("##AliasEditor_" + aliasItem.AliasIdentifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow);
+        using var child = ImRaii.Child("##AliasEditor_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow);
         if (!child) return wasModified;
 
         using (ImRaii.Group())
@@ -524,7 +523,7 @@ public class PuppeteerComponents
             ImGui.SameLine();
             var tempName = aliasItem.Name;
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - topRowButtonLength - itemSpacing.X * 4);
-            if (ImGui.InputTextWithHint("##AliasName_" + aliasItem.AliasIdentifier, "Give Alias a Label...", ref tempName, 70))
+            if (ImGui.InputTextWithHint("##AliasName_" + aliasItem.Identifier, "Give Alias a Label...", ref tempName, 70))
             {
                 aliasItem.Name = tempName;
                 wasModified = true;
@@ -534,10 +533,10 @@ public class PuppeteerComponents
             // scoot over to the far right where everything else is.
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - topRowButtonLength);
             // draw the add type button. (i really need to make a more modular combo class structure one day but today is not that day)
-            var canUseButton = _uiShared._selectedComboItems.TryGetValue("AliasTypeCombo" + aliasItem.AliasIdentifier, out var selectedType)
+            var canUseButton = _uiShared._selectedComboItems.TryGetValue("AliasTypeCombo" + aliasItem.Identifier, out var selectedType)
                 && selectedType is not null && !aliasItem.HasActionType((InvokableActionType)selectedType);
 
-            _uiShared.DrawCombo("AliasTypeCombo" + aliasItem.AliasIdentifier, comboSize, aliasItem.UnregisteredTypes(), (item) => item.ToName(),
+            _uiShared.DrawCombo("AliasTypeCombo" + aliasItem.Identifier, comboSize, aliasItem.UnregisteredTypes(), (item) => item.ToName(),
                 initialSelectedItem: aliasItem.UnregisteredTypes().FirstOrDefault(), shouldShowLabel: false, defaultPreviewText: "Can't Add More!");
             UiSharedService.AttachToolTip("Selects a new output action kind to add to this Alias Item.");
 
@@ -547,7 +546,7 @@ public class PuppeteerComponents
                 aliasItem.AddActionForType((InvokableActionType)selectedType!);
                 wasModified = true;
                 // change the selected combo value to the new default.
-                _uiShared._selectedComboItems["AliasTypeCombo" + aliasItem.AliasIdentifier] = aliasItem.UnregisteredTypes().FirstOrDefault();
+                _uiShared._selectedComboItems["AliasTypeCombo" + aliasItem.Identifier] = aliasItem.UnregisteredTypes().FirstOrDefault();
             }
             UiSharedService.AttachToolTip("Adds the item from the dropdown to the list of active output types." +
                 "--SEP--Only 1 of each type can be added maximum");
@@ -570,7 +569,7 @@ public class PuppeteerComponents
             ImGui.SameLine();
             var inputCommand = aliasItem.InputCommand;
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-            if (ImGui.InputTextWithHint("##InputCommand_" + aliasItem.AliasIdentifier, "Enter Text To Scan For...", ref inputCommand, 256))
+            if (ImGui.InputTextWithHint("##InputCommand_" + aliasItem.Identifier, "Enter Text To Scan For...", ref inputCommand, 256))
             {
                 aliasItem.InputCommand = inputCommand;
                 wasModified = true;
@@ -590,7 +589,7 @@ public class PuppeteerComponents
                         var outputText = textAction.OutputCommand;
                         ImGui.SameLine();
                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-                        if (ImGui.InputText("##TextOutput_" + aliasItem.AliasIdentifier, ref outputText, 256))
+                        if (ImGui.InputText("##TextOutput_" + aliasItem.Identifier, ref outputText, 256))
                         {
                             textAction.OutputCommand = outputText;
                             wasModified = true;
@@ -614,7 +613,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Invoke");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasGagState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasGagState" + aliasItem.Identifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         gagAction.NewState = i;
                         wasModified = true;
@@ -623,7 +622,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("state for");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasGagType" + aliasItem.AliasIdentifier, 150f, Enum.GetValues<GagType>(), (item) => item.GagName(), (i) =>
+                    _uiShared.DrawCombo("AliasGagType" + aliasItem.Identifier, 150f, Enum.GetValues<GagType>(), (item) => item.GagName(), (i) =>
                     {
                         gagAction.GagType = i;
                         wasModified = true;
@@ -647,7 +646,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Invoke");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasRestraintState" + aliasItem.AliasIdentifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasRestraintState" + aliasItem.Identifier, 60f, new[] { NewState.Enabled, NewState.Disabled }, (item) => item.ToString(), (i) =>
                     {
                         bindAction.NewState = i;
                         wasModified = true;
@@ -660,7 +659,7 @@ public class PuppeteerComponents
                     {
                         ImGui.SameLine();
                         var defaultSet = sets.FirstOrDefault(x => x.Identifier == bindAction.OutputIdentifier) ?? sets.FirstOrDefault();
-                        _uiShared.DrawCombo("AliasRestraintSet" + aliasItem.AliasIdentifier, 150f, sets, (item) => item.Name, (i) =>
+                        _uiShared.DrawCombo("AliasRestraintSet" + aliasItem.Identifier, 150f, sets, (item) => item.Name, (i) =>
                         {
                             bindAction.OutputIdentifier = i?.Identifier ?? Guid.Empty;
                             wasModified = true;
@@ -684,7 +683,7 @@ public class PuppeteerComponents
                     ImGui.SameLine();
                     ImGui.TextUnformatted("Apply");
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("AliasMoodleType" + aliasItem.AliasIdentifier, 90f, Enum.GetValues<IpcToggleType>(), (item) => item.ToString(), (i) =>
+                    _uiShared.DrawCombo("AliasMoodleType" + aliasItem.Identifier, 90f, Enum.GetValues<IpcToggleType>(), (item) => item.ToString(), (i) =>
                     {
                         statusAction.MoodleType = i;
                         wasModified = true;
@@ -696,7 +695,7 @@ public class PuppeteerComponents
                         ImGui.TextUnformatted("using");
 
                         ImGui.SameLine();
-                        _moodlesService.DrawMoodleStatusCombo("##AliasMoodleStatus" + aliasItem.AliasIdentifier, 175f, moodleData.MoodlesStatuses, (i) =>
+                        _moodlesService.DrawMoodleStatusCombo("##AliasMoodleStatus" + aliasItem.Identifier, 175f, moodleData.MoodlesStatuses, (i) =>
                         {
                             statusAction.Identifier = i ?? Guid.Empty;
                             wasModified = true;
@@ -708,7 +707,7 @@ public class PuppeteerComponents
                         ImGui.TextUnformatted("on preset");
 
                         ImGui.SameLine();
-                        _moodlesService.DrawMoodlesPresetCombo("##AliasMoodlePreset" + aliasItem.AliasIdentifier, 1575f, moodleData.MoodlesPresets, moodleData.MoodlesStatuses, (i) =>
+                        _moodlesService.DrawMoodlesPresetCombo("##AliasMoodlePreset" + aliasItem.Identifier, 1575f, moodleData.MoodlesPresets, moodleData.MoodlesStatuses, (i) =>
                         {
                             statusAction.Identifier = i ?? Guid.Empty;
                             wasModified = true;
@@ -730,7 +729,7 @@ public class PuppeteerComponents
                     UiSharedService.AttachToolTip("The shock collar instruction executed when the input command is detected.");
 
                     ImGui.SameLine();
-                    _uiShared.DrawCombo("ShockOpCode" + aliasItem.AliasIdentifier, 60f, Enum.GetValues<ShockMode>(), (mode) => mode.ToString(), (i) =>
+                    _uiShared.DrawCombo("ShockOpCode" + aliasItem.Identifier, 60f, Enum.GetValues<ShockMode>(), (mode) => mode.ToString(), (i) =>
                     {
                         shockAction.ShockInstruction.OpCode = i;
                         wasModified = true;
@@ -748,7 +747,7 @@ public class PuppeteerComponents
                     float value = (float)timeSpanFormat.TotalSeconds + (float)timeSpanFormat.Milliseconds / 1000;
 
                     ImGui.SetNextItemWidth(85f);
-                    if (ImGui.SliderFloat("##ShockDuration" + aliasItem.AliasIdentifier, ref value, 0.016f, 15f))
+                    if (ImGui.SliderFloat("##ShockDuration" + aliasItem.Identifier, ref value, 0.016f, 15f))
                     {
                         int newMaxDuration;
                         if (value % 1 == 0 && value >= 1 && value <= 15) { newMaxDuration = (int)value; }
@@ -765,7 +764,7 @@ public class PuppeteerComponents
                         ImGui.SameLine();
                         int intensity = shockAction.ShockInstruction.Intensity;
                         ImGui.SetNextItemWidth(85f);
-                        if (ImGui.SliderInt("##ShockIntensity" + aliasItem.AliasIdentifier, ref intensity, 0, 100))
+                        if (ImGui.SliderInt("##ShockIntensity" + aliasItem.Identifier, ref intensity, 0, 100))
                         {
                             shockAction.ShockInstruction.Intensity = intensity;
                             wasModified = true;

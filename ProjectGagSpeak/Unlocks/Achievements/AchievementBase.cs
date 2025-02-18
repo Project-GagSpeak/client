@@ -1,5 +1,3 @@
-using GagspeakAPI.Data.IPC;
-
 namespace GagSpeak.Achievements;
 public abstract class AchievementBase : IAchievementItem
 {

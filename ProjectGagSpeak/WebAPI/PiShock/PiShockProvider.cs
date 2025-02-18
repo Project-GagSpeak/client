@@ -1,4 +1,3 @@
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;

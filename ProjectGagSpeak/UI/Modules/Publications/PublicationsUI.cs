@@ -8,7 +8,6 @@ using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
 using GagSpeak.UI.UiToybox;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using System.Numerics;
 

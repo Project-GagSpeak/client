@@ -19,7 +19,7 @@ public abstract class DrawFolderBase : IDrawFolder
     protected readonly string _id;
     protected readonly IImmutableList<Pair> _allPairs;
     protected readonly NicknamesConfigService _openFolders;
-    protected readonly UiSharedService _uiShared;
+    protected readonly UiSharedService _uiSharedService;
     private float _menuWidth = -1;
     private bool _wasHovered = false;
 
@@ -34,7 +34,7 @@ public abstract class DrawFolderBase : IDrawFolder
         DrawPairs = drawPairs;
         _allPairs = allPairs;
         _openFolders = openFolders;
-        _uiShared = uiShared;
+        _uiSharedService = uiShared;
     }
 
     protected abstract bool RenderIfEmpty { get; }
@@ -55,7 +55,7 @@ public abstract class DrawFolderBase : IDrawFolder
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
-            _uiShared.IconText(icon);
+            _uiSharedService.IconText(icon);
 
             ImGui.SameLine();
             var leftSideEnd = DrawIcon();
@@ -81,7 +81,7 @@ public abstract class DrawFolderBase : IDrawFolder
         // if opened draw content
         if (_openFolders.Storage.OpenPairListFolders.Contains(_id))
         {
-            using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+            using var indent = ImRaii.PushIndent(_uiSharedService.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             if (DrawPairs.Any())
             {
                 foreach (var item in DrawPairs)
