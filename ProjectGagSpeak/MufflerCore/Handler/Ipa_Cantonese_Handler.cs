@@ -1,5 +1,4 @@
 using Dalamud.Plugin;
-using GagSpeak.Services.ConfigurationServices;
 using System.Text.RegularExpressions;
 
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
@@ -10,25 +9,24 @@ public class Ipa_Cantonese_Handler
 {
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Cantonese_Handler> _logger; // Logger
-    private readonly ClientConfigurationManager _clientConfig; // The GagSpeak configuration
+    private readonly GagspeakConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pluginInterface; // Plugin interface for file access
 
-    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger,
-        ClientConfigurationManager config, IDalamudPluginInterface pluginInterface)
+    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
-        _clientConfig = config;
-        _pluginInterface = pluginInterface;
+        _config = config;
+        _pluginInterface = pi;
         LoadConversionRules();
     }
 
     private void LoadConversionRules()
     {
-        string data_file = "MufflerCore\\StoredDictionaries\\yue.json";
+        var data_file = "MufflerCore\\StoredDictionaries\\yue.json";
         try
         {
-            string jsonFilePath = Path.Combine(_pluginInterface.AssemblyLocation.Directory?.FullName!, data_file);
-            string json = File.ReadAllText(jsonFilePath);
+            var jsonFilePath = Path.Combine(_pluginInterface.AssemblyLocation.Directory?.FullName!, data_file);
+            var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"[IPA Parser] File read: {data_file}", LoggerType.GarblerCore);
         }
@@ -49,20 +47,20 @@ public class Ipa_Cantonese_Handler
     /// </summary><returns> The input string converted to IPA notation</returns>
     public string UpdateResult(string input)
     { // remember it's splitting by chars, but they are chinese chars, which are words.
-        string c_w = input;
-        string str = "";
+        var c_w = input;
+        var str = "";
         // Iterate over each character in the input string
-        for (int i = 0; i < c_w.Length; i++)
+        for (var i = 0; i < c_w.Length; i++)
         {
             // If the character exists in the dictionary
             if (obj.ContainsKey(c_w[i].ToString()))
             {
                 // Initialize an array to store potential multi-word entries
-                string[] s_words = new string[6];
+                var s_words = new string[6];
                 // Assign the first word
                 s_words[0] = c_w[i].ToString();
                 // Iterate through the next 5 words
-                for (int j = 1; j < 6; j++)
+                for (var j = 1; j < 6; j++)
                 {
                     // If index is within the bounds of the array
                     if (i + j < c_w.Length)
@@ -72,9 +70,9 @@ public class Ipa_Cantonese_Handler
                     }
                 }
                 // Find the last index of the array that exists in the dictionary
-                int words_index = Array.FindLastIndex(s_words, sw => obj.ContainsKey(sw));
+                var words_index = Array.FindLastIndex(s_words, sw => obj.ContainsKey(sw));
                 // If the index is not -1, append the word to the result
-                string search_words = s_words[words_index];
+                var search_words = s_words[words_index];
                 // Adding word and its phonetic to the result
                 str += "(" + search_words + " /" + obj[search_words] + "/ )";
                 // Increment the index by the number of words in the array
@@ -96,11 +94,11 @@ public class Ipa_Cantonese_Handler
     /// </summary><returns> The formatted output string</returns>
     private string FormatMain(string t_str)
     {
-        string f_str = t_str;
+        var f_str = t_str;
 
-        if (_clientConfig.GagspeakConfig.LanguageDialect == "IPA_nei5") f_str = FormatIPANum(t_str);         // nei13
-        else if (_clientConfig.GagspeakConfig.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);     // nei˩˧
-        else if (_clientConfig.GagspeakConfig.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);  // nei5
+        if (_config.Config.LanguageDialect == "IPA_nei5") f_str = FormatIPANum(t_str);         // nei13
+        else if (_config.Config.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);     // nei˩˧
+        else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);  // nei5
 
         return f_str;
     }

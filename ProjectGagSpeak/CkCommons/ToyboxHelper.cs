@@ -1,5 +1,4 @@
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
 using PInvoke;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -19,14 +18,14 @@ public static class ToyboxHelper
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             AppPath = Path.Combine(appData, "IntifaceCentral", "intiface_central.exe");
             return;
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             // Adjust the path according to where the application resides on macOS
-            string homePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            var homePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
             AppPath = Path.Combine(homePath, "Applications", "IntifaceCentral", "intiface_central.app");
             return;
         }
@@ -35,7 +34,7 @@ public static class ToyboxHelper
     public static void OpenIntiface(ILogger logger, bool pushToForeground)
     {
         // search for the intiface celtral window
-        IntPtr windowHandle = FindWindowByRegex(logger, @"Intiface\u00AE Central*");
+        var windowHandle = FindWindowByRegex(logger, @"Intiface\u00AE Central*");
         // if it's present, place it to the foreground
         if (windowHandle != IntPtr.Zero)
         {
@@ -63,16 +62,16 @@ public static class ToyboxHelper
 
     public static IntPtr FindWindowByRegex(ILogger logger, string pattern)
     {
-        IntPtr matchedWindowHandle = IntPtr.Zero;
-        Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+        var matchedWindowHandle = IntPtr.Zero;
+        var regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
         User32.EnumWindows((hWnd, lParam) =>
         {
             if (User32.IsWindowVisible(hWnd))
             {
-                StringBuilder sb = new StringBuilder(256);
+                var sb = new StringBuilder(256);
                 GetWindowText(hWnd, sb, sb.Capacity);
-                string windowTitle = sb.ToString();
+                var windowTitle = sb.ToString();
 
                 if (regex.IsMatch(windowTitle))
                 {
@@ -93,11 +92,11 @@ public static class ToyboxHelper
 
     public static string GetActiveWindowTitle()
     {
-        IntPtr hwnd = User32.GetForegroundWindow();
+        var hwnd = User32.GetForegroundWindow();
         if (hwnd == IntPtr.Zero) return "No active window";
 
-        User32.GetWindowThreadProcessId(hwnd, out int processId);
-        Process process = Process.GetProcessById(processId);
+        User32.GetWindowThreadProcessId(hwnd, out var processId);
+        var process = Process.GetProcessById(processId);
 
         return process.MainWindowTitle;
     }

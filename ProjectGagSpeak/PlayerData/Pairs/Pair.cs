@@ -2,54 +2,43 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Dto.UserPair;
-using GagspeakAPI.Extensions;
-using OtterGui.Text.Widget.Editors;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.PlayerData.Pairs;
 
-/// <summary> Stores information about a paired user of the client.
-/// <para> 
-/// The Pair object is created by the PairFactory, which is responsible for generating pair objects.
-/// These pair objects are then created and deleted via the pair manager 
-/// The pair handler is what helps with the management of the CachedPlayer.
-/// </para>
-/// </summary>
+/// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
+/// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
 public class Pair
 {
-    private readonly PairHandlerFactory _cachedPlayerFactory;
-    private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ILogger<Pair> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly PairHandlerFactory _cachedPlayerFactory;
+    private readonly SemaphoreSlim _creationSemaphore = new(1);
+    private readonly ServerConfigurationManager _nickConfig;
     private readonly CosmeticService _cosmetics;
 
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
     private OnlineUserIdentDto? _onlineUserIdentDto = null;
 
-    public Pair(ILogger<Pair> logger, UserPairDto userPair,
-        PairHandlerFactory cachedPlayerFactory, GagspeakMediator mediator,
-        ServerConfigurationManager serverConfigs, CosmeticService cosmetics)
+    public Pair(ILogger<Pair> logger, UserPairDto userPair, GagspeakMediator mediator,
+        PairHandlerFactory factory, ServerConfigurationManager nickConfig, CosmeticService cosmetics)
     {
         _logger = logger;
-        _cachedPlayerFactory = cachedPlayerFactory;
         _mediator = mediator;
-        _serverConfigs = serverConfigs;
+        _cachedPlayerFactory = factory;
+        _nickConfig = nickConfig;
         _cosmetics = cosmetics;
         UserPair = userPair;
     }
@@ -70,7 +59,7 @@ public class Pair
 
     // Latest cached data for this pair.
     public CharaIPCData LastIpcData { get; set; } = new();
-    public CharaActiveGags LastAppearanceData { get; set; } = new();
+    public CharaActiveGags LastGagData { get; set; } = new();
     public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
     public CharaActiveRestraint LastRestraintData { get; set; } = new();
     public List<Guid> ActiveCursedItems { get; set; } = new();
@@ -195,7 +184,7 @@ public class Pair
     public void LoadCompositeData(OnlineUserCompositeDataDto dto)
     {
         _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastAppearanceData = dto.CompositeData.Gags;
+        LastGagData = dto.CompositeData.Gags;
         LastRestrictionsData = dto.CompositeData.Restrictions;
         LastRestraintData = dto.CompositeData.Restraint;
         ActiveCursedItems = dto.CompositeData.CursedItems;
@@ -205,7 +194,7 @@ public class Pair
         // Update Kinkplate display.
         UpdateCachedLockedSlots();
         // publish a mediator message that is listened to by the achievement manager for duration cleanup.
-        _mediator.Publish(new PlayerLatestActiveItems(UserData, LastAppearanceData, LastRestrictionsData, LastRestraintData));
+        _mediator.Publish(new PlayerLatestActiveItems(UserData, LastGagData, LastRestrictionsData, LastRestraintData));
 
         if (dto.WasSafeword)
             return;
@@ -218,7 +207,7 @@ public class Pair
     public void UpdateGagData(CallbackGagDataDto data)
     {
         _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastAppearanceData.GagSlots[(int)data.AffectedSlot] = data.NewData;
+        LastGagData.GagSlots[(int)data.AffectedSlot] = data.NewData;
 
         switch (data.Type)
         {
@@ -401,70 +390,8 @@ public class Pair
     public void UpdateCachedLockedSlots()
     {
         var result = new Dictionary<EquipSlot, (EquipItem, string)>();
-        // return false instantly if the wardrobe data or light data is null.
-        if (LastRestraintData is null || LastRestrictionsData is null || LastLightStorage is null || LastAppearanceData is null)
-        {
-            _logger.LogDebug("Wardrobe or LightStorage Data is null for " + UserData.UID, LoggerType.PairDataTransfer);
-            return;
-        }
 
-        // we must check in the priority of Cursed Items -> Gag -> Restrictions -> Restraints
-
-        // If the pair has any cursed items active.
-        if (ActiveCursedItems.Any())
-        {
-            // iterate through the active cursed items, and stop at the first
-            foreach (var cursedItem in ActiveCursedItems)
-            {
-                // locate the light cursed item associated with the ID.
-                var lightCursedItem = LastLightStorage.CursedItems.FirstOrDefault(x => x.Id == cursedItem);
-                if (lightCursedItem != null)
-                {
-                    // if the cursed item is a Gag, locate the gag glamour first.
-                    if (lightCursedItem.Type is RestrictionType.Gag)
-                    {
-/*                        if (LastLightStorage.GagItems.TryGetValue(lightCursedItem.GagType, out var gagItem))
-                        {
-                            // if the gag item's slot is not yet occupied by anything, add it, otherwise, skip.
-                            if (!result.ContainsKey((EquipSlot)gagItem.Slot))
-                                result.Add(
-                                    (EquipSlot)gagItem.Slot,
-                                    (ItemIdVars.Resolve((EquipSlot)gagItem.Slot, new CustomItemId(gagItem.CustomItemId)),
-                                    gagItem.Tooltip));
-                        }*/
-                        continue; // Move to next item. (Early Skip)
-                    }
-
-                    // Cursed Item should be referenced by its applied item instead, so check to see if its already in the dictionary, if it isnt, add it.
-/*                    if (!result.ContainsKey((EquipSlot)lightCursedItem.AffectedSlot.Slot))
-                        result.Add(
-                            (EquipSlot)lightCursedItem.AffectedSlot.Slot,
-                            (ItemIdVars.Resolve((EquipSlot)lightCursedItem.AffectedSlot.Slot, new CustomItemId(lightCursedItem.AffectedSlot.CustomItemId)),
-                            lightCursedItem.AffectedSlot.Tooltip));*/
-                }
-            }
-        }
-/*
-        // next iterate through our locked gags, adding any gag glamour's to locked slots if they are present.
-        foreach (var gagSlot in LastAppearanceData.GagSlots.Where(x => x.GagItem is not GagType.None))
-        {
-            // if the pairs stored gag items contains a glamour for that item, attempt to add it, if possible.
-            if (LastLightStorage. .TryGetValue(gagSlot.GagItem, out var gagItem))
-                if (!result.ContainsKey((EquipSlot)gagItem.Slot))
-                    result.Add((EquipSlot)gagItem.Slot, (ItemIdVars.Resolve((EquipSlot)gagItem.Slot, new CustomItemId(gagItem.CustomItemId)), gagItem.Tooltip));
-        }
-
-        // finally, locate the active restraint set, and iterate through the restraint item glamours, adding them if not already a part of the dictionary.
-        if (!LastRestraintData.ActiveSetId.IsEmptyGuid())
-        {
-            var activeSet = LastLightStorage.Restraints.FirstOrDefault(x => x.Identifier == LastWardrobeData.ActiveSetId);
-            if (activeSet is not null)
-            {
-                foreach (var restraintAffectedSlot in activeSet.AffectedSlots)
-                    if (!result.ContainsKey((EquipSlot)restraintAffectedSlot.Slot))
-                        result.Add((EquipSlot)restraintAffectedSlot.Slot, (ItemIdVars.Resolve((EquipSlot)restraintAffectedSlot.Slot, new CustomItemId(restraintAffectedSlot.CustomItemId)), restraintAffectedSlot.Tooltip));
-            }
-        }*/
+        // Rewrite this completely.
         _logger.LogDebug("Updated Locked Slots for " + UserData.UID, LoggerType.PairInfo);
         LockedSlots = result;
     }
@@ -472,7 +399,7 @@ public class Pair
     /// <summary> Get the nicknames for the user. </summary>
     public string? GetNickname()
     {
-        return _serverConfigs.GetNicknameForUid(UserData.UID);
+        return _nickConfig.GetNicknameForUid(UserData.UID);
     }
 
     public string GetNickAliasOrUid() => GetNickname() ?? UserData.AliasOrUID;

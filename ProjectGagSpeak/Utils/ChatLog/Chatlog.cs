@@ -19,7 +19,7 @@ namespace GagSpeak.Utils.ChatLog;
 // an instance of a chatlog.
 public class ChatLog
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GagspeakMediator _mediator;
     private readonly CosmeticService _cosmetics;
 
@@ -38,7 +38,7 @@ public class ChatLog
 
     public ChatLog(MainHub mainHub, GagspeakMediator mediator, CosmeticService cosmetics)
     {
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _mediator = mediator;
         _cosmetics = cosmetics;
         TimeCreated = DateTime.Now;
@@ -230,7 +230,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 // Display each action as a selectable
                 if (ImGui.Selectable("Send Kinkster Request"))
                 {
-                    _ = _apiHubMain.UserSendPairRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage));
+                    _ = _hub.UserSendPairRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage));
                     _lastInteractedMsg = new ChatMessage();
                     ImGui.CloseCurrentPopup();
                 }

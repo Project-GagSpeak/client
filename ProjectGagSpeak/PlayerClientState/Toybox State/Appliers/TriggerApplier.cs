@@ -1,321 +1,434 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.TextHelpers;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Controllers;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using OtterGui;
 
 namespace GagSpeak.PlayerState.Toybox;
 
-// Visions of circular dependancy horrors....
-public sealed class TriggerApplier
+/// <summary> This is technically an applier for other trigger sources like puppeteer as well. </summary>
+/// </summary>
+public sealed class TriggerApplier : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<TriggerApplier> _logger;
+    private readonly MainHub _hub;
+    private readonly GagspeakConfigService _config;
     private readonly GlobalData _playerData;
     private readonly PairManager _pairs;
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly IpcCallerMoodles _moodlesIpc;
-    private readonly VibratorService _vibeService;
+    private readonly RestraintManager _restraints;
+    private readonly RestrictionManager _restrictions;
+    private readonly GagRestrictionManager _gags;
+    private readonly VisualApplierMoodles _moodles;
+    private readonly SexToyManager _vibeService;
 
-    public TriggerApplier(ILogger<TriggerApplier> logger, GlobalData playerData,
-        PairManager pairs, ClientConfigurationManager clientConfigs, IpcCallerMoodles moodlesIpc,
-        VibratorService vibeService)
+    // Our RateLimiter.
+    private ActionRateLimiter _rateLimiter { get; init; }
+
+    public TriggerApplier(ILogger<TriggerApplier> logger, GagspeakMediator mediator, MainHub hub,
+        GagspeakConfigService config, GlobalData playerData, PairManager pairs,
+        RestraintManager restraints, RestrictionManager restrictions, GagRestrictionManager gags,
+        VisualApplierMoodles moodles, SexToyManager vibeService) : base(logger, mediator)
     {
-        _logger = logger;
+        _hub = hub;
+        _config = config;
         _playerData = playerData;
         _pairs = pairs;
-        _clientConfigs = clientConfigs;
-        _moodlesIpc = moodlesIpc;
+        _restraints = restraints;
+        _restrictions = restrictions;
+        _gags = gags;
+        _moodles = moodles;
         _vibeService = vibeService;
+
+        _rateLimiter = new ActionRateLimiter(TimeSpan.FromSeconds(3), 1, 3, 3, 3);
     }
 
-    public async Task<bool> ExecuteActionAsync(IActionGS actionExecutable, string performerUID)
+    public async Task<bool> HandleActionAsync(InvokableGsAction invokableAction, string enactor, ActionSource source)
     {
-        if (actionExecutable == null)
-            throw new ArgumentNullException(nameof(actionExecutable));
-
-        return actionExecutable.ExecutionType switch
+        try
         {
-            ActionExecutionType.TextOutput => HandleTextAction(actionExecutable as TextAction, performerUID),
-            ActionExecutionType.Gag => await HandleGagAction(actionExecutable as GagAction, performerUID),
-            ActionExecutionType.Restraint => await HandleRestraintAction(actionExecutable as RestraintAction, performerUID),
-            ActionExecutionType.Moodle => HandleMoodleAction(actionExecutable as MoodleAction, performerUID),
-            ActionExecutionType.ShockCollar => HandlePiShockAction(actionExecutable as PiShockAction, performerUID),
-            ActionExecutionType.SexToy => HandleSexToyAction(actionExecutable as SexToyAction, performerUID),
-            _ => false // If no matching execution type, return false
-        };
+            // Rate-limit check before invoking action
+            if (!CanExecuteAction(invokableAction))
+            {
+                Logger.LogDebug("Rate limit exceeded for action: " + invokableAction.GetType().Name, LoggerType.ToyboxTriggers);
+                return false;
+            }
+
+            // perform an action based on the type.
+            return invokableAction switch
+            {
+                TextAction        ta  =>       DoTextAction(ta, enactor, source),
+                GagAction         ga  => await DoGagAction(ga, enactor),
+                RestrictionAction rsa => await DoRestrictionAction(rsa, enactor),
+                RestraintAction   rta => await DoRestraintAction(rta, enactor),
+                MoodleAction      ma  =>       DoMoodleAction(ma, enactor),
+                PiShockAction     ps  =>       DoPiShockAction(ps, enactor),
+                SexToyAction      sta =>       DoSexToyAction(sta, enactor),
+                _ => throw new InvalidOperationException($"Unhandled action type: {invokableAction.GetType().Name}")
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing action: {Action}", invokableAction);
+            return false;
+        }
     }
 
-    public async Task ExecuteMultiActionAsync(List<IActionGS> multiAction, string performerUID, Action? onSuccess = null)
+    public async Task HandleMultiActionAsync(IEnumerable<InvokableGsAction> multiAction, string enactor, ActionSource source)
     {
         var anySuccess = false;
         foreach (var action in multiAction)
         {
-            var result = await ExecuteActionAsync(action, performerUID);
-            if (result && anySuccess) anySuccess = true;
+            var result = await HandleActionAsync(action, enactor, source);
+            if (result && !anySuccess)
+                anySuccess = true;
         }
-        if (anySuccess) onSuccess?.Invoke();
     }
 
-    private bool HandleTextAction(TextAction? textAction, string performerUID)
+
+    private bool CanExecuteAction(InvokableGsAction invokableAction)
     {
-        if (textAction is null)
+        switch (invokableAction)
         {
-            _logger.LogWarning("Executing Action is invalid, cannot execute Text Action.");
-            return false;
+            case GagAction         _: return _rateLimiter.CanExecute(InvokableActionType.Gag);
+            case RestraintAction   _: return _rateLimiter.CanExecute(InvokableActionType.Restraint);
+            case RestrictionAction _: return _rateLimiter.CanExecute(InvokableActionType.Restriction);
+            case MoodleAction      _: return _rateLimiter.CanExecute(InvokableActionType.Moodle);
+            default:                  return true; // No rate limit for other actions
         }
+    }
+
+    private bool DoTextAction(TextAction act, string enactor, ActionSource source)
+    {
+        if(enactor == MainHub.UID)
+            return false;
 
         // construct the new SeString to send.
-        var remainingMessage = new SeString().Append(textAction.OutputCommand);
+        var remainingMessage = new SeString().Append(act.OutputCommand);
+        remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
+
         if (remainingMessage.TextValue.IsNullOrEmpty())
         {
-            _logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
+            Logger.LogTrace("Message is empty after alias conversion.", LoggerType.Puppeteer);
             return false;
         }
 
         // apply bracket conversions.
         remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
-        // verify permissions are satisfied.
-        var executerUID = performerUID;
         
-        var aliasAllowed = false;
-        // if performer is self, use global perms, otherwise, use pair perms.
-        if (performerUID == MainHub.UID)
+        // Handle final checks based on the source type.
+        switch (source)
         {
-            // This method is _only called_ from an alias
-            aliasAllowed = _playerData.GlobalPerms?.GlobalAllowAliasRequests ?? false;
-        }
-        else
-        {
-            var matchedPair = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == performerUID);
-            if (matchedPair is null)
-            {
-                _logger.LogWarning("No pair found for the performer, cannot execute Text Action.");
+            case ActionSource.GlobalAlias:
+                if(_playerData.GlobalPerms is null || !_playerData.GlobalPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias))
+                    return false;
+
+                break;
+            case ActionSource.PairAlias:
+                if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == enactor) is not { } match)
+                    return false;
+                // If it was a match, return false if you have not given the pair alias permissions.
+                if(match.OwnPerms.PuppeteerPerms.HasFlag(PuppeteerPerms.Alias) is false)
+                    return false;
+
+                break;
+            default:
+                Logger.LogWarning("Unknown or disallowed type for Text Action.");
                 return false;
-            }
-
-            matchedPair.OwnPerms.PuppetPerms(out var sits2, out var motions2, out var alias2, out var all2, out var startChar, out var endChar);
-            aliasAllowed = alias2;
         }
 
-        // Only apply this if it either originated from a trigger (or alias) 
-        // Or it it meets the various criteria for the sender.
-        if (aliasAllowed)
+        Logger.LogInformation("Text Action is being executed.", LoggerType.Puppeteer);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+        ChatMonitor.EnqueueMessage("/" + remainingMessage.TextValue);
+        return true;
+    }
+
+    private async Task<bool> DoGagAction(GagAction act, string enactor)
+    {
+        if(_gags.ActiveGagsData is not { } gagData)
+            return false;
+
+        // if the state is to enable the gag.
+        switch (act.NewState)
         {
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
-            ChatBoxMessage.EnqueueMessage("/" + remainingMessage.TextValue);
-            return true;
-        }
+            case NewState.Enabled:
+                var availableIdx = gagData.FindFirstUnused();
+                if (availableIdx is -1)
+                    return false;
 
-        // Implement text logic here
+                Logger.LogInformation("Applying a " + act.GagType + " to layer " + (GagLayer)availableIdx, LoggerType.GagHandling);
+                var newInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Applied)
+                {
+                    Layer = (GagLayer)availableIdx,
+                    Gag = act.GagType,
+                    Enabler = MainHub.UID
+                };
+                if (await _hub.UserPushDataGags(newInfo))
+                    return true;
+
+                break;
+            case NewState.Locked:
+                // Idk why you would do this lol but account for it.
+                if (act.Padlock is Padlocks.None)
+                    return false;
+
+                // If we have defined a layer idx, look for a gag on that index and return false if none are present or it is locked.
+                if (act.LayerIdx != -1)
+                {
+                    if (gagData.GagSlots[act.LayerIdx].IsLocked() || gagData.GagSlots[act.LayerIdx].GagItem is GagType.None)
+                        return false;
+                }
+
+                // If we have selected a spesific gag to lock, look for it, and if none are found, return false.
+                if (act.GagType is not GagType.None && gagData.FindOutermostActive(act.GagType) is -1)
+                    return false;
+
+                // Otherwise, attempt to locate the first lockable gagslot.
+                var idx = gagData.FindFirstUnlocked();
+                if (idx is -1)
+                    return false;
+
+                // We have found one to lock. Check what lock we chose, and define accordingly.
+                var password = act.Padlock switch
+                {
+                    // Generate a random 6 digit string of characters.
+                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    _ => string.Empty
+                };
+                // define a random time between 2 timespan bounds.
+                var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
+                Logger.LogInformation("Locking a " + act.GagType + " with " + act.Padlock + " to layer " + (GagLayer)idx, LoggerType.ToyboxTriggers);
+                var newLockInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Locked)
+                {
+                    Layer = (GagLayer)idx,
+                    Padlock = act.Padlock,
+                    Password = password,
+                    Timer = new DateTimeOffset(DateTime.UtcNow + timer),
+                    Assigner = MainHub.UID
+                };
+                if (await _hub.UserPushDataGags(newLockInfo))
+                    return true;
+
+                break;
+            case NewState.Disabled:
+                var match = act.GagType is GagType.None
+                    ? gagData.FindOutermostActive()
+                    : gagData.FindOutermostActive(act.GagType);
+
+                if (match is -1)
+                    return false;
+
+                // We can remove it.
+                Logger.LogDebug("Removing a " + act.GagType + " from layer " + (GagLayer)match, LoggerType.ToyboxTriggers);
+                var removeInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { Layer = (GagLayer)match };
+                if (await _hub.UserPushDataGags(removeInfo))
+                    return true;
+
+                break;
+            default:
+                return false;
+        }
         return false;
     }
 
-    private async Task<bool> HandleGagAction(GagAction? gagAction, string performerUID)
+    private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)
     {
-        if (_playerData.AppearanceData is null || gagAction is null)
-        {
-            _logger.LogWarning("Executing Action is invalid, cannot execute Gag Action.");
+        if (_restrictions.ActiveRestrictionsData is not { } restrictions)
             return false;
-        }
 
-        // if the state is to enable the ballgag.
-        if (gagAction.NewState is NewState.Enabled)
+        switch (act.NewState)
         {
-            // don't process if all gags equipped already.
-            if (!_playerData.AppearanceData.GagSlots.Any(x => x.GagType.ToGagType() is GagType.None))
+            case NewState.Enabled:
+                // grab the right restriction first.
+                var availableIdx = act.LayerIdx is -1
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier.IsEmptyGuid())
+                    : act.LayerIdx;
+
+                if (availableIdx is -1 || restrictions.Restrictions[availableIdx].IsLocked() || !restrictions.Restrictions[availableIdx].CanApply())
+                    return false;
+
+                var item = restrictions.Restrictions[act.LayerIdx];
+                Logger.LogInformation("Applying a restriction item to layer " + availableIdx, LoggerType.ToyboxTriggers);
+                var newInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Applied)
+                {
+                    AffectedIndex = availableIdx,
+                    ActiveSetId = act.RestrictionId,
+                    Enabler = MainHub.UID
+                };
+                if (await _hub.UserPushDataRestrictions(newInfo))
+                    return true;
+
+                break;
+            case NewState.Locked:
+                // Locate the first available unlocked restriction.
+                var idx = act.LayerIdx is -1
+                    ? restrictions.Restrictions.IndexOf(x => !x.Identifier.IsEmptyGuid() && x.CanLock())
+                    : act.LayerIdx;
+
+                if (idx is -1 || !restrictions.Restrictions[idx].CanLock() || act.Padlock is Padlocks.None)
+                    return false;
+
+                var password = act.Padlock switch
+                {
+                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    _ => string.Empty
+                };
+                // define a random time between 2 timespan bounds.
+                var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
+                Logger.LogDebug("Locking a restriction item with " + act.Padlock + " to layer " + idx, LoggerType.ToyboxTriggers);
+                var newLockInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Locked)
+                {
+                    AffectedIndex = idx,
+                    Padlock = act.Padlock,
+                    Password = password,
+                    Timer = new DateTimeOffset(DateTime.UtcNow + timer),
+                    Assigner = MainHub.UID
+                };
+                if (await _hub.UserPushDataRestrictions(newLockInfo))
+                    return true;
+
+                break;
+            case NewState.Disabled:
+                var match = !act.RestrictionId.IsEmptyGuid()
+                    ? restrictions.FindOutermostActiveUnlocked()
+                    : restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId);
+
+                if (match is -1 || restrictions.Restrictions[match].CanRemove() is false)
+                    return false;
+
+                Logger.LogDebug("Removing a restriction item from layer " + match, LoggerType.ToyboxTriggers);
+                var removeInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { AffectedIndex = match };
+                if (await _hub.UserPushDataRestrictions(removeInfo))
+                    return true;
+
+                break;
+            default:
                 return false;
-
-            // if a slot is available, find the first index that is empty.
-            var availableSlot = _playerData.AppearanceData.GagSlots.IndexOf(x => x.GagType.ToGagType() is GagType.None);
-            // apply the gag to that slot.
-            _logger.LogInformation("ActionExecutorGS is applying Gag Type " + gagAction.GagType + " to layer " + (GagLayer)availableSlot, LoggerType.GagHandling);
-            await _appearanceManager.GagApplied((GagLayer)availableSlot, gagAction.GagType, MainHub.UID, true, false);
-            return true;
-        }
-        else if (gagAction.NewState is NewState.Disabled)
-        {
-            // allow wildcard.
-            if (gagAction.GagType is GagType.None)
-            {
-                // remove the outermost gag (target the end of the list and move to the start)
-                var idx = _playerData.AppearanceData.FindOutermostActive();
-                if (idx is not -1)
-                {
-                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
-                    return true;
-                }
-            }
-            else
-            {
-                // if the gagtype is not GagType.None, disable the first gagtype matching it.
-                var idx = _playerData.AppearanceData.FindOutermostActive(gagAction.GagType);
-                if (idx is not -1)
-                {
-                    _logger.LogInformation("ActionExecutorGS is attempting removing Gag Type " + gagAction.GagType + " from layer " + (GagLayer)idx, LoggerType.GagHandling);
-                    await _appearanceManager.GagRemoved((GagLayer)idx, performerUID, true, false);
-                    return true;
-                }
-            }
         }
         return false;
     }
 
-    private async Task<bool> HandleRestraintAction(RestraintAction? restraintAction, string performerUID)
+    private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
     {
-        if (restraintAction is null)
-        {
-            _logger.LogWarning("Executing Action is invalid, cannot execute Restraint Action.");
+        if(_restraints.ActiveRestraintData is not { } restraint)
             return false;
-        }
 
-        // if the set does not exist in our list of sets, log error and return.
-        if (!_clientConfigs.StoredRestraintSets.Any(x => x.RestraintId == restraintAction.OutputIdentifier))
+        switch (act.NewState)
         {
-            _logger.LogError("ActionExecution Set no longer exists in your wardrobe!");
-            return false;
-        }
+            case NewState.Enabled:
+                if (!restraint.CanApply() || !_restraints.Storage.Contains(act.RestrictionId))
+                    return false;
 
-        // if enabling.
-        if (restraintAction.NewState is NewState.Enabled)
-        {
-            if(_appearanceManager.CanEnableSet(restraintAction.OutputIdentifier))
-            {
-                // swap if one is active, or apply if not.
-                _logger.LogInformation("HandleRestraint ActionExecution performing set SWAP/APPLY.", LoggerType.Restraints);
-                await _appearanceManager.SwapOrApplyRestraint(restraintAction.OutputIdentifier, MainHub.UID, true);
-                return true;
-            }
-        }
-        else if (restraintAction.NewState is NewState.Disabled)
-        {
-            if (_clientConfigs.TryGetActiveSet(out var activeSet))
-            {
-                if (_appearanceManager.CanDisableSet(activeSet.RestraintId))
+                Logger.LogDebug("Applying a restraint item to layer " + act.RestrictionId, LoggerType.ToyboxTriggers);
+                var newInfo = new PushRestraintDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Applied)
                 {
-                    // if the set is active, and the set is the one we want to disable, disable it.
-                    _logger.LogInformation("HandleRestraint ActionExecution performing set DISABLE.");
-                    await _appearanceManager.DisableRestraintSet(activeSet.RestraintId, MainHub.UID, true, false);
+                    ActiveSetId = act.RestrictionId,
+                    Enabler = MainHub.UID
+                };
+                if (await _hub.UserPushDataRestraint(newInfo))
                     return true;
-                }
-            }
-        }
 
-        return false; // Failure.
+                break;
+            case NewState.Locked:
+                if (!restraint.CanLock() || act.Padlock is Padlocks.None)
+                    return false;
+
+                var password = act.Padlock switch
+                {
+                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    _ => string.Empty
+                };
+                // define a random time between 2 timespan bounds.
+                var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
+                Logger.LogDebug("Locking a restraint item with " + act.Padlock, LoggerType.ToyboxTriggers);
+                var newLockInfo = new PushRestraintDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Locked)
+                {
+                    Padlock = act.Padlock,
+                    Password = password,
+                    Timer = new DateTimeOffset(DateTime.UtcNow + timer),
+                    Assigner = MainHub.UID
+                };
+                if (await _hub.UserPushDataRestraint(newLockInfo))
+                    return true;
+
+                break;
+            case NewState.Disabled:
+                if (!restraint.CanRemove() || !_restraints.Storage.Contains(act.RestrictionId))
+                    return false;
+
+                Logger.LogDebug("Removing a restraint item from layer " + act.RestrictionId, LoggerType.ToyboxTriggers);
+                var removeInfo = new PushRestraintDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed);
+                if (await _hub.UserPushDataRestraint(removeInfo))
+                    return true;
+
+                break;
+            default:
+                return false;
+        }
+        return false;
     }
 
-    private bool HandleMoodleAction(MoodleAction? moodleAction, string performerUID)
+    private bool DoMoodleAction(MoodleAction act, string enactor)
     {
-        if (moodleAction is null)
-            return false;
-
-        if (!IpcCallerMoodles.APIAvailable || _playerData.LastIpcData is null)
+        if(!IpcCallerMoodles.APIAvailable)
         {
-            _logger.LogError("Moodles IPC is not available, cannot execute moodle trigger.");
+            Logger.LogWarning("Moodles not available, cannot execute moodle trigger.");
             return false;
         }
 
-        // check if the action is available in our lists.
-        if (moodleAction.MoodleType is IpcToggleType.MoodlesStatus)
+        var moodlesToApply = act.MoodleItem switch
         {
-            if (!_playerData.LastIpcData.MoodlesStatuses.Any(x => x.GUID == moodleAction.Identifier))
-                return false;
+            MoodlePresetApi p => p.Statuses.Select(m => new Moodle() { Id = m.GUID }),
+            MoodleStatusApi s => new[] { new Moodle(s.Status.GUID) },
+            _ => Enumerable.Empty<Moodle>()
+        };
 
-            if (_playerData.LastIpcData.MoodlesDataStatuses.Any(x => x.GUID == moodleAction.Identifier))
-                return false;
-
-            _moodlesIpc.ApplyOwnStatusByGUID(new[] { moodleAction.Identifier });
-            return true;
-        }
-        else
-        {
-            if (_playerData.LastIpcData.MoodlesPresets.Any(x => x.Item1 == moodleAction.Identifier))
-            {
-                // we have a valid Moodle to set, so go ahead and try to apply it!
-                _logger.LogInformation("HandleMoodlePreset Action Execution performing a MOODLE PRESET APPLY", LoggerType.IpcMoodles);
-                _moodlesIpc.ApplyOwnPresetByGUID(moodleAction.Identifier);
-                return true;
-            }
-        }
-
-        return false; // Failure.
+        Logger.LogDebug("Applying a Moodle action to the player.", LoggerType.IpcMoodles);
+        _moodles.AddRestrictedMoodle(moodlesToApply);
+        return true;
     }
 
-    private bool HandlePiShockAction(PiShockAction? piShockAction, string performerUID)
+    private bool DoPiShockAction(PiShockAction act, string enactor)
     {
-        if (_playerData.GlobalPerms is null || piShockAction is null)
+        if (_playerData.GlobalPerms is not { } perms)
             return false;
 
-        if (_playerData.GlobalPerms.GlobalShockShareCode.IsNullOrEmpty() || !_playerData.GlobalPerms.HasValidShareCode())
+        if(perms.GlobalShockShareCode.IsNullOrWhitespace() || !perms.HasValidShareCode())
         {
-            _logger.LogWarning("Can't execute Shock Instruction if none are currently connected!");
+            Logger.LogWarning("Can't execute Shock Instruction if none are currently connected!");
             return false;
         }
 
         // execute the instruction with our global share code.
-        _logger.LogInformation("HandlePiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
-        _vibeService.ExecuteShockAction(_playerData.GlobalPerms.GlobalShockShareCode, piShockAction.ShockInstruction);
+        Logger.LogInformation("DoPiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
+        var shareCode = perms.GlobalShockShareCode;
+        Mediator.Publish(new PiShockExecuteOperation(shareCode, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, act.ShockInstruction.Duration));
         return true;
     }
 
-    private bool HandleSexToyAction(SexToyAction? sexToyAction, string performerUID)
+    private bool DoSexToyAction(SexToyAction act, string enactor)
     {
-        if (sexToyAction is null) return false;
-        _vibeService.DeviceHandler.ExecuteVibeTrigger(sexToyAction);
+        // Nothing atm.
         return true;
-    }
-
-    public bool MeetsSettingCriteria(bool canSit, bool canEmote, bool canAll, SeString message)
-    {
-        if (canAll)
-        {
-            _logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
-            return true;
-        }
-
-        if (canEmote)
-        {
-            var emote = EmoteMonitor.EmoteCommandsWithId
-                .FirstOrDefault(e => string.Equals(message.TextValue, e.Key.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrEmpty(emote.Key))
-            {
-                _logger.LogTrace("Valid Emote name: " + emote.Key.Replace(" ", "").ToLower() + ", RowID: " + emote.Value, LoggerType.Puppeteer);
-                _logger.LogTrace("Accepting Message as you allow Motion Commands", LoggerType.Puppeteer);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)emote.Value);
-                return true;
-            }
-        }
-
-        // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
-        if (canSit)
-        {
-            _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
-            var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
-            if (sitEmote.RowId is 50 or 52)
-            {
-                _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)sitEmote.RowId);
-                return true;
-            }
-            if (EmoteMonitor.EmoteCommandsWithId.Where(e => e.Value is 90).Any(e => message.TextValue.Contains(e.Key.Replace(" ", "").ToLower())))
-            {
-                _logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, (ushort)90);
-                return true;
-            }
-        }
-
-        // Failure
-        return false;
     }
 }
 

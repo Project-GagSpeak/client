@@ -2,6 +2,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerState.Components;
+using GagSpeak.Services;
 using GagSpeak.Utils;
 using JetBrains.Annotations;
 using OtterGui.Classes;
@@ -156,7 +157,7 @@ public class ModPresetLayer : IRestraintLayer
 
 
 
-public class RestraintSet : IMetaToggles
+public class RestraintSet
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; internal set; } = string.Empty;
@@ -217,7 +218,7 @@ public class RestraintSet : IMetaToggles
             if(!glamourItem.ApplyFlags.HasFlag(RestraintFlags.Glamour)) 
                 continue;
 
-            if(glamourItem.EquipItem.ItemId == ItemIdVars.NothingItem(glamourItem.EquipSlot).ItemId && glamourItem.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
+            if(glamourItem.EquipItem.ItemId == ItemService.NothingItem(glamourItem.EquipSlot).ItemId && glamourItem.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
                 continue;
 
             if(glamourItem is RestraintSlotBasic basic) 
@@ -231,7 +232,7 @@ public class RestraintSet : IMetaToggles
             if(!layer.ApplyFlags.HasFlag(RestraintFlags.Glamour))
                 continue;
 
-            if(layer.EquipItem.ItemId == ItemIdVars.NothingItem(layer.EquipSlot).ItemId && layer.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
+            if(layer.EquipItem.ItemId == ItemService.NothingItem(layer.EquipSlot).ItemId && layer.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
                 continue;
             
             GlamourItems[layer.EquipSlot] = layer.Ref.Glamour;
@@ -243,7 +244,7 @@ public class RestraintSet : IMetaToggles
     /// <summary> Arranges the associated mods for this restraint set through a helper function. </summary>
     /// <returns> A dictionary of mods associated with this restraint set. </returns>
     /// <remarks> Prioritizes the base slots, then the restraint layers, then additional mods. </remarks>
-    public IEnumerable<ModAssociation> GetMods()
+    public HashSet<ModAssociation> GetMods()
     {
         var associationPresets = new Dictionary<Mod, string>();
         foreach (var slot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
@@ -266,11 +267,7 @@ public class RestraintSet : IMetaToggles
         }
 
         // Convert the dictionary entries back to ModAssociation
-        return associationPresets.Select(kvp => new ModAssociation
-        {
-            ModInfo = kvp.Key,
-            CustomSettings = kvp.Value
-        });
+        return associationPresets.Select(kvp => new ModAssociation(kvp)).ToHashSet();
     }
 
     /// <summary> Grabs all 3 MetaData states compiled into a MetaDataStruct to operate with. </summary>
@@ -314,7 +311,7 @@ public class RestraintSet : IMetaToggles
             ["Description"] = Description,
             ["DoRedraw"] = DoRedraw,
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
-            ["BonusSlot"] = Glasses.Serialize(),
+            ["Glasses"] = Glasses.Serialize(),
             ["Layers"] = new JArray(Layers.OrderBy(x => x.Priority).Select(x => x.Serialize())),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
@@ -322,25 +319,6 @@ public class RestraintSet : IMetaToggles
             ["RestraintMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
             ["RestraintMods"] = new JArray(RestraintMods.Select(x => x.Serialize())),
         };
-    }
-
-    public void LoadRestraintSet(JObject jsonObject)
-    {
-        Identifier = Guid.TryParse(jsonObject["Identifier"]?.Value<string>(), out var guid) ? guid : Guid.NewGuid();
-        Label = jsonObject["Label"]?.Value<string>() ?? string.Empty;
-        Description = jsonObject["Description"]?.Value<string>() ?? string.Empty;
-        DoRedraw = jsonObject["DoRedraw"]?.Value<bool>() ?? false;
-        // for the restraint slots, iterate through each of the keys, being placed into the jsonObject["RestraintSlots"], and serialize the value, based on the type of object it is.
-        RestraintSlots = jsonObject["RestraintSlots"]?.ToObject<Dictionary<EquipSlot, IRestraintSlot>>() ?? new Dictionary<EquipSlot, IRestraintSlot>();
-        Glasses.LoadBonus(jsonObject["BonusSlot"]);
-        Layers = jsonObject["Layers"]?.ToObject<List<IRestraintLayer>>() ?? new List<IRestraintLayer>()
-            .OrderBy(layer => layer.Priority)
-            .ToList();
-        HeadgearState = JsonHelp.FromJObject(jsonObject["HeadgearState"]);
-        VisorState = JsonHelp.FromJObject(jsonObject["VisorState"]);
-        WeaponState = JsonHelp.FromJObject(jsonObject["WeaponState"]);
-        RestraintMoodles = jsonObject["RestraintMoodles"]?.ToObject<List<Moodle>>() ?? new List<Moodle>();
-        RestraintMods = jsonObject["RestraintMods"]?.ToObject<List<ModAssociation>>() ?? new List<ModAssociation>();
     }
 }
 

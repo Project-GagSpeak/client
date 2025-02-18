@@ -35,9 +35,9 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
     }
 
     // Cached Information
-    private GarblerRestriction? ActiveEditorItem = null;
+    public GarblerRestriction? ActiveEditorItem { get; private set; }
     public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; }
-    private SortedList<GagLayer, GarblerRestriction> ActiveRestrictions;
+    public SortedList<GagLayer, GarblerRestriction> ActiveRestrictions { get; private set; }
 
     // Stored Information.
     public CharaActiveGags? ActiveGagsData { get; private set; }
@@ -48,9 +48,9 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
     /// <param name="gagType"> The GagType to get the GagRestriction of for editing. </param>
-    public void StartEditing(GagType gagType)
+    public void StartEditing(GarblerRestriction restriction)
     {
-        if(Storage.TryGetGag(gagType, out var restriction))
+        if (restriction is not null && restriction.GagType is not GagType.None)
             ActiveEditorItem = new GarblerRestriction(restriction);
     }
 
@@ -151,9 +151,6 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
 
                     if(restriction.Value.VisorState != OptionalBool.Null)
                         flags &= ~VisualUpdateFlags.Visor;
-
-                    if(restriction.Value.WeaponState != OptionalBool.Null)
-                        flags &= ~VisualUpdateFlags.Weapon;
                 }
 
                 // these properties should not be updated if any item contains it.
@@ -227,7 +224,6 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
             if(matchedItem.Mod is null) flags &= ~VisualUpdateFlags.Mod;
             if(matchedItem.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
             if(matchedItem.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
-            if(matchedItem.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
             if(matchedItem.Moodle is null) flags &= ~VisualUpdateFlags.Moodle;
             if(matchedItem.ProfileGuid == Guid.Empty) flags &= ~VisualUpdateFlags.CustomizeProfile;
         }
@@ -328,16 +324,16 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
         if (ActiveGagsData is null || !ActiveGagsData.AnyGagLocked())
             return;
 
-        foreach(var (gagslot, index) in ActiveGagsData.GagSlots.Select((slot, index) => (slot, index)))
-            if (gagslot.Padlock.IsTimerLock() && gagslot.HasTimerExpired())
+        foreach(var (gagSlot, index) in ActiveGagsData.GagSlots.Select((slot, index) => (slot, index)))
+            if (gagSlot.Padlock.IsTimerLock() && gagSlot.HasTimerExpired())
             {
                 Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
                 // only set data relevant to the new change.
                 var newData = new ActiveGagSlot()
                 {
-                    Padlock = gagslot.Padlock, // match the padlock
-                    Password = gagslot.Password, // use the same password.
-                    PadlockAssigner = gagslot.PadlockAssigner // use the same assigner. (To remove devotional timers)
+                    Padlock = gagSlot.Padlock, // match the padlock
+                    Password = gagSlot.Password, // use the same password.
+                    PadlockAssigner = gagSlot.PadlockAssigner // use the same assigner. (To remove devotional timers)
                 };
                 Mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, (GagLayer)index, newData));
             }

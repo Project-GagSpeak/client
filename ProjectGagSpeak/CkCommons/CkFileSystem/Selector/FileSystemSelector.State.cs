@@ -4,27 +4,27 @@ using OtterGui.Raii;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
-public partial class FileSystemSelector<T, TStateStorage> : IDisposable
+public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
 {
     /// <summary> The state storage can contain arbitrary data for each visible node. </summary>
     /// <remarks> It also contains the path of the visible node itself as well as its depth in the file system tree. </remarks>
     private struct StateStruct
     {
-        public TStateStorage       StateStorage;
-        public FileSystem<T>.IPath Path;
-        public byte                Depth;
+        public TStateStorage         StateStorage;
+        public CkFileSystem<T>.IPath Path;
+        public byte                  Depth;
     }
 
     /// <summary> Only contains values not filtered out at any time. </summary>
     /// <remarks> This is, in other words, the current filtered State cache of all visable folders and files. </remarks>
     private readonly List<StateStruct> _state;
 
-    private FileSystem<T>.Leaf? _singleLeaf = null;
-    private int                 _leafCount  = 0;
+    private CkFileSystem<T>.Leaf? _singleLeaf = null;
+    private int                   _leafCount  = 0;
 
     public virtual void Dispose()
     {
-        FileSystem.Changed -= OnFileSystemChange;
+        CkFileSystem.Changed -= OnFileSystemChange;
     }
 
     /// <summary> The default filter string that is input. </summary>
@@ -111,21 +111,21 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
     /// <param name="path"> The path to check. </param>
     /// <remarks> Is not called directly, but through ApplyFiltersAndState, which can be overwritten separately. </remarks>
     /// <returns> If any filters matched for this path. </returns>
-    protected virtual bool ApplyFilters(FileSystem<T>.IPath path)
+    protected virtual bool ApplyFilters(CkFileSystem<T>.IPath path)
         => FilterValue.Length != 0 && !path.FullName().Contains(FilterValue);
 
     /// <summary> Customization point to get the state associated with a given path. </summary>
     /// <param name="path"> The path to get the state for. </param>
     /// <remarks> Is not called directly, but through ApplyFiltersAndState, which can be overwritten separately. </remarks>
     /// <returns> the state storage of the path. </returns>
-    protected virtual TStateStorage GetState(FileSystem<T>.IPath path)
+    protected virtual TStateStorage GetState(CkFileSystem<T>.IPath path)
         => default;
 
     /// <summary> If state and filtering are connected, you can overwrite this method. </summary>
     /// <param name="path"> The path to get the state storage from and apply filters too. </param>
     /// <param name="state"> The StateStorage of the path. </param>
     /// <returns> If the path is visible after filtering. </returns>
-    protected virtual bool ApplyFiltersAndState(FileSystem<T>.IPath path, out TStateStorage state)
+    protected virtual bool ApplyFiltersAndState(CkFileSystem<T>.IPath path, out TStateStorage state)
     {
         state = GetState(path);
         return ApplyFilters(path);
@@ -137,7 +137,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
     /// <param name="currentDepth"> the depth in the hierarchy we are in. </param>
     /// <returns> If anything was filtered here. </returns>
     /// <remarks> But if any of a folders descendants is visible, the folder will also remain visible. </remarks>
-    private bool ApplyFiltersAddInternal(FileSystem<T>.IPath path, ref int idx, byte currentDepth)
+    private bool ApplyFiltersAddInternal(CkFileSystem<T>.IPath path, ref int idx, byte currentDepth)
     {
         var filtered = ApplyFiltersAndState(path, out var state);
         _state.Insert(idx, new StateStruct()
@@ -147,7 +147,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
             StateStorage = state,
         });
 
-        if (path is FileSystem<T>.Folder f)
+        if (path is CkFileSystem<T>.Folder f)
         {
             if (f.State)
                 foreach (var child in f.GetChildren(SortMode))
@@ -160,7 +160,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
         }
         else if (!filtered && _leafCount++ == 0)
         {
-            _singleLeaf = path as FileSystem<T>.Leaf;
+            _singleLeaf = path as CkFileSystem<T>.Leaf;
         }
 
         // Remove a completely filtered folder again.
@@ -172,16 +172,16 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
 
     /// <summary> Scan for visible descendants of an uncollapsed folder. </summary>
     /// <returns> If any filters were applied after the scan. </returns>
-    private bool ApplyFiltersScanInternal(FileSystem<T>.IPath path)
+    private bool ApplyFiltersScanInternal(CkFileSystem<T>.IPath path)
     {
         if (!ApplyFiltersAndState(path, out var state))
         {
-            if (path is FileSystem<T>.Leaf l && _leafCount++ == 0)
+            if (path is CkFileSystem<T>.Leaf l && _leafCount++ == 0)
                 _singleLeaf = l;
             return false;
         }
 
-        if (path is FileSystem<T>.Folder f)
+        if (path is CkFileSystem<T>.Folder f)
             return f.GetChildren(ISortMode<T>.Lexicographical).All(ApplyFiltersScanInternal);
 
 
@@ -197,7 +197,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
         _leafCount = 0;
         _state.Clear();
         var idx = 0;
-        foreach (var child in FileSystem.Root.GetChildren(SortMode))
+        foreach (var child in CkFileSystem.Root.GetChildren(SortMode))
         {
             ApplyFiltersAddInternal(child, ref idx, 0);
             ++idx;
@@ -217,7 +217,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
 
     /// <summary> Adds or removes descendants of the given folder based on the affected change. </summary>
     /// <param name="folder"> The folder we are adding or removing descendants from. </param>
-    private void AddOrRemoveDescendants(FileSystem<T>.Folder folder)
+    private void AddOrRemoveDescendants(CkFileSystem<T>.Folder folder)
     {
         if (folder.State)
         {
@@ -252,7 +252,7 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
     /// <param name="f"> the folder to add descendants from. </param>
     /// <param name="parentIndex"> the index of the folder in the cache. -1 indicates the root. </param>
     /// <remarks> Used when folders are expanded. </remarks>
-    private void AddDescendants(FileSystem<T>.Folder f, int parentIndex)
+    private void AddDescendants(CkFileSystem<T>.Folder f, int parentIndex)
     {
         var depth = (byte)(parentIndex == -1 ? 0 : _state[parentIndex].Depth + 1);
         foreach (var child in f.GetChildren(SortMode))
@@ -264,15 +264,15 @@ public partial class FileSystemSelector<T, TStateStorage> : IDisposable
 
     /// <summary> Any file system change also sets the filters dirty. </summary>
     private void EnableFileSystemSubscription()
-        => FileSystem.Changed += OnFileSystemChange;
+        => CkFileSystem.Changed += OnFileSystemChange;
 
     /// <summary> Processes what to do upon any change in the File System. </summary>
     /// <param name="type"> The type of change that occurred. </param>
     /// <param name="changedObject"> The object that was changed. </param>
     /// <param name="previousParent"> The previous parent the object belonged to. </param>
     /// <param name="newParent"> The new parent the object belongs to. </param>
-    private void OnFileSystemChange(FileSystemChangeType type, FileSystem<T>.IPath changedObject, FileSystem<T>.IPath? previousParent,
-        FileSystem<T>.IPath? newParent)
+    private void OnFileSystemChange(FileSystemChangeType type, CkFileSystem<T>.IPath changedObject, CkFileSystem<T>.IPath? previousParent,
+        CkFileSystem<T>.IPath? newParent)
     {
         switch (type)
         {

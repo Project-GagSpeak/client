@@ -1,6 +1,6 @@
 namespace GagSpeak.CkCommons.FileSystem;
 
-public partial class FileSystem<T>
+public partial class CkFileSystem<T>
 {
     /// <summary> The structure for folder objects within the file system. </summary>
     /// <remarks> Folders can hold children and other folders. </remarks>

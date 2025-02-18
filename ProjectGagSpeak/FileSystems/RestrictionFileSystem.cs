@@ -1,15 +1,15 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak.CkCommons.FileSystem;
+using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using OtterGui.Filesystem;
-using ProjectGagSpeak.CkCommons.HybridSaver;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.FileSystems;
 
-public sealed class RestrictionFileSystem : FileSystem<RestrictionItem>, IMediatorSubscriber, IHybridSavable, IDisposable
+public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMediatorSubscriber, IHybridSavable, IDisposable
 {
     private readonly ILogger<RestrictionFileSystem> _logger;
     private readonly RestrictionManager _manager;

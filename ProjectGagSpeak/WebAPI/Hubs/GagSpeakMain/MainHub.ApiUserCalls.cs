@@ -1,24 +1,20 @@
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.Permissions;
-using GagspeakAPI.Dto.UserPair;
-using Microsoft.AspNetCore.SignalR.Client;
-using GagspeakAPI.Enums;
-using GagspeakAPI.Dto.Toybox;
-using GagspeakAPI.Dto.IPC;
-using GagspeakAPI.Dto.Patterns;
-using GagspeakAPI.Data.Permissions;
-using Microsoft.AspNetCore.SignalR;
 using GagspeakAPI.Dto;
+using GagspeakAPI.Dto.Connection;
+using GagspeakAPI.Dto.IPC;
+using GagspeakAPI.Dto.Permissions;
+using GagspeakAPI.Dto.Sharehub;
+using GagspeakAPI.Dto.User;
+using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Dto.VibeRoom;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace GagSpeak.WebAPI;
 
 #pragma warning disable MA0040
-/// <summary>
-/// Handles the User functions of the API controller on the Main GagSpeak Server.
-/// </summary>
+
 public partial class MainHub
 {
     /// <summary> 
@@ -235,6 +231,7 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserApplyMoodlesByGuid), dto).ConfigureAwait(false);
     }
 
+    /// <summary> For when we are applying OUR moodles to another pair. </summary>
     public async Task<bool> UserApplyMoodlesByStatus(ApplyMoodlesByStatusDto dto)
     {
         if (!IsConnected) return false;
@@ -320,14 +317,23 @@ public partial class MainHub
     public async Task UserPushDataIpc(PushIpcDataUpdateDto dto)
         => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataIpc), dto).ConfigureAwait(false); });
 
-    public async Task UserPushDataGags(PushGagDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataGags), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataGags(PushGagDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushDataRestraint(PushRestraintDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataRestraint), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataRestraint(PushRestraintDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
+    }
 
     public async Task<bool> UserPushDataCursedLoot(PushCursedLootDataUpdateDto dto)
     {
@@ -335,14 +341,23 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
     }
 
-    public async Task UserPushDataOrders(PushOrdersDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataOrders), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataOrders(PushOrdersDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushDataAlias(PushAliasDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataAlias), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataAlias(PushAliasDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataAlias), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushDataToybox(PushToyboxDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataToybox), dto).ConfigureAwait(false); });
+    public async Task<bool> UserPushDataToybox(PushToyboxDataUpdateDto dto)
+    {
+        if (!IsConnected) return false;
+        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
+    }
 
     public async Task UserPushDataLightStorage(PushLightStorageMessageDto dto)
         => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false); });

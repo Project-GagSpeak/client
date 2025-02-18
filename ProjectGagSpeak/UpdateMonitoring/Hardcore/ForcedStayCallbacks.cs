@@ -3,7 +3,6 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Utils;
 using System.Runtime.InteropServices;
 using ValType = FFXIVClientStructs.FFXIV.Component.GUI;
@@ -13,7 +12,7 @@ namespace GagSpeak.UpdateMonitoring;
 public unsafe class ForcedStayCallback : IDisposable
 {
     private readonly ILogger<ForcedStayCallback> _logger;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _mainConfig;
 
     // Ref:
     // https://github.com/Caraxi/SimpleTweaksPlugin/blob/02abb1c3e4a140cbccded03af1e0637c3c5665ff/Debugging/AddonDebug.cs#L127
@@ -43,14 +42,14 @@ public unsafe class ForcedStayCallback : IDisposable
             //_logger.LogDebug($"Callback triggered on {atkUnitBase->NameString} with values: {string.Join(", ", atkValueList.Select(value => value.ToString()))}");
             if(atkUnitBase->NameString == "SelectString")
             {
-                _clientConfigs.LastSeenListIndex = atkValues[0].Int;
-                //_logger.LogDebug("Last Seen List Index: " + _clientConfigs.LastSeenListIndex);
+                _mainConfig.LastSeenListIndex = atkValues[0].Int;
+                //_logger.LogDebug("Last Seen List Index: " + _mainConfig.LastSeenListIndex);
             }
             if(atkUnitBase->NameString == "SelectYesno")
             {
                 var selection = atkValues[0].Int == 1 ? "No" : "Yes";
-                _clientConfigs.LastSeenListSelection = selection;
-                //_logger.LogDebug("Last Seen List Selection: " + _clientConfigs.LastSeenListSelection);
+                _mainConfig.LastSeenListSelection = selection;
+                //_logger.LogDebug("Last Seen List Selection: " + _mainConfig.LastSeenListSelection);
             }
         }
         catch (Exception ex)
@@ -70,11 +69,11 @@ public unsafe class ForcedStayCallback : IDisposable
 
     internal delegate byte ForcedStayCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
     private static ForcedStayCallbackDelegate FireCallback = null!; // Used to execute things to this callback
-    public ForcedStayCallback(ILogger<ForcedStayCallback> logger, ClientConfigurationManager config,
+    public ForcedStayCallback(ILogger<ForcedStayCallback> logger, GagspeakConfigService config,
         ISigScanner sigScanner, IGameInteropProvider interopProvider)
     {
         _logger = logger;
-        _clientConfigs = config;
+        _mainConfig = config;
         interopProvider.InitializeFromAttributes(this);
 
         var callbackAddr = sigScanner.ScanText(Signatures.CallbackSignature);

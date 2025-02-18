@@ -1,6 +1,6 @@
 namespace GagSpeak.CkCommons.FileSystem;
 
-public partial class FileSystem<T>
+public partial class CkFileSystem<T>
 {
     public sealed class Leaf : IWritePath
     {

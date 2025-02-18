@@ -1,19 +1,15 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration.Models;
+/*using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.Utils;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Data.Character;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.Numerics;
 
 namespace GagSpeak.UI.Components;
 
@@ -90,17 +86,18 @@ public class SetPreviewComponent
         }
     }
 
-    public void DrawEquipSlotPreview(GagDrawData refData, float totalLength)
+    public void DrawEquipSlotPreview(GlamourSlot refGlamourSlot, float totalLength)
     {
-        refData.GameItem.DrawIcon(_textureHandler.IconData, GameIconSize, refData.Slot);
+        refGlamourSlot.GameItem.DrawIcon(_textureHandler.IconData, GameIconSize, refGlamourSlot.Slot);
         ImGui.SameLine(0, 3);
-        using (var groupDraw = ImRaii.Group()) DrawStain(refData);
+        using (var groupDraw = ImRaii.Group()) DrawStain(refGlamourSlot);
     }
 
+    // Reapproach this later.
     private void DrawRestraintSetDisplay(RestraintSet set)
     {
         // Draw the table.
-        using (var equipIconsTable = ImRaii.Table("equipIconsTable", 2, ImGuiTableFlags.RowBg))
+*//*        using (var equipIconsTable = ImRaii.Table("equipIconsTable", 2, ImGuiTableFlags.RowBg))
         {
             if (!equipIconsTable) return;
             // Create the headers for the table
@@ -138,7 +135,7 @@ public class SetPreviewComponent
                     DrawStain(set, slot);
                 }
             }
-        }
+        }*//*
     }
     private void DrawRestraintSetDisplay(LightRestraintData lightSet)
     {
@@ -179,59 +176,65 @@ public class SetPreviewComponent
 
     private void DrawStain(RestraintSet refSet, EquipSlot slot)
     {
+        // THIS IS A LOT MORE IN DEPTH TO LOGIC NOW.
+        // Maybe make it reference the RestrictionCache instead.
 
-        // draw the stain combo for each of the 2 dyes (or just one)
-        foreach (var (stainId, index) in refSet.DrawData[slot].GameStain.WithIndex())
+
+*//*      // draw the stain combo for each of the 2 dyes (or just one)
+        foreach (var (stainId, index) in refSet.RestraintSlots)
         {
+            // continue if slot is not basic and has no glamour flag.
+            if (slot != EquipSlot.Head && slot != EquipSlot.Body && slot != EquipSlot.Legs && slot != EquipSlot.Feet)
+                continue;
             using var id = ImUtf8.PushId(index);
             var found = _textureHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo, but dont make it hoverable
             using (ImRaii.Disabled(true))
                 StainColorCombos.Draw($"##stain{refSet.DrawData[slot].Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
-        }
+        }*//*
     }
 
-    private void DrawStain(GagDrawData refEquipItem)
+    private void DrawStain(GlamourSlot refGlamourSlot)
     {
 
         // draw the stain combo for each of the 2 dyes (or just one)
-        foreach (var (stainId, index) in refEquipItem.GameStain.WithIndex())
+        foreach (var (stainId, index) in refGlamourSlot.GameStain.WithIndex())
         {
             using var id = ImUtf8.PushId(index);
             var found = _textureHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo, but dont make it hoverable
             using (ImRaii.Disabled(true))
-                StainColorCombos.Draw($"##EquipStainPreview{refEquipItem.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
+                StainColorCombos.Draw($"##EquipStainPreview{refGlamourSlot.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, MouseWheelType.None);
         }
     }
 
-    public void DrawEquipDataDetailedSlot(EquipDrawData refData, float totalLength)
+    public void DrawEquipDataDetailedSlot(GlamourSlot refGlamourSlot, float totalLength)
     {
         var iconSize = new Vector2(3 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y * 2);
 
-        refData.GameItem.DrawIcon(_textureHandler.IconData, iconSize, refData.Slot);
+        refGlamourSlot.GameItem.DrawIcon(_textureHandler.IconData, iconSize, refGlamourSlot.Slot);
         // if we right click the icon, clear it
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            refData.GameItem = ItemIdVars.NothingItem(refData.Slot);
+            refGlamourSlot.GameItem = ItemIdVars.NothingItem(refGlamourSlot.Slot);
 
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
-            var refValue = (int)refData.Slot.ToIndex();
+            var refValue = (int)refGlamourSlot.Slot.ToIndex();
             ImGui.SetNextItemWidth((totalLength - ImGui.GetStyle().ItemInnerSpacing.X - iconSize.X));
             if (ImGui.Combo("##DetailedSlotEquip", ref refValue, EquipSlotExtensions.EqdpSlots.Select(slot => slot.ToName()).ToArray(), EquipSlotExtensions.EqdpSlots.Count))
             {
-                refData.Slot = EquipSlotExtensions.EqdpSlots[refValue];
-                refData.GameItem = ItemIdVars.NothingItem(refData.Slot);
+                refGlamourSlot.Slot = EquipSlotExtensions.EqdpSlots[refValue];
+                refGlamourSlot.GameItem = ItemIdVars.NothingItem(refGlamourSlot.Slot);
             }
 
-            DrawEquipDataSlot(refData, (totalLength - ImGui.GetStyle().ItemInnerSpacing.X - iconSize.X), false);
+            DrawEquipDataSlot(refGlamourSlot, (totalLength - ImGui.GetStyle().ItemInnerSpacing.X - iconSize.X), false);
         }
     }
 
-    private void DrawEquipDataSlot(EquipDrawData refData, float totalLength, bool allowMouse)
+    private void DrawEquipDataSlot(GlamourSlot refGlamourSlot, float totalLength, bool allowMouse)
     {
-        using var id = ImRaii.PushId((int)refData.Slot);
+        using var id = ImRaii.PushId((int)refGlamourSlot.Slot);
         var spacing = ImGui.GetStyle().ItemInnerSpacing with { Y = ImGui.GetStyle().ItemSpacing.Y };
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing);
 
@@ -240,57 +243,57 @@ public class SetPreviewComponent
 
         using var group = ImRaii.Group();
 
-        DrawEditableItem(refData, right, left, totalLength, allowMouse);
-        DrawEditableStain(refData, totalLength);
+        DrawEditableItem(refGlamourSlot, right, left, totalLength, allowMouse);
+        DrawEditableStain(refGlamourSlot, totalLength);
     }
 
-    private void DrawEditableItem(EquipDrawData refData, bool clear, bool open, float width, bool allowMouse)
+    private void DrawEditableItem(GlamourSlot refGlamourSlot, bool clear, bool open, float width, bool allowMouse)
     {
         // draw the item combo.
-        var combo = ItemCombos[refData.Slot.ToIndex()];
+        var combo = ItemCombos[refGlamourSlot.Slot.ToIndex()];
         if (open)
         {
-            GenericHelpers.OpenCombo($"##WardrobeCreateNewSetItem-{refData.Slot}");
+            GenericHelpers.OpenCombo($"##WardrobeCreateNewSetItem-{refGlamourSlot.Slot}");
             _logger.LogTrace($"{combo.Label} Toggled");
         }
         // draw the combo
-        var change = combo.Draw(refData.GameItem.Name, refData.GameItem.ItemId, width, width * 1.3f, allowMouseWheel: allowMouse);
+        var change = combo.Draw(refGlamourSlot.GameItem.Name, refGlamourSlot.GameItem.ItemId, width, width * 1.3f, allowMouseWheel: allowMouse);
 
         // if we changed something
-        if (change && !refData.GameItem.Equals(combo.CurrentSelection))
+        if (change && !refGlamourSlot.GameItem.Equals(combo.CurrentSelection))
         {
             // log full details.
             _logger.LogTrace($"Item changed from {combo.CurrentSelection} [{combo.CurrentSelection.ItemId}] " +
-                $"to {refData.GameItem} [{refData.GameItem.ItemId}]");
+                $"to {refGlamourSlot.GameItem} [{refGlamourSlot.GameItem.ItemId}]");
             // update the item to the new selection.
-            refData.GameItem = combo.CurrentSelection;
+            refGlamourSlot.GameItem = combo.CurrentSelection;
         }
 
         // if we right clicked
         if (clear || ImGui.IsItemClicked(ImGuiMouseButton.Right))
         {
             // if we right click the item, clear it.
-            _logger.LogTrace($"Item changed to {ItemIdVars.NothingItem(refData.Slot)} " +
-                $"[{ItemIdVars.NothingItem(refData.Slot).ItemId}] " +
-                $"from {refData.GameItem} [{refData.GameItem.ItemId}]");
+            _logger.LogTrace($"Item changed to {ItemIdVars.NothingItem(refGlamourSlot.Slot)} " +
+                $"[{ItemIdVars.NothingItem(refGlamourSlot.Slot).ItemId}] " +
+                $"from {refGlamourSlot.GameItem} [{refGlamourSlot.GameItem.ItemId}]");
             // clear the item.
-            refData.GameItem = ItemIdVars.NothingItem(refData.Slot);
+            refGlamourSlot.GameItem = ItemIdVars.NothingItem(refGlamourSlot.Slot);
         }
     }
 
-    private void DrawEditableStain(EquipDrawData refData, float width)
+    private void DrawEditableStain(GlamourSlot refGlamourSlot, float width)
     {
         // fetch the correct stain from the stain data
-        var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (refData.GameStain.Count - 1)) / refData.GameStain.Count;
+        var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (refGlamourSlot.GameStain.Count - 1)) / refGlamourSlot.GameStain.Count;
 
         // draw the stain combo for each of the 2 dyes (or just one)
-        foreach (var (stainId, index) in refData.GameStain.WithIndex())
+        foreach (var (stainId, index) in refGlamourSlot.GameStain.WithIndex())
         {
             using var id = ImUtf8.PushId(index);
             var found = _textureHandler.TryGetStain(stainId, out var stain);
             // draw the stain combo.
-            var change = StainColorCombos.Draw($"##cursedStain{refData.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, widthStains);
-            if (index < refData.GameStain.Count - 1)
+            var change = StainColorCombos.Draw($"##cursedStain{refGlamourSlot.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, widthStains);
+            if (index < refGlamourSlot.GameStain.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one if there are two stains
 
             // if we had a change made, update the stain data.
@@ -299,19 +302,20 @@ public class SetPreviewComponent
                 if (_textureHandler.TryGetStain(StainColorCombos.CurrentSelection.Key, out stain))
                 {
                     // if changed, change it.
-                    refData.GameStain = refData.GameStain.With(index, stain.RowIndex);
+                    refGlamourSlot.GameStain = refGlamourSlot.GameStain.With(index, stain.RowIndex);
                 }
                 else if (StainColorCombos.CurrentSelection.Key == Stain.None.RowIndex)
                 {
                     // if set to none, reset it to default
-                    refData.GameStain = refData.GameStain.With(index, Stain.None.RowIndex);
+                    refGlamourSlot.GameStain = refGlamourSlot.GameStain.With(index, Stain.None.RowIndex);
                 }
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
                 // reset the stain to default
-                refData.GameStain = refData.GameStain.With(index, Stain.None.RowIndex);
+                refGlamourSlot.GameStain = refGlamourSlot.GameStain.With(index, Stain.None.RowIndex);
             }
         }
     }
 }
+*/

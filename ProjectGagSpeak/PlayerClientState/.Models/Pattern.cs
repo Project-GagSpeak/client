@@ -5,8 +5,7 @@ namespace GagSpeak.PlayerState.Models;
 [Serializable]
 public class Pattern
 {
-    public Guid Identifier { get; set; } = Guid.Empty;
-
+    public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public TimeSpan Duration { get; set; } = TimeSpan.Zero;
@@ -15,7 +14,25 @@ public class Pattern
     public bool ShouldLoop { get; set; } = false;
     public List<byte> PatternData { get; set; } = new();
 
-    public LightPattern ToLightData() => new LightPattern(Identifier, Label, Description, Duration, ShouldLoop);
+    internal Pattern() { }
+
+    public Pattern(Pattern other, bool copyIdentifier = true)
+    {
+        if (copyIdentifier)
+            Identifier = other.Identifier;
+
+        Label = other.Label;
+        Description = other.Description;
+        Duration = other.Duration;
+        StartPoint = other.StartPoint;
+        PlaybackDuration = other.PlaybackDuration;
+        ShouldLoop = other.ShouldLoop;
+        PatternData = new List<byte>(other.PatternData);
+    }
+
+    public LightPattern ToLightData() 
+        => new LightPattern(Identifier, Label, Description, Duration, ShouldLoop);
+
     public JObject Serialize()
     {
         // Convert _patternData to a comma-separated string
@@ -38,7 +55,7 @@ public class Pattern
     {
         try
         {
-            Identifier = Guid.TryParse(jsonObject["Identifier"]?.Value<string>(), out var guid) ? guid : Guid.Empty;
+            Identifier = Guid.TryParse(jsonObject["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!");
             Label = jsonObject["Label"]?.Value<string>() ?? string.Empty;
             Description = jsonObject["Description"]?.Value<string>() ?? string.Empty;
             Duration = TimeSpan.TryParse(jsonObject["Duration"]?.Value<string>(), out var duration) ? duration : TimeSpan.Zero;
@@ -46,21 +63,19 @@ public class Pattern
             PlaybackDuration = TimeSpan.TryParse(jsonObject["PlaybackDuration"]?.Value<string>(), out var playbackDuration) ? playbackDuration : TimeSpan.Zero;
             ShouldLoop = jsonObject["ShouldLoop"]?.Value<bool>() ?? false;
 
-            PatternData.Clear();
+            // Deserialize PatternByteData from CSV (comma-separated)
             var patternDataString = jsonObject["PatternByteData"]?.Value<string>();
-            if (string.IsNullOrEmpty(patternDataString))
+            if (!string.IsNullOrEmpty(patternDataString))
             {
-                // If the string is null or empty, generate a list with a single byte of 0
-                PatternData = new List<byte> { (byte)0 };
-            }
-            else
-            {
-                // Otherwise, split the string into an array and convert each element to a byte
                 PatternData = patternDataString.Split(',')
                     .Select(byte.Parse)
                     .ToList();
             }
+            else
+            {
+                PatternData = new List<byte> { (byte)0 }; // Default case
+            }
         }
-        catch (System.Exception e) { throw new Exception($"{e} Error deserializing pattern data"); }
+        catch (Exception e) { throw new Exception($"{e} Error deserializing pattern data"); }
     }
 }

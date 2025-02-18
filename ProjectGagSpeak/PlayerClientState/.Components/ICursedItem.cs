@@ -27,6 +27,7 @@ public interface ICursedItem
     bool CanOverride { get; }
 
     /// <summary> Level of precedence an item has when marking comparison for overriding. </summary>
+    /// <remarks> We use this to sort our cursed item list with higher precedence first, so we can efficiently recalculate our list. </remarks>
     Precedence Precedence { get; }
 
     /// <summary> Stores a reference to the restriction item being used. </summary>

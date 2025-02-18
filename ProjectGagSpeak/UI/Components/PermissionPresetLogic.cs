@@ -2,7 +2,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
@@ -13,21 +12,17 @@ namespace GagSpeak.Services;
 public class PermissionPresetLogic
 {
     private readonly ILogger<PermissionPresetLogic> _logger;
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GlobalData _playerManager;
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
     public PermissionPresetLogic(ILogger<PermissionPresetLogic> logger,
-        MainHub apiHubMain, GlobalData playerManager,
-        ClientConfigurationManager clientConfigs, PairManager pairManager,
-        UiSharedService uiShared)
+        MainHub hub, GlobalData playerManager, PairManager pairManager, UiSharedService uiShared)
     {
         _logger = logger;
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _playerManager = playerManager;
-        _clientConfigs = clientConfigs;
         _pairManager = pairManager;
         _uiShared = uiShared;
     }
@@ -39,9 +34,9 @@ public class PermissionPresetLogic
     {
         // before drawing, we need to know if we should disable it or not.
         // It's OK if things are active for the player, since it doesn't actually trigger everything at once.
-        bool disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
+        var disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
 
-        float comboWidth = width - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Apply Preset");
+        var comboWidth = width - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Apply Preset");
         using (var disabled = ImRaii.Disabled(disabledCondition))
         {
             _uiShared.DrawCombo("Permission Preset Selector", comboWidth, Enum.GetValues<PresetName>(),
@@ -66,7 +61,7 @@ public class PermissionPresetLogic
         try
         {
             Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple;
-            switch (SelectedPreset)
+            /*switch (SelectedPreset)
             {
                 case PresetName.Dominant:
                     permissionTuple = PresetDominantSetup();
@@ -121,7 +116,7 @@ public class PermissionPresetLogic
                 default:
                     _logger.LogWarning("No preset selected for pair {pair}", pairToDrawListFor.UserData.UID);
                     break;
-            }
+            }*/
         }
         catch (Exception e)
         {
@@ -131,11 +126,11 @@ public class PermissionPresetLogic
 
     private void PushCmdToServer(Pair pairToDrawListFor, Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple, string presetName)
     {
-        _ = _apiHubMain.UserPushAllUniquePerms(new(pairToDrawListFor.UserData, MainHub.PlayerUserData, permissionTuple.Item1, permissionTuple.Item2, UpdateDir.Own));
+        _ = _hub.UserPushAllUniquePerms(new(pairToDrawListFor.UserData, MainHub.PlayerUserData, permissionTuple.Item1, permissionTuple.Item2, UpdateDir.Own));
         _logger.LogInformation("Applied {preset} preset to pair {pair}", presetName, pairToDrawListFor.UserData.UID);
         LastApplyTime = DateTime.UtcNow;
     }
-
+/*
     private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetDominantSetup()
     {
         var pairPerms = new UserPairPermissions();
@@ -687,5 +682,5 @@ public class PermissionPresetLogic
             CanToggleTriggersAllowed = true,
         };
         return new(pairPerms, pairAccess);
-    }
+    }*/
 }

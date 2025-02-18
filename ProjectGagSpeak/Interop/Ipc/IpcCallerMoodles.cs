@@ -46,15 +46,15 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtil;
 
     public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, IDalamudPluginInterface pi,
-        GagspeakMediator mediator, ClientMonitorService clientService, OnFrameworkService frameworkUtils)
+        GagspeakMediator mediator, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _frameworkUtil = frameworkUtils;
 
         _moodlesApiVersion = pi.GetIpcSubscriber<int>("Moodles.Version");
@@ -175,7 +175,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public bool ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
     {
         if (!APIAvailable) return false;
-        string clientName = _clientService.ClientPlayer.NameWithWorld();
+        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
         if (clientName.IsNullOrWhitespace()) return false;
         // run the tasks in async with each other
         Parallel.ForEach(guidsToAdd, guid => ApplyOwnStatusByGUID(guid, clientName));
@@ -193,7 +193,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public void ApplyOwnPresetByGUID(Guid guid)
     {
         if (!APIAvailable) return;
-        string clientName = _clientService.ClientPlayer.NameWithWorld();
+        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
         if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => _applyPresetByGuid.InvokeAction(guid, clientName));
     }
 
@@ -209,7 +209,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public void RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
     {
         if (!APIAvailable) return;
-        string clientName = _clientService.ClientPlayer.NameWithWorld();
+        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
         _logger.LogTrace("Removing Moodles: " + string.Join(", ", guidsToRemove), LoggerType.ClientPlayerData);
         if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), clientName));
     }
@@ -225,7 +225,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public void ClearStatus()
     {
         if(!APIAvailable) return;
-        string clientName = _clientService.ClientPlayer.NameWithWorld();
+        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
         if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => ClearStatus(clientName));
     }
 

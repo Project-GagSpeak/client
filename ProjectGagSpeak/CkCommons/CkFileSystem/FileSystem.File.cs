@@ -1,6 +1,6 @@
 namespace GagSpeak.CkCommons.FileSystem;
 
-public partial class FileSystem<T>
+public partial class CkFileSystem<T>
 {
     /// <summary>
     /// Save a current filesystem to a file, using a function that transforms the data value as well as its full path

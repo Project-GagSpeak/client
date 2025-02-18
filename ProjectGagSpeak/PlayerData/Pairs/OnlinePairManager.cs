@@ -1,6 +1,5 @@
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Listener;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -11,16 +10,7 @@ namespace GagSpeak.PlayerData.Pairs;
 
 public class OnlinePairManager : DisposableMediatorSubscriberBase
 {
-    private readonly GagRestrictionsConfigService _gagsConfig;
-    private readonly RestrictionsConfigService _restrictionsConfig;
-    private readonly RestraintsConfigService _restraintsConfig;
-    private readonly CursedLootConfigService _cursedLootConfig;
-    private readonly AliasConfigService _aliasConfig;
-    private readonly AlarmConfigService _alarmConfig;
-    private readonly PatternConfigService _patternsConfig;
-    private readonly TriggerConfigService _triggersConfig;
-    
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
@@ -43,9 +33,9 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
     private string _lastShockPermShareCode = string.Empty;
 
     public OnlinePairManager(ILogger<OnlinePairManager> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, PairManager pairManager) : base(logger, mediator)
+        MainHub hub, PairManager pairManager) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _pairManager = pairManager;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => FrameworkOnUpdate());
@@ -179,18 +169,18 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
                     Gags = _gagManager.ActiveGagsData,
                     Restrictions = _restrictionManager.ActiveRestrictionsData,
                     Restraint = _restraintManager.ActiveRestraintData,
-                    CursedItems = _cursedLootConfig.Current.Storage.CursedItems.Select(x => x.Identifier).ToList(),
-                    AliasData = _aliasConfig.Current.FromAliasStorage(),
+                    CursedItems = _cursedLootConfig.Config.Storage.CursedItems.Select(x => x.Identifier).ToList(),
+                    AliasData = _aliasConfig.Config.FromAliasStorage(),
                     ToyboxData = new CharaToyboxData()
                     {
-                        ActivePattern = _patternsConfig.Current.Storage.Patterns.Where(p => p.IsActive).Select(p => p.UniqueIdentifier).FirstOrDefault(),
-                        ActiveAlarms = _alarmConfig.Current.Storage.Alarms.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
-                        ActiveTriggers = _triggersConfig.Current.Storage.Triggers.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
+                        ActivePattern = _patternsConfig.Config.Storage.Patterns.Where(p => p.IsActive).Select(p => p.UniqueIdentifier).FirstOrDefault(),
+                        ActiveAlarms = _alarmConfig.Config.Storage.Alarms.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
+                        ActiveTriggers = _triggersConfig.Config.Storage.Triggers.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
                     },
                     LightStorageData = new CharaStorageData(), // Handle this later.
                 };*/
                 Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
-                await _apiHubMain.UserPushData(new(newOnlinePairs, compiledComposite, false)).ConfigureAwait(false);
+                await _hub.UserPushData(new(newOnlinePairs, compiledComposite, false)).ConfigureAwait(false);
             });
         }
     }
@@ -213,7 +203,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
                 Timer = _lastGagData.Timer,
                 Assigner = _lastGagData.PadlockAssigner
             };
-            await _apiHubMain.UserPushDataGags(sentDto).ConfigureAwait(false);
+            await _hub.UserPushDataGags(sentDto).ConfigureAwait(false);
         });
     }
 
@@ -235,7 +225,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
                 Timer = _lastRestrictionData.Timer,
                 Assigner = _lastRestrictionData.PadlockAssigner
             };
-            await _apiHubMain.UserPushDataRestrictions(sentDto).ConfigureAwait(false);
+            await _hub.UserPushDataRestrictions(sentDto).ConfigureAwait(false);
         });
     }
 
@@ -257,7 +247,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
                 Timer = _lastRestraintData.Timer,
                 Assigner = _lastRestraintData.PadlockAssigner
             };
-            await _apiHubMain.UserPushDataRestraint(sentDto).ConfigureAwait(false);
+            await _hub.UserPushDataRestraint(sentDto).ConfigureAwait(false);
         });
     }
 
@@ -269,7 +259,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         _ = Task.Run(async () =>
         {
             SendUpdateLog(onlinePlayers, updateKind);
-            await _apiHubMain.UserPushDataOrders(new(onlinePlayers, updateKind)).ConfigureAwait(false);
+            await _hub.UserPushDataOrders(new(onlinePlayers, updateKind)).ConfigureAwait(false);
         });
     }
 
@@ -282,7 +272,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
         _ = Task.Run(async () =>
         {
             Logger.LogDebug("Pushing Character Alias data to " + intendedPair.AliasOrUID + "[" + updateKind + "]", LoggerType.OnlinePairs);
-            await _apiHubMain.UserPushDataAlias(new(intendedPair, _lastAliasData, updateKind)).ConfigureAwait(false);
+            await _hub.UserPushDataAlias(new(intendedPair, _lastAliasData, updateKind)).ConfigureAwait(false);
         });
     }
 
@@ -294,7 +284,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             _ = Task.Run(async () =>
             {
                 SendUpdateLog(onlinePlayers, updateKind);
-                await _apiHubMain.UserPushDataToybox(new(onlinePlayers, _lastToyboxData, updateKind)).ConfigureAwait(false);
+                await _hub.UserPushDataToybox(new(onlinePlayers, _lastToyboxData, updateKind)).ConfigureAwait(false);
             });
         }
         else
@@ -312,7 +302,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             {
                 SendUpdateLog(onlinePlayers, DataUpdateType.StorageUpdated);
 
-                await _apiHubMain.UserPushDataLightStorage(new(onlinePlayers, _lastLightStorage)).ConfigureAwait(false);
+                await _hub.UserPushDataLightStorage(new(onlinePlayers, _lastLightStorage)).ConfigureAwait(false);
             });
         }
         else

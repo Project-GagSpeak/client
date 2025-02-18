@@ -2,11 +2,9 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Toybox.Controllers;
 using GagSpeak.UI;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UpdateMonitoring.Chat;
@@ -24,22 +22,20 @@ public sealed class CommandManager : IDisposable
     private readonly GagspeakMediator _mediator;
     private readonly PairManager _pairManager;
     private readonly GagspeakConfigService _mainConfig;
-    private readonly ServerConfigurationManager _serverConfigs;
-    private readonly ChatBoxMessage _chatMessages;
+    private readonly ChatMonitor _chatMessages;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
     private readonly IClientState _clientState;
     private readonly ICommandManager _commands;
 
     public CommandManager(GagspeakMediator mediator, PairManager pairManager,
-        GagspeakConfigService mainConfig, ServerConfigurationManager serverConfigs,
-        ChatBoxMessage chatMessages, DeathRollService deathRolls, 
-        IChatGui chat, IClientState clientState, ICommandManager commandManager)
+        GagspeakConfigService mainConfig, ChatMonitor chatMessages,
+        DeathRollService deathRolls, IChatGui chat, IClientState clientState,
+        ICommandManager commandManager)
     {
         _mediator = mediator;
         _pairManager = pairManager;
         _mainConfig = mainConfig;
-        _serverConfigs = serverConfigs;
         _chatMessages = chatMessages;
         _deathRolls = deathRolls;
         _chat = chat;
@@ -85,8 +81,8 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0)
         {
             // Interpret this as toggling the UI
-            if (_mainConfig.Current.HasValidSetup())
-                _mediator.Publish(new UiToggleMessage(typeof(MainWindowUI)));
+            if (_mainConfig.Config.HasValidSetup())
+                _mediator.Publish(new UiToggleMessage(typeof(MainUI)));
             else
                 _mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
             return;
@@ -94,7 +90,7 @@ public sealed class CommandManager : IDisposable
 
         else if (string.Equals(splitArgs[0], "settings", StringComparison.OrdinalIgnoreCase))
         {
-            if (_mainConfig.Current.HasValidSetup())
+            if (_mainConfig.Config.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
 
@@ -122,7 +118,7 @@ public sealed class CommandManager : IDisposable
         }
 
         // If safeword matches, invoke the safeword mediator
-        if (string.Equals(_mainConfig.Current.Safeword, splitArgs[0], StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_mainConfig.Config.Safeword, splitArgs[0], StringComparison.OrdinalIgnoreCase))
         {
             if (splitArgs.Length > 1)
             {

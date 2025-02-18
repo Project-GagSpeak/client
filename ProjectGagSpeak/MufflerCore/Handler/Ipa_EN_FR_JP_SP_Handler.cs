@@ -1,6 +1,5 @@
 using Dalamud.Plugin;
-using GagSpeak.Services.ConfigurationServices;
-using GagSpeak.Utils;
+using GagSpeak.CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.MufflerCore.Handler;
@@ -9,29 +8,28 @@ namespace GagSpeak.MufflerCore.Handler;
 public class Ipa_EN_FR_JP_SP_Handler
 {
     private readonly ILogger<Ipa_EN_FR_JP_SP_Handler> _logger;
-    private readonly ClientConfigurationManager _clientConfig; // The GagSpeak configuration
+    private readonly GagspeakConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // file accessor
     private Dictionary<string, string> obj;             // Dictionary to store the conversion rules in JSON
     public string uniqueSymbolsString = "";
 
     /* FOR DEBUGGING: If you ever need to aquire new unique symbols please reference the outdated private gagspeak repo. */
 
-    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger,
-        ClientConfigurationManager clientConfig, IDalamudPluginInterface pi)
+    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
-        _clientConfig = clientConfig;
+        _config = config;
         _pi = pi;
         LoadConversionRules();
     }
 
     private void LoadConversionRules()
     {
-        string data_file = GetDataFilePath();
+        var data_file = GetDataFilePath();
         try
         {
-            string jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
-            string json = File.ReadAllText(jsonFilePath);
+            var jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
+            var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
         }
@@ -61,9 +59,9 @@ public class Ipa_EN_FR_JP_SP_Handler
     public string ToIPAStringDisplay(string input)
     {
         // split the string by the spaces between words
-        string[] c_w = (Preprocess(input) + " ").Split(" ");
+        var c_w = (Preprocess(input) + " ").Split(" ");
         // the new string to output
-        string str = "";
+        var str = "";
         // iterate over each word in the input string
         foreach (var word in c_w)
         {
@@ -71,7 +69,7 @@ public class Ipa_EN_FR_JP_SP_Handler
             if (!string.IsNullOrEmpty(word))
             {
                 // remove punctuation from the word
-                string wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
+                var wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
                 wordWithoutPunctuation = wordWithoutPunctuation.ToLower();
                 // if the word exists in the dictionary
                 if (obj.ContainsKey(wordWithoutPunctuation))
@@ -96,8 +94,8 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public string ToIPAStringSpacedDisplay(string input)
     {
-        string str = input;
-        List<Tuple<string, List<string>>> parsedStr = ToIPAList(str);
+        var str = input;
+        var parsedStr = ToIPAList(str);
         str = ConvertDictionaryToSpacedPhonetics(parsedStr);
         return str;
     }
@@ -110,9 +108,9 @@ public class Ipa_EN_FR_JP_SP_Handler
         // Log the input string
 
         _logger.LogTrace($"Parsing IPA string from original message:", LoggerType.GarblerCore);
-        string[] c_w = (Preprocess(input) + " ").Split(" ");
+        var c_w = (Preprocess(input) + " ").Split(" ");
         // Initialize the result dictionary
-        List<Tuple<string, List<string>>> result = new List<Tuple<string, List<string>>>();
+        var result = new List<Tuple<string, List<string>>>();
         // Iterate over each word in the input string
         foreach (var word in c_w)
         {
@@ -120,13 +118,13 @@ public class Ipa_EN_FR_JP_SP_Handler
             if (!string.IsNullOrEmpty(word))
             {
                 // remove punctuation from the word
-                string wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
+                var wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
                 wordWithoutPunctuation = wordWithoutPunctuation.ToLower();
                 // If the word exists in the obj dictionary
                 if (obj.ContainsKey(wordWithoutPunctuation))
                 {
                     // Retrieve the phonetic representation of the word
-                    string phonetics = obj[wordWithoutPunctuation];
+                    var phonetics = obj[wordWithoutPunctuation];
                     // Process the phonetic representation to remove unwanted characters
                     phonetics = phonetics.Replace("/", "");
                     if (phonetics.Contains(","))
@@ -135,16 +133,16 @@ public class Ipa_EN_FR_JP_SP_Handler
                     }
                     phonetics = phonetics.Replace("ˈ", "").Replace("ˌ", "");
                     // Initialize a list to hold the phonetic symbols
-                    List<string> phoneticSymbols = new List<string>();
+                    var phoneticSymbols = new List<string>();
                     // Iterate over the phonetic symbols
-                    for (int i = 0; i < phonetics.Length; i++)
+                    for (var i = 0; i < phonetics.Length; i++)
                     {
                         // Check for known combinations of symbols
                         if (i < phonetics.Length - 1)
                         {
                             // first 
-                            string possibleCombination = phonetics.Substring(i, 2);
-                            int index = GetMasterListBasedOnDialect().FindIndex(t => t == possibleCombination);
+                            var possibleCombination = phonetics.Substring(i, 2);
+                            var index = GetMasterListBasedOnDialect().FindIndex(t => t == possibleCombination);
                             if (index != -1)
                             {
                                 // If a combination is found, add it to the list and skip the next character
@@ -184,14 +182,14 @@ public class Ipa_EN_FR_JP_SP_Handler
     public string ConvertDictionaryToSpacedPhonetics(List<Tuple<string, List<string>>> inputTupleList)
     {
         // Initialize a string to hold the result
-        string result = "";
+        var result = "";
 
         // Iterate over each entry in the dictionary
-        foreach (Tuple<string, List<string>> entry in inputTupleList)
+        foreach (var entry in inputTupleList)
         {
             // If the list has content, join the phonetic symbols with a dash
             // Otherwise, just use the normal word
-            string phonetics = entry.Item2.Any() ? string.Join("-", entry.Item2) : entry.Item1;
+            var phonetics = entry.Item2.Any() ? string.Join("-", entry.Item2) : entry.Item1;
 
             // Add the phonetics to the result string
             result += $"{phonetics} ";
@@ -206,7 +204,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public string GetDataFilePath()
     {
-        switch (_clientConfig.GagspeakConfig.LanguageDialect)
+        switch (_config.Config.LanguageDialect)
         {
             case "IPA_UK": return "MufflerCore\\StoredDictionaries\\en_UK.json";
             case "IPA_US": return "MufflerCore\\StoredDictionaries\\en_US.json";
@@ -224,7 +222,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public List<string> GetMasterListBasedOnDialect()
     {
-        switch (_clientConfig.GagspeakConfig.LanguageDialect)
+        switch (_config.Config.LanguageDialect)
         {
             case "IPA_UK": return GagPhonetics.MasterListEN_UK;
             case "IPA_US": return GagPhonetics.MasterListEN_US;

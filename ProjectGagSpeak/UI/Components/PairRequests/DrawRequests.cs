@@ -14,7 +14,7 @@ namespace GagSpeak.UI.Components.UserPairList;
 /// </summary>
 public class DrawRequests : IRequestsFolder
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GlobalData _clientData;
     private readonly DrawEntityFactory _pairRequestFactory;
     private readonly CosmeticService _cosmetics;
@@ -36,7 +36,7 @@ public class DrawRequests : IRequestsFolder
         DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
         UiSharedService uiSharedService)
     {
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _clientData = clientData;
         _pairRequestFactory = pairRequestFactory;
         _cosmetics = cosmetics;

@@ -1,12 +1,9 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
 using ImGuiNET;
-using OtterGui;
-using System.Numerics;
 namespace GagSpeak.UI;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
@@ -92,7 +89,7 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
             var groupLabel = $"Version {group.Key.Major}.{group.Key.Minor}.{group.Key.Build}.X";
             var groupFlags = ImGuiTreeNodeFlags.None;
 
-            bool isOpened = false;
+            var isOpened = false;
             using (var color = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudViolet))
             {
                 isOpened = ImGui.TreeNodeEx(groupLabel, groupFlags);

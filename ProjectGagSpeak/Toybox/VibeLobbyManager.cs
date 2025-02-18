@@ -2,15 +2,14 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.Toybox;
-using Lumina.Excel.Sheets;
+using GagspeakAPI.Dto.VibeRoom;
 
 namespace GagSpeak.VibeLobby;
 public class VibeRoomManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly VibratorService _vibeService;
+    private readonly SexToyManager _vibeService;
 
     private List<VibeRoomInviteDto> CurrentInvites = new();
 

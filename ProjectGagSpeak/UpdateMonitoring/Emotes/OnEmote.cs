@@ -85,10 +85,10 @@ public class OnEmote : IDisposable
             await _frameworkUtils.RunOnFrameworkThread(() =>
             {
                 var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
-                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Emote Caller";
+                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Emote Caller";
                 var emoteName = EmoteMonitor.GetEmoteName(emoteId);
                 var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
-                var targetName = (targetObj as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Target";
+                var targetName = (targetObj as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Target";
                 _logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
 
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);

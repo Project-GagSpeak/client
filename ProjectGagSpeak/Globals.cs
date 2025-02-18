@@ -10,7 +10,7 @@ global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
 
-/// Global Tuples
+/// Global Tuple
 global using MoodlesStatusInfo = (
     System.Guid GUID,
     int IconID,

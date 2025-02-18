@@ -11,18 +11,27 @@ public record RestraintTrigger : Trigger
     // the new state of it that will trigger the execution
     public NewState RestraintState { get; set; } = NewState.Enabled;
 
-    public override RestraintTrigger DeepClone()
+    internal RestraintTrigger() { }
+
+    public RestraintTrigger(RestraintTrigger other, bool keepId) : base(other, keepId)
     {
-        return new RestraintTrigger
-        {
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone(),
-            RestraintSetId = RestraintSetId,
-            RestraintState = RestraintState
-        };
+        RestraintSetId = other.RestraintSetId;
+        RestraintState = other.RestraintState;
+    }
+}
+
+[Serializable]
+public record RestrictionTrigger : Trigger
+{
+    public override TriggerKind Type => TriggerKind.Restriction;
+    public Guid RestrictionId { get; set; } = Guid.Empty;
+    public NewState RestrictionState { get; set; } = NewState.Enabled;
+
+    internal RestrictionTrigger() { }
+
+    public RestrictionTrigger(RestrictionTrigger other, bool keepId) : base(other, keepId)
+    {
+        RestrictionId = other.RestrictionId;
+        RestrictionState = other.RestrictionState;
     }
 }

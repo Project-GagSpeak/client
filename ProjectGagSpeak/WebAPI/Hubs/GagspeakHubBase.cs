@@ -12,15 +12,15 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
 {
     // make any accessible classes in here protected.
     protected readonly TokenProvider _tokenProvider;
-    protected readonly ClientMonitorService _clientService;
+    protected readonly ClientMonitor _clientMonitor;
     protected readonly OnFrameworkService _frameworkUtils;
 
     public GagspeakHubBase(ILogger logger, GagspeakMediator mediator, 
-        TokenProvider tokenProvider, ClientMonitorService clientService, 
+        TokenProvider tokenProvider, ClientMonitor clientMonitor, 
         OnFrameworkService frameworkUtils) : base(logger, mediator)
     {
         _tokenProvider = tokenProvider;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
 
         // Should fire to all overrides.
@@ -141,7 +141,7 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
     /// <param name="token"> token that when canceled will stop the while loop from occurring, preventing infinite reloads/waits </param>
     protected async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {
-        while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+        while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
         {
             Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
             await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);

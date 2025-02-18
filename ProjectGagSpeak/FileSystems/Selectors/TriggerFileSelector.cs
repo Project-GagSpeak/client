@@ -1,20 +1,18 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.Alarms;
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.FileSystems;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.FileSystem.Selector;
-using OtterGui.Log;
 
-namespace GagSpeak.Alarms;
+namespace GagSpeak.Triggers;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
-public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelector.AlarmState>, IMediatorSubscriber, IDisposable
+public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerFileSelector.TriggerState>, IMediatorSubscriber, IDisposable
 {
-    private readonly AlarmManager _manager;
+    private readonly TriggerManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
     /// <summary> 
@@ -23,48 +21,48 @@ public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelec
     /// We will find out later if anything.
     /// </summary>
     /// <remarks> This allows each item in here to be accessed efficiently at runtime during the draw loop. </remarks>
-    public record struct AlarmState(uint Color) { }
+    public record struct TriggerState(uint Color) { }
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
-    public new AlarmFileSystem.Leaf? SelectedLeaf
+    public new TriggerFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public AlarmFileSelector(GagspeakMediator mediator, AlarmManager manager, AlarmFileSystem fileSystem, IKeyState keys,
-        Logger log) : base(fileSystem, keys, log)
+    public TriggerFileSelector(TriggerManager manager, GagspeakMediator mediator, TriggerFileSystem fileSystem,
+        ILogger<TriggerFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##TriggerFileSelector")
     {
         Mediator = mediator;
         _manager = manager;
 
-        Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
 
         // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
     }
 
-    private void RenameLeafAlarm(AlarmFileSystem.Leaf leaf)
+    private void RenameLeafTrigger(TriggerFileSystem.Leaf leaf)
     {
         ImGui.Separator();
         RenameLeaf(leaf);
     }
 
-    private void RenameAlarm(AlarmFileSystem.Leaf leaf)
+    private void RenameTrigger(TriggerFileSystem.Leaf leaf)
     {
         ImGui.Separator();
         var currentName = leaf.Value.Label;
         if (ImGui.IsWindowAppearing())
             ImGui.SetKeyboardFocusHere(0);
-        ImGui.TextUnformatted("Rename Alarm:");
-        if (ImGui.InputText("##RenameAlarm", ref currentName, 256, ImGuiInputTextFlags.EnterReturnsTrue))
+        ImGui.TextUnformatted("Rename Trigger:");
+        if (ImGui.InputText("##RenameTrigger", ref currentName, 256, ImGuiInputTextFlags.EnterReturnsTrue))
         {
             _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
-        ImGuiUtil.HoverTooltip("Enter a new name here to rename the changed alarm.");
+        ImGuiUtil.HoverTooltip("Enter a new name here to rename the changed trigger.");
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        Mediator.Unsubscribe<ConfigAlarmChanged>(this);
+        Mediator.Unsubscribe<ConfigTriggerChanged>(this);
     }
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
@@ -75,7 +73,7 @@ public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelec
     // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnAlarmChange(StorageItemChangeType type, Alarm alarm, string? oldString)
+    private void OnTriggerChange(StorageItemChangeType type, Trigger trigger, string? oldString)
         => SetFilterDirty();
 
 

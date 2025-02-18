@@ -1,5 +1,4 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

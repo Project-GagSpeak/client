@@ -2,15 +2,14 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.Permissions;
-using GagspeakAPI.Dto.Toybox;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Dto.VibeRoom;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace GagSpeak.WebAPI;
@@ -26,12 +25,12 @@ public partial class MainHub
         {
             case MessageSeverity.Error:
                 Mediator.Publish(new NotificationMessage("Error from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
                 break;
 
             case MessageSeverity.Warning:
                 Mediator.Publish(new NotificationMessage("Warning from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
                 break;
 
             case MessageSeverity.Information:
@@ -41,7 +40,7 @@ public partial class MainHub
                     break;
                 }
                 Mediator.Publish(new NotificationMessage("Info from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(7.5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(7.5)));
                 break;
         }
         // return it as a completed task.
@@ -54,12 +53,12 @@ public partial class MainHub
         {
             case MessageSeverity.Error:
                 Mediator.Publish(new NotificationMessage("Error from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
                 break;
 
             case MessageSeverity.Warning:
                 Mediator.Publish(new NotificationMessage("Warning from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
                 break;
 
             case MessageSeverity.Information:
@@ -69,7 +68,7 @@ public partial class MainHub
                     break;
                 }
                 Mediator.Publish(new NotificationMessage("Info from " +
-                    _serverConfigs.CurrentServer!.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(5)));
+                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(5)));
                 break;
         }
         // we need to update the api server state to be stopped if connected
@@ -78,7 +77,7 @@ public partial class MainHub
             _ = Task.Run(async () =>
             {
                 // pause the server state
-                _serverConfigs.CurrentServer.FullPause = true;
+                _serverConfigs.ServerStorage.FullPause = true;
                 _serverConfigs.Save();
                 SuppressNextNotification = true;
                 // create a new connection to force the disconnect.
@@ -88,7 +87,7 @@ public partial class MainHub
                 _tokenProvider.ResetTokenCache();
 
                 // after it stops, switch the connection pause back to false and create a new connection.
-                _serverConfigs.CurrentServer.FullPause = false;
+                _serverConfigs.ServerStorage.FullPause = false;
                 _serverConfigs.Save();
                 SuppressNextNotification = true;
                 await Connect().ConfigureAwait(false);
@@ -156,7 +155,7 @@ public partial class MainHub
     {
         Logger.LogDebug("Client_UserApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
         // obtain the local player name and world
-        var NameWithWorld = _clientService.ClientPlayer.NameWithWorld();
+        var NameWithWorld = _clientMonitor.ClientPlayer.NameWithWorld();
         _visualListener.ApplyStatusesToSelf(dto, NameWithWorld);
         return Task.CompletedTask;
     }
@@ -231,7 +230,7 @@ public partial class MainHub
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            if (_pairs.DirectPairs.TryGetItem(x => x.UserData.UID == dto.User.UID, out var pair))
+            if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
             {
                 Logger.LogDebug("OWN Client_UserUpdatePairPermsGlobal: " + dto, LoggerType.Callbacks);
                 ExecuteSafely(() => _globals.ApplyGlobalPermChange(dto, pair));
@@ -433,7 +432,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
-            _visualListener.UpdateStoredAliasName(dataDto.User.UID, dataDto.NewData.ListenerName);
+            _miscListener.UpdateListener(dataDto.User.UID, dataDto.NewData.ListenerName);
             return Task.CompletedTask;
         }
         else

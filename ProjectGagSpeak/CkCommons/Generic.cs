@@ -26,10 +26,7 @@ public static class Generic
             cts?.Cancel();
             cts?.Dispose();
         }
-        catch (ObjectDisposedException)
-        {
-            // swallow it
-        }
+        catch (ObjectDisposedException) { }
     }
 
     public static CancellationTokenSource CancelRecreate(this CancellationTokenSource? cts)
@@ -50,28 +47,6 @@ public static class Generic
         var jsonString = JsonConvert.SerializeObject(obj, settings);
         return JsonConvert.DeserializeObject<T>(jsonString, settings)!;
     }
-
-    public static string EnsureUniqueName<T>(string baseName, IEnumerable<T> collection, Func<T, string> nameSelector)
-    {
-        // Regex to match the base name and the (X) suffix if it exists
-        var suffixPattern = @"^(.*?)(?: \((\d+)\))?$";
-        var match = System.Text.RegularExpressions.Regex.Match(baseName, suffixPattern);
-
-        string namePart = match.Groups[1].Value; // The base part of the name
-        int currentNumber = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
-
-        // Increment current number for the new copy
-        currentNumber = Math.Max(1, currentNumber);
-
-        string newName = baseName;
-
-        // Ensure the name is unique by appending (X) and incrementing if necessary
-        while (collection.Any(item => nameSelector(item) == newName))
-            newName = $"{namePart} ({currentNumber++})";
-
-        return newName;
-    }
-
     public static unsafe int? ObjectTableIndex(this IGameObject? gameObject)
     {
         if (gameObject == null || gameObject.Address == IntPtr.Zero)
@@ -81,7 +56,5 @@ public static class Generic
 
         return ((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)gameObject.Address)->ObjectIndex;
     }
-
-
 }
 

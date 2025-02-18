@@ -1,4 +1,4 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+/*using GagSpeak.GagspeakConfiguration.Configurations;
 
 namespace GagSpeak.GagspeakConfiguration;
 
@@ -111,12 +111,12 @@ public abstract class ConfigurationServiceBase<T> : IDisposable where T : IGagsp
                             : Directory.EnumerateFiles(ConfigurationDirectory, ConfigurationName + ".bak.*").Select(c => new FileInfo(c)))
             .OrderByDescending(c => c.LastWriteTime).ToList();
 
-/*        if (PerCharacterConfigPath && !string.IsNullOrEmpty(_currentUid))
+*//*        if (PerCharacterConfigPath && !string.IsNullOrEmpty(_currentUid))
             configFolder = Path.Combine(ConfigurationDirectory, _currentUid);
 
         var existingConfigs = Directory.EnumerateFiles(configFolder, ConfigurationName + ".bak.*")
             .Select(c => new FileInfo(c))
-            .OrderByDescending(c => c.LastWriteTime).ToList();*/
+            .OrderByDescending(c => c.LastWriteTime).ToList();*//*
 
         var lastItem = existingConfigs.FirstOrDefault();
         if (lastItem is not null && lastItem.LastWriteTime.AddHours(2) <= DateTime.Now)
@@ -130,7 +130,7 @@ public abstract class ConfigurationServiceBase<T> : IDisposable where T : IGagsp
             {
                 File.Copy(ConfigurationPath, ConfigurationPath + ".bak." + DateTime.Now.ToString("yyyyMMddHHmmss"), overwrite: true);
             }
-            catch {  /* Consume */ }
+            catch {  *//* Consume *//* }
         }
 
         var temp = ConfigurationPath + ".tmp";
@@ -221,3 +221,4 @@ public abstract class ConfigurationServiceBase<T> : IDisposable where T : IGagsp
         }
     }
 }
+*/

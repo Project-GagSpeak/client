@@ -1,5 +1,4 @@
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Toybox.Services;
 using GagspeakAPI.Data.Character;
 
@@ -10,7 +9,7 @@ public class PatternApplier : IDisposable
 {
     private readonly ILogger<PatternApplier> _logger;
     private readonly GagspeakConfigService _config;
-    private readonly VibratorService _vibeService;
+    private readonly SexToyManager _vibeService;
 
     private CancellationTokenSource? _playbackCTS;
     private Task? _playbackTask;
@@ -23,7 +22,7 @@ public class PatternApplier : IDisposable
     private List<float> SimulatedVolumes;
 
     public PatternApplier(ILogger<PatternApplier> logger, GagspeakConfigService config,
-        VibratorService vibeService)
+        SexToyManager vibeService)
     {
         _logger = logger;
         _config = config;
@@ -56,7 +55,7 @@ public class PatternApplier : IDisposable
         PlaybackData = TrimDataToPlayableRegion(patternToPlay.PatternData, customStartPoint, customDuration);
         ActivePatternInfo = patternToPlay.ToLightData();
 
-        if (_config.Current.VibratorMode is VibratorMode.Simulated)
+        if (_config.Config.VibratorMode is VibratorEnums.Simulated)
             InitializeVolumeLevels(PlaybackData);
 
         // Start the cancelation token, and begin playback task.

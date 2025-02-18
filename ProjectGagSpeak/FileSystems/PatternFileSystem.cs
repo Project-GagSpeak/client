@@ -1,15 +1,15 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak.CkCommons.FileSystem;
+using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
-using OtterGui.Filesystem;
-using ProjectGagSpeak.CkCommons.HybridSaver;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.FileSystems;
 
-public sealed class PatternFileSystem : FileSystem<Pattern>, IMediatorSubscriber, IHybridSavable, IDisposable
+public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscriber, IHybridSavable, IDisposable
 {
     private readonly ILogger<PatternFileSystem> _logger;
     private readonly PatternManager _manager;

@@ -13,16 +13,6 @@ public interface ICustomizePlus // Requirements for C+ Integration
     uint ProfilePriority { get; set; }
 }
 
-public interface IMetaToggles // Requirements for Meta Toggles
-{
-    /// <summary> Defines the state that the headgear should be put to, or if it should be ignored. </summary>
-    OptionalBool HeadgearState { get; }
-    /// <summary> Defines the state that the visor should be put to, or if it should be ignored. </summary>
-    OptionalBool VisorState { get; }
-    /// <summary> Defines the state that the weapon should be put to, or if it should be ignored. </summary>
-    OptionalBool WeaponState { get; }
-}
-
 public interface IRestriction
 {
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
@@ -36,8 +26,6 @@ public interface IRestriction
     Traits Traits { get; }
     /// <summary> Serializes the restriction item to a JObject. </summary>
     JObject Serialize();
-    /// <summary> Loads the restriction item from a JObject. </summary>
-    void LoadRestriction(JObject json);
 }
 
 public interface IRestrictionItem : IRestriction
@@ -47,7 +35,7 @@ public interface IRestrictionItem : IRestriction
 }
 
 // Used for Gags. | Ensure C+ Allowance & Meta Allowance. Uses shared functionality but is independent.
-public class GarblerRestriction : IRestriction, ICustomizePlus, IMetaToggles, IComparable
+public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
 {
     public GagType GagType { get; init; }
     public bool IsEnabled { get; internal set; }
@@ -57,7 +45,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IMetaToggles, IC
     public Traits Traits { get; internal set; }
     public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool WeaponState { get; internal set; } = OptionalBool.Null;
     public Guid ProfileGuid { get; set; }
     public uint ProfilePriority { get; set; }
     public bool DoRedraw { get; set; }
@@ -72,7 +59,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IMetaToggles, IC
         Traits = other.Traits;
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
-        WeaponState = other.WeaponState;
         ProfileGuid = other.ProfileGuid;
         ProfilePriority = other.ProfilePriority;
         DoRedraw = other.DoRedraw;
@@ -95,7 +81,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IMetaToggles, IC
             ["Traits"] = Traits.ToString(),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
-            ["WeaponState"] = WeaponState.ToString(),
             ["ProfileGuid"] = ProfileGuid.ToString(),
             ["ProfilePriority"] = ProfilePriority,
             ["DoRedraw"] = DoRedraw,
@@ -110,7 +95,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IMetaToggles, IC
         Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
         HeadgearState = JsonHelp.FromJObject(json["HeadgearState"]);
         VisorState = JsonHelp.FromJObject(json["VisorState"]);
-        WeaponState = JsonHelp.FromJObject(json["WeaponState"]);
         ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority");
         DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false;
@@ -163,12 +147,11 @@ public class RestrictionItem : IRestrictionItem
     }
 }
 
-public class BlindfoldRestriction : RestrictionItem, IMetaToggles // Ensure Meta Toggles.
+public class BlindfoldRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
     public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool WeaponState { get; internal set; } = OptionalBool.Null;
     public string CustomPath { get; set; }
     public bool IsCustom => !CustomPath.IsNullOrWhitespace();
 
@@ -178,7 +161,6 @@ public class BlindfoldRestriction : RestrictionItem, IMetaToggles // Ensure Meta
     {
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
-        WeaponState = other.WeaponState;
         CustomPath = other.CustomPath;
     }
 
@@ -188,7 +170,6 @@ public class BlindfoldRestriction : RestrictionItem, IMetaToggles // Ensure Meta
         var json = base.Serialize();
         json["HeadgearState"] = HeadgearState.ToString();
         json["VisorState"] = VisorState.ToString();
-        json["WeaponState"] = WeaponState.ToString();
         json["CustomPath"] = CustomPath;
         return json;
     }
@@ -198,7 +179,6 @@ public class BlindfoldRestriction : RestrictionItem, IMetaToggles // Ensure Meta
         base.LoadRestriction(json);
         HeadgearState = JsonHelp.FromJObject(json["HeadgearState"]);
         VisorState = JsonHelp.FromJObject(json["VisorState"]);
-        WeaponState = JsonHelp.FromJObject(json["WeaponState"]);
         CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
     }
 }

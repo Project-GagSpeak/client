@@ -1,20 +1,14 @@
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.Achievements;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.IPC;
 using Microsoft.Extensions.Hosting;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 
 namespace GagSpeak.Services.Textures;
 
-// Friendly Reminded, this is a scoped service, and IDalamudTextureWraps will only return values on the framework thread.
+// Friendly Reminder, this is a scoped service, and IDalamudTextureWraps will only return values on the framework thread.
 // Attempting to use or access this class to obtain information outside the framework draw update thread will result in a null return.
 public class CosmeticService : IHostedService, IDisposable
 {
@@ -139,9 +133,9 @@ public class CosmeticService : IHostedService, IDisposable
     public (IDalamudTextureWrap? SupporterWrap, string Tooltip) GetSupporterInfo(UserData userData)
     {
         IDalamudTextureWrap? supporterWrap = null;
-        string tooltipString = string.Empty;
+        var tooltipString = string.Empty;
 
-        switch (userData.SupporterTier)
+        switch (userData.Tier)
         {
             case CkSupporterTier.ServerBooster:
                 supporterWrap = CorePluginTextures[CorePluginTexture.SupporterBooster];

@@ -2,6 +2,8 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerState.Components;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.UpdateMonitoring;
 using Glamourer.Api.Enums;
 using OtterGui.Classes;

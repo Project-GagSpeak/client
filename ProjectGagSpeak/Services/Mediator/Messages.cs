@@ -1,6 +1,7 @@
 using Buttplug.Client;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.ChatMessages;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
@@ -71,22 +72,16 @@ public record MufflerLanguageChanged : MessageBase; // called whenever the clien
 public record AppearanceImpactingSettingChanged : MessageBase; // called whenever an appearance impacting setting is changed.
 
 /* ------------- PLAYER DATA MODULE INTERACTIONS --------- */
-public record TooltipSetItemToRestraintSetMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
-public record TooltipSetItemToCursedItemMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
-
-////////////// WARDROBE RELATED RECORDS //////////////
+public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record HardcoreActionMessage(InteractionType type, NewState State) : MessageBase;
 public record HardcoreRemoveBlindfoldMessage : MessageBase;
 public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
-
-////////////// PUPPETEER RELATED RECORDS //////////////
-public record UpdateChatListeners(IEnumerable<string> Names) : MessageBase; // for updating the chat listeners.
 
 ////////////// TOYBOX RELATED RECORDS //////////////
 public record VfxActorRemoved(IntPtr data) : MessageBase;
 public record ToyScanStarted : MessageBase; // for when the toybox scan is started.
 public record ToyScanFinished : MessageBase; // for when the toybox scan is finished.
-public record VibratorModeToggled(VibratorMode VibratorMode) : MessageBase; // for when the vibrator mode is toggled.
+public record VibratorModeToggled(VibratorEnums VibratorMode) : MessageBase; // for when the vibrator mode is toggled.
 public record ToyDeviceAdded(ButtplugClientDevice Device) : MessageBase; // for when a device is added.
 public record ToyDeviceRemoved(ButtplugClientDevice Device) : MessageBase; // for when a device is removed.
 public record ButtplugClientDisconnected : MessageBase; // for when the buttplug client disconnects.
@@ -96,20 +91,13 @@ public record PatternRemovedMessage(Guid PatternId) : MessageBase; // for when a
 public record TriggersModifiedMessage : MessageBase;
 public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) : MessageBase;
 
-
-/* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-/*public record PlayerCharAppearanceChanged(GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
-public record PlayerCharWardrobeChanged(ActiveSetUpdateType UpdateKind, string AffectedItem) : MessageBase;
-public record PlayerCharOrdersChanged(OrdersUpdateType UpdateKind, string AffectedId) : MessageBase;
-public record PlayerCharAliasChanged(string UpdatedPairUID, PuppetUpdateType UpdateKind) : MessageBase;
-public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
-public record PlayerCharStorageUpdated : MessageBase;*/
 public record PlayerLatestActiveItems(UserData User, CharaActiveGags GagsInfo, CharaActiveRestrictions RestrictionsInfo, CharaActiveRestraint RestraintInfo) : MessageBase;
 
 
 /* ------------------ IPC HANDLER RECORDS------------------ */
 public record PenumbraInitializedMessage : MessageBase;
 public record PenumbraDisposedMessage : MessageBase;
+public record ModSettingPresetRemoved(string directory) : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;
 public record CustomizeReady : MessageBase;
@@ -159,7 +147,7 @@ public record ClosePatternSavePromptMessage : MessageBase; // closes the pattern
 
 /* -------------------- DISCOVER TAB RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
-
+public record ClientSentChat(ChatChannel.Channels Channel, string Message) : MessageBase; // Client Player sent a chat message.
 public record SafewordUsedMessage(string UID = "") : MessageBase; // for when the safeword is used.
 public record SafewordHardcoreUsedMessage(string UID = "") : MessageBase; // for when the hardcore safeword is used.
 

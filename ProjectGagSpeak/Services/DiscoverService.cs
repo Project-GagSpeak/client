@@ -17,7 +17,7 @@ namespace GagSpeak.Services;
 // handles the global chat and pattern discovery social features.
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
     private readonly CosmeticService _cosmetics;
@@ -29,13 +29,13 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         PairManager pairManager, CosmeticService cosmetics) : base(logger, mediator)
     {
         _configDirectory = configDirectory;
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
         _cosmetics = cosmetics;
 
         // Create a new chat log
-        GlobalChat = new ChatLog(_apiHubMain, Mediator, _cosmetics);
+        GlobalChat = new ChatLog(_hub, Mediator, _cosmetics);
 
         // Load the chat log
         LoadChatLog(GlobalChat);

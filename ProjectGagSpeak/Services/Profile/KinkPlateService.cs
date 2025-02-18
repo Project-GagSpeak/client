@@ -1,9 +1,4 @@
-using Dalamud.Interface.Textures;
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Profile;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
@@ -14,17 +9,17 @@ namespace GagSpeak.Services;
 
 public class KinkPlateService : MediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly KinkPlateFactory _profileFactory;
 
     // concurrent dictionary of cached profile data.
     private readonly ConcurrentDictionary<UserData, KinkPlate> _kinkPlates= new(UserDataComparer.Instance);
 
     public KinkPlateService(ILogger<KinkPlateService> logger,
-        GagspeakMediator mediator, MainHub apiHubMain, 
+        GagspeakMediator mediator, MainHub hub, 
         KinkPlateFactory profileFactory) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _profileFactory = profileFactory;
 
         // Clear profiles when called.
@@ -116,7 +111,7 @@ public class KinkPlateService : MediatorSubscriberBase
         {
             Logger.LogTrace("Fetching profile for "+data.UID, LoggerType.KinkPlateMonitor);
             // Fetch userData profile info from server
-            var profile = await _apiHubMain.UserGetKinkPlate(new UserDto(data)).ConfigureAwait(false);
+            var profile = await _hub.UserGetKinkPlate(new UserDto(data)).ConfigureAwait(false);
 
             // apply the retrieved profile data to the profile object.
             _kinkPlates[data].KinkPlateInfo = profile.Info;

@@ -2,30 +2,37 @@ using GagspeakAPI.Data.Character;
 
 namespace GagSpeak.PlayerData.Storage;
 
-[Serializable]
-public class AliasStorage
+public class PairAliasStorage : Dictionary<string, NamedAliasStorage>
 {
-    public bool HasNameStored => !string.IsNullOrEmpty(CharacterNameWithWorld);
-    public string CharacterNameWithWorld { get; set; } = string.Empty;
-    public List<AliasTrigger> AliasList { get; set; } = [];
+    public PairAliasStorage() { }
 
-    public List<AliasTrigger> CloneAliasList()
-    {
-        return AliasList.Select(alias => new AliasTrigger
-        {
-            Enabled = alias.Enabled,
-            Label = alias.Label,
-            InputCommand = alias.InputCommand,
-            Executions = alias.Executions
-        }).ToList();
-    }
+    // Helpful for config read-write
+    public PairAliasStorage(Dictionary<string, NamedAliasStorage> init) : base(init) { }
+
+    public bool NameIsStored(string key) => !string.IsNullOrEmpty(this[key].StoredNameWorld);
+}
+
+public class NamedAliasStorage
+{
+    public NamedAliasStorage() { }
+
+    public string StoredNameWorld { get; set; } = string.Empty;
+    public AliasStorage Storage { get; set; } = new AliasStorage();
+}
+
+// This can double as a use for a GlobalAliasStorage.
+public class AliasStorage : List<AliasTrigger>
+{
+    internal AliasStorage() { }
+    public AliasStorage(IEnumerable<AliasTrigger> init) : base(init) { }
+
+    public AliasStorage CloneAliasStorage()
+        => new AliasStorage(this.Select(x => new AliasTrigger(x, false)).ToList());
 
     public CharaAliasData ToAliasData()
-    {
-        return new CharaAliasData()
+        => new CharaAliasData()
         {
-            HasNameStored = HasNameStored,
-            AliasList = AliasList,
+            AliasList = this.ToList()
         };
-    }
 }
+

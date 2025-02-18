@@ -58,7 +58,7 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
 
         var restriction = this[gag];
         // we should return true if there is any attached Glamour, moodle, or mods.
-        if (restriction.Glamour.GameItem.ItemId != ItemIdVars.NothingItem(restriction.Glamour.Slot).ItemId)
+        if (restriction.Glamour.GameItem.ItemId != ItemService.NothingItem(restriction.Glamour.Slot).ItemId)
             return true;
 
         if (restriction.Moodle.Id != Guid.Empty)
@@ -96,9 +96,6 @@ public class CursedLootStorage : List<CursedItem>
 
     public CursedItem? ByIdentifier(Guid id)
         => this.FirstOrDefault(x => x.Identifier == id);
-
-    public bool Contains(Guid id)
-        => ByIdentifier(id) != null;
 
     public bool TryRemoveLoot(Guid id)
     {

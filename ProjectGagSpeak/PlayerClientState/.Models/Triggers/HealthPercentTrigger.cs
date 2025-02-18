@@ -20,21 +20,15 @@ public record HealthPercentTrigger : Trigger
     // the maxValue to display (can either be in percent or normal numbers, based on above option)
     public int MaxHealthValue { get; set; } = 10000000;
 
-    public override HealthPercentTrigger DeepClone()
+    internal HealthPercentTrigger() { }
+
+    public HealthPercentTrigger(HealthPercentTrigger other, bool keepId)
+        : base(other, keepId)
     {
-        return new HealthPercentTrigger
-        {
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone(),
-            PlayerToMonitor = PlayerToMonitor,
-            UsePercentageHealth = UsePercentageHealth,
-            PassKind = PassKind,
-            MinHealthValue = MinHealthValue,
-            MaxHealthValue = MaxHealthValue
-        };
+        PlayerToMonitor = other.PlayerToMonitor;
+        UsePercentageHealth = other.UsePercentageHealth;
+        PassKind = other.PassKind;
+        MinHealthValue = other.MinHealthValue;
+        MaxHealthValue = other.MaxHealthValue;
     }
 }

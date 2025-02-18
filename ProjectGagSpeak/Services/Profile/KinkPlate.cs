@@ -2,17 +2,12 @@ using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.IPC;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.Services;
 
-/// <summary>
-/// Determines the configuration data stored within a GagSpeak KinkPlate.
-/// </summary>
 public class KinkPlate : DisposableMediatorSubscriberBase
 {
     private readonly GlobalData _playerData;

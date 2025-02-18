@@ -1,39 +1,33 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.ChatMessages;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
-using System.Threading;
 
 namespace GagSpeak.Achievements;
 
 public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _mainHub;
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly GlobalData _playerData;
     private readonly PairManager _pairManager;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly CosmeticService _cosmetics;
     private readonly KinkPlateService _kinkPlateService;
-    private readonly VibratorService _vibeService;
+    private readonly SexToyManager _vibeService;
     private readonly UnlocksEventManager _eventManager;
     private readonly INotificationManager _notify;
     private readonly IDutyState _dutyState;
@@ -46,16 +40,15 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     public static AchievementSaveData SaveData { get; private set; } = new AchievementSaveData();
 
     public AchievementManager(ILogger<AchievementManager> logger, GagspeakMediator mediator, 
-        MainHub mainHub, ClientConfigurationManager clientConfigs, GlobalData playerData, 
-        PairManager pairManager, ClientMonitorService clientService, OnFrameworkService frameworkUtils, 
-        CosmeticService cosmetics, KinkPlateService kinkPlateService, VibratorService vibeService, 
-        UnlocksEventManager eventManager, INotificationManager notifs, IDutyState dutyState) : base(logger, mediator)
+        MainHub mainHub, GlobalData playerData, PairManager pairManager, ClientMonitor clientMonitor,
+        OnFrameworkService frameworkUtils, CosmeticService cosmetics, KinkPlateService kinkPlateService,
+        SexToyManager vibeService, UnlocksEventManager eventManager, INotificationManager notifs, 
+        IDutyState dutyState) : base(logger, mediator)
     {
         _mainHub = mainHub;
-        _clientConfigs = clientConfigs;
         _playerData = playerData;
         _pairManager = pairManager;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
         _cosmetics = cosmetics;
         _kinkPlateService = kinkPlateService;
@@ -221,7 +214,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             }
 
             // Determine how long we should wait before the next update Randomly between 20 and 30 minutes
-            int delayMinutes = random.Next(20, 31);
+            var delayMinutes = random.Next(20, 31);
             Logger.LogInformation("SaveData Update Task Completed, Firing Again in " + delayMinutes + " Minutes");
             // Wait for the next update cycle.
             await Task.Delay(TimeSpan.FromMinutes(delayMinutes), ct).ConfigureAwait(false);
@@ -235,7 +228,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             var bytes = Convert.FromBase64String(Base64saveDataToLoad);
             var version = bytes[0];
             version = bytes.DecompressToString(out var decompressed);
-            LightSaveDataDto item = SaveDataDeserialize(decompressed) ?? throw new Exception("Failed to deserialize.");
+            var item = SaveDataDeserialize(decompressed) ?? throw new Exception("Failed to deserialize.");
 
             // Update the local achievement data by loading from the light save data.
             SaveData.LoadFromLightSaveDataDto(item);
@@ -298,19 +291,19 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     public static string GetSaveDataDtoString()
     {
         // get the Dto-Ready data object of our saveData
-        LightSaveDataDto saveDataDto = SaveData.ToLightSaveDataDto();
+        var saveDataDto = SaveData.ToLightSaveDataDto();
 
         // condense it into the json and compress it.
-        string json = SaveDataSerialize(saveDataDto);
+        var json = SaveDataSerialize(saveDataDto);
         var compressed = json.Compress(6);
-        string base64Data = Convert.ToBase64String(compressed);
+        var base64Data = Convert.ToBase64String(compressed);
         return base64Data;
     }
 
     private static string SaveDataSerialize(LightSaveDataDto lightSaveDataDto)
     {
         // Ensure to set the version and include all necessary properties.
-        JObject saveDataJsonObject = new JObject
+        var saveDataJsonObject = new JObject
         {
             ["Version"] = lightSaveDataDto.Version,
             ["LightAchievementData"] = JArray.FromObject(lightSaveDataDto.LightAchievementData),
@@ -325,10 +318,10 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private static LightSaveDataDto SaveDataDeserialize(string jsonString)
     {
         // Parse the JSON string into a JObject
-        JObject saveDataJsonObject = JObject.Parse(jsonString);
+        var saveDataJsonObject = JObject.Parse(jsonString);
 
         // Extract and validate the version
-        int version = saveDataJsonObject["Version"]?.Value<int>() ?? 3;
+        var version = saveDataJsonObject["Version"]?.Value<int>() ?? 3;
 
         // Apply migrations based on the version number
         if (version < 3)
@@ -340,12 +333,12 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         }
 
         // Extract and validate LightAchievementData
-        JArray lightAchievementDataArray = saveDataJsonObject["LightAchievementData"] as JArray ?? new JArray();
-        List<LightAchievement> lightAchievementDataList = new List<LightAchievement>();
+        var lightAchievementDataArray = saveDataJsonObject["LightAchievementData"] as JArray ?? new JArray();
+        var lightAchievementDataList = new List<LightAchievement>();
 
         foreach (JObject achievement in lightAchievementDataArray)
         {
-            int achievementId = achievement["AchievementId"]?.Value<int>() ?? 0;
+            var achievementId = achievement["AchievementId"]?.Value<int>() ?? 0;
 
             // Check and correct achievement data against AchievementMap
             if (!Achievements.AchievementMap.ContainsKey(achievementId))
@@ -380,15 +373,15 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         }
 
         // Extract and validate EasterEggIcons
-        JObject easterEggIconsObject = saveDataJsonObject["EasterEggIcons"] as JObject ?? new JObject();
-        Dictionary<string, bool> easterEggIcons = easterEggIconsObject.ToObject<Dictionary<string, bool>>() ?? new Dictionary<string, bool>();
+        var easterEggIconsObject = saveDataJsonObject["EasterEggIcons"] as JObject ?? new JObject();
+        var easterEggIcons = easterEggIconsObject.ToObject<Dictionary<string, bool>>() ?? new Dictionary<string, bool>();
 
         // Extract and validate VisitedWorldTour
-        JObject visitedWorldTourObject = saveDataJsonObject["VisitedWorldTour"] as JObject ?? new JObject();
-        Dictionary<ushort, bool> visitedWorldTour = visitedWorldTourObject.ToObject<Dictionary<ushort, bool>>() ?? new Dictionary<ushort, bool>();
+        var visitedWorldTourObject = saveDataJsonObject["VisitedWorldTour"] as JObject ?? new JObject();
+        var visitedWorldTour = visitedWorldTourObject.ToObject<Dictionary<ushort, bool>>() ?? new Dictionary<ushort, bool>();
 
         // Create and return the LightSaveDataDto object
-        LightSaveDataDto lightSaveDataDto = new LightSaveDataDto
+        var lightSaveDataDto = new LightSaveDataDto
         {
             Version = version,
             LightAchievementData = lightAchievementDataList,
@@ -402,7 +395,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private static void MigrateToVersion3(JObject saveDataJsonObject)
     {
         // this made a successful update.
-        JArray lightAchievementDataArray = saveDataJsonObject["LightAchievementData"] as JArray ?? new JArray();
+        var lightAchievementDataArray = saveDataJsonObject["LightAchievementData"] as JArray ?? new JArray();
 
         foreach (JObject achievement in lightAchievementDataArray)
         {
@@ -511,7 +504,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         _eventManager.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
         _eventManager.Subscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
-        _eventManager.Subscribe<ushort>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _eventManager.Subscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
         _eventManager.Subscribe<bool>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _eventManager.Subscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
@@ -532,14 +525,13 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _eventManager.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _eventManager.Subscribe(UnlocksEvent.ClientSlain, () => (SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
         _eventManager.Subscribe(UnlocksEvent.ClientOneHp, () => (SaveData.Achievements[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
-        _eventManager.Subscribe<XivChatType>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _eventManager.Subscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _eventManager.Subscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _eventManager.Subscribe(UnlocksEvent.TutorialCompleted, () => (SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Subscribe(UnlocksEvent.PairAdded, OnPairAdded);
         _eventManager.Subscribe(UnlocksEvent.PresetApplied, () => (SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Subscribe(UnlocksEvent.GlobalSent, () => (SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Subscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
-        _eventManager.Subscribe<string>(UnlocksEvent.EasterEggFound, OnIconClicked);
         _eventManager.Subscribe(UnlocksEvent.ChocoboRaceFinished, () => (SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
         _eventManager.Subscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
         _eventManager.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
@@ -590,7 +582,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         _eventManager.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
         _eventManager.Unsubscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
-        _eventManager.Unsubscribe<ushort>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _eventManager.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
         _eventManager.Unsubscribe<bool>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _eventManager.Unsubscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
@@ -610,14 +602,13 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         _eventManager.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _eventManager.Unsubscribe(UnlocksEvent.ClientSlain, () => (SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
-        _eventManager.Unsubscribe<XivChatType>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _eventManager.Unsubscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _eventManager.Unsubscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _eventManager.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
         _eventManager.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
         _eventManager.Unsubscribe(UnlocksEvent.PresetApplied, () => (SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Unsubscribe(UnlocksEvent.GlobalSent, () => (SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
         _eventManager.Unsubscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
-        _eventManager.Unsubscribe<string>(UnlocksEvent.EasterEggFound, OnIconClicked);
         _eventManager.Unsubscribe(UnlocksEvent.ChocoboRaceFinished, () => (SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
         _eventManager.Unsubscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
         _eventManager.Unsubscribe(UnlocksEvent.CutsceneInturrupted, () => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());

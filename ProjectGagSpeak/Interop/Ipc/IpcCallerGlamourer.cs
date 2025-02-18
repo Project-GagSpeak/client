@@ -2,11 +2,16 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Services;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using Glamourer.Api.Enums;
 using Glamourer.Api.Helpers;
 using Glamourer.Api.IpcSubscribers;
+using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Interop.Ipc;
 
@@ -14,7 +19,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 {
     /* ------------- Class Attributes ------------ */
     private readonly GlobalData _clientData;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
 
     private bool _shownGlamourerUnavailable = false;
@@ -29,12 +34,12 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private readonly SetMetaState SetMetaState; // Changes the metadata state(s) on the Client.
 
     public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator,
-        GlobalData clientData, ClientMonitorService clientService, OnFrameworkService frameworkUtils,
+        GlobalData clientData, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils,
         IDalamudPluginInterface pi) : base(logger, mediator)
     {
         _clientData = clientData;
         _frameworkUtils = frameworkUtils;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
 
         ApiVersion = new ApiVersion(pi);
         GetState = new GetState(pi);
@@ -87,7 +92,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
-        if (!APIAvailable || _clientService.IsZoning) return;
+        if (!APIAvailable || _clientMonitor.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, 1337)).ConfigureAwait(true);
@@ -101,7 +106,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
-        if (!APIAvailable || _clientService.IsZoning) return;
+        if (!APIAvailable || _clientMonitor.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, 1337)).ConfigureAwait(false);
@@ -115,7 +120,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     public async Task SetCustomize(JToken customizations, JToken parameters)
     {
         // if the glamourerApi is not active, then return an empty string for the customization
-        if (!APIAvailable || _clientService.IsZoning) return;
+        if (!APIAvailable || _clientMonitor.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() =>
@@ -132,33 +137,93 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         }
     }
 
-    public bool SetRestraintEquipmentFromState(RestraintSet setToEdit)
-        {
-            // Get the player state and equipment JObject
-            var playerState = GetClientGlamourerState();
-            // Store all the equipment items.
-            var equipment = playerState?["Equipment"];
-            if (equipment == null) return false;
-
-            var slots = new[] { "MainHand", "OffHand", "Head", "Body", "Hands", "Legs", "Feet", "Ears", "Neck", "Wrists", "RFinger", "LFinger" };
-
-            // Update each slot
-            foreach (var slotName in slots)
-            {
-                var item = equipment[slotName];
-                var equipDrawData = UpdateItem(item, slotName);
-
-                if (equipDrawData != null)
-                    setToEdit.DrawData[equipDrawData.Slot] = equipDrawData;
-            }
-
-            return true;
-        }*/
-
-    public void SetRestraintCustomizationsFromState(ref  setToEdit)
+    // Map between the slot strings and their EquipSlot enum values.
+    private static readonly Dictionary<string, EquipSlot> SlotMap = new()
     {
-        var playerState = GetClientState();
-        setToEdit.CustomizeObject = playerState!["Customize"] ?? new JObject();
-        setToEdit.ParametersObject = playerState!["Parameters"] ?? new JObject();
+        { "Head", EquipSlot.Head },
+        { "Body", EquipSlot.Body },
+        { "Hands", EquipSlot.Hands },
+        { "Legs", EquipSlot.Legs },
+        { "Feet", EquipSlot.Feet },
+        { "Ears", EquipSlot.Ears },
+        { "Neck", EquipSlot.Neck },
+        { "Wrists", EquipSlot.Wrists },
+        { "RFinger", EquipSlot.RFinger },
+        { "LFinger", EquipSlot.LFinger }
+    };
+
+    public bool TryTransferActorEquipment(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> currentAppearance)
+    {
+        currentAppearance = new Dictionary<EquipSlot, RestraintSlotBasic>();
+        // Get the player state and equipment JObject
+        var playerState = GetClientGlamourerState();
+        if (GetClientGlamourerState() is not JObject state)
+            return false;
+
+        // Store all the equipment items.
+        if (state["Equipment"] is not JObject equipment)
+            return false;
+
+        foreach (var (name, equipSlot) in SlotMap)
+        {
+            // Create the default template.
+            currentAppearance[equipSlot] = new RestraintSlotBasic()
+            {
+                ApplyFlags = asOverlay ? RestraintFlags.Basic : 0,
+                Glamour = new GlamourSlot(equipSlot, ItemService.NothingItem(equipSlot))
+            };
+
+            // if the item does not contain any valid data, continue.
+            if (equipment[name] is not JObject itemData)
+                continue;
+
+            // get the glamourSlot.
+            var customItemId = itemData["ItemId"]?.Value<ulong>() ?? 4294967164;
+            var stain = itemData["Stain"]?.Value<int>() ?? 0;
+            var stain2 = itemData["Stain2"]?.Value<int>() ?? 0;
+
+            var newSlotData = new GlamourSlot()
+            {
+                Slot = equipSlot,
+                GameItem = items.Resolve(equipSlot, customItemId),
+                GameStain = new StainIds((StainId)stain, (StainId)stain2),
+            };
+
+            // set the item.
+            currentAppearance[equipSlot].Glamour = newSlotData;
+        }
+        return true;
+    }
+
+    public bool TryTransferActorCustomization(out JObject customize, out JObject parameters)
+    {
+        customize = new JObject();
+        parameters = new JObject();
+
+        if (GetClientGlamourerState() is not JObject playerState)
+            return false;
+
+        if(playerState["Customize"] is not JObject customizeData)
+            return false;
+
+        if(playerState["Parameters"] is not JObject parametersData)
+            return false;
+
+        customize = customizeData;
+        parameters = parametersData;
+        return true;
+    }
+
+    public bool TryTransferMaterials(out JObject materials)
+    {
+        materials = new JObject();
+        if (GetClientGlamourerState() is not JObject playerState)
+            return false;
+
+        if(playerState["Materials"] is not JObject materialsData)
+            return false;
+
+        materials = materialsData;
+        return true;
     }
 }

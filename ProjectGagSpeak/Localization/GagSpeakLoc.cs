@@ -1,5 +1,4 @@
 using Dalamud.Plugin;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.Localization;
 using GagSpeak.Services.Tutorial;
 using Microsoft.Extensions.Hosting;
@@ -30,8 +29,8 @@ public class GagSpeakLoc : IDisposable, IHostedService
         GSLoc.ReInitialize();
 
         // Update our forced stay entries as well.
-        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
-        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Config.ForcedStayPromptList.CheckAndInsertRequired();
+        _mainConfig.Config.ForcedStayPromptList.PruneEmpty();
         _mainConfig.Save();
 
         // load tutorial strings.
@@ -53,8 +52,8 @@ public class GagSpeakLoc : IDisposable, IHostedService
         GSLoc.ReInitialize();
 
         // Update our forced stay entries as well.
-        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
-        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Config.ForcedStayPromptList.CheckAndInsertRequired();
+        _mainConfig.Config.ForcedStayPromptList.PruneEmpty();
         _mainConfig.Save();
         // re-initialize tutorial strings.
         _tutorialService.InitializeTutorialStrings();

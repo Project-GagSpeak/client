@@ -5,7 +5,7 @@ using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
-public partial class FileSystemSelector<T, TStateStorage>
+public partial class CkFileSystemSelector<T, TStateStorage>
 {
     private int             _currentDepth;
     private int             _currentIndex;
@@ -18,9 +18,9 @@ public partial class FileSystemSelector<T, TStateStorage>
     {
         return state.Path switch
         {
-            FileSystem<T>.Folder f => DrawFolder(f),
-            FileSystem<T>.Leaf l   => DrawLeaf(l, state.StateStorage),
-            _                      => (Vector2.Zero, Vector2.Zero),
+            CkFileSystem<T>.Folder f => DrawFolder(f),
+            CkFileSystem<T>.Leaf l   => DrawLeaf(l, state.StateStorage),
+            _                        => (Vector2.Zero, Vector2.Zero),
         };
     }
 
@@ -28,7 +28,7 @@ public partial class FileSystemSelector<T, TStateStorage>
     /// <param name="leaf"> The Leaf to draw. </param>
     /// <param name="state"> The StateStorage for this leaf's path, if any. </param>
     /// <returns> The minimum and maximum points of the drawn item. </returns>
-    private (Vector2, Vector2) DrawLeaf(FileSystem<T>.Leaf leaf, in TStateStorage state)
+    private (Vector2, Vector2) DrawLeaf(CkFileSystem<T>.Leaf leaf, in TStateStorage state)
     {
         DrawLeafName(leaf, state, leaf == SelectedLeaf || SelectedPaths.Contains(leaf));
         if(ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -135,7 +135,7 @@ public partial class FileSystemSelector<T, TStateStorage>
     /// <param name="folder"> The Folder to draw. </param>
     /// <remarks> If the folder is expanded, draw its children one tier deeper. </remarks>
     /// <returns> The minimum and maximum points of the drawn item. </returns>
-    private (Vector2, Vector2) DrawFolder(FileSystem<T>.Folder folder)
+    private (Vector2, Vector2) DrawFolder(CkFileSystem<T>.Folder folder)
     {
         var selected = SelectedPaths.Contains(folder);
         DrawFolderName(folder, selected);

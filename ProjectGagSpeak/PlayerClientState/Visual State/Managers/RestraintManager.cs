@@ -1,41 +1,38 @@
-using GagSpeak.GagspeakConfiguration;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Services;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
-using OtterGui.Classes;
 using GagspeakAPI.Extensions;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.PlayerData.Storage;
-using System.Linq;
-using System.Diagnostics.CodeAnalysis;
-using GagSpeak.CkCommons;
-using GagSpeak.Utils;
+using OtterGui.Classes;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
-using System.Text.Json.Nodes;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
-public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisualManager
+public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
 {
     private readonly GlobalData _clientData;
     private readonly RestrictionManager _restraints;
     private readonly FavoritesManager _favorites;
+    private readonly ItemService _items;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
-    public RestraintManager(ILogger<RestraintManager> logger, GlobalData clientData,
-        RestrictionManager restraints, FavoritesManager favorites, ConfigFileProvider fileNames, 
-        HybridSaveService saver, GagspeakMediator mediator) : base(logger, mediator)
+    public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
+        GlobalData clientData, RestrictionManager restraints, FavoritesManager favorites, 
+        ItemService items, ConfigFileProvider fileNames, HybridSaveService saver) 
+        : base(logger, mediator)
     {
         _clientData = clientData;
         _restraints = restraints;
         _favorites = favorites;
+        _items = items;
         _fileNames = fileNames;
         _saver = saver;
         Load();
@@ -44,9 +41,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     }
 
     // Cached Information.
-    private RestraintSet? ActiveEditorItem = null;
+    public RestraintSet? ActiveEditorItem = null;
     public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
-    private RestraintSet? EnabledSet = null;
+    public RestraintSet? EnabledSet = null;
 
     // Stored Information
     public CharaActiveRestraint? ActiveRestraintData { get; private set; }
@@ -74,7 +71,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         Storage.Add(clonedItem);
         _saver.Save(this);
         Logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -89,7 +86,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         if (Storage.Remove(restraint))
         {
             Logger.LogDebug($"Deleted restraint {restraint.Identifier}.");
-            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Deleted, restraint, null));
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Deleted, restraint, null));
             _saver.Save(this);
         }
     }
@@ -105,7 +102,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         restraint.Label = newName;
         _saver.Save(this);
         Logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Renamed, restraint, oldName));
+        Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Renamed, restraint, oldName));
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -152,7 +149,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
 
         if (ActiveRestraintData is { } data && data.CanApply())
             return true;
-        _logger.LogTrace("Not able to Apply at this time due to errors!");
+        Logger.LogTrace("Not able to Apply at this time due to errors!");
         return false;
     }
 
@@ -160,7 +157,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     {
         if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanLock()))
             return true;
-        _logger.LogTrace("Not able to Lock at this time due to errors!");
+        Logger.LogTrace("Not able to Lock at this time due to errors!");
         return false;
     }
 
@@ -168,7 +165,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     {
         if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanUnlock()))
             return true;
-        _logger.LogTrace("Not able to Unlock at this time due to errors!");
+        Logger.LogTrace("Not able to Unlock at this time due to errors!");
         return false;
     }
 
@@ -176,7 +173,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     {
         if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanRemove()))
             return true;
-        _logger.LogTrace("Not able to Remove at this time due to errors!");
+        Logger.LogTrace("Not able to Remove at this time due to errors!");
         return false;
     }
     #endregion Validators
@@ -206,8 +203,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
             if(set.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
             if(set.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
         }
-        ActiveRestraint = set;
-        LatestVisualCache.UpdateCache(ActiveRestraint);
+        EnabledSet = set;
+        LatestVisualCache.UpdateCache(EnabledSet);
         return flags;
     }
 
@@ -263,8 +260,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         if (Storage.TryGetRestraint(removedRestraint, out var matchedItem))
         {
             // Do recalculations first since it doesnt madder here.
-            ActiveRestraint = null;
-            LatestVisualCache.UpdateCache(ActiveRestraint);
+            EnabledSet = null;
+            LatestVisualCache.UpdateCache(EnabledSet);
 
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;
@@ -337,12 +334,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
 
         // otherwise, parse it out and stuff YIPPEE
         foreach (var setToken in restraintSetList)
-        {
             if(TryLoadRestraintSet(setToken, out var loadedSet))
-            {
                 Storage.Add(loadedSet);
-            }
-        }
     }
 
     private void MigrateV0toV1(JObject oldConfigJson)
@@ -380,34 +373,42 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
                     layers.Add(LoadRestraintLayer(layerToken));
             }
 
-
-
-
+            set = new RestraintSet()
+            {
+                Identifier = Guid.TryParse(setJson["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID"),
+                Label = setJson["Label"]?.Value<string>() ?? string.Empty,
+                Description = setJson["Description"]?.Value<string>() ?? string.Empty,
+                DoRedraw = setJson["DoRedraw"]?.Value<bool>() ?? false,
+                RestraintSlots = slotDict,
+                Glasses = _items.ParseBonusSlot(setJson["Glasses"]),
+                Layers = layers,
+                HeadgearState = JsonHelp.FromJObject(setJson["HeadgearState"]),
+                VisorState = JsonHelp.FromJObject(setJson["VisorState"]),
+                WeaponState = JsonHelp.FromJObject(setJson["WeaponState"]),
+                RestraintMods = setJson["RestraintMods"]?.ToObject<List<ModAssociation>>() ?? throw new Exception("Invalid Mods"),
+                RestraintMoodles = setJson["RestraintMoodles"]?.ToObject<List<Moodle>>() ?? throw new Exception("Invalid Moodles"),
+            };
+            return true;
         }
         catch (Exception e)
         {
             Logger.LogError(e, "Failed to load RestraintSet from JSON.");
             set = null;
             return false;
-
         }
     }
 
-    private IRestraintLayer LoadRestraintLayer(JToken? layerToken)
-    {
-        if (layerToken is not JObject layerJson)
-            return;
-
-        var layer = new RestraintLayer();
-        layer.LoadRestraintLayer(layerJson);
-    }
-
+    /// <summary> Attempts to load a restraint set slot item. This can be Basic or Advanced. </summary>
+    /// <param name="slotToken"> The JSON Token for the Slot. </param>
+    /// <returns> The loaded slot. </returns>
+    /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
+    /// <exception cref="InvalidOperationException"> If the JSON Token is missing required information. </exception>
     private IRestraintSlot LoadSlot(JToken? slotToken)
     {
         if (slotToken is not JObject json)
             throw new Exception("Invalid JSON Token for Slot.");
 
-        string typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
+        var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
         if (!Enum.TryParse(typeStr, out RestraintSlotType type))
             throw new InvalidOperationException($"Unknown RestraintSlotType: {typeStr}");
 
@@ -427,22 +428,28 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
 
     }
 
-
-
+    /// <summary> Attempts to load a BasicSlot from the restraint set. </summary>
+    /// <param name="slotToken"> The JSON Token for the Slot. </param>
+    /// <returns> The loaded BasicSlot. </returns>
+    /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
+    /// <remarks> Throws if the JToken is either not valid or the GlamourSlot fails to parse.</remarks>
     private RestraintSlotBasic LoadBasicSlot(JToken? slotToken)
     {
         if (slotToken is not JObject slotJson)
             throw new Exception("Invalid JSON Token for Slot.");
 
-        var newItem = new RestraintSlotBasic()
+        return new RestraintSlotBasic()
         {
             ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value ? (RestraintFlags)value : RestraintFlags.Basic,
+            Glamour = _items.ParseGlamourSlot(slotJson["Glamour"])
         };
-        newItem.Glamour.LoadEquip(slotJson["Glamour"]);
-
-        return newItem;
     }
 
+    /// <summary> Attempts to load a Advanced from the restraint set. </summary>
+    /// <param name="slotToken"> The JSON Token for the Slot. </param>
+    /// <returns> The loaded Advanced. </returns>
+    /// <exception cref="Exception"></exception>
+    /// <remarks> Throws if the JToken is either not valid or the Ref Restriction fails to parse.</remarks>
     private RestraintSlotAdvanced LoadAdvancedSlot(JToken? slotToken)
     {
         if(slotToken is not JObject slotJson)
@@ -457,6 +464,18 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
             ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value ? (RestraintFlags)value : RestraintFlags.Advanced,
             Ref = refItem
         };
+    }
+
+    private IRestraintLayer LoadRestraintLayer(JToken? layerToken)
+    {
+        if (layerToken is not JObject json)
+            throw new Exception("Invalid JSON Token for Slot.");
+
+        var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
+        if (!Enum.TryParse(typeStr, out RestraintSlotType type))
+            throw new InvalidOperationException($"Unknown RestraintLayerType: {typeStr}");
+
+        return LoadRestraintLayer(json);
     }
 
     #endregion HybridSaver

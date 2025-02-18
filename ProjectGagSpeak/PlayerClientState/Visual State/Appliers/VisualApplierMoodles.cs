@@ -1,4 +1,5 @@
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Restrictions;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -16,15 +17,15 @@ namespace GagSpeak.PlayerState.Visual;
 public class VisualApplierMoodles : DisposableMediatorSubscriberBase
 {
     private readonly IpcCallerMoodles _moodles;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
 
     private bool _isZoning = false;
 
     public VisualApplierMoodles(ILogger<VisualApplierMoodles> logger, GagspeakMediator mediator,
-        IpcCallerMoodles moodles, ClientMonitorService clientService) : base(logger, mediator)
+        IpcCallerMoodles moodles, ClientMonitor clientMonitor) : base(logger, mediator)
     {
         _moodles = moodles;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
 
         // if the moodles API is already available by the time this loads, run OnMoodlesReady.
         // This lets us account for the case where we load before Moodles does.
@@ -55,22 +56,22 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         LatestIpcData.MoodlesStatuses = _moodles.GetStatusListDetails();
         LatestIpcData.MoodlesPresets = _moodles.GetPresetListDetails();
         Logger.LogDebug("Moodles is now ready, pushing to all visible pairs", LoggerType.IpcMoodles);
-        Mediator.Publish(new IpcDataCreatedMessage(IpcUpdateType.UpdateVisible, LatestIpcData));
+        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.UpdateVisible, LatestIpcData));
     }
 
     /// <summary> Handles the Moodles Status Manager being modified. </summary>
     /// <remarks> Will also reapply any restricted Moodles gone missing! </remarks>
     public void StatusManagerModified(IntPtr address)
     {
-        if(_isZoning || !_clientService.IsPresent)
+        if(_isZoning || !_clientMonitor.IsPresent)
             return;
 
-        if(address != _clientService.Address)
+        if(address != _clientMonitor.Address)
             return;
 
         // Check and Update the clients Moodles. Reapply if the moodle removed was restricted.
         if(CheckAndUpdateClientMoodles())
-            Mediator.Publish(new IpcDataCreatedMessage(IpcUpdateType.StatusManagerChanged, LatestIpcData));
+            Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusManagerChanged, LatestIpcData));
     }
 
     /// <summary> Checks if any of our restricted Moodles are no longer present in the new status manager update. </summary>
@@ -111,7 +112,7 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
     /// <summary> Fired whenever we change any setting in any of our Moodles Statuses via the Moodles UI </summary>
     public void ClientStatusModified(Guid id)
     {
-        if(_isZoning || !_clientService.IsPresent)
+        if(_isZoning || !_clientMonitor.IsPresent)
             return;
 
         // locate the index in our status list. We have a list of tuple objects, so need to know which has the matching guid.
@@ -121,13 +122,13 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         else LatestIpcData.MoodlesStatuses = _moodles.GetStatusListDetails();
 
         // Push the update to the visible pairs.
-        Mediator.Publish(new IpcDataCreatedMessage(IpcUpdateType.StatusesUpdated, LatestIpcData));
+        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusesUpdated, LatestIpcData));
     }
 
     /// <summary> Fired whenever we change any setting in any of our Moodles Presets via the Moodles UI </summary>
     public void ClientPresetModified(Guid id)
     {
-        if(_isZoning || !_clientService.IsPresent)
+        if(_isZoning || !_clientMonitor.IsPresent)
             return;
 
         // locate the index in our status list. We have a list of tuple objects, so need to know which has the matching guid.
@@ -137,7 +138,7 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         else LatestIpcData.MoodlesPresets = _moodles.GetPresetListDetails();
 
         // Push the update to the visible pairs.
-        Mediator.Publish(new IpcDataCreatedMessage(IpcUpdateType.PresetsUpdated, LatestIpcData));
+        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.PresetsUpdated, LatestIpcData));
     }
 
     public void AddRestrictedMoodle(Moodle moodle)
@@ -146,18 +147,22 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
             return;
 
         // determine the type. If is it a status, just add the ID. if it is a preset, we need to obtain the list of statuses from that preset.
-        if (moodle.Type is MoodleType.Status && LatestIpcData.MoodlesStatuses.Any(x => x.GUID == moodle.Id))
+        if (moodle is MoodlePreset { } preset)
+        {
+            // determine what moodles should be applied by taking the moodlePreset.StatusIds and doing an except/union with Restricted moodles to get it.
+            var missing = preset.StatusIds.Except(RestrictedMoodles);
+            Logger.LogDebug("Adding Restricted Moodles not yet applied to the player: " + string.Join(", ", missing), LoggerType.IpcMoodles);
+            RestrictedMoodles.Union(preset.StatusIds);
+            // Apply the missing.
+            if (missing.Any())
+                _moodles.ApplyOwnStatusByGUID(missing);
+        }
+        else
         {
             RestrictedMoodles.Add(moodle.Id);
             // try and apply it if it is not already applied.
             if (!LatestIpcData.MoodlesDataStatuses.Any(x => x.GUID == moodle.Id))
                 _moodles.ApplyOwnStatusByGUID(new[] { moodle.Id });
-        }
-        else if (moodle.Type is MoodleType.Preset && LatestIpcData.MoodlesPresets.TryGetItem(x => x.GUID == moodle.Id, out MoodlePresetInfo info))
-        {
-            RestrictedMoodles.Union(info.Statuses);
-            var missing = info.Statuses.Except(LatestIpcData.MoodlesDataStatuses.Select(x => x.GUID));
-            if (missing.Any()) _moodles.ApplyOwnStatusByGUID(missing);
         }
     }
 
@@ -167,15 +172,16 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
             AddRestrictedMoodle(moodle);
     }
 
+    // This will be handled better later i think.
     public void RemoveRestrictedMoodle(Moodle moodle)
     {
         if(LatestIpcData.MoodlesStatuses.Count == 0)
             return;
 
-        IEnumerable<Guid> moodlesToRemove = moodle.Type switch
+        IEnumerable<Guid> moodlesToRemove = moodle switch
         {
-            MoodleType.Status => new[] { moodle.Id },
-            MoodleType.Preset => LatestIpcData.MoodlesPresets.TryGetItem(x => x.GUID == moodle.Id, out MoodlePresetInfo info) ? info.Statuses : Enumerable.Empty<Guid>(),
+            MoodlePreset p => p.StatusIds,
+            Moodle m => new[] { m.Id },
             _ => Enumerable.Empty<Guid>()
         };
         // apply the updates if it contained anything.

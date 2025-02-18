@@ -11,18 +11,11 @@ public record GagTrigger : Trigger
     // the state of the gag that invokes it.
     public NewState GagState { get; set; } = NewState.Enabled;
 
-    public override GagTrigger DeepClone()
+    internal GagTrigger() { }
+
+    public GagTrigger(GagTrigger other, bool keepId) : base(other, keepId)
     {
-        return new GagTrigger
-        {
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone(),
-            Gag = Gag,
-            GagState = GagState
-        };
+        Gag = other.Gag;
+        GagState = other.GagState;
     }
 }

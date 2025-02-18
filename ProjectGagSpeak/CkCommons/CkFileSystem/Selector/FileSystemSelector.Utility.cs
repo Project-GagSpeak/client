@@ -2,7 +2,7 @@ using Dalamud.Plugin.Services;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
-public partial class FileSystemSelector<T, TStateStorage>
+public partial class CkFileSystemSelector<T, TStateStorage>
 {
     private readonly IKeyState _keyState;
 
@@ -66,11 +66,11 @@ public partial class FileSystemSelector<T, TStateStorage>
     /// <param name="stateIdx"> the current index in the statestruct cache list. </param>
     /// <param name="open"> if the folder is expanded or not. </param>
     /// <remarks> Handles ImGui-state as well as cache-state. </remarks>
-    private void ToggleDescendants(FileSystem<T>.Folder folder, int stateIdx, bool open)
+    private void ToggleDescendants(CkFileSystem<T>.Folder folder, int stateIdx, bool open)
     {
         folder.UpdateState(open);
         RemoveDescendants(stateIdx);
-        foreach (var child in folder.GetAllDescendants(ISortMode<T>.Lexicographical).OfType<FileSystem<T>.Folder>())
+        foreach (var child in folder.GetAllDescendants(ISortMode<T>.Lexicographical).OfType<CkFileSystem<T>.Folder>())
             child.UpdateState(open);
 
         if (open)
@@ -81,7 +81,7 @@ public partial class FileSystemSelector<T, TStateStorage>
     /// <param name="path"> The Path to expand all its ancestors from. </param>
     /// <returns> If any state was changed. </returns>
     /// <remarks> Can only be executed from the main selector window due to ID computation. Handles only ImGui-state. </remarks>
-    private bool ExpandAncestors(FileSystem<T>.IPath path)
+    private bool ExpandAncestors(CkFileSystem<T>.IPath path)
     {
         if (path.IsRoot || path.Parent.IsRoot)
             return false;

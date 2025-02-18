@@ -1,7 +1,4 @@
-using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Configurations;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
@@ -9,10 +6,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data.Character;
-using GagspeakAPI.Extensions;
 using System.Diagnostics.CodeAnalysis;
-using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.ILayoutInstance;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -41,9 +35,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
     }
 
     // Cached Information.
-    private CursedItem? ActiveEditorItem = null;
+    public CursedItem? ActiveEditorItem { get; private set; }
     public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
-    // No active restriction stuff for this i dont think, at least not yet, since it mostly references other items.
 
     // Stored Information.
     public IReadOnlyList<CursedItem> ActiveCursedItems => Storage.ActiveItems;
@@ -141,6 +134,38 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
     public void RemoveFavorite(CursedItem cursedLoot)
         => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, cursedLoot.Identifier);
 
+
+    public void ActivateCursedItem(CursedItem item, DateTimeOffset endTimeUtc)
+    {
+        if (!Storage.Contains(item))
+        {
+            Logger.LogError("Attempted to activate a cursed item that does not exist in storage!");
+            return;
+        }
+
+        item.AppliedTime = DateTimeOffset.UtcNow;
+        item.ReleaseTime = endTimeUtc;
+        _saver.Save(this);
+
+        // if it was a restriction manager, be sure to apply its item.
+        if (item.RestrictionRef is RestrictionItem nonGagRestriction)
+            _restrictions.AddOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+    }
+
+    // Scan by id so we dont spam deactivation.
+    public void DeactivateCursedItem(Guid lootId)
+    {
+        if(Storage.ByIdentifier(lootId) is not { } item)
+            return;
+
+        item.AppliedTime = DateTimeOffset.MinValue;
+        item.ReleaseTime = DateTimeOffset.MinValue;
+        _saver.Save(this);
+
+        // if it was a restriction manager, be sure to remove its item.
+        if (item.RestrictionRef is RestrictionItem nonGagRestriction)
+            _restrictions.RemoveOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+    }
 
     public void SetLowerLimit(TimeSpan time)
     {

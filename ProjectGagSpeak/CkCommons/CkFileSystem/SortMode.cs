@@ -11,7 +11,7 @@ public interface ISortMode<T> where T : class
     string Name        { get; }
     string Description { get; }
 
-    IEnumerable<FileSystem<T>.IPath> GetChildren(FileSystem<T>.Folder folder);
+    IEnumerable<CkFileSystem<T>.IPath> GetChildren(CkFileSystem<T>.Folder folder);
 
     public static readonly ISortMode<T> FoldersFirst           = new FoldersFirstT();
     public static readonly ISortMode<T> Lexicographical        = new LexicographicalT();
@@ -25,8 +25,8 @@ public interface ISortMode<T> where T : class
         public string Description
             => "In each folder, sort all subfolders lexicographically, then sort all leaves lexicographically.";
 
-        public IEnumerable<FileSystem<T>.IPath> GetChildren(FileSystem<T>.Folder folder)
-            => folder.GetSubFolders().Cast<FileSystem<T>.IPath>().Concat(folder.GetLeaves());
+        public IEnumerable<CkFileSystem<T>.IPath> GetChildren(CkFileSystem<T>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<T>.IPath>().Concat(folder.GetLeaves());
     }
 
     // Default
@@ -38,7 +38,7 @@ public interface ISortMode<T> where T : class
         public string Description
             => "In each folder, sort all children lexicographically.";
 
-        public IEnumerable<FileSystem<T>.IPath> GetChildren(FileSystem<T>.Folder folder)
+        public IEnumerable<CkFileSystem<T>.IPath> GetChildren(CkFileSystem<T>.Folder folder)
             => folder.Children;
     }
 }

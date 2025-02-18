@@ -1,6 +1,6 @@
 namespace GagSpeak.CkCommons.FileSystem;
 
-public partial class FileSystem<T>
+public partial class CkFileSystem<T>
 {
     /// <summary> Compare paths only by their name, using the submitted string comparer. </summary>
     private readonly struct NameComparer : IComparer<IPath>

@@ -20,6 +20,7 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
     public readonly string Patterns;
     public readonly string RecentGlobalChat;
     public readonly string CustomModSettings;
+    public readonly string TraitAllowances;
     public readonly string SortFilers;
     public readonly string Favorites;
 
@@ -38,7 +39,7 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
     public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
 
     // If anything gets written here, then there are serious issues going on...
-    private string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
+    public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
 
     private Task? _accountConfigLoadTask = null;
     public GagspeakMediator Mediator { get; }
@@ -54,6 +55,7 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
         RecentGlobalChat = Path.Combine(GagSpeakDirectory, "global-chat-recent.json");
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
+        TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
         SortFilers = Path.Combine(GagSpeakDirectory, "file-system-arrangements.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");

@@ -1,5 +1,5 @@
 using GagSpeak.Interop.Ipc;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Models;
 using Penumbra.Api.Enums;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -17,25 +17,33 @@ public class VisualApplierPenumbra
 
     /// <summary> Gets all of the clients mods from penumbra. </summary>
     /// <remarks> The settings returned with this only provide the options selected, not all options. </remarks>
-    public IEnumerable<ModAssociation> GetClientMods()
+    public IEnumerable<(Mod, ModSettings)> GetClientMods()
     {
-        var res = _penumbra.GetModInfos();
-        return res.Select(x => new ModAssociation(x.Mod, x.Settings));
+        return _penumbra.GetModInfos();
     }
 
     public ModSettingOptions GetAllModOptions(ModAssociation mod)
         => _penumbra.GetAllOptionsForMod(mod.ModInfo);
 
-    public bool SetOrUpdateTempMod(ModAssociation mod, bool redraw = false)
+    public bool SetOrUpdateTempMod(Mod mod, ModSettings presetSettings, bool redraw = false)
     {
-        return _penumbra.SetOrUpdateTemporaryMod(mod) == PenumbraApiEc.Success;
+        return _penumbra.SetOrUpdateTemporaryMod(mod, presetSettings) == PenumbraApiEc.Success;
         // maybe something with redraw later but for now i have no idea.
     }
 
     public bool RemoveTempMod(ModAssociation mod, bool redraw = false)
     {
-        return _penumbra.RemoveTemporaryMod(mod) == PenumbraApiEc.Success;
+        return _penumbra.RemoveTemporaryMod(mod.ModInfo) == PenumbraApiEc.Success;
         // maybe something with redraw later but for now i have no idea.
+    }
+
+    public bool RemoveTempMod(IEnumerable<ModAssociation> mods)
+    {
+        foreach (var mod in mods)
+            if (_penumbra.RemoveTemporaryMod(mod.ModInfo) != PenumbraApiEc.Success)
+                return false;
+
+        return true;
     }
 
     public bool RemoveAllTempMods(bool redraw = false)

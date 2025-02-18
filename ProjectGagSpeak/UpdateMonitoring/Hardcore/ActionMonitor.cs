@@ -3,28 +3,27 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Hardcore;
 using GagSpeak.Hardcore.Hotbar;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using GagSpeak.Utils.Enums;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using System.Collections.Immutable;
 using ClientStructFramework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
+// REWORK THIS TO FUNCTION WITH THE TRAIT MANAGER ENTIRELY.
 namespace GagSpeak.UpdateMonitoring;
 public class ActionMonitor : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GlobalData _globals;
+    private readonly TraitsManager _traitsManager;
     private readonly HardcoreHandler _hardcoreHandler;
-    private readonly WardrobeHandler _wardrobeHandler;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
 
     // attempt to get the rapture hotbar module so we can modify the display of hotbar items
     public unsafe RaptureHotbarModule* raptureHotbarModule = ClientStructFramework.Instance()->GetUIModule()->GetRaptureHotbarModule();
@@ -37,14 +36,13 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
     public Dictionary<int, Tuple<float, DateTime>> CooldownList = new Dictionary<int, Tuple<float, DateTime>>(); // stores the recast timers for each action
 
     public unsafe ActionMonitor(ILogger<ActionMonitor> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, HardcoreHandler handler,
-        WardrobeHandler wardrobeHandler, ClientMonitorService clientService,
-        IGameInteropProvider interop) : base(logger, mediator)
+        GlobalData globals, TraitsManager traitsManager, HardcoreHandler hardcoreHandler,
+        ClientMonitor clientMonitor, IGameInteropProvider interop) : base(logger, mediator)
     {
-        _clientConfigs = clientConfigs;
-        _hardcoreHandler = handler;
-        _wardrobeHandler = wardrobeHandler;
-        _clientService = clientService;
+        _globals = globals;
+        _traitsManager = traitsManager;
+        _hardcoreHandler = hardcoreHandler;
+        _clientMonitor = clientMonitor;
 
         // set up a hook to fire every time the address signature is detected in our game.
         UseActionHook = interop.HookFromAddress<UseActionDelegate>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
@@ -53,17 +51,16 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, _ => SafewordUsed());
         Mediator.Subscribe<DalamudLoginMessage>(this, _ =>
         {
-            _clientService.RunOnFrameworkThread(() => UpdateJobList(_clientService.ClientPlayer.ClassJobId())).ConfigureAwait(false);
+            _clientMonitor.RunOnFrameworkThread(() => UpdateJobList(_clientMonitor.ClientPlayer.ClassJobId())).ConfigureAwait(false);
         });
         Mediator.Subscribe<DalamudLogoutMessage>(this, _ => DisableManipulatedActionData());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
         Mediator.Subscribe<JobChangeMessage>(this, (msg) => JobChanged(msg.jobId));
-        IpcFastUpdates.HardcoreTraitsEventFired += ToggleHardcoreTraits;
 
         // if we are already logged in, then run the login function
-        if (_clientService.IsLoggedIn)
+        if (_clientMonitor.IsLoggedIn)
         {
-            _clientService.RunOnFrameworkThread(() => UpdateJobList(_clientService.ClientPlayer.ClassJobId())).ConfigureAwait(false);
+            _clientMonitor.RunOnFrameworkThread(() => UpdateJobList(_clientMonitor.ClientPlayer.ClassJobId())).ConfigureAwait(false);
         }
     }
 
@@ -85,7 +82,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
         // recalculate the cooldowns for the current job if using stimulation
         if (set.SetTraits[enabler].StimulationLevel is not StimulationLevel.None)
         {
-            await _clientService.RunOnFrameworkThread(() => UpdateJobList(_clientService.ClientPlayer.ClassJobId()));
+            await _clientMonitor.RunOnFrameworkThread(() => UpdateJobList(_clientMonitor.ClientPlayer.ClassJobId()));
         }
 
         HotbarLocker.SetHotbarLockState(NewState.Locked);
@@ -144,7 +141,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                raptureHotbarModule->LoadSavedHotbar(_clientService.ClientPlayer.ClassJobId(), (uint)i);
+                raptureHotbarModule->LoadSavedHotbar(_clientMonitor.ClientPlayer.ClassJobId(), (uint)i);
         }
     }
 
@@ -216,7 +213,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
     private Task UpdateJobList(uint jobId)
     {
         // change the getawaiter if running into issues here.
-        if (_clientService.IsPresent)
+        if (_clientMonitor.IsPresent)
         {
             Logger.LogDebug("Updating job list to : " + (JobType)jobId, LoggerType.HardcoreActions);
             GagspeakActionData.GetJobActionProperties((JobType)jobId, out var bannedJobActions);
@@ -262,7 +259,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
                     var adjustedId = ActionManager.Instance()->GetAdjustedActionId(slot->CommandId);
                     // get the cooldown group
                     var cooldownGroup = -1;
-                    if (_clientService.TryGetAction(adjustedId, out Lumina.Excel.Sheets.Action action))
+                    if (_clientMonitor.TryGetAction(adjustedId, out var action))
                     {
                         // there is a minus one offset for actions, while general actions do not have them.
                         cooldownGroup = action.CooldownGroup - 1;
@@ -296,7 +293,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
     private unsafe void FrameworkUpdate()
     {
         // make sure we only do checks when we are properly logged in and have a character loaded
-        if (!_clientService.IsPresent)
+        if (!_clientMonitor.IsPresent)
             return;
 
         // Setup a hotkey for safeword keybinding to trigger a hardcore safeword message.

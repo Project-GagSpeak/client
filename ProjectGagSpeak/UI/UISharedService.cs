@@ -1,6 +1,5 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
@@ -14,14 +13,12 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
-using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Configs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -46,8 +43,7 @@ public partial class UiSharedService
     private const string _nicknameStart = "##GAGSPEAK_USER_NICKNAME_START##";
 
     private readonly ILogger<UiSharedService> _logger;
-    private readonly MainHub _apiHubMain;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly MainHub _hub;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly UiFontService _fonts;
     private readonly OnFrameworkService _frameworkUtil;
@@ -58,14 +54,13 @@ public partial class UiSharedService
     public Dictionary<string, object> _selectedComboItems;    // the selected combo items
     public Dictionary<string, string> SearchStrings;
 
-    public UiSharedService(ILogger<UiSharedService> logger, MainHub apiHubMain, 
-        ClientConfigurationManager clientConfigs, ServerConfigurationManager serverConfigs,
+    public UiSharedService(ILogger<UiSharedService> logger, MainHub hub,
+        ServerConfigurationManager serverConfigs,
         UiFontService fonts, OnFrameworkService frameworkUtil, IpcManager ipcManager, 
         IDalamudPluginInterface pi, ITextureProvider textureProvider)
     {
         _logger = logger;
-        _apiHubMain = apiHubMain;
-        _clientConfigs = clientConfigs;
+        _hub = hub;
         _serverConfigs = serverConfigs;
         _fonts = fonts;
         _frameworkUtil = frameworkUtil;
@@ -115,14 +110,14 @@ public partial class UiSharedService
                 // if it does, we will split the text by the tooltip
                 var splitText = text.Split(TooltipSeparator, StringSplitOptions.None);
                 // for each of the split text, we will display the text unformatted
-                for (int i = 0; i < splitText.Length; i++)
+                for (var i = 0; i < splitText.Length; i++)
                 {
                     if (splitText[i].Contains(ColorToggleSeparator, StringComparison.Ordinal) && color.HasValue)
                     {
                         var colorSplitText = splitText[i].Split(ColorToggleSeparator, StringSplitOptions.None);
-                        bool useColor = false;
+                        var useColor = false;
 
-                        for (int j = 0; j < colorSplitText.Length; j++)
+                        for (var j = 0; j < colorSplitText.Length; j++)
                         {
                             if (useColor)
                             {
@@ -204,7 +199,7 @@ public partial class UiSharedService
 
     public static void ColorTextCentered(string text, Vector4 color)
     {
-        float offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
+        var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
         ColorText(text, color);
     }
@@ -286,7 +281,7 @@ public partial class UiSharedService
 
     public float GetButtonSize(string text)
     {
-        Vector2 vector2 = ImGui.CalcTextSize(text);
+        var vector2 = ImGui.CalcTextSize(text);
         return vector2.X + ImGui.GetStyle().FramePadding.X * 2f;
     }
 
@@ -296,8 +291,8 @@ public partial class UiSharedService
         using (_fonts.IconFont.Push())
             vector = ImGui.CalcTextSize(icon.ToIconString());
 
-        Vector2 vector2 = ImGui.CalcTextSize(text);
-        float num = 3f * ImGuiHelpers.GlobalScale;
+        var vector2 = ImGui.CalcTextSize(text);
+        var num = 3f * ImGuiHelpers.GlobalScale;
         return vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num;
     }
 
@@ -348,7 +343,7 @@ public partial class UiSharedService
             ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
         }
         var oldCur = ImGui.GetCursorPosX();
-        bool result = ImGui.Button(string.Empty, buttonSize);
+        var result = ImGui.Button(string.Empty, buttonSize);
         //_logger.LogTrace("Result of button: {result}", result);
         ImGui.SameLine(0, 0);
         UtilsExtensions.CenteredLineWidths[ID] = ImGui.GetCursorPosX() - oldCur;
@@ -388,25 +383,25 @@ public partial class UiSharedService
     public bool IconButton(FontAwesomeIcon icon, float? height = null, string? id = null, bool disabled = false, bool inPopup = false)
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
-        int num = 0;
+        var num = 0;
         if (inPopup)
         {
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
             num++;
         }
 
-        string text = icon.ToIconString();
+        var text = icon.ToIconString();
 
         ImGui.PushID((id == null) ? icon.ToIconString() : id + icon.ToIconString());
         Vector2 vector;
         using (_fonts.IconFont.Push())
             vector = ImGui.CalcTextSize(text);
-        ImDrawListPtr windowDrawList = ImGui.GetWindowDrawList();
-        Vector2 cursorScreenPos = ImGui.GetCursorScreenPos();
-        float x = vector.X + ImGui.GetStyle().FramePadding.X * 2f;
-        float frameHeight = height ?? ImGui.GetFrameHeight();
-        bool result = ImGui.Button(string.Empty, new Vector2(x, frameHeight));
-        Vector2 pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X,
+        var windowDrawList = ImGui.GetWindowDrawList();
+        var cursorScreenPos = ImGui.GetCursorScreenPos();
+        var x = vector.X + ImGui.GetStyle().FramePadding.X * 2f;
+        var frameHeight = height ?? ImGui.GetFrameHeight();
+        var result = ImGui.Button(string.Empty, new Vector2(x, frameHeight));
+        var pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X,
             cursorScreenPos.Y + (height ?? ImGui.GetFrameHeight()) / 2f - (vector.Y / 2f));
         using (_fonts.IconFont.Push())
             windowDrawList.AddText(pos, ImGui.GetColorU32(ImGuiCol.Text), text);
@@ -422,7 +417,7 @@ public partial class UiSharedService
     private bool IconTextButtonInternal(FontAwesomeIcon icon, string text, Vector4? defaultColor = null, float? width = null, bool disabled = false, string id = "")
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
-        int num = 0;
+        var num = 0;
         if (defaultColor.HasValue)
         {
             ImGui.PushStyleColor(ImGuiCol.Button, defaultColor.Value);
@@ -433,17 +428,17 @@ public partial class UiSharedService
         Vector2 vector;
         using (_fonts.IconFont.Push())
             vector = ImGui.CalcTextSize(icon.ToIconString());
-        Vector2 vector2 = ImGui.CalcTextSize(text);
-        ImDrawListPtr windowDrawList = ImGui.GetWindowDrawList();
-        Vector2 cursorScreenPos = ImGui.GetCursorScreenPos();
-        float num2 = 3f * ImGuiHelpers.GlobalScale;
-        float x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
-        float frameHeight = ImGui.GetFrameHeight();
-        bool result = ImGui.Button(string.Empty, new Vector2(x, frameHeight));
-        Vector2 pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
+        var vector2 = ImGui.CalcTextSize(text);
+        var windowDrawList = ImGui.GetWindowDrawList();
+        var cursorScreenPos = ImGui.GetCursorScreenPos();
+        var num2 = 3f * ImGuiHelpers.GlobalScale;
+        var x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
+        var frameHeight = ImGui.GetFrameHeight();
+        var result = ImGui.Button(string.Empty, new Vector2(x, frameHeight));
+        var pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
         using (_fonts.IconFont.Push())
             windowDrawList.AddText(pos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
-        Vector2 pos2 = new Vector2(pos.X + vector.X + num2, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
+        var pos2 = new Vector2(pos.X + vector.X + num2, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
         windowDrawList.AddText(pos2, ImGui.GetColorU32(ImGuiCol.Text), text);
         ImGui.PopID();
         if (num > 0)
@@ -467,7 +462,7 @@ public partial class UiSharedService
         float max, Vector4? defaultColor = null, float? width = null, bool disabled = false, string format = "%.1f")
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
-        int num = 0;
+        var num = 0;
         // Disable if issues, tends to be culpret
         if (defaultColor.HasValue)
         {
@@ -479,17 +474,17 @@ public partial class UiSharedService
         Vector2 vector;
         using (_fonts.IconFont.Push())
             vector = ImGui.CalcTextSize(icon.ToIconString());
-        Vector2 vector2 = ImGui.CalcTextSize(label);
-        ImDrawListPtr windowDrawList = ImGui.GetWindowDrawList();
-        Vector2 cursorScreenPos = ImGui.GetCursorScreenPos();
-        float num2 = 3f * ImGuiHelpers.GlobalScale;
-        float x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
-        float frameHeight = ImGui.GetFrameHeight();
+        var vector2 = ImGui.CalcTextSize(label);
+        var windowDrawList = ImGui.GetWindowDrawList();
+        var cursorScreenPos = ImGui.GetCursorScreenPos();
+        var num2 = 3f * ImGuiHelpers.GlobalScale;
+        var x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
+        var frameHeight = ImGui.GetFrameHeight();
         ImGui.SetCursorPosX(vector.X + ImGui.GetStyle().FramePadding.X * 2f);
         ImGui.SetNextItemWidth(x - vector.X - num2 * 4); // idk why this works, it probably doesnt on different scaling. Idfk. Look into later.
-        bool result = ImGui.SliderFloat(label + "##" + id, ref valueRef, min, max, format);
+        var result = ImGui.SliderFloat(label + "##" + id, ref valueRef, min, max, format);
 
-        Vector2 pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
+        var pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
         using (_fonts.IconFont.Push())
             windowDrawList.AddText(pos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
         ImGui.PopID();
@@ -515,7 +510,7 @@ public partial class UiSharedService
         uint maxLength, Vector4? defaultColor = null, float? width = null, bool disabled = false)
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
-        int num = 0;
+        var num = 0;
         // Disable if issues, tends to be culpret
         if (defaultColor.HasValue)
         {
@@ -527,17 +522,17 @@ public partial class UiSharedService
         Vector2 vector;
         using (_fonts.IconFont.Push())
             vector = ImGui.CalcTextSize(icon.ToIconString());
-        Vector2 vector2 = ImGui.CalcTextSize(label);
-        ImDrawListPtr windowDrawList = ImGui.GetWindowDrawList();
-        Vector2 cursorScreenPos = ImGui.GetCursorScreenPos();
-        float num2 = 3f * ImGuiHelpers.GlobalScale;
-        float x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
-        float frameHeight = ImGui.GetFrameHeight();
+        var vector2 = ImGui.CalcTextSize(label);
+        var windowDrawList = ImGui.GetWindowDrawList();
+        var cursorScreenPos = ImGui.GetCursorScreenPos();
+        var num2 = 3f * ImGuiHelpers.GlobalScale;
+        var x = width ?? vector.X + vector2.X + ImGui.GetStyle().FramePadding.X * 2f + num2;
+        var frameHeight = ImGui.GetFrameHeight();
         ImGui.SetCursorPosX(vector.X + ImGui.GetStyle().FramePadding.X * 2f);
         ImGui.SetNextItemWidth(x - vector.X - num2 * 4); // idk why this works, it probably doesnt on different scaling. Idfk. Look into later.
-        bool result = ImGui.InputTextWithHint(label, hint, ref inputStr, maxLength, ImGuiInputTextFlags.EnterReturnsTrue);
+        var result = ImGui.InputTextWithHint(label, hint, ref inputStr, maxLength, ImGuiInputTextFlags.EnterReturnsTrue);
 
-        Vector2 pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
+        var pos = new Vector2(cursorScreenPos.X + ImGui.GetStyle().FramePadding.X, cursorScreenPos.Y + ImGui.GetStyle().FramePadding.Y);
         using (_fonts.IconFont.Push())
             windowDrawList.AddText(pos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
         ImGui.PopID();
@@ -652,10 +647,10 @@ public partial class UiSharedService
     private static int FindWrapPosition(string text, float wrapWidth)
     {
         float currentWidth = 0;
-        int lastSpacePos = -1;
-        for (int i = 0; i < text.Length; i++)
+        var lastSpacePos = -1;
+        for (var i = 0; i < text.Length; i++)
         {
-            char c = text[i];
+            var c = text[i];
             currentWidth += ImGui.CalcTextSize(c.ToString()).X;
             if (char.IsWhiteSpace(c))
             {
@@ -676,19 +671,19 @@ public partial class UiSharedService
         var lines = text.Split('\n').ToList();
 
         // Traverse each line to check if it exceeds the wrap width
-        for (int i = 0; i < lines.Count; i++)
+        for (var i = 0; i < lines.Count; i++)
         {
-            float lineWidth = ImGui.CalcTextSize(lines[i]).X;
+            var lineWidth = ImGui.CalcTextSize(lines[i]).X;
 
             while (lineWidth > wrapWidth)
             {
                 // Find where to break the line
-                int wrapPos = FindWrapPosition(lines[i], wrapWidth);
+                var wrapPos = FindWrapPosition(lines[i], wrapWidth);
                 if (wrapPos >= 0)
                 {
                     // Insert a newline at the wrap position
-                    string part1 = lines[i].Substring(0, wrapPos);
-                    string part2 = lines[i].Substring(wrapPos).TrimStart();
+                    var part1 = lines[i].Substring(0, wrapPos);
+                    var part2 = lines[i].Substring(wrapPos).TrimStart();
                     lines[i] = part1;
                     lines.Insert(i + 1, part2);
                     lineWidth = ImGui.CalcTextSize(part2).X;
@@ -706,18 +701,18 @@ public partial class UiSharedService
 
     private static unsafe int TextEditCallback(ImGuiInputTextCallbackData* data, float wrapWidth)
     {
-        string text = Marshal.PtrToStringAnsi((IntPtr)data->Buf, data->BufTextLen);
+        var text = Marshal.PtrToStringAnsi((IntPtr)data->Buf, data->BufTextLen);
 
         // Normalize newlines for processing
         text = text.Replace("\r\n", "\n");
         var lines = text.Split('\n').ToList();
 
-        bool textModified = false;
+        var textModified = false;
 
         // Traverse each line to check if it exceeds the wrap width
-        for (int i = 0; i < lines.Count; i++)
+        for (var i = 0; i < lines.Count; i++)
         {
-            float lineWidth = ImGui.CalcTextSize(lines[i]).X;
+            var lineWidth = ImGui.CalcTextSize(lines[i]).X;
 
             // Skip wrapping if this line ends with \r (i.e., it's a true newline)
             if (lines[i].EndsWith("\r"))
@@ -728,12 +723,12 @@ public partial class UiSharedService
             while (lineWidth > wrapWidth)
             {
                 // Find where to break the line
-                int wrapPos = FindWrapPosition(lines[i], wrapWidth);
+                var wrapPos = FindWrapPosition(lines[i], wrapWidth);
                 if (wrapPos >= 0)
                 {
                     // Insert a newline at the wrap position
-                    string part1 = lines[i].Substring(0, wrapPos);
-                    string part2 = lines[i].Substring(wrapPos).TrimStart();
+                    var part1 = lines[i].Substring(0, wrapPos);
+                    var part2 = lines[i].Substring(wrapPos).TrimStart();
                     lines[i] = part1;
                     lines.Insert(i + 1, part2);
                     textModified = true;
@@ -749,9 +744,9 @@ public partial class UiSharedService
         // Merge lines back to the buffer
         if (textModified)
         {
-            string newText = string.Join("\n", lines); // Use \n for internal representation
+            var newText = string.Join("\n", lines); // Use \n for internal representation
 
-            byte[] newTextBytes = Encoding.UTF8.GetBytes(newText.PadRight(data->BufSize, '\0'));
+            var newTextBytes = Encoding.UTF8.GetBytes(newText.PadRight(data->BufSize, '\0'));
             Marshal.Copy(newTextBytes, 0, (IntPtr)data->Buf, newTextBytes.Length);
             data->BufTextLen = newText.Length;
             data->BufDirty = 1;
@@ -763,12 +758,12 @@ public partial class UiSharedService
 
     public unsafe static bool InputTextWrapMultiline(string id, ref string text, uint maxLength = 500, int lineHeight = 2, float? width = null)
     {
-        float wrapWidth = width ?? ImGui.GetContentRegionAvail().X; // Determine wrap width
+        var wrapWidth = width ?? ImGui.GetContentRegionAvail().X; // Determine wrap width
 
         // Format text for display
         text = FormatTextForDisplay(text, wrapWidth);
 
-        bool result = ImGui.InputTextMultiline(id, ref text, maxLength,
+        var result = ImGui.InputTextMultiline(id, ref text, maxLength,
              new(width ?? ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * lineHeight), // Expand height calculation
              ImGuiInputTextFlags.CallbackEdit | ImGuiInputTextFlags.NoHorizontalScroll, // Flag settings
              (data) => { return TextEditCallback(data, wrapWidth); });
@@ -802,7 +797,7 @@ public partial class UiSharedService
         ImGuiComboFlags flags = ImGuiComboFlags.None, string defaultPreviewText = "Nothing Selected..")
     {
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        string comboLabel = shouldShowLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
+        var comboLabel = shouldShowLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
         if (!comboItems.Any())
         {
             ImGui.SetNextItemWidth(width);
@@ -829,14 +824,14 @@ public partial class UiSharedService
             }
         }
 
-        string displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
+        var displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
 
         ImGui.SetNextItemWidth(width);
         if (ImGui.BeginCombo(comboLabel, displayText, flags))
         {
             foreach (var item in comboItems)
             {
-                bool isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
+                var isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
                 if (ImGui.Selectable(toName(item), isSelected))
                 {
                     _selectedComboItems[comboName] = item!;
@@ -865,7 +860,7 @@ public partial class UiSharedService
         try
         {
             // Return default if there are no items to display in the combo box.
-            string comboLabel = showLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
+            var comboLabel = showLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
             if (!comboItems.Any())
             {
                 ImGui.SetNextItemWidth(width);
@@ -900,7 +895,7 @@ public partial class UiSharedService
                 SearchStrings[comboName] = searchString;
             }
 
-            string displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
+            var displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
 
             ImGui.SetNextItemWidth(width);
             if (ImGui.BeginCombo(comboLabel, displayText, flags))
@@ -918,7 +913,7 @@ public partial class UiSharedService
                 // display filtered content.
                 foreach (var item in filteredItems)
                 {
-                    bool isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
+                    var isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
                     if (ImGui.Selectable(toName(item), isSelected))
                     {
                         _logger.LogTrace("Selected {item} from {comboName}", toName(item), comboName);
@@ -947,8 +942,8 @@ public partial class UiSharedService
     {
         if (patternDuration > patternMaxDuration) patternDuration = patternMaxDuration;
 
-        string maxDurationFormatted = patternMaxDuration.ToString(format);
-        string patternDurationFormatted = patternDuration.ToString(format);
+        var maxDurationFormatted = patternMaxDuration.ToString(format);
+        var patternDurationFormatted = patternDuration.ToString(format);
 
         // Button to open popup
         var pos = ImGui.GetCursorScreenPos();
@@ -975,7 +970,7 @@ public partial class UiSharedService
     private void DrawTimeSpanUI(ref TimeSpan patternDuration, TimeSpan maxDuration, float width, string format)
     {
         var totalColumns = GetColumnCountFromFormat(format);
-        float extraPadding = ImGui.GetStyle().ItemSpacing.X;
+        var extraPadding = ImGui.GetStyle().ItemSpacing.X;
 
         Vector2 patternHourTextSize;
         Vector2 patternMinuteTextSize;
@@ -1028,7 +1023,7 @@ public partial class UiSharedService
 
     private void DrawTimeComponentUI(ref TimeSpan duration, TimeSpan maxDuration, string suffix)
     {
-        string prevValue = suffix switch
+        var prevValue = suffix switch
         {
             "h" => $"{Math.Max(0, (duration.Hours - 1)):00}",
             "m" => $"{Math.Max(0, (duration.Minutes - 1)):00}",
@@ -1037,7 +1032,7 @@ public partial class UiSharedService
             _ => $"UNK"
         };
 
-        string currentValue = suffix switch
+        var currentValue = suffix switch
         {
             "h" => $"{duration.Hours:00}h",
             "m" => $"{duration.Minutes:00}m",
@@ -1046,7 +1041,7 @@ public partial class UiSharedService
             _ => $"UNK"
         };
 
-        string nextValue = suffix switch
+        var nextValue = suffix switch
         {
             "h" => $"{Math.Min(maxDuration.Hours, (duration.Hours + 1)):00}",
             "m" => $"{Math.Min(maxDuration.Minutes, (duration.Minutes + 1)):00}",
@@ -1069,12 +1064,12 @@ public partial class UiSharedService
         // adjust the value with the mouse wheel
         if (ImGui.IsItemHovered() && ImGui.GetIO().MouseWheel != 0)
         {
-            int hours = duration.Hours;
-            int minutes = duration.Minutes;
-            int seconds = duration.Seconds;
-            int milliseconds = duration.Milliseconds;
+            var hours = duration.Hours;
+            var minutes = duration.Minutes;
+            var seconds = duration.Seconds;
+            var milliseconds = duration.Milliseconds;
 
-            int delta = -(int)ImGui.GetIO().MouseWheel;
+            var delta = -(int)ImGui.GetIO().MouseWheel;
             if (suffix == "h") { hours += delta; }
             if (suffix == "m") { minutes += delta; }
             if (suffix == "s") { seconds += delta; }
@@ -1094,8 +1089,6 @@ public partial class UiSharedService
 
             // update the duration
             duration = new TimeSpan(0, hours, minutes, seconds, milliseconds);
-
-            //_logger.LogDebug($"Duration changed to {duration.ToString("hh\\:mm\\:ss\\:fff")}");
         }
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 5f);
         var offset2 = (CurrentValBigSize - ImGui.CalcTextSize(prevValue).X) / 2;
@@ -1104,7 +1097,7 @@ public partial class UiSharedService
     }
     private int GetColumnCountFromFormat(string format)
     {
-        int columnCount = 0;
+        var columnCount = 0;
         if (format.Contains("hh")) columnCount++;
         if (format.Contains("mm")) columnCount++;
         if (format.Contains("ss")) columnCount++;

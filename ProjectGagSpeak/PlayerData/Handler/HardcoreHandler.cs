@@ -2,28 +2,21 @@ using Dalamud.Game.ClientState.Objects;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
-using Lumina.Excel.Sheets;
-using System.Numerics;
 using static GagspeakAPI.Extensions.GlobalPermExtensions;
 
 namespace GagSpeak.PlayerData.Handlers;
-/// <summary> Responsible for handling hardcore communication from stored data & ui to core logic. </summary>
 public class HardcoreHandler : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly GlobalData _playerData;
     private readonly PairManager _pairManager;
-    private readonly MainHub _apiHubMain; // for sending the updates.
+    private readonly MainHub _hub; // for sending the updates.
     private readonly MoveController _moveController; // for movement logic
     private readonly ChatSender _chatSender; // for sending chat commands
     private readonly EmoteMonitor _emoteMonitor; // for handling the blindfold logic
@@ -33,15 +26,12 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
 
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
     public HardcoreHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, GlobalData playerData,
-        PairManager pairManager, MainHub apiHubMain,
-        MoveController moveController, ChatSender chatSender, EmoteMonitor emoteMonitor,
-        ITargetManager targetManager) : base(logger, mediator)
+        GlobalData playerData, PairManager pairManager, MainHub hub, MoveController moveController,
+        ChatSender chatSender, EmoteMonitor emoteMonitor, ITargetManager targetManager) : base(logger, mediator)
     {
-        _clientConfigs = clientConfigs;
         _playerData = playerData;
         _pairManager = pairManager;
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _moveController = moveController;
         _chatSender = chatSender;
         _emoteMonitor = emoteMonitor;
@@ -149,7 +139,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             if (_playerData.GlobalPerms?.IsFollowing() ?? false)
             {
                 Logger.LogInformation("ForceFollow Disable was triggered manually before it naturally disabled. Forcibly shutting down.");
-                _ = _apiHubMain.UserUpdateOwnGlobalPerm(new(new(MainHub.UID), MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", string.Empty), UpdateDir.Own));
+                _ = _hub.UserUpdateOwnGlobalPerm(new(new(MainHub.UID), MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", string.Empty), UpdateDir.Own));
 
             }
             else
@@ -166,7 +156,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
         if (CachedMovementMode is MovementMode.Standard)
         {
             // if forced follow is still on, dont switch it back to false
-            uint mode = newState switch
+            var mode = newState switch
             {
                 NewState.Enabled => (uint)MovementMode.Legacy,
                 NewState.Disabled => (uint)MovementMode.Standard,
@@ -197,7 +187,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
             }
 
             // Step 1: Get Players current emoteId
-            ushort currentEmote = _emoteMonitor.CurrentEmoteId(); // our current emote ID.
+            var currentEmote = _emoteMonitor.CurrentEmoteId(); // our current emote ID.
 
             // if our expected emote is 50, and we are not in any sitting pose, force the sit pose.
             if (ForcedEmoteState.EmoteID is 50 or 52)
@@ -218,7 +208,7 @@ public class HardcoreHandler : DisposableMediatorSubscriberBase
                 }
 
                 // get our cycle pose.
-                byte currentCyclePose = _emoteMonitor.CurrentCyclePose();
+                var currentCyclePose = _emoteMonitor.CurrentCyclePose();
 
                 // if its not the expected cycle pose, we need to cycle the emote into the correct state.
                 if (currentCyclePose != ForcedEmoteState.CyclePoseByte)

@@ -1,21 +1,17 @@
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -24,13 +20,12 @@ using XivControl = FFXIVClientStructs.FFXIV.Client.Game.Control;
 namespace GagSpeak.UpdateMonitoring;
 public class MovementMonitor : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _mainConfig;
     private readonly HardcoreHandler _handler;
-    private readonly WardrobeHandler _outfitHandler;
     private readonly SelectStringPrompt _promptsString;
     private readonly YesNoPrompt _promptsYesNo;
     private readonly RoomSelectPrompt _promptsRooms;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly EmoteMonitor _emoteMonitor;
     private readonly MoveController _MoveController;
@@ -49,19 +44,17 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
 
     // the list of keys that are blocked while movement is disabled. Req. to be static, must be set here.
     public MovementMonitor(ILogger<MovementMonitor> logger, GagspeakMediator mediator,
-        HardcoreHandler hardcoreHandler, WardrobeHandler outfitHandler,
-        ClientConfigurationManager clientConfigs, SelectStringPrompt stringPrompts,
-        YesNoPrompt yesNoPrompts, RoomSelectPrompt rooms, ClientMonitorService clientService,
+        HardcoreHandler hardcoreHandler, GagspeakConfigService config, SelectStringPrompt stringPrompts,
+        YesNoPrompt yesNoPrompts, RoomSelectPrompt rooms, ClientMonitor clientMonitor,
         OnFrameworkService frameworkUtils, EmoteMonitor emoteMonitor, MoveController moveController, 
         IKeyState keyState, IObjectTable objectTable, ITargetManager targetManager) : base(logger, mediator)
     {
-        _clientConfigs = clientConfigs;
+        _mainConfig = config;
         _handler = hardcoreHandler;
-        _outfitHandler = outfitHandler;
         _promptsString = stringPrompts;
         _promptsYesNo = yesNoPrompts;
         _promptsRooms = rooms;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
         _emoteMonitor = emoteMonitor;
         _MoveController = moveController;
@@ -80,24 +73,13 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, _ => SafewordUsed());
         Mediator.Subscribe<DalamudLogoutMessage>(this, _ => DisableManipulatedTraitData());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
-
-        IpcFastUpdates.HardcoreTraitsEventFired += ToggleHardcoreTraits;
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-
         // enable movement
         ResetCancelledMoveKeys();
-
-        IpcFastUpdates.HardcoreTraitsEventFired -= ToggleHardcoreTraits;
-    }
-
-    private void DisableManipulatedTraitData()
-    {
-        HandleImmobilize = false;
-        HandleWeighty = false;
     }
 
     public async void SafewordUsed()
@@ -107,40 +89,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         await Task.Delay(3000);
         // Fix walking state
         ResetCancelledMoveKeys();
-        DisableManipulatedTraitData();
     }
-
-    public void ToggleHardcoreTraits(NewState newState, RestraintSet restraintSet)
-    {
-        if (restraintSet.EnabledBy == MainHub.UID)
-            return;
-
-        // Grab properties.
-        var properties = restraintSet.SetTraits[restraintSet.EnabledBy];
-        // if the set has a weighty property, we need to disable the walking state
-        if (properties.Weighty)
-            HandleWeighty = newState is NewState.Enabled ? true : false;
-
-        if (properties.Immobile)
-        {
-            if (newState is NewState.Enabled)
-            {
-                Logger.LogDebug("Enabling Immobilization", LoggerType.HardcoreMovement);
-                HandleImmobilize = true;
-            }
-            else
-            {
-                Logger.LogDebug("Disabling Immobilization", LoggerType.HardcoreMovement);
-                HandleImmobilize = false;
-            }
-        }
-    }
-
-    /// <summary>
-    /// A Static Accessor to be handled by the AppearanceHandler to know if we should handle immobilization or not.
-    /// </summary>
-    private bool HandleImmobilize = false;
-    private bool HandleWeighty = false;
 
     #region Framework Updates
     /// <summary>
@@ -153,7 +102,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
     private unsafe void FrameworkUpdate()
     {
         // make sure we only do checks when we are properly logged in and have a character loaded
-        if (!_clientService.IsPresent || _clientService.IsDead)
+        if (!_clientMonitor.IsPresent || _clientMonitor.IsDead)
             return;
 
         // FORCED FOLLOW LOGIC: Keep player following until idle for 6 seconds.
@@ -170,10 +119,10 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             if (_handler.LastMovementTime != DateTimeOffset.MinValue)
             {
                 // Check to see if the player is moving or not.
-                if (_clientService.ClientPlayer!.Position != _handler.LastPosition)
+                if (_clientMonitor.ClientPlayer!.Position != _handler.LastPosition)
                 {
                     _handler.LastMovementTime = DateTimeOffset.UtcNow;           // reset timer
-                    _handler.LastPosition = _clientService.ClientPlayer!.Position; // reset position
+                    _handler.LastPosition = _clientMonitor.ClientPlayer!.Position; // reset position
                 }
 
                 // if we have been idle for longer than 6 seconds, we should release the player.
@@ -197,14 +146,14 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         if (_handler.MonitorStayLogic)
         {
             // while they are active, if we are not in a dialog prompt option, scan to see if we are by an estate entrance
-            if (!_clientService.InQuestEvent)
+            if (!_clientMonitor.InQuestEvent)
             {
                 // grab all the event object nodes (door interactions)
                 var nodes = _objectTable.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.EventObj).ToList();
                 foreach (var node in nodes)
                 {
                     // Grab distance to object.
-                    var distance = _clientService.ClientPlayer?.GetTargetDistance(node) ?? float.MaxValue;
+                    var distance = _clientMonitor.ClientPlayer?.GetTargetDistance(node) ?? float.MaxValue;
                     // If its a estate entrance, and we are within 3.5f, interact with it.
 
 
@@ -235,7 +184,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
                     if (node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterFCOneName && node.IsTargetable)
                     {
                         // if we are not within 2f of it, attempt to execute the task.
-                        if (distance > 2f && _clientConfigs.GagspeakConfig.MoveToChambersInEstates)
+                        if (distance > 2f && _mainConfig.Config.MoveToChambersInEstates)
                         {
                             if (_moveToChambersTask is null)
                             {
@@ -261,7 +210,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         }
 
         // Handle Prompt Logic.
-        if (_handler.MonitorStayLogic || _clientService.InCutscene)
+        if (_handler.MonitorStayLogic || _clientMonitor.InCutscene)
         {
             // enable the hooks for the option prompts
             if (!_promptsString.Enabled) _promptsString.Enable();
@@ -289,7 +238,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             _MoveController.DisableMouseAutoMoveHook();
 
         // BLINDFOLDED STATE - Force Lock First Person if desired.
-        if (_clientConfigs.GagspeakConfig.ForceLockFirstPerson && _handler.MonitorBlindfoldLogic)
+        if (_mainConfig.Config.ForceLockFirstPerson && _handler.MonitorBlindfoldLogic)
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;

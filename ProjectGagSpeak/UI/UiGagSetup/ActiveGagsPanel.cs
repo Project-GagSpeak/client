@@ -5,12 +5,13 @@ using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.StateManagers;
-using GagSpeak.UI.Components.Combos;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using ProjectGagSpeak.CustomCombos;
+using ProjectGagSpeak.CustomCombos.Padlocks;
 using System.Numerics;
 
 namespace GagSpeak.UI.UiGagSetup;
@@ -33,11 +34,11 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         _guides = guides;
         _uiShared = uiShared;
 
-        _gagItemCombos = new GagComboClient[3]
+        _gagItemCombos = new ClientSyncGagCombo[3]
         {
-            new GagComboClient(0, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot0"),
-            new GagComboClient(1, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot1"),
-            new GagComboClient(2, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot2")
+            new ClientSyncGagCombo(0, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot0"),
+            new ClientSyncGagCombo(1, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot1"),
+            new ClientSyncGagCombo(2, mediator, gagData, clientConfigs, appearance, uiShared, logger, "ClientGagSlot2")
         };
         _gagPadlockCombos = new PadlockGagsClient[3]
         {
@@ -50,7 +51,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     private string GetGagTypePath(int index) => $"GagImages\\{_gagData.AppearanceData!.GagSlots[index].GagType}.png" ?? $"ItemMouth\\None.png";
     private string GetGagPadlockPath(int index) => $"PadlockImages\\{_gagData.AppearanceData!.GagSlots[index].Padlock.ToPadlock()}.png" ?? $"Padlocks\\None.png";
 
-    private GagComboClient[] _gagItemCombos = new GagComboClient[3];
+    private ClientSyncGagCombo[] _gagItemCombos = new ClientSyncGagCombo[3];
     private PadlockGagsClient[] _gagPadlockCombos = new PadlockGagsClient[3];
 
     // Draw the active gags tab

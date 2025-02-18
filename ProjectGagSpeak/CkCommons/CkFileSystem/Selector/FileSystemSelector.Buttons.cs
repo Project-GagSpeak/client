@@ -2,12 +2,11 @@ using Dalamud.Interface;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
-using OtterGui.Filesystem;
 using OtterGui.Raii;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
-public partial class FileSystemSelector<T, TStateStorage>
+public partial class CkFileSystemSelector<T, TStateStorage>
 {
     /// <summary> Add a button to the bottom-list. Should be an object that does not exceed the size parameter. </summary>
     /// <remarks> Buttons are sorted from left to right on priority, then subscription order. </remarks>
@@ -51,11 +50,11 @@ public partial class FileSystemSelector<T, TStateStorage>
             ImGui.OpenPopup(newFolderName);
 
         // Does not need to be delayed since it is not in the iteration itself.
-        FileSystem<T>.Folder? folder = null;
+        CkFileSystem<T>.Folder? folder = null;
         if (ImGuiUtil.OpenNameField(newFolderName, ref _newName) && _newName.Length > 0)
             try
             {
-                folder   = FileSystem.FindOrCreateAllFolders(_newName);
+                folder   = CkFileSystem.FindOrCreateAllFolders(_newName);
                 _newName = string.Empty;
             }
             catch
@@ -84,7 +83,7 @@ public partial class FileSystemSelector<T, TStateStorage>
             if (Selected != null)
                 delete(Selected);
             else
-                foreach (var leaf in _selectedPaths.OfType<FileSystem<T>.Leaf>())
+                foreach (var leaf in _selectedPaths.OfType<CkFileSystem<T>.Leaf>())
                     delete(leaf.Value);
         }
     }

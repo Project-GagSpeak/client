@@ -1,16 +1,16 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak.CkCommons.FileSystem;
+using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
-using OtterGui.Filesystem;
-using ProjectGagSpeak.CkCommons.HybridSaver;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.FileSystems;
 
-public sealed class GagFileSystem : FileSystem<GarblerRestriction>, IMediatorSubscriber, IHybridSavable, IDisposable
+public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorSubscriber, IHybridSavable, IDisposable
 {
     private readonly ILogger<GagFileSystem> _logger;
     private readonly GagRestrictionManager _manager;
@@ -59,32 +59,8 @@ public sealed class GagFileSystem : FileSystem<GarblerRestriction>, IMediatorSub
 
     private void OnGagChange(StorageItemChangeType type, GarblerRestriction gag, string? oldString)
     {
-        switch (type)
-        {
-            case StorageItemChangeType.Created:
-                var parent = Root;
-                if(oldString != null)
-                    try { parent = FindOrCreateAllFolders(oldString); }
-                    catch (Exception ex) { _logger.LogWarning(ex, $"Could not move gag because the folder could not be created."); }
-
-                CreateDuplicateLeaf(parent, gag.Label, gag);
-                return;
-            case StorageItemChangeType.Deleted:
-                if (FindLeaf(gag, out var leaf1))
-                    Delete(leaf1);
-                return;
-            case StorageItemChangeType.Modified:
-                Reload();
-                return;
-            case StorageItemChangeType.Renamed when oldString != null:
-                if (!FindLeaf(gag, out var leaf2))
-                    return;
-
-                var old = oldString.FixName();
-                if (old == leaf2.Name || leaf2.Name.IsDuplicateName(out var baseName, out _) && baseName == old)
-                    RenameWithDuplicates(leaf2, gag.Label);
-                return;
-        }
+        if (type is StorageItemChangeType.Modified)
+            Reload();
     }
 
     // Used for saving and loading.

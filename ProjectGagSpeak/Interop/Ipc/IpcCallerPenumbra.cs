@@ -1,10 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Restrictions;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using GagSpeak.UpdateMonitoring;
 using Penumbra.Api.Enums;
 using Penumbra.Api.Helpers;
@@ -12,9 +9,12 @@ using Penumbra.Api.IpcSubscribers;
 
 namespace GagSpeak.Interop.Ipc;
 
-/// <summary> reads/gets the name and directory name of the mod. </summary>
-public readonly record struct Mod(string Name, string DirectoryName) : IComparable<Mod>
+/// <summary> reads/gets the directory name & label name of the mod. </summary>
+public readonly record struct Mod(string DirectoryName, string Name) : IComparable<Mod>
 {
+    // constructor by KVP
+    public Mod(KeyValuePair<string, string> kvp) : this(kvp.Key, kvp.Value) { }
+
     public int CompareTo(Mod other)
     {
         var nameComparison = string.Compare(Name, other.Name, StringComparison.Ordinal);
@@ -175,12 +175,12 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
 
-    public IReadOnlyList<Mod> GetMods()
+    public List<Mod> GetMods()
     {
         if(!APIAvailable)
-            return Array.Empty<Mod>();
+            return new List<Mod>();
         var allMods = GetModList.Invoke();
-        return allMods.Select(m => new Mod(m.Value, m.Key)).ToList();
+        return allMods.Select(m => new Mod(m)).OrderByDescending(mod => mod.Name).ToList();
     }
 
 
@@ -214,6 +214,19 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         }
     }
 
+    public ModSettings GetSettingsForMod(Mod mod)
+    {
+        if (!APIAvailable)
+            return ModSettings.Empty;
+
+        var collection = GetActiveCollection.Invoke(ApiCollectionType.Current);
+        var res = GetModSettingsCurrent.Invoke(collection!.Value.Id, mod.DirectoryName);
+        if(res.Item1 is not PenumbraApiEc.Success)
+            return ModSettings.Empty;
+        
+        return (res.Item2.HasValue) ? new ModSettings(res.Item2!.Value.Item3, res.Item2!.Value.Item2, res.Item2!.Value.Item1, false, false) : ModSettings.Empty;
+    }
+
     public ModSettingOptions GetAllOptionsForMod(Mod mod)
     {
         if (!APIAvailable)
@@ -226,32 +239,32 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     /// <summary> Used for Setting or updating the settings of a mod, binding it to GagSpeak as a temporary mod. </summary>
     /// <remarks> While active, these mods settings will be locked in penumbra to ensure further helplessness. </remarks>
-    public PenumbraApiEc SetOrUpdateTemporaryMod(ModAssociation HandledMod)
+    public PenumbraApiEc SetOrUpdateTemporaryMod(Mod mod, ModSettings PresetSettings)
     {
         if (!APIAvailable)
             return PenumbraApiEc.NothingChanged;
 
         // set, or update, the temporary mod settings for the mod.
         return SetOrUpdateTempMod.Invoke(PLAYER_OBJECT_IDX,
-            HandledMod.ModInfo.DirectoryName,
+            mod.DirectoryName,
             false,
             true,
-            HandledMod.Settings.Priority + 25,
-            HandledMod.Settings.Settings.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value),
+            PresetSettings.Priority + 25,
+            PresetSettings.Settings.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value),
             GAGSPEAK_ID,
             GAGSPEAK_KEY,
-            HandledMod.ModInfo.Name);
+            mod.Name);
     }
 
     /// <summary> Used for removing a temporary mod from the client. </summary>
     /// <returns> The penumbra status code of success. </returns>
-    public PenumbraApiEc RemoveTemporaryMod(ModAssociation AssociatedMod)
+    public PenumbraApiEc RemoveTemporaryMod(Mod mod)
     {
         if (!APIAvailable)
             return PenumbraApiEc.NothingChanged;
 
         // Remove the temporary mod we set. This also undoes the priority shift we set for it.
-        return RemoveTempMod.Invoke(PLAYER_OBJECT_IDX, AssociatedMod.ModInfo.DirectoryName, GAGSPEAK_KEY, AssociatedMod.ModInfo.Name);
+        return RemoveTempMod.Invoke(PLAYER_OBJECT_IDX, mod.DirectoryName, GAGSPEAK_KEY, mod.Name);
     }
 
     /// <summary> Used to clear the temporary mod settings managed by GagSpeak upon plugin shutdown or logout. </summary>

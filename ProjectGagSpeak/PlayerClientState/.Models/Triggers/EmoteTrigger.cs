@@ -14,19 +14,12 @@ public record EmoteTrigger : Trigger
     // if the 'other' is player spesific, define the player here.
     public string EmotePlayerNameWorld { get; set; } = string.Empty;
 
-    public override EmoteTrigger DeepClone()
+    internal EmoteTrigger() { }
+
+    public EmoteTrigger(EmoteTrigger other, bool keepId) : base(other, keepId)
     {
-        return new EmoteTrigger
-        {
-            EmoteID = EmoteID,
-            EmoteDirection = EmoteDirection,
-            EmotePlayerNameWorld = EmotePlayerNameWorld,
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone()
-        };
+        EmoteID = other.EmoteID;
+        EmoteDirection = other.EmoteDirection;
+        EmotePlayerNameWorld = other.EmotePlayerNameWorld;
     }
 }

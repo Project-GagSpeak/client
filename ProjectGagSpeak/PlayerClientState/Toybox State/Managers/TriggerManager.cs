@@ -1,13 +1,41 @@
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.Services;
+using GagSpeak.Services.Configs;
+using GagSpeak.Services.Mediator;
+using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.PlayerState.Toybox;
 
-public sealed class TriggerManager(ILogger<TriggerManager> logger, GagspeakConfigService mainConfig, 
-    TriggerConfigService triggers) : TriggerEditor(logger, mainConfig, triggers)
+public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
 {
-    public TriggerStorage Storage => _triggers.Current.Storage;
+    private readonly PatternManager _patterns;
+    private readonly AlarmManager _alarms;
+    private readonly FavoritesManager _favorites;
+    private readonly ConfigFileProvider _fileNames;
+    private readonly HybridSaveService _saver;
+
+    public TriggerManager(ILogger<TriggerManager> logger, GagspeakMediator mediator,
+        PatternManager patterns, AlarmManager alarms, FavoritesManager favorites,
+        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+    {
+        _patterns = patterns;
+        _alarms = alarms;
+        _favorites = favorites;
+        _fileNames = fileNames;
+        _saver = saver;
+        Load();
+    }
+
+    // Cached Information.
+    public Trigger? ActiveEditorItem = null;
+    // no cache needed for triggers.
+    public IEnumerable<Trigger> EnabledTriggers => Storage.Where(t => t.Enabled);
+
+    // Stored information.
+    public TriggerStorage Storage { get; private set; } = new TriggerStorage();
 
     public void OnLogin() { }
 
@@ -15,54 +43,100 @@ public sealed class TriggerManager(ILogger<TriggerManager> logger, GagspeakConfi
 
     public Trigger CreateNew(string triggerName)
     {
-        return new GagTrigger() { Label = triggerName };
+        var newTrigger = new GagTrigger() { Label = triggerName };
+        Storage.Add(newTrigger);
+        _saver.Save(this);
+        Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Created, newTrigger, null));
+        return newTrigger;
     }
 
     public Trigger CreateClone(Trigger other, string newName)
     {
-        return other switch
+        Trigger clonedItem = other switch
         {
-            SpellActionTrigger   t => new SpellActionTrigger() { Label = newName },
-            HealthPercentTrigger t => new HealthPercentTrigger() { Label = newName },
-            RestraintTrigger     t => new RestraintTrigger() { Label = newName },
-            GagTrigger           t => new GagTrigger() { Label = newName },
-            SocialTrigger        t => new SocialTrigger() { Label = newName },
-            EmoteTrigger         t => new EmoteTrigger() { Label = newName },
-            _ => throw new InvalidOperationException("Unknown trigger type.")
+            SpellActionTrigger   sa => new SpellActionTrigger(sa, false) { Label = newName },
+            HealthPercentTrigger hp => new HealthPercentTrigger(hp, false) { Label = newName },
+            RestraintTrigger     r  => new RestraintTrigger(r, false) { Label = newName },
+            GagTrigger           g  => new GagTrigger(g, false) { Label = newName },
+            SocialTrigger        s  => new SocialTrigger(s, false) { Label = newName },
+            EmoteTrigger         e  => new EmoteTrigger(e, false) { Label = newName },
+            _ => throw new NotImplementedException("Unknown trigger type."),
         };
+        Storage.Add(clonedItem);
+        _saver.Save(this);
+        Logger.LogDebug($"Cloned trigger {other.Label} to {newName}.");
+        Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Created, clonedItem, null));
+        return clonedItem;
     }
 
     public void Delete(Trigger trigger)
     {
+        if(ActiveEditorItem is null)
+            return;
+
+        if(Storage.Remove(trigger))
+        {
+            Logger.LogDebug($"Deleted trigger {trigger.Label}.");
+            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Deleted, trigger, null));
+            _saver.Save(this);
+        }
 
     }
 
     public void StartEditing(Trigger trigger)
     {
-
+        if (Storage.Contains(trigger))
+        {
+            ActiveEditorItem = trigger switch
+            {
+                SpellActionTrigger sa => new SpellActionTrigger(sa, true),
+                HealthPercentTrigger hp => new HealthPercentTrigger(hp, true),
+                RestraintTrigger r => new RestraintTrigger(r, true),
+                GagTrigger g => new GagTrigger(g, true),
+                SocialTrigger s => new SocialTrigger(s, true),
+                EmoteTrigger e => new EmoteTrigger(e, true),
+                _ => throw new NotImplementedException("Unknown trigger type."),
+            };
+        }
     }
 
+    /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing()
-    {
+        => ActiveEditorItem = null;
 
+    /// <summary> Injects all the changes made to the Restriction and applies them to the actual item. </summary>
+    /// <remarks> All changes are saved to the config once this completes. </remarks>
+    public void SaveChangesAndStopEditing()
+    {
+        if (ActiveEditorItem is null)
+            return;
+        // Update the active restriction with the new data, update the cache, and clear the edited restriction.
+        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        {
+            item = ActiveEditorItem;
+            ActiveEditorItem = null;
+            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Modified, item, null));
+            _saver.Save(this);
+        }
     }
 
-    public void AddFavorite(Trigger trigger)
-    {
+    /// <summary> Attempts to add the gag restriction as a favorite. </summary>
+    /// <returns> True if successful, false otherwise. </returns>
+    public bool AddFavorite(Trigger trigger)
+        => _favorites.TryAddRestriction(FavoriteIdContainer.Trigger, trigger.Identifier);
 
-    }
+    /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
+    /// <returns> True if successful, false otherwise. </returns>
+    public bool RemoveFavorite(Trigger trigger)
+        => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, trigger.Identifier);
 
-    public void RemoveFavorite(Trigger trigger)
-    {
-
-    }
-
+    // unsure how stable these are to use atm but we will see.
     public void ToggleTrigger(Guid triggerId, string enactor)
     {
         if (Storage.TryGetTrigger(triggerId, out var trigger))
         {
             trigger.Enabled = !trigger.Enabled;
-            _triggers.Save();
+            _saver.Save(this);
         }
     }
 
@@ -71,7 +145,7 @@ public sealed class TriggerManager(ILogger<TriggerManager> logger, GagspeakConfi
         if (Storage.TryGetTrigger(triggerId, out var trigger))
         {
             trigger.Enabled = true;
-            _triggers.Save();
+            _saver.Save(this);
         }
     }
 
@@ -84,14 +158,118 @@ public sealed class TriggerManager(ILogger<TriggerManager> logger, GagspeakConfi
                 return;
 
             trigger.Enabled = false;
-            _triggers.Save();
+            _saver.Save(this);
         }
     }
-}
 
-public class TriggerEditor(ILogger logger, GagspeakConfigService mainConfig, TriggerConfigService triggers)
-{
-    protected readonly ILogger _logger = logger;
-    protected readonly GagspeakConfigService _mainConfig = mainConfig;
-    protected readonly TriggerConfigService _triggers = triggers;
+    #region HybridSavable
+    public int ConfigVersion => 0;
+    public HybridSaveType SaveType => HybridSaveType.Json;
+    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
+    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+        => (isAccountUnique = true, files.Alarms).Item2;
+    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public string JsonSerialize()
+    {
+        // we need to iterate through our list of trigger objects and serialize them.
+        var triggerItems = JsonConvert.SerializeObject(Storage, Formatting.Indented);
+
+        // construct the config object to serialize.
+        return new JObject()
+        {
+            ["Version"] = ConfigVersion,
+            ["Triggers"] = triggerItems,
+        }.ToString(Formatting.Indented);
+    }
+
+    private void Load()
+    {
+        var file = _fileNames.Triggers;
+        Storage.Clear();
+        if (!File.Exists(file))
+        {
+            Logger.LogWarning("No Triggers file found at {0}", file);
+            return;
+        }
+
+        // Read the json from the file.
+        var jsonText = File.ReadAllText(file);
+        var jObject = JObject.Parse(jsonText);
+        var version = jObject["Version"]?.Value<int>() ?? 0;
+
+        // Perform Migrations if any, and then load the data.
+        switch (version)
+        {
+            case 0:
+                LoadV0(jObject["Triggers"]);
+                break;
+            default:
+                Logger.LogError("Invalid Version!");
+                return;
+        }
+    }
+
+    private void LoadV0(JToken? data)
+    {
+        if (data is not JArray triggers)
+            return;
+
+        try
+        {
+            foreach (var triggerToken in triggers)
+            {
+                if (!Enum.TryParse(triggerToken["Type"]?.ToString(), out TriggerKind triggerType))
+                    continue;
+
+                // Otherwise, try and parse it out.
+                Trigger triggerAbstract = triggerType switch
+                {
+                    TriggerKind.SpellAction => triggerToken.ToObject<SpellActionTrigger>() ?? new SpellActionTrigger(),
+                    TriggerKind.HealthPercent => triggerToken.ToObject<HealthPercentTrigger>() ?? new HealthPercentTrigger(),
+                    TriggerKind.RestraintSet => triggerToken.ToObject<RestraintTrigger>() ?? new RestraintTrigger(),
+                    TriggerKind.GagState => triggerToken.ToObject<GagTrigger>() ?? new GagTrigger(),
+                    TriggerKind.SocialAction => triggerToken.ToObject<SocialTrigger>() ?? new SocialTrigger(),
+                    TriggerKind.EmoteAction => triggerToken.ToObject<EmoteTrigger>() ?? new EmoteTrigger(),
+                    _ => throw new Exception("Invalid Trigger Type")
+                };
+                // Safely parse the integer to InvokableActionType
+                if (Enum.TryParse(triggerToken["ExecutionType"]?.ToString(), out InvokableActionType executionType))
+                {
+                    IActionGS executableAction = executionType switch
+                    {
+                        InvokableActionType.TextOutput => triggerToken["ExecutableAction"]?.ToObject<TextAction>() ?? new TextAction(),
+                        InvokableActionType.Gag => triggerToken["ExecutableAction"]?.ToObject<GagAction>() ?? new GagAction(),
+                        InvokableActionType.Restraint => triggerToken["ExecutableAction"]?.ToObject<RestraintAction>() ?? new RestraintAction(),
+                        InvokableActionType.Moodle => triggerToken["ExecutableAction"]?.ToObject<MoodleAction>() ?? new MoodleAction(),
+                        InvokableActionType.ShockCollar => triggerToken["ExecutableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),
+                        InvokableActionType.SexToy => triggerToken["ExecutableAction"]?.ToObject<SexToyAction>() ?? new SexToyAction(),
+                        _ => throw new Exception("Invalid Execution Type")
+                    };
+
+                    if (executableAction is not null)
+                        triggerAbstract.ExecutableAction = executableAction;
+                    else
+                        throw new Exception("Failed to deserialize ExecutableAction");
+                }
+                else
+                {
+                    throw new Exception("Invalid Execution Type");
+                }
+
+                Storage.Add(triggerAbstract);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load Triggers");
+        }
+    }
+
+    private void MigrateV0toV1(JObject oldConfigJson)
+    {
+        // update only the version value to 1, then return it.
+        oldConfigJson["Version"] = 1;
+    }
+
+    #endregion HybridSavable
 }

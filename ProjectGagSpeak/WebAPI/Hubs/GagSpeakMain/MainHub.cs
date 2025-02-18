@@ -1,11 +1,10 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Listener;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
@@ -26,6 +25,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     private readonly HubFactory _hubFactory;
     private readonly VisualStateListener _visualListener;
     private readonly ToyboxStateListener _kinkListener;
+    private readonly MiscellaneousListener _miscListener;
     private readonly PairManager _pairs;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly GagspeakConfigService _mainConfig;
@@ -33,29 +33,33 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     // Cancellation Token Sources
     private CancellationTokenSource HubConnectionCTS;
     private CancellationTokenSource? HubHealthCTS = new();
-    private const string MainServer = "GagSpeak Main";
-    private const string MainServiceUri = "wss://gagspeak.kinkporium.studio";
+    public const string MainServer = "GagSpeak Main";
+    public const string MainServiceUri = "wss://gagspeak.kinkporium.studio";
 
     public MainHub(
         ILogger<MainHub> logger,
         GagspeakMediator mediator,
         TokenProvider tokenProvider,
-        ClientMonitorService clientService,
+        ClientMonitor clientMonitor,
         OnFrameworkService frameworkUtils,
         GlobalData globals,
         HubFactory hubFactory,
         VisualStateListener visualListener,
         ToyboxStateListener kinkListener,
+        MiscellaneousListener miscListener,
         PairManager pairs,
         ServerConfigurationManager serverConfigs,
         GagspeakConfigService mainConfig)
-        : base(logger, mediator, tokenProvider, clientService, frameworkUtils)
+        : base(logger, mediator, tokenProvider, clientMonitor, frameworkUtils)
     {
         _globals = globals;
         _hubFactory = hubFactory;
         _pairs = pairs;
         _serverConfigs = serverConfigs;
         _mainConfig = mainConfig;
+        _visualListener = visualListener;
+        _kinkListener = kinkListener;
+        _miscListener = miscListener;
 
         // Create our CTS for the hub connection
         HubConnectionCTS = new CancellationTokenSource();
@@ -90,7 +94,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     public static bool IsConnected => ServerStatus is ServerState.Connected;
     public static bool IsOnUnregistered => ServerStatus is ServerState.NoSecretKey;
     public static bool IsServerAlive => ServerStatus is ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
-    public bool ClientHasConnectionPaused => _serverConfigs.CurrentServer?.FullPause ?? false;
+    public bool ClientHasConnectionPaused => _serverConfigs.ServerStorage.FullPause;
 
     protected override void Dispose(bool disposing)
     {
@@ -119,7 +123,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
             return;
         }
 
-        Logger.LogInformation("Connection Validation Approved, Creating Connection with [" + _serverConfigs.CurrentServer.ServerName + "]", LoggerType.ApiCore);
+        Logger.LogInformation("Connection Validation Approved, Creating Connection with [" + _serverConfigs.ServerStorage.ServerName + "]", LoggerType.ApiCore);
         // if the current state was offline, change it to disconnected.
         if (ServerStatus is ServerState.Offline)
             ServerStatus = ServerState.Disconnected;
@@ -267,7 +271,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         if (GagSpeakHubMain is not null)
         {
             Logger.LogInformation("Instance disposed of in '_hubFactory', but still exists in MainHub.cs, " +
-                "clearing all other variables for [" + _serverConfigs.CurrentServer.ServerName + "]", LoggerType.ApiCore);
+                "clearing all other variables for [" + _serverConfigs.ServerStorage.ServerName + "]", LoggerType.ApiCore);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             Initialized = false;
             HubHealthCTS?.Cancel();
@@ -354,14 +358,14 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         fetchedSecretKey = string.Empty;
 
         // if we are not logged in, we should not be able to connect.
-        if (_clientService.IsLoggedIn is false)
+        if (_clientMonitor.IsLoggedIn is false)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // if we have not yet made an account, abort this connection.
-        if (_mainConfig.Current.AccountCreated is false)
+        if (_mainConfig.Config.AccountCreated is false)
         {
             Logger.LogDebug("Primary Account not yet created, Aborting Connection.", LoggerType.ApiCore);
             return false;
@@ -631,7 +635,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
             AchievementManager.LastUnhandledDisconnect = DateTime.UtcNow;
         }
 
-        Logger.LogWarning("Connection to " + _serverConfigs.CurrentServer.ServerName + " Closed... Reconnecting. (Reason: " + arg);
+        Logger.LogWarning("Connection to " + _serverConfigs.ServerStorage.ServerName + " Closed... Reconnecting. (Reason: " + arg);
     }
 
     protected override async Task HubInstanceOnReconnected()

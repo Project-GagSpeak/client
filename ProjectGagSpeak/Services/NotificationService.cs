@@ -1,9 +1,10 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
@@ -21,15 +22,17 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
 {
     private readonly GagspeakConfigService _mainConfig;
     private readonly GlobalData _playerData;
+    private readonly GagRestrictionManager _gags;
     private readonly INotificationManager _notifications;
     private readonly IChatGui _chat;
 
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, GlobalData playerData, IChatGui chat,
-        INotificationManager notifications) : base(logger, mediator)
+        GagspeakConfigService mainConfig, GlobalData playerData, GagRestrictionManager gags,
+        IChatGui chat, INotificationManager notifications) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _playerData = playerData;
+        _gags = gags;
         _chat = chat;
         _notifications = notifications;
 
@@ -39,7 +42,10 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         // notify about live chat garbler on zone switch.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
         {
-            if (_mainConfig.Current.LiveGarblerZoneChangeWarn && _playerData.IsPlayerGagged && (_playerData.GlobalPerms?.LiveChatGarblerActive ?? false))
+            if(_gags.ActiveGagsData is not { } gags || _playerData.GlobalPerms is not { } perms)
+                return;
+
+            if (_mainConfig.Config.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)
                 ShowNotification(new NotificationMessage("Zone Switch", "Live Chat Garbler is still Active!", NotificationType.Warning));
         });
     }
@@ -118,15 +124,15 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
             case NotificationType.Info:
             case NotificationType.Success:
             case NotificationType.None:
-                ShowNotificationLocationBased(msg, _mainConfig.Current.InfoNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Config.InfoNotification);
                 break;
 
             case NotificationType.Warning:
-                ShowNotificationLocationBased(msg, _mainConfig.Current.WarningNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Config.WarningNotification);
                 break;
 
             case NotificationType.Error:
-                ShowNotificationLocationBased(msg, _mainConfig.Current.ErrorNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Config.ErrorNotification);
                 break;
         }
     }

@@ -8,17 +8,10 @@ public record SocialTrigger : Trigger
     // the social action to monitor.
     public SocialActionType SocialType { get; set; } = SocialActionType.DeathRollLoss;
 
-    public override SocialTrigger DeepClone()
+    internal SocialTrigger() { }
+
+    public SocialTrigger(SocialTrigger other, bool clone) : base(other, clone)
     {
-        return new SocialTrigger
-        {
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone(),
-            SocialType = SocialType
-        };
+        SocialType = other.SocialType;
     }
 }

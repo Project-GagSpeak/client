@@ -1,19 +1,17 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
-using System.Numerics;
 
 namespace GagSpeak.UI.Handlers;
 
 public class IdDisplayHandler
 {
-    private readonly GagspeakConfigService _mainConfig;
     private readonly GagspeakMediator _mediator;
-    private readonly ServerConfigurationManager _serverManager;
+    private readonly GagspeakConfigService _mainConfig;
+    private readonly ServerConfigurationManager _serverConfig;
     private readonly Dictionary<string, bool> _showIdForEntry = new(StringComparer.Ordinal);
     private string _editComment = string.Empty;
     private string _editEntry = string.Empty;
@@ -23,7 +21,7 @@ public class IdDisplayHandler
     public IdDisplayHandler(GagspeakMediator mediator, ServerConfigurationManager serverManager, GagspeakConfigService gagspeakConfigService)
     {
         _mediator = mediator;
-        _serverManager = serverManager;
+        _serverConfig = serverManager;
         _mainConfig = gagspeakConfigService;
     }
 
@@ -32,10 +30,10 @@ public class IdDisplayHandler
         var returnVal = false;
 
         ImGui.SameLine(textPosX);
-        (bool textIsUid, string playerText) = GetPlayerText(pair);
+        (var textIsUid, var playerText) = GetPlayerText(pair);
 
-        float textWidth = editBoxWidth.Invoke() - 20f;
-        bool hovered = false;
+        var textWidth = editBoxWidth.Invoke() - 20f;
+        var hovered = false;
 
         if (!string.Equals(_editEntry, pair.UserData.UID, StringComparison.Ordinal))
         {
@@ -50,12 +48,12 @@ public class IdDisplayHandler
 
                     if (!string.Equals(_lastMouseOverUid, id))
                     {
-                        _popupTime = DateTime.UtcNow.AddSeconds(_mainConfig.Current.ProfileDelay);
+                        _popupTime = DateTime.UtcNow.AddSeconds(_mainConfig.Config.ProfileDelay);
                     }
 
                     _lastMouseOverUid = id;
 
-                    if (_popupTime < DateTime.UtcNow && !_popupShown && _mainConfig.Current.ShowProfiles)
+                    if (_popupTime < DateTime.UtcNow && !_popupShown && _mainConfig.Config.ShowProfiles)
                     {
                         _popupShown = true;
                         _mediator.Publish(new ProfilePopoutToggle(pair.UserData));
@@ -108,8 +106,7 @@ public class IdDisplayHandler
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
-                    _serverManager.SetNicknameForUid(_editEntry, _editComment, save: true);
-
+                    _serverConfig.SetNicknameForUid(_editEntry, _editComment);
                     _editComment = pair.GetNickname() ?? string.Empty;
                     _editEntry = pair.UserData.UID;
                 }
@@ -122,8 +119,7 @@ public class IdDisplayHandler
             ImGui.SetNextItemWidth(editBoxWidth.Invoke());
             if (ImGui.InputTextWithHint("##"+pair.UserData.UID, "Nick/Nicknames", ref _editComment, 255, ImGuiInputTextFlags.EnterReturnsTrue))
             {
-                _serverManager.SetNicknameForUid(pair.UserData.UID, _editComment);
-                _serverManager.Save();
+                _serverConfig.SetNicknameForUid(pair.UserData.UID, _editComment);
                 _editEntry = string.Empty;
             }
 
@@ -138,8 +134,8 @@ public class IdDisplayHandler
     public (bool isUid, string text) GetPlayerText(Pair pair)
     {
         var textIsUid = true;
-        bool showUidInsteadOfName = ShowUidInsteadOfName(pair);
-        string? playerText = _serverManager.GetNicknameForUid(pair.UserData.UID);
+        var showUidInsteadOfName = ShowUidInsteadOfName(pair);
+        var playerText = _serverConfig.GetNicknameForUid(pair.UserData.UID);
         if (!showUidInsteadOfName && playerText != null)
         {
             if (string.IsNullOrEmpty(playerText))
@@ -160,7 +156,7 @@ public class IdDisplayHandler
         {
             playerText = pair.PlayerName;
             textIsUid = false;
-            if (_mainConfig.Current.PreferNicknamesOverNames)
+            if (_mainConfig.Config.PreferNicknamesOverNames)
             {
                 var note = pair.GetNickname();
                 if (note != null)

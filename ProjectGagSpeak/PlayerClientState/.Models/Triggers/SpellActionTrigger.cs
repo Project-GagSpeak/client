@@ -18,21 +18,14 @@ public record SpellActionTrigger : Trigger
     public int ThresholdMinValue { get; set; } = -1;
     public int ThresholdMaxValue { get; set; } = 10000000;
 
-    public override SpellActionTrigger DeepClone()
+    internal SpellActionTrigger() { }
+
+    internal SpellActionTrigger(SpellActionTrigger other, bool keepId) : base(other, keepId)
     {
-        return new SpellActionTrigger
-        {
-            Identifier = Identifier,
-            Enabled = Enabled,
-            Priority = Priority,
-            Label = Label,
-            Description = Description,
-            ExecutableAction = ExecutableAction.DeepClone(),
-            ActionKind = ActionKind,
-            Direction = Direction,
-            ActionID = ActionID,
-            ThresholdMinValue = ThresholdMinValue,
-            ThresholdMaxValue = ThresholdMaxValue
-        };
+        ActionKind = other.ActionKind;
+        Direction = other.Direction;
+        ActionID = other.ActionID;
+        ThresholdMinValue = other.ThresholdMinValue;
+        ThresholdMaxValue = other.ThresholdMaxValue;
     }
 }

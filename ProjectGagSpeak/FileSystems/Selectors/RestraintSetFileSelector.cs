@@ -1,20 +1,18 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.Alarms;
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.FileSystems;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.FileSystem.Selector;
-using OtterGui.Log;
 
-namespace GagSpeak.Alarms;
+namespace GagSpeak.RestraintSets;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
-public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelector.AlarmState>, IMediatorSubscriber, IDisposable
+public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet, RestraintSetFileSelector.RestraintSetState>, IMediatorSubscriber, IDisposable
 {
-    private readonly AlarmManager _manager;
+    private readonly RestraintManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
     /// <summary> 
@@ -23,48 +21,48 @@ public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelec
     /// We will find out later if anything.
     /// </summary>
     /// <remarks> This allows each item in here to be accessed efficiently at runtime during the draw loop. </remarks>
-    public record struct AlarmState(uint Color) { }
+    public record struct RestraintSetState(uint Color) { }
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
-    public new AlarmFileSystem.Leaf? SelectedLeaf
+    public new RestraintSetFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public AlarmFileSelector(GagspeakMediator mediator, AlarmManager manager, AlarmFileSystem fileSystem, IKeyState keys,
-        Logger log) : base(fileSystem, keys, log)
+    public RestraintSetFileSelector(RestraintManager manager, GagspeakMediator mediator, RestraintSetFileSystem fileSystem,
+        ILogger<RestraintSetFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##RestraintSetFileSelector")
     {
         Mediator = mediator;
         _manager = manager;
 
-        Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
 
         // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
     }
 
-    private void RenameLeafAlarm(AlarmFileSystem.Leaf leaf)
+    private void RenameLeafRestraintSet(RestraintSetFileSystem.Leaf leaf)
     {
         ImGui.Separator();
         RenameLeaf(leaf);
     }
 
-    private void RenameAlarm(AlarmFileSystem.Leaf leaf)
+    private void RenameRestraintSet(RestraintSetFileSystem.Leaf leaf)
     {
         ImGui.Separator();
         var currentName = leaf.Value.Label;
         if (ImGui.IsWindowAppearing())
             ImGui.SetKeyboardFocusHere(0);
-        ImGui.TextUnformatted("Rename Alarm:");
-        if (ImGui.InputText("##RenameAlarm", ref currentName, 256, ImGuiInputTextFlags.EnterReturnsTrue))
+        ImGui.TextUnformatted("Rename Restraint Set:");
+        if (ImGui.InputText("##RenameRestraintSet", ref currentName, 256, ImGuiInputTextFlags.EnterReturnsTrue))
         {
             _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
-        ImGuiUtil.HoverTooltip("Enter a new name here to rename the changed alarm.");
+        ImGuiUtil.HoverTooltip("Enter a new name here to rename the changed restraintSet.");
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        Mediator.Unsubscribe<ConfigAlarmChanged>(this);
+        Mediator.Unsubscribe<ConfigRestraintSetChanged>(this);
     }
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
@@ -75,7 +73,7 @@ public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelec
     // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnAlarmChange(StorageItemChangeType type, Alarm alarm, string? oldString)
+    private void OnRestraintSetChange(StorageItemChangeType type, RestraintSet restraintSet, string? oldString)
         => SetFilterDirty();
 
 

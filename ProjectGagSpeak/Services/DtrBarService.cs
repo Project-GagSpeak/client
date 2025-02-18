@@ -4,7 +4,6 @@ using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
@@ -20,25 +19,25 @@ namespace GagSpeak.UpdateMonitoring;
 /// </summary>
 public sealed class DtrBarService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GagspeakConfigService _mainConfig;
     private readonly EventAggregator _eventAggregator;
     private readonly PairManager _pairManager;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly IDataManager _gameData;
     private readonly IDtrBar _dtrBar;
     public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator, 
-        MainHub apiHubMain, GagspeakConfigService mainConfig,  EventAggregator eventAggregator, 
-        PairManager pairs, OnFrameworkService frameworkUtils, ClientMonitorService clientService,
+        MainHub hub, GagspeakConfigService mainConfig,  EventAggregator eventAggregator, 
+        PairManager pairs, OnFrameworkService frameworkUtils, ClientMonitor clientMonitor,
         IDataManager gameData, IDtrBar dtrBar) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _mainConfig = mainConfig;
         _eventAggregator = eventAggregator;
         _pairManager = pairs;
         _frameworkUtils = frameworkUtils;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _gameData = gameData;
         _dtrBar = dtrBar;
 
@@ -86,9 +85,9 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         if (!MainHub.IsServerAlive)
             return;
 
-        PrivacyEntry.Shown = _mainConfig.Current.ShowPrivacyRadar;
-        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Current.ShowActionNotifs;
-        VibratorEntry.Shown = _mainConfig.Current.ShowVibeStatus;
+        PrivacyEntry.Shown = _mainConfig.Config.ShowPrivacyRadar;
+        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Config.ShowActionNotifs;
+        VibratorEntry.Shown = _mainConfig.Config.ShowVibeStatus;
 
         if (PrivacyEntry.Shown)
         {
@@ -96,7 +95,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             var visiblePairGameObjects = _pairManager.GetVisiblePairGameObjects();
             // get players not included in our gagspeak pairs.
             var playersNotInPairs = _frameworkUtils.GetObjectTablePlayers()
-                .Where(player => player != _clientService.ClientPlayer && !visiblePairGameObjects.Contains(player))
+                .Where(player => player != _clientMonitor.ClientPlayer && !visiblePairGameObjects.Contains(player))
                 .Where(o => o.ObjectIndex < 200)
                 .ToList();
 
@@ -107,10 +106,10 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             var remainingCount = playersNotInPairs.Count - displayedPlayers.Count;
 
             // set the text based on if privacy was breeched or not.
-            BitmapFontIcon DisplayIcon = playersNotInPairs.Any() ? BitmapFontIcon.Warning : BitmapFontIcon.Recording;
-            string TextDisplay = playersNotInPairs.Any() ? (playersNotInPairs.Count + " Others") : "Only Pairs";
+            var DisplayIcon = playersNotInPairs.Any() ? BitmapFontIcon.Warning : BitmapFontIcon.Recording;
+            var TextDisplay = playersNotInPairs.Any() ? (playersNotInPairs.Count + " Others") : "Only Pairs";
             // Limit to 10 players and indicate if there are more
-            string TooltipDisplay = playersNotInPairs.Any()
+            var TooltipDisplay = playersNotInPairs.Any()
                 ? "Non-GagSpeak Players:\n" + string.Join("\n", displayedPlayers.Select(player => player.Name.ToString() + "  " + player.HomeWorld.Value.Name.ToString())) +
                     (remainingCount > 0 ? $"\nand {remainingCount} others..." : string.Empty)
                 : "Only GagSpeak Pairs Visible";
@@ -128,20 +127,20 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
 
     public void LocatePlayer(IPlayerCharacter player)
     {
-        if (!_clientService.IsPresent) 
+        if (!_clientMonitor.IsPresent) 
             return;
 
         try
         {
-            if(!_gameData.GetExcelSheet<TerritoryType>().TryGetRow(_clientService.TerritoryId, out TerritoryType row))
+            if(!_gameData.GetExcelSheet<TerritoryType>().TryGetRow(_clientMonitor.TerritoryId, out var row))
             {
                 Logger.LogError("Failed to get map data.");
                 return;
             }
             var coords = GenerateMapLinkMessageForObject(player);
             Logger.LogTrace($"{player.Name} at {coords}", LoggerType.ContextDtr);
-            var mapLink = new MapLinkPayload(_clientService.TerritoryId, row.Map.RowId, coords.Item1, coords.Item2);
-            _clientService.OpenMapWithMapLink(mapLink);
+            var mapLink = new MapLinkPayload(_clientMonitor.TerritoryId, row.Map.RowId, coords.Item1, coords.Item2);
+            _clientMonitor.OpenMapWithMapLink(mapLink);
         }
         catch (Exception ex)
         {
@@ -152,10 +151,10 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
     private (float, float) GenerateMapLinkMessageForObject(IGameObject playerObject)
     {
         var place = _gameData
-            .GetExcelSheet<Map>(_clientService.ClientLanguage)?
-            .FirstOrDefault(m => m.TerritoryType.RowId == _clientService.TerritoryId);
+            .GetExcelSheet<Map>(_clientMonitor.ClientLanguage)?
+            .FirstOrDefault(m => m.TerritoryType.RowId == _clientMonitor.TerritoryId);
         var placeName = place?.PlaceName.RowId;
-        float scale = place?.SizeFactor ?? 100f;
+        var scale = place?.SizeFactor ?? 100f;
 
         return ((float)ToMapCoordinate(playerObject.Position.X, scale), (float)ToMapCoordinate(playerObject.Position.Z, scale));
     }

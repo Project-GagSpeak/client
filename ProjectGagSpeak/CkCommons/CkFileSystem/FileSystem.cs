@@ -13,7 +13,7 @@ public enum FileSystemChangeType
 
 /// <summary> The public facing filesystem methods all throw descriptive exceptions if they are unsuccessful. </summary>
 /// <typeparam name="T"> The type of file system we are constructing. </typeparam>
-public partial class FileSystem<T> where T : class
+public partial class CkFileSystem<T> where T : class
 {
     /// <summary> Any filesystem change triggers the event after the actual change has taken place. </summary>
     public delegate void         ChangeDelegate(FileSystemChangeType type, IPath changedObject, IPath? previousParent, IPath? newParent);
@@ -27,7 +27,7 @@ public partial class FileSystem<T> where T : class
     /// <summary> The string comparer passed will be used to compare the names of siblings. </summary>
     /// <param name="comparer"> The Name Comparer. </param>
     /// <remarks> If none is supplied, they will be compared with OrdinalIgnoreCase. </remarks>
-    public FileSystem(IComparer<string>? comparer = null)
+    public CkFileSystem(IComparer<string>? comparer = null)
     {
         _stringComparer = comparer ?? StringComparer.OrdinalIgnoreCase;
         _nameComparer   = new NameComparer(_stringComparer);

@@ -75,12 +75,12 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
                     // Apply Restraint Right Finger
                     case (false, false):
                         Logger.LogDebug($"Applying {item.Name} to Right Finger.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToRestraintSetMessage(EquipSlot.RFinger, item));
+                        Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.RFinger, item));
                         return;
                     // Apply Restraint Left Finger
                     case (false, true):
                         Logger.LogDebug($"Applying {item.Name} to Left Finger.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToRestraintSetMessage(EquipSlot.LFinger, item));
+                        Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.LFinger, item));
                         return;
                     // Apply Cursed Item Right Finger
                     case (true, false):
@@ -101,7 +101,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
                     return;
                 }
                 Logger.LogDebug($"Applying {item.Name} to {slot.ToName()}.", LoggerType.IpcPenumbra);
-                Mediator.Publish(new TooltipSetItemToRestraintSetMessage(slot, item));
+                Mediator.Publish(new TooltipSetItemToEditorMessage(slot, item));
                 return;
         }
     }

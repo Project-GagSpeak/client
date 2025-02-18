@@ -4,8 +4,6 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data.IPC;
 using GagspeakAPI.Dto.IPC;
 using Microsoft.Extensions.Hosting;
 
@@ -65,7 +63,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         Mediator.Subscribe<MoodlesPermissionsUpdated>(this, (msg) =>
         {
             // update the visible pair objects with their latest permissions.
-            int idxOfPair = VisiblePairObjects.FindIndex(p => p.Item1.NameWithWorld == msg.NameWithWorld);
+            var idxOfPair = VisiblePairObjects.FindIndex(p => p.Item1.NameWithWorld == msg.NameWithWorld);
             if (idxOfPair != -1)
             {
                 var newPerms = _pairManager.GetMoodlePermsForPairByName(msg.NameWithWorld);
@@ -169,7 +167,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         }
 
         // the moodle and permissions are valid.
-        UserData pairUser = _pairManager.DirectPairs.FirstOrDefault(p => p.PlayerNameWithWorld == recipient)!.UserData;
+        var pairUser = _pairManager.DirectPairs.FirstOrDefault(p => p.PlayerNameWithWorld == recipient)!.UserData;
         if (pairUser == null)
         {
             _logger.LogWarning("Received ApplyStatusesToPairRequest for {recipient} but could not find the UID for the pair", recipient);
@@ -178,7 +176,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         // fetch the UID for the pair to apply for.
         _logger.LogInformation($"Received ApplyStatusesToPairRequest for {recipient} from {requester}, applying statuses");
-        var dto = new ApplyMoodlesByStatusDto(pairUser, statuses, (isPreset ? IpcToggleType.MoodlesPreset : IpcToggleType.MoodlesStatus));
+        var dto = new ApplyMoodlesByStatusDto(pairUser, statuses, (isPreset ? MoodleType.Preset : MoodleType.Status));
         Mediator.Publish(new MoodlesApplyStatusToPair(dto));
     }
 

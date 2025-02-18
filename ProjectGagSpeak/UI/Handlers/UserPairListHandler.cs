@@ -2,15 +2,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components.UserPairList;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace GagSpeak.UI.Handlers;
 
@@ -24,7 +21,6 @@ public class UserPairListHandler
     private readonly GagspeakMediator _mediator;
     private List<IDrawFolder> _drawFolders;
     private List<DrawUserPair> _allUserPairDrawsDistinct; // distinct userpairs to draw
-    private readonly TagHandler _tagHandler;
     private readonly PairManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
@@ -33,16 +29,13 @@ public class UserPairListHandler
     private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
-    public UserPairListHandler(ILogger<UserPairListHandler> logger,
-        GagspeakMediator mediator, TagHandler tagHandler,
-        PairManager pairManager, DrawEntityFactory drawEntityFactory,
-        DrawRequests drawRequests, GagspeakConfigService configService, 
-        UiSharedService uiSharedService)
+    public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
+        PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
+        GagspeakConfigService configService, UiSharedService uiSharedService)
     {
         _logger = logger;
         _mediator = mediator;
-        _tagHandler = tagHandler;
-        _pairManager = pairManager;
+        _pairManager = pairs;
         _drawEntityFactory = drawEntityFactory;
         _drawRequests = drawRequests;
         _configService = configService;
@@ -104,7 +97,7 @@ public class UserPairListHandler
             foreach (var item in _drawFolders)
             {
                 // draw the content
-                if (item is DrawFolderBase folderBase && folderBase.ID == TagHandler.CustomAllTag && _configService.Current.ShowOfflineUsersSeparately) 
+                if (item is DrawFolderBase folderBase && folderBase.ID == TagHandler.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
                     continue;
                 // draw folder if not all tag.
                 item.Draw();
@@ -133,11 +126,11 @@ public class UserPairListHandler
             ImGui.TextUnformatted("No Draw Pairs to Draw");
         }
 
-        for (int i = 0; i < folderDrawPairs.Count(); i++)
+        for (var i = 0; i < folderDrawPairs.Count(); i++)
         {
             var item = folderDrawPairs[i];
 
-            bool isSelected = SelectedPair is not null && SelectedPair.UserData.UID == item.Pair.UserData.UID;
+            var isSelected = SelectedPair is not null && SelectedPair.UserData.UID == item.Pair.UserData.UID;
 
             using (var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(isSelected ? ImGuiCol.FrameBgHovered : ImGuiCol.FrameBg), isSelected))
             {
@@ -168,7 +161,7 @@ public class UserPairListHandler
         var searchWidth = width - (buttonOneSize + buttonTwoSize);
 
         ImGui.SetNextItemWidth(searchWidth);
-        string filter = Filter;
+        var filter = Filter;
         if (ImGui.InputTextWithHint("##filter", "Filter for UID/notes", ref filter, 255))
         {
             Filter = filter;
@@ -248,12 +241,12 @@ public class UserPairListHandler
         // the alphabetical sort function of the pairs.
         string? AlphabeticalSort(Pair u)
             => !string.IsNullOrEmpty(u.PlayerName)
-                    ? (_configService.Current.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
+                    ? (_configService.Config.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
                     : u.GetNickname() ?? u.UserData.AliasOrUID;
 
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)
         bool FilterOnlineOrPausedSelf(Pair u)
-            => u.IsOnline || !u.IsOnline && !_configService.Current.ShowOfflineUsersSeparately || u.UserPair.OwnPairPerms.IsPaused;
+            => u.IsOnline || !u.IsOnline && !_configService.Config.ShowOfflineUsersSeparately || u.UserPair.OwnPairPerms.IsPaused;
 
         bool FilterPairedOrPausedSelf(Pair u)
              => u.IsOnline || !u.IsOnline || u.UserPair.OwnPairPerms.IsPaused;
@@ -269,17 +262,15 @@ public class UserPairListHandler
         ImmutableList<Pair> ImmutablePairList(IEnumerable<Pair> u) => u.ToImmutableList();
 
         // if we should filter visible users
-        bool FilterVisibleUsers(Pair u) => u.IsVisible && u.IsDirectlyPaired;
+        bool FilterVisibleUsers(Pair u) => u.IsVisible;
 
-        bool FilterTagusers(Pair u, string tag) => u.IsDirectlyPaired && !u.IsOneSidedPair && _tagHandler.HasTag(u.UserData.UID, tag);
+        bool FilterOnlineUsers(Pair u) => u.IsOnline;
 
-        bool FilterNotTaggedUsers(Pair u) => u.IsDirectlyPaired && !u.IsOneSidedPair && !_tagHandler.HasAnyTag(u.UserData.UID);
-
-        bool FilterOfflineUsers(Pair u) => u.IsDirectlyPaired && !u.IsOneSidedPair && !u.IsOnline && !u.UserPair.OwnPairPerms.IsPaused;
+        bool FilterOfflineUsers(Pair u) => !u.IsOnline && !u.UserPair.OwnPairPerms.IsPaused;
 
 
         // if we wish to display our visible users separately, then do so.
-        if (_configService.Current.ShowVisibleUsersSeparately)
+        if (_configService.Config.ShowVisibleUsersSeparately)
         {
             // display all visible pairs, without filter
             var allVisiblePairs = ImmutablePairList(allPairs
@@ -292,44 +283,22 @@ public class UserPairListHandler
             drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomVisibleTag, filteredVisiblePairs, allVisiblePairs));
         }
 
-        // grab the tags stored in the tag handler
-        var tags = _tagHandler.GetAllTagsSorted();
-        // for each tag
-        foreach (var tag in tags)
-        {
-            _logger.LogDebug("Adding Pair Section List Tag: " + tag, LoggerType.UserPairDrawer);
-            // display the pairs that have the tag, and are not one sided pairs, and are online or paused
-            var allTagPairs = ImmutablePairList(allPairs
-                .Where(u => FilterTagusers(u, tag)));
-            var filteredTagPairs = BasicSortedList(filteredPairs
-                .Where(u => FilterTagusers(u, tag) && FilterOnlineOrPausedSelf(u)));
-
-            // append the draw folders for the tag
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(tag, filteredTagPairs, allTagPairs));
-        }
-
-        // store the pair list of all online untagged pairs
-        var allOnlineNotTaggedPairs = ImmutablePairList(allPairs
-            .Where(FilterNotTaggedUsers));
-        // store the online untagged pairs
-        var onlineNotTaggedPairs = BasicSortedList(filteredPairs
-            .Where(u => FilterNotTaggedUsers(u) && FilterOnlineOrPausedSelf(u)));
+        var allOnlinePairs = ImmutablePairList(allPairs.Where(FilterOnlineOrPausedSelf));
+        var onlineFilteredPairs = BasicSortedList(filteredPairs.Where(FilterOnlineUsers));
 
         var bidirectionalTaggedPairs = BasicSortedList(filteredPairs
-            .Where(u => FilterNotTaggedUsers(u) && FilterPairedOrPausedSelf(u)));
+            .Where(u => FilterOnlineUsers(u) && FilterPairedOrPausedSelf(u)));
 
         _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomAllTag, LoggerType.UserPairDrawer);
-        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomAllTag,
-            bidirectionalTaggedPairs, allOnlineNotTaggedPairs));
+        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
 
 
         // if we want to show offline users seperately,
-        if (_configService.Current.ShowOfflineUsersSeparately)
+        if (_configService.Config.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
             _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomOnlineTag, LoggerType.UserPairDrawer);
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomOnlineTag,
-                onlineNotTaggedPairs, allOnlineNotTaggedPairs));
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
 
             // then do so.
             var allOfflinePairs = ImmutablePairList(allPairs

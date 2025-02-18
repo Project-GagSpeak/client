@@ -1,9 +1,8 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Factories;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
@@ -54,7 +53,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         if (args.MenuType is ContextMenuType.Inventory) return;
         
         // don't open if we don't want to show context menus
-        if (!_mainConfig.Current.ShowContextMenus) return;
+        if (!_mainConfig.Config.ShowContextMenus) return;
 
         // otherwise, locate the pair and add the context menu args to the visible pairs.
         foreach (var pair in _allClientPairs.Where((p => p.Value.IsVisible)))
@@ -233,7 +232,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         }
 
         // if send notification is on, then we should send the online notification to the client.
-        if (sendNotification && _mainConfig.Current.NotifyForOnlinePairs && (_mainConfig.Current.NotifyLimitToNickedPairs && !string.IsNullOrEmpty(pair.GetNickname())))
+        if (sendNotification && _mainConfig.Config.NotifyForOnlinePairs && (_mainConfig.Config.NotifyLimitToNickedPairs && !string.IsNullOrEmpty(pair.GetNickname())))
         {
             // get the nickname from the pair, if it is not null, set the nickname to the pair's nickname.
             var nickname = pair.GetNickname();

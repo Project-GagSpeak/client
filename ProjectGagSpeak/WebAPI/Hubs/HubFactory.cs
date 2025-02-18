@@ -1,4 +1,4 @@
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
 using GagspeakAPI.SignalR;

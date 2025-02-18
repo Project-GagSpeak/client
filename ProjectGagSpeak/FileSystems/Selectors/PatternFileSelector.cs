@@ -1,16 +1,15 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration.Models;
+using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.FileSystem.Selector;
-using OtterGui.Log;
 
 namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
-public sealed class PatternFileSelector : FileSystemSelector<Pattern, PatternFileSelector.PatternState>, IMediatorSubscriber, IDisposable
+public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternFileSelector.PatternState>, IMediatorSubscriber, IDisposable
 {
     private readonly PatternManager _manager;
     public GagspeakMediator Mediator { get; init; }
@@ -27,8 +26,8 @@ public sealed class PatternFileSelector : FileSystemSelector<Pattern, PatternFil
     public new PatternFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public PatternFileSelector(GagspeakMediator mediator, PatternManager manager, PatternFileSystem fileSystem, IKeyState keys,
-        Logger log) : base(fileSystem, keys, log)
+    public PatternFileSelector(PatternManager manager, GagspeakMediator mediator, PatternFileSystem fileSystem, 
+        ILogger<PatternFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##PatternFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

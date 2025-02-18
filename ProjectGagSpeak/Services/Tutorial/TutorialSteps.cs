@@ -153,7 +153,7 @@ public enum StepsTriggers
     CreatingTriggers,
     InfoTab,
     ToTriggerActions,
-    ActionExecutionType,
+    InvokableActionType,
     SelectingTriggerType,
     ToChatText,
     ToActionTrigger,

@@ -1,16 +1,14 @@
 using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.FileSystem.Selector;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Log;
 
 namespace GagSpeak.FileSystems;
 
-public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelector.AlarmState>, IMediatorSubscriber, IDisposable
+public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSelector.AlarmState>, IMediatorSubscriber, IDisposable
 {
     private readonly AlarmManager _manager;
     public GagspeakMediator Mediator { get; init; }
@@ -27,8 +25,8 @@ public sealed class AlarmFileSelector : FileSystemSelector<Alarm, AlarmFileSelec
     public new AlarmFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public AlarmFileSelector(GagspeakMediator mediator, AlarmManager manager, AlarmFileSystem fileSystem, IKeyState keys,
-        Logger log) : base(fileSystem, keys, log)
+    public AlarmFileSelector(AlarmManager manager, GagspeakMediator mediator, AlarmFileSystem fileSystem,
+        ILogger<AlarmFileSelector> logger, IKeyState keys) : base(fileSystem, logger, keys, "##AlarmFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

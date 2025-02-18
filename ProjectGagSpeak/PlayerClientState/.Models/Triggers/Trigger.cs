@@ -3,8 +3,7 @@ using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.PlayerState.Models;
 
-[Serializable]
-public abstract record Trigger : IExecutableAction
+public abstract record Trigger
 {
     public abstract TriggerKind Type { get; }
 
@@ -14,16 +13,33 @@ public abstract record Trigger : IExecutableAction
     public string Label { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 
-    public ActionExecutionType ExecutionType => ExecutableAction.ExecutionType;
+    public InvokableActionType ActionType => InvokableAction.ExecutionType;
+    public InvokableGsAction InvokableAction { get; set; }
 
-    /// <summary> Fancy hecking interface action that can be sent across to others through special message pack handling. </summary>
-    public IActionGS ExecutableAction { get; set; } = new MoodleAction();
+    internal Trigger() { }
 
-    public LightTrigger ToLightData() => new LightTrigger(Identifier, Priority, Label, Description, Type, GetTypeName());
+    public Trigger(Trigger other, bool copyID)
+    {
+        Identifier = copyID ? other.Identifier : Guid.NewGuid();
+        Enabled = other.Enabled;
+        Priority = other.Priority;
+        Label = other.Label;
+        Description = other.Description;
+        InvokableAction = other.InvokableAction switch
+        {
+            SexToyAction sta     => new SexToyAction(sta),
+            PiShockAction ps     => new PiShockAction(ps),
+            MoodleAction ma      => new MoodleAction(ma),
+            RestraintAction ra   => new RestraintAction(ra),
+            RestrictionAction ra => new RestrictionAction(ra),
+            GagAction ga         => new GagAction(ga),
+            TextAction ta        => new TextAction(ta),
+            _ => throw new NotImplementedException()
+        };
+    }
 
-    public ActionExecutionType GetTypeName() => ExecutableAction.ExecutionType;
-
-    public abstract Trigger DeepClone();
+    public LightTrigger ToLightData() 
+        => new LightTrigger(Identifier, Priority, Label, Description, Type, ActionType);
 }
 
 

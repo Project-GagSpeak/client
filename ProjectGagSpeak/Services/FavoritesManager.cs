@@ -5,8 +5,8 @@ namespace GagSpeak.Services;
 
 public enum FavoriteIdContainer
 {
-    Restriction,
     Restraint,
+    Restriction,
     CursedLoot,
     Pattern,
     Alarm,
@@ -19,11 +19,7 @@ public class FavoritesManager : IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider filenameService, out bool uniquePerAccount)
-    {
-        uniquePerAccount = true;
-        return filenameService.Favorites;
-    }
+    public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = true, ser.Favorites).Item2;
     public string JsonSerialize() => throw new NotImplementedException();
     public FavoritesManager(HybridSaveService saver)
     {
@@ -32,8 +28,8 @@ public class FavoritesManager : IHybridSavable
     }
 
     // Favorites Sections.
+    public readonly HashSet<Guid>    _favoriteRestraints = [];
     public readonly HashSet<Guid>    _favoriteRestrictions = [];
-    public readonly HashSet<Guid>    _favoriteRestraints   = [];
     public readonly HashSet<GagType> _favoriteGags         = [];
     public readonly HashSet<Guid>    _favoriteCursedLoot   = [];
 
@@ -55,9 +51,8 @@ public class FavoritesManager : IHybridSavable
                 throw new Exception("Failed to load favorites.");
             // Load favorites.
             // (No Migration Needed yet).
-
-            _favoriteRestrictions.UnionWith(load.Restrictions);
             _favoriteRestraints.UnionWith(load.Restraints);
+            _favoriteRestrictions.UnionWith(load.Restrictions);
             _favoriteGags.UnionWith(load.Gags);
             _favoriteCursedLoot.UnionWith(load.CursedLoot);
             _favoritePatterns.UnionWith(load.Patterns);
@@ -116,8 +111,8 @@ public class FavoritesManager : IHybridSavable
     {
         var res = type switch
         {
-            FavoriteIdContainer.Restriction => _favoriteRestrictions.Remove(restriction),
             FavoriteIdContainer.Restraint => _favoriteRestraints.Remove(restriction),
+            FavoriteIdContainer.Restriction => _favoriteRestrictions.Remove(restriction),
             FavoriteIdContainer.CursedLoot => _favoriteCursedLoot.Remove(restriction),
             FavoriteIdContainer.Pattern => _favoritePatterns.Remove(restriction),
             FavoriteIdContainer.Alarm => _favoriteAlarms.Remove(restriction),
@@ -216,8 +211,8 @@ public class FavoritesManager : IHybridSavable
     private class LoadIntermediary
     {
         public int Version = 0;
+        public IEnumerable<Guid>    Restraints = [];
         public IEnumerable<Guid>    Restrictions = [];
-        public IEnumerable<Guid>    Restraints   = [];
         public IEnumerable<GagType> Gags         = [];
         public IEnumerable<Guid>    CursedLoot   = [];
         public IEnumerable<Guid>    Patterns     = [];

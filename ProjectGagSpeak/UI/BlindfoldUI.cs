@@ -1,17 +1,9 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Toybox;
 using GagSpeak.Toybox.Debouncer;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
-using ImGuiScene;
-using System.Numerics;
 using System.Timers;
 
 namespace GagSpeak.UI;
@@ -22,7 +14,7 @@ public enum BlindfoldType { Light, Sensual }
 
 public class BlindfoldUI : WindowMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _clientConfigs;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly UiSharedService _uiShared;
     private readonly IDalamudPluginInterface _pi;
@@ -41,8 +33,8 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
     float startY = -ImGui.GetIO().DisplaySize.Y;
     float midY = 0.2f * ImGui.GetIO().DisplaySize.Y;
 
-    public BlindfoldUI(ILogger<BlindfoldUI> logger, GagspeakMediator mediator, 
-        ClientConfigurationManager clientConfigs, OnFrameworkService frameworkUtils,
+    public BlindfoldUI(ILogger<BlindfoldUI> logger, GagspeakMediator mediator,
+        GagspeakConfigService clientConfigs, OnFrameworkService frameworkUtils,
         UiSharedService uiShared, IDalamudPluginInterface pi) : base(logger, mediator, "BlindfoldWindowUI###BlindfoldWindowUI")
     {
         _clientConfigs = clientConfigs;
@@ -140,8 +132,8 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         // start the timer to deactivate the window
         _TimerRecorder.Start();
         AnimationProgress = AnimType.DeactivateWindow;
-        alpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
-        imageAlpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
+        alpha = _clientConfigs.Config.BlindfoldOpacity;
+        imageAlpha = _clientConfigs.Config.BlindfoldOpacity;
         isShowing = false;
         IsWindowOpen = false;
     }
@@ -188,7 +180,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         }
 
         // ensure we know our max allowed opacity
-        var maxAlpha = _clientConfigs.GagspeakConfig.BlindfoldOpacity;
+        var maxAlpha = _clientConfigs.Config.BlindfoldOpacity;
 
         if (AnimationProgress != AnimType.None)
         {
@@ -261,7 +253,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         // get the window size
         var windowSize = ImGui.GetWindowSize();
         // Draw the image with the updated alpha value
-        if (_clientConfigs.GagspeakConfig.BlindfoldStyle is BlindfoldType.Light)
+        if (_clientConfigs.Config.BlindfoldStyle is BlindfoldType.Light)
         {
             var imageLight = _uiShared.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Light.png");
             if (imageLight is { } wrapLight)

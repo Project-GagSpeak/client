@@ -1,14 +1,13 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.Gags;
-using GagSpeak.Restrictions;
+using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
-using OtterGui.FileSystem.Selector;
-using OtterGui.Log;
 
 namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
-public sealed class GagRestrictionFileSelector : FileSystemSelector<GarblerRestriction, GagRestrictionFileSelector.GagRestrictionState>, IMediatorSubscriber, IDisposable
+public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRestriction, GagRestrictionFileSelector.GagRestrictionState>, IMediatorSubscriber, IDisposable
 {
     private readonly GagRestrictionManager _manager;
     public GagspeakMediator Mediator { get; init; }
@@ -25,8 +24,8 @@ public sealed class GagRestrictionFileSelector : FileSystemSelector<GarblerRestr
     public new GagFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public GagRestrictionFileSelector(GagspeakMediator mediator, GagRestrictionManager manager, GagFileSystem fileSystem, IKeyState keys,
-        Logger log) : base(fileSystem, keys, log)
+    public GagRestrictionFileSelector(GagRestrictionManager manager, GagspeakMediator mediator, GagFileSystem fileSystem, 
+        ILogger<GagRestrictionFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##GarblerFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

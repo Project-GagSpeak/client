@@ -21,14 +21,14 @@ public class GagSetupUI : WindowMediatorSubscriberBase
     private readonly GagSetupTabMenu _tabMenu;
     private readonly ActiveGagsPanel _activeGags;
     private readonly LockPickerSim _lockPickSim;
-    private readonly GagStoragePanel _gagStorage;
+    private readonly GagRestrictionsPanel _gagStorage;
     private readonly GlobalData _playerManager;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
 
     public GagSetupUI(ILogger<GagSetupUI> logger, GagspeakMediator mediator,
-        ActiveGagsPanel activeGags, LockPickerSim lockPickSim, GagStoragePanel gagStorage, 
+        ActiveGagsPanel activeGags, LockPickerSim lockPickSim, GagRestrictionsPanel gagStorage, 
         GlobalData playerManager, CosmeticService cosmetics,
         UiSharedService uiShared, TutorialService guides) : base(logger, mediator, "Gag Setup UI")
     {

@@ -94,7 +94,7 @@ public unsafe class ChatInputDetour : IDisposable
             if (messageDecoded.StartsWith("/"))
             {
                 // Match Command if Command being used is in our list of allowed Channels to translate in.
-                var allowedChannels = _config.Current.ChannelsGagSpeak.GetChatChannelsListAliases();
+                var allowedChannels = _config.Config.ChannelsGagSpeak.GetChatChannelsListAliases();
                 matchedCommand = allowedChannels.FirstOrDefault(prefix => messageDecoded.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
                 // This means its not a chat channel command and just a normal command, so return original.
@@ -128,7 +128,7 @@ public unsafe class ChatInputDetour : IDisposable
             }
 
             // If current channel message is being sent to is in list of enabled channels, translate it.
-            if (_config.Current.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Current.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
+            if (_config.Config.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Config.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
             {
                 // only obtain the text payloads from this message, as nothing else should madder.
                 var textPayloads = originalSeString.Payloads.OfType<TextPayload>().ToList();

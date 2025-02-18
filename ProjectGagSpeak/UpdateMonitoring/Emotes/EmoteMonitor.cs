@@ -1,84 +1,64 @@
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.UpdateMonitoring.Triggers;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using ClientStructFramework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
-
 
 namespace GagSpeak.UpdateMonitoring;
 public class EmoteMonitor
 {
     private readonly ILogger<EmoteMonitor> _logger;
-    private readonly ClientMonitorService _clientService;
-    private readonly IDataManager _gameData;
+    private readonly ClientMonitor _clientMonitor;
 
     private static unsafe AgentEmote* EmoteAgentRef = (AgentEmote*)ClientStructFramework.Instance()->GetUIModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Emote);
-    public unsafe EmoteMonitor(ILogger<EmoteMonitor> logger, ClientMonitorService clientService, IDataManager dataManager)
+    public unsafe EmoteMonitor(ILogger<EmoteMonitor> logger, ClientMonitor clientMonitor, IDataManager dataManager)
     {
         _logger = logger;
-        _clientService = clientService;
-        _gameData = dataManager;
-        EmoteDataAll = _gameData.GetExcelSheet<Emote>();
-        EmoteDataLoops = EmoteDataAll.Where(x => x.RowId is (50 or 52) || x.EmoteMode.Value.ConditionMode is 3).ToDictionary(x => x.RowId, x => x).AsReadOnly();
-        ValidEmotes = EmoteDataAll.Where(x => x.EmoteCategory.IsValid && x.EmoteCategory.Value.RowId is not 3).ToDictionary(x => x.RowId, x => x).AsReadOnly();
-        // Generate Emote List.
-        EmoteCommandsWithId = EmoteDataAll
-        .Where(x => x.EmoteCategory.IsValid && x.EmoteCategory.Value.RowId is not 3)
-        .SelectMany(emoteCommand => new[]
+        _clientMonitor = clientMonitor;
+        EmoteDataAll = dataManager.GetExcelSheet<Emote>();
+        // Inject the nessisary data into the cache.
+        ValidEmotes = EmoteDataAll.Where(x =>
         {
-            (Command: emoteCommand.TextCommand.ValueNullable?.Command.ToString().TrimStart('/'), emoteCommand.RowId),
-            (Command: emoteCommand.TextCommand.ValueNullable?.ShortCommand.ToString().TrimStart('/'), emoteCommand.RowId),
-            (Command: emoteCommand.TextCommand.ValueNullable?.Alias.ToString().TrimStart('/'), emoteCommand.RowId),
-            (Command: emoteCommand.TextCommand.ValueNullable?.ShortAlias.ToString().TrimStart('/'), emoteCommand.RowId)
-        })
-        .Where(cmd => !string.IsNullOrWhiteSpace(cmd.Command))
-        .GroupBy(cmd => cmd.Command)
-        .OrderBy(x => x.Key)
-        .Select(group => group.First())
-        .ToDictionary(cmd => cmd.Command!, cmd => cmd.RowId);
+            // Emote must be valid
+            if (x.EmoteCategory.IsValid is false)
+                return false;
+            // Extracted name cannot be empty.
+            if (x.Name.ExtractText().IsNullOrWhitespace())
+                return false;
 
-        // Filter for yes/no commands based on RowId (42 or 24).
-        var yesNoCommands = EmoteCommandsWithId.Where(kvp => kvp.Value is 42 or 24).Select(kvp => kvp.Key).ToHashSet();
-
-        // Create the final set by excluding yesNoCommands from EmoteCommandsWithId keys.
-        EmoteCommandsYesNoAccepted = EmoteCommandsWithId.Keys.Except(yesNoCommands).ToHashSet();
+            // Will be sent to parsed emote row storage.
+            return true;
+        }).Select(x => new ParsedEmoteRow(x));
 
         // log all recorded emotes.
         _logger.LogDebug("Emote Commands: " + string.Join(", ", EmoteCommands), LoggerType.EmoteMonitor);
-
         _logger.LogDebug("CposeInfo => " + EmoteDataAll.FirstOrDefault(x => x.RowId is 90).Name.ToString(), LoggerType.EmoteMonitor);
     }
 
+    // Universal across languages.
     public static readonly ushort[] StandIdleList = new ushort[] { 0, 91, 92, 107, 108, 218, 219 };
     public static readonly ushort[] SitIdList = new ushort[] { 50, 95, 96, 254, 255 };
     public static readonly ushort[] GroundSitIdList = new ushort[] { 52, 97, 98, 117 };
-    // Generic full accessor storage.
+
     public static ExcelSheet<Emote> EmoteDataAll = null!;
-    // Container only storing emotes that loop.
-    public static IReadOnlyDictionary<uint, Emote> EmoteDataLoops = null!;
-    public static IReadOnlyDictionary<uint, Emote> ValidEmotes = null!;
-    // The full list of emote commands, containing their emote id's
-    public static IDictionary<string, uint> EmoteCommandsWithId = null!;
-    // just the plain strings for the commands of the above dictionary. The YesNo accepted is to validate chat alteration overrides.
-    public static HashSet<string> EmoteCommands => EmoteCommandsWithId.Keys.ToHashSet();
-    public static HashSet<string> EmoteCommandsYesNoAccepted = [];
+    public static IEnumerable<ParsedEmoteRow> ValidEmotes;      // Efficent low memory storage.
+    public static IEnumerable<ParsedEmoteRow> EmoteDataLoops    => ValidEmotes.Where(x => x.EmoteConditionMode is 3 || x.RowId is 50 or 52);
+    public static IEnumerable<string> EmoteCommands             => ValidEmotes.SelectMany(c => c.EmoteCommands);
+    public static IEnumerable<string> EmoteCommandsWithoutYesNo => ValidEmotes.Where(c => c.RowId is not 42 and not 24).SelectMany(c => c.EmoteCommands);
+    public static IEnumerable<ParsedEmoteRow> SitEmoteComboList => EmoteDataLoops.Where(x => x.RowId is 50 || x.RowId is 52);
+    public static string GetEmoteName(ushort emoteId) 
+        => ValidEmotes.FirstOrDefault(x => x.RowId == emoteId).GetEmoteName() ?? "UNKNOWN / INVALID EMOTE";
 
-    // create a IEnumerable array that only consists of the emote data from keys of 50 and 52.
-    public static IEnumerable<Emote> SitEmoteComboList => EmoteDataLoops.Where(x => x.Key == 50 || x.Key == 52).Select(x => x.Value);
-    public static IEnumerable<Emote> EmoteComboList => EmoteDataLoops.Values.ToArray();
-    public static string GetEmoteName(uint emoteId)
-    {
-        if (ValidEmotes.TryGetValue(emoteId, out var emote)) return emote.Name.ExtractText().Replace("\u00AD", "") ?? $"Emote#{emoteId}";
-        return $"Emote#{emoteId}";
-    }
-
-    public unsafe ushort CurrentEmoteId() => ((Character*)(_clientService.Address))->EmoteController.EmoteId;
-    public unsafe byte CurrentCyclePose() => ((Character*)(_clientService.Address))->EmoteController.CPoseState;
-    public unsafe bool InPositionLoop() => ((Character*)(_clientService.Address))->Mode is CharacterModes.InPositionLoop;
+    public unsafe ushort CurrentEmoteId()
+        => ((Character*)(_clientMonitor.Address))->EmoteController.EmoteId;
+    public unsafe byte CurrentCyclePose()
+        => ((Character*)(_clientMonitor.Address))->EmoteController.CPoseState;
+    public unsafe bool InPositionLoop() // Performing an emote currently.
+        => ((Character*)(_clientMonitor.Address))->Mode is CharacterModes.InPositionLoop;
 
     // This is valid for both if its not unlocked or if you are on cooldown.
     public static unsafe bool CanUseEmote(ushort emoteId) => EmoteAgentRef->CanUseEmote(emoteId);
@@ -116,14 +96,14 @@ public class EmoteMonitor
 
     public void ForceCyclePose(byte expectedCyclePose)
     {
-        if (EmoteMonitor.IsCyclePoseTaskRunning) return;
+        if (IsCyclePoseTaskRunning)
+            return;
+
         _logger.LogDebug("Forcing player into cycle pose: " + expectedCyclePose, LoggerType.EmoteMonitor);
         EnforceCyclePoseTask = ForceCyclePoseInternal(expectedCyclePose);
     }
 
-    /// <summary>
-    /// Force player into a certain CyclePose. Will not fire if Task is currently running.
-    /// </summary>
+    /// <summary> Force player into a certain CyclePose. Will not fire if Task is currently running. </summary>
     private async Task ForceCyclePoseInternal(byte expectedCyclePose)
     {
         try
@@ -153,9 +133,7 @@ public class EmoteMonitor
         }
     }
 
-    /// <summary>
-    /// Await for emote execution to be allowed again
-    /// </summary>
+    /// <summary> Await for emote execution to be allowed again </summary>
     /// <returns>true when the condition was fulfilled, false if timed out or cancelled</returns>
     public async Task<bool> WaitForCondition(Func<bool> condition, int timeoutSeconds = 5, CancellationToken token = default)
     {

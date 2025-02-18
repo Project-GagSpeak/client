@@ -2,9 +2,6 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 
@@ -12,17 +9,17 @@ namespace GagSpeak.Hardcore.ForcedStay;
 public class RoomSelectPrompt : BasePrompt
 {
     private readonly ILogger<RoomSelectPrompt> _logger;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _config;
     private readonly IAddonLifecycle _addonLifecycle;
     private readonly ITargetManager _targets;
 
     private DateTime LastSelectionTime = DateTime.MinValue;
 
-    internal RoomSelectPrompt(ILogger<RoomSelectPrompt> logger, ClientConfigurationManager clientConfigs, 
+    internal RoomSelectPrompt(ILogger<RoomSelectPrompt> logger, GagspeakConfigService config, 
         IAddonLifecycle addonLifecycle, ITargetManager targetManager)
     {
         _logger = logger;
-        _clientConfigs = clientConfigs;
+        _config = config;
         _addonLifecycle = addonLifecycle;
         _targets = targetManager;
     }
@@ -42,13 +39,13 @@ public class RoomSelectPrompt : BasePrompt
     {
         try
         {
-            AtkUnitBase* addon = args.Base();
+            var addon = args.Base();
             // get the name
             var target = _targets.Target;
             var targetName = target != null ? target.Name.ExtractText() : string.Empty;
-            _clientConfigs.LastSeenNodeName = targetName;
+            _config.LastSeenNodeName = targetName;
             // Output all the text nodes in a concatinated string
-            _clientConfigs.LastSeenNodeLabel = AddonBaseRoom.ToText(addon, 8);
+            _config.LastSeenNodeLabel = AddonBaseRoom.ToText(addon, 8);
         }
         catch { }
     }
@@ -69,11 +66,11 @@ public class RoomSelectPrompt : BasePrompt
         // get the name
         var target = _targets.Target;
         var targetName = target != null ? target.Name.ExtractText() : string.Empty;
-        _clientConfigs.LastSeenNodeName = targetName;
+        _config.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
 
         // Try and locate if we have a match.
-        var nodes = _clientConfigs.GetAllNodes().OfType<ChambersTextNode>();
+        var nodes = _config.GetAllNodes().OfType<ChambersTextNode>();
         foreach (var node in nodes)
         {
             // If the node does not have the chamber room set, do not process it.
@@ -81,7 +78,7 @@ public class RoomSelectPrompt : BasePrompt
                 continue;
 
             // If we are only doing it on a spesific node and the names dont match, skip it.
-            if (node.TargetRestricted && !_clientConfigs.LastSeenNodeName.Contains(node.TargetNodeName))
+            if (node.TargetRestricted && !_config.LastSeenNodeName.Contains(node.TargetNodeName))
                 continue;
 
             // If we have a match, fire the event.
@@ -92,7 +89,7 @@ public class RoomSelectPrompt : BasePrompt
                 _logger.LogDebug("We need to switch room sets first to setlistIdx " + node.ChamberRoomSet);
                 unsafe
                 {
-                    AtkUnitBase* addon = addonInfo.Base();
+                    var addon = addonInfo.Base();
                     ForcedStayCallback.Fire(addon, true, 1, node.ChamberRoomSet);
                 }
             }
@@ -104,7 +101,7 @@ public class RoomSelectPrompt : BasePrompt
             _logger.LogDebug("Selecting room " + node.ChamberListIdx);
             unsafe
             {
-                AtkUnitBase* addon = addonInfo.Base();
+                var addon = addonInfo.Base();
                 ForcedStayCallback.Fire(addon, true, 0, node.ChamberListIdx);
             }
             LastSelectionTime = DateTime.UtcNow;

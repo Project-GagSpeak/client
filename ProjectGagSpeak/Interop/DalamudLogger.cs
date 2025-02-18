@@ -1,6 +1,4 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
-using GagspeakAPI.Enums;
 
 namespace GagSpeak.Interop;
 
@@ -28,7 +26,7 @@ internal sealed class DalamudLogger : ILogger
     /// <summary> Checks if the log level is enabled for the current log level we are inspecting. </summary>
     public bool IsEnabled(LogLevel logLevel)
     {
-        return (int)_gagspeakConfigService.Current.LogLevel <= (int)logLevel;
+        return (int)_gagspeakConfigService.Config.LogLevel <= (int)logLevel;
     }
 
     /// <summary> This is the Log method that is called by the ILogger interface. </summary>
@@ -82,7 +80,7 @@ internal sealed class DalamudLogger : ILogger
     private StringBuilder ExceptionStringBuilder<TState>(TState state, Exception? exception)
     {
         // create the format for our exception format
-        StringBuilder exceptionStr = new StringBuilder();
+        var exceptionStr = new StringBuilder();
         exceptionStr.AppendLine($"[{_name}] {state} {exception?.Message}");
         exceptionStr.AppendLine(exception?.StackTrace);
 

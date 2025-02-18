@@ -1,6 +1,5 @@
-using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.Utils;
+using GagSpeak.Services;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -8,31 +7,19 @@ namespace GagSpeak.PlayerState.Models;
 
 public class Moodle
 {
-    public MoodleType Type { get; internal set; }
     public Guid Id { get; internal set; }
 
-    internal Moodle()
-    {
-        Type = MoodleType.Status;
-        Id = Guid.Empty;
-    }
+    internal Moodle() => Id = Guid.Empty;
+    public Moodle(Moodle other) => Id = other.Id;
+    public Moodle(Guid id) => Id = id;
 
-    public Moodle(Moodle other)
-    {
-        Type = other.Type;
-        Id = other.Id;
-    }
-
-    public Moodle(MoodleType type, Guid id)
-    {
-        Type = type;
-        Id = id;
-    }
+    public override bool Equals(object? obj) => obj is Moodle other && Id.Equals(other.Id);
+    public override int GetHashCode() => Id.GetHashCode();
 
     public virtual JObject Serialize()
         => new JObject
         {
-            ["Type"] = Type.ToString(),
+            ["Type"] = MoodleType.Status.ToString(),
             ["Id"] = Id.ToString(),
         };
 
@@ -41,7 +28,6 @@ public class Moodle
         if (moodle is not JObject jsonObject)
             return;
 
-        Type = (MoodleType)Enum.Parse(typeof(MoodleType), jsonObject["Type"]?.Value<string>() ?? string.Empty);
         Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
     }
 }
@@ -51,23 +37,19 @@ public class MoodlePreset : Moodle
     public IEnumerable<Guid> StatusIds { get; internal set; }
 
     public MoodlePreset()
-    {
-        Type = MoodleType.Status;
-        Id = Guid.Empty;
-        StatusIds = Enumerable.Empty<Guid>();
-    }
+        => (Id, StatusIds) = (Guid.Empty, Enumerable.Empty<Guid>());
 
     public MoodlePreset(MoodlePreset other)
-        : base(other.Type, other.Id)
-    {
-        StatusIds = other.StatusIds;
-    }
+        => (Id, StatusIds) = (other.Id, other.StatusIds);
 
     public override JObject Serialize()
     {
-        var json = base.Serialize();
-        json["StatusIds"] = new JArray(StatusIds.Select(x => x.ToString()));
-        return json;
+        return new JObject
+        {
+            ["Type"] = MoodleType.Preset.ToString(),
+            ["Id"] = Id.ToString(),
+            ["StatusIds"] = new JArray(StatusIds.Select(x => x.ToString())),
+        };
     }
 
     public override void LoadMoodle(JToken? moodle)
@@ -86,22 +68,19 @@ public class ModAssociation
     public string CustomSettings { get; internal set; }
 
     internal ModAssociation()
-    {
-        ModInfo = new Mod();
-        CustomSettings = string.Empty;
-    }
+        => (ModInfo, CustomSettings) = (new Mod(), string.Empty);
 
     public ModAssociation(ModAssociation other)
-    {
-        ModInfo = other.ModInfo;
-        CustomSettings = other.CustomSettings;
-    }
+        => (ModInfo, CustomSettings) = (other.ModInfo, other.CustomSettings);
 
-    public ModAssociation(Mod mod, string customSettingsName)
-    {
-        ModInfo = mod;
-        CustomSettings = customSettingsName;
-    }
+    public ModAssociation(KeyValuePair<Mod, string> kvp)
+        => (ModInfo, CustomSettings) = (kvp.Key, kvp.Value);
+
+    public override bool Equals(object? obj)
+        => obj is ModAssociation other && ModInfo.DirectoryName.Equals(other.ModInfo.DirectoryName);
+
+    public override int GetHashCode()
+        => ModInfo.DirectoryName.GetHashCode();
 
     // Not utilitizing the inherit and remove properties, but may not be nessisary
     public JObject Serialize()
@@ -130,22 +109,13 @@ public class GlamourBonusSlot
     public EquipItem GameItem { get; internal set; } = EquipItem.BonusItemNothing(BonusItemFlag.Glasses);
 
     internal GlamourBonusSlot()
-    {
-        Slot = BonusItemFlag.Glasses;
-        GameItem = EquipItem.BonusItemNothing(BonusItemFlag.Glasses);
-    }
+        => (Slot, GameItem) = (BonusItemFlag.Glasses, EquipItem.BonusItemNothing(BonusItemFlag.Glasses));
 
     public GlamourBonusSlot(GlamourBonusSlot other)
-    {
-        Slot = other.Slot;
-        GameItem = other.GameItem;
-    }
+        => (Slot, GameItem) = (other.Slot, other.GameItem);
 
     public GlamourBonusSlot(BonusItemFlag slot, EquipItem gameItem)
-    {
-        Slot = slot;
-        GameItem = gameItem;
-    }
+        => (Slot, GameItem) = (slot, gameItem);
 
     public JObject Serialize()
         => new JObject
@@ -153,16 +123,6 @@ public class GlamourBonusSlot
             ["Slot"] = Slot.ToString(),
             ["CustomItemId"] = GameItem.Id.ToString(),
         };
-
-    public void LoadBonus(JToken? bonusItem)
-    {
-        if (bonusItem is not JObject jsonObject)
-            return;
-
-        Slot = (BonusItemFlag)Enum.Parse(typeof(BonusItemFlag), jsonObject["Slot"]?.Value<string>() ?? string.Empty);
-        ushort customItemId = jsonObject["CustomItemId"]?.Value<ushort>() ?? ushort.MaxValue;
-        GameItem = ItemIdVars.Resolve(Slot, new BonusItemId(customItemId));
-    }
 }
 
 public class GlamourSlot
@@ -172,23 +132,13 @@ public class GlamourSlot
     public StainIds GameStain { get; internal set; } = StainIds.None;
 
     internal GlamourSlot()
-    {
-        Slot = EquipSlot.Head;
-        GameItem = ItemIdVars.NothingItem(EquipSlot.Head);
-    }
+        => (Slot, GameItem, GameStain) = (EquipSlot.Head, ItemService.NothingItem(EquipSlot.Head), StainIds.None);
 
     public GlamourSlot(GlamourSlot other)
-    {
-        Slot = other.Slot;
-        GameItem = other.GameItem;
-        GameStain = other.GameStain;
-    }
+        => (Slot, GameItem, GameStain) = (other.Slot, other.GameItem, other.GameStain);
 
     public GlamourSlot(EquipSlot slot, EquipItem gameItem)
-    {
-        Slot = slot;
-        GameItem = gameItem;
-    }
+        => (Slot, GameItem) = (slot, gameItem);
 
     public JObject Serialize()
         => new JObject
@@ -197,15 +147,4 @@ public class GlamourSlot
             ["CustomItemId"] = GameItem.Id.ToString(),
             ["Stains"] = GameStain.ToString(),
         };
-
-    public void LoadEquip(JToken? equipItem)
-    {
-        if (equipItem is not JObject json)
-            return;
-
-        Slot = (EquipSlot)Enum.Parse(typeof(EquipSlot), json["Slot"]?.Value<string>() ?? string.Empty);
-        ulong customItemId = json["CustomItemId"]?.Value<ulong>() ?? 4294967164;
-        GameItem = ItemIdVars.Resolve(Slot, new CustomItemId(customItemId));
-        GameStain = JsonHelp.ParseCompactStainIds(json);
-    }
 }

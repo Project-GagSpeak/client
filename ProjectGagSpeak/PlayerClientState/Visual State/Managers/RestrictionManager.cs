@@ -32,11 +32,15 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     }
 
     // Cached Information.
-    private RestrictionItem? ActiveEditorItem = null;
+    public RestrictionItem? ActiveEditorItem { get; private set; }
     public VisualRestrictionsCache LatestVisualCache { get; private set; } = new();
-    private SortedList<int, RestrictionItem> ActiveRestrictions; // Limited to 5
+    public SortedList<int, RestrictionItem> ActiveRestrictions { get; private set; } // Restrictions applied via primary restriction slots.
+
 
     // Stored Information.
+    /// <summary> Holds any restriction active from ANY source. Is not used in Caching information. </summary>
+    /// <remarks> <b>Source will ALWAYS be VeryLow</b> unless from a CursedItem, in which it is used for comparison.</remarks>
+    public HashSet<(RestrictionItem Item, ManagerPriority Source)> OccupiedRestrictions { get; private set; }
     public CharaActiveRestrictions? ActiveRestrictionsData { get; private set; }
     public RestrictionStorage Storage { get; private set; } = new RestrictionStorage();
 
@@ -147,6 +151,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     /// <returns> True if successful, false otherwise. </returns>
     public bool RemoveFavorite(GarblerRestriction restriction)
         => _favorites.RemoveGag(restriction.GagType);
+
+    public void AddOccupiedRestriction(RestrictionItem item, ManagerPriority source)
+        => OccupiedRestrictions.Add((item, source));
+
+    public void RemoveOccupiedRestriction(RestrictionItem item, ManagerPriority source)
+        => OccupiedRestrictions.Remove((item, source));
 
     #region Active Restriction Updates
     public VisualUpdateFlags ApplyRestriction(int layerIdx, Guid id, string enactor, out RestrictionItem? item)

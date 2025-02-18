@@ -5,37 +5,37 @@ using OtterGui.Raii;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
-public partial class FileSystemSelector<T, TStateStorage> where T : class where TStateStorage : struct
+public partial class CkFileSystemSelector<T, TStateStorage> where T : class where TStateStorage : struct
 {
     public delegate void SelectionChangeDelegate(T? oldSelection, T? newSelection, in TStateStorage state);
 
-    protected readonly HashSet<FileSystem<T>.IPath> _selectedPaths = [];
+    protected readonly HashSet<CkFileSystem<T>.IPath> _selectedPaths = [];
 
     // The currently selected leaf, if any.
-    protected FileSystem<T>.Leaf? SelectedLeaf;
+    protected CkFileSystem<T>.Leaf? SelectedLeaf;
 
     // The currently selected value, if any.
     public T? Selected
         => SelectedLeaf?.Value;
 
-    public IReadOnlySet<FileSystem<T>.IPath> SelectedPaths
+    public IReadOnlySet<CkFileSystem<T>.IPath> SelectedPaths
         => _selectedPaths;
 
     // Fired after the selected leaf changed.
     public event SelectionChangeDelegate? SelectionChanged;
-    private FileSystem<T>.Leaf?           _jumpToSelection;
+    private CkFileSystem<T>.Leaf?         _jumpToSelection;
 
     public void ClearSelection()
         => Select(null, AllowMultipleSelection);
 
-    public void RemovePathFromMultiSelection(FileSystem<T>.IPath path)
+    public void RemovePathFromMultiSelection(CkFileSystem<T>.IPath path)
     {
         _selectedPaths.Remove(path);
-        if (_selectedPaths.Count == 1 && _selectedPaths.First() is FileSystem<T>.Leaf leaf)
+        if (_selectedPaths.Count == 1 && _selectedPaths.First() is CkFileSystem<T>.Leaf leaf)
             Select(leaf, true, GetState(leaf));
     }
 
-    private void Select(FileSystem<T>.IPath? path, in TStateStorage storage, bool additional, bool all)
+    private void Select(CkFileSystem<T>.IPath? path, in TStateStorage storage, bool additional, bool all)
     {
         if (path == null)
         {
@@ -66,13 +66,13 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
             else
                 Select(null, false);
         }
-        else if (path is FileSystem<T>.Leaf leaf)
+        else if (path is CkFileSystem<T>.Leaf leaf)
         {
             Select(leaf, AllowMultipleSelection, storage);
         }
     }
 
-    protected virtual void Select(FileSystem<T>.Leaf? leaf, bool clear, in TStateStorage storage = default)
+    protected virtual void Select(CkFileSystem<T>.Leaf? leaf, bool clear, in TStateStorage storage = default)
     {
         if (clear)
             _selectedPaths.Clear();
@@ -86,7 +86,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
         SelectionChanged?.Invoke(oldV, newV, storage);
     }
 
-    protected readonly FileSystem<T> FileSystem;
+    protected readonly CkFileSystem<T> CkFileSystem;
 
     public virtual ISortMode<T> SortMode
         => ISortMode<T>.Lexicographical;
@@ -127,11 +127,11 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
 
     protected readonly ILogger Log;
 
-    public FileSystemSelector(FileSystem<T> fileSystem, IKeyState keyState, ILogger log,
-        string label = "##FileSystemSelector", bool allowMultipleSelection = false)
+    public CkFileSystemSelector(CkFileSystem<T> fileSystem, ILogger log, IKeyState keyState,
+        string label = "##CkFileSystemSelector", bool allowMultipleSelection = false)
     {
-        FileSystem             = fileSystem;
-        _state                 = new List<StateStruct>(FileSystem.Root.TotalDescendants);
+        CkFileSystem             = fileSystem;
+        _state                 = new List<StateStruct>(CkFileSystem.Root.TotalDescendants);
         _keyState              = keyState;
         Label                  = label;
         AllowMultipleSelection = allowMultipleSelection;
@@ -139,7 +139,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
 
         InitDefaultContext();
         InitDefaultButtons();
-        EnableFileSystemSubscription();
+        EnableCkFileSystemSubscription();
         ExceptionHandler = e => Log.LogWarning(e.ToString());
     }
 
@@ -147,7 +147,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
     /// <param name="folder"> The folder to draw. </param>
     /// <param name="selected"> If the folder is selected. (This does NOT mean if it's expanded or not. </param>
     /// <remarks> Everything here is wrapped in a group. </remarks>
-    protected virtual void DrawFolderName(FileSystem<T>.Folder folder, bool selected)
+    protected virtual void DrawFolderName(CkFileSystem<T>.Folder folder, bool selected)
     {
         using var id = ImRaii.PushId((int)folder.Identifier);
         using var color = ImRaii.PushColor(ImGuiCol.Text, folder.State ? ExpandedFolderColor : CollapsedFolderColor);
@@ -161,7 +161,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
     /// <param name="state"> The state storage for the leaf. </param>
     /// <param name="selected"> Whether the leaf is currently selected. </param>
     /// <remarks> Can add additional icons or buttons if wanted. Everything drawn in here is wrapped in a group. </remarks>
-    protected virtual void DrawLeafName(FileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
+    protected virtual void DrawLeafName(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
     {
         // Can add custom color application in any override.
         using var id = ImRaii.PushId((int)leaf.Identifier);
@@ -184,7 +184,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
         }
         catch (Exception e)
         {
-            throw new Exception("Exception during FileSystemSelector rendering:\n"
+            throw new Exception("Exception during CkFileSystemSelector rendering:\n"
               + $"{_currentIndex} Current Index\n"
               + $"{_currentDepth} Current Depth\n"
               + $"{_currentEnd} Current End\n"
@@ -197,7 +197,7 @@ public partial class FileSystemSelector<T, TStateStorage> where T : class where 
     // If a corresponding leaf can be found, also expand its ancestors.
     public void SelectByValue(T value)
     {
-        var leaf = FileSystem.Root.GetAllDescendants(ISortMode<T>.Lexicographical).OfType<FileSystem<T>.Leaf>()
+        var leaf = CkFileSystem.Root.GetAllDescendants(ISortMode<T>.Lexicographical).OfType<CkFileSystem<T>.Leaf>()
             .FirstOrDefault(l => l.Value == value);
         if (leaf != null)
             EnqueueFsAction(() =>
