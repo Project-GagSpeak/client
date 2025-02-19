@@ -271,7 +271,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new AccountInfoExchanger(pi.ConfigDirectory.FullName))
 
         // UI general services
-        .AddSingleton<ActiveGagsPanel>()
+        .AddSingleton<GagRestrictionsPanel>()
         .AddSingleton<PuppeteerComponents>()
 
         // Toybox UI
@@ -279,7 +279,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ToyboxPatterns>()
         .AddSingleton<ToyboxVibeRooms>()
         .AddSingleton<ToyboxTriggerManager>()
-        .AddSingleton<ToyboxAlarmManager>()
+        .AddSingleton<AlarmManager>()
         .AddSingleton((s) => new VibeSimAudio(s.GetRequiredService<ILogger<VibeSimAudio>>(), pi))
 
         // Orders UI
