@@ -9,7 +9,6 @@ using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using GagSpeak.ChatMessages;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
