@@ -1,23 +1,16 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.ChatMessages;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Localization;
+using GagSpeak.CkCommons.TextHelpers;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.Restrictions;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using System.Text.RegularExpressions;
-using static System.Windows.Forms.AxHost;
 
 namespace GagSpeak.Achievements;
 public partial class AchievementManager
@@ -105,7 +98,7 @@ public partial class AchievementManager
         if(_clientMonitor.InMainCity)
             (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
-        ushort territory = _clientMonitor.TerritoryId;
+        var territory = _clientMonitor.TerritoryId;
 
         // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
         if (territory is 939 && !_clientMonitor.InPvP)
@@ -300,7 +293,7 @@ public partial class AchievementManager
     {
         if (gagAppliedOrRemoved is GagType.None) return;
 
-        string trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();
+        var trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();
 
         // for enables.
         if (applying)

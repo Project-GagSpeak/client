@@ -27,14 +27,14 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gagManager;
     private readonly GagGarbler _garbler;
     private readonly KinkPlateService _kinkPlateManager;
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
     private readonly DiscoverService _discoveryService;
     private readonly TutorialService _guides;
 
     public GlobalChatTab(ILogger<GlobalChatTab> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, MainHub hub, 
         GlobalData playerManager, GagRestrictionManager gagManager, GagGarbler garbler,
-        KinkPlateService kinkPlateManager, UiSharedService uiSharedService, 
+        KinkPlateService kinkPlateManager, UiSharedService uiShared, 
         DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
@@ -43,7 +43,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         _gagManager = gagManager;
         _garbler = garbler;
         _kinkPlateManager = kinkPlateManager;
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
         _discoveryService = discoverService;
         _guides = guides;
     }
@@ -103,7 +103,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
         // Set width for input box and create it with a hint
         FontAwesomeIcon Icon = DiscoverService.GlobalChat.AutoScroll ? FontAwesomeIcon.ArrowDownUpLock : FontAwesomeIcon.ArrowDownUpAcrossLine;
-        ImGui.SetNextItemWidth(CurrentRegion.X - _uiSharedService.GetIconButtonSize(Icon).X*2 - ImGui.GetStyle().ItemInnerSpacing.X*2);
+        ImGui.SetNextItemWidth(CurrentRegion.X - _uiShared.GetIconButtonSize(Icon).X*2 - ImGui.GetStyle().ItemInnerSpacing.X*2);
         if (ImGui.InputTextWithHint("##ChatInputBox" + windowId, "chat message here...", ref nextMessageRef, 300))
         {
             // Update stored message
@@ -137,13 +137,13 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
-        if (_uiSharedService.IconButton(Icon))
+        if (_uiShared.IconButton(Icon))
             DiscoverService.GlobalChat.AutoScroll = !DiscoverService.GlobalChat.AutoScroll;
         UiSharedService.AttachToolTip("Toggles the AutoScroll Functionality (Current: " + (DiscoverService.GlobalChat.AutoScroll ? "Enabled" : "Disabled") + ")");
 
         // draw the popout button
         ImUtf8.SameLineInner();
-        if (_uiSharedService.IconButton(FontAwesomeIcon.Expand, disabled: !KeyMonitor.ShiftPressed()))
+        if (_uiShared.IconButton(FontAwesomeIcon.Expand, disabled: !KeyMonitor.ShiftPressed()))
             Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
         UiSharedService.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }

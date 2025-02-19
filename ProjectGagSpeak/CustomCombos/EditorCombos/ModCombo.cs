@@ -1,11 +1,10 @@
 using Dalamud.Interface.Utility;
-using GagSpeak.CustomCombos;
 using GagSpeak.Interop.Ipc;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Raii;
 
-namespace GagSpeak.Interop.IpcHelpers.Penumbra;
+namespace GagSpeak.CustomCombos.EditorCombos;
 
 public sealed class ModCombo : CkFilterComboCache<(Mod Mod, ModSettings Settings)>
 {

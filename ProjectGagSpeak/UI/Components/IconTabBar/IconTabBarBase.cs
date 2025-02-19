@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using ImGuiNET;
-using System.Numerics;
 
 namespace GagSpeak.UI.Components;
 
@@ -13,21 +12,20 @@ public abstract class IconTabBarBase<ITab> where ITab : Enum
 
     protected readonly List<TabButtonDefinition> _tabButtons = new(); // Store tab data
     private ITab _selectedTab;
-    protected readonly UiSharedService UiSharedService;
-
     public ITab TabSelection
     {
         get => _selectedTab;
         set
         {
+            TabSelectionChanged?.Invoke(_selectedTab, value);
             _selectedTab = value;
-            OnTabSelectionChanged(value);
         }
     }
 
-    protected IconTabBarBase(UiSharedService uiSharedService) => UiSharedService = uiSharedService;
+    protected IconTabBarBase() { }
 
-    protected virtual void OnTabSelectionChanged(ITab newTab) { }
+    /// <summary> Invokes actions informing people of the previous and new tab selected. </summary>
+    public event Action<ITab, ITab>? TabSelectionChanged;
     protected virtual bool IsTabDisabled(ITab tab) => false;
 
     public void AddDrawButton(FontAwesomeIcon icon, ITab targetTab, string tooltip, Action? customAction = null)

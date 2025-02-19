@@ -1,19 +1,19 @@
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.UI.UiOrders;
+namespace GagSpeak.UI.Orders;
 public class OrdersViewActive
 {
     private readonly ILogger<OrdersViewActive> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
 
     public OrdersViewActive(ILogger<OrdersViewActive> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService)
+        UiSharedService uiShared)
     {
         _logger = logger;
         _mediator = mediator;
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
     }
 
     public void DrawActiveOrdersPanel()

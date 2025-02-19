@@ -1,24 +1,20 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.Achievements;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
-using System.Numerics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using GagSpeak.Achievements;
-using Dalamud.Interface;
-using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
-using Dalamud.Interface.Utility.Raii;
-using System.Threading;
-using GagSpeak.WebAPI;
-using Dalamud.Interface.Utility;
 
 namespace GagSpeak.UI.Profile;
 
@@ -212,20 +208,20 @@ public class KinkPlateLight
     private void DrawLimitedDescription(string desc, Vector4 color, Vector2 size)
     {
         // Calculate the line height and determine the max lines based on available height
-        float lineHeight = ImGui.CalcTextSize("A").Y;
-        int maxLines = (int)(size.Y / lineHeight);
+        var lineHeight = ImGui.CalcTextSize("A").Y;
+        var maxLines = (int)(size.Y / lineHeight);
 
-        int currentLines = 1;
-        float lineWidth = size.X; // Max width for each line
-        string[] words = desc.Split(' '); // Split text by words
-        string newDescText = "";
-        string currentLine = "";
+        var currentLines = 1;
+        var lineWidth = size.X; // Max width for each line
+        var words = desc.Split(' '); // Split text by words
+        var newDescText = "";
+        var currentLine = "";
 
         foreach (var word in words)
         {
             // Try adding the current word to the line
-            string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-            float testLineWidth = ImGui.CalcTextSize(testLine).X;
+            var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+            var testLineWidth = ImGui.CalcTextSize(testLine).X;
 
             if (testLineWidth > lineWidth)
             {
@@ -260,11 +256,11 @@ public class KinkPlateLight
         // jump down to where we should draw out the stats, and draw out the achievement icon.
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         var statsPos = StatsPos;
-        var formattedDate = userData.createdOn ?? DateTime.MinValue;
+        var formattedDate = userData.CreatedOn ?? DateTime.MinValue;
         string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
-        float dateWidth = ImGui.CalcTextSize(createdDate).X;
-        float achievementWidth = ImGui.CalcTextSize(info.CompletedAchievementsTotal + "/" + AchievementManager.Total).X;
-        float totalWidth = dateWidth + achievementWidth + StatIconSize.X * 3 + spacing * 3;
+        var dateWidth = ImGui.CalcTextSize(createdDate).X;
+        var achievementWidth = ImGui.CalcTextSize(info.CompletedAchievementsTotal + "/" + AchievementManager.Total).X;
+        var totalWidth = dateWidth + achievementWidth + StatIconSize.X * 3 + spacing * 3;
 
         statsPos.X += (PlateSize.X - totalWidth) / 2;
         KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Clock], statsPos, StatIconSize, ImGuiColors.ParsedGold);

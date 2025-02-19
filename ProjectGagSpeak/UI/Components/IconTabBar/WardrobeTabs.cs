@@ -16,8 +16,10 @@ public class WardrobeTabs : IconTabBarBase<WardrobeTabs.SelectedTab>
         MyModPresets,
     }
 
-    public WardrobeTabs(UiSharedService uiSharedService) : base(uiSharedService)
+    private readonly UiSharedService _ui;
+    public WardrobeTabs(UiSharedService ui)
     {
+        _ui = ui;
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.MyGags, "Gags" +
             "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
         
@@ -41,7 +43,7 @@ public class WardrobeTabs : IconTabBarBase<WardrobeTabs.SelectedTab>
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = UiSharedService.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
         var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));

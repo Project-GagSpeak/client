@@ -1,25 +1,21 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI.Handlers;
-using System.Collections.Immutable;
-using GagSpeak.UI;
+using GagSpeak.Services.Configs;
+using ImGuiNET;
 using OtterGui.Text;
-using GagSpeak.PlayerData.Storage;
+using System.Collections.Immutable;
 
 namespace GagSpeak.UI.Components.UserPairList;
 
-/// <summary>
-/// The base for the draw folder, which is a dropdown section in the list of paired users, and handles the basic draw functionality
-/// </summary>
+/// <summary> The base for the draw folder, a dropdown section in the list of paired users </summary>
 public abstract class DrawFolderBase : IDrawFolder
 {
     public IImmutableList<DrawUserPair> DrawPairs { get; init; }
     protected readonly string _id;
     protected readonly IImmutableList<Pair> _allPairs;
-    protected readonly NicknamesConfigService _openFolders;
-    protected readonly UiSharedService _uiSharedService;
+    protected readonly ServerConfigurationManager _serverConfigs;
+    protected readonly UiSharedService _uiShared;
     private float _menuWidth = -1;
     private bool _wasHovered = false;
 
@@ -28,17 +24,16 @@ public abstract class DrawFolderBase : IDrawFolder
     public string ID => _id;
 
     protected DrawFolderBase(string id, IImmutableList<DrawUserPair> drawPairs,
-        IImmutableList<Pair> allPairs, NicknamesConfigService openFolders, UiSharedService uiShared)
+        IImmutableList<Pair> allPairs, ServerConfigurationManager serverConfigs, UiSharedService uiShared)
     {
         _id = id;
         DrawPairs = drawPairs;
         _allPairs = allPairs;
-        _openFolders = openFolders;
-        _uiSharedService = uiShared;
+        _serverConfigs = serverConfigs;
+        _uiShared = uiShared;
     }
 
     protected abstract bool RenderIfEmpty { get; }
-    protected abstract bool RenderMenu { get; }
 
     public void Draw()
     {
@@ -51,11 +46,11 @@ public abstract class DrawFolderBase : IDrawFolder
             UiSharedService.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
         {
             // draw opener
-            var icon = _openFolders.Storage.OpenPairListFolders.Contains(_id) ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight;
+            var icon = _serverConfigs.NickStorage.OpenPairListFolders.Contains(_id) ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight;
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
-            _uiSharedService.IconText(icon);
+            _uiShared.IconText(icon);
 
             ImGui.SameLine();
             var leftSideEnd = DrawIcon();
@@ -70,8 +65,8 @@ public abstract class DrawFolderBase : IDrawFolder
         _wasHovered = ImGui.IsItemHovered();
         if (ImGui.IsItemClicked())
         {
-            _openFolders.Storage.OpenPairListFolders.SymmetricExceptWith(new[] { _id });
-            _openFolders.Save();
+            _serverConfigs.NickStorage.OpenPairListFolders.SymmetricExceptWith(new[] { _id });
+            _serverConfigs.SaveNicknames();
         }
 
         color.Dispose();
@@ -79,9 +74,9 @@ public abstract class DrawFolderBase : IDrawFolder
         ImGui.Separator();
 
         // if opened draw content
-        if (_openFolders.Storage.OpenPairListFolders.Contains(_id))
+        if (_serverConfigs.NickStorage.OpenPairListFolders.Contains(_id))
         {
-            using var indent = ImRaii.PushIndent(_uiSharedService.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+            using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             if (DrawPairs.Any())
             {
                 foreach (var item in DrawPairs)
@@ -97,8 +92,6 @@ public abstract class DrawFolderBase : IDrawFolder
     }
 
     protected abstract float DrawIcon();
-
-    protected abstract void DrawMenu(float menuWidth);
 
     protected abstract void DrawName(float width);
 }

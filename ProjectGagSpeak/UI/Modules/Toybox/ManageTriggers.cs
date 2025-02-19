@@ -26,6 +26,9 @@ using System.Numerics;
 
 namespace GagSpeak.UI.UiToybox;
 
+// This is a hellscape that needs to be reworked lmao.
+// idk if i would even attempt fixing this yes. I totally forgot to get the editor working.
+// I might just comment it out completely until i get the new panels working on the new UI design.
 public class ToyboxTriggerManager
 {
     private readonly ILogger<ToyboxTriggerManager> _logger;
@@ -42,14 +45,14 @@ public class ToyboxTriggerManager
     private readonly TutorialService _guides;
 
     public ToyboxTriggerManager(ILogger<ToyboxTriggerManager> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService, PairManager pairManager, GagspeakConfigService clientConfigs,
+        UiSharedService uiShared, PairManager pairManager, GagspeakConfigService clientConfigs,
         GlobalData playerManager, IntifaceController deviceController, TriggerManager triggerManager,
         PatternManager patternHandler, ClientMonitor clientMonitor, RestrictionManager moodlesService,
         TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
         _pairManager = pairManager;
         _clientConfigs = clientConfigs;
         _clientData = playerManager;

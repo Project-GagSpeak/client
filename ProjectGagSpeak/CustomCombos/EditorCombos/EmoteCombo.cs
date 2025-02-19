@@ -4,7 +4,7 @@ using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
 using OtterGui.Raii;
 
-namespace GagSpeak.CustomCombos.Editor;
+namespace GagSpeak.CustomCombos.EditorCombos;
 
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>

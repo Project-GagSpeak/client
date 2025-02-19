@@ -1,8 +1,6 @@
-using GagSpeak.Localization;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Extensions;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.UI.Components;
 
@@ -15,7 +13,7 @@ public class AccountInfoExchanger
     public string CurrentUID => MainHub.UID;
 
     // the config directory files for each account
-    private const string GagStorageFile = "gag-storage.json";
+    private const string GagRestrictionStorageFile = "gag-storage.json";
     private const string WardrobeFile = "wardrobe.json";
     private const string CursedLootFile = "cursedloot.json";
     private const string TriggersFile = "triggers.json";
@@ -42,15 +40,15 @@ public class AccountInfoExchanger
     }
 
     // obtain the gagstorage dictionary from the specified UID
-    public GagStorage GetGagStorageFromUID(string uid)
+    public GagRestrictionStorage GetGagRestrictionStorageFromUID(string uid)
     {
-        var ret = new GagStorage();
+        var ret = new GagRestrictionStorage();
 
-        var path = Path.Combine(ConfigDirectory, uid, GagStorageFile);
+/*        var path = Path.Combine(ConfigDirectory, uid, GagRestrictionStorageFile);
         if (!File.Exists(path)) return ret;
         var json = File.ReadAllText(path);
         var configJson = JObject.Parse(json);
-        var gagEquipDataObject = configJson["GagStorage"]!["GagEquipData"] as JObject ?? new JObject();
+        var gagEquipDataObject = configJson["GagRestrictionStorage"]!["GagEquipData"] as JObject ?? new JObject();
         if (gagEquipDataObject is null) return ret;
 
         foreach (var gagData in gagEquipDataObject)
@@ -72,7 +70,7 @@ public class AccountInfoExchanger
                     ret.GagEquipData.Add(gagType, gagDrawData);
                 }
             }
-        }
+        }*/
         return ret;
     }
 
@@ -81,7 +79,7 @@ public class AccountInfoExchanger
     {
         var ret = new List<RestraintSet>();
 
-        var path = Path.Combine(ConfigDirectory, uid, WardrobeFile);
+/*        var path = Path.Combine(ConfigDirectory, uid, WardrobeFile);
         if (!File.Exists(path)) return ret;
         var json = File.ReadAllText(path);
         var configJson = JObject.Parse(json);
@@ -101,7 +99,7 @@ public class AccountInfoExchanger
                 restraintSet.Deserialize(ItemValue);
                 ret.Add(restraintSet);
             }
-        }
+        }*/
         return ret;
     }
 
@@ -109,7 +107,7 @@ public class AccountInfoExchanger
     public List<CursedItem> GetCursedItemsFromUID(string uid)
     {
         var ret = new List<CursedItem>();
-
+/*
         var path = Path.Combine(ConfigDirectory, uid, CursedLootFile);
         if (!File.Exists(path)) return ret;
         var json = File.ReadAllText(path);
@@ -127,7 +125,7 @@ public class AccountInfoExchanger
                 readCursedItem.Deserialize(cursedItemValue);
                 ret.Add(readCursedItem);
             }
-        }
+        }*/
         return ret;
     }
 
@@ -135,7 +133,7 @@ public class AccountInfoExchanger
     public List<Trigger> GetTriggersFromUID(string uid)
     {
         var ret = new List<Trigger>();
-
+/*
         var path = Path.Combine(ConfigDirectory, uid, TriggersFile);
         if (!File.Exists(path)) return ret;
         var json = File.ReadAllText(path);
@@ -175,7 +173,7 @@ public class AccountInfoExchanger
                     ret.Add(triggerAbstract);
                 }
             }
-        }
+        }*/
         return ret;
     }
 
@@ -183,13 +181,13 @@ public class AccountInfoExchanger
     public List<Alarm> GetAlarmsFromUID(string uid)
     {
         var ret = new List<Alarm>();
-
+/*
         var path = Path.Combine(ConfigDirectory, uid, AlarmsFile);
         if (!File.Exists(path)) return ret;
         var json = File.ReadAllText(path);
         var configJson = JObject.Parse(json);
-        var result = JsonConvert.DeserializeObject<AlarmConfig>(configJson.ToString());
-        return result?.AlarmStorage.Alarms ?? ret;
+        var result = JsonConvert.DeserializeObject<AlarmConfig>(configJson.ToString());*/
+        return ret;
     }
 
 

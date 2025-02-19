@@ -3,9 +3,9 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.UiGagSetup;
-using GagSpeak.UI.UiOrders;
-using GagSpeak.UI.UiPublications;
-using GagSpeak.UI.UiPuppeteer;
+using GagSpeak.UI.Orders;
+using GagSpeak.UI.Publications;
+using GagSpeak.UI.Puppeteer;
 using GagSpeak.UI.UiRemote;
 using GagSpeak.UI.UiToybox;
 using GagSpeak.UI.Wardrobe;
@@ -29,12 +29,12 @@ public class HomepageTab
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
     public HomepageTab(GagspeakMediator mediator, ClientMonitor client, 
-        OnFrameworkService framework, UiSharedService uiSharedService)
+        OnFrameworkService framework, UiSharedService uiShared)
     {
         _mediator = mediator;
         _client = client;
         _framework = framework;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Type)>

@@ -1,24 +1,19 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Collections.Immutable;
 
 namespace GagSpeak.UI.Components.UserPairList;
 
-/// <summary>
-/// Class handling the tag (name) that a dropdown folder section has in the list of paired users
-/// <para> 
-/// Notibly, by being a parent of the draw folder base, it is able to override some functions inside the base,
-/// such as draw icon, allowing it to draw customized icon's for the spesific catagoeiss of folder dropdowns
-/// </para>
-/// </summary>
+/// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
 {
 
     public DrawFolderTag(string id, IImmutableList<DrawUserPair> drawPairs, 
-        IImmutableList<Pair> allPairs, UiSharedService uiSharedService)
-        : base(id, drawPairs, allPairs, uiSharedService)
+        IImmutableList<Pair> allPairs, ServerConfigurationManager configs,
+        UiSharedService uiShared) : base(id, drawPairs, allPairs, configs, uiShared)
     { }
 
     protected override bool RenderIfEmpty => _id switch
@@ -29,24 +24,6 @@ public class DrawFolderTag : DrawFolderBase
         Globals.CustomAllTag => true,
         _ => true,
     };
-
-    protected override bool RenderMenu => _id switch
-    {
-        Globals.CustomOnlineTag => false,
-        Globals.CustomOfflineTag => false,
-        Globals.CustomVisibleTag => false,
-        Globals.CustomAllTag => false,
-        _ => true,
-    };
-
-    private bool RenderPause => _id switch
-    {
-        Globals.CustomOnlineTag => false,
-        Globals.CustomOfflineTag => false,
-        Globals.CustomVisibleTag => false,
-        Globals.CustomAllTag => false,
-        _ => true,
-    } && _allPairs.Any();
 
     private bool RenderCount => _id switch
     {
@@ -69,7 +46,7 @@ public class DrawFolderTag : DrawFolderBase
         };
 
         ImGui.AlignTextToFramePadding();
-        _uiSharedService.IconText(icon);
+        _uiShared.IconText(icon);
 
         if (RenderCount)
         {

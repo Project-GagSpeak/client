@@ -1,18 +1,14 @@
-using Dalamud.Interface.Colors;
+/*using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos.Padlockable;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.StateManagers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 using ProjectGagSpeak.CustomCombos;
-using ProjectGagSpeak.CustomCombos.Padlocks;
-using System.Numerics;
 
 namespace GagSpeak.UI.UiGagSetup;
 
@@ -20,12 +16,11 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 {
     private readonly GlobalData _gagData; // for grabbing lock data
     private readonly ClientConfigurationManager _clientConfigs;
-    private readonly AppearanceManager _appearance;
     private readonly TutorialService _guides;
     private readonly UiSharedService _uiShared;
 
     public ActiveGagsPanel(ILogger<ActiveGagsPanel> logger, GagspeakMediator mediator, GlobalData gagData,
-        ClientConfigurationManager clientConfigs, AppearanceManager appearance,
+        ClientConfigurationManager clientConfigs,
         TutorialService guides, UiSharedService uiShared) : base(logger, mediator)
     {
         _gagData = gagData;
@@ -57,7 +52,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     // Draw the active gags tab
     public void DrawActiveGagsPanel(Vector2 winPos, Vector2 winSize)
     {
-        Vector2 bigTextSize = new Vector2(0, 0);
+        var bigTextSize = new Vector2(0, 0);
 
         using (_uiShared.GagspeakLabelFont.Push()) bigTextSize = ImGui.CalcTextSize("HeightDummy");
 
@@ -174,3 +169,4 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         UiSharedService.ColorText(endTime.ToGsRemainingTimeFancy(), color);
     }
 }
+*/

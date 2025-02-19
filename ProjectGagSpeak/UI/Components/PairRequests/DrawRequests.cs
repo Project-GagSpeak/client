@@ -34,13 +34,13 @@ public class DrawRequests : IRequestsFolder
 
     public DrawRequests(MainHub mainHub, GlobalData clientData,
         DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
-        UiSharedService uiSharedService)
+        UiSharedService uiShared)
     {
         _hub = mainHub;
         _clientData = clientData;
         _pairRequestFactory = pairRequestFactory;
         _cosmetics = cosmetics;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
     }
 
     public void Draw()

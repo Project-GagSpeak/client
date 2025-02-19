@@ -1,11 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Toybox;
+using GagSpeak.PlayerState.Visual;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -13,7 +12,6 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using System.Numerics;
 
 namespace GagSpeak.UI;
 
@@ -34,18 +32,32 @@ public class DebugTab
         { "WebAPI", new[] { LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens } }
     };
 
+    private readonly GagspeakConfigService _mainConfig;
     private readonly GlobalData _playerData;
-    private readonly ClientDataChanges _playerDataChanges;
     private readonly PairManager _pairManager;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagRestrictionManager _gags;
+    private readonly RestrictionManager _restrictions;
+    private readonly RestraintManager _restraints;
+    private readonly CursedLootManager _cursedLoot;
+    private readonly PatternManager _patterns;
+    private readonly PuppeteerManager _alias;
+    private readonly TriggerManager _triggers;
     private readonly UiSharedService _uiShared;
-    public DebugTab(PairManager pairManager, GlobalData playerData, ClientDataChanges playerDataChanges,
-        ClientConfigurationManager clientConfigs, UiSharedService uiShared)
+    public DebugTab(GagspeakConfigService config, PairManager pairManager, GlobalData playerData,
+        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
+        CursedLootManager cursedLoot, PatternManager patterns, PuppeteerManager alias,
+        TriggerManager triggers, UiSharedService uiShared)
     {
+        _mainConfig = config;
         _playerData = playerData;
-        _playerDataChanges = playerDataChanges;
         _pairManager = pairManager;
-        _clientConfigs = clientConfigs;
+        _gags = gags;
+        _restrictions = restrictions;
+        _restraints = restraints;
+        _cursedLoot = cursedLoot;
+        _patterns = patterns;
+        _alias = alias;
+        _triggers = triggers;
         _uiShared = uiShared;
     }
 
@@ -56,11 +68,11 @@ public class DebugTab
         // display the combo box for setting the log level we wish to have for our plugin
         _uiShared.DrawCombo("Log Level", 400, Enum.GetValues<LogLevel>(), (level) => level.ToString(), (level) =>
         {
-            _clientConfigs.GagspeakConfig.LogLevel = level;
-            _clientConfigs.Save();
-        }, _clientConfigs.GagspeakConfig.LogLevel);
+            _mainConfig.Config.LogLevel = level;
+            _mainConfig.Save();
+        }, _mainConfig.Config.LogLevel);
 
-        var logFilters = _clientConfigs.GagspeakConfig.LoggerFilters;
+        var logFilters = _mainConfig.Config.LoggerFilters;
 
         // draw a collapsible tree node here to draw the logger settings:
         ImGui.Spacing();
@@ -82,7 +94,7 @@ public class DebugTab
 
     private void AdvancedLogger()
     {
-        bool isFirstSection = true;
+        var isFirstSection = true;
 
         // Iterate through each section in loggerSections
         foreach (var section in loggerSections)
@@ -105,25 +117,25 @@ public class DebugTab
                 using (ImRaii.Table(section.Key, 4, ImGuiTableFlags.None))
                 {
                     // Iterate through the checkboxes, managing columns and rows
-                    for (int i = 0; i < checkboxes.Length; i++)
+                    for (var i = 0; i < checkboxes.Length; i++)
                     {
                         ImGui.TableNextColumn();
 
-                        bool isEnabled = _clientConfigs.GagspeakConfig.LoggerFilters.Contains(checkboxes[i]);
+                        var isEnabled = _mainConfig.Config.LoggerFilters.Contains(checkboxes[i]);
 
                         if (ImGui.Checkbox(checkboxes[i].ToName(), ref isEnabled))
                         {
                             if (isEnabled)
                             {
-                                _clientConfigs.GagspeakConfig.LoggerFilters.Add(checkboxes[i]);
+                                _mainConfig.Config.LoggerFilters.Add(checkboxes[i]);
                                 LoggerFilter.AddAllowedCategory(checkboxes[i]);
                             }
                             else
                             {
-                                _clientConfigs.GagspeakConfig.LoggerFilters.Remove(checkboxes[i]);
+                                _mainConfig.Config.LoggerFilters.Remove(checkboxes[i]);
                                 LoggerFilter.RemoveAllowedCategory(checkboxes[i]);
                             }
-                            _clientConfigs.Save();
+                            _mainConfig.Save();
                         }
                     }
 
@@ -133,16 +145,16 @@ public class DebugTab
                         ImGui.TableNextColumn();
                         if (ImGui.Button("All On"))
                         {
-                            _clientConfigs.GagspeakConfig.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
-                            _clientConfigs.Save();
-                            LoggerFilter.AddAllowedCategories(_clientConfigs.GagspeakConfig.LoggerFilters);
+                            _mainConfig.Config.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
+                            _mainConfig.Save();
+                            LoggerFilter.AddAllowedCategories(_mainConfig.Config.LoggerFilters);
                         }
                         ImUtf8.SameLineInner();
                         if (ImGui.Button("All Off"))
                         {
-                            _clientConfigs.GagspeakConfig.LoggerFilters.Clear();
-                            _clientConfigs.GagspeakConfig.LoggerFilters.Add(LoggerType.None);
-                            _clientConfigs.Save();
+                            _mainConfig.Config.LoggerFilters.Clear();
+                            _mainConfig.Config.LoggerFilters.Add(LoggerType.None);
+                            _mainConfig.Save();
                             LoggerFilter.ClearAllowedCategories();
                         }
                     }
@@ -162,9 +174,9 @@ public class DebugTab
         }
 
         // Ensure LoggerType.None is always included in the filtered categories
-        if (!_clientConfigs.GagspeakConfig.LoggerFilters.Contains(LoggerType.None))
+        if (!_mainConfig.Config.LoggerFilters.Contains(LoggerType.None))
         {
-            _clientConfigs.GagspeakConfig.LoggerFilters.Add(LoggerType.None);
+            _mainConfig.Config.LoggerFilters.Add(LoggerType.None);
             LoggerFilter.AddAllowedCategory(LoggerType.None);
         }
     }
@@ -173,20 +185,21 @@ public class DebugTab
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
-        DrawAppearance("Player", _playerData.AppearanceData ?? new CharaGagData());
-        DrawWardrobe("Player", _clientConfigs.CompileWardrobeToAPI());
+        DrawAppearance("Player", _gags.ActiveGagsData ?? new CharaActiveGags());
+        DrawWardrobe("Player", _restraints.ActiveRestraintData ?? new CharaActiveRestraint());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
-            foreach (var alias in _clientConfigs.AliasConfig.AliasStorage)
+            foreach (var alias in _alias.PairAliasStorage)
             {
                 using (ImRaii.TreeNode("Your Alias List for: " + alias.Key))
                 {
-                    DrawAlias(alias.Key, alias.Value.ToAliasData());
+                    ImGui.Text("Listener Name: " + alias.Value.StoredNameWorld);
+                    DrawAlias(alias.Key, alias.Value.Storage.ToAliasData());
                 }
             }
         }
-        DrawToybox("Player", _clientConfigs.CompileToyboxToAPI());
+/*        DrawToybox("Player", _mainConfig.CompileToyboxToAPI());*/
     }
 
     private void DrawPairsDebug()
@@ -209,11 +222,11 @@ public class DebugTab
             DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
             DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
             DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
-            DrawAppearance(pair.UserData.UID, pair.LastGagData ?? new CharaGagData());
-            DrawWardrobe(pair.UserData.UID, pair.LastWardrobeData ?? new CharaWardrobeData());
+            DrawAppearance(pair.UserData.UID, pair.LastGagData ?? new CharaActiveGags());
+            DrawWardrobe(pair.UserData.UID, pair.LastRestraintData ?? new CharaActiveRestraint());
             DrawAlias(pair.UserData.UID, pair.LastAliasData ?? new CharaAliasData());
             DrawToybox(pair.UserData.UID, pair.LastToyboxData ?? new CharaToyboxData());
-            DrawLightStorage(pair.UserData.UID, pair.LastLightStorage ?? new CharaStorageData());
+            DrawLightStorage(pair.UserData.UID, pair.LastLightStorage ?? new CharaLightStorageData());
         }
     }
 
@@ -252,10 +265,10 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
-        DrawPermissionRowBool("Allow Sit", perms.GlobalAllowSitRequests);
-        DrawPermissionRowBool("Allow Motion", perms.GlobalAllowMotionRequests);
-        DrawPermissionRowBool("Allow Alias", perms.GlobalAllowAliasRequests);
-        DrawPermissionRowBool("Allow All", perms.GlobalAllowAllRequests);
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.All));
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
@@ -265,12 +278,10 @@ public class DebugTab
         DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
         DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
         DrawPermissionRowString("Forced Stay", perms.ForcedStay);
-        DrawPermissionRowString("Forced Blindfold", perms.ForcedBlindfold);
         DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
         DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
         DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Shock Collar Active", perms.ShockCollarIsActive);
         DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
         DrawPermissionRowBool("Allow Shocks ", perms.AllowShocks);
         DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
@@ -310,10 +321,10 @@ public class DebugTab
         DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowString("Start Char", perms.StartChar.ToString());
         DrawPermissionRowString("End Char", perms.EndChar.ToString());
-        DrawPermissionRowBool("Allow Sit Requests", perms.SitRequests);
-        DrawPermissionRowBool("Allow Motion Requests", perms.MotionRequests);
-        DrawPermissionRowBool("Allow Alias Requests", perms.AliasRequests);
-        DrawPermissionRowBool("Allow All Requests", perms.AllRequests);
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.All));
         ImGui.TableNextRow();
         DrawPermissionRowBool("Allow Positive Moodles", perms.AllowPositiveStatusTypes);
         DrawPermissionRowBool("Allow Negative Moodles", perms.AllowNegativeStatusTypes);
@@ -338,7 +349,6 @@ public class DebugTab
         DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
         DrawPermissionRowBool("Allow Forced Emote", perms.AllowForcedEmote);
         DrawPermissionRowBool("Allow Forced To Stay", perms.AllowForcedToStay);
-        DrawPermissionRowBool("Allow Blindfold", perms.AllowBlindfold);
         DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
         DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
@@ -424,7 +434,7 @@ public class DebugTab
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
     }
 
-    private void DrawAppearance(string uid, GagData appearance)
+    private void DrawAppearance(string uid, CharaActiveGags appearance)
     {
         using var nodeMain = ImRaii.TreeNode("Appearance Data");
         if (!nodeMain) return;
@@ -438,22 +448,22 @@ public class DebugTab
             ImGui.TableHeadersRow();
 
             ImGuiUtil.DrawTableColumn("GagType:");
-            for (int i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].GagType);
+            for (var i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].GagItem.GagName());
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Padlock:");
-            for (int i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Padlock);
+            for (var i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Padlock.ToName());
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Password:");
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
                 ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Password);
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Time Remaining:");
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 ImGui.TableNextColumn();
                 UiSharedService.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
@@ -461,35 +471,40 @@ public class DebugTab
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Assigner:");
-            for (int i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Assigner);
+            for (var i = 0; i < 3; i++)
+                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].PadlockAssigner);
         }
     }
 
-    private void DrawWardrobe(string uid, CharaWardrobeData wardrobe)
+    private void DrawWardrobe(string uid, CharaActiveRestraint wardrobe)
     {
         using var nodeMain = ImRaii.TreeNode("Wardrobe Data");
         if (!nodeMain) return;
 
         using (ImRaii.Table("##debug-wardrobe" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            DrawPermissionRowString("Active Set ID", wardrobe.ActiveSetId.ToString());
-            DrawPermissionRowString("Active Set Enabled By", wardrobe.ActiveSetEnabledBy);
-            DrawPermissionRowString("Padlock", wardrobe.Padlock);
+            DrawPermissionRowString("Active Set ID", wardrobe.Identifier.ToString());
+            DrawPermissionRowString("Active Set Enabled By", wardrobe.Enabler);
+            DrawPermissionRowString("Padlock", wardrobe.Padlock.ToName());
             DrawPermissionRowString("Password", wardrobe.Password);
             ImGuiUtil.DrawTableColumn("Expiration Time");
             ImGui.TableNextColumn();
             UiSharedService.ColorText(wardrobe.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             ImGui.TableNextRow();
-            DrawPermissionRowString("Assigner", wardrobe.Assigner);
+            DrawPermissionRowString("Assigner", wardrobe.PadlockAssigner);
         }
+    }
 
+    // Probably better to make these light cursed item structs or something idk.
+    private void DrawCursedLoot(string uid, List<Guid> cursedItems)
+    {
         // draw out the list of cursed item GUID's
         using var subnodeCursedItems = ImRaii.TreeNode("Active Cursed Items");
-        if(!subnodeCursedItems) return;
-        
-        foreach (var item in wardrobe.ActiveCursedItems)
+        if (!subnodeCursedItems) return;
+
+        foreach (var item in cursedItems)
             ImGui.TextUnformatted(item.ToString());
+
     }
 
     private void DrawAlias(string uid, CharaAliasData alias)
@@ -544,12 +559,10 @@ public class DebugTab
         }
     }
 
-    private void DrawLightStorage(string uid, CharaStorageData lightStorage)
+    private void DrawLightStorage(string uid, CharaLightStorageData lightStorage)
     {
         using var nodeMain = ImRaii.TreeNode("Light Storage Data");
         if (!nodeMain) return;
-
-        ImGui.Text("Blindfold Item Slot: " + lightStorage.BlindfoldItem.Slot);
 
         // lightStorage subnode gags.
         using (var subnodeGagGlamours = ImRaii.TreeNode("Gags with Glamour's"))
@@ -586,8 +599,8 @@ public class DebugTab
 
                     foreach (var set in lightStorage.Restraints)
                     {
-                        ImGuiUtil.DrawTableColumn(set.Identifier.ToString());
-                        ImGuiUtil.DrawTableColumn(set.Name);
+                        ImGuiUtil.DrawTableColumn(set.Id.ToString());
+                        ImGuiUtil.DrawTableColumn(set.Label);
                         ImGuiUtil.DrawTableColumn(string.Join(",", set.AffectedSlots.Select(x => ((EquipSlot)x.Slot).ToString())));
                         ImGui.TableNextRow();
                     }
@@ -604,14 +617,14 @@ public class DebugTab
                 {
                     ImGui.TableSetupColumn("Cursed Item ID");
                     ImGui.TableSetupColumn("Cursed Item Name");
-                    ImGui.TableSetupColumn("Is Gag?");
+                    ImGui.TableSetupColumn("RestrictionType?");
                     ImGui.TableHeadersRow();
 
                     foreach (var item in lightStorage.CursedItems)
                     {
-                        ImGuiUtil.DrawTableColumn(item.Identifier.ToString());
-                        ImGuiUtil.DrawTableColumn(item.Name);
-                        ImGuiUtil.DrawTableColumn(item.IsGag.ToString());
+                        ImGuiUtil.DrawTableColumn(item.Id.ToString());
+                        ImGuiUtil.DrawTableColumn(item.Label);
+                        ImGuiUtil.DrawTableColumn(item.Type.ToString());
                         ImGui.TableNextRow();
                     }
                 }
@@ -634,10 +647,10 @@ public class DebugTab
 
                     foreach (var pattern in lightStorage.Patterns)
                     {
-                        ImGuiUtil.DrawTableColumn(pattern.Identifier.ToString());
-                        ImGuiUtil.DrawTableColumn(pattern.Name);
+                        ImGuiUtil.DrawTableColumn(pattern.Id.ToString());
+                        ImGuiUtil.DrawTableColumn(pattern.Label);
                         ImGuiUtil.DrawTableColumn(pattern.Duration.ToString());
-                        ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
+                        ImGuiUtil.DrawTableColumn(pattern.Loops.ToString());
                         ImGui.TableNextRow();
                     }
                 }
@@ -658,8 +671,8 @@ public class DebugTab
 
                     foreach (var alarm in lightStorage.Alarms)
                     {
-                        ImGuiUtil.DrawTableColumn(alarm.Identifier.ToString());
-                        ImGuiUtil.DrawTableColumn(alarm.Name);
+                        ImGuiUtil.DrawTableColumn(alarm.Id.ToString());
+                        ImGuiUtil.DrawTableColumn(alarm.Label);
                         ImGuiUtil.DrawTableColumn(alarm.SetTimeUTC.ToLocalTime().TimeOfDay.ToString());
                         ImGui.TableNextRow();
                     }
@@ -682,8 +695,8 @@ public class DebugTab
 
                 foreach (var trigger in lightStorage.Triggers)
                 {
-                    ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
-                    ImGuiUtil.DrawTableColumn(trigger.Name);
+                    ImGuiUtil.DrawTableColumn(trigger.Id.ToString());
+                    ImGuiUtil.DrawTableColumn(trigger.Label);
                     ImGuiUtil.DrawTableColumn(trigger.Type.ToString());
                     ImGuiUtil.DrawTableColumn(trigger.ActionOnTrigger.ToString());
                     ImGui.TableNextRow();

@@ -20,9 +20,10 @@ public class OrderTabs : IconTabBarBase<OrderTabs.SelectedTab>
         OrderCreator,
         OrderMonitor
     }
-
-    public OrderTabs(UiSharedService uiSharedService) : base(uiSharedService)
+    private readonly UiSharedService _ui;
+    public OrderTabs(UiSharedService ui)
     {
+        _ui = ui;
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.ActiveOrders, "Your Orders");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.OrderCreator, "Create Order");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.OrderMonitor, "Assign Order");
@@ -35,7 +36,7 @@ public class OrderTabs : IconTabBarBase<OrderTabs.SelectedTab>
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = UiSharedService.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
         var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));

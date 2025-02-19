@@ -14,12 +14,12 @@ public class PopupHandler : WindowMediatorSubscriberBase
 {
     protected bool _openPopup = false;
     private readonly HashSet<IPopupHandler> _handlers;
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
     private IPopupHandler? _currentHandler = null;
     private bool ThemePushed = false;
 
     public PopupHandler(ILogger<PopupHandler> logger, GagspeakMediator mediator, IEnumerable<IPopupHandler> popupHandlers,
-        UiSharedService uiSharedService) : base(logger, mediator, "GagspeakPopupHandler")
+        UiSharedService uiShared) : base(logger, mediator, "GagspeakPopupHandler")
     {
         // Adjust to restore some functionality?
         Flags = ImGuiWindowFlags.NoBringToFrontOnFocus
@@ -78,7 +78,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
 
 
 
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
     }
 
     protected override void PreDrawInternal()
@@ -145,7 +145,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
         if (_currentHandler.ShowClosed)
         {
             ImGui.Separator();
-            if (_uiSharedService.IconTextButton(FontAwesomeIcon.Times, "Close", ImGui.GetContentRegionAvail().X))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.Times, "Close", ImGui.GetContentRegionAvail().X))
             {
                 ImGui.CloseCurrentPopup();
             }

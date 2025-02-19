@@ -6,14 +6,14 @@ public class OrdersCreator
 {
     private readonly ILogger<OrdersCreator> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
 
     public OrdersCreator(ILogger<OrdersCreator> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService)
+        UiSharedService uiShared)
     {
         _logger = logger;
         _mediator = mediator;
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
     }
 
     public void DrawOrderCreatorPanel()

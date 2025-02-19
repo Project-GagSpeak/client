@@ -1,17 +1,12 @@
-using Dalamud.Interface;
+/*using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Tabs.WardrobeTab;
 using GagSpeak.Utils;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
-using System.Numerics;
 
 namespace GagSpeak.UI.UiGagSetup;
 
@@ -222,3 +217,4 @@ public class GagSetupUI : WindowMediatorSubscriberBase
         }
     }
 }
+*/

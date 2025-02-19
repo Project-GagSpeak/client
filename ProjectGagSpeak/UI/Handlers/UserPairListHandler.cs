@@ -25,13 +25,13 @@ public class UserPairListHandler
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
     private readonly GagspeakConfigService _configService;
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
     private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
         PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
-        GagspeakConfigService configService, UiSharedService uiSharedService)
+        GagspeakConfigService configService, UiSharedService uiShared)
     {
         _logger = logger;
         _mediator = mediator;
@@ -39,7 +39,7 @@ public class UserPairListHandler
         _drawEntityFactory = drawEntityFactory;
         _drawRequests = drawRequests;
         _configService = configService;
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
 
         _drawRequests.UpdateKinksterRequests();
         UpdateDrawFoldersAndUserPairDraws();
@@ -97,7 +97,7 @@ public class UserPairListHandler
             foreach (var item in _drawFolders)
             {
                 // draw the content
-                if (item is DrawFolderBase folderBase && folderBase.ID == TagHandler.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
+                if (item is DrawFolderBase folderBase && folderBase.ID == Globals.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
                     continue;
                 // draw folder if not all tag.
                 item.Draw();
@@ -105,21 +105,21 @@ public class UserPairListHandler
         }
     }
 
-    /// <summary> 
-    /// Draws all bi-directionally paired users (online or offline) without any tag header. 
-    /// </summary>
+    // Probably rework this later idk.
+    /// <summary> Draws all bi-directionally paired users (online or offline) without any tag header. </summary>
     public void DrawPairListSelectable(bool showOffline, byte id)
     {
-        var tagToUse = TagHandler.CustomAllTag;
+        var tagToUse = Globals.CustomAllTag;
 
         var allTagFolder = _drawFolders
             .FirstOrDefault(folder => folder is DrawFolderBase && ((DrawFolderBase)folder).ID == tagToUse);
 
-        if (allTagFolder == null) return;
+        if (allTagFolder is null)
+            return;
 
         var folderDrawPairs = showOffline ? ((DrawFolderBase)allTagFolder).DrawPairs.ToList() : ((DrawFolderBase)allTagFolder).DrawPairs.Where(x => x.Pair.IsOnline).ToList();
 
-        using var indent = ImRaii.PushIndent(_uiSharedService.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+        using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
 
         if (!folderDrawPairs.Any())
         {
@@ -143,65 +143,36 @@ public class UserPairListHandler
     }
 
     /// <summary> Draws the search filter for our user pair list (whitelist) </summary>
-    public void DrawSearchFilter(bool showClear, bool showClearText,
-        FontAwesomeIcon ibTwo = FontAwesomeIcon.None, string ib2text = "", string ib2tooltip = "", Action? onIb2 = null)
+    public void DrawSearchFilter(bool showClearText)
     {
         var width = ImGui.GetContentRegionAvail().X;
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
 
-        var buttonOneSize = showClear
-            ? (showClearText
-                ? _uiSharedService.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
-                : _uiSharedService.GetIconButtonSize(FontAwesomeIcon.Ban).X + spacing)
-            : 0;
-        var buttonTwoSize = ibTwo == FontAwesomeIcon.None ? 0 : ib2text.IsNullOrWhitespace()
-            ? _uiSharedService.GetIconButtonSize(ibTwo).X + spacing
-            : _uiSharedService.GetIconTextButtonSize(ibTwo, ib2text) + spacing;
+        var buttonOneSize = showClearText
+            ? _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
+            : _uiShared.GetIconButtonSize(FontAwesomeIcon.Ban).X + spacing;
 
-        var searchWidth = width - (buttonOneSize + buttonTwoSize);
+        var searchWidth = width - buttonOneSize;
 
         ImGui.SetNextItemWidth(searchWidth);
         var filter = Filter;
         if (ImGui.InputTextWithHint("##filter", "Filter for UID/notes", ref filter, 255))
-        {
             Filter = filter;
-        }
 
         // perform the firstbutton if we should.
-        if (showClear)
+        ImUtf8.SameLineInner();
+        if (showClearText)
         {
-            ImUtf8.SameLineInner();
-            if (showClearText)
-            {
-                if (_uiSharedService.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
-                    Filter = string.Empty;
-            }
-            else
-            {
-                if (_uiSharedService.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
-                    Filter = string.Empty;
-            }
-            UiSharedService.AttachToolTip("Clears the filter");
+            if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
+                Filter = string.Empty;
         }
-
-        // perform the second button if we should.
-        if (ibTwo != FontAwesomeIcon.None)
+        else
         {
-            ImUtf8.SameLineInner();
-            if (ib2text.IsNullOrWhitespace())
-            {
-                if (_uiSharedService.IconButton(ibTwo, null, "FilterButtonTwo"+ ibTwo))
-                    onIb2?.Invoke();
-            }
-            else
-            {
-                if (_uiSharedService.IconTextButton(ibTwo, ib2text))
-                    onIb2?.Invoke();
-            }
-            UiSharedService.AttachToolTip(ib2tooltip);
+            if (_uiShared.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
+                Filter = string.Empty;
         }
+        UiSharedService.AttachToolTip("Clears the filter");
     }
-
 
     public void UpdateKinksterRequests() => _drawRequests.UpdateKinksterRequests();
 
@@ -280,7 +251,7 @@ public class UserPairListHandler
                 .Where(FilterVisibleUsers));
 
             // add the draw folders based on the 
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomVisibleTag, filteredVisiblePairs, allVisiblePairs));
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomVisibleTag, filteredVisiblePairs, allVisiblePairs));
         }
 
         var allOnlinePairs = ImmutablePairList(allPairs.Where(FilterOnlineOrPausedSelf));
@@ -289,16 +260,16 @@ public class UserPairListHandler
         var bidirectionalTaggedPairs = BasicSortedList(filteredPairs
             .Where(u => FilterOnlineUsers(u) && FilterPairedOrPausedSelf(u)));
 
-        _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomAllTag, LoggerType.UserPairDrawer);
-        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
+        _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomAllTag, LoggerType.UserPairDrawer);
+        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
 
 
         // if we want to show offline users seperately,
         if (_configService.Config.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
-            _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomOnlineTag, LoggerType.UserPairDrawer);
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
+            _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomOnlineTag, LoggerType.UserPairDrawer);
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
 
             // then do so.
             var allOfflinePairs = ImmutablePairList(allPairs
@@ -307,8 +278,8 @@ public class UserPairListHandler
                 .Where(FilterOfflineUsers));
 
             // add the folder.
-            _logger.LogDebug("Adding Pair Section List Tag: " + TagHandler.CustomOfflineTag, LoggerType.UserPairDrawer);
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(TagHandler.CustomOfflineTag, filteredOfflinePairs,
+            _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomOfflineTag, LoggerType.UserPairDrawer);
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomOfflineTag, filteredOfflinePairs,
                 allOfflinePairs));
 
         }

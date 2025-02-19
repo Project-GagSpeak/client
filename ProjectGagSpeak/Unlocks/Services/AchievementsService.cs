@@ -1,11 +1,7 @@
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
-using System.Numerics;
 
 namespace GagSpeak.Achievements.Services;
 
@@ -13,15 +9,12 @@ namespace GagSpeak.Achievements.Services;
 // if its so small, just add it to framework updates.
 public class AchievementsService : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
     private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
 
     public AchievementsService(ILogger<AchievementsService> logger, GagspeakMediator mediator,
-        ClientConfigurationManager clientConfigs, ClientMonitor clientMonitor,
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        ClientMonitor clientMonitor, OnFrameworkService frameworkUtils) : base(logger, mediator)
     {
-        _clientConfigs = clientConfigs;
         _clientMonitor = clientMonitor;
         _frameworkUtils = frameworkUtils;
 

@@ -33,7 +33,7 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
     {
         try
         {
-            _userPairListHandler.DrawSearchFilter(true, true);
+            _userPairListHandler.DrawSearchFilter(true);
             ImGui.Separator();
             _userPairListHandler.DrawPairs();
         }

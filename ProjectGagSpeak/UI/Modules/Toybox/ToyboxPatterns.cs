@@ -2,8 +2,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
@@ -11,16 +9,14 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.UiRemote;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
-using System.Numerics;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.UI.UiToybox;
 
+// This does not yet have the updated format of the UI design from the visual state UI components yet.
+// Because of this a lot is off and likely can just be commented out for now.
 public class ToyboxPatterns
 {
     private readonly ILogger<ToyboxPatterns> _logger;
@@ -31,13 +27,13 @@ public class ToyboxPatterns
     private readonly ShareHubService _shareHub;
     private readonly TutorialService _guides;
     public ToyboxPatterns(ILogger<ToyboxPatterns> logger, GagspeakMediator mediator,
-        KinkPlateService kinkPlates, UiSharedService uiSharedService, PatternManager patternHandler, 
+        KinkPlateService kinkPlates, UiSharedService uiShared, PatternManager patternHandler, 
         ShareHubService shareHubService, TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
         _kinkPlates = kinkPlates;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
         _handler = patternHandler;
         _shareHub = shareHubService;
         _guides = guides;
@@ -190,13 +186,13 @@ public class ToyboxPatterns
     {
         var region = ImGui.GetContentRegionAvail();
         var topLeftSideHeight = region.Y;
-        bool anyItemHovered = false;
+        var anyItemHovered = false;
 
         using (var rightChild = ImRaii.Child($"###PatternListPreview", region with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
         {
             try
             {
-                for (int i = 0; i < FilteredPatternsList.Count; i++)
+                for (var i = 0; i < FilteredPatternsList.Count; i++)
                 {
                     var set = FilteredPatternsList[i];
                     DrawPatternSelectable(set, i);
@@ -215,7 +211,7 @@ public class ToyboxPatterns
                     }
                 }
 
-                bool isPopupOpen = LastHoveredIndex != -1 && ImGui.IsPopupOpen($"PatternDataContext{LastHoveredIndex}");
+                var isPopupOpen = LastHoveredIndex != -1 && ImGui.IsPopupOpen($"PatternDataContext{LastHoveredIndex}");
 
                 if (LastHoveredIndex != -1 && LastHoveredIndex < FilteredPatternsList.Count)
                     HandlePopupMenu();
@@ -264,7 +260,7 @@ public class ToyboxPatterns
         var patternToggleButtonSize = _uiShared.GetIconButtonSize(pattern.IsActive ? FontAwesomeIcon.Stop : FontAwesomeIcon.Play);
 
         // create the selectable
-        float height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
+        var height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), LastHoveredIndex == idx);
         using (ImRaii.Child($"##PatternSelectable{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
@@ -359,25 +355,25 @@ public class ToyboxPatterns
             pattern.ShouldLoop = !pattern.ShouldLoop;
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.EditLoopToggle, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
-        TimeSpan patternDurationTimeSpan = pattern.Duration;
-        TimeSpan patternStartPointTimeSpan = pattern.StartPoint;
-        TimeSpan patternPlaybackDuration = pattern.PlaybackDuration;
+        var patternDurationTimeSpan = pattern.Duration;
+        var patternStartPointTimeSpan = pattern.StartPoint;
+        var patternPlaybackDuration = pattern.PlaybackDuration;
 
         // playback start point
         UiSharedService.ColorText("Pattern Start-Point Timestamp", ImGuiColors.ParsedGold);
-        string formatStart = patternDurationTimeSpan.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
+        var formatStart = patternDurationTimeSpan.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
         _uiShared.DrawTimeSpanCombo("PatternStartPointTimeCombo", patternDurationTimeSpan, ref patternStartPointTimeSpan, 150f, formatStart, false);
         pattern.StartPoint = patternStartPointTimeSpan;
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.EditStartPoint, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         // time difference calculation.
         if (pattern.StartPoint > patternDurationTimeSpan) pattern.StartPoint = patternDurationTimeSpan;
-        TimeSpan maxPlaybackDuration = patternDurationTimeSpan - pattern.StartPoint;
+        var maxPlaybackDuration = patternDurationTimeSpan - pattern.StartPoint;
 
         // playback duration
         ImGui.Spacing();
         UiSharedService.ColorText("Pattern Playback Duration", ImGuiColors.ParsedGold);
-        string formatDuration = patternPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
+        var formatDuration = patternPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
         _uiShared.DrawTimeSpanCombo("Pattern Playback Duration", maxPlaybackDuration, ref patternPlaybackDuration, 150f, formatDuration, false);
         pattern.PlaybackDuration = patternPlaybackDuration;
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.EditPlaybackDuration, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
@@ -388,14 +384,14 @@ public class ToyboxPatterns
         try
         {
             // Get the JSON string from the clipboard
-            string base64 = ImGui.GetClipboardText();
+            var base64 = ImGui.GetClipboardText();
             // Deserialize the JSON string back to pattern data
             var bytes = Convert.FromBase64String(base64);
             // Decode the base64 string back to a regular string
             var version = bytes[0];
             version = bytes.DecompressToString(out var decompressed);
             // Deserialize the string back to pattern data
-            Pattern pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
+            var pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
             // Set the active pattern
             _logger.LogInformation("Set pattern data from clipboard");
             _handler.AddNewPattern(pattern);

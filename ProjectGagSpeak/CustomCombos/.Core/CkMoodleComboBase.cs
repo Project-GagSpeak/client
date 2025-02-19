@@ -6,20 +6,22 @@ using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 
 namespace GagSpeak.CustomCombos;
 
 public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
 {
+    protected readonly CharaIPCData _moodleData;
     protected readonly MoodleStatusMonitor _statuses;
     protected float _iconScale;
-    private CharaIPCData _moodleData { get; init; }
 
     protected CkMoodleComboBase(float iconScale, CharaIPCData data, MoodleStatusMonitor monitor, ILogger log,
         Func<IReadOnlyList<T>> generator) : base(generator, log)
     {
         _statuses = monitor;
         _iconScale = iconScale;
+        _moodleData = data;
     }
 
     protected virtual Vector2 IconSize => MoodleStatusMonitor.DefaultSize * _iconScale;

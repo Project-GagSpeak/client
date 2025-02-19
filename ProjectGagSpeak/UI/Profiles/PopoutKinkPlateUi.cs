@@ -1,11 +1,9 @@
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using System.Numerics;
 
 namespace GagSpeak.UI.Profile;
 
@@ -82,7 +80,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         // obtain the profile for this userPair.
         var KinkPlate = _KinkPlateManager.GetKinkPlate(_userDataToDisplay);
 
-        string DisplayName = _userDataToDisplay.AliasOrUID;
+        var DisplayName = _userDataToDisplay.AliasOrUID;
 
         var drawList = ImGui.GetWindowDrawList();
         _lightUI.RectMin = drawList.GetClipRectMin();

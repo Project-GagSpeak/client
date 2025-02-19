@@ -18,8 +18,10 @@ public class MigrationTabs : IconTabBarBase<MigrationTabs.SelectedTab>
         Triggers,
     }
 
-    public MigrationTabs(UiSharedService uiSharedService) : base(uiSharedService)
+    private readonly UiSharedService _ui;
+    public MigrationTabs(UiSharedService ui)
     {
+        _ui = ui;
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Gags, "Transfer Gag Storage Data" +
             "--SEP--Migrate Gag Storage from another Account!");
 
@@ -32,8 +34,8 @@ public class MigrationTabs : IconTabBarBase<MigrationTabs.SelectedTab>
         AddDrawButton(FontAwesomeIcon.Gem, SelectedTab.CursedLoot, "Transfer Cursed Loot Storage" +
             "--SEP--Migrate Cursed Loot from another Account!");
 
-        AddDrawButton(FontAwesomeIcon.Lock, SelectedTab.HardcoreTraitAllowances, "Transfer Pair Trait Allowances" +
-            "--SEP--Migrate Hardcore Trait Allowances from another Account!");
+/*        AddDrawButton(FontAwesomeIcon.Lock, SelectedTab.HardcoreTraitAllowances, "Transfer Pair Trait Allowances" +
+            "--SEP--Migrate Hardcore Trait Allowances from another Account!");*/
 
         AddDrawButton(FontAwesomeIcon.Bell, SelectedTab.Alarms, "Transfer Alarm Storage" +
             "--SEP--Migrate Alarms from another Account!");
@@ -49,7 +51,7 @@ public class MigrationTabs : IconTabBarBase<MigrationTabs.SelectedTab>
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = UiSharedService.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
         var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));

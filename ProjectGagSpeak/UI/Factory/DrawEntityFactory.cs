@@ -1,4 +1,5 @@
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components.UserPairList;
@@ -12,28 +13,32 @@ namespace GagSpeak.UI;
 public class DrawEntityFactory
 {
     private readonly ILoggerFactory _loggerFactory;
-    private readonly MainHub _hub;
     private readonly GagspeakMediator _mediator;
-    private readonly IdDisplayHandler _uidDisplayHandler;
+    private readonly MainHub _hub;
+    private readonly ServerConfigurationManager _configs;
+    private readonly IdDisplayHandler _nameDisplay;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
 
     public DrawEntityFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, MainHub hub,
-        IdDisplayHandler uidDisplayHandler, CosmeticService cosmetics, UiSharedService uiShared)
+        ServerConfigurationManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics,
+        UiSharedService uiShared)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
         _hub = hub;
-        _uidDisplayHandler = uidDisplayHandler;
+        _configs = configs;
+        _nameDisplay = nameDisplay;
         _cosmetics = cosmetics;
         _uiShared = uiShared;
     }
     public DrawFolderTag CreateDrawTagFolder(string tag, List<Pair> filteredPairs, IImmutableList<Pair> allPairs)
-        => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs, _uiShared);
+        => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs,
+            _configs, _uiShared);
 
     public DrawUserPair CreateDrawPair(string id, Pair user)
         => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + user.UserData.UID,
-            user, _hub, _uidDisplayHandler, _mediator, _cosmetics, _uiShared);
+            user, _hub, _nameDisplay, _mediator, _cosmetics, _uiShared);
 
     public KinksterRequestEntry CreateKinsterRequest(string id, UserPairRequestDto request)
         => new KinksterRequestEntry(id, request, _hub, _cosmetics, _uiShared);

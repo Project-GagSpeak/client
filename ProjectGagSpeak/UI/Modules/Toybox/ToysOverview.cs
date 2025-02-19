@@ -28,13 +28,13 @@ public class ToyboxOverview
     private readonly TutorialService _guides;
 
     public ToyboxOverview(ILogger<ToyboxOverview> logger, GagspeakMediator mediator,
-        UiSharedService uiSharedService, GlobalData playerData,
+        UiSharedService uiShared, GlobalData playerData,
         GagspeakConfigService clientConfigs, ServerConfigService serverConfigs,
         SexToyManager vibeService, TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
         _playerManager = playerData;
         _clientConfigs = clientConfigs;
         _serverConfigs = serverConfigs;

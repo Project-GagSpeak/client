@@ -2,11 +2,6 @@ using Dalamud.Game;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using GagSpeak.GagspeakConfiguration;
-using GagspeakAPI.Enums;
-using Microsoft.Extensions.Logging;
-using System.Numerics;
-using static FFXIVClientStructs.FFXIV.Client.Game.Character.ActionEffectHandler;
 using ActionEffectHandler = FFXIVClientStructs.FFXIV.Client.Game.Character.ActionEffectHandler;
 
 // References for Knowledge

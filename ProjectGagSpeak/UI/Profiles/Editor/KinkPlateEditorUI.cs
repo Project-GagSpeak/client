@@ -26,7 +26,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
     public KinkPlateEditorUI(ILogger<KinkPlateEditorUI> logger, GagspeakMediator mediator,
         MainHub hub, FileDialogManager fileDialogManager,
         KinkPlateService KinkPlateManager, CosmeticService cosmetics,
-        UiSharedService uiSharedService) : base(logger, mediator, "KinkPlate Editor###GagSpeakKinkPlateEditorUI")
+        UiSharedService uiShared) : base(logger, mediator, "KinkPlate Editor###GagSpeakKinkPlateEditorUI")
     {
         Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoResize;
         IsOpen = false;
@@ -41,7 +41,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         _fileDialogManager = fileDialogManager;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
     }

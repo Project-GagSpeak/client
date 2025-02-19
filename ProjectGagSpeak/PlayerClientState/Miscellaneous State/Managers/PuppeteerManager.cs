@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Data.Permissions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -18,7 +17,6 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly PairManager _pairs;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
-
     public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator,
         GlobalData clientData, PairManager pairs, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
@@ -85,18 +83,18 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         ActiveEditorItem = GlobalAliasStorage.CloneAliasStorage();
     }
 
-    public void StartEditingPair(string pairUid)
+    public void StartEditingPair(Pair? pair)
     {
-        if(ActiveEditorItem is not null)
+        if(ActiveEditorItem is not null || pair is null)
             return;
 
         // if the pair does not exist in the dictionary, we should create a new entry at that index.
-        if (!PairAliasStorage.ContainsKey(pairUid))
-            PairAliasStorage[pairUid] = new NamedAliasStorage();
+        if (!PairAliasStorage.ContainsKey(pair.UserData.UID))
+            PairAliasStorage[pair.UserData.UID] = new NamedAliasStorage();
 
         // Open the pair for editing.
-        ActiveEditorItem = PairAliasStorage[pairUid].Storage.CloneAliasStorage();
-        ActiveEditorPair = pairUid;
+        ActiveEditorItem = PairAliasStorage[pair.UserData.UID].Storage.CloneAliasStorage();
+        ActiveEditorPair = pair.UserData.UID;
     }
 
     /// <summary> Cancel the editing process without saving anything. </summary>

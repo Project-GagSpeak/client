@@ -1,64 +1,57 @@
-using Dalamud.Interface.Colors;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
+using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.CustomCombos.Moodles;
+using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
-using ImGuiNET;
-using OtterGui.Text;
-using Dalamud.Interface.Utility.Raii;
-using System.Numerics;
-using Dalamud.Interface.Utility;
+using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
-using System.Globalization;
-using Dalamud.Utility;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.MufflerCore.Handler;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using GagSpeak.PlayerData.Data;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using ImGuiNET;
 using OtterGui;
-using System.Linq;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Models;
+using OtterGui.Text;
+using System.Collections.Immutable;
+using System.Globalization;
 
-namespace GagSpeak.UI.UiPublications;
+namespace GagSpeak.UI.Publications;
 public class PublicationsManager
 {
-    private readonly ILogger<PublicationsManager> _logger;
-    private readonly GagspeakMediator _mediator;
-    private readonly GlobalData _clientData;
-    private readonly PatternManager _patternManager;
-    private readonly MoodlesService _moodlesService;
+    private readonly VisualApplierMoodles _moodlesData;
     private readonly ShareHubService _shareHub;
     private readonly UiSharedService _uiShared;
 
-    public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, PatternManager patternManager, MoodlesService moodlesService,
-        ShareHubService shareHub, UiSharedService uiSharedService)
+    public PublicationsManager(ILogger<PublicationsManager> logger, VisualApplierMoodles moodleData,
+        MoodleStatusMonitor monitor, FavoritesManager favorites, PatternManager patterns,
+        ShareHubService shareHub, UiSharedService uiShared)
     {
-        _logger = logger;
-        _mediator = mediator;
-        _clientData = clientData;
-        _patternManager = patternManager;
-        _moodlesService = moodlesService;
+        _moodlesData = moodleData;
         _shareHub = shareHub;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
+
+        _patternCombo = new PatternCombo(patterns, favorites, uiShared, logger);
+        _statusCombo = new MoodleStatusCombo(1.5f, moodleData.LatestIpcData, monitor, logger);
     }
 
-    private Pattern? _selectedPattern = null;
-    private MoodlesStatusInfo _selectedMoodle = new MoodlesStatusInfo();
     private string _authorName = string.Empty;
     private string _tagList = string.Empty;
+    private readonly PatternCombo _patternCombo;
+    private readonly MoodleStatusCombo _statusCombo;
 
-    public void DrawPatternManager()
+    public void DrawPatternPublications()
     {
-        // draw the create section.
         _uiShared.GagspeakBigText("Publish A Pattern");
 
-        // start by selecting the pattern.
-        _uiShared.DrawComboSearchable("##PatternSelector", 200f, _patternManager.Storage,
-            (item) => item.Label, true, (selected) => _selectedPattern = selected);
+        _patternCombo.Draw(200f);
+
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
         UiSharedService.ColorText("Chosen Pattern", ImGuiColors.ParsedGold);
@@ -74,7 +67,7 @@ public class PublicationsManager
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             _tagList = _tagList.ToLower();
-            int commaCount = _tagList.Count(c => c == ',');
+            var commaCount = _tagList.Count(c => c == ',');
             if (commaCount > 4)
             {
                 var tags = _tagList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -86,11 +79,12 @@ public class PublicationsManager
         UiSharedService.AttachToolTip("You can have a maximum of 5 tags."); 
         
         ImUtf8.SameLineInner();
+        // Copy Brios Tag Appender here or something later because it looks wonderful.
         _uiShared.DrawCombo("##patternTagsFilter", ImGui.GetContentRegionAvail().X, _shareHub.FetchedTags.ToImmutableList(), (i) => i,
             (tag) =>
             {
                 if(tag.IsNullOrEmpty()) return;
-                int commaCount = _tagList.Count(c => c == ',');
+                var commaCount = _tagList.Count(c => c == ',');
                 if (commaCount >= 4) return;
 
                 // Handle new tab
@@ -101,12 +95,14 @@ public class PublicationsManager
                     _tagList += tag.ToLower();
                 }
             }, shouldShowLabel: false, defaultPreviewText: "Add Existing Tags..");
-        if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X, false, _authorName.IsNullOrEmpty() || _selectedPattern is null))
+
+        if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
+            false, _authorName.IsNullOrEmpty() || _patternCombo.CurrentSelection is null))
         {
-            if (_selectedPattern is null) return;
+            if (_patternCombo.CurrentSelection is null)
+                return;
             // upload itttt
-            _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
-            _selectedPattern = null;
+            _shareHub.UploadPattern(_patternCombo.CurrentSelection, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
         }
         UiSharedService.AttachToolTip("Must have a selected pattern and author name to upload.");
         ImGui.Spacing();
@@ -121,10 +117,10 @@ public class PublicationsManager
         DrawPublishedPatternList();
     }
 
-    public void DrawRestrictionsManager()
+    public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (_clientData.LastIpcData is null)
+        if (_moodlesData.LatestIpcData is null)
         {
             UiSharedService.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }
@@ -133,12 +129,8 @@ public class PublicationsManager
             // draw the create section.
             _uiShared.GagspeakBigText("Publish A Moodle");
 
-            _moodlesService.DrawMoodleStatusCombo("##MoodleSelector", 200f, _clientData.LastIpcData.MoodlesStatuses, (selected) =>
-            {
-                if (!_clientData.LastIpcData.MoodlesStatuses.Any(x => x.GUID == selected)) return;
-                var statusInfo = _clientData.LastIpcData.MoodlesStatuses.First(x => x.GUID == selected);
-                _selectedMoodle = statusInfo;
-            });
+            _statusCombo.Draw(200f);
+
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
             UiSharedService.ColorText("Chosen Moodle", ImGuiColors.ParsedGold);
@@ -154,7 +146,7 @@ public class PublicationsManager
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
                 _tagList = _tagList.ToLower();
-                int commaCount = _tagList.Count(c => c == ',');
+                var commaCount = _tagList.Count(c => c == ',');
                 if (commaCount > 4)
                 {
                     var tags = _tagList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -170,7 +162,7 @@ public class PublicationsManager
                 (tag) =>
                 {
                     if (tag.IsNullOrEmpty()) return;
-                    int commaCount = _tagList.Count(c => c == ',');
+                    var commaCount = _tagList.Count(c => c == ',');
                     if (commaCount >= 4) return;
 
                     // Handle new tab
@@ -184,11 +176,13 @@ public class PublicationsManager
             UiSharedService.AttachToolTip("Select an existing tag on the Server." +
                 "--SEP--This makes it easier for people to find your Moodles!");
 
-            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, false, _authorName.IsNullOrEmpty() || _selectedMoodle.GUID.IsEmptyGuid()))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
+                false, _authorName.IsNullOrEmpty() || _statusCombo.CurrentSelection.GUID.IsEmptyGuid()))
             {
-                if (_selectedMoodle.GUID.IsEmptyGuid()) return;
-                _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _selectedMoodle);
-                _selectedMoodle = new MoodlesStatusInfo();
+                if (_statusCombo.CurrentSelection.GUID.IsEmptyGuid())
+                    return;
+
+                _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.CurrentSelection);
             }
             UiSharedService.AttachToolTip("Must have a selected Moodle and author name to upload.");
             ImGui.Spacing();
@@ -242,8 +236,8 @@ public class PublicationsManager
 
     private void PublishedPatternItem(PublishedPattern pattern)
     {
-        float unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
-        float height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
+        var unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##PatternResult_{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
 
@@ -251,7 +245,7 @@ public class PublicationsManager
             {
                 // display name, then display the downloads and likes on the other side.
                 ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText(pattern.Name, ImGuiColors.DalamudWhite);
+                UiSharedService.ColorText(pattern.Label, ImGuiColors.DalamudWhite);
                 if(!pattern.Description.IsNullOrEmpty()) _uiShared.DrawHelpText(pattern.Description, true);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
@@ -274,7 +268,7 @@ public class PublicationsManager
                 UiSharedService.AttachToolTip("The date this pattern was published.");
 
                 var formatDuration = pattern.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-                string timerText = pattern.Length.ToString(formatDuration);
+                var timerText = pattern.Length.ToString(formatDuration);
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - _uiShared.GetIconData(FontAwesomeIcon.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
                 
                 using (ImRaii.Group())
@@ -290,16 +284,16 @@ public class PublicationsManager
 
     private void PublishedMoodleItem(PublishedMoodle moodle)
     {
-        float unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
-        float height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
+        var unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##MoodleResult_{moodle.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
-            Vector2 imagePos = Vector2.Zero;
+            var imagePos = Vector2.Zero;
             using (ImRaii.Group())
             {
                 // display name, then display the downloads and likes on the other side.
                 imagePos = ImGui.GetCursorPos();
-                ImGuiHelpers.ScaledDummy(MoodlesService.StatusSize.X);
+                ImGuiHelpers.ScaledDummy(MoodleStatusMonitor.DefaultSize);
                 // if the scaled dummy is hovered, display the description, if any.
                 if(ImGui.IsItemHovered())
                 {
@@ -372,14 +366,11 @@ public class PublicationsManager
                     if (statusIcon is { } wrap)
                     {
                         ImGui.SetCursorPos(imagePos);
-                        ImGui.Image(statusIcon.ImGuiHandle, MoodlesService.StatusSize);
+                        ImGui.Image(statusIcon.ImGuiHandle, MoodleStatusMonitor.DefaultSize);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to draw the status icon for the moodle.");
-            }
+            catch (Exception) { }
         }
     }
 }

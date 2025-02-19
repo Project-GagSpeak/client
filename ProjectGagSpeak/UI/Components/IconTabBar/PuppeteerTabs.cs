@@ -1,24 +1,44 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerState.Visual;
 using ImGuiNET;
 
 namespace GagSpeak.UI.Components;
 
-public class PublicationTabs : IconTabBarBase<PublicationTabs.SelectedTab>
+public class PuppeteerTabs : IconTabBarBase<PuppeteerTabs.SelectedTab>
 {
     public enum SelectedTab
     {
-        Patterns,
-        Moodles,
+        GlobalAliasList,
+        TriggerPhrases,
+        PairAliasList,
+        OtherPairAliasList,
     }
 
+    private readonly PuppeteerManager _manager;
     private readonly UiSharedService _ui;
-    public PublicationTabs(UiSharedService ui)
+    public PuppeteerTabs(PuppeteerManager manager, UiSharedService ui)
     {
+        _manager = manager;
         _ui = ui;
-        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Patterns, "Pattern Publisher");
-        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Moodles, "Moodle Publisher");
+        AddDrawButton(FontAwesomeIcon.Globe, SelectedTab.GlobalAliasList, "Global Alias List");
+        AddDrawButton(FontAwesomeIcon.QuoteLeft, SelectedTab.TriggerPhrases, "Trigger Phrases");
+        AddDrawButton(FontAwesomeIcon.List, SelectedTab.PairAliasList, "Pair Alias List");
+        AddDrawButton(FontAwesomeIcon.ListAlt, SelectedTab.OtherPairAliasList, "Other Pair Alias List");
+    }
+
+    protected override bool IsTabDisabled(SelectedTab tab)
+    {
+        return tab switch
+        {
+            SelectedTab.GlobalAliasList => false,
+            SelectedTab.TriggerPhrases => false,
+            SelectedTab.PairAliasList => _manager.ActiveEditorPair is null,
+            SelectedTab.OtherPairAliasList => _manager.ActiveEditorPair is null,
+            _ => true,
+        };
+
     }
 
     public override void Draw(float availableWidth)

@@ -29,7 +29,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
     private readonly UiSharedService _uiShared;
     public ProfilePictureEditor(ILogger<ProfilePictureEditor> logger, GagspeakMediator mediator,
         MainHub hub, FileDialogManager fileDialogManager, KinkPlateService KinkPlateManager,
-        CosmeticService cosmetics, UiSharedService uiSharedService)
+        CosmeticService cosmetics, UiSharedService uiShared)
         : base(logger, mediator, "Edit KinkPlate Profile Picture###KinkPlateProfilePictureUI")
     {
         IsOpen = false;
@@ -41,7 +41,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         _fileDialogManager = fileDialogManager;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
-        _uiShared = uiSharedService;
+        _uiShared = uiShared;
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
     }

@@ -46,6 +46,7 @@ public class MoodleStatusMonitor
             ImGui.Image(icon.ImGuiHandle, size);
         }
     }
+    // Move the above into UiShared later probably lol.
 
     /// <summary> Validates if the pair can apply the status to the user. </summary>
     /// <param name="pairPerms"> The permissions of the pair. </param>

@@ -235,7 +235,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
                 // Safely parse the integer to InvokableActionType
                 if (Enum.TryParse(triggerToken["ExecutionType"]?.ToString(), out InvokableActionType executionType))
                 {
-                    IActionGS executableAction = executionType switch
+                    InvokableGsAction executableAction = executionType switch
                     {
                         InvokableActionType.TextOutput => triggerToken["ExecutableAction"]?.ToObject<TextAction>() ?? new TextAction(),
                         InvokableActionType.Gag => triggerToken["ExecutableAction"]?.ToObject<GagAction>() ?? new GagAction(),
@@ -247,7 +247,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
                     };
 
                     if (executableAction is not null)
-                        triggerAbstract.ExecutableAction = executableAction;
+                        triggerAbstract.InvokableAction = executableAction;
                     else
                         throw new Exception("Failed to deserialize ExecutableAction");
                 }

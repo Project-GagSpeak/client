@@ -1,19 +1,12 @@
 using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Debouncer;
 using GagSpeak.Toybox.Services;
 using ImGuiNET;
 using ImPlotNET;
-using Lumina.Excel.Sheets;
-using OtterGui;
-using System.Numerics;
 using System.Timers;
 
 namespace GagSpeak.UI.UiRemote;
@@ -154,7 +147,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         // set the should expand
         IsExpanded = shouldExpand;
         // set the new width
-        float width = IsExpanded ? WindowWidthMax : WindowWidthMin;
+        var width = IsExpanded ? WindowWidthMax : WindowWidthMin;
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(width, 430),
@@ -211,11 +204,11 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             if (!child) { return; }
 
             // get the xpos so we can draw it back a bit to span the whole width of the window.
-            float xPos = ImGui.GetCursorPosX();
-            float yPos = ImGui.GetCursorPosY();
+            var xPos = ImGui.GetCursorPosX();
+            var yPos = ImGui.GetCursorPosY();
 
             // Create a table with one or two columns based on the Expanded property
-            int columnCount = IsExpanded ? 2 : 1;
+            var columnCount = IsExpanded ? 2 : 1;
             using (var table = ImRaii.Table("##RemoteUITable", columnCount, ImGuiTableFlags.NoPadInnerX | ImGuiTableFlags.NoPadOuterX | ImGuiTableFlags.BordersV))
             {
                 ImGui.TableSetupColumn("##RemoteUIContent", ImGuiTableColumnFlags.WidthFixed, WindowWidthMin);
@@ -230,7 +223,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
                 {
                     // draw the playback display, this particular playback display should have its width increased by 20, and moved up 10f and left 10f
                     ImGui.SetCursorPos(new Vector2(xPos - ImGuiHelpers.GlobalScale * 10f, yPos - ImGuiHelpers.GlobalScale * 10f));
-                    float width = WindowWidthMin + ImGuiHelpers.GlobalScale * 20f;
+                    var width = WindowWidthMin + ImGuiHelpers.GlobalScale * 20f;
                     DrawRecordedDisplay(ref xPos, ref yPos, ref width);
 
                     // draw the center bar for recording information and things
@@ -273,12 +266,12 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         try
         {
             // Setup the waveform bounding box.
-            float[] xs = Enumerable.Range(0, RecordedPositions.Count).Select(i => (float)i).ToArray();  // x-values
-            float[] ys = RecordedPositions.Select(pos => (float)pos).ToArray();  // y-values
-            float latestX = xs.Length > 0 ? xs[xs.Length - 1] : 0; // The latest x-value
+            var xs = Enumerable.Range(0, RecordedPositions.Count).Select(i => (float)i).ToArray();  // x-values
+            var ys = RecordedPositions.Select(pos => (float)pos).ToArray();  // y-values
+            var latestX = xs.Length > 0 ? xs[xs.Length - 1] : 0; // The latest x-value
 
             // Transform the x-values so that the latest position appears at x=0 (ensure it doesn't start smack dab in the middle)
-            for (int i = 0; i < xs.Length; i++)
+            for (var i = 0; i < xs.Length; i++)
                 xs[i] -= latestX;
 
             // set up the color map for our plots.

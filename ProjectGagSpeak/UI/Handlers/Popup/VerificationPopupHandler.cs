@@ -11,12 +11,12 @@ namespace GagSpeak.UI.Components.Popup;
 
 internal class VerificationPopupHandler : IPopupHandler
 {
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
     private string _verificationCode = string.Empty;
 
-    public VerificationPopupHandler(UiSharedService uiSharedService)
+    public VerificationPopupHandler(UiSharedService uiShared)
     {
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
     }
 
     public Vector2 PopupSize => new(600, 160);
@@ -28,7 +28,7 @@ internal class VerificationPopupHandler : IPopupHandler
     {
         var width = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
         // push the title for the popup.
-        using (_uiSharedService.UidFont.Push())
+        using (_uiShared.UidFont.Push())
         {
             var headerTextSize = ImGui.CalcTextSize("Verification Code for " + MainHub.DisplayName);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - (headerTextSize.X / 2));
@@ -51,7 +51,7 @@ internal class VerificationPopupHandler : IPopupHandler
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X / 2 - ImGui.CalcTextSize("Close Popup window &&& Be sure verification is successful before closing.").X / 2);
         using (ImRaii.Disabled(string.IsNullOrEmpty(_verificationCode)))
         {
-            if (_uiSharedService.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Close Popup Window"))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Close Popup Window"))
             {
                 ImGui.CloseCurrentPopup();
             }

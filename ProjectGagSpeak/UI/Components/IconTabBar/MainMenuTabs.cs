@@ -26,12 +26,12 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
 
     private readonly GagspeakMediator _mediator;
     private readonly TutorialService _guides;
-
-    public MainMenuTabs(UiSharedService uiSharedService, GagspeakMediator mediator,
-        TutorialService guides) : base(uiSharedService)
+    private readonly UiSharedService _ui;
+    public MainMenuTabs(GagspeakMediator mediator, TutorialService guides, UiSharedService ui)
     {
         _mediator = mediator;
         _guides = guides;
+        _ui = ui;
 
         AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Homepage",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
@@ -53,11 +53,8 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
 
         AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account User Settings",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToAccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
-    }
 
-    protected override void OnTabSelectionChanged(SelectedTab newTab)
-    {
-        _mediator.Publish(new MainWindowTabChangeMessage(newTab));
+        TabSelectionChanged += (oldTab, newTab) => _mediator.Publish(new MainWindowTabChangeMessage(newTab));
     }
 
     public override void Draw(float availableWidth)
@@ -67,7 +64,7 @@ public class MainMenuTabs : IconTabBarBase<MainMenuTabs.SelectedTab>
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = UiSharedService.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
         var underlineColor = ImGui.GetColorU32(ImGuiCol.Separator);
