@@ -19,6 +19,8 @@ using GagSpeak.PlayerData.Data;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using System.Linq;
+using GagSpeak.PlayerState.Toybox;
+using GagSpeak.PlayerState.Models;
 
 namespace GagSpeak.UI.UiPublications;
 public class PublicationsManager
@@ -26,19 +28,19 @@ public class PublicationsManager
     private readonly ILogger<PublicationsManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly GlobalData _clientData;
-    private readonly GagspeakConfigService _clientConfigs;
+    private readonly PatternManager _patternManager;
     private readonly MoodlesService _moodlesService;
     private readonly ShareHubService _shareHub;
     private readonly UiSharedService _uiShared;
 
     public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, ClientConfigurationManager clientConfigs, MoodlesService moodlesService,
+        GlobalData clientData, PatternManager patternManager, MoodlesService moodlesService,
         ShareHubService shareHub, UiSharedService uiSharedService)
     {
         _logger = logger;
         _mediator = mediator;
         _clientData = clientData;
-        _clientConfigs = clientConfigs;
+        _patternManager = patternManager;
         _moodlesService = moodlesService;
         _shareHub = shareHub;
         _uiShared = uiSharedService;
@@ -55,8 +57,8 @@ public class PublicationsManager
         _uiShared.GagspeakBigText("Publish A Pattern");
 
         // start by selecting the pattern.
-        _uiShared.DrawComboSearchable("##PatternSelector", 200f, _clientConfigs.PatternConfig.PatternStorage.Patterns,
-            (item) => item.Name, true, (selected) => _selectedPattern = selected);
+        _uiShared.DrawComboSearchable("##PatternSelector", 200f, _patternManager.Storage,
+            (item) => item.Label, true, (selected) => _selectedPattern = selected);
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
         UiSharedService.ColorText("Chosen Pattern", ImGuiColors.ParsedGold);
