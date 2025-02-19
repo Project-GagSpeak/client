@@ -1,5 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Services;
@@ -17,15 +18,13 @@ public class RemotePersonal : RemoteBase
     // the class includes are shared however (i think), so dont worry about that.
     private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService; // these SHOULD all be shared. but if not put into Service.
-    private readonly ToyboxRemoteService _remoteService;
     public RemotePersonal(ILogger<RemotePersonal> logger,GagspeakMediator mediator, 
-        UiSharedService uiShared, ToyboxRemoteService remoteService, SexToyManager vibeService,
+        UiSharedService uiShared, SexToyManager vibeService,
         TutorialService guides, string windowName = "Personal") 
-        : base(logger, mediator, uiShared, vibeService, remoteService, guides, windowName)
+        : base(logger, mediator, uiShared, vibeService, guides, windowName)
     {
         _uiShared = uiShared;
         _vibeService = vibeService;
-        _remoteService = remoteService;
     }
 
     protected override void Dispose(bool disposing)
@@ -64,7 +63,7 @@ public class RemotePersonal : RemoteBase
         // push our styles
         using var styleColor = ImRaii.PushColor(ImGuiCol.Button, new Vector4(.2f, .2f, .2f, .2f))
             .Push(ImGuiCol.ButtonHovered, new Vector4(.3f, .3f, .3f, .4f))
-            .Push(ImGuiCol.ButtonActive, _remoteService.LushPinkButton);
+            .Push(ImGuiCol.ButtonActive, CkColors.LushPinkButton);
         using var styleVar = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 40);
 
         // grab the content region of the current section
@@ -96,7 +95,7 @@ public class RemotePersonal : RemoteBase
             var spinArrow = _uiShared.GetImageFromDirectoryFile("RequiredImages\\arrowspin.png");
             if (spinArrow is { } wrap)
             {
-                Vector4 buttonColor = IsLooping ? _remoteService.LushPinkButton : _remoteService.SideButton;
+                Vector4 buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("LoopButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
@@ -112,7 +111,7 @@ public class RemotePersonal : RemoteBase
             var circlesDot = _uiShared.GetImageFromDirectoryFile("RequiredImages\\circledot.png");
             if (circlesDot is { } wrap2)
             {
-                Vector4 buttonColor2 = IsFloating ? _remoteService.LushPinkButton : _remoteService.SideButton;
+                Vector4 buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("FloatButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
@@ -128,7 +127,7 @@ public class RemotePersonal : RemoteBase
             var power = _uiShared.GetImageFromDirectoryFile("RequiredImages\\power.png");
             if (power is { } wrap3)
             {
-                Vector4 buttonColor3 = RemoteOnline ? _remoteService.LushPinkButton : _remoteService.SideButton;
+                Vector4 buttonColor3 = RemoteOnline ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("PowerToggleButton"+ WindowBaseName, new Vector2(50, 50),
                     buttonColor3, new Vector2(40, 40), wrap3))

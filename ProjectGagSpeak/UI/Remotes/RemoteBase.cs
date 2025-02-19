@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Debouncer;
@@ -21,17 +22,15 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
     // the class includes are shared however (i think), so dont worry about that.
     private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService;
-    private readonly ToyboxRemoteService _remoteService;
     protected readonly TutorialService _guides;
 
     public RemoteBase(ILogger logger, GagspeakMediator mediator, 
-        UiSharedService uiShared, SexToyManager vibeService, 
-        ToyboxRemoteService remoteService, TutorialService guides, 
+        UiSharedService uiShared, SexToyManager vibeService,
+        TutorialService guides, 
         string windowName): base(logger, mediator, windowName + " Remote")
     {
         _uiShared = uiShared;
         _vibeService = vibeService;
-        _remoteService = remoteService;
         _guides = guides;
 
         AllowPinning = false;
@@ -275,8 +274,8 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
                 xs[i] -= latestX;
 
             // set up the color map for our plots.
-            ImPlot.PushStyleColor(ImPlotCol.Line, _remoteService.LushPinkLine);
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, _remoteService.LovenseScrollingBG);
+            ImPlot.PushStyleColor(ImPlotCol.Line, CkColors.LushPinkLine);
+            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColors.LovenseScrollingBG);
 
             // setup and draw the waveform graph axis
             ImPlot.SetNextAxesLimits(-150, 0, -5, 110, ImPlotCond.Always);
@@ -337,7 +336,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
 
             // create styles for the next plot
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, _remoteService.LovenseDragButtonBG);
+            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColors.LovenseDragButtonBG);
             DrawCircleButtonGraph(ref width, ref yPos);
 
             // end of using disabled & first column
@@ -356,7 +355,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
 
     private void DrawCircleButtonGraph(ref float width, ref float yPos)
     {
-        using var color = ImRaii.PushColor(ImPlotCol.PlotBg, _remoteService.LovenseDragButtonBG);
+        using var color = ImRaii.PushColor(ImPlotCol.PlotBg, CkColors.LovenseDragButtonBG);
         // Draw a thin line with a timer to show the current position of the circle
         width = ImGui.GetContentRegionAvail().X;
         var height = ImGui.GetContentRegionAvail().Y + ImGui.GetTextLineHeight();
@@ -379,7 +378,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             // setup the drag point circle
             using (ImRaii.Disabled(!RemoteOnline))
             {
-                ImPlot.DragPoint(0, ref CirclePosition[0], ref CirclePosition[1], _remoteService.LushPinkButton, 20, ImPlotDragToolFlags.NoCursors);
+                ImPlot.DragPoint(0, ref CirclePosition[0], ref CirclePosition[1], CkColors.LushPinkButton, 20, ImPlotDragToolFlags.NoCursors);
             }
             _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, CurrentPos, CurrentSize);
             _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, CurrentPos, CurrentSize);

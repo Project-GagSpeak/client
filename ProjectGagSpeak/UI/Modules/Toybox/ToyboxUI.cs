@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -14,12 +15,12 @@ namespace GagSpeak.UI.UiToybox;
 
 public class ToyboxUI : WindowMediatorSubscriberBase
 {
-    private readonly ToyboxTabMenu _tabMenu;
+    private readonly ToyboxTabs _tabMenu;
     private readonly ToyboxOverview _toysOverview;
     private readonly ToyboxVibeRooms _vibeServer;
     private readonly ToyboxPatterns _patterns;
     private readonly ToyboxTriggerManager _triggerManager;
-    private readonly ToyboxAlarmManager _alarmManager;
+    private readonly AlarmManager _alarmManager;
     private readonly PlaybackDrawer _playback;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
@@ -28,15 +29,15 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     // mapping tutorials.
     private static readonly Dictionary<object, (TutorialType Type, string StartLog, string SkipLog)> TutorialMap = new Dictionary<object, (TutorialType Type, string StartLog, string SkipLog)>()
     {
-        { ToyboxTabs.Tabs.ToyOverview, (TutorialType.Toybox, "Starting Toybox Tutorial", "Skipping Toybox Tutorial") },
-        { ToyboxTabs.Tabs.PatternManager, (TutorialType.Patterns, "Starting Patterns Tutorial", "Skipping Patterns Tutorial") },
-        { ToyboxTabs.Tabs.TriggerManager, (TutorialType.Triggers, "Starting Triggers Tutorial", "Skipping Triggers Tutorial") },
-        { ToyboxTabs.Tabs.AlarmManager, (TutorialType.Alarms, "Starting Alarms Tutorial", "Skipping Alarms Tutorial") }
+        { ToyboxTabs.SelectedTab.ToyOverview, (TutorialType.Toybox, "Starting Toybox Tutorial", "Skipping Toybox Tutorial") },
+        { ToyboxTabs.SelectedTab.PatternManager, (TutorialType.Patterns, "Starting Patterns Tutorial", "Skipping Patterns Tutorial") },
+        { ToyboxTabs.SelectedTab.TriggerManager, (TutorialType.Triggers, "Starting Triggers Tutorial", "Skipping Triggers Tutorial") },
+        { ToyboxTabs.SelectedTab.AlarmManager, (TutorialType.Alarms, "Starting Alarms Tutorial", "Skipping Alarms Tutorial") }
     };
 
     public ToyboxUI(ILogger<ToyboxUI> logger, GagspeakMediator mediator,
         ToyboxOverview toysOverview, ToyboxVibeRooms vibeServer, ToyboxPatterns patterns,
-        ToyboxTriggerManager triggerManager, ToyboxAlarmManager alarmManager,
+        ToyboxTriggerManager triggerManager, AlarmManager alarmManager,
         PlaybackDrawer playback, CosmeticService cosmetics, UiSharedService uiShared,
         TutorialService guides) : base(logger, mediator, "Toybox UI")
     {
@@ -50,7 +51,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         _uiShared = uiShared;
         _guides = guides;
 
-        _tabMenu = new ToyboxTabMenu(_uiShared);
+        _tabMenu = new ToyboxTabs(_uiShared);
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -77,7 +78,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                 Click = (msg) =>
                 {
                     // Check if the current tab has an associated tutorial
-                    if (TutorialMap.TryGetValue(_tabMenu.SelectedTab, out var tutorialInfo))
+                    if (TutorialMap.TryGetValue(_tabMenu.TabSelection, out var tutorialInfo))
                     {
                         // Perform tutorial actions
                         if (_guides.IsTutorialActive(tutorialInfo.Type))
@@ -96,12 +97,12 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                 ShowTooltip = () =>
                 {
                     ImGui.BeginTooltip();
-                    var text = _tabMenu.SelectedTab switch
+                    var text = _tabMenu.TabSelection switch
                     {
-                        ToyboxTabs.Tabs.ToyOverview => "Start/Stop Toybox Tutorial",
-                        ToyboxTabs.Tabs.PatternManager => "Start/Stop Patterns Tutorial",
-                        ToyboxTabs.Tabs.TriggerManager => "Start/Stop Triggers Tutorial",
-                        ToyboxTabs.Tabs.AlarmManager => "Start/Stop Alarms Tutorial",
+                        ToyboxTabs.SelectedTab.ToyOverview => "Start/Stop Toybox Tutorial",
+                        ToyboxTabs.SelectedTab.PatternManager => "Start/Stop Patterns Tutorial",
+                        ToyboxTabs.SelectedTab.TriggerManager => "Start/Stop Triggers Tutorial",
+                        ToyboxTabs.SelectedTab.AlarmManager => "Start/Stop Alarms Tutorial",
                         _ => "No Tutorial Available"
                     };
                     ImGui.Text(text);
@@ -193,9 +194,9 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                     ImGui.Spacing();
                     ImGui.Separator();
                     // add the tab menu for the left side.
-                    _tabMenu.DrawSelectableTabMenu();
+                    _tabMenu.Draw(region.Y - 80f);
 
-                    ImGui.SetCursorPosY(region.Y - 80f);
+                    // ImGui.SetCursorPosY(region.Y - 80f);
                     _playback.DrawPlaybackDisplay();
                 }
                 // pop pushed style variables and draw next column.
@@ -206,21 +207,21 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                 // display right half viewport based on the tab selection
                 using (var rightChild = ImRaii.Child($"###ToyboxRight", Vector2.Zero, false))
                 {
-                    switch (_tabMenu.SelectedTab)
+                    switch (_tabMenu.TabSelection)
                     {
-                        case ToyboxTabs.Tabs.ToyOverview:
+                        case ToyboxTabs.SelectedTab.ToyOverview:
                             _toysOverview.DrawOverviewPanel();
                             break;
-                        case ToyboxTabs.Tabs.VibeServer:
+                        case ToyboxTabs.SelectedTab.VibeServer:
                             _vibeServer.DrawVibeServerPanel();
                             break;
-                        case ToyboxTabs.Tabs.PatternManager:
+                        case ToyboxTabs.SelectedTab.PatternManager:
                             _patterns.DrawPatternManagerPanel();
                             break;
-                        case ToyboxTabs.Tabs.TriggerManager:
+                        case ToyboxTabs.SelectedTab.TriggerManager:
                             _triggerManager.DrawTriggersPanel();
                             break;
-                        case ToyboxTabs.Tabs.AlarmManager:
+                        case ToyboxTabs.SelectedTab.AlarmManager:
                             _alarmManager.DrawAlarmManagerPanel();
                             break;
                         default:

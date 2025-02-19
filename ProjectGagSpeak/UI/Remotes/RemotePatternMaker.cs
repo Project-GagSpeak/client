@@ -1,5 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -19,18 +20,16 @@ public class RemotePatternMaker : RemoteBase
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService; // these SHOULD all be shared. but if not put into Service.
-    private readonly ToyboxRemoteService _remoteService;
     private readonly string _windowName;
     public RemotePatternMaker(ILogger<RemotePatternMaker> logger, GagspeakMediator mediator,
         CosmeticService cosmetics, UiSharedService uiShared, SexToyManager vibeService,
-        ToyboxRemoteService remoteService, TutorialService guides, string windowName = "Pattern Creator") 
-        : base(logger, mediator, uiShared, vibeService, remoteService, guides, windowName)
+        TutorialService guides, string windowName = "Pattern Creator") 
+        : base(logger, mediator, uiShared, vibeService, guides, windowName)
     {
         // grab the shared services
         _cosmetics = cosmetics;
         _uiShared = uiShared;
         _vibeService = vibeService;
-        _remoteService = remoteService;
         _windowName = windowName;
     }
 
@@ -79,7 +78,7 @@ public class RemotePatternMaker : RemoteBase
         // push our styles
         using var styleColor = ImRaii.PushColor(ImGuiCol.Button, new Vector4(.2f, .2f, .2f, .2f))
             .Push(ImGuiCol.ButtonHovered, new Vector4(.3f, .3f, .3f, .4f))
-            .Push(ImGuiCol.ButtonActive, _remoteService.LushPinkButton);
+            .Push(ImGuiCol.ButtonActive, CkColors.LushPinkButton);
         using var styleVar = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 40);
 
         // grab the content region of the current section
@@ -111,7 +110,7 @@ public class RemotePatternMaker : RemoteBase
             var spinArrow = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\arrowspin.png");
             if (spinArrow is { } wrap)
             {
-                Vector4 buttonColor = IsLooping ? _remoteService.LushPinkButton : _remoteService.SideButton;
+                Vector4 buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("LoopButton"+ _windowName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
@@ -129,7 +128,7 @@ public class RemotePatternMaker : RemoteBase
             var circlesDot = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\circledot.png");
             if (circlesDot is { } wrap2)
             {
-                Vector4 buttonColor2 = IsFloating ? _remoteService.LushPinkButton : _remoteService.SideButton;
+                Vector4 buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("FloatButton" + _windowName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
@@ -142,7 +141,7 @@ public class RemotePatternMaker : RemoteBase
 
 
             ImGui.SetCursorPosY(CurrentRegion.Y * .775f);
-            Vector4 buttonColor3 = IsRecording ? _remoteService.LushPinkButton : _remoteService.SideButton;
+            Vector4 buttonColor3 = IsRecording ? CkColors.LushPinkButton : CkColors.SideButton;
             // display the stop or play icon depending on if we are recording or not.
             if (!IsRecording)
             {
