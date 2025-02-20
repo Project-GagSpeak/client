@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Listener;
 using GagSpeak.PlayerState.Visual;
@@ -139,7 +139,7 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
             return;
 
         // check for global puppeteer triggers
-        var globalTriggers = _globals.GlobalPerms.GlobalTriggerPhrase.Split('|').ToList();
+        var globalTriggers = _globals.GlobalPerms.TriggerPhrase.Split('|').ToList();
         if (IsValidTriggerWord(globalTriggers, message, out var globalMatch))
             if (_listener.ExecuteGlobalTrigger(globalMatch, message, _globals.GlobalPerms.PuppetPerms))
                 return; // early return to prevent double trigger call.

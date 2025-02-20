@@ -51,7 +51,6 @@ public unsafe static class HotbarLocker
         }
 
         // in other words, if it was locked prior to toggling on or off, it will simply hide the lock button.
-        // Speaking of which, let's do that now.
         var lockNode = actionBar->GetNodeById(21);
         if (lockNode is null)
             return;

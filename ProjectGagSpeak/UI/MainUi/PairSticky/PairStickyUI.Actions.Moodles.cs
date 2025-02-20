@@ -19,9 +19,8 @@ public partial class PairStickyUI
     {
         var lastIpcData = StickyPair.LastIpcData;
         var pairUniquePerms = StickyPair.PairPerms;
-        if (lastIpcData == null || pairUniquePerms == null) return;
 
-        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.PairCanApplyYourMoodlesToYou || lastIpcData.MoodlesStatuses.Count <= 0;
+        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag.PairCanApplyYourMoodlesToYou || lastIpcData.MoodlesStatuses.Count <= 0;
         var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.PairCanApplyOwnMoodlesToYou || LastCreatedCharacterData == null || LastCreatedCharacterData.MoodlesStatuses.Count <= 0;
         var RemovePairsMoodlesDisabled = !pairUniquePerms.AllowRemovingMoodles || lastIpcData.MoodlesDataStatuses.Count <= 0;
         var ClearPairsMoodlesDisabled = !pairUniquePerms.AllowRemovingMoodles || lastIpcData.MoodlesData == string.Empty;

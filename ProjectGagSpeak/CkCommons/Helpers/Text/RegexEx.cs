@@ -1,7 +1,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using System.Text.RegularExpressions;
 
-namespace GagSpeak.CkCommons.TextHelpers;
+namespace GagSpeak.CkCommons.Helpers;
 
 public static class RegexEx
 {

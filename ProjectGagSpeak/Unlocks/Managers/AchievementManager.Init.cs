@@ -1,8 +1,6 @@
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
-using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using System.Runtime.InteropServices;
 
@@ -67,7 +65,7 @@ public partial class AchievementManager
         SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.TheKinkyLegend, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
 
         SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SilentButDeadly, 10,
-            () => _playerData.AppearanceData?.GagSlots.Any(x => x.GagType.ToGagType() != GagType.None) ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Roulettes Completed");
+            () => _gags.ActiveGagsData is { } gagData && gagData.AnyGagActive(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Roulettes Completed");
 
         SaveData.AddTimedProgress(AchievementModuleKind.Gags, Achievements.ATrueGagSlut, 10, TimeSpan.FromHours(1), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Received In Hour");
 
@@ -75,26 +73,26 @@ public partial class AchievementManager
 
         SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.QuietNowDear, () =>
         {
-            bool targetIsGagged = false;
-            if (_pairManager.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
+            var targetIsGagged = false;
+            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
             {
                 Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
-                var targetPair = _pairManager.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
+                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
                 if (targetPair is not null)
                 {
                     Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
-                    targetIsGagged = targetPair.LastGagData?.GagSlots.Any(x => x.GagType.ToGagType() is not GagType.None) ?? false;
+                    targetIsGagged = targetPair.LastGagData.GagSlots.Any(x => x.GagItem is not GagType.None);
                 }
             }
             return targetIsGagged;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinkster Hushed");
 
-        SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.SilenceOfShame, () => _playerData.IsGagged(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinksters", "Hushed by");
+        SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.SilenceOfShame, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinksters", "Hushed by");
 
         SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.YourFavoriteNurse, 20,
-            () => _playerData.AppearanceData?.GagSlots.Any(x => x.GagType.ToGagType() == GagType.MedicalMask) ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Patients Serviced", reqBeginAndFinish: false);
+            () => _gags.ActiveGagsData is { } gagData && gagData.GagSlots.Any(x => x.GagItem == GagType.MedicalMask), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Patients Serviced", reqBeginAndFinish: false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SayMmmph, 1, () => _playerData.IsGagged, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Photos Taken");
+        SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SayMmmph, 1, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Photos Taken");
         #endregion GAG MODULE
 
         #region WARDROBE MODULE
@@ -105,9 +103,9 @@ public partial class AchievementManager
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DiDEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
 
         SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.CrowdPleaser, 15,
-            () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "People Nearby");
+            () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "People Nearby");
         SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.Humiliation, 5,
-            () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "GagSpeak Pairs Nearby");
+            () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "GagSpeak Pairs Nearby");
 
         SaveData.AddTimedProgress(AchievementModuleKind.Wardrobe,Achievements.BondageBunny, 5, TimeSpan.FromHours(2), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Received In 2 Hours");
 
@@ -131,46 +129,42 @@ public partial class AchievementManager
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
         SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
 
-        SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.KinkyExplorer, () => _clientConfigs.GagspeakConfig.CursedLootPanel, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Runs Started");
+        SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.KinkyExplorer, () => _mainConfig.Config.CursedLootPanel, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Runs Started");
         SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TemptingFatesTreasure, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered");
         SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BadEndSeeker, 25,
-            () => _clientConfigs.CursedLootConfig.CursedLootStorage.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
+            () => _cursedLoot.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
         SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EverCursed, 100,
-            () => _clientConfigs.CursedLootConfig.CursedLootStorage.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
+            () => _cursedLoot.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HealSlut, 1,
-            () => _playerData.IsGagged || _clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Duties Completed");
-
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BondagePalace, 1, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HornyOnHigh, 1, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EurekaWhorethos, 1, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinkRunsDeep, 1, () =>
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HealSlut, 1, () =>
         {
-            var activeSet = _clientConfigs.GetActiveSet();
-            if (activeSet is null) return false;
-            return activeSet.PropertiesEnabledForUser(activeSet.EnabledBy);
-        }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinksRunDeeper, 1, () =>
-        {
-            var activeSet = _clientConfigs.GetActiveSet();
-            if (activeSet is null) return false;
-            return activeSet.PropertiesEnabledForUser(activeSet.EnabledBy);
-        }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+            int activeItems = 0;
+            if(_gags.ActiveGagsData?.IsGagged() ?? false) activeItems++;
+            if(_restraints.EnabledSet is not null) activeItems++;
+            if(_sexToys.ConnectedToyActive) activeItems++;
+            return activeItems >= 2;
+        }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Duties Completed");
 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BondagePalace, 1, () 
+            => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HornyOnHigh, 1, () 
+            => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EurekaWhorethos, 1, () 
+            => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.MyKinkRunsDeep, 1, () 
+            => _restraints.EnabledSet is not null && _restraints.LatestVisualCache.Traits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinksRunDeeper, 1, ()
+            => _restraints.EnabledSet is not null && _restraints.LatestVisualCache.Traits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
         SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfFocus, 1, () =>
         {
-            if (_clientMonitor.Level < 90) return false;
-            var activeSet = _clientConfigs.GetActiveSet();
-            if (activeSet is null) return false;
-
-            if (activeSet.SetTraits.TryGetValue(activeSet.EnabledBy, out var prop))
-                return prop.StimulationLevel is not StimulationLevel.None;
-
-            return false;
+            if (_clientMonitor.Level < 90)
+                return false;
+            return (_restraints.EnabledSet is not null && ((_restraints.LatestVisualCache.Traits & Traits.StimHeavy) != 0)) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfDexterity, 1, () =>
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
         {
-            if (_clientMonitor.Level < 90) return false;
+            if (_clientMonitor.Level < 90)
+                return false;
             var activeSet = _clientConfigs.GetActiveSet();
             if (activeSet is null) return false;
 
@@ -179,7 +173,7 @@ public partial class AchievementManager
 
             return false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfTheBlind, 1, () =>
+        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
         {
             if (_clientMonitor.Level < 90) return false;
             // get the set and make sure stimulation is enabled for the person who enabled it.
@@ -215,7 +209,7 @@ public partial class AchievementManager
 
         // Bondodge - Within 2 seconds of having a restraint set applied to you, remove it from yourself (might want to add a duration conditional but idk?)
         SaveData.AddTimeLimitedConditional(AchievementModuleKind.Wardrobe,Achievements.Bondodge,
-            TimeSpan.FromSeconds(2), () => _clientConfigs.GetActiveSetIdx() != -1, DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
+            TimeSpan.FromSeconds(2), () => _restraints.EnabledSet is not null, DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
 
         #endregion WARDROBE MODULE
 
@@ -329,7 +323,7 @@ public partial class AchievementManager
         SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
             () =>
             {
-                if (_clientConfigs.GetActiveSetIdx() != -1 && (_playerData.GlobalPerms?.IsBlindfolded() ?? false) && (_playerData.GlobalPerms?.IsFollowing() ?? false))
+                if (_restraints.EnabledSet is not null && (_playerData.GlobalPerms?.IsBlindfolded() ?? false) && (_playerData.GlobalPerms?.IsFollowing() ?? false))
                     if (_clientMonitor.InMainCity)
                         return true;
                 return false;
@@ -339,7 +333,7 @@ public partial class AchievementManager
             () =>
             {
                 if (_playerData.GlobalPerms?.IsBlindfolded() ?? false)
-                    if (_pairManager.DirectPairs.Any(x => x.PairGlobals.IsFollowing() && x.PairGlobals.IsBlindfolded()))
+                    if (_pairs.DirectPairs.Any(x => x.PairGlobals.IsFollowing() && x.PairGlobals.IsBlindfolded()))
                         return true;
                 return false;
             }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Pairs Led");
@@ -385,7 +379,7 @@ public partial class AchievementManager
         #region GENERIC MODULE
         SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TutorialComplete, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Tutorial Completed");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.KinkyNovice, () => _pairManager.DirectPairs.Count > 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pair Added");
+        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.KinkyNovice, () => _pairs.DirectPairs.Count > 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pair Added");
 
         SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TheCollector, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pairs Added");
 
@@ -396,19 +390,19 @@ public partial class AchievementManager
         SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.KnowsMyLimits, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Safewords Used");
 
         SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.WarriorOfLewd, 1,
-            () => _playerData.IsGagged && _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Cutscenes Watched Bound & Gagged");
+            () => _playerData.IsGagged && _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Cutscenes Watched Bound & Gagged");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.EscapingIsNotEasy, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Escape Attempts Made");
+        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.EscapingIsNotEasy, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Escape Attempts Made");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.ICantBelieveYouveDoneThis, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Slaps Received");
+        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.ICantBelieveYouveDoneThis, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Slaps Received");
 
         SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.WithAKissGoodbye, () =>
         {
-            bool targetIsImmobile = false;
-            if (_pairManager.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
+            var targetIsImmobile = false;
+            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
             {
                 Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
-                var targetPair = _pairManager.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
+                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
                 if (targetPair is not null)
                 {
                     Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
@@ -427,10 +421,10 @@ public partial class AchievementManager
 
         SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ProlificPetter, 10, () =>
         {
-            bool targetIsImmobile = false;
-            if (_pairManager.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
+            var targetIsImmobile = false;
+            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
             {
-                var targetPair = _pairManager.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
+                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == _clientMonitor.TargetObjectId);
                 if (targetPair is not null)
                 {
                     // store if they are stuck emoting.
@@ -445,21 +439,21 @@ public partial class AchievementManager
             return targetIsImmobile;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientMonitor.InPvP && (_clientConfigs.GetActiveSetIdx() != -1 || _vibeService.ConnectedToyActive), 
+        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _vibeService.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 
@@ -468,43 +462,43 @@ public partial class AchievementManager
 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
         {
-            return _playerData.IsGagged && _clientConfigs.GetActiveSetIdx() != -1 && _clientConfigs.ActivePatternGuid() != Guid.Empty
+            return _playerData.IsGagged && _restraints.EnabledSet is not null && _clientConfigs.ActivePatternGuid() != Guid.Empty
             && _clientConfigs.ActiveTriggers.Count() > 0 && _clientConfigs.ActiveAlarmCount > 0 && _vibeService.ConnectedToyActive;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Conditions", isSecret: true);
 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
         {
-            return _playerData.IsGagged && _clientConfigs.GetActiveSetIdx() != -1 && _vibeService.ConnectedToyActive && _pairManager.DirectPairs.Any(x => x.OwnPerms.InHardcore)
+            return _playerData.IsGagged && _restraints.EnabledSet is not null && _vibeService.ConnectedToyActive && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
             && (_playerData.GlobalPerms?.IsFollowing() ?? false) || (_playerData.GlobalPerms?.IsSitting() ?? false);
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Hardcore Conditions", isSecret: true);
 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _vibeService.ConnectedToyActive && _playerData.IsGagged, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
         SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _clientConfigs.GetActiveSetIdx() != -1 && _clientMonitor.IsDead, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _playerData.IsGagged && _playerData.GlobalPerms!.LiveChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
+        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.EnabledSet is not null && _clientMonitor.IsDead, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _playerData.IsGagged && _playerData.GlobalPerms!.ChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
         // The above is currently non functional as i dont have the data to know which chat message type contains these request tasks.
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyTeacher, 10, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyProfessor, 50, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyMentor, 100, () => _clientConfigs.GetActiveSetIdx() != -1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyTeacher, 10, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyProfessor, 50, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyMentor, 100, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
         SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.ExtremeBondageEnjoyer, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restriction Conditions Satisfied", isSecret: true); 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.WildRide, () =>
         {
-            bool raceEndVisible = false;
+            var raceEndVisible = false;
             unsafe
             {
                 var raceEnded = (AtkUnitBase*)AtkFuckery.GetAddonByName("RaceChocoboResult");
                 if (raceEnded != null)
                     raceEndVisible = raceEnded->RootNode->IsVisible();
             };
-            return _clientMonitor.IsChocoboRacing && raceEndVisible && _clientConfigs.GetActiveSetIdx() != -1;
+            return _clientMonitor.IsChocoboRacing && raceEndVisible && _restraints.EnabledSet is not null;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Races Won In Unusual Conditions", isSecret: true);
 
         SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.SlavePresentation, () =>
         {
-            return _clientConfigs.GetActiveSetIdx() != -1 && _playerData.IsGagged;
+            return _restraints.EnabledSet is not null && _playerData.IsGagged;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Presentations Given on Stage", isSecret: true);
         #endregion SECRETS MODULE
 

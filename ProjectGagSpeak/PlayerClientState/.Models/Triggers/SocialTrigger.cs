@@ -10,6 +10,8 @@ public record SocialTrigger : Trigger
 
     internal SocialTrigger() { }
 
+    public SocialTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     public SocialTrigger(SocialTrigger other, bool clone) : base(other, clone)
     {
         SocialType = other.SocialType;

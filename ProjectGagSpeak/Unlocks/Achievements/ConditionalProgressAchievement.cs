@@ -62,6 +62,9 @@ public class ConditionalProgressAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
+        if (ConditionalTaskBegun)
+            return;
+
         // wait the delayed time before checking the conditional task.
         if (secondsDelayBeforeCheck > 0) 
             await Task.Delay(secondsDelayBeforeCheck * 1000);

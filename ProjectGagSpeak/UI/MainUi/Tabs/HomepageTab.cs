@@ -2,12 +2,11 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.UiGagSetup;
 using GagSpeak.UI.Orders;
 using GagSpeak.UI.Publications;
 using GagSpeak.UI.Puppeteer;
+using GagSpeak.UI.Toybox;
 using GagSpeak.UI.UiRemote;
-using GagSpeak.UI.UiToybox;
 using GagSpeak.UI.Wardrobe;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
@@ -41,11 +40,10 @@ public class HomepageTab
         {
             ("Sex Toy Remote", FontAwesomeIcon.WaveSquare, typeof(RemotePersonal)),
             ("Orders", FontAwesomeIcon.ClipboardList, typeof(OrdersUI)),
-            ("Gags", FontAwesomeIcon.CommentSlash, typeof(GagSetupUI)),
             ("Wardrobe", FontAwesomeIcon.ToiletPortable, typeof(WardrobeUI)),
             ("Puppeteer", FontAwesomeIcon.PersonHarassing, typeof(PuppeteerUI)),
             ("Toybox", FontAwesomeIcon.BoxOpen, typeof(ToyboxUI)),
-            ("My Publications", FontAwesomeIcon.CloudUploadAlt, typeof(PublicationsUI)),
+            ("Publications", FontAwesomeIcon.CloudUploadAlt, typeof(PublicationsUI)),
             ("Achievements", FontAwesomeIcon.Trophy, typeof(AchievementsUI)),
         };
     }

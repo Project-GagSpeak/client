@@ -67,11 +67,11 @@ public sealed class SafewordService : MediatorSubscriberBase, IHostedService
             // do direct updates so they apply first client side, then push to the server. The callback can validate these changes.
             if (_playerManager.GlobalPerms is not null)
             {
-                _playerManager.GlobalPerms.LiveChatGarblerActive = false;
-                _playerManager.GlobalPerms.LiveChatGarblerLocked = false;
+                _playerManager.GlobalPerms.ChatGarblerActive = false;
+                _playerManager.GlobalPerms.ChatGarblerLocked = false;
                 _playerManager.GlobalPerms.WardrobeEnabled = false;
-                _playerManager.GlobalPerms.ItemAutoEquip = false;
-                _playerManager.GlobalPerms.RestraintSetAutoEquip = false;
+                _playerManager.GlobalPerms.GagVisuals = false;
+                _playerManager.GlobalPerms.RestraintSetVisuals = false;
                 _playerManager.GlobalPerms.PuppeteerEnabled = false;
                 _playerManager.GlobalPerms.ToyboxEnabled = false;
                 _playerManager.GlobalPerms.LockToyboxUI = false;

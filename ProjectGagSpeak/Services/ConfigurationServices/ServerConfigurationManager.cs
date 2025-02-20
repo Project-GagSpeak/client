@@ -184,7 +184,7 @@ public class ServerConfigurationManager
     /// <returns>Returns the nickname as a string if found; otherwise, returns null.</returns>
     internal string? GetNicknameForUid(string uid)
     {
-        if (NickStorage.UidServerComments.TryGetValue(uid, out var nickname))
+        if (NickStorage.Nicknames.TryGetValue(uid, out var nickname))
         {
             if (string.IsNullOrEmpty(nickname))
                 return null;
@@ -203,7 +203,7 @@ public class ServerConfigurationManager
         if (string.IsNullOrEmpty(uid))
             return;
 
-        NickStorage.UidServerComments[uid] = nickname;
+        NickStorage.Nicknames[uid] = nickname;
         _nicknameConfig.Save();
     }
 }

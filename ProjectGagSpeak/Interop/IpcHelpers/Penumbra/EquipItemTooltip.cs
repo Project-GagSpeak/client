@@ -48,17 +48,14 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
             case EquipSlot.RFinger:
                 using (_ = !openTooltip ? null : ImRaii.Tooltip())
                 {
-                    ImGui.TextUnformatted($"{prefix} Middle-Click to apply to assign in Restraint Editor  (Right Finger).");
-                    ImGui.TextUnformatted($"{prefix} SHIFT + Middle-Click to assign to opened Cursed Item (Right Finger).");
-                    ImGui.TextUnformatted($"{prefix} CTRL + Middle-Click to assign in Restraint Editor (Left Finger).");
-                    ImGui.TextUnformatted($"{prefix} CTRL + SHIFT + Middle-Click to opened Cursed Item (Left Finger).");
+                    ImGui.TextUnformatted($"{prefix} Middle-Click to apply to assign in GagSpeak Editor  (Right Finger).");
+                    ImGui.TextUnformatted($"{prefix} CTRL + Middle-Click to assign in GagSpeak Editor (Left Finger).");
                 }
                 break;
             default:
                 using (_ = !openTooltip ? null : ImRaii.Tooltip())
                 {
                     ImGui.TextUnformatted($"{prefix} Middle-Click to apply to selected Restraint Set.");
-                    ImGui.TextUnformatted($"{prefix} SHIFT + Middle-Click to assign to opened Cursed Item.");
                 }
                 break;
         }
@@ -67,42 +64,26 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
     public void ApplyItem(EquipItem item)
     {
         var slot = item.Type.ToSlot();
-        switch (slot)
+        if (slot is EquipSlot.RFinger)
         {
-            case EquipSlot.RFinger:
-                switch (ImGui.GetIO().KeyShift, ImGui.GetIO().KeyCtrl)
-                {
-                    // Apply Restraint Right Finger
-                    case (false, false):
-                        Logger.LogDebug($"Applying {item.Name} to Right Finger.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.RFinger, item));
-                        return;
-                    // Apply Restraint Left Finger
-                    case (false, true):
-                        Logger.LogDebug($"Applying {item.Name} to Left Finger.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.LFinger, item));
-                        return;
-                    // Apply Cursed Item Right Finger
-                    case (true, false):
-                        Logger.LogDebug($"Applying {item.Name} to Right Finger in cursed items.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToCursedItemMessage(EquipSlot.RFinger, item));
-                        return;
-                    // Apply Cursed Item Left Finger
-                    case (true, true):
-                        Logger.LogDebug($"Applying {item.Name} to Left Finger in cursed items.", LoggerType.IpcPenumbra);
-                        Mediator.Publish(new TooltipSetItemToCursedItemMessage(EquipSlot.LFinger, item));
-                        return;
-                }
-            default:
-                if (ImGui.GetIO().KeyShift)
-                {
-                    Logger.LogDebug($"Applying {item.Name} to {slot.ToName()} in cursedItems.", LoggerType.IpcPenumbra);
-                    Mediator.Publish(new TooltipSetItemToCursedItemMessage(slot, item));
-                    return;
-                }
-                Logger.LogDebug($"Applying {item.Name} to {slot.ToName()}.", LoggerType.IpcPenumbra);
-                Mediator.Publish(new TooltipSetItemToEditorMessage(slot, item));
+            if (ImGui.GetIO().KeyCtrl)
+            {
+                Logger.LogDebug($"Applying {item.Name} to Right Finger.", LoggerType.IpcPenumbra);
+                Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.RFinger, item));
                 return;
+            }
+            else
+            {
+                Logger.LogDebug($"Applying {item.Name} to Left Finger.", LoggerType.IpcPenumbra);
+                Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.LFinger, item));
+                return;
+            }
+        }
+        else
+        {
+            Logger.LogDebug($"Applying {item.Name} to {slot.ToName()}.", LoggerType.IpcPenumbra);
+            Mediator.Publish(new TooltipSetItemToEditorMessage(slot, item));
+            return;
         }
     }
 

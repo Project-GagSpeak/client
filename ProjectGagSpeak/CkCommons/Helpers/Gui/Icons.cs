@@ -1,20 +1,17 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Interop.IpcHelpers.GameData;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.MinionListModule.Delegates;
 
-namespace GagSpeak.CkCommons;
+namespace GagSpeak.CkCommons.Helpers;
 
-public static class IconDisplays
+public static class Icons
 {
 
     /// <summary> Draw a game icon display (not icon button or anything) </summary>

@@ -139,7 +139,7 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
 
         InitDefaultContext();
         InitDefaultButtons();
-        EnableCkFileSystemSubscription();
+        EnableFileSystemSubscription();
         ExceptionHandler = e => Log.LogWarning(e.ToString());
     }
 

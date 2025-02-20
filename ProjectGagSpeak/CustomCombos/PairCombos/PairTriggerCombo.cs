@@ -110,7 +110,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             // Draw the alarm time.
             UiSharedService.ColorText("Trigger Kind:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
-            ImGui.TextUnformatted(item.Type.TriggerKindToString());
+            ImGui.TextUnformatted(item.Type.ToName());
 
             UiSharedService.ColorText("Action Kind Performed:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();

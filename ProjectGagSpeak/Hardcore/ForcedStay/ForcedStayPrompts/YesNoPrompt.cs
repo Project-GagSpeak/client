@@ -28,15 +28,21 @@ public class YesNoPrompt : BasePrompt
     // Run on plugin Enable
     public override void Enable()
     {
-        base.Enable();
-        _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
+        if(!Enabled)
+        {
+            base.Enable();
+            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
+        }
     }
 
     // Run on Plugin Disable
     public override void Disable()
     {
-        base.Disable();
-        _addonLifecycle.UnregisterListener(AddonSetup);
+        if(Enabled)
+        {
+            base.Disable();
+            _addonLifecycle.UnregisterListener(AddonSetup);
+        }
     }
 
     // Run whenever we open a prompt that is a Yes/No prompt

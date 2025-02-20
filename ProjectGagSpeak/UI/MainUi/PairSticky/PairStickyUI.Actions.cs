@@ -37,32 +37,32 @@ public partial class PairStickyUI
                 ImGui.TextUnformatted("Gag Actions");
                 DrawGagActions();
             }
-
-            if (StickyPair.LastWardrobeData != null)
+            else if (StickyPair.LastRestrictionsData != null)
+            {
+                ImGui.TextUnformatted("Restrictions Actions");
+                // DrawRestrictionsActions();
+            }
+            else if (StickyPair.LastRestraintData != null)
             {
                 ImGui.TextUnformatted("Wardrobe Actions");
                 DrawWardrobeActions();
             }
-
-            if (StickyPair.LastIpcData != null && StickyPair.IsVisible)
+            else if (StickyPair.LastIpcData != null && StickyPair.IsVisible)
             {
                 ImGui.TextUnformatted("Moodles Actions");
                 DrawMoodlesActions();
             }
-
-            if (StickyPair.LastToyboxData != null)
+            else if (StickyPair.LastToyboxData != null)
             {
                 ImGui.TextUnformatted("Toybox Actions");
                 DrawToyboxActions();
             }
-
-            if (StickyPair.PairPerms.InHardcore)
+            else if (StickyPair.PairPerms.InHardcore)
             {
                 ImGui.TextUnformatted("Hardcore Actions");
                 DrawHardcoreActions();
             }
-
-            if (StickyPair.PairPerms.InHardcore && (UniqueShockCollarPermsExist() || GlobalShockCollarPermsExist()))
+            else if (StickyPair.PairPerms.InHardcore && (UniqueShockCollarPermsExist() || GlobalShockCollarPermsExist()))
             {
                 ImGui.TextUnformatted("Hardcore Shock Collar Actions.");
                 DrawHardcoreShockCollarActions();
@@ -74,8 +74,8 @@ public partial class PairStickyUI
         DrawIndividualMenu();
     }
 
-    private bool UniqueShockCollarPermsExist() => !StickyPair.PairPerms.ShockCollarShareCode.IsNullOrEmpty() && StickyPair.PairGlobals.MaxIntensity != -1;
-    private bool GlobalShockCollarPermsExist() => !StickyPair.PairGlobals.GlobalShockShareCode.IsNullOrEmpty() && StickyPair.PairGlobals.MaxIntensity != -1;
+    private bool UniqueShockCollarPermsExist() => !StickyPair.PairPerms.HasValidShareCode();
+    private bool GlobalShockCollarPermsExist() => !StickyPair.PairGlobals.HasValidShareCode();
 
     private void DrawCommonClientMenu()
     {
@@ -99,13 +99,14 @@ public partial class PairStickyUI
             UiSharedService.AttachToolTip("Snapshot "+ PairNickOrAliasOrUID+"'s KinkPlate and send it as a reported profile.");
         }
 
-        if (StickyPair.IsPaired)
+        if (StickyPair.IsOnline)
         {
             var pauseIcon = OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
             var pauseText = OwnPerms.IsPaused ? "Unpause " + PairNickOrAliasOrUID : "Pause " + PairNickOrAliasOrUID;
             if (_uiShared.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
-                _ = _hub.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused), UpdateDir.Own));
+                _hub.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
             }
             UiSharedService.AttachToolTip(!OwnPerms.IsPaused
                 ? "Pause pairing with " + PairNickOrAliasOrUID : "Resume pairing with " + PairNickOrAliasOrUID);
@@ -125,13 +126,8 @@ public partial class PairStickyUI
 
     private void DrawIndividualMenu()
     {
-        if (StickyPair.IndividualPairStatus != IndividualPairStatus.None)
-        {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
-            {
-                _ = _hub.UserRemovePair(new(StickyPair.UserData));
-            }
-            UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PairNickOrAliasOrUID);
-        }
+        if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
+            _hub.UserRemovePair(new(StickyPair.UserData)).ConfigureAwait(false);
+        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PairNickOrAliasOrUID);
     }
 }

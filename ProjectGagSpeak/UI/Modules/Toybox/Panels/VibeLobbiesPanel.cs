@@ -1,22 +1,12 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagSpeak.VibeLobby;
-using ImGuiNET;
-using OtterGui;
-using OtterGui.Text;
-using System.Globalization;
-using System.Numerics;
 
 namespace GagSpeak.UI.UiToybox;
 
-public class ToyboxVibeRooms : DisposableMediatorSubscriberBase
+public class VibeLobbiesPanel : DisposableMediatorSubscriberBase
 {
     private readonly VibeRoomManager _roomManager;
     private readonly UiSharedService _uiShared;
@@ -24,7 +14,7 @@ public class ToyboxVibeRooms : DisposableMediatorSubscriberBase
     private readonly GagspeakConfigService _configService;
     private readonly ServerConfigService _serverConfigs;
 
-    public ToyboxVibeRooms(ILogger<ToyboxVibeRooms> logger,
+    public VibeLobbiesPanel(ILogger<VibeLobbiesPanel> logger,
         GagspeakMediator mediator, VibeRoomManager roomManager,
         UiSharedService uiShared, PairManager pairManager,
         GagspeakConfigService mainConfig, ServerConfigService serverConfigs)
@@ -37,7 +27,7 @@ public class ToyboxVibeRooms : DisposableMediatorSubscriberBase
         _serverConfigs = serverConfigs;
     }
 
-    public void DrawVibeServerPanel()
+    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
     {
         UiSharedService.ColorTextCentered("Currently Under Construction!", ImGuiColors.DalamudRed);
     }

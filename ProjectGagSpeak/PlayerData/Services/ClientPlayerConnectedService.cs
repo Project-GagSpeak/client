@@ -99,7 +99,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
             return;
         }
 
-        var hasExpiredTimer = serverData.Padlock.ToPadlock().IsTimerLock() && serverData.Timer < DateTimeOffset.UtcNow;
+        var hasExpiredTimer = serverData.Padlock.IsTimerLock() && serverData.Timer < DateTimeOffset.UtcNow;
         if(_clientConfigs.TryGetActiveSet(out var activeClientSet))
             await HandleClientSet(serverData, hasExpiredTimer, activeClientSet);
     }
@@ -144,7 +144,7 @@ public sealed class OnConnectedService : DisposableMediatorSubscriberBase, IHost
         if (serverData.Padlock != Padlocks.None.ToName())
         {
             Logger.LogInformation("Re-Locking the stored active Restraint Set", LoggerType.Restraints);
-            _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock.ToPadlock(),
+            _appearanceHandler.LockRestraintSet(serverData.ActiveSetId, serverData.Padlock,
                 serverData.Password, serverData.Timer.GetEndTimeOffsetString(), serverData.Assigner, true, true);
         }
     }

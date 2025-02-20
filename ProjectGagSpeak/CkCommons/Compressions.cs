@@ -1,7 +1,7 @@
 using Penumbra.String.Functions;
 using System.IO.Compression;
 
-namespace GagSpeak.Utils;
+namespace GagSpeak.CkCommons;
 public static class Compressions
 {
     /// <summary> Compress a byte array with a prepended version. </summary>

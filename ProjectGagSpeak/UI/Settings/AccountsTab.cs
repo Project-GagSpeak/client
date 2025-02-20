@@ -252,7 +252,7 @@ public class AccountsTab
                 _mainConfig.Config.AccountCreated = false;
             }
             _mainConfig.Config.LastUidLoggedIn = "";
-            _mainConfig.UpdateConfigs(string.Empty);
+            _mainConfig.UpdateConfigs(string.Empty); // Should be changing the UID's file the config file provider service.
             _mainConfig.Save();
 
             _logger.LogInformation("Deleting Account from Server.");

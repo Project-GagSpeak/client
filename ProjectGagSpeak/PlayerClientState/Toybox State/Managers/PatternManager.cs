@@ -26,7 +26,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     // Cached Information
     public Pattern? ActiveEditorItem { get; private set; } = null;
-    public LightPattern? ActivePattern => _applier.ActivePatternInfo;
+    public Pattern? ActivePattern => _applier.ActivePatternInfo;
 
     // Storage
     public PatternStorage Storage { get; private set; } = new PatternStorage();
@@ -127,7 +127,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     {
         // This only actually fires if a pattern is active, and is skipped otherwise.
         if(ActivePattern is not null)
-            DisablePattern(ActivePattern.Id, enactor);
+            DisablePattern(ActivePattern.Identifier, enactor);
         // now enable it.
         EnablePattern(patternId, enactor);
     }
@@ -142,7 +142,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     public void DisablePattern(Guid patternId, string enactor)
     {
-        if(ActivePattern is not null && ActivePattern.Id == patternId)
+        if(ActivePattern is not null && ActivePattern.Identifier == patternId)
             _applier.StopPlayback();
     }
 

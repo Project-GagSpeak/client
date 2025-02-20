@@ -240,7 +240,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public void SetUniqueSymbolsString()
     {
-        switch (_clientConfig.GagspeakConfig.LanguageDialect)
+        switch (_config.Config.LanguageDialect)
         {
             case "IPA_UK": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_UK); break;
             case "IPA_US": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_US); break;

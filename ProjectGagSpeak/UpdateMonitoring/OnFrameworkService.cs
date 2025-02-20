@@ -3,10 +3,10 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
 using Microsoft.Extensions.Hosting;
+using StructsPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace GagSpeak.UpdateMonitoring;
 
@@ -308,7 +308,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             _sentBetweenAreas = false;
             Mediator.Publish(new ZoneSwitchEndMessage());
             // if our commendation count is different, update it and invoke the event with the difference.
-            var newCommendations = PlayerState.Instance()->PlayerCommendations;
+            var newCommendations = StructsPlayerState.Instance()->PlayerCommendations;
             if (newCommendations != LastCommendationsCount)
             {
                 Logger.LogDebug("Our Previous Commendation Count was: " + LastCommendationsCount + " and our new commendation count is: " + newCommendations);

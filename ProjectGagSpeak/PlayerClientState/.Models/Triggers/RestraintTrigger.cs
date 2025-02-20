@@ -13,6 +13,8 @@ public record RestraintTrigger : Trigger
 
     internal RestraintTrigger() { }
 
+    public RestraintTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     public RestraintTrigger(RestraintTrigger other, bool keepId) : base(other, keepId)
     {
         RestraintSetId = other.RestraintSetId;

@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons;
+namespace GagSpeak.CkCommons.Helpers;
 
 public static class CkColors
 {

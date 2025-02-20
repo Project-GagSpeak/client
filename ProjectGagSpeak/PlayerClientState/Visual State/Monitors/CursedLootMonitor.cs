@@ -18,7 +18,7 @@ using OtterGui;
 using System.Reflection.Metadata;
 using System;
 using GameObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Text;
 using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.PlayerState.Visual;

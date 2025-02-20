@@ -1,5 +1,5 @@
 using Dalamud.Utility;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Text;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using ImGuiNET;

@@ -20,6 +20,8 @@ public record SpellActionTrigger : Trigger
 
     internal SpellActionTrigger() { }
 
+    internal SpellActionTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     internal SpellActionTrigger(SpellActionTrigger other, bool keepId) : base(other, keepId)
     {
         ActionKind = other.ActionKind;

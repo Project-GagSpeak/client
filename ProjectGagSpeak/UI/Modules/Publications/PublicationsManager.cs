@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Text;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.PlayerData.Data;

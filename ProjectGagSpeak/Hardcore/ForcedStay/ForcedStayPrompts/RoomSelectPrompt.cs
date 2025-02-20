@@ -27,12 +27,14 @@ public class RoomSelectPrompt : BasePrompt
     // Run on plugin Enable
     public override void Enable()
     {
-        base.Enable();
-        _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", AddonSetup);
-        _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", SetEntry);
-        _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", AddonSetup);
-        _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MansionSelectRoom", SetEntry);
-
+        if(!Enabled)
+        {
+            base.Enable();
+            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", AddonSetup);
+            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", SetEntry);
+            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", AddonSetup);
+            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MansionSelectRoom", SetEntry);
+        }
     }
 
     private unsafe void SetEntry(AddonEvent type, AddonArgs args)
@@ -53,9 +55,12 @@ public class RoomSelectPrompt : BasePrompt
     // Run on Plugin Disable
     public override void Disable()
     {
-        base.Disable();
-        _addonLifecycle.UnregisterListener(AddonSetup);
-        _addonLifecycle.UnregisterListener(SetEntry);
+        if(Enabled)
+        {
+            base.Disable();
+            _addonLifecycle.UnregisterListener(AddonSetup);
+            _addonLifecycle.UnregisterListener(SetEntry);
+        }
     }
 
     protected async void AddonSetup(AddonEvent eventType, AddonArgs addonInfo)

@@ -53,27 +53,27 @@ public class PuppeteerComponents
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
 
         // so they let sits?
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true))
-                onSitsChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
+                onSitsChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit));
         UiSharedService.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true))
-                onMotionChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
+                onMotionChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
         UiSharedService.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true))
-                onAliasChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
+                onAliasChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias));
         UiSharedService.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
 
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             if (_uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
-                onAllChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppeteerPerms.All));
+                onAllChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All));
         UiSharedService.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform any command.");
 
         ImUtf8.SameLineInner();
@@ -104,25 +104,25 @@ public class PuppeteerComponents
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Chair, inPopup: true);
         UiSharedService.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Walking, inPopup: true);
         UiSharedService.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
         UiSharedService.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppeteerPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
             _uiShared.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
         UiSharedService.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform any command.");
     }

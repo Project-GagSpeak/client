@@ -81,7 +81,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
 
                 if (!UserColors.ContainsKey(x.UID))
                 {
-                    if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                    if (x.Tier is CkSupporterTier.KinkporiumMistress)
                     {
                         UserColors[x.UID] = CKMistressColor;
                     }
@@ -142,7 +142,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     // If the total width is less than available, print in one go
                     if (msgWidth <= remainingWidth)
                     {
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorText(x.Message, CkMistressText);
                         else
                             ImGui.TextUnformatted(x.Message);
@@ -167,7 +167,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
 
                         // Print the fitting part of the message
                         ImUtf8.SameLineInner();
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
                         else
                             ImGui.TextUnformatted(fittingMessage.TrimEnd());
@@ -175,7 +175,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         // Draw the remaining part of the message wrapped
                         string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
                         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
                         else
                             UiSharedService.TextWrapped(wrappedMessage);

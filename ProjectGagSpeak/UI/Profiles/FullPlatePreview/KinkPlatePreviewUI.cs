@@ -282,7 +282,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         statsPos += new Vector2(24, 0);
 
         ImGui.SetCursorScreenPos(statsPos);
-        var formattedDate = MainHub.PlayerUserData.createdOn ?? DateTime.MinValue;
+        var formattedDate = MainHub.PlayerUserData.CreatedOn ?? DateTime.MinValue;
         string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
 
         UiSharedService.ColorText(createdDate, ImGuiColors.ParsedGold);

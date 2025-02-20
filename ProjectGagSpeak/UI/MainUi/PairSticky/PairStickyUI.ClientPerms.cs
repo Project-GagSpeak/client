@@ -31,25 +31,27 @@ public partial class PairStickyUI
     {
         /* ----------- GLOBAL SETTINGS ----------- */
         ImGui.TextUnformatted("Global Permissions");
+        if (_clientData.GlobalPerms is not { } globals)
+            return;
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.LiveChatGarblerActive), nameof(StickyPair.OwnPermAccess.LiveChatGarblerActiveAllowed),
-            _clientData.GlobalPerms!.LiveChatGarblerActive ? "Live Chat Garbler Active" : "Live Chat Garbler Inactive", // label
-            _clientData.GlobalPerms.LiveChatGarblerActive ? FontAwesomeIcon.MicrophoneSlash : FontAwesomeIcon.Microphone, // icon
-            _clientData.GlobalPerms.LiveChatGarblerActive ? "Click to disable Live Chat Garbler (Global)" : "Click to enable Live Chat Garbler (Global)", // tooltip
-            OwnPerms.InHardcore || _clientData.GlobalPerms.LiveChatGarblerLocked, // Disable condition
+        DrawOwnSetting(nameof(globals.ChatGarblerActive), nameof(StickyPair.OwnPermAccess.ChatGarblerActiveAllowed),
+            globals.ChatGarblerActive ? "Live Chat Garbler Active" : "Live Chat Garbler Inactive", // label
+            globals.ChatGarblerActive ? FontAwesomeIcon.MicrophoneSlash : FontAwesomeIcon.Microphone, // icon
+            globals.ChatGarblerActive ? "Click to disable Live Chat Garbler (Global)" : "Click to enable Live Chat Garbler (Global)", // tooltip
+            OwnPerms.InHardcore || globals.ChatGarblerLocked, // Disable condition
             PermissionType.Global, PermissionValueType.YesNo); // permission type and value type
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.LiveChatGarblerLocked), nameof(StickyPair.OwnPermAccess.LiveChatGarblerLockedAllowed),
-            _clientData.GlobalPerms.LiveChatGarblerLocked ? "Live Chat Garbler Locked" : "LIve Chat Garbler Unlocked",
-            _clientData.GlobalPerms.LiveChatGarblerLocked ? FontAwesomeIcon.Key : FontAwesomeIcon.UnlockAlt,
-            _clientData.GlobalPerms.LiveChatGarblerLocked ? "Click to unlock Live Chat Garbler (Global)" : "Click to lock Live Chat Garbler (Global)",
+        DrawOwnSetting(nameof(globals.ChatGarblerLocked), nameof(StickyPair.OwnPermAccess.ChatGarblerLockedAllowed),
+            globals.ChatGarblerLocked ? "Live Chat Garbler Locked" : "LIve Chat Garbler Unlocked",
+            globals.ChatGarblerLocked ? FontAwesomeIcon.Key : FontAwesomeIcon.UnlockAlt,
+            globals.ChatGarblerLocked ? "Click to unlock Live Chat Garbler (Global)" : "Click to lock Live Chat Garbler (Global)",
             true,
             PermissionType.Global, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.LockToyboxUI), nameof(StickyPair.OwnPermAccess.LockToyboxUIAllowed),
-            _clientData.GlobalPerms.LockToyboxUI ? "Toybox Interactions Restricted" : "Toybox Interactions Allowed",
-            _clientData.GlobalPerms.LockToyboxUI ? FontAwesomeIcon.Box : FontAwesomeIcon.BoxOpen,
-            _clientData.GlobalPerms.LockToyboxUI ? "Click to allow Toybox Interactions (Global)" : "Click to disallow Toybox Interactions (Global)",
+        DrawOwnSetting(nameof(globals.LockToyboxUI), nameof(StickyPair.OwnPermAccess.LockToyboxUIAllowed),
+            globals.LockToyboxUI ? "Toybox Interactions Restricted" : "Toybox Interactions Allowed",
+            globals.LockToyboxUI ? FontAwesomeIcon.Box : FontAwesomeIcon.BoxOpen,
+            globals.LockToyboxUI ? "Click to allow Toybox Interactions (Global)" : "Click to disallow Toybox Interactions (Global)",
             OwnPerms.InHardcore,
             PermissionType.Global, PermissionValueType.YesNo);
 
@@ -86,10 +88,10 @@ public partial class PairStickyUI
         /* ----------- GAG PERMISSIONS ----------- */
         ImGui.TextUnformatted("Gag Permissions");
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ItemAutoEquip), nameof(StickyPair.OwnPermAccess.ItemAutoEquipAllowed),
-            _clientData.GlobalPerms.ItemAutoEquip ? "Auto-equip Gag Glamours Active" : "Auto-equip Gag Glamours Inactive",
-            _clientData.GlobalPerms.ItemAutoEquip ? FontAwesomeIcon.Surprise : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.ItemAutoEquip ? "Click to disable Gag Glamours (Global)" 
+        DrawOwnSetting(nameof(globals.GagVisuals), nameof(StickyPair.OwnPermAccess.GagVisualsAllowed),
+            globals.GagVisuals ? "Auto-equip Gag Glamours Active" : "Auto-equip Gag Glamours Inactive",
+            globals.GagVisuals ? FontAwesomeIcon.Surprise : FontAwesomeIcon.Ban,
+            globals.GagVisuals ? "Click to disable Gag Glamours (Global)" 
                                                      : "Click to enable Gag Glamours (Global)",
             OwnPerms.InHardcore,
             PermissionType.Global, PermissionValueType.YesNo);
@@ -134,13 +136,66 @@ public partial class PairStickyUI
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
         ImGui.Separator();
+
+        /* ----------- RESTRICTION PERMISSIONS ----------- */
+        ImGui.TextUnformatted("Restriction Permissions");
+
+        DrawOwnSetting(nameof(globals.RestrictionVisuals), nameof(StickyPair.OwnPermAccess.RestrictionVisualsAllowed),
+            globals.RestrictionVisuals ? "Auto-equip Restriction Glamours Active" : "Auto-equip Restriction Glamours Inactive",
+            globals.RestrictionVisuals ? FontAwesomeIcon.Surprise : FontAwesomeIcon.Ban,
+            globals.RestrictionVisuals ? "Click to disable Restriction Glamours (Global)"
+                                                     : "Click to enable Restriction Glamours (Global)",
+            OwnPerms.InHardcore,
+            PermissionType.Global, PermissionValueType.YesNo);
+
+        DrawOwnSetting(nameof(OwnPerms.ApplyRestrictions), nameof(StickyPair.OwnPermAccess.ApplyRestrictionsAllowed),
+            OwnPerms.ApplyRestrictions ? "Applying Restrictions Allowed" : "Applying Restrictions Restricted",
+            OwnPerms.ApplyRestrictions ? FontAwesomeIcon.CheckCircle : FontAwesomeIcon.Ban,
+            OwnPerms.ApplyRestrictions ? $"Click to revoke {PairNickOrAliasOrUID}'s access to apply Restrictions to you."
+                               : $"Click to allow {PairNickOrAliasOrUID} to apply Restrictions to you.",
+            OwnPerms.InHardcore,
+            PermissionType.UniquePairPerm, PermissionValueType.YesNo);
+
+        DrawOwnSetting(nameof(OwnPerms.LockRestrictions), nameof(StickyPair.OwnPermAccess.LockRestrictionsAllowed),
+            OwnPerms.LockRestrictions ? "Locking Restrictions Allowed" : "Locking Restrictions Restricted",
+            OwnPerms.LockRestrictions ? FontAwesomeIcon.Lock : FontAwesomeIcon.Ban,
+            OwnPerms.LockRestrictions ? $"Click to revoke {PairNickOrAliasOrUID}'s access to lock Restrictions on you."
+                              : $"Click to allow {PairNickOrAliasOrUID} to lock Restrictions on you.",
+            OwnPerms.InHardcore,
+            PermissionType.UniquePairPerm, PermissionValueType.YesNo);
+
+        DrawOwnSetting(nameof(OwnPerms.MaxRestrictionTime), nameof(StickyPair.OwnPermAccess.MaxRestrictionTimeAllowed),
+            "Max Duration",
+            FontAwesomeIcon.HourglassHalf,
+            $"Max duration {PairNickOrAliasOrUID} can lock your gags for",
+            true,
+            PermissionType.UniquePairPerm, PermissionValueType.TimeSpan);
+
+        DrawOwnSetting(nameof(OwnPerms.UnlockRestrictions), nameof(StickyPair.OwnPermAccess.UnlockRestrictionsAllowed),
+            OwnPerms.UnlockRestrictions ? "Unlocking Restrictions Allowed" : "Unlocking Restrictions Restricted",
+            OwnPerms.UnlockRestrictions ? FontAwesomeIcon.LockOpen : FontAwesomeIcon.Ban,
+            OwnPerms.UnlockRestrictions ? $"Click to revoke {PairNickOrAliasOrUID}'s access to unlock Restrictions from you."
+                               : $"Click to allow {PairNickOrAliasOrUID} to unlock Restrictions from you.",
+            OwnPerms.InHardcore,
+            PermissionType.UniquePairPerm, PermissionValueType.YesNo);
+
+        DrawOwnSetting(nameof(OwnPerms.RemoveRestrictions), nameof(StickyPair.OwnPermAccess.RemoveRestrictionsAllowed),
+            OwnPerms.RemoveRestrictions ? "Removing Restrictions Allowed" : "Removing Restrictions Restricted",
+            OwnPerms.RemoveRestrictions ? FontAwesomeIcon.TimesCircle : FontAwesomeIcon.Ban,
+            OwnPerms.RemoveRestrictions ? $"Click to revoke {PairNickOrAliasOrUID}'s access to remove Restrictions from you."
+                                : $"Click to allow {PairNickOrAliasOrUID} to remove Restrictions from you.",
+            OwnPerms.InHardcore,
+            PermissionType.UniquePairPerm, PermissionValueType.YesNo);
+
+        ImGui.Separator();
+
         /* ----------- RESTRAINT SET PERMISSIONS ----------- */
         ImGui.TextUnformatted("Restraint Set Permissions");
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.RestraintSetAutoEquip), nameof(StickyPair.OwnPermAccess.RestraintSetAutoEquipAllowed),
-            _clientData.GlobalPerms.RestraintSetAutoEquip ? "Restraint Set Glamours Active" : "Restraint Set Glamours Inactive",
-            _clientData.GlobalPerms.RestraintSetAutoEquip ? FontAwesomeIcon.ShopLock : FontAwesomeIcon.ShopSlash,
-            _clientData.GlobalPerms.RestraintSetAutoEquip ? "Click to disable Restraint Set Glamours (Global)" 
+        DrawOwnSetting(nameof(globals.RestraintSetVisuals), nameof(StickyPair.OwnPermAccess.RestraintSetVisualsAllowed),
+            globals.RestraintSetVisuals ? "Restraint Set Glamours Active" : "Restraint Set Glamours Inactive",
+            globals.RestraintSetVisuals ? FontAwesomeIcon.ShopLock : FontAwesomeIcon.ShopSlash,
+            globals.RestraintSetVisuals ? "Click to disable Restraint Set Glamours (Global)" 
                                                              : "Click to enable Restraint Set Glamours (Global)",
             OwnPerms.InHardcore,
             PermissionType.Global, PermissionValueType.YesNo);
@@ -161,7 +216,7 @@ public partial class PairStickyUI
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(OwnPerms.MaxAllowedRestraintTime), nameof(StickyPair.OwnPermAccess.MaxAllowedRestraintTimeAllowed),
+        DrawOwnSetting(nameof(OwnPerms.MaxRestraintTime), nameof(StickyPair.OwnPermAccess.MaxRestraintTimeAllowed),
             "Max Duration",
             FontAwesomeIcon.HourglassHalf,
             $"Max duration {PairNickOrAliasOrUID} can lock your Restraint Sets for",
@@ -353,24 +408,24 @@ public partial class PairStickyUI
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(OwnPerms.DevotionalStatesForPair), string.Empty,
-            OwnPerms.DevotionalStatesForPair ? $"Toggles are Devotional from {PairNickOrAliasOrUID}" : $"Toggles are not Devotional",
-            OwnPerms.DevotionalStatesForPair ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock,
-            OwnPerms.DevotionalStatesForPair ? $"Click to make toggles from {PairNickOrAliasOrUID} not be Devotional" : $"Click to make toggles from {PairNickOrAliasOrUID} be Devotional",
+        DrawOwnSetting(nameof(OwnPerms.PairLockedStates), string.Empty,
+            OwnPerms.PairLockedStates ? $"Toggles are Devotional from {PairNickOrAliasOrUID}" : $"Toggles are not Devotional",
+            OwnPerms.PairLockedStates ? FontAwesomeIcon.Lock : FontAwesomeIcon.Unlock,
+            OwnPerms.PairLockedStates ? $"Click to make toggles from {PairNickOrAliasOrUID} not be Devotional" : $"Click to make toggles from {PairNickOrAliasOrUID} be Devotional",
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ForcedFollow), nameof(OwnPerms.AllowForcedFollow),
-            _clientData.GlobalPerms.IsFollowing() ? "Forced to follow" : "Not forced to follow",
-            _clientData.GlobalPerms.IsFollowing() ? FontAwesomeIcon.Walking : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsFollowing() ? $"You are being forced to follow {PairNickOrAliasOrUID}" : $"You are not being forced to follow {PairNickOrAliasOrUID}",
+        DrawOwnSetting(nameof(globals.ForcedFollow), nameof(OwnPerms.AllowForcedFollow),
+            globals.IsFollowing() ? "Forced to follow" : "Not forced to follow",
+            globals.IsFollowing() ? FontAwesomeIcon.Walking : FontAwesomeIcon.Ban,
+            globals.IsFollowing() ? $"You are being forced to follow {PairNickOrAliasOrUID}" : $"You are not being forced to follow {PairNickOrAliasOrUID}",
             true, PermissionType.Hardcore);
 
         using (ImRaii.Group())
         {
-            var icon = _clientData.GlobalPerms.ForcedEmoteState.NullOrEmpty() ? FontAwesomeIcon.Ban : (OwnPerms.AllowForcedEmote ? FontAwesomeIcon.PersonArrowDownToLine : FontAwesomeIcon.Chair);
-            var txt = _clientData.GlobalPerms.ForcedEmoteState.NullOrEmpty() ? "Not forced to emote or sit" : "Forced to emote or sit";
-            var tooltipStr = _clientData.GlobalPerms.ForcedEmoteState.NullOrEmpty() ? $"You are not being forced to emote or sit by {PairNickOrAliasOrUID}" : $"You are being forced to emote or sit by {PairNickOrAliasOrUID}";
+            var icon = globals.ForcedEmoteState.NullOrEmpty() ? FontAwesomeIcon.Ban : (OwnPerms.AllowForcedEmote ? FontAwesomeIcon.PersonArrowDownToLine : FontAwesomeIcon.Chair);
+            var txt = globals.ForcedEmoteState.NullOrEmpty() ? "Not forced to emote or sit" : "Forced to emote or sit";
+            var tooltipStr = globals.ForcedEmoteState.NullOrEmpty() ? $"You are not being forced to emote or sit by {PairNickOrAliasOrUID}" : $"You are being forced to emote or sit by {PairNickOrAliasOrUID}";
             var specialWidth = IconButtonTextWidth - ImGui.GetFrameHeightWithSpacing();
             _uiShared.IconTextButton(icon, txt, specialWidth, true, true);
             UiSharedService.AttachToolTip(tooltipStr);
@@ -397,50 +452,50 @@ public partial class PairStickyUI
             UiSharedService.AttachToolTip("Allow " + PairNickOrAliasOrUID + " to force you to perform any looped emote");
         }
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ForcedStay), nameof(OwnPerms.AllowForcedToStay),
-            _clientData.GlobalPerms.IsStaying() ? "Forced to stay" : "Not forced to stay",
-            _clientData.GlobalPerms.IsStaying() ? FontAwesomeIcon.HouseLock : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsStaying() ? $"You are being forced to stay by {PairNickOrAliasOrUID}" : $"You are not being forced to stay by {PairNickOrAliasOrUID}",
+        DrawOwnSetting(nameof(globals.ForcedStay), nameof(OwnPerms.AllowForcedToStay),
+            globals.IsStaying() ? "Forced to stay" : "Not forced to stay",
+            globals.IsStaying() ? FontAwesomeIcon.HouseLock : FontAwesomeIcon.Ban,
+            globals.IsStaying() ? $"You are being forced to stay by {PairNickOrAliasOrUID}" : $"You are not being forced to stay by {PairNickOrAliasOrUID}",
             true, PermissionType.Hardcore);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ForcedBlindfold), nameof(OwnPerms.AllowBlindfold),
-            _clientData.GlobalPerms.IsBlindfolded() ? "Blindfolded" : "Not Blindfolded",
-            _clientData.GlobalPerms.IsBlindfolded() ? FontAwesomeIcon.Blind : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsBlindfolded() ? $"You have been blindfolded by {PairNickOrAliasOrUID}" : $"You have not been blindfolded by {PairNickOrAliasOrUID}",
+        DrawOwnSetting(nameof(globals.ForcedBlindfold), nameof(OwnPerms.AllowBlindfold),
+            globals.IsBlindfolded() ? "Blindfolded" : "Not Blindfolded",
+            globals.IsBlindfolded() ? FontAwesomeIcon.Blind : FontAwesomeIcon.Ban,
+            globals.IsBlindfolded() ? $"You have been blindfolded by {PairNickOrAliasOrUID}" : $"You have not been blindfolded by {PairNickOrAliasOrUID}",
             true, PermissionType.Hardcore);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ChatBoxesHidden), nameof(OwnPerms.AllowHidingChatBoxes),
-            _clientData.GlobalPerms.IsChatHidden() ? "Chatbox is hidden" : "Chatbox is visible",
-            _clientData.GlobalPerms.IsChatHidden() ? FontAwesomeIcon.CommentSlash : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsChatHidden() ? _clientData.GlobalPerms.ChatBoxesHidden.HardcorePermUID() + " has hidden your chatbox" : "Your chatbox is visible",
+        DrawOwnSetting(nameof(globals.ChatBoxesHidden), nameof(OwnPerms.AllowHidingChatBoxes),
+            globals.IsChatHidden() ? "Chatbox is hidden" : "Chatbox is visible",
+            globals.IsChatHidden() ? FontAwesomeIcon.CommentSlash : FontAwesomeIcon.Ban,
+            globals.IsChatHidden() ? globals.ChatBoxesHidden.HardcorePermUID() + " has hidden your chatbox" : "Your chatbox is visible",
             true, PermissionType.Hardcore);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ChatInputHidden), nameof(OwnPerms.AllowHidingChatInput),
-            _clientData.GlobalPerms.IsChatInputHidden() ? "Chat Input is Hidden" : "Chat Input is Visible",
-            _clientData.GlobalPerms.IsChatInputHidden() ? FontAwesomeIcon.CommentSlash : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsChatInputHidden() ? _clientData.GlobalPerms.ChatInputHidden.HardcorePermUID() + " has hidden your chat input" : "Your chat input is visible",
+        DrawOwnSetting(nameof(globals.ChatInputHidden), nameof(OwnPerms.AllowHidingChatInput),
+            globals.IsChatInputHidden() ? "Chat Input is Hidden" : "Chat Input is Visible",
+            globals.IsChatInputHidden() ? FontAwesomeIcon.CommentSlash : FontAwesomeIcon.Ban,
+            globals.IsChatInputHidden() ? globals.ChatInputHidden.HardcorePermUID() + " has hidden your chat input" : "Your chat input is visible",
             true, PermissionType.Hardcore);
 
-        DrawOwnSetting(nameof(_clientData.GlobalPerms.ChatInputBlocked), nameof(OwnPerms.AllowChatInputBlocking),
-            _clientData.GlobalPerms.IsChatInputBlocked() ? "Chat Input Unavailable" : "Chat Input Available",
-            _clientData.GlobalPerms.IsChatInputBlocked() ? FontAwesomeIcon.CommentDots : FontAwesomeIcon.Ban,
-            _clientData.GlobalPerms.IsChatInputBlocked() ? PairNickOrAliasOrUID + " has blocked your chat input access" : "You are chat input access is not being blocked",
+        DrawOwnSetting(nameof(globals.ChatInputBlocked), nameof(OwnPerms.AllowChatInputBlocking),
+            globals.IsChatInputBlocked() ? "Chat Input Unavailable" : "Chat Input Available",
+            globals.IsChatInputBlocked() ? FontAwesomeIcon.CommentDots : FontAwesomeIcon.Ban,
+            globals.IsChatInputBlocked() ? PairNickOrAliasOrUID + " has blocked your chat input access" : "You are chat input access is not being blocked",
             true, PermissionType.Hardcore);
 
 
-        string shockCollarPairShareCode = OwnPerms.ShockCollarShareCode ?? string.Empty;
+        string shockCollarPairShareCode = OwnPerms.PiShockShareCode ?? string.Empty;
         using (var group = ImRaii.Group())
         {
             float width = IconButtonTextWidth - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") + ImGui.GetFrameHeight();
-            if (_uiShared.IconInputText("ShockCollarShareCode" + PairUID, FontAwesomeIcon.ShareAlt, string.Empty, "Unique Share Code",
+            if (_uiShared.IconInputText("PiShockShareCode" + PairUID, FontAwesomeIcon.ShareAlt, string.Empty, "Unique Share Code",
             ref shockCollarPairShareCode, 40, width, true, false))
             {
-                OwnPerms.ShockCollarShareCode = shockCollarPairShareCode;
+                OwnPerms.PiShockShareCode = shockCollarPairShareCode;
             }
             // Set the permission once deactivated. If invalid, set to default.
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                SetOwnPermission(PermissionType.UniquePairPerm, "ShockCollarShareCode", shockCollarPairShareCode);
+                SetOwnPermission(PermissionType.UniquePairPerm, "PiShockShareCode", shockCollarPairShareCode);
             }
             UiSharedService.AttachToolTip($"Unique Share Code for {PairNickOrAliasOrUID}" + Environment.NewLine
             + "This should be a separate Share Code from your Global Share Code." + Environment.NewLine
@@ -505,8 +560,8 @@ public partial class PairStickyUI
             switch (permissionType)
             {
                 case PermissionType.Global:
-                    if (_clientData.GlobalPerms is null) return;
-                    DrawOwnPermission(permissionType, _clientData.GlobalPerms, textLabel, icon, tooltipStr, isLocked,
+                    if (globals is null) return;
+                    DrawOwnPermission(permissionType, globals, textLabel, icon, tooltipStr, isLocked,
                         permissionName, permissionValueType, permissionAccessName);
                     break;
                 case PermissionType.UniquePairPerm:
@@ -553,7 +608,7 @@ public partial class PairStickyUI
             // draw the iconTextButton and checkbox beside it. Because we are in control, unless in hardcore, this should never be disabled.
             using (var group = ImRaii.Group())
             {
-                // have a special case, where we mark the button as disabled if _clientData.GlobalPerms.LiveChatGarblerLocked is true
+                // have a special case, where we mark the button as disabled if globals.ChatGarblerLocked is true
                 if (_uiShared.IconTextButton(icon, label, IconButtonTextWidth, true, isLocked))
                     SetOwnPermission(permissionType, permissionName, !currValState);
                 UiSharedService.AttachToolTip(tooltip);
@@ -631,7 +686,7 @@ public partial class PairStickyUI
         try
         {
             // Grab the current value.
-            string currValState = (string)(_clientData.GlobalPerms?.GetType().GetProperty(permissionName)?.GetValue(_clientData?.GlobalPerms) ?? string.Empty);
+            string currValState = (string)(globals?.GetType().GetProperty(permissionName)?.GetValue(_clientData?.GlobalPerms) ?? string.Empty);
 
             using (ImRaii.Group())
             {

@@ -343,7 +343,7 @@ public class PermissionPresetLogic
             CanToggleTriggers = true,
 
             InHardcore = false,
-            DevotionalStatesForPair = false,
+            PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
             AllowForcedToStay = true,
@@ -402,7 +402,7 @@ public class PermissionPresetLogic
             CanToggleTriggers = false,
 
             InHardcore = false,
-            DevotionalStatesForPair = false,
+            PairLockedStates = false,
             AllowForcedFollow = false,
             AllowForcedSit = false,
             AllowForcedToStay = false,
@@ -512,7 +512,7 @@ public class PermissionPresetLogic
             CanToggleTriggers = false,
 
             InHardcore = false,
-            DevotionalStatesForPair = false,
+            PairLockedStates = false,
             AllowForcedFollow = false,
             AllowForcedSit = true,
             AllowForcedToStay = false,
@@ -622,7 +622,7 @@ public class PermissionPresetLogic
             CanToggleTriggers = true,
 
             InHardcore = false,
-            DevotionalStatesForPair = false,
+            PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
             AllowForcedToStay = true,

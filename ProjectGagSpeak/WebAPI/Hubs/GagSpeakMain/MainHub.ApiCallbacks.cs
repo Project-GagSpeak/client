@@ -508,11 +508,11 @@ public partial class MainHub
                 };
                 var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
 
-                if (!pairMatch.OwnPerms.ShockCollarShareCode.IsNullOrEmpty())
+                if (!pairMatch.OwnPerms.PiShockShareCode.IsNullOrEmpty())
                 {
                     Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
                     Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                    Mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.ShockCollarShareCode, dto.OpCode, dto.Intensity, dto.Duration));
+                    Mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
                     if(dto.OpCode is 0)
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
                 }

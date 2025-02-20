@@ -5,19 +5,11 @@ using Dalamud.Utility;
 using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Localization;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services;
-using GagSpeak.UI.Components.Combos;
-using GagSpeak.UI.Handlers;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.Utils;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
-using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
-using Penumbra.String.Classes;
-using System.Numerics;
 
 namespace GagSpeak.UI;
 
@@ -25,9 +17,7 @@ public class SettingsHardcore
 {
     private readonly ILogger<SettingsHardcore> _logger;
     private readonly GagspeakConfigService _clientConfigs;
-    private readonly GameStain _itemStainHandler;
-    private readonly WardrobeHandler _wardrobeHandler;
-    private readonly HardcoreHandler _hardcoreHandler;
+    private readonly GlobalData _globals;
     private readonly UiSharedService _uiShared;
 
     private const float ComboWidth = 200;
@@ -36,45 +26,23 @@ public class SettingsHardcore
     private readonly GameItemCombo[] GameItemCombo;
     private readonly GameStainCombo StainCombo;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger,
-        GagspeakConfigService clientConfigs,
-        GameItemStainHandler itemStainHandler,
-        WardrobeHandler wardrobeHandler,
-        HardcoreHandler hardcoreHandler,
-        UiSharedService uiShared)
+    public SettingsHardcore(ILogger<SettingsHardcore> logger, GagspeakConfigService config,
+        GlobalData globals, UiSharedService ui)
     {
         _logger = logger;
-        _clientConfigs = clientConfigs;
-        _itemStainHandler = itemStainHandler;
-        _wardrobeHandler = wardrobeHandler;
-        _hardcoreHandler = hardcoreHandler;
-        _uiShared = uiShared;
-        // create a new gameItemCombo for each equipment piece type, then store them into the array.
-        GameItemCombo = _itemStainHandler.ObtainItemCombos();
-        StainCombo = _itemStainHandler.ObtainStainCombos(ComboWidth);
+        _clientConfigs = config;
+        _globals = globals;
+        _uiShared = ui;
     }
 
     public void DrawHardcoreSettings()
     {
-        if (ImGui.BeginTabBar("hardcoreSettingsTabBar"))
-        {
-            if (ImGui.BeginTabItem("Blindfold Item"))
-            {
-                DrawBlindfoldItem();
-                ImGui.EndTabItem();
-            }
-            if (ImGui.BeginTabItem("Forced To Stay Filters"))
-            {
-                DisplayTextButtons();
-                ImGui.Spacing();
-                foreach (var node in _clientConfigs.Config.ForcedStayPromptList.Children.ToArray())
-                    DisplayTextEntryNode(node);
-                ImGui.EndTabItem();
-            }
-            ImGui.EndTabBar();
-        }
+        DisplayTextButtons();
+        ImGui.Spacing();
+        foreach (var node in _clientConfigs.Config.ForcedStayPromptList.Children.ToArray())
+            DisplayTextEntryNode(node);
     }
-
+/*
     private void DrawBlindfoldItem()
     {
         // define icon size and combo length
@@ -123,7 +91,7 @@ public class SettingsHardcore
         using (ImRaii.Group())
         { 
             var forceLockFirstPerson = _clientConfigs.Config.ForceLockFirstPerson;
-            int blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldOpacity * 100);
+            var blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldOpacity * 100);
 
             // Draw the first person selection.
             if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
@@ -160,7 +128,7 @@ public class SettingsHardcore
             _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
         }
         ImGui.Separator();
-        string filePath = _clientConfigs.Config.BlindfoldStyle switch
+        var filePath = _clientConfigs.Config.BlindfoldStyle switch
         {
             BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
             BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
@@ -172,40 +140,44 @@ public class SettingsHardcore
         {
             // calculate the height of the available region and compare it to the ImGuiHandles Y height, to get how long we should display the X.
             // we need to do this to scale down the imagesize in the imguihandle to fit within the content region.
-            float scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
-            Vector2 finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
+            var scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
+            var finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
             // display the image.
             ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldOpacity));
             UiSharedService.AttachToolTip("Preview of the Blindfold Style");
         }
     }
-
+*/
     private void DisplayTextButtons()
     {
+        if (_globals.GlobalPerms is not { } globals)
+            return;
+
         // replace disabled with ForcedStay == true
-        if (_uiShared.IconTextButton(FontAwesomeIcon.SearchPlus, "Last Seen TextNode", disabled: _hardcoreHandler.IsForcedToStay))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.SearchPlus, "Last Seen TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.AddLastSeenNode();
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeLastSeenTT);
 
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New TextNode", disabled: _hardcoreHandler.IsForcedToStay))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateTextNode();
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewTT);
 
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New ChamberNode", disabled: _hardcoreHandler.IsForcedToStay))
+        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New ChamberNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateChamberNode();
         }
         UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewChamberTT);
+
         ImGui.SameLine();
-        using (ImRaii.Disabled(_hardcoreHandler.IsForcedToStay))
+        using (ImRaii.Disabled(globals.ForcedStay.IsNullOrEmpty()))
         {
-            bool enterChambersRef = _clientConfigs.Config.MoveToChambersInEstates;
+            var enterChambersRef = _clientConfigs.Config.MoveToChambersInEstates;
             if (ImGui.Checkbox("Auto-Move to Chambers", ref enterChambersRef))
             {
                 _clientConfigs.Config.MoveToChambersInEstates = enterChambersRef;
@@ -403,106 +375,5 @@ public class SettingsHardcore
         {
             PairSearchString = string.Empty;
         }
-    }
-
-    public bool DrawEquip(EquipDrawData blindfold, GameItemCombo[] _gameItemCombo, StainColorCombo _stainCombo, float _comboLength)
-    {
-        using var id = ImRaii.PushId((int)blindfold.Slot);
-        var spacing = ImGui.GetStyle().ItemInnerSpacing with { Y = ImGui.GetStyle().ItemSpacing.Y };
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing);
-
-        var right = ImGui.IsItemClicked(ImGuiMouseButton.Right);
-        var left = ImGui.IsItemClicked(ImGuiMouseButton.Left);
-
-        bool itemChange = false;
-        bool stainChange = false;
-
-        using var group = ImRaii.Group();
-        itemChange = DrawItem(out var label, right, left, _comboLength, _gameItemCombo, blindfold);
-        stainChange = DrawStain(_comboLength, _stainCombo, blindfold);
-
-        return itemChange || stainChange;
-    }
-
-    private bool DrawItem(out string label, bool clear, bool open, float width,
-    GameItemCombo[] _gameItemCombo, EquipDrawData blindfold)
-    {
-        // draw the item combo.
-        var combo = _gameItemCombo[blindfold.Slot.ToIndex()];
-        label = combo.Label;
-        if (open)
-        {
-            GenericHelpers.OpenCombo($"##BlindfoldItem{blindfold.GameItem.Name}{combo.Label}");
-            _logger.LogTrace($"{combo.Label} Toggled");
-        }
-        // draw the combo
-        var change = combo.Draw(blindfold.GameItem.Name, blindfold.GameItem.ItemId, width, ComboWidth, ' ' + GSLoc.Settings.Hardcore.BlindfoldItem);
-
-        // conditionals to detect for changes in the combo's
-        if (change && !blindfold.GameItem.Equals(combo.CurrentSelection))
-        {
-            // log full details.
-            _logger.LogTrace($"Item changed from {combo.CurrentSelection} [{combo.CurrentSelection.ItemId}] " +
-                $"to {blindfold.GameItem} [{blindfold.GameItem.ItemId}]");
-            blindfold.GameItem = combo.CurrentSelection;
-            change = true;
-        }
-
-        if (clear || ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        {
-            _logger.LogTrace($"Item changed to {ItemService.NothingItem(blindfold.Slot)} [{ItemService.NothingItem(blindfold.Slot).ItemId}] " +
-                $"from {blindfold.GameItem} [{blindfold.GameItem.ItemId}]");
-            blindfold.GameItem = ItemService.NothingItem(blindfold.Slot);
-            change = true;
-        }
-
-        return change;
-    }
-
-    private bool DrawStain(float width, StainColorCombo _stainCombo, EquipDrawData blindfold)
-    {
-        // fetch the correct stain from the stain data
-        var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (blindfold.GameStain.Count - 1)) / blindfold.GameStain.Count;
-
-        bool dyeChanged = false;
-
-        foreach (var (stainId, index) in blindfold.GameStain.WithIndex())
-        {
-            using var id = ImUtf8.PushId(index);
-            var found = _itemStainHandler.TryGetStain(stainId, out var stain);
-            // draw the stain combo.
-            var change = _stainCombo.Draw($"##stain{blindfold.Slot}", stain.RgbaColor, stain.Name, found, stain.Gloss, widthStains);
-            if (index < blindfold.GameStain.Count - 1)
-                ImUtf8.SameLineInner(); // instantly go to draw the next one.
-
-            // if we had a change made, update the stain data.
-            if (change)
-            {
-                if (_itemStainHandler.TryGetStain(_stainCombo.CurrentSelection.Key, out stain))
-                {
-                    // if changed, change it.
-                    blindfold.GameStain = blindfold.GameStain.With(index, stain.RowIndex);
-                    change = true;
-                }
-                else if (_stainCombo.CurrentSelection.Key == Stain.None.RowIndex)
-                {
-                    // if set to none, reset it to default
-                    blindfold.GameStain = blindfold.GameStain.With(index, Stain.None.RowIndex);
-                    change = true;
-                }
-            }
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            {
-                // reset the stain to default
-                blindfold.GameStain = blindfold.GameStain.With(index, Stain.None.RowIndex);
-                change = true;
-            }
-
-            dyeChanged |= change;
-
-        }
-        ImGui.SameLine();
-        ImGui.Text(' ' + GSLoc.Settings.Hardcore.BlindfoldDye);
-        return dyeChanged;
     }
 }

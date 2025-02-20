@@ -24,9 +24,9 @@ public partial class PairStickyUI
 
         var applyRestraintText = "Apply Restraint Set";
         var applyRestraintTT = "Applies a Restraint Set to " + PairNickOrAliasOrUID + ". Click to select set.";
-        var lockRestraintText = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None
+        var lockRestraintText = StickyPair.LastWardrobeData.Padlock is Padlocks.None
             ? "Lock Restraint Set" : "Locked with a " + StickyPair.LastWardrobeData.Padlock;
-        var lockRestraintTT = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None
+        var lockRestraintTT = StickyPair.LastWardrobeData.Padlock is Padlocks.None
             ? "Locks the Restraint Set applied to " + PairNickOrAliasOrUID + ". Click to view options."
             : "Set is currently locked with a " + StickyPair.LastWardrobeData.Padlock;
         var unlockRestraintText = "Unlock Restraint Set";
@@ -35,7 +35,7 @@ public partial class PairStickyUI
         var removeRestraintTT = "Removes the Restraint Set applied to " + PairNickOrAliasOrUID + ". Click to view options.";
 
         // Expander for ApplyRestraint
-        var disableApplyExpand = !PairPerms.ApplyRestraintSets || StickyPair.LastWardrobeData.Padlock.ToPadlock() is not Padlocks.None;
+        var disableApplyExpand = !PairPerms.ApplyRestraintSets || StickyPair.LastWardrobeData.Padlock is not Padlocks.None;
         if (_uiShared.IconTextButton(FontAwesomeIcon.Handcuffs, applyRestraintText, WindowMenuWidth, true, disableApplyExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestraint) ? InteractionType.None : InteractionType.ApplyRestraint;
         UiSharedService.AttachToolTip(applyRestraintTT);
@@ -49,14 +49,14 @@ public partial class PairStickyUI
         }
 
         // Expander for LockRestraint
-        var disableLockExpand = StickyPair.LastWardrobeData.ActiveSetId.IsEmptyGuid() || StickyPair.LastWardrobeData.Padlock.ToPadlock() is not Padlocks.None || !PairPerms.LockRestraintSets;
-        using (ImRaii.PushColor(ImGuiCol.Text, (StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
+        var disableLockExpand = StickyPair.LastWardrobeData.ActiveSetId.IsEmptyGuid() || StickyPair.LastWardrobeData.Padlock is not Padlocks.None || !PairPerms.LockRestraintSets;
+        using (ImRaii.PushColor(ImGuiCol.Text, (StickyPair.LastWardrobeData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
             if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
         UiSharedService.AttachToolTip(lockRestraintTT +
-            ((GsPadlockEx.IsTimerLock(StickyPair.LastWardrobeData.Padlock.ToPadlock())) ? "--SEP----COL--" + StickyPair.LastWardrobeData.Timer.ToGsRemainingTimeFancy() : "")
+            ((GsPadlockEx.IsTimerLock(StickyPair.LastWardrobeData.Padlock)) ? "--SEP----COL--" + StickyPair.LastWardrobeData.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint
@@ -68,7 +68,7 @@ public partial class PairStickyUI
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock.ToPadlock() is Padlocks.None || !PairPerms.UnlockRestraintSets;
+        var disableUnlockExpand = StickyPair.LastWardrobeData.Padlock is Padlocks.None || !PairPerms.UnlockRestraintSets;
         if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestraint) ? InteractionType.None : InteractionType.UnlockRestraint;
         UiSharedService.AttachToolTip(unlockRestraintTT);
@@ -82,7 +82,7 @@ public partial class PairStickyUI
         }
 
         // Expander for removing.
-        var disableRemoveExpand = StickyPair.LastWardrobeData.ActiveSetId.IsEmptyGuid() || StickyPair.LastWardrobeData.Padlock.ToPadlock() is not Padlocks.None || !PairPerms.RemoveRestraintSets;
+        var disableRemoveExpand = StickyPair.LastWardrobeData.ActiveSetId.IsEmptyGuid() || StickyPair.LastWardrobeData.Padlock is not Padlocks.None || !PairPerms.RemoveRestraintSets;
         if (_uiShared.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestraintText, WindowMenuWidth, true, disableRemoveExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestraint) ? InteractionType.None : InteractionType.RemoveRestraint;
         UiSharedService.AttachToolTip(removeRestraintTT);

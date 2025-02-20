@@ -224,12 +224,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         bool cursedDungeonLoot = _mainConfig.Config.CursedLootPanel;
 
         var puppeteerEnabled = _global.GlobalPerms.PuppeteerEnabled;
-        var globalTriggerPhrase = _global.GlobalPerms.GlobalTriggerPhrase;
-        // Update flags over bool values now.
-        bool globalSitRequests = _global.GlobalPerms.GlobalSitRequests;
-        bool globalMotionRequests = _global.GlobalPerms.GlobalMotionRequests;
-        bool globalAliasRequests = _global.GlobalPerms.GlobalAliasRequests;
-        bool globalAllRequests = _global.GlobalPerms.GlobalAllRequests;
+        var globalTriggerPhrase = _global.GlobalPerms.TriggerPhrase;
+        var globalPuppetPerms = _global.GlobalPerms.PuppetPerms;
 
         var toyboxEnabled = _global.GlobalPerms.ToyboxEnabled;
         bool intifaceAutoConnect = _mainConfig.Config.IntifaceAutoConnect;
@@ -240,13 +236,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
         string piShockApiKey = _mainConfig.Config.PiShockApiKey;
         string piShockUsername = _mainConfig.Config.PiShockUsername;
 
-        var globalShockCollarShareCode = _global.GlobalPerms.GlobalShockShareCode;
+        var globalPiShockShareCode = _global.GlobalPerms.GlobalShockShareCode;
         var allowGlobalShockShockCollar = _global.GlobalPerms.AllowShocks;
         var allowGlobalVibrateShockCollar = _global.GlobalPerms.AllowVibrations;
         var allowGlobalBeepShockCollar = _global.GlobalPerms.AllowBeeps;
         var maxGlobalShockCollarIntensity = _global.GlobalPerms.MaxIntensity;
         var maxGlobalShockDuration = _global.GlobalPerms.GetTimespanFromDuration();
-        var maxGlobalVibrateDuration = (int)_global.GlobalPerms.GlobalShockVibrateDuration.TotalSeconds;
+        var maxGlobalVibrateDuration = (int)_global.GlobalPerms.ShockVibrateDuration.TotalSeconds;
 
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderGags);
         using (ImRaii.Disabled(liveChatGarblerLocked))
@@ -321,11 +317,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
             if (ImGui.InputText(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, ref globalTriggerPhrase, 100, ImGuiInputTextFlags.EnterReturnsTrue))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalTriggerPhrase), globalTriggerPhrase), UpdateDir.Own)).ConfigureAwait(false);
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.TriggerPhrase), globalTriggerPhrase), UpdateDir.Own)).ConfigureAwait(false);
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
             // Correct these!
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref globalSitRequests))
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref globalPuppetPerms))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalSitRequests), globalSitRequests), UpdateDir.Own)).ConfigureAwait(false);
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
@@ -403,9 +399,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
-        if (ImGui.InputText("##Global PiShock Share Code", ref globalShockCollarShareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
+        if (ImGui.InputText("##Global PiShock Share Code", ref globalPiShockShareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockShareCode), globalShockCollarShareCode), UpdateDir.Own)).ConfigureAwait(false);
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockShareCode), globalPiShockShareCode), UpdateDir.Own)).ConfigureAwait(false);
 
         ImUtf8.SameLineInner();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
@@ -439,14 +435,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
         if (ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxGlobalVibrateDuration, 0, 30))
         {
-            _global.GlobalPerms.GlobalShockVibrateDuration = TimeSpan.FromSeconds(maxGlobalVibrateDuration);
+            _global.GlobalPerms.ShockVibrateDuration = TimeSpan.FromSeconds(maxGlobalVibrateDuration);
         }
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             // Convert TimeSpan to ticks and send as UInt64
-            var ticks = (ulong)_global.GlobalPerms.GlobalShockVibrateDuration.Ticks;
+            var ticks = (ulong)_global.GlobalPerms.ShockVibrateDuration.Ticks;
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockVibrateDuration), ticks), UpdateDir.Own)).ConfigureAwait(false);
+                new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ShockVibrateDuration), ticks), UpdateDir.Own)).ConfigureAwait(false);
         }
         _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 

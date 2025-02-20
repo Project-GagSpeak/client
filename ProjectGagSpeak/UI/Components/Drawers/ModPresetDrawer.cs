@@ -1,14 +1,13 @@
 using GagSpeak.PlayerState.Visual;
 
 namespace GagSpeak.UI.Components;
-public class ModPresetDrawer
+// This class will automate the drawing of checkboxes, buttons, sliders and more used across the various UI elements through a modular approach.
+public class OptionDrawer
 {
-    private readonly ModSettingPresetManager _modSettingManager;
     private readonly UiSharedService _uiShared;
 
-    public ModPresetDrawer(ModSettingPresetManager manager, UiSharedService uiShared)
+    public OptionDrawer(UiSharedService uiShared)
     {
-        _modSettingManager = manager;
         _uiShared = uiShared;
     }
 }

@@ -1,6 +1,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
@@ -9,9 +9,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Services;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
@@ -133,7 +131,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         switch (source)
         {
             case ActionSource.GlobalAlias:
-                if(_playerData.GlobalPerms is null || !_playerData.GlobalPerms.PuppetPerms.HasFlag(PuppeteerPerms.Alias))
+                if(_playerData.GlobalPerms is null || !_playerData.GlobalPerms.PuppetPerms.HasFlag(PuppetPerms.Alias))
                     return false;
 
                 break;
@@ -141,7 +139,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == enactor) is not { } match)
                     return false;
                 // If it was a match, return false if you have not given the pair alias permissions.
-                if(match.OwnPerms.PuppeteerPerms.HasFlag(PuppeteerPerms.Alias) is false)
+                if(match.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) is false)
                     return false;
 
                 break;

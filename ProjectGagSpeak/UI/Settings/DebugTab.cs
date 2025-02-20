@@ -265,10 +265,10 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.All));
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppetPerms.All));
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
@@ -321,10 +321,10 @@ public class DebugTab
         DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowString("Start Char", perms.StartChar.ToString());
         DrawPermissionRowString("End Char", perms.EndChar.ToString());
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppeteerPerms.All));
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppetPerms.All));
         ImGui.TableNextRow();
         DrawPermissionRowBool("Allow Positive Moodles", perms.AllowPositiveStatusTypes);
         DrawPermissionRowBool("Allow Negative Moodles", perms.AllowNegativeStatusTypes);
@@ -344,7 +344,7 @@ public class DebugTab
         DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggers);
         ImGui.TableNextRow();
         DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
-        DrawPermissionRowBool("Devotional States For Pair", perms.DevotionalStatesForPair);
+        DrawPermissionRowBool("Devotional States For Pair", perms.PairLockedStates);
         DrawPermissionRowBool("Allow Forced Follow", perms.AllowForcedFollow);
         DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
         DrawPermissionRowBool("Allow Forced Emote", perms.AllowForcedEmote);
@@ -353,7 +353,7 @@ public class DebugTab
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
         DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
         ImGui.TableNextRow();
-        DrawPermissionRowString("Shock Collar Share Code", perms.ShockCollarShareCode);
+        DrawPermissionRowString("Shock Collar Share Code", perms.PiShockShareCode);
         DrawPermissionRowBool("Allow Shocks", perms.AllowShocks);
         DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
         DrawPermissionRowBool("Allow Beeps", perms.AllowBeeps);

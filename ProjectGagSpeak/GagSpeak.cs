@@ -39,10 +39,9 @@ using GagSpeak.UI.Handlers;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UI.Orders;
 using GagSpeak.UI.Profile;
-using GagSpeak.UI.UiGagSetup;
-using GagSpeak.UI.Orders;
 using GagSpeak.UI.Publications;
 using GagSpeak.UI.Puppeteer;
+using GagSpeak.UI.Toybox;
 using GagSpeak.UI.UiRemote;
 using GagSpeak.UI.UiToybox;
 using GagSpeak.UI.Wardrobe;
@@ -214,8 +213,8 @@ public static class GagSpeakServiceExtensions
 
         // UpdateMonitoring Services
         .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, pl))
-        .AddSingleton((s) => new ActionMonitor(s.GetRequiredService<ILogger<ActionMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GlobalData>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<HardcoreHandler>(), s.GetRequiredService<ClientMonitor>(), gip))
+        /*.AddSingleton((s) => new ActionMonitor(s.GetRequiredService<ILogger<ActionMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GlobalData>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<HardcoreHandler>(), s.GetRequiredService<ClientMonitor>(), gip))*/
 
         .AddSingleton((s) => new MovementMonitor(s.GetRequiredService<ILogger<MovementMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<HardcoreHandler>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<SelectStringPrompt>(), s.GetRequiredService<YesNoPrompt>(), s.GetRequiredService<RoomSelectPrompt>(),
@@ -275,11 +274,11 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PuppeteerComponents>()
 
         // Toybox UI
-        .AddSingleton<ToyboxOverview>()
-        .AddSingleton<ToyboxPatterns>()
-        .AddSingleton<ToyboxVibeRooms>()
-        .AddSingleton<ToyboxTriggerManager>()
-        .AddSingleton<AlarmManager>()
+        .AddSingleton<SexToysPanel>()
+        .AddSingleton<VibeLobbiesPanel>()
+        .AddSingleton<PatternsPanel>()
+        .AddSingleton<AlarmsPanel>()
+        .AddSingleton<TriggersPanel>()
         .AddSingleton((s) => new VibeSimAudio(s.GetRequiredService<ILogger<VibeSimAudio>>(), pi))
 
         // Orders UI
@@ -400,7 +399,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, RemotePersonal>()
         .AddScoped<WindowMediatorSubscriberBase, RemotePatternMaker>()
         // RemoteController made via the factory is defined via the factory and not here.
-        .AddScoped<WindowMediatorSubscriberBase, GagSetupUI>()
         .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()

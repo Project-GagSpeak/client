@@ -27,15 +27,13 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         // check to see if the user just paused themselves.
         if (pair.UserPair.OtherPairPerms.IsPaused != dto.PairPermissions.IsPaused)
-        {
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
-        }
+
+        MoodlesChanged = (dto.PairPermissions.MoodlePerms != pair.PairPerms.MoodlePerms)
+            || (dto.PairPermissions.MaxMoodleTime != pair.PairPerms.MaxMoodleTime);
 
         // set the permissions.
         pair.UserPair.OtherGlobalPerms = dto.GlobalPermissions;
-        // check to see if we are updating any moodles permissions
-        MoodlesChanged = UpdatingMoodlesPerms(dto.PairPermissions, pair.UserPair.OtherPairPerms);
-        // update pair perms
         pair.UserPair.OtherPairPerms = dto.PairPermissions;
         pair.UserPair.OtherEditAccessPerms = dto.EditAccessPermissions;
 
@@ -44,52 +42,24 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(true);
 
         // push notify after recreating lazy.
-        if (MoodlesChanged)
-        {
-            // only push the notification if they are online.
-            if (GetVisibleUsers().Contains(pair.UserData))
-            {
-                // Handle Moodle permission change
-                Logger.LogTrace($"Moodle permissions were changed, pushing change to provider!", LoggerType.PairDataTransfer);
-                Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-            }
-        }
-
-    }
-
-    private bool UpdatingMoodlesPerms(UserPairPermissions newPerms, UserPairPermissions oldPerms)
-    {
-        return newPerms.AllowPositiveStatusTypes != oldPerms.AllowPositiveStatusTypes
-            || newPerms.AllowNegativeStatusTypes != oldPerms.AllowNegativeStatusTypes
-            || newPerms.AllowSpecialStatusTypes != oldPerms.AllowSpecialStatusTypes
-            || newPerms.PairCanApplyOwnMoodlesToYou != oldPerms.PairCanApplyOwnMoodlesToYou
-            || newPerms.PairCanApplyYourMoodlesToYou != oldPerms.PairCanApplyYourMoodlesToYou
-            || newPerms.MaxMoodleTime != oldPerms.MaxMoodleTime
-            || newPerms.AllowPermanentMoodles != oldPerms.AllowPermanentMoodles
-            || newPerms.AllowRemovingMoodles != oldPerms.AllowRemovingMoodles;
+        if (MoodlesChanged && GetOnlineUserDatas().Contains(pair.UserData))
+            Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
     }
 
     public void UpdatePairUpdateOwnAllUniquePermissions(BulkUpdatePermsUniqueDto dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        // fetch the current actions that fire events
-        var prevMotionPerms = pair.UserPair.OwnPairPerms.MotionRequests;
-        var prevAllPerms = pair.UserPair.OwnPairPerms.AllRequests;
-
-        // see if the states are different.
-        var motionPermsChanged = prevMotionPerms != dto.UniquePerms.MotionRequests;
-        var allPermsChanged = prevAllPerms != dto.UniquePerms.AllRequests;
+        // Find new permissions enabled that were not enabled before
+        var prevPerms = pair.OwnPerms.PuppetPerms;
+        var newlyEnabledPermissions = (dto.UniquePerms.PuppetPerms & ~prevPerms);
 
         // update the permissions.
         pair.UserPair.OwnPairPerms = dto.UniquePerms;
         pair.UserPair.OwnEditAccessPerms = dto.UniqueAccessPerms;
 
-        // publish the mediator changes.
-        if (motionPermsChanged)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, false);
-        if (allPermsChanged) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, true);
+        if (newlyEnabledPermissions is not PuppetPerms.None)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newlyEnabledPermissions);
 
         Logger.LogDebug($"Updated own unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
@@ -163,18 +133,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
-    private bool IsMoodlePermission(string changedPermission)
-    {
-        return changedPermission == nameof(UserPairPermissions.AllowPositiveStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.AllowNegativeStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.AllowSpecialStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.PairCanApplyOwnMoodlesToYou) ||
-               changedPermission == nameof(UserPairPermissions.PairCanApplyYourMoodlesToYou) ||
-               changedPermission == nameof(UserPairPermissions.MaxMoodleTime) ||
-               changedPermission == nameof(UserPairPermissions.AllowPermanentMoodles) ||
-               changedPermission == nameof(UserPairPermissions.AllowRemovingMoodles);
-    }
-
     /// <summary>
     /// Updates one of the paired users pair permissions they have set for you. (their permission for you)
     /// </summary>>
@@ -219,16 +177,9 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (IsMoodlePermission(ChangedPermission))
-        {
-            // only push the notification if they are online.
-            if (GetVisibleUsers().Contains(pair.UserData))
-            {
-                // Handle Moodle permission change
-                Logger.LogTrace($"Moodle permission '{ChangedPermission}' was changed to '{ChangedValue}', pushing change to provider!", LoggerType.PairDataTransfer);
+        if (ChangedPermission is nameof(UserPairPermissions.MoodlePerms) || ChangedPermission is nameof(UserPairPermissions.MaxMoodleTime))
+            if (GetOnlineUserDatas().Contains(pair.UserData))
                 Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-            }
-        }
     }
 
     /// <summary>
@@ -283,13 +234,9 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         if (ChangedPermission is "IsPaused" && (pair.UserPair.OwnPairPerms.IsPaused != (bool)ChangedValue))
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
-
-        // store changes pre-apply.
-        var motionPermsChanged = ChangedPermission is nameof(UserPairPermissions.MotionRequests)
-            && (pair.UserPair.OwnPairPerms.MotionRequests != (bool)ChangedValue);
-        var allPermsChanged = ChangedPermission == nameof(UserPairPermissions.AllRequests)
-            && (pair.UserPair.OwnPairPerms.AllRequests != (bool)ChangedValue);
-
+        
+        var prevPerms = pair.OwnPerms.PuppetPerms;
+        var puppetChanged = ChangedPermission == nameof(UserPairPermissions.PuppetPerms);
 
         var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
         if (propertyInfo is null)
@@ -319,20 +266,15 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             return;
         }
 
-        // Handle special cases AFTER the change was made.
-        if (motionPermsChanged && (bool)ChangedValue) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, false);
-        if (allPermsChanged && (bool)ChangedValue) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, true);
+        var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);
+        if (newEnabledPuppetPerms is not PuppetPerms.None)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newEnabledPuppetPerms);
 
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (IsMoodlePermission(ChangedPermission))
-        {
-            Logger.LogTrace($"Moodle permission '{ChangedPermission}' was changed to '{ChangedValue}', pushing change to provider!", LoggerType.PairDataTransfer);
+        if (ChangedPermission is nameof(UserPairPermissions.MoodlePerms) || ChangedPermission is nameof(UserPairPermissions.MaxMoodleTime))
             Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-        }
     }
 
     /// <summary>

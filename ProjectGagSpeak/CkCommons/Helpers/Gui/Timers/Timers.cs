@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
 
-namespace GagSpeak.CkCommons.Timers;
+namespace GagSpeak.CkCommons.Helpers;
+
 public class GSpeakTimers
 {
-
     public static bool TryParseTimeSpanStr(string input, out TimeSpan result)
     {
         result = TimeSpan.Zero;

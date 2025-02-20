@@ -16,18 +16,18 @@ public partial class PairStickyUI
         /* ----------- GLOBAL SETTINGS ----------- */
         ImGui.TextUnformatted("Global Settings");
 
-        DrawOtherPairSetting(nameof(PairGlobals.LiveChatGarblerActive), nameof(StickyPair.PairPermAccess.LiveChatGarblerActiveAllowed),
-            StickyPair.PairGlobals.LiveChatGarblerActive ? (PairNickOrAliasOrUID + "'s Chat Garbler is Active") : (PairNickOrAliasOrUID + "'s Chat Garbler is Inactive"),
-            StickyPair.PairGlobals.LiveChatGarblerActive ? FontAwesomeIcon.MicrophoneSlash : FontAwesomeIcon.Microphone,
-            StickyPair.PairPermAccess.LiveChatGarblerActiveAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.LiveChatGarblerActiveAllowed,
+        DrawOtherPairSetting(nameof(PairGlobals.ChatGarblerActive), nameof(StickyPair.PairPermAccess.ChatGarblerActiveAllowed),
+            StickyPair.PairGlobals.ChatGarblerActive ? (PairNickOrAliasOrUID + "'s Chat Garbler is Active") : (PairNickOrAliasOrUID + "'s Chat Garbler is Inactive"),
+            StickyPair.PairGlobals.ChatGarblerActive ? FontAwesomeIcon.MicrophoneSlash : FontAwesomeIcon.Microphone,
+            StickyPair.PairPermAccess.ChatGarblerActiveAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.ChatGarblerActiveAllowed,
             PermissionType.Global, PermissionValueType.YesNo);
 
-        DrawOtherPairSetting(nameof(PairGlobals.LiveChatGarblerLocked), nameof(StickyPair.PairPermAccess.LiveChatGarblerLockedAllowed),
-            StickyPair.PairGlobals.LiveChatGarblerLocked ? (PairNickOrAliasOrUID + "'s Chat Garbler is Locked") : (PairNickOrAliasOrUID + "'s Chat Garbler is Unlocked"),
-            StickyPair.PairGlobals.LiveChatGarblerLocked ? FontAwesomeIcon.Key : FontAwesomeIcon.UnlockAlt,
-            StickyPair.PairPermAccess.LiveChatGarblerLockedAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.LiveChatGarblerLockedAllowed,
+        DrawOtherPairSetting(nameof(PairGlobals.ChatGarblerLocked), nameof(StickyPair.PairPermAccess.ChatGarblerLockedAllowed),
+            StickyPair.PairGlobals.ChatGarblerLocked ? (PairNickOrAliasOrUID + "'s Chat Garbler is Locked") : (PairNickOrAliasOrUID + "'s Chat Garbler is Unlocked"),
+            StickyPair.PairGlobals.ChatGarblerLocked ? FontAwesomeIcon.Key : FontAwesomeIcon.UnlockAlt,
+            StickyPair.PairPermAccess.ChatGarblerLockedAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.ChatGarblerLockedAllowed,
             PermissionType.Global, PermissionValueType.YesNo);
 
         DrawOtherPairSetting(nameof(PairGlobals.LockToyboxUI), nameof(StickyPair.PairPermAccess.LockToyboxUIAllowed),
@@ -70,11 +70,11 @@ public partial class PairStickyUI
         /* ----------- GAG PERMISSIONS ----------- */
         ImGui.TextUnformatted("Gag Permissions");
 
-        DrawOtherPairSetting(nameof(PairGlobals.ItemAutoEquip), nameof(StickyPair.PairPermAccess.ItemAutoEquipAllowed),
-            StickyPair.PairGlobals.ItemAutoEquip ? (PairNickOrAliasOrUID + " has Gag Glamours Enabled") : (PairNickOrAliasOrUID + " has Gag Glamours Disabled"),
-            StickyPair.PairGlobals.ItemAutoEquip ? FontAwesomeIcon.Surprise : FontAwesomeIcon.MehBlank,
-            StickyPair.PairPermAccess.ItemAutoEquipAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.ItemAutoEquipAllowed,
+        DrawOtherPairSetting(nameof(PairGlobals.GagVisuals), nameof(StickyPair.PairPermAccess.GagVisualsAllowed),
+            StickyPair.PairGlobals.GagVisuals ? (PairNickOrAliasOrUID + " has Gag Glamours Enabled") : (PairNickOrAliasOrUID + " has Gag Glamours Disabled"),
+            StickyPair.PairGlobals.GagVisuals ? FontAwesomeIcon.Surprise : FontAwesomeIcon.MehBlank,
+            StickyPair.PairPermAccess.GagVisualsAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state. [Global]") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.GagVisualsAllowed,
             PermissionType.Global, PermissionValueType.YesNo);
 
         // draw settings for ApplyGags, LockGags, MaxGagTime, UnlockGags, and RemoveGags.
@@ -122,11 +122,11 @@ public partial class PairStickyUI
         ImGui.TextUnformatted("Restraint Set Permissions");
 
         // draw settings for ApplyRestraintSets, LockRestraintSets, MaxAllowedRestraintTime, UnlockRestraintSets, and RemoveRestraintSets all using nameof() for the first parameters.
-        DrawOtherPairSetting(nameof(PairGlobals.RestraintSetAutoEquip), nameof(StickyPair.PairPermAccess.RestraintSetAutoEquipAllowed),
-            StickyPair.PairGlobals.RestraintSetAutoEquip ? (PairNickOrAliasOrUID + " has Restraint Glamours Enabled") : (PairNickOrAliasOrUID + " has Restraint Glamours Disabled"),
-            StickyPair.PairGlobals.RestraintSetAutoEquip ? FontAwesomeIcon.Tshirt : FontAwesomeIcon.Ban,
-            StickyPair.PairPermAccess.RestraintSetAutoEquipAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.RestraintSetAutoEquipAllowed,
+        DrawOtherPairSetting(nameof(PairGlobals.RestraintSetVisuals), nameof(StickyPair.PairPermAccess.RestraintSetVisualsAllowed),
+            StickyPair.PairGlobals.RestraintSetVisuals ? (PairNickOrAliasOrUID + " has Restraint Glamours Enabled") : (PairNickOrAliasOrUID + " has Restraint Glamours Disabled"),
+            StickyPair.PairGlobals.RestraintSetVisuals ? FontAwesomeIcon.Tshirt : FontAwesomeIcon.Ban,
+            StickyPair.PairPermAccess.RestraintSetVisualsAllowed ? ("Press to Toggle" + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.RestraintSetVisualsAllowed,
             PermissionType.Global, PermissionValueType.YesNo);
 
         DrawOtherPairSetting(nameof(PairPerms.ApplyRestraintSets), nameof(StickyPair.PairPermAccess.ApplyRestraintSetsAllowed),
@@ -379,7 +379,7 @@ public partial class PairStickyUI
             // draw the iconTextButton and checkbox beside it. Because we are in control, unless in hardcore, this should never be disabled.
             using (var group = ImRaii.Group())
             {
-                // have a special case, where we mark the button as disabled if StickyPair.PairGlobals.LiveChatGarblerLocked is true
+                // have a special case, where we mark the button as disabled if StickyPair.PairGlobals.ChatGarblerLocked is true
                 if (_uiShared.IconTextButton(icon, label, IconButtonTextWidth, true, !hasAccess))
                 {
                     SetOtherPairPermission(permissionType, permissionName, !currValState);

@@ -20,9 +20,12 @@ public class SelectStringPrompt : SetupSelectListPrompt
 
     public override void Enable()
     {
-        base.Enable();
-        _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", AddonSetup);
-        _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", SetEntry);
+        if(!Enabled)
+        {
+            base.Enable();
+            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", AddonSetup);
+            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", SetEntry);
+        }
     }
 
     private void SetEntry(AddonEvent type, AddonArgs args)
@@ -48,10 +51,13 @@ public class SelectStringPrompt : SetupSelectListPrompt
 
     public override void Disable()
     {
-        base.Disable();
-        _addonLifecycle.UnregisterListener(AddonSetup);
-        _addonLifecycle.UnregisterListener(SetEntry);
-        _logger.LogInformation("Disabling SelectString!", LoggerType.HardcorePrompt);
+        if(Enabled)
+        {
+            base.Disable();
+            _addonLifecycle.UnregisterListener(AddonSetup);
+            _addonLifecycle.UnregisterListener(SetEntry);
+            _logger.LogInformation("Disabling SelectString!", LoggerType.HardcorePrompt);
+        }
     }
 
     protected unsafe void AddonSetup(AddonEvent eventType, AddonArgs addonInfo)

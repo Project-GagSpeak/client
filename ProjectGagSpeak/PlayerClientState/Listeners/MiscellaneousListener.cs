@@ -1,7 +1,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
-using GagSpeak.CkCommons.TextHelpers;
+using GagSpeak.CkCommons.Text;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Toybox;
@@ -113,7 +113,7 @@ public sealed class MiscellaneousListener : DisposableMediatorSubscriberBase
         PostActionMsg(pairName, InteractionType.ListenerName, $"Updated listener name to {listenerName} for {pairName}.");
     }
 
-    public bool ExecuteGlobalTrigger(string trigger, SeString chatMessage, PuppeteerPerms perms)
+    public bool ExecuteGlobalTrigger(string trigger, SeString chatMessage, PuppetPerms perms)
     {
         Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
         Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);
@@ -126,7 +126,7 @@ public sealed class MiscellaneousListener : DisposableMediatorSubscriberBase
         remainingMessage = remainingMessage.GetSubstringWithinParentheses();
         Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
 
-        if (perms.HasFlag(PuppeteerPerms.Alias))
+        if (perms.HasFlag(PuppetPerms.Alias))
             if(ConvertAliasCommandsIfAny(remainingMessage, _aliasManager.GlobalAliasStorage, MainHub.UID, ActionSource.GlobalAlias))
                 return true;
 
@@ -160,7 +160,7 @@ public sealed class MiscellaneousListener : DisposableMediatorSubscriberBase
         remainingMessage = remainingMessage.GetSubstringWithinParentheses(perms.StartChar, perms.EndChar);
         Logger.LogTrace("Remaining message after brackets: " + remainingMessage);
 
-        if (perms.PuppetPerms.HasFlag(PuppeteerPerms.Alias))
+        if (perms.PuppetPerms.HasFlag(PuppetPerms.Alias))
             if(ConvertAliasCommandsIfAny(remainingMessage, _aliasManager.PairAliasStorage[enactor].Storage, enactor, ActionSource.PairAlias))
                 return true;
 
@@ -206,21 +206,21 @@ public sealed class MiscellaneousListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Determines if the message meets the criteria for the sender. </summary>
-    public bool MeetsSettingCriteria(PuppeteerPerms perms, SeString message)
+    public bool MeetsSettingCriteria(PuppetPerms perms, SeString message)
     {
-        if (perms.HasFlag(PuppeteerPerms.All))
+        if (perms.HasFlag(PuppetPerms.All))
         {
             Logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
             IsEmoteMatch(message);
             return true;
         }
 
-        if (perms.HasFlag(PuppeteerPerms.Emotes))
+        if (perms.HasFlag(PuppetPerms.Emotes))
             if (IsEmoteMatch(message))
                 return true;
 
         // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
-        if (perms.HasFlag(PuppeteerPerms.Sit))
+        if (perms.HasFlag(PuppetPerms.Sit))
         {
             Logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
             var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));

@@ -3,12 +3,9 @@ using PInvoke;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
-namespace GagSpeak.Utils;
+namespace GagSpeak.CkCommons.Intiface;
 
-/// <summary>
-/// Handles Intiface Access
-/// </summary> 
-public static class ToyboxHelper
+public static class Intiface
 {
     // the path to intiface central.exe
     public static string AppPath = string.Empty;

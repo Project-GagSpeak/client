@@ -14,11 +14,11 @@ using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.UiToybox;
+namespace GagSpeak.UI.Toybox;
 
-public class ToyboxOverview
+public class SexToysPanel
 {
-    private readonly ILogger<ToyboxOverview> _logger;
+    private readonly ILogger<SexToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly UiSharedService _uiShared;
     private readonly GlobalData _playerManager;
@@ -27,7 +27,7 @@ public class ToyboxOverview
     private readonly SexToyManager _vibeService;
     private readonly TutorialService _guides;
 
-    public ToyboxOverview(ILogger<ToyboxOverview> logger, GagspeakMediator mediator,
+    public SexToysPanel(ILogger<SexToysPanel> logger, GagspeakMediator mediator,
         UiSharedService uiShared, GlobalData playerData,
         GagspeakConfigService clientConfigs, ServerConfigService serverConfigs,
         SexToyManager vibeService, TutorialService guides)
@@ -42,11 +42,11 @@ public class ToyboxOverview
         _guides = guides;
 
         // grab path to the intiface
-        if (ToyboxHelper.AppPath == string.Empty)
-            ToyboxHelper.GetApplicationPath();
+        if (Intiface.AppPath == string.Empty)
+            Intiface.GetApplicationPath();
     }
 
-    public void DrawOverviewPanel()
+    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
     {
         // draw the top display field for Intiface connectivity, similar to our other servers.
         DrawIntifaceConnectionStatus();
@@ -71,7 +71,6 @@ public class ToyboxOverview
             }
             ImGui.EndCombo();
         }
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.SelectingVibratorType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.Config.VibratorMode = VibratorEnums.Simulated);
 
         // display the wide list of connected devices, along with if they are active or not, below some scanner options
         if (_uiShared.IconTextButton(FontAwesomeIcon.TabletAlt, "Personal Remote", 125f))
@@ -117,7 +116,6 @@ public class ToyboxOverview
             ImGui.EndCombo();
         }
         UiSharedService.AttachToolTip("Select the type of simulated vibrator sound to play when the intensity is adjusted.");
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.AudioTypeSelection, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         // draw out the combo for the audio device selection to play to
         ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
@@ -136,7 +134,6 @@ public class ToyboxOverview
             ImGui.EndCombo();
         }
         UiSharedService.AttachToolTip("Select the audio device to play the simulated vibrator sound to.");
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.PlaybackAudioDevice, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize, () => _clientConfigs.Config.VibratorMode = VibratorEnums.Actual);
     }
 
     public void DrawDevicesTable()
@@ -153,7 +150,6 @@ public class ToyboxOverview
                 _vibeService.DeviceHandler.StartDeviceScanAsync().ConfigureAwait(false);
             }
         }
-        _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.DeviceScanner, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         var color = _vibeService.ScanningForDevices ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudRed;
         var scanText = _vibeService.ScanningForDevices ? "Scanning..." : "Idle";
@@ -241,10 +237,9 @@ public class ToyboxOverview
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
             if (_uiShared.IconButton(intifaceOpenIcon))
             {
-                ToyboxHelper.OpenIntiface(_logger, true);
+                Intiface.OpenIntiface(_logger, true);
             }
             UiSharedService.AttachToolTip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
-            _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.OpeningIntiface, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
             // in the next column, draw the centered status.
             ImGui.TableNextColumn();
@@ -289,7 +284,6 @@ public class ToyboxOverview
                 }
                 UiSharedService.AttachToolTip(_vibeService.IntifaceConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
             }
-            _guides.OpenTutorial(TutorialType.Toybox, StepsToybox.IntifaceConnection, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
         }
         // draw out the vertical slider.
         ImGui.Separator();

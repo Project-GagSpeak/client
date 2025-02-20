@@ -7,11 +7,15 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.Localization;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Extensions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -20,18 +24,23 @@ using XivControl = FFXIVClientStructs.FFXIV.Client.Game.Control;
 namespace GagSpeak.UpdateMonitoring;
 public class MovementMonitor : DisposableMediatorSubscriberBase
 {
+    private readonly MainHub _hub;
+    private readonly GlobalData _globals;
+    private readonly ChatSender _chatSender; // Ensures 0 delay from the point of send.
     private readonly GagspeakConfigService _mainConfig;
-    private readonly HardcoreHandler _handler;
     private readonly SelectStringPrompt _promptsString;
     private readonly YesNoPrompt _promptsYesNo;
     private readonly RoomSelectPrompt _promptsRooms;
+    private readonly PairManager _pairs;
+    private readonly TraitsManager _traits;
     private readonly ClientMonitor _clientMonitor;
-    private readonly OnFrameworkService _frameworkUtils;
     private readonly EmoteMonitor _emoteMonitor;
-    private readonly MoveController _MoveController;
+    private readonly MoveController _moveController;
     private readonly IKeyState _keyState;
     private readonly IObjectTable _objectTable;
     private readonly ITargetManager _targetManager;
+
+    private CancellationTokenSource _emoteCTS = new();
 
     // for controlling walking speed, follow movement manager, and sitting/standing.
     public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
@@ -42,22 +51,37 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
     private static GetRefValue? getRefValue;
     private bool WasCancelled = false; // if true, we have cancelled any movement keys
 
-    // the list of keys that are blocked while movement is disabled. Req. to be static, must be set here.
-    public MovementMonitor(ILogger<MovementMonitor> logger, GagspeakMediator mediator,
-        HardcoreHandler hardcoreHandler, GagspeakConfigService config, SelectStringPrompt stringPrompts,
-        YesNoPrompt yesNoPrompts, RoomSelectPrompt rooms, ClientMonitor clientMonitor,
-        OnFrameworkService frameworkUtils, EmoteMonitor emoteMonitor, MoveController moveController, 
-        IKeyState keyState, IObjectTable objectTable, ITargetManager targetManager) : base(logger, mediator)
+    public MovementMonitor(
+        ILogger<MovementMonitor> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        GlobalData globals,
+        ChatSender chatSender,
+        GagspeakConfigService config,
+        SelectStringPrompt stringPrompts,
+        YesNoPrompt yesNoPrompts,
+        RoomSelectPrompt rooms,
+        PairManager pairs,
+        TraitsManager traits,
+        ClientMonitor clientMonitor,
+        EmoteMonitor emoteMonitor,
+        MoveController moveController, 
+        IKeyState keyState,
+        IObjectTable objectTable,
+        ITargetManager targetManager) : base(logger, mediator)
     {
+        _hub = hub;
+        _globals = globals;
+        _chatSender = chatSender;
         _mainConfig = config;
-        _handler = hardcoreHandler;
         _promptsString = stringPrompts;
         _promptsYesNo = yesNoPrompts;
         _promptsRooms = rooms;
+        _pairs = pairs;
+        _traits = traits;
         _clientMonitor = clientMonitor;
-        _frameworkUtils = frameworkUtils;
         _emoteMonitor = emoteMonitor;
-        _MoveController = moveController;
+        _moveController = moveController;
         _keyState = keyState;
         _objectTable = objectTable;
         _targetManager = targetManager;
@@ -69,11 +93,17 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
                             _keyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(int) }, null)!);
         });
 
-        // try and see if we can remove this????
         Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, _ => SafewordUsed());
-        Mediator.Subscribe<DalamudLogoutMessage>(this, _ => DisableManipulatedTraitData());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+
+        traits.OnTraitStateChanged += ProcessTraitChange;
+        traits.OnHardcoreStateChanged += ProcessHardcoreTraitChange;
+
     }
+
+    public Stopwatch LastMovement { get; set; } = new Stopwatch();
+    private Vector3 LastPosition = Vector3.Zero;
+    private EmoteState EmoteStateCache = new EmoteState();
 
     protected override void Dispose(bool disposing)
     {
@@ -81,6 +111,150 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         // enable movement
         ResetCancelledMoveKeys();
     }
+
+    #region Process Trait Changes
+    private void ProcessTraitChange(Traits prevTraits, Traits newTraits)
+    {
+
+    }
+
+    private async void ProcessHardcoreTraitChange(HardcoreTraits prevTraits, HardcoreTraits newTraits)
+    {
+        var changed = prevTraits ^ newTraits;
+
+        if (_globals.GlobalPerms is not { } perms)
+            return;
+
+        // Enable Forced Follow if it was set to enabled.
+        if(changed.HasAny(HardcoreTraits.ForceFollow))
+        {
+            if(newTraits.HasAny(HardcoreTraits.ForceFollow))
+            {
+                // Cache movement mode to keep original movement set afterwards.
+                _traits.CachedMovementMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
+                Logger.LogDebug("Cached MoveMode: " + _traits.CachedMovementMode, LoggerType.HardcoreMovement);
+                GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy);
+
+                if(LastMovement.IsRunning) LastMovement.Restart();
+                else LastMovement.Start();
+
+                if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == perms.ForcedFollow.HardcorePermUID()) is { } match)
+                {
+                    if(match.VisiblePairGameObject?.IsTargetable ?? false)
+                    {
+                        _targetManager.Target = match.VisiblePairGameObject;
+                        ChatMonitor.EnqueueMessage("/follow <t>");
+                        Logger.LogDebug("Enabled forced follow for pair.", LoggerType.HardcoreMovement);
+                    }
+                }
+            }
+            else
+            {
+                DisableForcedFollow();
+            }
+        }
+
+        // Handle Forced Emote if it was changed.
+        if (changed.HasAny(HardcoreTraits.ForceEmote))
+        {
+            if (newTraits.HasAny(HardcoreTraits.ForceFollow))
+            {
+                Logger.LogDebug("Enabled forced Emote State for pair.", LoggerType.HardcoreMovement);
+                _moveController.EnableMovementLock();
+
+                // Reset cancellation token source.
+                if (!_emoteCTS.TryReset()) { _emoteCTS.Dispose(); _emoteCTS = new(); }
+
+                // cache emote state set.
+                EmoteStateCache = perms.ExtractEmoteState();
+
+                var currentEmote = _emoteMonitor.CurrentEmoteId();
+                if (EmoteStateCache.EmoteID is 50 or 52)
+                {
+                    if (!EmoteMonitor.IsSittingAny(currentEmote))
+                    {
+                        Logger.LogDebug("Forcing Emote: /SIT [or /GROUNDSIT]. (Current emote was: " + currentEmote + ").");
+                        EmoteMonitor.ExecuteEmote(EmoteStateCache.EmoteID);
+                    }
+
+                    // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
+                    var emoteID = EmoteStateCache.EmoteID; // Assigned for condition below to avoid accessing the EmoteStateCache getter multiple times.
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _emoteCTS.Token))
+                    {
+                        Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                        return;
+                    }
+
+                    // get our cycle pose.
+                    var currentCyclePose = _emoteMonitor.CurrentCyclePose();
+                    if (currentCyclePose != EmoteStateCache.CyclePoseByte)
+                    {
+                        Logger.LogDebug("Your Cpose [" + currentCyclePose + "] doesn't match requested cpose [" + EmoteStateCache.CyclePoseByte + "]");
+                        if (!EmoteMonitor.IsCyclePoseTaskRunning)
+                            _emoteMonitor.ForceCyclePose(EmoteStateCache.CyclePoseByte);
+                    }
+                    Logger.LogDebug("Locking Player in Current State until released.");
+                }
+                else
+                {
+                    // if we are currently sitting in any manner, stand up first.
+                    if (EmoteMonitor.IsSittingAny(currentEmote))
+                    {
+                        Logger.LogDebug("Forcing Emote: /STAND. (Current emote was: " + currentEmote + ").");
+                        EmoteMonitor.ExecuteEmote(51);
+                    }
+
+                    // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
+                    var emoteID = EmoteStateCache.EmoteID; // Assigned for condition below to avoid accessing the EmoteStateCache getter multiple times.
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _emoteCTS.Token))
+                    {
+                        Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
+                        return;
+                    }
+
+                    // Execute the desired emote.
+                    Logger.LogDebug("Forcing Emote: " + EmoteStateCache.EmoteID + "(Current emote was: " + currentEmote + ")");
+                    EmoteMonitor.ExecuteEmote(EmoteStateCache.EmoteID);
+                    Logger.LogDebug("Locking Player in Current State until released.");
+                }
+            }
+            else
+            {
+                Logger.LogDebug("Pair has allowed you to stand again.", LoggerType.HardcoreMovement);
+                _emoteCTS.Cancel();
+                _moveController.DisableMovementLock();
+            }
+        }
+
+        if (changed.HasAny(HardcoreTraits.ChatboxHidden))
+        {
+            if (newTraits.HasAny(HardcoreTraits.ChatboxHidden))
+            {
+                Logger.LogDebug("Hiding Chatbox", LoggerType.HardcoreActions);
+                ChatLogAddonHelper.SetChatLogPanelsVisibility(false);
+            }
+            else
+            {
+                Logger.LogDebug("Showing Chatbox", LoggerType.HardcoreActions);
+                ChatLogAddonHelper.SetChatLogPanelsVisibility(true);
+            }
+        }
+
+        if (changed.HasAny(HardcoreTraits.ChatInputHidden))
+        {
+            if (newTraits.HasAny(HardcoreTraits.ChatInputHidden))
+            {
+                Logger.LogDebug("Hiding Chat Input", LoggerType.HardcoreActions);
+                ChatLogAddonHelper.SetMainChatLogVisibility(false);
+            }
+            else
+            {
+                Logger.LogDebug("Showing Chat Input", LoggerType.HardcoreActions);
+                ChatLogAddonHelper.SetMainChatLogVisibility(false);
+            }
+        }
+    }
+    #endregion Process Trait Changes
 
     public async void SafewordUsed()
     {
@@ -91,71 +265,67 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         ResetCancelledMoveKeys();
     }
 
+    private async void DisableForcedFollow()
+    {
+        LastMovement.Stop();
+        // assume true for safety.
+        if (_globals.GlobalPerms?.IsFollowing() ?? true)
+        {
+            Logger.LogInformation("ForceFollow Disable was triggered manually before it naturally disabled. Forcibly shutting down.");
+            await _hub.UserUpdateOwnGlobalPerm(new(new(MainHub.UID), MainHub.PlayerUserData,
+                new KeyValuePair<string, object>("ForcedFollow", string.Empty), UpdateDir.Own));
+        }
+
+        // stop the movement mode.
+        _moveController.DisableUnfollowHook();
+
+        // reset movement mode if cached was standard.
+        if (_traits.CachedMovementMode is MovementMode.Standard)
+            GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
+
+        // make cached mode not set again.
+        if (_traits.CachedMovementMode is not MovementMode.NotSet)
+            _traits.CachedMovementMode = MovementMode.NotSet;
+    }
+
     #region Framework Updates
-    /// <summary>
-    /// Apologies in advance for the terrible overhead clutter in this framework update.
-    /// Originally it was much cleaner, but due to other plugins such as Cammy and ECommons
-    /// Interacting with similar pointers and signatures that I use in GagSpeak, I need to
-    /// add checks to ensure proper synchronization to prevent using plugins in conjunction
-    /// locking up your character.
-    /// </summary>
     private unsafe void FrameworkUpdate()
     {
         // make sure we only do checks when we are properly logged in and have a character loaded
         if (!_clientMonitor.IsPresent || _clientMonitor.IsDead)
             return;
 
-        // FORCED FOLLOW LOGIC: Keep player following until idle for 6 seconds.
-        if (_handler.MonitorFollowLogic)
+        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow))
         {
-            // If cached movement mode was standard and our current setting is standard, set it to legacy.
-            if (_handler.CachedMovementMode is MovementMode.Standard && GameConfig.UiControl.GetBool("MoveMode") is false)
-                GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy);
-
-            // Enable unfollow hook.
-            _MoveController.EnableUnfollowHook();
-
-            // Do not account for auto-disable logic if our Offset is .MinValue.
-            if (_handler.LastMovementTime != DateTimeOffset.MinValue)
+            _moveController.EnableUnfollowHook();
+            if (LastMovement.IsRunning)
             {
-                // Check to see if the player is moving or not.
-                if (_clientMonitor.ClientPlayer!.Position != _handler.LastPosition)
+                if (_clientMonitor.ClientPlayer!.Position != LastPosition)
                 {
-                    _handler.LastMovementTime = DateTimeOffset.UtcNow;           // reset timer
-                    _handler.LastPosition = _clientMonitor.ClientPlayer!.Position; // reset position
+                    LastMovement.Restart();
+                    LastPosition = _clientMonitor.ClientPlayer!.Position;
                 }
 
-                // if we have been idle for longer than 6 seconds, we should release the player.
-                if ((DateTimeOffset.UtcNow - _handler.LastMovementTime).TotalSeconds > 6)
-                    _handler.UpdateForcedFollow(NewState.Disabled);
+                if (LastMovement.Elapsed > TimeSpan.FromSeconds(6))
+                    DisableForcedFollow();
             }
         }
 
-
-        // FORCED FOLLOW -- OR -- WEIGHTY RESTRAINT, Handle forced Walk
-        if (_handler.MonitorFollowLogic || HandleWeighty)
+        if (_traits.ForceWalking)
         {
-            // get the byte that sees if the player is walking
             uint isWalking = Marshal.ReadByte((nint)gameControl, 30211);
-            // and if they are not, force it.
-            if (isWalking is 0)
-                Marshal.WriteByte((nint)gameControl, 30211, 0x1);
+            if (isWalking is 0) Marshal.WriteByte((nint)gameControl, 30211, 0x1);
         }
 
-        // FORCED STAY LOGIC: Handle Forced Stay
-        if (_handler.MonitorStayLogic)
+        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceStay))
         {
-            // while they are active, if we are not in a dialog prompt option, scan to see if we are by an estate entrance
             if (!_clientMonitor.InQuestEvent)
             {
                 // grab all the event object nodes (door interactions)
                 var nodes = _objectTable.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.EventObj).ToList();
                 foreach (var node in nodes)
                 {
-                    // Grab distance to object.
                     var distance = _clientMonitor.ClientPlayer?.GetTargetDistance(node) ?? float.MaxValue;
-                    // If its a estate entrance, and we are within 3.5f, interact with it.
-
 
                     if ((node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterEstateName || node.Name.TextValue == GSLoc.Settings.ForcedStay.EnterAPTOneName))
                     {
@@ -210,43 +380,37 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         }
 
         // Handle Prompt Logic.
-        if (_handler.MonitorStayLogic || _clientMonitor.InCutscene)
+        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceStay) || _clientMonitor.InCutscene)
         {
-            // enable the hooks for the option prompts
-            if (!_promptsString.Enabled) _promptsString.Enable();
-            if (!_promptsYesNo.Enabled) _promptsYesNo.Enable();
-            if (!_promptsRooms.Enabled) _promptsRooms.Enable();
+            _promptsString.Enable();
+            _promptsYesNo.Enable();
+            _promptsRooms.Enable();
         }
         else
         {
-            if (_promptsString.Enabled) _promptsString.Disable();
-            if (_promptsYesNo.Enabled) _promptsYesNo.Disable();
-            if (_promptsRooms.Enabled) _promptsRooms.Disable();
+            _promptsString.Disable();
+            _promptsYesNo.Disable();
+            _promptsRooms.Disable();
         }
-
 
         // Cancel Keys if forced follow or immobilization is active. (Also disable our keys we are performing the Chambers Task)
-        if (_handler.MonitorFollowLogic || HandleImmobilize || _moveToChambersTask is not null)
-            CancelMoveKeys();
-        else
-            ResetCancelledMoveKeys();
+        if (_traits.ShouldBlockKeys || _moveToChambersTask is not null) CancelMoveKeys();
+        else ResetCancelledMoveKeys();
 
-        // RESTRAINT IMMOBILIZATION OR FORCED FOLLOW, in where we need to prevent LMB+RMB movement.
-        if (HandleImmobilize)
-            _MoveController.EnableMouseAutoMoveHook();
-        else
-            _MoveController.DisableMouseAutoMoveHook();
+        // We need to prevent LMB+RMB movement.
+        if (_traits.IsImmobile) _moveController.EnableMouseAutoMoveHook();
+        else _moveController.DisableMouseAutoMoveHook();
 
-        // BLINDFOLDED STATE - Force Lock First Person if desired.
-        if (_mainConfig.Config.ForceLockFirstPerson && _handler.MonitorBlindfoldLogic)
+        // Force Lock First Person if desired.
+        if (_mainConfig.Config.ForceLockFirstPerson && _traits.ActiveTraits.HasAny(Traits.Blindfolded))
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;
         }
 
-        // FORCED Emote LOGIC Logic.
-        if (_handler.MonitorEmoteLogic)
-            _MoveController.EnableMovementLock();
+        // Ensure restricted movement.
+        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote))
+            _moveController.EnableMovementLock();
     }
 
     private Task? _moveToChambersTask;
@@ -259,9 +423,9 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             // Set the target to the node.
             _targetManager.Target = nodeToWalkTo;
             // lock onto the object
-            _handler.SendMessageHardcore("lockon");
+            _chatSender.SendMessage("/lockon");
             await Task.Delay(500);
-            _handler.SendMessageHardcore("automove");
+            _chatSender.SendMessage("/automove");
             // set mode to run
             unsafe
             {
@@ -288,28 +452,21 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             {
                 // if the value is set to execute, cancel it.
                 _keyState.SetRawValue(x, 0);
-                // set was canceled to true
                 WasCancelled = true;
-                //Logger.LogTrace("Cancelling key: " + x, LoggerType.HardcoreMovement);
             }
         });
     }
 
     private void ResetCancelledMoveKeys()
     {
-        // if we had any keys canceled
         if (WasCancelled)
         {
-            // set was cancelled back to false
             WasCancelled = false;
-            // and restore the state of the virtual keys
+            // Restore the state of the virtual keys
             MoveKeys.Each(x =>
             {
-                // the action to execute for each key
                 if (KeyMonitor.IsKeyPressed((int)(Keys)x))
-                {
                     SetKeyState(x, 3);
-                }
             });
         }
     }

@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Dto;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
@@ -40,13 +41,13 @@ public partial class PairStickyUI
         var disableChatVisibilityToggle = !PairPerms.AllowHidingChatBoxes || !PairGlobals.CanToggleChatHidden(MainHub.UID);
         var disableChatInputVisibilityToggle = !PairPerms.AllowHidingChatInput || !PairGlobals.CanToggleChatInputHidden(MainHub.UID);
         var disableChatInputBlockToggle = !PairPerms.AllowChatInputBlocking || !PairGlobals.CanToggleChatInputBlocked(MainHub.UID);
-        var pairAllowsDevotionalToggles = PairPerms.DevotionalStatesForPair;
+        var pairlockStates = PairPerms.PairLockedStates;
 
         var forceFollowIcon = PairGlobals.IsFollowing() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.PersonWalkingArrowRight;
         var forceFollowText = PairGlobals.IsFollowing() ? $"Have {PairNickOrAliasOrUID} stop following you." : $"Make {PairNickOrAliasOrUID} follow you.";
         if (_uiShared.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
-            var newStr = PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
+            var newStr = PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", newStr), UpdateDir.Other));
         }
         
@@ -56,7 +57,7 @@ public partial class PairStickyUI
         var forceToStayText = PairGlobals.IsStaying() ? $"Release {PairNickOrAliasOrUID}." : $"Lock away {PairNickOrAliasOrUID}.";
         if (_uiShared.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
         {
-            var newStr = PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
+            var newStr = PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedStay", newStr), UpdateDir.Other));
         }
 
@@ -64,7 +65,7 @@ public partial class PairStickyUI
         var toggleChatboxText = PairGlobals.IsChatHidden() ? "Make " + PairNickOrAliasOrUID + "'s Chat Visible." : "Hide "+PairNickOrAliasOrUID+"'s Chat Window.";
         if (_uiShared.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
         {
-            var newStr = PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
+            var newStr = PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatBoxesHidden", newStr), UpdateDir.Other));
         }
 
@@ -72,7 +73,7 @@ public partial class PairStickyUI
         var toggleChatInputText = PairGlobals.IsChatInputHidden() ? "Make " + PairNickOrAliasOrUID + "'s Chat Input Visible." : "Hide "+PairNickOrAliasOrUID+"'s Chat Input.";
         if (_uiShared.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
         {
-            var newStr = PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
+            var newStr = PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputHidden", newStr), UpdateDir.Other));
         }
 
@@ -80,7 +81,7 @@ public partial class PairStickyUI
         var toggleChatBlockingText = PairGlobals.IsChatInputBlocked() ? "Reallow "+PairNickOrAliasOrUID+"'s Chat Input." : "Block "+PairNickOrAliasOrUID+"'s Chat Input.";
         if (_uiShared.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
         {
-            var newStr = PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairAllowsDevotionalToggles ? Globals.DevotedString : string.Empty);
+            var newStr = PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputBlocked", newStr), UpdateDir.Other));
         }
         ImGui.Separator();
@@ -138,7 +139,7 @@ public partial class PairStickyUI
                         if (ImGui.Button("Force State##ForceEmoteStateTo" + PairNickOrAliasOrUID))
                         {
                             // Compile the string for sending.
-                            var newStr = MainHub.UID + "|" + SelectedEmote?.RowId.ToString() + "|" + SelectedCPose.ToString() + (PairPerms.DevotionalStatesForPair ? Globals.DevotedString : string.Empty);
+                            var newStr = MainHub.UID + "|" + SelectedEmote?.RowId.ToString() + "|" + SelectedCPose.ToString() + (PairPerms.PairLockedStates ? Globals.DevotedString : string.Empty);
                             _logger.LogDebug("Sending EmoteState update for emote: " + (SelectedEmote?.Name.ToString()));
                             _ = _hub.UserUpdateOtherGlobalPerm(new(StickyPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr), UpdateDir.Other));
                             PairCombos.Opened = InteractionType.None;
@@ -164,7 +165,7 @@ public partial class PairStickyUI
         var AllowBeeps = PairPerms.HasValidShareCode() ? PairPerms.AllowBeeps : StickyPair.PairGlobals.AllowBeeps;
         var MaxIntensity = PairPerms.HasValidShareCode() ? PairPerms.MaxIntensity : StickyPair.PairGlobals.MaxIntensity;
         var maxVibeDuration = PairPerms.HasValidShareCode() ? PairPerms.GetTimespanFromDuration() : StickyPair.PairGlobals.GetTimespanFromDuration();
-        var piShockShareCodePref = PairPerms.HasValidShareCode() ? PairPerms.ShockCollarShareCode : StickyPair.PairGlobals.GlobalShockShareCode;
+        var piShockShareCodePref = PairPerms.HasValidShareCode() ? PairPerms.PiShockShareCode : StickyPair.PairGlobals.GlobalShockShareCode;
 
         if (_uiShared.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PairNickOrAliasOrUID + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
         {

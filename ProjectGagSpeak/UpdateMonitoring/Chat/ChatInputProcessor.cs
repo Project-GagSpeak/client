@@ -82,7 +82,7 @@ public unsafe class ChatInputDetour : IDisposable
             var newSeStringBuilder = new SeStringBuilder();
 
             // If we are not meant to garble the message, then return original.
-            if (!_clientData.GlobalPerms.LiveChatGarblerActive || !_clientData.AnyGagActive)
+            if (!_clientData.GlobalPerms.ChatGarblerActive || !_clientData.AnyGagActive)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */

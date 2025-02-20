@@ -18,7 +18,7 @@ public class PatternApplier : IDisposable
     public Stopwatch DisplayTime { get; private set; }
     public int ReadBufferIdx { get; private set; }
     public IReadOnlyList<byte> PlaybackData { get; private set; }
-    public LightPattern? ActivePatternInfo { get; private set; }
+    public Pattern? ActivePatternInfo { get; private set; }
     private List<float> SimulatedVolumes;
 
     public PatternApplier(ILogger<PatternApplier> logger, GagspeakConfigService config,
@@ -53,7 +53,7 @@ public class PatternApplier : IDisposable
 
         // Store in the vibrator data from the defined startpoint, for the defined duration
         PlaybackData = TrimDataToPlayableRegion(patternToPlay.PatternData, customStartPoint, customDuration);
-        ActivePatternInfo = patternToPlay.ToLightData();
+        ActivePatternInfo = patternToPlay;
 
         if (_config.Config.VibratorMode is VibratorEnums.Simulated)
             InitializeVolumeLevels(PlaybackData);
@@ -85,7 +85,7 @@ public class PatternApplier : IDisposable
         _playbackCTS?.Dispose();
         _playbackCTS = null;
 
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Stopped, ActivePatternInfo.Id, false);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Stopped, ActivePatternInfo.Identifier, false);
         ActivePatternInfo = null;
     }
 
@@ -131,7 +131,7 @@ public class PatternApplier : IDisposable
                 // If we reached the end of the data. Stop playback or restart if looping.
                 if (ReadBufferIdx >= PlaybackData.Count)
                 {
-                    if (ActivePatternInfo?.Loops ?? false)
+                    if (ActivePatternInfo?.ShouldLoop ?? false)
                     {
                         ReadBufferIdx = 0;
                         DisplayTime.Restart();

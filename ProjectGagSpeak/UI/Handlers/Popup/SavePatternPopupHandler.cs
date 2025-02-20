@@ -50,14 +50,14 @@ public class SavePatternPopupHandler : IPopupHandler
         }
         ImGuiHelpers.ScaledDummy(5f);
         ImGui.Separator();
-        var name = CompiledPatternData.Name;
+        var name = CompiledPatternData.Label;
         ImGui.SetNextItemWidth(150);
         if (ImGui.InputTextWithHint("Pattern Name", "Enter a name...", ref name, 48))
         {
-            CompiledPatternData.Name = name;
+            CompiledPatternData.Label = name;
         }
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternName, ImGui.GetWindowPos(), _size,
-            () => CompiledPatternData.Name = "Tutorial Pattern");
+            () => CompiledPatternData.Label = "Tutorial Pattern");
 
         // description field
         var description = CompiledPatternData.Description;
@@ -104,18 +104,16 @@ public class SavePatternPopupHandler : IPopupHandler
     {
         // compile a fresh pattern object
         CompiledPatternData = new Pattern();
-        // create new GUID for it
-        CompiledPatternData.UniqueIdentifier = Guid.NewGuid();
         // set the duration
         CompiledPatternData.Duration = message.Duration;
         CompiledPatternData.PlaybackDuration = message.Duration;
         // set the pattern data
-        CompiledPatternData.PatternByteData = message.StoredData;
+        CompiledPatternData.PatternData = message.StoredData;
     }
 
     public void Close()
     {
-        _patternHandler.AddNewPattern(CompiledPatternData);
+        _patterns.CreateClone(CompiledPatternData, CompiledPatternData.Label);
         ImGui.CloseCurrentPopup();
     }
 }

@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons.TextHelpers;
+namespace GagSpeak.CkCommons.Helpers;
 
 public static class Generators
 {

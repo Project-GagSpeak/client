@@ -16,6 +16,8 @@ public record EmoteTrigger : Trigger
 
     internal EmoteTrigger() { }
 
+    public EmoteTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     public EmoteTrigger(EmoteTrigger other, bool keepId) : base(other, keepId)
     {
         EmoteID = other.EmoteID;

@@ -137,7 +137,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
     /// <remarks> This method helps act as an override for mare to apply the moodles data to other non-mare players. </remarks>
     public void ApplyCharacterData(Guid applicationBase, CharaIPCData characterData)
     {
-        var oldMoodleData = _cachedIpcData?.DeepClone() ?? new();
+        var oldMoodleData = new CharaIPCData(_cachedIpcData ?? new());
         if (string.Equals(oldMoodleData.MoodlesData, characterData.MoodlesData, StringComparison.Ordinal))
             return;
 

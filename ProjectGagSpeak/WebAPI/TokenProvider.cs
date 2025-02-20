@@ -1,4 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;

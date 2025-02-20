@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
@@ -67,6 +68,42 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
         Logger.LogDebug($"Cloned trigger {other.Label} to {newName}.");
         Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
+    }
+
+    public void ChangeTriggerType(Trigger newTrigger, TriggerKind newType)
+    {
+        Trigger convertedTrigger = newType switch
+        {
+            TriggerKind.SpellAction => new SpellActionTrigger(newTrigger, false),
+            TriggerKind.HealthPercent => new HealthPercentTrigger(newTrigger, false),
+            TriggerKind.RestraintSet => new RestraintTrigger(newTrigger, false),
+            TriggerKind.GagState => new GagTrigger(newTrigger, false),
+            TriggerKind.SocialAction => new SocialTrigger(newTrigger, false),
+            TriggerKind.EmoteAction => new EmoteTrigger(newTrigger, false),
+            _ => throw new NotImplementedException("Unknown trigger type."),
+        };
+
+        // we need to replace the item in the storage with this item, and also replace the active editor item since that is the only place it can be changed.
+        if (Storage.FindIndex(t => t.Identifier == newTrigger.Identifier) is { } matchIdx && matchIdx != -1)
+        {
+            Storage[matchIdx] = convertedTrigger;
+            ActiveEditorItem = convertedTrigger;
+            _saver.Save(this);
+            Logger.LogDebug($"Changed trigger {newTrigger.Label} to {newType}.");
+            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Modified, convertedTrigger, null));
+        }
+    }
+
+    public void Rename(Trigger trigger, string newName)
+    {
+        if (Storage.Contains(trigger))
+        {
+            Logger.LogDebug($"Storage contained trigger, renaming {trigger.Label} to {newName}.");
+            var newNameReal = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
+            trigger.Label = newNameReal;
+            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Renamed, trigger, newNameReal));
+            _saver.Save(this);
+        }
     }
 
     public void Delete(Trigger trigger)

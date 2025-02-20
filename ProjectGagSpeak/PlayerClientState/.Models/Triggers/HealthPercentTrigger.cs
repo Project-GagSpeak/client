@@ -22,6 +22,8 @@ public record HealthPercentTrigger : Trigger
 
     internal HealthPercentTrigger() { }
 
+    public HealthPercentTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     public HealthPercentTrigger(HealthPercentTrigger other, bool keepId)
         : base(other, keepId)
     {

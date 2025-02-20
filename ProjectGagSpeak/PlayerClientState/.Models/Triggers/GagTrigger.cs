@@ -13,6 +13,8 @@ public record GagTrigger : Trigger
 
     internal GagTrigger() { }
 
+    public GagTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+
     public GagTrigger(GagTrigger other, bool keepId) : base(other, keepId)
     {
         Gag = other.Gag;
