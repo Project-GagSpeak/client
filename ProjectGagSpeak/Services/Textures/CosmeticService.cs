@@ -143,22 +143,22 @@ public class CosmeticService : IHostedService, IDisposable
                 break;
 
             case CkSupporterTier.IllustriousSupporter:
-                supporterWrap = CorePluginTextures[CorePluginTexture.Tier1];
+                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier1];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Illustrious Supporter";
                 break;
 
             case CkSupporterTier.EsteemedPatron:
-                supporterWrap = CorePluginTextures[CorePluginTexture.Tier2];
+                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier2];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Esteemed Patron";
                 break;
 
             case CkSupporterTier.DistinguishedConnoisseur:
-                supporterWrap = CorePluginTextures[CorePluginTexture.Tier3];
+                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier3];
                 tooltipString = userData.AliasOrUID + " is supporting CK as a Distinguished Connoisseur";
                 break;
 
             case CkSupporterTier.KinkporiumMistress:
-                supporterWrap = CorePluginTextures[CorePluginTexture.Tier4];
+                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier4];
                 tooltipString = userData.AliasOrUID + " is the Shop Mistress of CK, and the Dev of GagSpeak.";
                 break;
 

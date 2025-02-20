@@ -1,9 +1,8 @@
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Text;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using ImGuiNET;
-using Penumbra.GameData.Files.ShaderStructs;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 

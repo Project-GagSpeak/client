@@ -1,5 +1,6 @@
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
@@ -382,9 +383,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
                 RestraintSlots = slotDict,
                 Glasses = _items.ParseBonusSlot(setJson["Glasses"]),
                 Layers = layers,
-                HeadgearState = JsonHelp.FromJObject(setJson["HeadgearState"]),
-                VisorState = JsonHelp.FromJObject(setJson["VisorState"]),
-                WeaponState = JsonHelp.FromJObject(setJson["WeaponState"]),
+                HeadgearState = JParser.FromJObject(setJson["HeadgearState"]),
+                VisorState = JParser.FromJObject(setJson["VisorState"]),
+                WeaponState = JParser.FromJObject(setJson["WeaponState"]),
                 RestraintMods = setJson["RestraintMods"]?.ToObject<List<ModAssociation>>() ?? throw new Exception("Invalid Mods"),
                 RestraintMoodles = setJson["RestraintMoodles"]?.ToObject<List<Moodle>>() ?? throw new Exception("Invalid Moodles"),
             };

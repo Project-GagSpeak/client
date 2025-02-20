@@ -1,8 +1,7 @@
-using GagSpeak.CkCommons.Text;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Extensions;
@@ -21,7 +20,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     { }
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.PairCanApplyYourMoodlesToYou is false;
+        => _pairRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) is false;
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

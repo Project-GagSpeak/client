@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
@@ -38,7 +39,7 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
     {
         var pattern = Items[globalIdx];
 
-        if(IconDisplays.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
+        if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
         {
             // Force a recalculation on the cached display.
             CurrentSelectionIdx = -1;

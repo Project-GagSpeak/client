@@ -274,11 +274,11 @@ public partial class PairStickyUI
             StickyPair.PairPermAccess.CanUseVibeRemoteAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOtherPairSetting(nameof(StickyPair.PairPerms.CanToggleAlarms), nameof(StickyPair.PairPermAccess.CanToggleAlarmsAllowed),
-            StickyPair.PairPerms.CanToggleAlarms ? (PairNickOrAliasOrUID + " allows Alarm Toggling") : (PairNickOrAliasOrUID + " prevents Alarm Toggling"),
-            StickyPair.PairPerms.CanToggleAlarms ? FontAwesomeIcon.Bell : FontAwesomeIcon.Ban,
-            StickyPair.PairPermAccess.CanToggleAlarmsAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.CanToggleAlarmsAllowed,
+        DrawOtherPairSetting(nameof(StickyPair.PairPerms.ToggleAlarms), nameof(StickyPair.PairPermAccess.ToggleAlarmsAllowed),
+            StickyPair.PairPerms.ToggleAlarms ? (PairNickOrAliasOrUID + " allows Alarm Toggling") : (PairNickOrAliasOrUID + " prevents Alarm Toggling"),
+            StickyPair.PairPerms.ToggleAlarms ? FontAwesomeIcon.Bell : FontAwesomeIcon.Ban,
+            StickyPair.PairPermAccess.ToggleAlarmsAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.ToggleAlarmsAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
         DrawOtherPairSetting(nameof(StickyPair.PairPerms.CanSendAlarms), nameof(StickyPair.PairPermAccess.CanSendAlarmsAllowed),
@@ -288,11 +288,11 @@ public partial class PairStickyUI
             StickyPair.PairPermAccess.CanSendAlarmsAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOtherPairSetting(nameof(StickyPair.PairPerms.CanExecutePatterns), nameof(StickyPair.PairPermAccess.CanExecutePatternsAllowed),
-            StickyPair.PairPerms.CanExecutePatterns ? (PairNickOrAliasOrUID + " allows Pattern Execution") : (PairNickOrAliasOrUID + " prevents Pattern Execution"),
-            StickyPair.PairPerms.CanExecutePatterns ? FontAwesomeIcon.LandMineOn : FontAwesomeIcon.Ban,
-            StickyPair.PairPermAccess.CanExecutePatternsAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.CanExecutePatternsAllowed,
+        DrawOtherPairSetting(nameof(StickyPair.PairPerms.ExecutePatterns), nameof(StickyPair.PairPermAccess.ExecutePatternsAllowed),
+            StickyPair.PairPerms.ExecutePatterns ? (PairNickOrAliasOrUID + " allows Pattern Execution") : (PairNickOrAliasOrUID + " prevents Pattern Execution"),
+            StickyPair.PairPerms.ExecutePatterns ? FontAwesomeIcon.LandMineOn : FontAwesomeIcon.Ban,
+            StickyPair.PairPermAccess.ExecutePatternsAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.ExecutePatternsAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
         DrawOtherPairSetting(nameof(StickyPair.PairPerms.CanStopPatterns), nameof(StickyPair.PairPermAccess.CanStopPatternsAllowed),
@@ -302,11 +302,11 @@ public partial class PairStickyUI
             StickyPair.PairPermAccess.CanStopPatternsAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOtherPairSetting(nameof(StickyPair.PairPerms.CanToggleTriggers), nameof(StickyPair.PairPermAccess.CanToggleTriggersAllowed),
-            StickyPair.PairPerms.CanToggleTriggers ? (PairNickOrAliasOrUID + " allows Toggling Triggers") : (PairNickOrAliasOrUID + " prevents Toggling Triggers"),
-            StickyPair.PairPerms.CanToggleTriggers ? FontAwesomeIcon.FileMedicalAlt : FontAwesomeIcon.Ban,
-            StickyPair.PairPermAccess.CanToggleTriggersAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
-            StickyPair.PairPermAccess.CanToggleTriggersAllowed,
+        DrawOtherPairSetting(nameof(StickyPair.PairPerms.ToggleTriggers), nameof(StickyPair.PairPermAccess.ToggleTriggersAllowed),
+            StickyPair.PairPerms.ToggleTriggers ? (PairNickOrAliasOrUID + " allows Toggling Triggers") : (PairNickOrAliasOrUID + " prevents Toggling Triggers"),
+            StickyPair.PairPerms.ToggleTriggers ? FontAwesomeIcon.FileMedicalAlt : FontAwesomeIcon.Ban,
+            StickyPair.PairPermAccess.ToggleTriggersAllowed ? ("Press to Toggle " + PairNickOrAliasOrUID + "'s permission state.") : ("You Can't Change " + PairNickOrAliasOrUID + "'s Permission here."),
+            StickyPair.PairPermAccess.ToggleTriggersAllowed,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
     }
 

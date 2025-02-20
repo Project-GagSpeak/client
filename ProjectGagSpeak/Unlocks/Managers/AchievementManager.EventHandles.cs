@@ -1,7 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.ChatMessages;
-using GagSpeak.CkCommons.Text;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;

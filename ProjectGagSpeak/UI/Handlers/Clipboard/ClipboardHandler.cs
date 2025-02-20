@@ -1,4 +1,4 @@
-using GagSpeak.Utils;
+using GagSpeak.CkCommons;
 using ImGuiNET;
 
 namespace GagSpeak.UI.Components;
@@ -20,11 +20,11 @@ public class ClipboardHandler<T> : IClipboardHandler<T>
         try
         {
             // Serialize the item to JSON
-            string json = JsonConvert.SerializeObject(item);
+            var json = JsonConvert.SerializeObject(item);
             // Compress the JSON string
             var compressed = json.Compress(6);
             // Encode the compressed string to base64
-            string base64Pattern = Convert.ToBase64String(compressed);
+            var base64Pattern = Convert.ToBase64String(compressed);
             // Copy the base64 string to the clipboard
             ImGui.SetClipboardText(base64Pattern);
             _logger.LogInformation("Data copied to clipboard.");
@@ -46,14 +46,14 @@ public class ClipboardHandler<T> : IClipboardHandler<T>
         try
         {
             // Get the base64 string from the clipboard
-            string base64 = ImGui.GetClipboardText();
+            var base64 = ImGui.GetClipboardText();
             // Decode the base64 string to bytes
             var bytes = Convert.FromBase64String(base64);
             // Decompress the bytes to a JSON string
             var version = bytes[0];
             version = bytes.DecompressToString(out var decompressed);
             // Deserialize the JSON string back to the object
-            T item = JsonConvert.DeserializeObject<T>(decompressed) ?? throw new Exception("Failed to deserialize data from clipboard.");
+            var item = JsonConvert.DeserializeObject<T>(decompressed) ?? throw new Exception("Failed to deserialize data from clipboard.");
 
             // Perform the custom action with the de-serialized item
             onAddAction(item);

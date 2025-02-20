@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace GagSpeak.UI.Components;
 
-namespace ProjectGagSpeak.UI.Components.Drawers
+public class OptionDrawer
 {
-    internal class OptionDrawer
+    private readonly UiSharedService _uiShared;
+
+    public OptionDrawer(UiSharedService uiShared)
     {
+        _uiShared = uiShared;
     }
 }

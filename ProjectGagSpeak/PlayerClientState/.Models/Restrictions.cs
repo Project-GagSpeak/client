@@ -93,8 +93,8 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
         Mod.LoadMod(json["Mod"]);
         Moodle.LoadMoodle(json["Moodle"]);
         Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
-        HeadgearState = JsonHelp.FromJObject(json["HeadgearState"]);
-        VisorState = JsonHelp.FromJObject(json["VisorState"]);
+        HeadgearState = JParser.FromJObject(json["HeadgearState"]);
+        VisorState = JParser.FromJObject(json["VisorState"]);
         ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority");
         DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false;
@@ -177,8 +177,8 @@ public class BlindfoldRestriction : RestrictionItem
     public override void LoadRestriction(JObject json)
     {
         base.LoadRestriction(json);
-        HeadgearState = JsonHelp.FromJObject(json["HeadgearState"]);
-        VisorState = JsonHelp.FromJObject(json["VisorState"]);
+        HeadgearState = JParser.FromJObject(json["HeadgearState"]);
+        VisorState = JParser.FromJObject(json["VisorState"]);
         CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
     }
 }

@@ -31,7 +31,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
             CurrentSelection = _pairRef.LastLightStorage.Alarms.FirstOrDefault();
     }
 
-    protected override bool DisableCondition() => _pairRef.PairPerms.CanToggleAlarms is false;
+    protected override bool DisableCondition() => _pairRef.PairPerms.ToggleAlarms is false;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)

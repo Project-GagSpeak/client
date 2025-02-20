@@ -6,7 +6,9 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -28,7 +30,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
         _saver = saver;
         Load();
 
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
+        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckForExpiredLocks());
     }
 
     // Cached Information.
@@ -346,4 +348,27 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     }
 
     #endregion HybridSavable
+
+    public void CheckForExpiredLocks()
+    {
+        if (!MainHub.IsConnected)
+            return;
+
+        if (ActiveRestrictionsData is null || !ActiveRestrictionsData.Restrictions.Any(i => i.IsLocked()))
+            return;
+
+        foreach (var (restriction, index) in ActiveRestrictionsData.Restrictions.Select((slot, index) => (slot, index)))
+            if (restriction.Padlock.IsTimerLock() && restriction.HasTimerExpired())
+            {
+                Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
+                // only set data relevant to the new change.
+                var newData = new ActiveRestriction()
+                {
+                    Padlock = restriction.Padlock, // match the padlock
+                    Password = restriction.Password, // use the same password.
+                    PadlockAssigner = restriction.PadlockAssigner // use the same assigner. (To remove devotional timers)
+                };
+                Mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Unlocked, index, newData));
+            }
+    }
 }

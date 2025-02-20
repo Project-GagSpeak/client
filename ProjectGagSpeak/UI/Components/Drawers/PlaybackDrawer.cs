@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Toybox;
 using ImGuiNET;
 using ImPlotNET;

@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
+using GagspeakAPI.Data.Struct;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -58,7 +59,6 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public Action<Traits, Traits>? OnTraitStateChanged;
     private HardcoreTraits _previousHcTraits = HardcoreTraits.None;
     private Traits _previousTraits = Traits.None;
-
     public HardcoreTraits ActiveHcTraits
     {
         get => _previousHcTraits;
@@ -72,7 +72,6 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
             }
         }
     }
-
     public Traits ActiveTraits
     {
         get => _previousTraits;
@@ -89,6 +88,8 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     /// <summary> Cache the Movement Mode of our player during ForcedFollow </summary>
     public MovementMode CachedMovementMode = MovementMode.NotSet;
+    public EmoteState CachedEmoteState = new EmoteState();
+
 
     /// <summary> Lame overhead nessisary to avoid mare conflicts with first person fuckery. </summary>
     public bool InitialBlindfoldRedrawMade = false;

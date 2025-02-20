@@ -32,7 +32,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
     }
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.CanExecutePatterns is false
+        => _pairRef.PairPerms.ExecutePatterns is false
         || _pairRef.LastToyboxData.ActivePattern == CurrentSelection?.Id
         || CurrentSelection is null;
 

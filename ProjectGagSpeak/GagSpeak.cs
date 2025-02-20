@@ -188,9 +188,6 @@ public static class GagSpeakServiceExtensions
 
         // PlayerData Services
         .AddSingleton<GagGarbler>()
-        .AddSingleton((s) => new HardcoreHandler(s.GetRequiredService<ILogger<HardcoreHandler>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GlobalData>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<MoveController>(), s.GetRequiredService<ChatSender>(), s.GetRequiredService<EmoteMonitor>(), tm))
         .AddSingleton<GlobalData>()
         .AddSingleton<GameObjectHandlerFactory>()
         .AddSingleton<PairFactory>()
@@ -216,7 +213,7 @@ public static class GagSpeakServiceExtensions
         /*.AddSingleton((s) => new ActionMonitor(s.GetRequiredService<ILogger<ActionMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<GlobalData>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<HardcoreHandler>(), s.GetRequiredService<ClientMonitor>(), gip))*/
 
-        .AddSingleton((s) => new MovementMonitor(s.GetRequiredService<ILogger<MovementMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<HardcoreHandler>(),
+        .AddSingleton((s) => new MovementMonitor(s.GetRequiredService<ILogger<MovementMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<SelectStringPrompt>(), s.GetRequiredService<YesNoPrompt>(), s.GetRequiredService<RoomSelectPrompt>(),
             s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<EmoteMonitor>(), s.GetRequiredService<MoveController>(), ks, ot, tm))
         .AddSingleton((s) => new MoveController(s.GetRequiredService<ILogger<MoveController>>(), gip, ot))

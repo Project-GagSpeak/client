@@ -2,15 +2,9 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components.Combos;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagSpeak.WebAPI.Utils;
-using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui.Text;
-using System.Numerics;
 
 namespace GagSpeak.UI.Permissions;
 

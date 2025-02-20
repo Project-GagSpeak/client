@@ -1,7 +1,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
-using GagSpeak.CkCommons.Text;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Toybox;

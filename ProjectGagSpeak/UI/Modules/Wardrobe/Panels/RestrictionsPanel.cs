@@ -1,8 +1,6 @@
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Restrictions;
 using GagSpeak.Services.Tutorial;

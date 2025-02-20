@@ -50,11 +50,11 @@ public partial class PairStickyUI
 
 
         bool openVibeRemoteDisabled = !StickyPair.OnlineToyboxUser || !PairPerms.CanUseVibeRemote;
-        bool patternExecuteDisabled = !PairPerms.CanExecutePatterns || !StickyPair.PairGlobals.ToyIsActive || !lastLightStorage.Patterns.Any();
+        bool patternExecuteDisabled = !PairPerms.ExecutePatterns || !StickyPair.PairGlobals.ToyIsActive || !lastLightStorage.Patterns.Any();
         bool patternStopDisabled = !PairPerms.CanStopPatterns || !StickyPair.PairGlobals.ToyIsActive || lastToyboxData.ActivePatternId.IsEmptyGuid();
-        bool alarmToggleDisabled = !PairPerms.CanToggleAlarms || !lastLightStorage.Alarms.Any();
+        bool alarmToggleDisabled = !PairPerms.ToggleAlarms || !lastLightStorage.Alarms.Any();
         bool alarmSendDisabled = !PairPerms.CanSendAlarms;
-        bool triggerToggleDisabled = !PairPerms.CanToggleTriggers || !lastLightStorage.Triggers.Any();
+        bool triggerToggleDisabled = !PairPerms.ToggleTriggers || !lastLightStorage.Triggers.Any();
 
         ////////// TOGGLE PAIRS ACTIVE TOYS //////////
         if (_uiShared.IconTextButton(FontAwesomeIcon.User, toggleToyText, WindowMenuWidth, true))
@@ -73,7 +73,7 @@ public partial class PairStickyUI
         UiSharedService.AttachToolTip(createRemoteTT);
 
         // Expander for executing a pattern on another pair.
-        var disablePatternExpand = !PairPerms.CanExecutePatterns || !StickyPair.PairGlobals.ToyIsActive;
+        var disablePatternExpand = !PairPerms.ExecutePatterns || !StickyPair.PairGlobals.ToyIsActive;
         if (_uiShared.IconTextButton(FontAwesomeIcon.PlayCircle, executePatternText, WindowMenuWidth, true, patternExecuteDisabled))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ActivatePattern) ? InteractionType.None : InteractionType.ActivatePattern;
         UiSharedService.AttachToolTip(executePatternTT);
@@ -100,7 +100,7 @@ public partial class PairStickyUI
         UiSharedService.AttachToolTip(stopPatternTT);
 
         // Expander for toggling an alarm.
-        var disableAlarmExpand = !PairPerms.CanToggleAlarms || !lastLightStorage.Alarms.Any();
+        var disableAlarmExpand = !PairPerms.ToggleAlarms || !lastLightStorage.Alarms.Any();
         if (_uiShared.IconTextButton(FontAwesomeIcon.Clock, toggleAlarmText, WindowMenuWidth, true, alarmToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleAlarm ? InteractionType.None : InteractionType.ToggleAlarm;
         UiSharedService.AttachToolTip(toggleAlarmTT);
@@ -113,7 +113,7 @@ public partial class PairStickyUI
         }
 
         // Expander for toggling a trigger.
-        var disableTriggerExpand = !PairPerms.CanToggleTriggers || !lastLightStorage.Triggers.Any();
+        var disableTriggerExpand = !PairPerms.ToggleTriggers || !lastLightStorage.Triggers.Any();
         if (_uiShared.IconTextButton(FontAwesomeIcon.LandMineOn, toggleTriggerText, WindowMenuWidth, true, triggerToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleTrigger ? InteractionType.None : InteractionType.ToggleTrigger;
         UiSharedService.AttachToolTip(toggleTriggerTT);

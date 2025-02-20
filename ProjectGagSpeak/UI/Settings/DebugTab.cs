@@ -337,11 +337,11 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyState);
         DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToys);
-        DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatterns);
+        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatterns);
         DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatterns);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarms);
-        DrawPermissionRowBool("Can Send Alarms", perms.CanToggleAlarms);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggers);
+        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarms);
+        DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarms);
+        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggers);
         ImGui.TableNextRow();
         DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
         DrawPermissionRowBool("Devotional States For Pair", perms.PairLockedStates);
@@ -427,11 +427,11 @@ public class DebugTab
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
         DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyStateAllowed);
         DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToysAllowed);
-        DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatternsAllowed);
+        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatternsAllowed);
         DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatternsAllowed);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Send Alarms", perms.CanToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
+        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
+        DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarmsAllowed);
+        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
     }
 
     private void DrawAppearance(string uid, CharaActiveGags appearance)

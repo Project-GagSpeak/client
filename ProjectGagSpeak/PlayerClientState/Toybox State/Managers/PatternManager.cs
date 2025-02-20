@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
@@ -5,6 +6,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Character;
+using System.Linq;
 
 namespace GagSpeak.PlayerState.Toybox;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -52,6 +54,18 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         Logger.LogDebug($"Cloned pattern {other.Label} to {newName}.");
         Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
+    }
+
+    public void Rename(Pattern pattern, string newName)
+    {
+        if (Storage.Contains(pattern))
+        {
+            Logger.LogDebug($"Storage contained pattern, renaming {pattern.Label} to {newName}.");
+            var newNameReal = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
+            pattern.Label = newNameReal;
+            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Renamed, pattern, newNameReal));
+            _saver.Save(this);
+        }
     }
 
     public void Delete(Pattern pattern)

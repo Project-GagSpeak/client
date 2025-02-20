@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.Text;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
@@ -24,7 +24,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
     }
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.PairCanApplyOwnMoodlesToYou is false;
+        => _pairRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou) is false;
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

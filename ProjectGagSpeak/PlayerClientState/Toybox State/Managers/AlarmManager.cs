@@ -1,9 +1,11 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using System.Linq;
 
 namespace GagSpeak.PlayerState.Toybox;
 
@@ -57,6 +59,18 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         Logger.LogDebug($"Cloned alarm {other.Label} to {newName}.");
         Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
+    }
+
+    public void Rename(Alarm alarm, string newName)
+    {
+        if (Storage.Contains(alarm))
+        {
+            Logger.LogDebug($"Storage contained alarm, renaming {alarm.Label} to {newName}.");
+            var newNameReal = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
+            alarm.Label = newNameReal;
+            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Renamed, alarm, newNameReal));
+            _saver.Save(this);
+        }
     }
 
     public void Delete(Alarm alarm)

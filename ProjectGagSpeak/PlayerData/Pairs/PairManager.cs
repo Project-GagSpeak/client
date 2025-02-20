@@ -164,25 +164,25 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         }
 
         var ownPerms = (
-            pair.OwnPerms.AllowPositiveStatusTypes,
-            pair.OwnPerms.AllowNegativeStatusTypes,
-            pair.OwnPerms.AllowSpecialStatusTypes,
-            pair.OwnPerms.PairCanApplyYourMoodlesToYou,
-            pair.OwnPerms.PairCanApplyOwnMoodlesToYou,
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou),
             pair.OwnPerms.MaxMoodleTime,
-            pair.OwnPerms.AllowPermanentMoodles,
-            pair.OwnPerms.AllowRemovingMoodles
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles)
         );
 
         var uniquePerms = (
-            pair.PairPerms.AllowPositiveStatusTypes,
-            pair.PairPerms.AllowNegativeStatusTypes,
-            pair.PairPerms.AllowSpecialStatusTypes,
-            pair.PairPerms.PairCanApplyYourMoodlesToYou,
-            pair.PairPerms.PairCanApplyOwnMoodlesToYou,
-            pair.PairPerms.MaxMoodleTime,
-            pair.PairPerms.AllowPermanentMoodles,
-            pair.PairPerms.AllowRemovingMoodles
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou),
+            pair.OwnPerms.MaxMoodleTime,
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles),
+            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles)
         );
 
         return (ownPerms, uniquePerms);

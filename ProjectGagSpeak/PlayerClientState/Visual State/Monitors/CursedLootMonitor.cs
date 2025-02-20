@@ -5,6 +5,7 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
@@ -14,12 +15,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
-using OtterGui;
-using System.Reflection.Metadata;
-using System;
 using GameObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
-using GagSpeak.CkCommons.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.PlayerState.Visual;
 

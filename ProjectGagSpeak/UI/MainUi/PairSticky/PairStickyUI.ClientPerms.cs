@@ -362,10 +362,10 @@ public partial class PairStickyUI
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(OwnPerms.CanToggleAlarms), nameof(StickyPair.OwnPermAccess.CanToggleAlarmsAllowed),
-            OwnPerms.CanToggleAlarms ? "Toggle Alarms Allowed" : "Toggle Alarms Restricted",
-            OwnPerms.CanToggleAlarms ? FontAwesomeIcon.Bell : FontAwesomeIcon.Ban,
-            OwnPerms.CanToggleAlarms ? $"Click to disallow {PairNickOrAliasOrUID} to toggle your alarms" : $"Click to allow {PairNickOrAliasOrUID} to toggle your alarms",
+        DrawOwnSetting(nameof(OwnPerms.ToggleAlarms), nameof(StickyPair.OwnPermAccess.ToggleAlarmsAllowed),
+            OwnPerms.ToggleAlarms ? "Toggle Alarms Allowed" : "Toggle Alarms Restricted",
+            OwnPerms.ToggleAlarms ? FontAwesomeIcon.Bell : FontAwesomeIcon.Ban,
+            OwnPerms.ToggleAlarms ? $"Click to disallow {PairNickOrAliasOrUID} to toggle your alarms" : $"Click to allow {PairNickOrAliasOrUID} to toggle your alarms",
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
@@ -376,24 +376,24 @@ public partial class PairStickyUI
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(OwnPerms.CanExecutePatterns), nameof(StickyPair.OwnPermAccess.CanExecutePatternsAllowed),
-            OwnPerms.CanExecutePatterns ? "Start Patterns Allowed" : "Start Patterns Restricted",
-            OwnPerms.CanExecutePatterns ? FontAwesomeIcon.LandMineOn : FontAwesomeIcon.Ban,
-            OwnPerms.CanExecutePatterns ? $"Click to disallow {PairNickOrAliasOrUID} to start patterns" : $"Click to allow {PairNickOrAliasOrUID} to start patterns",
+        DrawOwnSetting(nameof(OwnPerms.ExecutePatterns), nameof(StickyPair.OwnPermAccess.ExecutePatternsAllowed),
+            OwnPerms.ExecutePatterns ? "Start Patterns Allowed" : "Start Patterns Restricted",
+            OwnPerms.ExecutePatterns ? FontAwesomeIcon.LandMineOn : FontAwesomeIcon.Ban,
+            OwnPerms.ExecutePatterns ? $"Click to disallow {PairNickOrAliasOrUID} to start patterns" : $"Click to allow {PairNickOrAliasOrUID} to start patterns",
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
         DrawOwnSetting(nameof(OwnPerms.CanStopPatterns), nameof(StickyPair.OwnPermAccess.CanStopPatternsAllowed),
             OwnPerms.CanStopPatterns ? "Stop Patterns Allowed" : "Stop Patterns Restricted",
             OwnPerms.CanStopPatterns ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.Ban,
-            OwnPerms.CanExecutePatterns ? $"Click to disallow {PairNickOrAliasOrUID} to stop patterns" : $"Click to allow {PairNickOrAliasOrUID} to stop patterns",
+            OwnPerms.ExecutePatterns ? $"Click to disallow {PairNickOrAliasOrUID} to stop patterns" : $"Click to allow {PairNickOrAliasOrUID} to stop patterns",
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
-        DrawOwnSetting(nameof(OwnPerms.CanToggleTriggers), nameof(StickyPair.OwnPermAccess.CanToggleTriggersAllowed),
-            OwnPerms.CanToggleTriggers ? "Toggle Triggers Allowed" : "Toggle Triggers Restricted",
-            OwnPerms.CanToggleTriggers ? FontAwesomeIcon.FileMedicalAlt : FontAwesomeIcon.Ban,
-            OwnPerms.CanToggleTriggers ? $"Click to disallow {PairNickOrAliasOrUID} to toggle your triggers" : $"Click to allow {PairNickOrAliasOrUID} to toggle your triggers",
+        DrawOwnSetting(nameof(OwnPerms.ToggleTriggers), nameof(StickyPair.OwnPermAccess.ToggleTriggersAllowed),
+            OwnPerms.ToggleTriggers ? "Toggle Triggers Allowed" : "Toggle Triggers Restricted",
+            OwnPerms.ToggleTriggers ? FontAwesomeIcon.FileMedicalAlt : FontAwesomeIcon.Ban,
+            OwnPerms.ToggleTriggers ? $"Click to disallow {PairNickOrAliasOrUID} to toggle your triggers" : $"Click to allow {PairNickOrAliasOrUID} to toggle your triggers",
             OwnPerms.InHardcore,
             PermissionType.UniquePairPerm, PermissionValueType.YesNo);
 
