@@ -1,4 +1,3 @@
-using GagspeakAPI.Data.IPC;
 using System.Windows.Forms;
 
 namespace GagSpeak.Achievements;
@@ -140,7 +139,7 @@ public static class Achievements
     public static readonly AchievementInfo TemptingFatesTreasure = new AchievementInfo(53, "Tempting Fate's Treasure", "Be Caught in Cursed Bondage Loot for the first time.");
     public static readonly AchievementInfo BadEndSeeker = new AchievementInfo(54, "Bad End Seeker", "Get trapped in Cursed Bondage Loot 25 times. (Chance must be 25% or lower)");
     public static readonly AchievementInfo EverCursed = new AchievementInfo(55, "Ever Cursed", "Get trapped in Cursed Bondage Loot 100 times. (Chance must be 25% or lower)");
-    public static readonly AchievementInfo HealSlut = new AchievementInfo(56, "Heal Slut", "Complete a duty as a healer while wearing a gag, restraint, or using a vibe.");
+    public static readonly AchievementInfo HealSlut = new AchievementInfo(56, "Heal Slut", "Complete a duty as a healer while having 2 or more of the following active: Gag, Restraint, Vibrator.");
 
     public static readonly AchievementInfo BondagePalace = new AchievementInfo(57, "Bondage Palace", "Reach Floor 50 or 100 of Palace of the Dead while bound.");
     public static readonly AchievementInfo HornyOnHigh = new AchievementInfo(58, "Horny on High", "Reach Floor 30 of Heaven-on-High while bound.");
@@ -149,7 +148,7 @@ public static class Achievements
     public static readonly AchievementInfo MyKinkRunsDeep = new AchievementInfo(60, "My Kinks Run Deep", "Complete a deep dungeon with hardcore stimulation or hardcore restraints.");
     public static readonly AchievementInfo MyKinksRunDeeper = new AchievementInfo(61, "My Kinks Run Deeper", "Solo a deep dungeon with hardcore stimulation or hardcore restraints.");
 
-    public static readonly AchievementInfo TrialOfFocus = new AchievementInfo(62, "Trial Of Focus", "Complete a trial within 10 levels of max level with stimulation (HardcoreLabels Focus).");
+    public static readonly AchievementInfo TrialOfFocus = new AchievementInfo(62, "Trial Of Focus", "Complete a trial within 10 levels of max level with hardcore stimulation trait and an active vibe.");
     public static readonly AchievementInfo TrialOfDexterity = new AchievementInfo(63, "Trial of Dexterity", "Complete a trial within 10 levels of max level with arms/legs restrained.");
     public static readonly AchievementInfo TrialOfTheBlind = new AchievementInfo(64, "Trial Of The Blind", "Complete a trial within 10 levels of max level while blindfolded.");
 

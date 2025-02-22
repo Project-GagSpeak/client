@@ -1,6 +1,6 @@
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Routes;
@@ -13,7 +13,7 @@ namespace GagSpeak.WebAPI;
 public sealed class TokenProvider : DisposableMediatorSubscriberBase
 {
     private readonly HttpClient _httpClient;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly ServerConfigurationManager _serverManager;
     private readonly ConcurrentDictionary<JwtIdentifier, string> _tokenCache;
@@ -21,10 +21,10 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     private JwtIdentifier? _lastJwtIdentifier;
 
     public TokenProvider(ILogger<TokenProvider> logger, GagspeakMediator mediator,
-        ClientMonitorService clientService, ServerConfigurationManager serverManager,
+        ClientMonitor clientMonitor, ServerConfigurationManager serverManager,
         OnFrameworkService frameworkUtils) : base(logger, mediator)
     {
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _serverManager = serverManager;
         _frameworkUtil = frameworkUtils;
         _httpClient = new HttpClient();
@@ -82,13 +82,13 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     {
         // create a URI for the token request
         Uri tokenUri;
-        string response = string.Empty;
+        var response = string.Empty;
         HttpResponseMessage result;
 
         // If for some god awful reason we have horrible timing and our character happens to be zoning during this 6 hourly interval, wait.
         try
         {
-            while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+            while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
@@ -245,7 +245,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     /// <returns>the JWT identifier object for the token</returns>
     private JwtIdentifier? GetIdentifier()
     {
-        var tempLocalContentID = _clientService.ContentIdAsync().GetAwaiter().GetResult();
+        var tempLocalContentID = _clientMonitor.ContentIdAsync().GetAwaiter().GetResult();
         try
         {
             var secretKey = string.Empty;
@@ -327,7 +327,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // await for the player to be present to get the JWT token
         try
         {
-            while (!await _clientService.IsPresentAsync().ConfigureAwait(false) && !linkedCTS.Token.IsCancellationRequested)
+            while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false) && !linkedCTS.Token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), linkedCTS.Token).ConfigureAwait(false);
@@ -347,13 +347,13 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         }
 
         // get the JWT identifier
-        JwtIdentifier? jwtIdentifier = GetIdentifier();
+        var jwtIdentifier = GetIdentifier();
         // if it is null, return null
         if (jwtIdentifier == null) 
             return null;
 
         // assume we dont need a renewal
-        bool renewal = false;
+        var renewal = false;
         if (_tokenCache.TryGetValue(jwtIdentifier, out var token))
         {
             // create a new handler for the JWT token

@@ -62,9 +62,32 @@ public static unsafe class ChatLogAddonHelper
     }
 
     public static unsafe bool IsChatInputVisible => ChatLogMain->AtkUnitBase.RootNode->IsVisible();
-    public static unsafe bool IsAnyChatPanelVisible => ChatLogPanels[0]->RootNode->IsVisible() || ChatLogPanels[1]->RootNode->IsVisible()
-         || ChatLogPanels[2]->RootNode->IsVisible() || ChatLogPanels[3]->RootNode->IsVisible();
-    public static unsafe bool IsChatPanelVisible(int panelIndex) => ChatLogPanels[panelIndex]->RootNode->IsVisible();
+    public static unsafe bool IsAnyChatPanelVisible()
+    {
+        foreach (var panel in ChatLogPanels)
+        {
+            if (panel is not null && panel->RootNode is not null && panel->RootNode->IsVisible())
+                return true;
+        }
+
+        return false;
+    }
+
+    public static unsafe bool IsChatPanelVisible(int panelIndex)
+    {
+        try
+        {
+            if (ChatLogPanels[panelIndex] is not null && ChatLogPanels[panelIndex]->RootNode is not null)
+                return ChatLogPanels[panelIndex]->RootNode->IsVisible();
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            StaticLogger.Logger.LogError(ex, "Failed to check chat log panel visibility.");
+            return false;
+        }
+    }
 
     public static unsafe void SetMainChatLogVisibility(bool state)
     {
@@ -74,9 +97,16 @@ public static unsafe class ChatLogAddonHelper
 
     public static unsafe void SetChatLogPanelsVisibility(bool state)
     {
-        foreach (var panel in ChatLogPanels)
-            if (panel->RootNode != null)
-                panel->RootNode->ToggleVisibility(state);
+        try
+        {
+            foreach (var panel in ChatLogPanels)
+                if (panel != null && panel->RootNode != null)
+                    panel->RootNode->ToggleVisibility(state);
+        }
+        catch (Exception ex)
+        {
+            StaticLogger.Logger.LogError(ex, "Failed to toggle chat log panels.");
+        }
     }
 
 

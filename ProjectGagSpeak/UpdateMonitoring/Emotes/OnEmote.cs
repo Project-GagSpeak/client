@@ -5,6 +5,7 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Utils;
 
 // References for Knowledge
@@ -14,7 +15,7 @@ namespace GagSpeak.UpdateMonitoring.Triggers;
 public class OnEmote : IDisposable
 {
     private readonly ILogger<OnEmote> _logger;
-    private readonly HardcoreHandler _hardcoreHandler;
+    private readonly TraitsManager _traits;
     private readonly OnFrameworkService _frameworkUtils;
     private static class Signatures
     {
@@ -27,18 +28,17 @@ public class OnEmote : IDisposable
 
     public delegate void OnEmoteFuncDelegate(ulong unk, ulong emoteCallerAddr, ushort emoteId, ulong targetId, ulong unk2);
     internal static Hook<OnEmoteFuncDelegate> ProcessEmoteHook = null!;
-    public OnEmote(ILogger<OnEmote> logger, HardcoreHandler hardcoreHandler,
-        OnFrameworkService frameworkUtils, ISigScanner sigScanner, IGameInteropProvider interopProvider)
+    public OnEmote(ILogger<OnEmote> logger, TraitsManager traits, OnFrameworkService frameworkUtils, ISigScanner ss, IGameInteropProvider gip)
     {
         _logger = logger;
-        _hardcoreHandler = hardcoreHandler;
+        _traits = traits;
         _frameworkUtils = frameworkUtils;
-        interopProvider.InitializeFromAttributes(this);
+        gip.InitializeFromAttributes(this);
 
-        ProcessEmoteHook = interopProvider.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmoteDetour, OnEmoteDetour);
+        ProcessEmoteHook = gip.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmoteDetour, OnEmoteDetour);
         unsafe
         {
-            OnExecuteEmoteHook = interopProvider.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
+            OnExecuteEmoteHook = gip.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
         }
         EnableHook();
         _logger.LogInformation("Started EmoteDetour");
@@ -85,10 +85,10 @@ public class OnEmote : IDisposable
             await _frameworkUtils.RunOnFrameworkThread(() =>
             {
                 var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
-                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Emote Caller";
+                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Emote Caller";
                 var emoteName = EmoteMonitor.GetEmoteName(emoteId);
                 var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
-                var targetName = (targetObj as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Target";
+                var targetName = (targetObj as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Target";
                 _logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
 
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);
@@ -113,14 +113,14 @@ public class OnEmote : IDisposable
         {
             _logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteMonitor.GetEmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
             // Block all emotes if forced to follow
-            if(_hardcoreHandler.IsForcedToFollow)
+            if(_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow))
                 return;
 
             // If we are forced to emote, then we should prevent execution unless NextEmoteAllowed is true.
-            if (_hardcoreHandler.IsForcedToEmote)
+            if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote))
             {
                 // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
-                if (_hardcoreHandler.ForcedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
+                if (_traits.CachedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
                 {
                     _logger.LogDebug("Allowing Emote Execution for Emote ID: " + emoteId, LoggerType.EmoteMonitor);
                 }

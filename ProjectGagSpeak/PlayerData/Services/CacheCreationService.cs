@@ -1,4 +1,4 @@
-using Dalamud.Interface;
+/*using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Factories;
@@ -34,7 +34,7 @@ public struct CacheData
 public sealed class CacheCreationService : DisposableMediatorSubscriberBase
 {
     private readonly SemaphoreSlim _cacheCreateLock = new(1);
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly IpcManager _ipcManager;
     private readonly CancellationTokenSource _cts = new();
@@ -45,20 +45,20 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
     private CacheData _cacheToCreate;
 
     private readonly CharaIPCData _playerIpcData = new(); // handler for our player character's IPC data.
-    private readonly GameObjectHandler _playerObject;         // handler for player characters object.
+    private readonly GameObjectHandler _playerObject;     // handler for player characters object.
 
     public CacheCreationService(ILogger<CacheCreationService> logger, GagspeakMediator mediator,
-        GameObjectHandlerFactory gameObjectHandlerFactory, ClientMonitorService clientService,
+        GameObjectHandlerFactory gameObjectHandlerFactory, ClientMonitor clientMonitor,
         OnFrameworkService frameworkUtil, IpcManager ipcManager) : base(logger, mediator)
     {
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _frameworkUtil = frameworkUtil;
         _ipcManager = ipcManager;
 
-        _playerObject = gameObjectHandlerFactory.Create(() => _clientService.Address, isWatched: true).GetAwaiter().GetResult();
+*//*        _playerObject = gameObjectHandlerFactory.Create(() => _clientMonitor.Address, isWatched: true).GetAwaiter().GetResult();
+*/
 
-
-        // called upon whenever a new cache should be added to the cache creation service.
+/*        // called upon whenever a new cache should be added to the cache creation service.
         Mediator.Subscribe<CreateCacheForObjectMessage>(this, async (msg) =>
         {
             Logger.LogDebug("Received CreateCacheForObject for " + msg.ObjectToCreateFor + ", updating", LoggerType.ClientPlayerData);
@@ -66,9 +66,9 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             if (IpcCallerMoodles.APIAvailable) await FetchLatestMoodlesDataAsync().ConfigureAwait(false);
             _cacheToCreate = new CacheData(msg.ObjectToCreateFor, IpcUpdateType.UpdateVisible, Guid.Empty);
             _cacheCreateLock.Release();
-        });
+        });*/
 
-        Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => _isZoning = true);
+/*        Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => _isZoning = true);
         Mediator.Subscribe<ZoneSwitchEndMessage>(this, (msg) => _isZoning = false);
 
         Mediator.Subscribe<ClearCacheForObjectMessage>(this, (msg) =>
@@ -83,12 +83,12 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 // If we are in a cutscene, we should publish a mediator event to let our appearance handler know we need to redraw.
                 // This is a safe workaround from executing things on cutscene start because glamourer takes precedence first.
                 // However, this toggle consistently occurs after Glamourer finishes its draws.
-                if (_clientService.InCutscene)
+                if (_clientMonitor.InCutscene)
                     Mediator.Publish(new ClientPlayerInCutscene());
             });
-        });
+        });*/
 
-        Mediator.Subscribe<MoodlesReady>(this, async (_) =>
+/*        Mediator.Subscribe<MoodlesReady>(this, async (_) =>
         {
             // run an api check before this to force update 
 
@@ -96,8 +96,8 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
             Logger.LogDebug("Moodles is now ready, fetching latest info and pushing to all visible pairs", LoggerType.IpcMoodles);
             Mediator.Publish(new IpcDataCreatedMessage(_playerIpcData, IpcUpdateType.UpdateVisible));
         });
-
-        Mediator.Subscribe<MoodlesStatusManagerUpdate>(this, (msg) =>
+*/
+/*        Mediator.Subscribe<MoodlesStatusManagerUpdate>(this, (msg) =>
         {
             if (_isZoning) return;
             // Assuming _playerObject is now a single GameObjectHandler instance
@@ -106,9 +106,9 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 Logger.LogDebug("Received new MoodlesStatusManagerUpdate", LoggerType.IpcMoodles);
                 _ = AddPlayerCacheToCreate(IpcUpdateType.MoodlesStatusManagerChanged, Guid.Empty);
             }
-        });
+        });*/
 
-        Mediator.Subscribe<MoodlesStatusModified>(this, (msg) =>
+/*        Mediator.Subscribe<MoodlesStatusModified>(this, (msg) =>
         {
             if (_isZoning) return;
             // Assuming _playerObject is now a single GameObjectHandler instance
@@ -127,7 +127,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
                 Logger.LogDebug("Received a Status Manager change for Moodles. Updating player with latest IPC", LoggerType.IpcMoodles);
                 _ = AddPlayerCacheToCreate(IpcUpdateType.MoodlesPresetsUpdated, msg.Guid);
             }
-        });
+        });*//*
 
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (msg) => ProcessCacheCreation());
     }
@@ -192,7 +192,7 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
         }
     }
 
-    /*   Creating and Buildering Character Information from IPC data */
+    *//*   Creating and Buildering Character Information from IPC data *//*
     public async Task BuildCharacterData(CharaIPCData prevData, CacheData playerObjData, CancellationToken token)
     {
         if (playerObjData.GameObj == null || playerObjData.GameObj.Address == nint.Zero) return;
@@ -299,3 +299,4 @@ public sealed class CacheCreationService : DisposableMediatorSubscriberBase
         => ((Character*)playerPointer)->GameObject.DrawObject == null;
 }
 #pragma warning restore MA0040
+*/

@@ -1,48 +1,34 @@
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Listener;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
-using GagSpeak.Toybox.Services;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Permissions;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
+// TODO LATER:::::::
 
 // The most fundamentally important service in the entire application.
 // helps revert any active states applied to the player when used.
-public class SafewordService : MediatorSubscriberBase, IHostedService
+public sealed class SafewordService : MediatorSubscriberBase, IHostedService
 {
-    private readonly MainHub _apiHubMain; // for sending the updates.
-    private readonly ClientData _playerManager; // has our global permissions.
-    private readonly PairManager _pairManager; // for accessing the permissions of each pair.
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly AppearanceManager _appearanceManager;
-    private readonly ToyboxManager _toyboxManager;
-    private readonly IpcFastUpdates _glamourFastEvent; // for reverting character.
+    private readonly MainHub _hub;
+    private readonly GlobalData _playerManager;
+    private readonly PairManager _pairManager;
+    private readonly VisualStateListener _visuaListener; // can directly call upon all reversion operations.
+    private readonly ToyboxStateListener _toyboxListener;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, ClientData playerManager, PairManager pairManager, 
-        ClientConfigurationManager clientConfigs, AppearanceManager appearanceManager, 
-        ToyboxManager toyboxManager, IpcFastUpdates glamourFastUpdate) : base(logger, mediator)
+        MainHub hub, GlobalData playerManager, PairManager pairManager) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _playerManager = playerManager;
         _pairManager = pairManager;
-        _clientConfigs = clientConfigs;
-        _appearanceManager = appearanceManager;
-        _toyboxManager = toyboxManager;
-        _glamourFastEvent = glamourFastUpdate;
 
         // set the chat log up.
-        Mediator.Subscribe<SafewordUsedMessage>(pairManager, (msg) => SafewordUsed(msg.UID.IsNullOrWhitespace() ? string.Empty : msg.UID));
-
-        Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, (msg) => HardcoreSafewordUsed(msg.UID.IsNullOrWhitespace() ? string.Empty : msg.UID));
-
+        Mediator.Subscribe<SafewordUsedMessage>(pairManager, (msg) => SafewordUsed(msg.UID));
+        Mediator.Subscribe<SafewordHardcoreUsedMessage>(this, (msg) => HardcoreSafewordUsed(msg.UID));
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (msg) => CheckCooldown());
     }
 
@@ -55,7 +41,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     {
         try
         {
-            // return if it has not yet been 5 minutes since the last use.
+/*            // return if it has not yet been 5 minutes since the last use.
             if (SafewordOnCD)
             {
                 Logger.LogWarning("Hardcore Safeword was used too soon after the last use. Must wait 5 minutes.", LoggerType.Safeword);
@@ -81,20 +67,19 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             // do direct updates so they apply first client side, then push to the server. The callback can validate these changes.
             if (_playerManager.GlobalPerms is not null)
             {
-                _playerManager.GlobalPerms.LiveChatGarblerActive = false;
-                _playerManager.GlobalPerms.LiveChatGarblerLocked = false;
+                _playerManager.GlobalPerms.ChatGarblerActive = false;
+                _playerManager.GlobalPerms.ChatGarblerLocked = false;
                 _playerManager.GlobalPerms.WardrobeEnabled = false;
-                _playerManager.GlobalPerms.ItemAutoEquip = false;
-                _playerManager.GlobalPerms.RestraintSetAutoEquip = false;
+                _playerManager.GlobalPerms.GagVisuals = false;
+                _playerManager.GlobalPerms.RestraintSetVisuals = false;
                 _playerManager.GlobalPerms.PuppeteerEnabled = false;
-                _playerManager.GlobalPerms.MoodlesEnabled = false;
                 _playerManager.GlobalPerms.ToyboxEnabled = false;
                 _playerManager.GlobalPerms.LockToyboxUI = false;
                 _playerManager.GlobalPerms.ToyIntensity = 0;
                 _playerManager.GlobalPerms.SpatialVibratorAudio = false;
 
                 Logger.LogInformation("Pushing Global updates to the server.", LoggerType.Safeword);
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms, UpdateDir.Own));
+                _ = _hub.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms, UpdateDir.Own));
                 Logger.LogInformation("Global updates pushed to the server.", LoggerType.Safeword);
             }
             Logger.LogInformation("Everything Disabled.", LoggerType.Safeword);
@@ -111,7 +96,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                     isolatedPair.OwnPerms.InHardcore = false;
                     // send the updates to the server.
                     if (MainHub.ServerStatus is ServerState.Connected)
-                        _ = _apiHubMain.UserUpdateOwnPairPerm(new(isolatedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
+                        _ = _hub.UserUpdateOwnPairPerm(new(isolatedPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
                 }
             }
             else
@@ -125,14 +110,13 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                         pair.OwnPerms.InHardcore = false;
                         // send the updates to the server.
                         if (MainHub.ServerStatus is ServerState.Connected)
-                            _ = _apiHubMain.UserUpdateOwnPairPerm(new(pair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
+                            _ = _hub.UserUpdateOwnPairPerm(new(pair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("InHardcore", false), UpdateDir.Own));
                     }
                 }
             }
 
             // reverting character.
-            IpcFastUpdates.InvokeGlamourer(GlamourUpdateType.Safeword);
-            Logger.LogInformation("Character reverted.", LoggerType.Safeword);
+            Logger.LogInformation("Character reverted.", LoggerType.Safeword);*/
         }
         catch (Exception ex)
         {
@@ -142,7 +126,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
     }
 
     private void HardcoreSafewordUsed(string isolatedUID)
-    {
+    {/*
         if (HardcoreSafewordOnCD)
         {
             Logger.LogWarning("Hardcore Safeword was used too soon after the last use Wait 1m before using again.");
@@ -167,7 +151,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
             if(MainHub.IsServerAlive)
             {
                 Logger.LogInformation("Pushing Global updates to the server.", LoggerType.Safeword);
-                _ = _apiHubMain.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms, UpdateDir.Own));
+                _ = _hub.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, _playerManager.GlobalPerms, UpdateDir.Own));
                 Logger.LogInformation("Global updates pushed to the server.", LoggerType.Safeword);
             }
         }
@@ -192,7 +176,7 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                 isolatedPair.OwnPerms.AllowChatInputBlocking = false;
                 // send the updates to the server.
                 if (MainHub.ServerStatus is ServerState.Connected)
-                    _ = _apiHubMain.UserPushAllUniquePerms(new(isolatedPair.UserData, MainHub.PlayerUserData, isolatedPair.UserPair.OwnPairPerms, isolatedPair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+                    _ = _hub.UserPushAllUniquePerms(new(isolatedPair.UserData, MainHub.PlayerUserData, isolatedPair.UserPair.OwnPairPerms, isolatedPair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
             }
         }
         else
@@ -213,17 +197,18 @@ public class SafewordService : MediatorSubscriberBase, IHostedService
                     pair.OwnPerms.AllowChatInputBlocking = false;
                     // send the updates to the server.
                     if (MainHub.ServerStatus is ServerState.Connected)
-                        _ = _apiHubMain.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+                        _ = _hub.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
                 }
             }
-        }
+        }*/
     }
 
     private void CheckCooldown()
     {
-        if (SafewordOnCD && TimeOfLastSafewordUsed.AddMinutes(5) < DateTime.Now) SafewordOnCD = false;
-
-        if (HardcoreSafewordOnCD && TimeOfLastHardcoreSafewordUsed.AddMinutes(1) < DateTime.Now) HardcoreSafewordOnCD = false;
+        if (SafewordOnCD && TimeOfLastSafewordUsed.AddMinutes(5) < DateTime.Now)
+            SafewordOnCD = false;
+        if (HardcoreSafewordOnCD && TimeOfLastHardcoreSafewordUsed.AddMinutes(1) < DateTime.Now)
+            HardcoreSafewordOnCD = false;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

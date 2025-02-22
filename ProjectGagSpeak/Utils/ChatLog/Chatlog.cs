@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
 using OtterGui.Text;
 using System;
@@ -19,7 +18,7 @@ namespace GagSpeak.Utils.ChatLog;
 // an instance of a chatlog.
 public class ChatLog
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GagspeakMediator _mediator;
     private readonly CosmeticService _cosmetics;
 
@@ -38,7 +37,7 @@ public class ChatLog
 
     public ChatLog(MainHub mainHub, GagspeakMediator mediator, CosmeticService cosmetics)
     {
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _mediator = mediator;
         _cosmetics = cosmetics;
         TimeCreated = DateTime.Now;
@@ -82,7 +81,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
 
                 if (!UserColors.ContainsKey(x.UID))
                 {
-                    if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                    if (x.Tier is CkSupporterTier.KinkporiumMistress)
                     {
                         UserColors[x.UID] = CKMistressColor;
                     }
@@ -143,7 +142,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     // If the total width is less than available, print in one go
                     if (msgWidth <= remainingWidth)
                     {
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorText(x.Message, CkMistressText);
                         else
                             ImGui.TextUnformatted(x.Message);
@@ -168,7 +167,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
 
                         // Print the fitting part of the message
                         ImUtf8.SameLineInner();
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
                         else
                             ImGui.TextUnformatted(fittingMessage.TrimEnd());
@@ -176,7 +175,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         // Draw the remaining part of the message wrapped
                         string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
                         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
-                        if (x.SupporterTier is CkSupporterTier.KinkporiumMistress)
+                        if (x.Tier is CkSupporterTier.KinkporiumMistress)
                             UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
                         else
                             UiSharedService.TextWrapped(wrappedMessage);
@@ -230,7 +229,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 // Display each action as a selectable
                 if (ImGui.Selectable("Send Kinkster Request"))
                 {
-                    _ = _apiHubMain.UserSendPairRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage));
+                    _ = _hub.UserSendPairRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage));
                     _lastInteractedMsg = new ChatMessage();
                     ImGui.CloseCurrentPopup();
                 }

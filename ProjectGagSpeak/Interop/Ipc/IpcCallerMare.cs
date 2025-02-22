@@ -10,7 +10,7 @@ namespace GagSpeak.Interop.Ipc;
 public sealed class IpcCallerMare : IIpcCaller
 {
     // Mare has no API Version attribute, so just pray i guess.
-    private readonly ICallGateSubscriber<List<nint>>? _handledGameAddresses;
+    private readonly ICallGateSubscriber<List<nint>> _handledGameAddresses;
 
     private readonly ILogger<IpcCallerMare> _logger;
     private readonly OnFrameworkService _frameworkUtil;
@@ -49,19 +49,18 @@ public sealed class IpcCallerMare : IIpcCaller
     }
 
     /// <summary> Gets currently handled players from mare. </summary>
-    public async Task<List<nint>?> GetHandledMarePlayers()
+    public List<nint> GetHandledMarePlayers()
     {
-        if (!APIAvailable) return null; // return if the API isnt available
+        if (!APIAvailable) return new List<nint>();
 
-        try // otherwise, try and return an awaited task that gets the moodles info for a provided GUID
+        try
         {
-            return await _frameworkUtil.RunOnFrameworkThread(() => _handledGameAddresses!.InvokeFunc());
+            return _handledGameAddresses.InvokeFunc();
         }
         catch (Exception e)
         {
-            // log it if we failed.
-            _logger.LogWarning("Could not Get Moodles Info"+e, LoggerType.IpcMare);
-            return null;
+            _logger.LogWarning("Could not Get Moodles Info: " + e, LoggerType.IpcMare);
+            return new List<nint>();
         }
     }
 }

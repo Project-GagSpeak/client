@@ -10,7 +10,7 @@ public record struct ChatMessage
     public DateTime TimeStamp { get; init; }
 
     public string UID => UserData.UID ?? "UNK";
-    public CkSupporterTier SupporterTier => UserData.SupporterTier ?? CkSupporterTier.NoRole;
+    public CkSupporterTier SupporterTier => UserData.Tier ?? CkSupporterTier.NoRole;
 
     public ChatMessage(UserData userData, string name, string message)
     {

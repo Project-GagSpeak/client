@@ -4,7 +4,6 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Services.ConfigurationServices;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 
@@ -12,16 +11,16 @@ namespace GagSpeak.Hardcore.ForcedStay;
 public class YesNoPrompt : BasePrompt
 {
     private readonly ILogger<YesNoPrompt> _logger;
-    private readonly ClientConfigurationManager _clientConfigs;
+    private readonly GagspeakConfigService _config;
     private readonly IAddonLifecycle _addonLifecycle;
     private readonly ITargetManager _targets;
 
 
     internal YesNoPrompt(ILogger<YesNoPrompt> logger,
-        ClientConfigurationManager clientConfigs, IAddonLifecycle addonLifecycle, ITargetManager targetManager)
+        GagspeakConfigService config, IAddonLifecycle addonLifecycle, ITargetManager targetManager)
     {
         _logger = logger;
-        _clientConfigs = clientConfigs;
+        _config = config;
         _addonLifecycle = addonLifecycle;
         _targets = targetManager;
     }
@@ -29,35 +28,41 @@ public class YesNoPrompt : BasePrompt
     // Run on plugin Enable
     public override void Enable()
     {
-        base.Enable();
-        _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
+        if(!Enabled)
+        {
+            base.Enable();
+            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
+        }
     }
 
     // Run on Plugin Disable
     public override void Disable()
     {
-        base.Disable();
-        _addonLifecycle.UnregisterListener(AddonSetup);
+        if(Enabled)
+        {
+            base.Disable();
+            _addonLifecycle.UnregisterListener(AddonSetup);
+        }
     }
 
     // Run whenever we open a prompt that is a Yes/No prompt
     protected unsafe void AddonSetup(AddonEvent eventType, AddonArgs addonInfo)
     {
-        AddonSelectYesno* addon = (AddonSelectYesno*)addonInfo.Base();
+        var addon = (AddonSelectYesno*)addonInfo.Base();
         // get the name
         var target = _targets.Target;
         var targetName = target != null ? target.Name.ExtractText() : string.Empty;
-        _clientConfigs.LastSeenNodeName = targetName;
+        _config.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
 
         // store the label of the node
-        var yesNoNodeLabelText = _clientConfigs.LastSeenNodeLabel = AddonBaseYesNo.GetTextLegacy(addon);
+        var yesNoNodeLabelText = _config.LastSeenNodeLabel = AddonBaseYesNo.GetTextLegacy(addon);
         _logger.LogDebug("Node Label Text: " + yesNoNodeLabelText, LoggerType.HardcorePrompt);
 
         _logger.LogDebug($"AddonSelectYesNo: text={yesNoNodeLabelText}", LoggerType.HardcorePrompt);
 
         // grab the nodes from our storage to see if we have a match.
-        var nodes = _clientConfigs.GetAllNodes().OfType<TextEntryNode>();
+        var nodes = _config.GetAllNodes().OfType<TextEntryNode>();
         foreach (var node in nodes)
         {
             // if the node is not enabled or has no text, skip it.
@@ -77,17 +82,17 @@ public class YesNoPrompt : BasePrompt
             if (node.SelectedOptionText is "Yes")
             {
                 ForcedStayCallback.Fire((AtkUnitBase*)addon, true, 0);
-                _clientConfigs.LastSelectedListNode = node;
-                _clientConfigs.LastSeenListSelection = "Yes";
-                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_clientConfigs.LastSeenListSelection}, LastSeenListTarget={_clientConfigs.LastSeenNodeLabel}");
+                _config.LastSelectedListNode = node;
+                _config.LastSeenListSelection = "Yes";
+                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_config.LastSeenListSelection}, LastSeenListTarget={_config.LastSeenNodeLabel}");
 
             }
             else
             {
                 ForcedStayCallback.Fire((AtkUnitBase*)addon, true, 1);
-                _clientConfigs.LastSelectedListNode = node;
-                _clientConfigs.LastSeenListSelection = "No";
-                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_clientConfigs.LastSeenListSelection}, LastSeenListTarget={_clientConfigs.LastSeenNodeLabel}");
+                _config.LastSelectedListNode = node;
+                _config.LastSeenListSelection = "No";
+                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_config.LastSeenListSelection}, LastSeenListTarget={_config.LastSeenNodeLabel}");
             }
             return;
         }

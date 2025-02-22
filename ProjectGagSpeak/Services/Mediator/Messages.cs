@@ -1,21 +1,20 @@
 using Buttplug.Client;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.PlayerData.Data;
+using GagSpeak.ChatMessages;
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.PrivateRooms;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Events;
 using GagSpeak.UI.Components;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
+using GagspeakAPI.Dto;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.IPC;
-using GagspeakAPI.Dto.Toybox;
+using GagspeakAPI.Dto.VibeRoom;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.Numerics;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -33,15 +32,15 @@ public record MainHubClosedMessage(Exception? Exception) : SameThreadMessage;
 public record MainHubConnectedMessage : MessageBase;
 public record OnlinePairsLoadedMessage : MessageBase;
 
-public record ToyboxHubDisconnectedMessage : SameThreadMessage;
-public record ToyboxHubReconnectingMessage(Exception? Exception) : SameThreadMessage;
-public record ToyboxHubReconnectedMessage(string? Arg) : SameThreadMessage;
-public record ToyboxHubClosedMessage(Exception? Exception) : SameThreadMessage;
-public record ToyboxHubConnectedMessage : MessageBase;
-
-public record ToyboxPrivateRoomJoined(string RoomName) : MessageBase;
-public record ToyboxPrivateRoomLeft(string RoomName) : MessageBase;
-public record OpenPrivateRoomRemote(PrivateRoom PrivateRoom) : MessageBase;
+// Unsure if we use these yet
+public record VibeRoomUserJoined(VibeRoomKinksterFullDto User) : MessageBase;
+public record VibeRoomUserLeft(VibeRoomKinksterFullDto User) : MessageBase;
+public record VibeRoomInvite(VibeRoomInviteDto Invite) : MessageBase;
+public record VibeRoomUserUpdatedDevice(UserData User, DeviceInfo Device) : MessageBase;
+public record VibeRoomDataStreamRecieved(SexToyDataStreamCallbackDto dto) : MessageBase;
+public record VibeRoomUserAccessGranted(UserData User) : MessageBase;
+public record VibeRoomUserAccessRevoked(UserData User) : MessageBase;
+public record VibeRoomChatMessage(UserData User, string Message) : MessageBase;
 
 
 /* ------------- DALAMUD FRAMEWORK UPDATE RECORDS ------------- */
@@ -73,22 +72,16 @@ public record MufflerLanguageChanged : MessageBase; // called whenever the clien
 public record AppearanceImpactingSettingChanged : MessageBase; // called whenever an appearance impacting setting is changed.
 
 /* ------------- PLAYER DATA MODULE INTERACTIONS --------- */
-public record TooltipSetItemToRestraintSetMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
-public record TooltipSetItemToCursedItemMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
-
-////////////// WARDROBE RELATED RECORDS //////////////
+public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record HardcoreActionMessage(InteractionType type, NewState State) : MessageBase;
 public record HardcoreRemoveBlindfoldMessage : MessageBase;
 public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
-
-////////////// PUPPETEER RELATED RECORDS //////////////
-public record UpdateChatListeners : MessageBase; // for updating the chat listeners.
 
 ////////////// TOYBOX RELATED RECORDS //////////////
 public record VfxActorRemoved(IntPtr data) : MessageBase;
 public record ToyScanStarted : MessageBase; // for when the toybox scan is started.
 public record ToyScanFinished : MessageBase; // for when the toybox scan is finished.
-public record VibratorModeToggled(VibratorMode VibratorMode) : MessageBase; // for when the vibrator mode is toggled.
+public record VibratorModeToggled(VibratorEnums VibratorMode) : MessageBase; // for when the vibrator mode is toggled.
 public record ToyDeviceAdded(ButtplugClientDevice Device) : MessageBase; // for when a device is added.
 public record ToyDeviceRemoved(ButtplugClientDevice Device) : MessageBase; // for when a device is removed.
 public record ButtplugClientDisconnected : MessageBase; // for when the buttplug client disconnects.
@@ -98,20 +91,13 @@ public record PatternRemovedMessage(Guid PatternId) : MessageBase; // for when a
 public record TriggersModifiedMessage : MessageBase;
 public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) : MessageBase;
 
-
-/* ------------------ PLAYERDATA CLIENTSIDE PERMISSION HANDLING ------------------- */
-public record PlayerCharAppearanceChanged(GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock = Padlocks.None) : MessageBase;
-public record PlayerCharWardrobeChanged(WardrobeUpdateType UpdateKind, string AffectedItem) : MessageBase;
-public record PlayerCharOrdersChanged(OrdersUpdateType UpdateKind, string AffectedId) : MessageBase;
-public record PlayerCharAliasChanged(string UpdatedPairUID, PuppeteerUpdateType UpdateKind) : MessageBase;
-public record PlayerCharToyboxChanged(ToyboxUpdateType UpdateKind) : MessageBase;
-public record PlayerCharStorageUpdated : MessageBase;
-public record PlayerLatestActiveItems(UserData User, CharaAppearanceData GagInfo, Guid ActiveRestraint) : MessageBase;
+public record PlayerLatestActiveItems(UserData User, CharaActiveGags GagsInfo, CharaActiveRestrictions RestrictionsInfo, CharaActiveRestraint RestraintInfo) : MessageBase;
 
 
 /* ------------------ IPC HANDLER RECORDS------------------ */
 public record PenumbraInitializedMessage : MessageBase;
 public record PenumbraDisposedMessage : MessageBase;
+public record ModSettingPresetRemoved(string directory) : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;
 public record CustomizeReady : MessageBase;
@@ -125,14 +111,14 @@ public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensit
 
 
 /* ----------------- Character Cache Creation Records ----------------- */
-public record CompositeDataCreatedMessage(CharaIPCData CharacterData) : MessageBase; // TODO: See how to remove this?
-public record IpcDataCreatedMessage(CharaIPCData CharaIPCData, IpcUpdateType UpdateKind) : SameThreadMessage;
-public record AppearanceDataCreatedMessage(CharaAppearanceData NewData, GagLayer AffectedLayer, GagUpdateType UpdateType, Padlocks PreviousLock) : SameThreadMessage;
-public record WardrobeDataCreatedMessage(CharaWardrobeData CharaWardrobeData, WardrobeUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
-public record OrdersDataCreatedMessage(CharaOrdersData CharaTimedData, OrdersUpdateType UpdateKind, string AffectedItem) : SameThreadMessage;
-public record AliasDataCreatedMessage(CharaAliasData CharaAliasData, UserData userData, PuppeteerUpdateType UpdateKind) : SameThreadMessage;
-public record ToyboxDataCreatedMessage(CharaToyboxData CharaToyboxData, ToyboxUpdateType UpdateKind) : SameThreadMessage;
-public record LightStorageDataCreatedMessage(CharaStorageData CharacterStorageData) : SameThreadMessage;
+public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewIpcData) : SameThreadMessage;
+public record GagDataChangedMessage(DataUpdateType UpdateType, GagLayer AffectedLayer, ActiveGagSlot NewData) : SameThreadMessage;
+public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int AffectedIdx, ActiveRestriction NewData) : SameThreadMessage;
+public record RestraintDataChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
+public record OrdersDataChangedMessage(DataUpdateType UpdateType) : SameThreadMessage;
+public record AliasDataChangedMessage(DataUpdateType UpdateType, UserData IntendedUser, CharaAliasData NewData) : SameThreadMessage;
+public record ToyboxDataChangedMessage(DataUpdateType UpdateType, CharaToyboxData NewData, Guid InteractionId) : SameThreadMessage;
+public record LightStorageDataChangedMessage(CharaLightStorageData CharacterStorageData) : SameThreadMessage;
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 
@@ -161,9 +147,18 @@ public record ClosePatternSavePromptMessage : MessageBase; // closes the pattern
 
 /* -------------------- DISCOVER TAB RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
-public record PairChatMessage(PairChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
-
+public record ClientSentChat(ChatChannel.Channels Channel, string Message) : MessageBase; // Client Player sent a chat message.
 public record SafewordUsedMessage(string UID = "") : MessageBase; // for when the safeword is used.
 public record SafewordHardcoreUsedMessage(string UID = "") : MessageBase; // for when the hardcore safeword is used.
+
+/* -------------------- FILE MANAGER RECORDS -------------------- */
+// May remove this down the line if events turn out to be better, but we will see to be honest. For now stick with these.
+public record ConfigGagRestrictionChanged(StorageItemChangeType Type, GarblerRestriction Item, string? OldString) : MessageBase;
+public record ConfigRestrictionChanged(StorageItemChangeType Type, RestrictionItem Item, string? OldString) : MessageBase;
+public record ConfigRestraintSetChanged(StorageItemChangeType Type, RestraintSet Item, string? OldString) : MessageBase;
+public record ConfigCursedItemChanged(StorageItemChangeType Type, CursedItem Item, string? OldString) : MessageBase;
+public record ConfigPatternChanged(StorageItemChangeType Type, Pattern Item, string? OldString) : MessageBase;
+public record ConfigAlarmChanged(StorageItemChangeType Type, Alarm Item, string? OldString) : MessageBase;
+public record ConfigTriggerChanged(StorageItemChangeType Type, Trigger Item, string? OldString) : MessageBase;
 
 #pragma warning restore S2094, MA0048

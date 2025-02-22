@@ -1,32 +1,35 @@
+using GagSpeak.FileSystems;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerData.Handlers;
+using GagSpeak.PlayerState.Visual;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.PlayerData.Data;
 
 public class GagGarbler
 {
     private readonly ILogger<GagGarbler> _logger;
-    private readonly ClientData _clientData;
+    private readonly GagRestrictionManager _gagManager;
     private readonly Ipa_EN_FR_JP_SP_Handler _IPAParser;
     private readonly GagDataHandler _gagDataHandler;
 
     public List<GagData> _activeGags;
 
-    public GagGarbler(ILogger<GagGarbler> logger, ClientData clientData,
+    public GagGarbler(ILogger<GagGarbler> logger, GagRestrictionManager gagManager,
         GagDataHandler gagDataHandler, Ipa_EN_FR_JP_SP_Handler IPAParser)
     {
         _logger = logger;
-        _clientData = clientData;
         _IPAParser = IPAParser;
+        _gagManager = gagManager;
         _gagDataHandler = gagDataHandler;
     }
 
     public void UpdateGarblerLogic()
     {
         // compile the strings into a list of strings, then locate the names in the handler storage that match it.
-        _activeGags = _clientData.CurrentGagNames
-        .Where(gagType => _gagDataHandler._gagTypes.Any(gag => gag.Name == gagType))
-        .Select(gagType => _gagDataHandler._gagTypes.First(gag => gag.Name == gagType))
+        _activeGags = _gagManager.ActiveGagsData!.CurrentGagNames()
+        .Where(gagType => _gagDataHandler.AllGarblerData.Any(gag => gag.Name == gagType))
+        .Select(gagType => _gagDataHandler.AllGarblerData.First(gag => gag.Name == gagType))
         .ToList();
     }
 

@@ -1,25 +1,17 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.MainWindow;
-using GagSpeak.UI.Profile;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Data.IPC;
 using ImGuiNET;
-using OtterGui;
-using System.Numerics;
 
 namespace GagSpeak.UI;
 
 public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 {
-    private readonly MainUiChat _globalChat;
+    private readonly GlobalChatTab _globalChat;
     private readonly UiSharedService _uiShared;
     private readonly CosmeticService _cosmetics;
     public GlobalChatPopoutUI(ILogger<GlobalChatPopoutUI> logger, GagspeakMediator mediator,
-        MainUiChat globalChat, UiSharedService uiShared, CosmeticService cosmetics) : base(logger, mediator, "Global Chat Popout UI")
+        GlobalChatTab globalChat, UiSharedService uiShared, CosmeticService cosmetics) : base(logger, mediator, "Global Chat Popout UI")
     {
         _globalChat = globalChat;
         _uiShared = uiShared;

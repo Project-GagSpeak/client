@@ -38,12 +38,34 @@
       <None Remove="Localization\jp.json" />
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\BonusItemCombo.cs" />
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboBase.cs" />
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboCache.cs" />
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\CustomFilterComboColor.cs" />
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\GameColorCombo.cs" />
-      <Compile Include="UI\Components\Combos\.GlamourerCombos\GameItemCombo.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboBase.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboButton.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboCache.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboCacheSync.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboColors.cs" />
+      <Compile Include="CustomCombos\.Core\CkFilterComboIconButton.cs" />
+      <Compile Include="CustomCombos\.Core\CkMoodleComboBase.cs" />
+      <Compile Include="CustomCombos\.Core\CkMoodleComboButtonBase.cs" />
+      <Compile Include="CustomCombos\.Core\CkPadlockComboBase.cs" />
+      <Compile Include="PlayerClientState\.Components\ICursedItem.cs" />
+      <Compile Include="PlayerClientState\.Components\IVisualApplier.cs" />
+      <Compile Include="PlayerClientState\.Components\MetaData.cs" />
+      <Compile Include="PlayerClientState\.Controllers\IntifaceController.cs" />
+      <Compile Include="PlayerClientState\.Controllers\RateLimiter.cs" />
+      <Compile Include="PlayerClientState\.Models\Alarm.cs" />
+      <Compile Include="PlayerClientState\.Models\ButtPlugDevice.cs" />
+      <Compile Include="PlayerClientState\.Models\CursedItem.cs" />
+      <Compile Include="PlayerClientState\.Models\Pattern.cs" />
+      <Compile Include="PlayerClientState\.Models\Restraint.cs" />
+      <Compile Include="PlayerClientState\.Models\RestrictionElements.cs" />
+      <Compile Include="PlayerClientState\.Models\Restrictions.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\EmoteTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\GagTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\HealthPercentTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\RestraintTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\SocialTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\SpellActionTrigger.cs" />
+      <Compile Include="PlayerClientState\.Models\Triggers\Trigger.cs" />
     </ItemGroup>
 
     <!--Other DLL's for dalamud supporting module/components-->
@@ -160,6 +182,11 @@
         <EmbeddedResource Include="Localization\de.json" />
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="GagspeakConfiguration\Configurations\" />
+      <Folder Include="PlayerClientState\Toybox State\Caches\" />
+      <Folder Include="UpdateMonitoring\DungeonLoot\" />
     </ItemGroup>
 </Project>
 

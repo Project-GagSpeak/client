@@ -1,69 +1,53 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Connection;
+using GagspeakAPI.Dto.User;
 using GagspeakAPI.Dto.UserPair;
-using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.PlayerData.Pairs;
 
-/// <summary> 
-/// Stores information about a paired user of the client.
-/// <para> 
-/// The Pair object is created by the PairFactory, which is responsible for generating pair objects.
-/// These pair objects are then created and deleted via the pair manager 
-/// The pair handler is what helps with the management of the CachedPlayer.
-/// </para>
-/// </summary>
+/// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
+/// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
 public class Pair
 {
-    private readonly PairHandlerFactory _cachedPlayerFactory;
-    private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ILogger<Pair> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly PairHandlerFactory _cachedPlayerFactory;
+    private readonly SemaphoreSlim _creationSemaphore = new(1);
+    private readonly ServerConfigurationManager _nickConfig;
     private readonly CosmeticService _cosmetics;
 
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
     private OnlineUserIdentDto? _onlineUserIdentDto = null;
 
-    public Pair(ILogger<Pair> logger, UserPairDto userPair,
-        PairHandlerFactory cachedPlayerFactory, GagspeakMediator mediator,
-        ServerConfigurationManager serverConfigs, CosmeticService cosmetics)
+    public Pair(ILogger<Pair> logger, UserPairDto userPair, GagspeakMediator mediator,
+        PairHandlerFactory factory, ServerConfigurationManager nickConfig, CosmeticService cosmetics)
     {
         _logger = logger;
-        _cachedPlayerFactory = cachedPlayerFactory;
         _mediator = mediator;
-        _serverConfigs = serverConfigs;
+        _cachedPlayerFactory = factory;
+        _nickConfig = nickConfig;
         _cosmetics = cosmetics;
         UserPair = userPair;
     }
 
-    /// <summary> 
-    /// The object that is responcible for handling the state of the pairs gameobject handler.
-    /// </summary>
+    /// <summary> The object that is responsible for handling the state of the pairs game object handler. </summary>
     private PairHandler? CachedPlayer { get; set; }
 
-    /// <summary> 
-    /// THE IMPORTANT DATA FOR THE PAIR OBJECT
-    /// <para>
-    /// This UserPairDto object, while simple, contains ALL of the pairs global, pair, and edit access permissions.
-    /// This means any permission that is being modified will be accessing this object directly, 
-    /// and is set whenever the pair is added. Initialized in the constructor on pair creation
-    /// </para>
-    /// </summary>
+    /// <summary> This UserPairDto object, contains ALL of the pairs global, pair, and edit access permissions. </summary>
+    /// <remarks> Thus, any permission modified will be accessing this object directly, and is defined upon a pair being added or marked online. </remarks>
     public UserPairDto UserPair { get; set; }
     public UserData UserData => UserPair.User;
     public bool OnlineToyboxUser { get; private set; } = false;
@@ -74,31 +58,27 @@ public class Pair
     public UserGlobalPermissions PairGlobals => UserPair.OtherGlobalPerms;
 
     // Latest cached data for this pair.
-    public CharaIPCData? LastIpcData { get; set; }
-    public CharaAppearanceData? LastAppearanceData { get; set; }
-    public CharaWardrobeData? LastWardrobeData { get; set; }
-    public CharaOrdersData? LastOrdersData { get; set; }
-    public CharaAliasData? LastAliasData { get; set; }
-    public CharaToyboxData? LastToyboxData { get; set; }
-    public CharaStorageData? LastLightStorage { get; set; }
-
+    public CharaIPCData LastIpcData { get; set; } = new();
+    public CharaActiveGags LastGagData { get; set; } = new();
+    public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
+    public CharaActiveRestraint LastRestraintData { get; set; } = new();
+    public List<Guid> ActiveCursedItems { get; set; } = new();
+    public CharaOrdersData LastOrdersData { get; set; } = new();
+    public CharaAliasData LastAliasData { get; set; } = new();
+    public CharaToyboxData LastToyboxData { get; set; } = new();
+    public CharaLightStorageData LastLightStorage { get; set; } = new();
 
     // Most of these attributes should be self explanatory, but they are public methods you can fetch from the pair manager.
     public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _onlineUserIdentDto != null;
-    public IndividualPairStatus IndividualPairStatus => UserPair.IndividualPairStatus;  // the individual pair status of the pair in relation to the client.
-    public bool IsDirectlyPaired => IndividualPairStatus != IndividualPairStatus.None;  // if the pair is directly paired.
-    public bool IsOneSidedPair => IndividualPairStatus == IndividualPairStatus.OneSided; // if the pair is one sided.
-    public OnlineUserIdentDto CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;       // the online user ident dto of the cached player.
-    public bool IsPaired => IndividualPairStatus == IndividualPairStatus.Bidirectional; // if the user is paired bidirectionally.
+    public OnlineUserIdentDto CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;
     public bool IsPaused => UserPair.OwnPairPerms.IsPaused;
-    public bool IsOnline => CachedPlayer != null;                                       // lets us know if the paired user is online. 
-    public bool IsVisible => CachedPlayer?.IsVisible ?? false;                          // if the paired user is visible.
-    public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null; // the visible pair game object.
+    public bool IsOnline => CachedPlayer != null;
+    public bool IsVisible => CachedPlayer?.IsVisible ?? false;
+    public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null;
     public string PlayerName => CachedPlayer?.PlayerName ?? UserData.AliasOrUID ?? string.Empty;  // Name of pair player. If empty, (pair handler) CachedData is not initialized yet.
     public string PlayerNameWithWorld => CachedPlayer?.PlayerNameWithWorld ?? string.Empty;
     public string CachedPlayerString() => CachedPlayer?.ToString() ?? "No Cached Player"; // string representation of the cached player.
     public Dictionary<EquipSlot, (EquipItem, string)> LockedSlots { get; private set; } = new(); // the locked slots of the pair. Used for quick reference in profile viewer.
-
 
     public void AddContextMenu(IMenuOpenedArgs args)
     {
@@ -162,35 +142,29 @@ public class Pair
 
 
     /// <summary> Update IPC Data </summary>
-    public void ApplyVisibleData(OnlineUserCharaIpcDataDto data)
+    public void UpdateVisibleData(CallbackIpcDataDto data)
     {
         _applicationCts = _applicationCts.CancelRecreate();
-        // set the last received character data to the data.CharaData
-        LastIpcData = data.IPCData;
+        LastIpcData = data.NewData;
 
         // if the cached player is null
-        if (CachedPlayer == null)
+        if (CachedPlayer is null)
         {
             // log that we received data for the user, but the cached player does not exist, and we are waiting.
             _logger.LogDebug("Received Data for " + data.User.UID + " but CachedPlayer does not exist, waiting", LoggerType.PairDataTransfer);
             // asynchronously run the following code
             _ = Task.Run(async () =>
             {
-                // create a new cancellation token source
                 using var timeoutCts = new CancellationTokenSource();
-                // auto cancel it after 120 seconds
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
+
                 // create a new cancellation token source for the application token
                 var appToken = _applicationCts.Token;
-                // create a new linked token source with the timeout token and the application token
                 using var combined = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, appToken);
 
                 // while the cached player is still null and the combined token is not cancelled
-                while (CachedPlayer == null && !combined.Token.IsCancellationRequested)
-                {
-                    // wait for 250 milliseconds
+                while (CachedPlayer is null && !combined.Token.IsCancellationRequested)
                     await Task.Delay(250, combined.Token).ConfigureAwait(false);
-                }
 
                 // if the combined token is not cancelled STILL
                 if (!combined.IsCancellationRequested)
@@ -207,130 +181,178 @@ public class Pair
         ApplyLastIpcData();
     }
 
-    /// <summary>
-    /// Applied updated Gag Appearance Data for the user pair. 
-    /// This is sent to all online players, not just visible.
-    /// </summary>
-    public void ApplyAppearanceData(OnlineUserCharaAppearanceDataDto data)
+    public void LoadCompositeData(OnlineUserCompositeDataDto dto)
     {
-        _logger.LogDebug("Applying updated appearance data for " + data.User.UID, LoggerType.PairDataTransfer);
-        LastAppearanceData = data.AppearanceData;
+        _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastGagData = dto.CompositeData.Gags;
+        LastRestrictionsData = dto.CompositeData.Restrictions;
+        LastRestraintData = dto.CompositeData.Restraint;
+        ActiveCursedItems = dto.CompositeData.CursedItems;
+        LastOrdersData = new CharaOrdersData();
+        LastToyboxData = dto.CompositeData.ToyboxData;
+        LastLightStorage = dto.CompositeData.LightStorageData;
+        // Update Kinkplate display.
+        UpdateCachedLockedSlots();
+        // publish a mediator message that is listened to by the achievement manager for duration cleanup.
+        _mediator.Publish(new PlayerLatestActiveItems(UserData, LastGagData, LastRestrictionsData, LastRestraintData));
+
+        if (dto.WasSafeword)
+            return;
+
+        // Deterministic AliasData setting.
+        var hasUser = dto.CompositeData.AliasData.ContainsKey(UserData.UID);
+        LastAliasData = hasUser ? dto.CompositeData.AliasData[UserData.UID] : new CharaAliasData();
+    }
+
+    public void UpdateGagData(CallbackGagDataDto data)
+    {
+        _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastGagData.GagSlots[(int)data.AffectedSlot] = data.NewData;
+
+        switch (data.Type)
+        {
+            case DataUpdateType.Swapped:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Applied:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Locked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedSlot, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                return;
+            case DataUpdateType.Unlocked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedSlot, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                return;
+            case DataUpdateType.Removed:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+        }
+    }
+
+    public void UpdateRestrictionData(CallbackRestrictionDataDto data)
+    {
+        _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastRestrictionsData.Restrictions[data.AffectedIndex] = data.NewData;
+
+        switch (data.Type)
+        {
+            case DataUpdateType.Swapped:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Applied:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Locked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                return;
+            case DataUpdateType.Unlocked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                return;
+            case DataUpdateType.Removed:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+        }
+    }
+
+    public void UpdateRestraintData(CallbackRestraintDataDto data)
+    {
+        _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastRestraintData = data.NewData;
+
+        switch (data.Type)
+        {
+            case DataUpdateType.Swapped:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Applied:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+            case DataUpdateType.Locked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                return;
+            case DataUpdateType.Unlocked:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                return;
+            case DataUpdateType.Removed:
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
+                UpdateCachedLockedSlots();
+                return;
+        }
+    }
+
+    public void UpdateCursedLootData(CallbackCursedLootDto data)
+    {
+        _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        ActiveCursedItems = data.NewActiveItems;
         UpdateCachedLockedSlots();
     }
 
-    /// <summary>
-    /// Applied updated Gag Appearance Data for the user pair. 
-    /// This is sent to all online players, not just visible.
-    /// </summary>
-    public void ApplyWardrobeData(OnlineUserCharaWardrobeDataDto data)
+    public void UpdateOrdersData(CallbackOrdersDataDto data)
     {
-        _logger.LogDebug("Applying updated wardrobe data for " + data.User.UID, LoggerType.PairDataTransfer);
-        var previousSetId = LastWardrobeData?.ActiveSetId ?? Guid.Empty;
-        var previousLock = LastWardrobeData?.Padlock.ToPadlock() ?? Padlocks.None;
-
-        LastWardrobeData = data.WardrobeData;
-
-        // depend on the EnabledBy field to know if we applied.
-        if (data.Type is WardrobeUpdateType.RestraintApplied)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.WardrobeData.ActiveSetId, true, data.WardrobeData.ActiveSetEnabledBy);
-
-        // We can only detect the lock uid by listening for the assigner UID. Unlocks are processed via the actions tab.
-        if (data.Type is WardrobeUpdateType.RestraintLocked)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.WardrobeData.ActiveSetId, data.WardrobeData.Padlock.ToPadlock(), true, data.WardrobeData.Assigner, UserData.UID);
-
-        // We can only detect the unlock uid by listening for the assigner UID. Unlocks are processed via the actions tab.
-        if (data.Type is WardrobeUpdateType.RestraintUnlocked)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.WardrobeData.ActiveSetId, previousLock, false, data.Enactor.UID, UserData.UID);
-
-        // For removal
-        if (data.Type is WardrobeUpdateType.RestraintDisabled)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, previousSetId, false, data.Enactor.UID);
-
-        // if the type was apply or removal, we should update the locked slots.
-        if (data.Type is WardrobeUpdateType.RestraintApplied or WardrobeUpdateType.RestraintDisabled or WardrobeUpdateType.CursedItemApplied or WardrobeUpdateType.CursedItemRemoved)
-            UpdateCachedLockedSlots();
+        _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastOrdersData = data.NewData;
     }
 
-    /// <summary>
-    /// Applied updated Orders Data for the user pair. 
-    /// This is sent to all online players, not just visible.
-    /// </summary>
-    public void ApplyOrdersData(OnlineUserCharaOrdersDataDto data)
+    public void UpdateAliasData(CallbackAliasDataDto data)
     {
-        _logger.LogDebug("Applying updated orders data for " + data.User.UID, LoggerType.PairDataTransfer);
-        LastOrdersData = data.OrdersData;
-    }
-
-    /// <summary>
-    /// Applies the restraint set information the user pair has allowed you to see.
-    /// This is sent to all online players, not just visible.
-    /// </summary>
-    public void ApplyAliasData(OnlineUserCharaAliasDataDto data)
-    {
-        _logger.LogDebug("Applying updated alias data for " + data.User.UID + " with type: " + data.Type, LoggerType.PairDataTransfer);
-        // update either the name associated to the list, or the list itself.
-        if (LastAliasData == null)
+        _logger.LogDebug("Applying updated alias data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        switch(data.Type)
         {
-            LastAliasData = data.AliasData;
-        }
-
-        // otherwise, update the appropriate part.
-        if (data.Type is PuppeteerUpdateType.AliasListUpdated)
-        {
-            LastAliasData.AliasList = data.AliasData.AliasList;
-        }
-        else if (data.Type is PuppeteerUpdateType.PlayerNameRegistered)
-        {
-            _logger.LogTrace("Updating Listener name to " + data.AliasData.ListenerName + " and HasStored to " + data.AliasData.HasNameStored, LoggerType.PairDataTransfer);
-            LastAliasData.HasNameStored = data.AliasData.HasNameStored;
-            LastAliasData.ListenerName = data.AliasData.ListenerName;
-        }
-        else if (data.Type is PuppeteerUpdateType.FullDataUpdate)
-        {
-            LastAliasData = data.AliasData;
+            case DataUpdateType.AliasListUpdated:
+                LastAliasData.AliasList = data.NewData.AliasList;
+                return;
+            case DataUpdateType.NameRegistered:
+                _logger.LogTrace("Updating Listener name to " + data.NewData.ListenerName + " and HasStored to " + data.NewData.HasNameStored, LoggerType.PairDataTransfer);
+                LastAliasData.HasNameStored = data.NewData.HasNameStored;
+                LastAliasData.ListenerName = data.NewData.ListenerName;
+                return;
+            default:
+                _logger.LogWarning("Invalid Update Type!");
+                break;
         }
     }
 
-    public void ApplyToyboxData(OnlineUserCharaToyboxDataDto data)
+    public void UpdateToyboxData(CallbackToyboxDataDto data)
     {
-        _logger.LogDebug("Applying updated toybox data for " + data.User.UID, LoggerType.PairDataTransfer);
-        LastToyboxData = data.ToyboxInfo;
+        _logger.LogDebug("Applying updated toybox data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        LastToyboxData = data.NewData;
     }
 
-    public void ApplyLightStorageData(OnlineUserStorageUpdateDto data)
+    public void UpdateLightStorageData(CallbackLightStorageDto data)
     {
-        _logger.LogDebug("Applying updated light storage data for " + data.User.UID, LoggerType.PairDataTransfer);
+        _logger.LogDebug("Applying updated light storage data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastLightStorage = data.LightStorage;
     }
 
     public void ApplyLastIpcData(bool forced = false)
     {
         // ( This implies that the pair object has had its CreateCachedPlayer method called )
-        if (CachedPlayer == null) return;
-
-        // if the last received character data is null, return and do not apply.
-        if (LastIpcData == null) return;
-
+        if (CachedPlayer is null || LastIpcData is null) 
+            return;
         // we have satisfied the conditions to apply the character data to our paired user, so apply it.
         CachedPlayer.ApplyCharacterData(Guid.NewGuid(), LastIpcData);
     }
 
-    /// <summary> 
-    /// Method that creates the cached player (PairHandler) object for the client pair.
-    /// <para> 
-    /// This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkPairOnline</c> method!
-    /// </para>
-    /// <para> 
-    /// Until the CachedPlayer object is made, the client will not apply any data sent from this paired user.
-    /// </para>
+    /// <summary> Method that creates the cached player (PairHandler) object for the client pair.
+    /// <para> This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkPairOnline</c> method! </para>
+    /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
     /// </summary>
     public void CreateCachedPlayer(OnlineUserIdentDto? dto = null)
     {
         try
         {
-            // wait for the creation semaphore to be available
             _creationSemaphore.Wait();
-
             // If the cachedPlayer is already stored for this pair, we do not need to create it again, so return.
             if (CachedPlayer != null)
             {
@@ -339,9 +361,9 @@ public class Pair
             }
 
             // if the Dto sent to us by the server is null, and the pairs onlineUserIdentDto is null, dispose of the cached player and return.
-            if (dto == null && _onlineUserIdentDto == null)
+            if (dto is null && _onlineUserIdentDto is null)
             {
-                // dispose of the cachedplayer and set it to null before returning
+                // dispose of the cached player and set it to null before returning
                 _logger.LogDebug("No DTO provided for {uid}, and OnlineUserIdentDto object in Pair class is null. Disposing of CachedPlayer", UserData.UID);
                 CachedPlayer?.Dispose();
                 CachedPlayer = null;
@@ -356,14 +378,11 @@ public class Pair
             }
 
             _logger.LogTrace("Disposing of existing CachedPlayer to create a new one for " + UserData.UID, LoggerType.PairInfo);
-            // not we can dispose of the cached player
             CachedPlayer?.Dispose();
-            // and create a new one from our _cachedPlayerFactory (the pair handler factory)
             CachedPlayer = _cachedPlayerFactory.Create(new OnlineUserIdentDto(UserData, _onlineUserIdentDto!.Ident));
         }
         finally
         {
-            // release the creation semaphore
             _creationSemaphore.Release();
         }
     }
@@ -371,81 +390,8 @@ public class Pair
     public void UpdateCachedLockedSlots()
     {
         var result = new Dictionary<EquipSlot, (EquipItem, string)>();
-        // return false instantly if the wardrobe data or light data is null.
-        if (LastWardrobeData is null || LastLightStorage is null || LastAppearanceData is null)
-        {
-            _logger.LogDebug("Wardrobe or LightStorage Data is null for " + UserData.UID, LoggerType.PairDataTransfer);
-            return;
-        }
 
-        // we must check in the priority of Cursed Items -> Blindfold -> Gag -> Restraints
-
-        // If the pair has any cursed items active.
-        if (LastWardrobeData.ActiveCursedItems.Any())
-        {
-            // iterate through the active cursed items, and stop at the first
-            foreach (var cursedItem in LastWardrobeData.ActiveCursedItems)
-            {
-                // locate the light cursed item associated with the ID.
-                var lightCursedItem = LastLightStorage.CursedItems.FirstOrDefault(x => x.Identifier == cursedItem);
-                if (lightCursedItem != null)
-                {
-                    // if the cursed item is a Gag, locate the gag glamour first.
-                    if (lightCursedItem.IsGag)
-                    {
-                        if (LastLightStorage.GagItems.TryGetValue(lightCursedItem.GagType, out var gagItem))
-                        {
-                            // if the gag item's slot is not yet occupied by anything, add it, otherwise, skip.
-                            if (!result.ContainsKey((EquipSlot)gagItem.Slot))
-                                result.Add(
-                                    (EquipSlot)gagItem.Slot,
-                                    (ItemIdVars.Resolve((EquipSlot)gagItem.Slot, new CustomItemId(gagItem.CustomItemId)),
-                                    gagItem.Tooltip));
-                        }
-                        continue; // Move to next item. (Early Skip)
-                    }
-
-                    // Cursed Item should be referenced by its applied item instead, so check to see if its already in the dictionary, if it isnt, add it.
-                    if (!result.ContainsKey((EquipSlot)lightCursedItem.AffectedSlot.Slot))
-                        result.Add(
-                            (EquipSlot)lightCursedItem.AffectedSlot.Slot,
-                            (ItemIdVars.Resolve((EquipSlot)lightCursedItem.AffectedSlot.Slot, new CustomItemId(lightCursedItem.AffectedSlot.CustomItemId)),
-                            lightCursedItem.AffectedSlot.Tooltip));
-                }
-            }
-        }
-
-        // Next check the blindfold item if they are blindfolded.
-        if (PairGlobals.IsBlindfolded())
-        {
-            // add the blindfold item to a slot if it is not occupied.
-            if (!result.ContainsKey((EquipSlot)LastLightStorage.BlindfoldItem.Slot))
-                result.Add(
-                    (EquipSlot)LastLightStorage.BlindfoldItem.Slot,
-                    (ItemIdVars.Resolve((EquipSlot)LastLightStorage.BlindfoldItem.Slot, new CustomItemId(LastLightStorage.BlindfoldItem.CustomItemId)),
-                    LastLightStorage.BlindfoldItem.Tooltip));
-        }
-
-        // next iterate through our locked gags, adding any gag glamour's to locked slots if they are present.
-        foreach (var gagSlot in LastAppearanceData.GagSlots.Where(x => x.GagType.ToGagType() is not GagType.None))
-        {
-            // if the pairs stored gag items contains a glamour for that item, attempt to add it, if possible.
-            if (LastLightStorage.GagItems.TryGetValue(gagSlot.GagType.ToGagType(), out var gagItem))
-                if (!result.ContainsKey((EquipSlot)gagItem.Slot))
-                    result.Add((EquipSlot)gagItem.Slot, (ItemIdVars.Resolve((EquipSlot)gagItem.Slot, new CustomItemId(gagItem.CustomItemId)), gagItem.Tooltip));
-        }
-
-        // finally, locate the active restraint set, and iterate through the restraint item glamours, adding them if not already a part of the dictionary.
-        if (!LastWardrobeData.ActiveSetId.IsEmptyGuid())
-        {
-            var activeSet = LastLightStorage.Restraints.FirstOrDefault(x => x.Identifier == LastWardrobeData.ActiveSetId);
-            if (activeSet is not null)
-            {
-                foreach (var restraintAffectedSlot in activeSet.AffectedSlots)
-                    if (!result.ContainsKey((EquipSlot)restraintAffectedSlot.Slot))
-                        result.Add((EquipSlot)restraintAffectedSlot.Slot, (ItemIdVars.Resolve((EquipSlot)restraintAffectedSlot.Slot, new CustomItemId(restraintAffectedSlot.CustomItemId)), restraintAffectedSlot.Tooltip));
-            }
-        }
+        // Rewrite this completely.
         _logger.LogDebug("Updated Locked Slots for " + UserData.UID, LoggerType.PairInfo);
         LockedSlots = result;
     }
@@ -453,7 +399,7 @@ public class Pair
     /// <summary> Get the nicknames for the user. </summary>
     public string? GetNickname()
     {
-        return _serverConfigs.GetNicknameForUid(UserData.UID);
+        return _nickConfig.GetNicknameForUid(UserData.UID);
     }
 
     public string GetNickAliasOrUid() => GetNickname() ?? UserData.AliasOrUID;
@@ -464,35 +410,22 @@ public class Pair
         return CachedPlayer?.PlayerNameHash ?? string.Empty;
     }
 
-    /// <summary> A boolean of if the pair has any connection to the client. </summary>
-    public bool HasAnyConnection()
-    {
-        return UserPair.IndividualPairStatus != IndividualPairStatus.None;
-    }
-
     /// <summary> Marks the pair as offline. </summary>
     public void MarkOffline()
     {
         try
         {
-            // block current thread until it can enter the semaphore
             _creationSemaphore.Wait();
-            // set the online user ident dto to null
             _onlineUserIdentDto = null;
-            // set the last received character data to null
             LastIpcData = null;
-            // set the pair handler player = to the cached player
+            // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;
-            // set the cached player to null
             CachedPlayer = null;
-            // dispose of the player object.
             player?.Dispose();
-            // log the pair as offline
             _logger.LogTrace("Marked " + UserData.UID + " as offline", LoggerType.PairManagement);
         }
         finally
         {
-            // release the creation semaphore
             _creationSemaphore.Release();
         }
     }

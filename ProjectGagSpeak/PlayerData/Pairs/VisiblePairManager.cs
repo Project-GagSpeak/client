@@ -15,23 +15,23 @@ namespace GagSpeak.PlayerData.Pairs;
 /// </summary>
 public class VisiblePairManager : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
-    private readonly ClientMonitorService _clientService;
-    private readonly ClientData _playerManager;
+    private readonly MainHub _hub;
+    private readonly ClientMonitor _clientMonitor;
+    private readonly GlobalData _playerManager;
     private readonly PairManager _pairManager;
 
-    // Stores the last recieved IpcData from our client player characters cache creation service.
-    private CharaIPCData LastIpcData = null!;
+    // Stores the last received IpcData from our client player characters cache creation service.
+    private CharaIPCData PreviousStoredIpcData = new CharaIPCData();
 
     // stores the set of newly visible players to update with our latest IPC data.
     private readonly HashSet<PairHandler> _newVisiblePlayers = [];
 
     public VisiblePairManager(ILogger<VisiblePairManager> logger, GagspeakMediator mediator, 
-        MainHub apiHubMain, ClientMonitorService clientService, ClientData playerManager,
+        MainHub hub, ClientMonitor clientMonitor, GlobalData playerManager,
         PairManager pairManager) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
-        _clientService = clientService;
+        _hub = hub;
+        _clientMonitor = clientMonitor;
         _playerManager = playerManager;
         _pairManager = pairManager;
 
@@ -39,16 +39,16 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => FrameworkOnUpdate());
 
         // Fired whenever our IPC data is updated. Sends to visible players.
-        Mediator.Subscribe<IpcDataCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<IpcDataChangedMessage>(this, (msg) =>
         {
-            var newData = msg.CharaIPCData;
+            var newData = msg.NewIpcData;
             // Send if attached data is different from last sent data.
             // this check also helps us ensure that we are not receiving the same data as pairHandlerVisible
-            if (LastIpcData == null || LastIpcData.Equals(newData))
+            if (!PreviousStoredIpcData.Equals(newData))
             {
                 Logger.LogDebug("Pushing new IPC data to all visible players", LoggerType.VisiblePairs);
-                LastIpcData = newData;
-                PushCharacterIpcData(_pairManager.GetVisibleUsers(), msg.UpdateKind);
+                PreviousStoredIpcData = newData;
+                PushCharacterIpcData(_pairManager.GetVisibleUsers(), msg.UpdateType);
             }
             else
             {
@@ -60,10 +60,7 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, (msg) =>
         {
             Logger.LogDebug("Applying List of your Statuses from your Moodles to "+msg.StatusDto.User.AliasOrUID, LoggerType.VisiblePairs);
-            _ = Task.Run(async () =>
-            {
-                await _apiHubMain.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false);
-            });
+            _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false);
         });
 
 
@@ -75,7 +72,7 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
     private void FrameworkOnUpdate()
     {
         // return if Client Player is not visible or not connected.
-        if (!_clientService.IsPresent || !MainHub.IsConnected) return;
+        if (!_clientMonitor.IsPresent || !MainHub.IsConnected) return;
 
         // return if no new visible players.
         if (!_newVisiblePlayers.Any()) return;
@@ -86,25 +83,16 @@ public class VisiblePairManager : DisposableMediatorSubscriberBase
 
         // Push our IPC data to those players, applying our moodles data & sending customize+ info.
         Logger.LogTrace("Has new visible players, pushing character data", LoggerType.VisiblePairs);
-        PushCharacterIpcData(newVisiblePlayers.Select(c => c.OnlineUser.User).ToList(), IpcUpdateType.FullDataUpdate);
+        PushCharacterIpcData(newVisiblePlayers.Select(c => c.OnlineUser.User).ToList(), DataUpdateType.UpdateVisible);
     }
 
-    /// <summary>
-    /// Pushes the character IPC data to the server for the visible players.
-    /// </summary>
-    private void PushCharacterIpcData(List<UserData> visablePlayers, IpcUpdateType updateKind)
+    /// <summary> Pushes the character IPC data to the server for the visible players. </summary>
+    private void PushCharacterIpcData(List<UserData> visiblePlayers, DataUpdateType updateKind)
     {
         // If the list contains any contents and we have new data, asynchronously push it to the server.
-        if (visablePlayers.Any() && LastIpcData != null)
-        {
-            _ = Task.Run(async () =>
-            {
-                await _apiHubMain.PushCharacterIpcData(LastIpcData, visablePlayers, updateKind).ConfigureAwait(false);
-            });
-        }
+        if (visiblePlayers.Any() && PreviousStoredIpcData != null)
+            _hub.PushClientIpcData(PreviousStoredIpcData, visiblePlayers, updateKind).ConfigureAwait(false);
         else
-        {
             Logger.LogInformation("No visible players to push IPC data to", LoggerType.VisiblePairs);
-        }
     }
 }

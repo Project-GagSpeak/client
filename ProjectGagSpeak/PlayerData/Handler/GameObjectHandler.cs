@@ -1,8 +1,7 @@
-using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI.Utils;
-using GagSpeak.UpdateMonitoring;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.Utils;
+using GagSpeak.CkCommons;
+using GagSpeak.Services.Mediator;
+using GagSpeak.UpdateMonitoring;
 
 namespace GagSpeak.PlayerData.Handlers;
 
@@ -91,7 +90,7 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
     {
         if(Address == IntPtr.Zero) return;
         PlayerCharacterObjRef = _frameworkUtil.GetIPlayerCharacterFromObjectTableAsync(Address).GetAwaiter().GetResult();
-        NameWithWorld = PlayerCharacterObjRef?.GetNameWithWorld() ?? string.Empty;
+        NameWithWorld = PlayerCharacterObjRef?.NameWithWorld() ?? string.Empty;
     }
 
     /* Performs an operation on each framework update to check and update the owned objects we have. 
@@ -120,8 +119,8 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
         if (_haltProcessing) return;
 
         // otherwise, check if the address or draw object address has changed.
-        bool drawObjDiff = DrawObjectAddress != prevDrawObj;
-        bool addrDiff = Address != prevAddr;
+        var drawObjDiff = DrawObjectAddress != prevDrawObj;
+        var addrDiff = Address != prevAddr;
 
         // check if the updated Address and Draw object are both not 0
         if (Address != IntPtr.Zero && DrawObjectAddress != IntPtr.Zero)

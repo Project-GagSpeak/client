@@ -1,15 +1,9 @@
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Permissions;
-using System.Reflection;
-using static FFXIVClientStructs.FFXIV.Component.GUI.AtkComponentNumericInput.Delegates;
-using GagSpeak.WebAPI;
-using GagSpeak.Services.Events;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.PlayerData.Pairs;
-
-// Personal note, this could easily become part of Pair Handler.
 
 /// <summary>
 /// General note to self, pairs used to have "own permissions" and "other permissions" but they were removed.
@@ -21,9 +15,9 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     /// Updates all permissions of a client pair user.
     /// Edit access is checked server-side to prevent abuse, so these should be all accurate
     /// </summary>
-    public void UpdateOtherPairAllPermissions(UserPairUpdateAllPermsDto dto)
+    public void UpdateOtherPairAllPermissions(BulkUpdatePermsAllDto dto)
     {
-        bool MoodlesChanged = false;
+        var MoodlesChanged = false;
         if (!_allClientPairs.TryGetValue(dto.User, out var pair))
         {
             throw new InvalidOperationException("No such pair for " + dto);
@@ -33,15 +27,13 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         // check to see if the user just paused themselves.
         if (pair.UserPair.OtherPairPerms.IsPaused != dto.PairPermissions.IsPaused)
-        {
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
-        }
+
+        MoodlesChanged = (dto.PairPermissions.MoodlePerms != pair.PairPerms.MoodlePerms)
+            || (dto.PairPermissions.MaxMoodleTime != pair.PairPerms.MaxMoodleTime);
 
         // set the permissions.
         pair.UserPair.OtherGlobalPerms = dto.GlobalPermissions;
-        // check to see if we are updating any moodles permissions
-        MoodlesChanged = UpdatingMoodlesPerms(dto.PairPermissions, pair.UserPair.OtherPairPerms);
-        // update pair perms
         pair.UserPair.OtherPairPerms = dto.PairPermissions;
         pair.UserPair.OtherEditAccessPerms = dto.EditAccessPermissions;
 
@@ -50,58 +42,30 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(true);
 
         // push notify after recreating lazy.
-        if (MoodlesChanged)
-        {
-            // only push the notification if they are online.
-            if (GetVisibleUsers().Contains(pair.UserData))
-            {
-                // Handle Moodle permission change
-                Logger.LogTrace($"Moodle permissions were changed, pushing change to provider!", LoggerType.PairDataTransfer);
-                Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-            }
-        }
-
+        if (MoodlesChanged && GetOnlineUserDatas().Contains(pair.UserData))
+            Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
     }
 
-    private bool UpdatingMoodlesPerms(UserPairPermissions newPerms, UserPairPermissions oldPerms)
-    {
-        return newPerms.AllowPositiveStatusTypes != oldPerms.AllowPositiveStatusTypes
-            || newPerms.AllowNegativeStatusTypes != oldPerms.AllowNegativeStatusTypes
-            || newPerms.AllowSpecialStatusTypes != oldPerms.AllowSpecialStatusTypes
-            || newPerms.PairCanApplyOwnMoodlesToYou != oldPerms.PairCanApplyOwnMoodlesToYou
-            || newPerms.PairCanApplyYourMoodlesToYou != oldPerms.PairCanApplyYourMoodlesToYou
-            || newPerms.MaxMoodleTime != oldPerms.MaxMoodleTime
-            || newPerms.AllowPermanentMoodles != oldPerms.AllowPermanentMoodles
-            || newPerms.AllowRemovingMoodles != oldPerms.AllowRemovingMoodles;
-    }
-
-    public void UpdatePairUpdateOwnAllUniquePermissions(UserPairUpdateAllUniqueDto dto)
+    public void UpdatePairUpdateOwnAllUniquePermissions(BulkUpdatePermsUniqueDto dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        // fetch the current actions that fire events
-        var prevMotionPerms = pair.UserPair.OwnPairPerms.MotionRequests;
-        var prevAllPerms = pair.UserPair.OwnPairPerms.AllRequests;
-
-        // see if the states are different.
-        bool motionPermsChanged = prevMotionPerms != dto.UniquePerms.MotionRequests;
-        bool allPermsChanged = prevAllPerms != dto.UniquePerms.AllRequests;
+        // Find new permissions enabled that were not enabled before
+        var prevPerms = pair.OwnPerms.PuppetPerms;
+        var newlyEnabledPermissions = (dto.UniquePerms.PuppetPerms & ~prevPerms);
 
         // update the permissions.
         pair.UserPair.OwnPairPerms = dto.UniquePerms;
         pair.UserPair.OwnEditAccessPerms = dto.UniqueAccessPerms;
 
-        // publish the mediator changes.
-        if (motionPermsChanged)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, false);
-        if (allPermsChanged) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, true);
+        if (newlyEnabledPermissions is not PuppetPerms.None)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newlyEnabledPermissions);
 
         Logger.LogDebug($"Updated own unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
 
-    public void UpdatePairUpdateOtherAllGlobalPermissions(UserPairUpdateAllGlobalPermsDto dto)
+    public void UpdatePairUpdateOtherAllGlobalPermissions(BulkUpdatePermsGlobalDto dto)
     {
         // update the pairs permissions.
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
@@ -109,7 +73,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Updated global permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
-    public void UpdatePairUpdateOtherAllUniquePermissions(UserPairUpdateAllUniqueDto dto)
+    public void UpdatePairUpdateOtherAllUniquePermissions(BulkUpdatePermsUniqueDto dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
         pair.UserPair.OtherPairPerms = dto.UniquePerms;
@@ -125,20 +89,20 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        string ChangedPermission = dto.ChangedPermission.Key;
-        object ChangedValue = dto.ChangedPermission.Value;
+        var ChangedPermission = dto.ChangedPermission.Key;
+        var ChangedValue = dto.ChangedPermission.Value;
 
-        PropertyInfo? propertyInfo = typeof(UserGlobalPermissions).GetProperty(ChangedPermission);
+        var propertyInfo = typeof(UserGlobalPermissions).GetProperty(ChangedPermission);
         if (propertyInfo is null)
             return;
 
         // Get the Hardcore Change Type before updating the property (if it is not valid it wont return anything but none anyways)
-        InteractionType hardcoreChangeType = pair.PairGlobals.GetHardcoreChange(ChangedPermission, ChangedValue);
+        var hardcoreChangeType = pair.PairGlobals.GetHardcoreChange(ChangedPermission, ChangedValue);
 
         // If the property exists and is found, update its value
         if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
         {
-            long ticks = (long)(ulong)ChangedValue;
+            var ticks = (long)(ulong)ChangedValue;
             propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, TimeSpan.FromTicks(ticks));
         }
         // char recognition. (these are converted to byte for Dto's instead of char)
@@ -149,7 +113,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         else if (propertyInfo.CanWrite)
         {
             // convert the value to the appropriate type before setting.
-            object value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+            var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
             propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, value);
             Logger.LogDebug($"Updated global permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
         }
@@ -163,25 +127,10 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         // Handle hardcore changes here.
         if (hardcoreChangeType is InteractionType.None) return;
 
-        // if the hardcore change is a blindfold change, we should update our slots for the pair.
-        if (hardcoreChangeType is InteractionType.ForcedBlindfold) pair.UpdateCachedLockedSlots();
-
         // log the new state, the hardcore change, and the new value.
         var newState = string.IsNullOrEmpty((string)ChangedValue) ? NewState.Disabled : NewState.Enabled;
         Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
         UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, dto.Enactor.UID, pair.UserData.UID);
-    }
-
-    private bool IsMoodlePermission(string changedPermission)
-    {
-        return changedPermission == nameof(UserPairPermissions.AllowPositiveStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.AllowNegativeStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.AllowSpecialStatusTypes) ||
-               changedPermission == nameof(UserPairPermissions.PairCanApplyOwnMoodlesToYou) ||
-               changedPermission == nameof(UserPairPermissions.PairCanApplyYourMoodlesToYou) ||
-               changedPermission == nameof(UserPairPermissions.MaxMoodleTime) ||
-               changedPermission == nameof(UserPairPermissions.AllowPermanentMoodles) ||
-               changedPermission == nameof(UserPairPermissions.AllowRemovingMoodles);
     }
 
     /// <summary>
@@ -191,21 +140,21 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        string ChangedPermission = dto.ChangedPermission.Key;
-        object ChangedValue = dto.ChangedPermission.Value;
+        var ChangedPermission = dto.ChangedPermission.Key;
+        var ChangedValue = dto.ChangedPermission.Value;
 
         // has the person just paused us.
         if (ChangedPermission == "IsPaused")
             if (pair.UserPair.OtherPairPerms.IsPaused != (bool)ChangedValue)
                 Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
-        PropertyInfo? propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
+        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
         if (propertyInfo != null)
         {
             // If the property exists and is found, update its value
             if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
             {
-                long ticks = (long)(ulong)ChangedValue;
+                var ticks = (long)(ulong)ChangedValue;
                 propertyInfo.SetValue(pair.UserPair.OtherPairPerms, TimeSpan.FromTicks(ticks));
             }
             // char recognition. (these are converted to byte for Dto's instead of char)
@@ -216,7 +165,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             else if (propertyInfo.CanWrite)
             {
                 // convert the value to the appropriate type before setting.
-                object value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
                 propertyInfo.SetValue(pair.UserPair.OtherPairPerms, value);
                 Logger.LogDebug($"Updated other pair permission permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
             }
@@ -228,16 +177,9 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (IsMoodlePermission(ChangedPermission))
-        {
-            // only push the notification if they are online.
-            if (GetVisibleUsers().Contains(pair.UserData))
-            {
-                // Handle Moodle permission change
-                Logger.LogTrace($"Moodle permission '{ChangedPermission}' was changed to '{ChangedValue}', pushing change to provider!", LoggerType.PairDataTransfer);
+        if (ChangedPermission is nameof(UserPairPermissions.MoodlePerms) || ChangedPermission is nameof(UserPairPermissions.MaxMoodleTime))
+            if (GetOnlineUserDatas().Contains(pair.UserData))
                 Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-            }
-        }
     }
 
     /// <summary>
@@ -247,16 +189,16 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        string ChangedPermission = dto.ChangedAccessPermission.Key;
-        object ChangedValue = dto.ChangedAccessPermission.Value;
+        var ChangedPermission = dto.ChangedAccessPermission.Key;
+        var ChangedValue = dto.ChangedAccessPermission.Value;
 
-        PropertyInfo? propertyInfo = typeof(UserEditAccessPermissions).GetProperty(ChangedPermission);
+        var propertyInfo = typeof(UserEditAccessPermissions).GetProperty(ChangedPermission);
         if (propertyInfo != null)
         {
             // If the property exists and is found, update its value
             if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
             {
-                long ticks = (long)(ulong)ChangedValue;
+                var ticks = (long)(ulong)ChangedValue;
                 propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, TimeSpan.FromTicks(ticks));
             }
             // char recognition. (these are converted to byte for Dto's instead of char)
@@ -267,7 +209,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             else if (propertyInfo.CanWrite)
             {
                 // convert the value to the appropriate type before setting.
-                object value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
                 propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, value);
                 Logger.LogDebug($"Updated other pair access perm '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
             }
@@ -287,27 +229,23 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        string ChangedPermission = dto.ChangedPermission.Key;
-        object ChangedValue = dto.ChangedPermission.Value;
+        var ChangedPermission = dto.ChangedPermission.Key;
+        var ChangedValue = dto.ChangedPermission.Value;
 
         if (ChangedPermission is "IsPaused" && (pair.UserPair.OwnPairPerms.IsPaused != (bool)ChangedValue))
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
+        
+        var prevPerms = pair.OwnPerms.PuppetPerms;
+        var puppetChanged = ChangedPermission == nameof(UserPairPermissions.PuppetPerms);
 
-        // store changes pre-apply.
-        bool motionPermsChanged = ChangedPermission is nameof(UserPairPermissions.MotionRequests)
-            && (pair.UserPair.OwnPairPerms.MotionRequests != (bool)ChangedValue);
-        bool allPermsChanged = ChangedPermission == nameof(UserPairPermissions.AllRequests)
-            && (pair.UserPair.OwnPairPerms.AllRequests != (bool)ChangedValue);
-
-
-        PropertyInfo? propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
+        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
         if (propertyInfo is null)
             return;
 
         // If the property exists and is found, update its value
         if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
         {
-            long ticks = (long)(ulong)ChangedValue;
+            var ticks = (long)(ulong)ChangedValue;
             propertyInfo.SetValue(pair.UserPair.OwnPairPerms, TimeSpan.FromTicks(ticks));
         }
         // char recognition. (these are converted to byte for Dto's instead of char)
@@ -318,7 +256,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         else if (propertyInfo.CanWrite)
         {
             // convert the value to the appropriate type before setting.
-            object value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+            var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
             propertyInfo.SetValue(pair.UserPair.OwnPairPerms, value);
             Logger.LogDebug($"Updated self pair permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
         }
@@ -328,20 +266,15 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             return;
         }
 
-        // Handle special cases AFTER the change was made.
-        if (motionPermsChanged && (bool)ChangedValue) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, false);
-        if (allPermsChanged && (bool)ChangedValue) 
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, true);
+        var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);
+        if (newEnabledPuppetPerms is not PuppetPerms.None)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newEnabledPuppetPerms);
 
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (IsMoodlePermission(ChangedPermission))
-        {
-            Logger.LogTrace($"Moodle permission '{ChangedPermission}' was changed to '{ChangedValue}', pushing change to provider!", LoggerType.PairDataTransfer);
+        if (ChangedPermission is nameof(UserPairPermissions.MoodlePerms) || ChangedPermission is nameof(UserPairPermissions.MaxMoodleTime))
             Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-        }
     }
 
     /// <summary>
@@ -351,16 +284,16 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
 
-        string ChangedPermission = dto.ChangedAccessPermission.Key;
-        object ChangedValue = dto.ChangedAccessPermission.Value;
+        var ChangedPermission = dto.ChangedAccessPermission.Key;
+        var ChangedValue = dto.ChangedAccessPermission.Value;
 
-        PropertyInfo? propertyInfo = typeof(UserEditAccessPermissions).GetProperty(ChangedPermission);
+        var propertyInfo = typeof(UserEditAccessPermissions).GetProperty(ChangedPermission);
         if (propertyInfo != null)
         {
             if (propertyInfo.CanWrite)
             {
                 // convert the value to the appropriate type before setting.
-                object value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
                 propertyInfo.SetValue(pair.UserPair.OwnEditAccessPerms, value);
                 Logger.LogDebug($"Updated self pair access permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
             }

@@ -1,4 +1,3 @@
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
@@ -38,9 +37,9 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            UserName = _mainConfig.Current.PiShockUsername,
+            UserName = _mainConfig.Config.PiShockUsername,
             Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
+            Apikey = _mainConfig.Config.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }
@@ -50,13 +49,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            Username = _mainConfig.Current.PiShockUsername,
+            Username = _mainConfig.Config.PiShockUsername,
             Name = "GagSpeakProvider",
             Op = opCode,
             Intensity = 0,
             Duration = 0,
             Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
+            Apikey = _mainConfig.Config.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }
@@ -66,13 +65,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            Username = _mainConfig.Current.PiShockUsername,
+            Username = _mainConfig.Config.PiShockUsername,
             Name = "GagSpeakProvider",
             Op = opCode,
             Intensity = intensity,
             Duration = duration,
             Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
+            Apikey = _mainConfig.Config.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }

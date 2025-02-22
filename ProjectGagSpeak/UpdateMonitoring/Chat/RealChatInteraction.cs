@@ -83,9 +83,8 @@ public class ChatSender
         Marshal.FreeHGlobal(mem1);
     }
 
-    /// <summary>
-    /// <para> Send a given message to the chat box. <b>USE THIS METHOD OVER THE UNSAFE ONE.</b></para>
-    /// </summary>
+    /// <summary> Send a given message to the chat box. <b>USE THIS METHOD OVER THE UNSAFE ONE.</b></summary>
+    /// <exception cref="ArgumentException">Thrown when the message is empty, too long, or contains invalid characters.</exception>
     public void SendMessage(string message)
     {
         // Get the number of bytes our message contains.

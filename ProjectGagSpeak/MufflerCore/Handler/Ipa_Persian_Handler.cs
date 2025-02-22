@@ -1,6 +1,5 @@
 using Dalamud.Plugin;
-using GagSpeak.Services.ConfigurationServices;
-using GagSpeak.Utils;
+using GagSpeak.CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
@@ -12,7 +11,7 @@ public class Ipa_Persian_Handler
     private string data_file; // Path to the JSON file containing the conversion rules
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Persian_Handler> _logger; // Logger
-    private readonly ClientConfigurationManager _clientConfig; // The GagSpeak configuration
+    private readonly GagspeakConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
@@ -20,10 +19,10 @@ public class Ipa_Persian_Handler
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, ClientConfigurationManager clientConfig, IDalamudPluginInterface pi)
+    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
-        _clientConfig = clientConfig;
+        _config = config;
         _pi = pi;
         data_file = "MufflerCore\\StoredDictionaries\\fa.json"; // Set the path to the JSON file based on the language dialect
         LoadConversionRules();
@@ -33,8 +32,8 @@ public class Ipa_Persian_Handler
     {
         try
         {
-            string jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
-            string json = File.ReadAllText(jsonFilePath);
+            var jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
+            var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
             ExtractUniquePhonetics();
@@ -192,7 +191,7 @@ public class Ipa_Persian_Handler
                     if (i < phonetics.Length - 1)
                     {
                         var possibleCombination = phonetics.Substring(i, 2);
-                        int index = GagPhonetics.MasterListEN_US.FindIndex(t => t == possibleCombination);
+                        var index = GagPhonetics.MasterListEN_US.FindIndex(t => t == possibleCombination);
                         if (index != -1)
                         {
                             spacedPhonetics += GagPhonetics.MasterListEN_US[index] + "-"; // Use the phoneme from the Translator object

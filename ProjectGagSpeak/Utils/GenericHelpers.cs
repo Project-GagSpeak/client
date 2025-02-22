@@ -7,12 +7,12 @@ namespace GagSpeak.Utils;
 public static class GenericHelpers
 {
     // work on integrating these into a utilities pack.
-    public static IEnumerable<ActionExecutionType> ActionTypesRestraint => Enum.GetValues<ActionExecutionType>()
-        .Where(x => x is not ActionExecutionType.Restraint && x is not ActionExecutionType.TextOutput);
-    public static IEnumerable<ActionExecutionType> ActionTypesOnGag => Enum.GetValues<ActionExecutionType>()
-        .Where(x => x is not ActionExecutionType.Gag && x is not ActionExecutionType.TextOutput);
-    public static IEnumerable<ActionExecutionType> ActionTypesTrigger => Enum.GetValues<ActionExecutionType>()
-        .Where(x => x is not ActionExecutionType.TextOutput);
+    public static IEnumerable<InvokableActionType> ActionTypesRestraint => Enum.GetValues<InvokableActionType>()
+        .Where(x => x is not InvokableActionType.Restraint && x is not InvokableActionType.TextOutput);
+    public static IEnumerable<InvokableActionType> ActionTypesOnGag => Enum.GetValues<InvokableActionType>()
+        .Where(x => x is not InvokableActionType.Gag && x is not InvokableActionType.TextOutput);
+    public static IEnumerable<InvokableActionType> ActionTypesTrigger => Enum.GetValues<InvokableActionType>()
+        .Where(x => x is not InvokableActionType.TextOutput);
 
     public static IEnumerable<NewState> RestrictedTriggerStates => Enum.GetValues<NewState>()
         .Where(x => x is not NewState.Disabled && x is not NewState.Unlocked);

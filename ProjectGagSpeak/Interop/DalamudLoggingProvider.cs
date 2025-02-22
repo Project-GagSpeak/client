@@ -1,5 +1,4 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.GagspeakConfiguration;
 using Serilog.Events;
 
 namespace GagSpeak.Interop;
@@ -24,7 +23,7 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
 
         // initialize the static logger filter with the stored filter list in the config service
         LoggerFilter.ClearAllowedCategories();
-        LoggerFilter.AddAllowedCategories(_gagspeakConfigService.Current.LoggerFilters);
+        LoggerFilter.AddAllowedCategories(_gagspeakConfigService.Config.LoggerFilters);
     }
 
     public ILogger CreateLogger(string categoryName)
@@ -34,7 +33,7 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
         // then selects the last segment.
         // (This is a common pattern to extract the most specific part of a namespace
         // or class name, which often represents the actual class or component name.)
-        string catName = categoryName.Split(".", StringSplitOptions.RemoveEmptyEntries).Last();
+        var catName = categoryName.Split(".", StringSplitOptions.RemoveEmptyEntries).Last();
         // if the name is longer than 15 characters, take the first 6 characters, the last 6 characters, and add "..."
         if (catName.Length > 19)
         {

@@ -2,16 +2,11 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Dto.UserPair;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Numerics;
 
 namespace GagSpeak.UI.Components.UserPairList;
 
@@ -22,17 +17,17 @@ public class KinksterRequestEntry
 {
     private readonly string _id;
     private UserPairRequestDto _requestEntry;
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly CosmeticService _cosmetics;
     private readonly UiSharedService _uiShared;
 
     private bool IsHovered = false;
     public KinksterRequestEntry(string id, UserPairRequestDto requestEntry, 
-        MainHub apiHubMain, CosmeticService cosmetics, UiSharedService uiShared)
+        MainHub hub, CosmeticService cosmetics, UiSharedService uiShared)
     {
         _id = id;
         _requestEntry = requestEntry;
-        _apiHubMain = apiHubMain;
+        _hub = hub;
         _cosmetics = cosmetics;
         _uiShared = uiShared;
 
@@ -96,7 +91,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
             if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
-                _apiHubMain.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+                _hub.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         UiSharedService.AttachToolTip("Accept the Request");
 
@@ -106,7 +101,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
             if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
-                _apiHubMain.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+                _hub.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         UiSharedService.AttachToolTip("Reject the Request");
     }
@@ -123,7 +118,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
             if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
-                _apiHubMain.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
+                _hub.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
         }
         UiSharedService.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
     }

@@ -1,23 +1,17 @@
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
-using GagSpeak.Utils;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Enums;
-using ImGuiNET;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 
 namespace GagSpeak.Services;
 
 // handles the global chat and pattern discovery social features.
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
     private readonly CosmeticService _cosmetics;
@@ -29,13 +23,13 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         PairManager pairManager, CosmeticService cosmetics) : base(logger, mediator)
     {
         _configDirectory = configDirectory;
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
         _cosmetics = cosmetics;
 
         // Create a new chat log
-        GlobalChat = new ChatLog(_apiHubMain, Mediator, _cosmetics);
+        GlobalChat = new ChatLog(_hub, Mediator, _cosmetics);
 
         // Load the chat log
         LoadChatLog(GlobalChat);
@@ -73,7 +67,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             NewMessages++;
 
         var userTagCode = msg.ChatMessage.UserTagCode;
-        string SenderName = "Kinkster-" + userTagCode;
+        var SenderName = "Kinkster-" + userTagCode;
 
 
         // extract the user data from the message
@@ -89,11 +83,11 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             SenderName = matchedPair.GetNickAliasOrUid() + " (" + userTagCode + ")";
 
         // if the supporter role is the highest role, give them a special label.
-        if (userData.SupporterTier is CkSupporterTier.KinkporiumMistress)
+        if (userData.Tier is CkSupporterTier.KinkporiumMistress)
             SenderName = $"Mistress Cordy";
 
         // construct the chat message struct to add.
-        ChatMessage msgToAdd = new ChatMessage(userData, SenderName, msg.ChatMessage.Message);
+        var msgToAdd = new ChatMessage(userData, SenderName, msg.ChatMessage.Message);
 
         GlobalChat.AddMessage(msgToAdd);
     }
@@ -105,13 +99,13 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         var logToSave = new SerializableChatLog(GlobalChat.TimeCreated, messagesToSave);
 
         // Serialize the item to JSON
-        string json = JsonConvert.SerializeObject(logToSave);
+        var json = JsonConvert.SerializeObject(logToSave);
 
         // Compress the JSON string
         var compressed = json.Compress(6);
 
         // Encode the compressed string to base64
-        string base64ChatLogData = Convert.ToBase64String(compressed);
+        var base64ChatLogData = Convert.ToBase64String(compressed);
         // Take this base64data and write it out to the json file.
         File.WriteAllText(ChatLogFilePath, base64ChatLogData);
     }
@@ -128,11 +122,11 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         }
 
         // Attempt Deserialization.
-        SerializableChatLog savedChatlog = new SerializableChatLog();
+        var savedChatlog = new SerializableChatLog();
         try
         {
             // The file was valid, so attempt to load in the data.
-            string base64logFile = File.ReadAllText(ChatLogFilePath);
+            var base64logFile = File.ReadAllText(ChatLogFilePath);
             // Decompress the log data
             var bytes = Convert.FromBase64String(base64logFile);
             // decompress it from string into the format we want.

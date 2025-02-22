@@ -1,6 +1,5 @@
 using Dalamud.Plugin;
-using GagSpeak.Services.ConfigurationServices;
-using GagSpeak.Utils;
+using GagSpeak.CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 
 
@@ -13,7 +12,7 @@ public class Ipa_Mandarian_Handler
     private string data_file; // Path to the JSON file containing the conversion rules
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Mandarian_Handler> _logger; // Logger
-    private readonly ClientConfigurationManager _clientConfig; // The GagSpeak configuration
+    private readonly GagspeakConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
@@ -21,13 +20,12 @@ public class Ipa_Mandarian_Handler
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, ClientConfigurationManager clientConfig, IDalamudPluginInterface pi)
+    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
-        _clientConfig = clientConfig;
+        _config = config;
         _pi = pi;
-        // Set the path to the JSON file based on the language dialect
-        data_file = DetermineDataFilePath(_clientConfig.GagspeakConfig.LanguageDialect);
+        data_file = DetermineDataFilePath(_config.Config.LanguageDialect);
         LoadConversionRules();
     }
 
@@ -48,8 +46,8 @@ public class Ipa_Mandarian_Handler
     {
         try
         {
-            string jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
-            string json = File.ReadAllText(jsonFilePath);
+            var jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
+            var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
             ExtractUniquePhonetics();
@@ -128,10 +126,10 @@ public class Ipa_Mandarian_Handler
     {
         var f_str = t_str;
 
-        if (_clientConfig.GagspeakConfig.LanguageDialect == "IPA_num") f_str = FormatIPANum(t_str);               // kuɔ35
-        else if (_clientConfig.GagspeakConfig.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);          // kuɔ˧˥
-        else if (_clientConfig.GagspeakConfig.LanguageDialect == "Jyutping_num") f_str = FormatJyutpingNum(t_str);// kuɔ2
-        else if (_clientConfig.GagspeakConfig.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);       // kuɔˊ
+        if (_config.Config.LanguageDialect == "IPA_num") f_str = FormatIPANum(t_str);               // kuɔ35
+        else if (_config.Config.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);          // kuɔ˧˥
+        else if (_config.Config.LanguageDialect == "Jyutping_num") f_str = FormatJyutpingNum(t_str);// kuɔ2
+        else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);       // kuɔˊ
 
         return f_str;
     }
@@ -253,7 +251,7 @@ public class Ipa_Mandarian_Handler
                     if (i < phonetics.Length - 1)
                     {
                         var possibleCombination = phonetics.Substring(i, 2);
-                        int index = GagPhonetics.MasterListEN_US.FindIndex(t => t == possibleCombination);
+                        var index = GagPhonetics.MasterListEN_US.FindIndex(t => t == possibleCombination);
                         if (index != -1)
                         {
                             spacedPhonetics += GagPhonetics.MasterListEN_US[index] + "-"; // Use the phoneme from the Translator object

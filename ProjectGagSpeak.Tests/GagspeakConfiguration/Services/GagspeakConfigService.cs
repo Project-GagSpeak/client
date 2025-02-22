@@ -47,7 +47,7 @@ public class GagspeakConfigService
                                  "Safeword": "",
                                  "Language": "English",
                                  "LanguageDialect": "IPA_US",
-                                 "CursedDungeonLoot": false,
+                                 "CursedLootPanel": false,
                                  "RemoveGagUponLockExpiration": false,
                                  "RevertStyle": 1,
                                  "DisableSetUponUnlock": false,

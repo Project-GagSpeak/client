@@ -1,42 +1,36 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration.Models;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.Patterns;
+using GagspeakAPI.Dto.Sharehub;
 using ImGuiNET;
-using System.Collections.Generic;
-using System.Linq;
-using Lumina.Text.ReadOnly;
 
 namespace GagSpeak.Services;
 
 // handles the global chat and pattern discovery social features.
 public class ShareHubService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly IpcCallerMoodles _moodles;
+    private readonly MainHub _hub;
     private readonly IpcProvider _ipcProvider;
+    private readonly PatternManager _patterns;
 
     private Task? CurrentShareHubTask = null;
     public ShareHubService(ILogger<ShareHubService> logger, GagspeakMediator mediator,
-        MainHub apiHubMain, ClientConfigurationManager clientConfigs,
-        IpcCallerMoodles moodles, IpcProvider ipcProvider) : base(logger, mediator)
+        MainHub hub, IpcProvider ipcProvider, PatternManager patterns) : base(logger, mediator)
     {
-        _apiHubMain = apiHubMain;
-        _clientConfigs = clientConfigs;
-        _moodles = moodles;
+        _hub = hub;
         _ipcProvider = ipcProvider;
+        _patterns = patterns;
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
-            if (MainHub.ConnectionDto is null) return;
+            if (MainHub.ConnectionDto is null)
+                return;
             ClientPublishedPatterns = MainHub.ConnectionDto.PublishedPatterns;
             ClientPublishedMoodles = MainHub.ConnectionDto.PublishedMoodles;
 
@@ -72,7 +66,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public void PerformPatternSearch() { if (CanShareHubTask) CurrentShareHubTask = FetchPatternsTask(); }
     public void DownloadPattern(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = DownloadPatternTask(patternId); }
     public void PerformPatternLikeAction(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = LikePatternActionTask(patternId); }
-    public void UploadPattern(PatternData pattern, string authorName, HashSet<string> tags)
+    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags)
     { 
         if (CanShareHubTask) CurrentShareHubTask = PatternUploadTask(pattern, authorName, tags); 
     }
@@ -133,7 +127,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            var latestTags = await _apiHubMain.FetchSearchTags();
+            var latestTags = await _hub.FetchSearchTags();
             FetchedTags = latestTags.OrderBy(x => x).ToHashSet();
             Logger.LogInformation("Retrieved tags from servers.");
         }
@@ -162,7 +156,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             PatternSearchDto dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
 
             // perform the search operation.
-            var result = await _apiHubMain.SearchPatterns(dto);
+            var result = await _hub.SearchPatterns(dto);
 
             // if the result contains an empty list, then we failed to retrieve patterns.
             if (result.Count == 0)
@@ -188,18 +182,18 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
 
-    private async Task PatternUploadTask(PatternData pattern, string authorName, HashSet<string> tags)
+    private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
     {
         try
         {
-            string json = JsonConvert.SerializeObject(pattern);
+            var json = JsonConvert.SerializeObject(pattern);
             var compressed = json.Compress(6);
-            string base64Pattern = Convert.ToBase64String(compressed);
+            var base64Pattern = Convert.ToBase64String(compressed);
             // construct the serverPatternInfo for the upload.
-            ServerPatternInfo patternInfo = new ServerPatternInfo()
+            var patternInfo = new ServerPatternInfo()
             {
-                Identifier = pattern.UniqueIdentifier,
-                Name = pattern.Name,
+                Identifier = pattern.Identifier,
+                Label = pattern.Label,
                 Description = pattern.Description,
                 Author = authorName,
                 Tags = tags,
@@ -210,16 +204,16 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             };
             Logger.LogTrace("Uploading Pattern to server.", LoggerType.PatternHub);
             // construct the dto for the upload.
-            PatternUploadDto patternDto = new(MainHub.PlayerUserData, patternInfo, base64Pattern);
+            PatternUploadDto patternDto = new(patternInfo, base64Pattern);
             // perform the api call for the upload.
-            var result = await _apiHubMain.UploadPattern(patternDto);
+            var result = await _hub.UploadPattern(patternDto);
             if (result)
             {
                 Mediator.Publish(new NotificationMessage("Pattern Upload", "uploaded successful!", NotificationType.Info));
                 ClientPublishedPatterns.Add(new PublishedPattern()
                 {
-                    Identifier = pattern.UniqueIdentifier,
-                    Name = pattern.Name,
+                    Identifier = pattern.Identifier,
+                    Label = pattern.Label,
                     Description = pattern.Description,
                     Author = authorName,
                     Looping = pattern.ShouldLoop,
@@ -248,7 +242,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            var downloadedData = await _apiHubMain.DownloadPattern(patternId);
+            var downloadedData = await _hub.DownloadPattern(patternId);
             if (downloadedData.IsNullOrWhitespace())
             {
                 Logger.LogError("Failed to download pattern from servers.");
@@ -280,11 +274,11 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                     decompressed = patternObject.ToString();
                 }
                 // Deserialize the string back to pattern data
-                PatternData pattern = JsonConvert.DeserializeObject<PatternData>(decompressed) ?? new PatternData();
+                Pattern pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
 
                 // Set the active pattern
-                _clientConfigs.AddNewPattern(pattern);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.UniqueIdentifier, false);
+                _patterns.CreateClone(pattern, pattern.Label);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
             }
         }
         catch (Exception e)
@@ -301,7 +295,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            var result = await _apiHubMain.LikePattern(patternId);
+            var result = await _hub.LikePattern(patternId);
             if (result)
             {
                 Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
@@ -338,7 +332,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             if (IdToRemove == Guid.Empty || !ClientPublishedPatterns.Any(p => p.Identifier == IdToRemove))
                 return;
 
-            var result = await _apiHubMain.RemovePattern(IdToRemove);
+            var result = await _hub.RemovePattern(IdToRemove);
             if (result)
             {
                 Logger.LogTrace("RemovePatternTask completed.", LoggerType.PatternHub);
@@ -375,7 +369,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             MoodleSearchDto dto = new(SearchString, tags, SearchFilter, SearchSort);
 
             // perform the search operation.
-            var result = await _apiHubMain.SearchMoodles(dto);
+            var result = await _hub.SearchMoodles(dto);
 
             // if the result contains an empty list, then we failed to retrieve Moodle.
             if (result.Count == 0)
@@ -404,7 +398,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            var result = await _apiHubMain.LikeMoodle(moodleId);
+            var result = await _hub.LikeMoodle(moodleId);
             if (result)
             {
                 Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
@@ -444,7 +438,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             MoodleUploadDto dto = new(authorName, tags, moodleInfo);
             Logger.LogTrace("Uploading Moodle to server.", LoggerType.PatternHub);
             // perform the api call for the upload.
-            var result = await _apiHubMain.UploadMoodle(dto);
+            var result = await _hub.UploadMoodle(dto);
             if (result)
             {
                 Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
@@ -471,7 +465,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.MoodleStatus.GUID == moodleId))
                 return;
 
-            var result = await _apiHubMain.RemoveMoodle(moodleId);
+            var result = await _hub.RemoveMoodle(moodleId);
             if (result)
             {
                 Logger.LogInformation("RemovePatternTask completed.", LoggerType.PatternHub);

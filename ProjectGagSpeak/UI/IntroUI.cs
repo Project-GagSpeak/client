@@ -1,29 +1,25 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.GagspeakConfiguration;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
 using OtterGui;
-using System.Numerics;
 
 namespace GagSpeak.UI;
 
 /// <summary> The introduction UI that will be shown the first time that the user starts the plugin. </summary>
 public class IntroUi : WindowMediatorSubscriberBase
 {
-    private readonly MainHub _apiHubMain;
+    private readonly MainHub _hub;
     private readonly GagspeakConfigService _configService;
     private readonly ServerConfigurationManager _serverConfigs;
-    private readonly ClientMonitorService _clientService;
+    private readonly ClientMonitor _clientMonitor;
     private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     private bool ThemePushed = false;
@@ -34,13 +30,13 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
         GagspeakConfigService configService, ServerConfigurationManager serverConfigs,
-        ClientMonitorService clientService, UiSharedService uiShared, TutorialService guides)
+        ClientMonitor clientMonitor, UiSharedService uiShared, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {
-        _apiHubMain = mainHub;
+        _hub = mainHub;
         _configService = configService;
         _serverConfigs = serverConfigs;
-        _clientService = clientService;
+        _clientMonitor = clientMonitor;
         _uiShared = uiShared;
         _guides = guides;
 
@@ -89,17 +85,17 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         // if the user has not accepted the agreement and they have not read the first page,
         // Then show the first page (everything in this if statement)
-        if (!_configService.Current.AcknowledgementUnderstood && !_readFirstPage)
+        if (!_configService.Config.AcknowledgementUnderstood && !_readFirstPage)
         {
             DrawWelcomePage();
         }
         // if they have read the first page but not yet created an account, we will need to present the account setup page for them.
-        else if (!_configService.Current.AcknowledgementUnderstood && _readFirstPage)
+        else if (!_configService.Config.AcknowledgementUnderstood && _readFirstPage)
         {
             DrawAcknowledgement();
         }
         // if the user has read the acknowledgements and the server is not alive, display the account creation window.
-        else if (!MainHub.IsServerAlive || !_configService.Current.AccountCreated)
+        else if (!MainHub.IsServerAlive || !_configService.Config.AccountCreated)
         {
             DrawAccountSetup();
         }
@@ -227,7 +223,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         UiSharedService.ColorTextCentered("Click this Button below once you have read and understood the above.", ImGuiColors.DalamudRed);
         if(ImGui.Button("Proceed To Account Creation.", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeightWithSpacing())))
         {
-            _configService.Current.AcknowledgementUnderstood = true;
+            _configService.Config.AcknowledgementUnderstood = true;
             _configService.Save();
         }
         ImGui.Spacing();
@@ -255,9 +251,9 @@ public class IntroUi : WindowMediatorSubscriberBase
         if (_secretKey.IsNullOrWhitespace())
         {
             // generate a secret key for the user and attempt initial connection when pressed.
-            if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Current.ButtonUsed))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
             {
-                _configService.Current.ButtonUsed = true;
+                _configService.Config.ButtonUsed = true;
                 _configService.Save();
                 _fetchAccountDetailsTask = FetchAccountDetailsAsync();
             }
@@ -308,7 +304,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                     };
 
                     // set the secret key for the character
-                    _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
+                    _serverConfigs.SetSecretKeyForCharacter(_clientMonitor.ContentId, newKey);
 
                     // run the create connections and set our account created to true
                     _initialAccountCreationTask = PerformFirstLoginAsync();
@@ -334,9 +330,9 @@ public class IntroUi : WindowMediatorSubscriberBase
     {
         try
         {
-            _configService.Current.AccountCreated = true; // set the account created flag to true
+            _configService.Config.AccountCreated = true; // set the account created flag to true
             _logger.LogInformation("Attempting to connect to the server for the first time.");
-            await _apiHubMain.Connect();
+            await _hub.Connect();
             _logger.LogInformation("Connection Attempt finished, marking account as created.");
             if (MainHub.IsConnected)
             {
@@ -347,7 +343,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to connect to the server for the first time.");
-            _configService.Current.AccountCreated = false;
+            _configService.Config.AccountCreated = false;
             _configService.Save();
         }
         finally
@@ -361,7 +357,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         try
         {
             // Begin by fetching the account details for the player. If this fails we will throw to the catch statement and perform an early return.
-            var accountDetails = await _apiHubMain.FetchFreshAccountDetails();
+            var accountDetails = await _hub.FetchFreshAccountDetails();
 
             // if we are still in the try statement by this point we have successfully retrieved our new account details.
             // This means that we can not create the new authentication and validate our account as created.
@@ -383,8 +379,8 @@ public class IntroUi : WindowMediatorSubscriberBase
             };
 
             // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(_clientService.ContentId, newKey);
-            _configService.Current.AccountCreated = true;
+            _serverConfigs.SetSecretKeyForCharacter(_clientMonitor.ContentId, newKey);
+            _configService.Config.AccountCreated = true;
             _configService.Save();
             // Log the details.
             _logger.LogInformation("UID: " + accountDetails.Item1);
@@ -396,8 +392,8 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             // Log the error
             _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
-            _configService.Current.ButtonUsed = false;
-            _configService.Current.AccountCreated = false;
+            _configService.Config.ButtonUsed = false;
+            _configService.Config.AccountCreated = false;
             _configService.Save();
 
             // set the task back to null and return.
@@ -410,7 +406,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         try
         {
             _logger.LogInformation("Attempting to connect to the server for the first time.");
-            await _apiHubMain.Connect();
+            await _hub.Connect();
             _logger.LogInformation("Connection Attempt finished.");
 
             if (MainHub.IsConnected) _guides.StartTutorial(TutorialType.MainUi);

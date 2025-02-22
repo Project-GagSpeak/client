@@ -9,7 +9,6 @@ using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using GagSpeak.ChatMessages;
-using GagSpeak.GagspeakConfiguration;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
@@ -28,7 +27,7 @@ public unsafe class ChatInputDetour : IDisposable
     private readonly ILogger<ChatInputDetour> _logger;
     private readonly GagspeakConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientData _clientData;
+    private readonly GlobalData _clientData;
     private readonly GagGarbler _garbler;
     private readonly EmoteMonitor _emoteMonitor;
 
@@ -38,7 +37,7 @@ public unsafe class ChatInputDetour : IDisposable
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, ClientData clientData, GagGarbler garbler,
+        GagspeakConfigService config, GlobalData clientData, GagGarbler garbler,
         EmoteMonitor emoteMonitor, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes
@@ -83,7 +82,7 @@ public unsafe class ChatInputDetour : IDisposable
             var newSeStringBuilder = new SeStringBuilder();
 
             // If we are not meant to garble the message, then return original.
-            if (!_clientData.GlobalPerms.LiveChatGarblerActive || !_clientData.AnyGagActive)
+            if (!_clientData.GlobalPerms.ChatGarblerActive || !_clientData.AnyGagActive)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */
@@ -94,7 +93,7 @@ public unsafe class ChatInputDetour : IDisposable
             if (messageDecoded.StartsWith("/"))
             {
                 // Match Command if Command being used is in our list of allowed Channels to translate in.
-                var allowedChannels = _config.Current.ChannelsGagSpeak.GetChatChannelsListAliases();
+                var allowedChannels = _config.Config.ChannelsGagSpeak.GetChatChannelsListAliases();
                 matchedCommand = allowedChannels.FirstOrDefault(prefix => messageDecoded.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
                 // This means its not a chat channel command and just a normal command, so return original.
@@ -128,7 +127,7 @@ public unsafe class ChatInputDetour : IDisposable
             }
 
             // If current channel message is being sent to is in list of enabled channels, translate it.
-            if (_config.Current.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Current.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
+            if (_config.Config.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Config.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
             {
                 // only obtain the text payloads from this message, as nothing else should madder.
                 var textPayloads = originalSeString.Payloads.OfType<TextPayload>().ToList();

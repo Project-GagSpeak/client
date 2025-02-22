@@ -1,18 +1,17 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Text;
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Localization;
+using Dalamud.Game.Text.SeStringHandling;
+using GagSpeak.ChatMessages;
+using GagSpeak.CkCommons.Helpers;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
-using static System.Windows.Forms.AxHost;
+using Penumbra.GameData.Structs;
+using System.Text.RegularExpressions;
 
 namespace GagSpeak.Achievements;
 public partial class AchievementManager
@@ -27,21 +26,43 @@ public partial class AchievementManager
     private void OnPairVisible()
     {
         // We need to obtain the total visible user count, then update the respective achievements.
-        var visiblePairs = _pairManager.GetVisibleUserCount();
+        var visiblePairs = _pairs.GetVisibleUserCount();
         (SaveData.Achievements[Achievements.BondageClub.Id] as ThresholdAchievement)?.UpdateThreshold(visiblePairs);
         (SaveData.Achievements[Achievements.Humiliation.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(visiblePairs);
     }
 
-    private void OnIconClicked(string windowLabel)
+    public void OnClientMessageContainsPairTrigger(string msg)
     {
-        if (SaveData.EasterEggIcons.ContainsKey(windowLabel) && SaveData.EasterEggIcons[windowLabel] is false)
+        foreach (var pair in _pairs.DirectPairs)
         {
-            if (SaveData.EasterEggIcons[windowLabel])
+            var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+            // This ensures it is a full word.
+            var foundTrigger = triggers.FirstOrDefault(trigger => Regex.IsMatch(msg, $@"(?<!\w){Regex.Escape(trigger)}(?!\w)", RegexOptions.IgnoreCase));
+
+            if (!string.IsNullOrEmpty(foundTrigger))
+            {
+                // This was a trigger message for the pair, so let's see what the pairs settings are for.
+                var startChar = pair.PairPerms.StartChar;
+                var endChar = pair.PairPerms.EndChar;
+
+                // Get the string that exists beyond the trigger phrase found in the message.
+                Logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
+                SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
+
+                // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
+                remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
+                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
+
+                // If the string contains the word "grovel", fire the grovel achievement.
+                if (remainingMessage.TextValue.Contains("grovel"))
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
+                else if (remainingMessage.TextValue.Contains("dance"))
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
+                else
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
+
                 return;
-            else
-                SaveData.EasterEggIcons[windowLabel] = true;
-            // update progress.
-            (SaveData.Achievements[Achievements.HiddenInPlainSight.Id] as ProgressAchievement)?.IncrementProgress();
+            }
         }
     }
 
@@ -58,7 +79,7 @@ public partial class AchievementManager
                 if (SaveData.VisitedWorldTour.ContainsKey(prevZone) && SaveData.VisitedWorldTour[prevZone] is false)
                 {
                     // Mark the conditonal as finished in the achievement, and mark as completed.
-                    if (_clientConfigs.GetActiveSetIdx() != -1)
+                    if (_restraints.EnabledSet is not null)
                     {
                         (SaveData.Achievements[Achievements.TourDeBound.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                         SaveData.VisitedWorldTour[prevZone] = true;
@@ -74,14 +95,14 @@ public partial class AchievementManager
 
     private void CheckOnZoneSwitchEnd()
     {
-        Logger.LogTrace("Current Territory Id: " + _clientService.TerritoryId, LoggerType.AchievementEvents);
-        if(_clientService.InMainCity)
+        Logger.LogTrace("Current Territory Id: " + _clientMonitor.TerritoryId, LoggerType.AchievementEvents);
+        if(_clientMonitor.InMainCity)
             (SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
-        ushort territory = _clientService.TerritoryId;
+        var territory = _clientMonitor.TerritoryId;
 
         // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
-        if (territory is 939 && !_clientService.InPvP)
+        if (territory is 939 && !_clientMonitor.InPvP)
             (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         else
             (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -125,11 +146,11 @@ public partial class AchievementManager
         if (floor is null) 
             return;
 
-        var deepDungeonType = _clientService.GetDeepDungeonType();
+        var deepDungeonType = _clientMonitor.GetDeepDungeonType();
         if (deepDungeonType is null) 
             return;
 
-        if (_clientService.PartySize is 1)
+        if (_clientMonitor.PartySize is 1)
             (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         // start this under any condition.
         (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -142,11 +163,12 @@ public partial class AchievementManager
                 {
                     (SaveData.Achievements[Achievements.BondagePalace.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
                     if (floor is 50 || floor is 100)
-                    {
                         (SaveData.Achievements[Achievements.BondagePalace.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                    }
+                }
+                if(floor is 200)
+                {
+                    (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
+                    (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                 }
                 break;
             case DeepDungeonType.HeavenOnHigh:
@@ -154,11 +176,12 @@ public partial class AchievementManager
                 {
                     (SaveData.Achievements[Achievements.HornyOnHigh.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
                     if (floor is 30)
-                    {
                         (SaveData.Achievements[Achievements.HornyOnHigh.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                    }
+                }
+                if (floor is 100)
+                {
+                    (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
+                    (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                 }
                 break;
             case DeepDungeonType.EurekaOrthos:
@@ -166,11 +189,12 @@ public partial class AchievementManager
                 {
                     (SaveData.Achievements[Achievements.EurekaWhorethos.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
                     if (floor is 30)
-                    {
                         (SaveData.Achievements[Achievements.EurekaWhorethos.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                        (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
-                    }
+                }
+                if (floor is 100)
+                {
+                    (SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
+                    (SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                 }
                 break;
         }
@@ -179,7 +203,7 @@ public partial class AchievementManager
     private void OnDutyStart(object? sender, ushort e)
     {
         Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
-        if (_clientService.InPvP)
+        if (_clientMonitor.InPvP)
             return;
 
         (SaveData.Achievements[Achievements.KinkyExplorer.Id] as ConditionalAchievement)?.CheckCompletion();
@@ -187,11 +211,11 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         (SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.BeginConditionalTask(25); // 10s delay.
 
-        if (_clientService.ClientPlayer.ClassJobRole() is ActionRoles.Healer)
+        if (_clientMonitor.ClientPlayer.ClassJobRole() is ActionRoles.Healer)
             (SaveData.Achievements[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
 
         // If the party size is 8, let's check for the trials.
-        if(_clientService.PartySize is 8 && _clientService.Level >= 90)
+        if(_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
         {
             (SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
             (SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -204,7 +228,7 @@ public partial class AchievementManager
 
     private void OnDutyEnd(object? sender, ushort e)
     {
-        if (_clientService.InPvP)
+        if (_clientMonitor.InPvP)
             return;
         Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
         if ((SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
@@ -219,7 +243,7 @@ public partial class AchievementManager
         // Trial has ended, check for completion.
         if ((SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientService.PartySize is 8 && _clientService.Level >= 90)
+            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
                 (SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -227,7 +251,7 @@ public partial class AchievementManager
         
         if ((SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientService.PartySize is 8 && _clientService.Level >= 90)
+            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
                 (SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -235,7 +259,7 @@ public partial class AchievementManager
         
         if ((SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientService.PartySize is 8 && _clientService.Level >= 90)
+            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
                 (SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -269,11 +293,12 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagStateChanged(bool applying, GagLayer gagLayer, GagType gagAppliedOrRemoved, string enactorUid)
+    private void OnGagStateChanged(GagLayer gagLayer, GagType gagAppliedOrRemoved, bool applying, string enactorUid)
     {
-        if (gagAppliedOrRemoved is GagType.None) return;
+        if (_gags.ActiveGagsData is not { } gagData || gagAppliedOrRemoved is GagType.None)
+            return;
 
-        string trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();
+        var trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();
 
         // for enables.
         if (applying)
@@ -310,14 +335,10 @@ public partial class AchievementManager
 
             (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
             (SaveData.Achievements[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
-
-            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
         }
         // for disables.
         else
         {
-            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
-
             (SaveData.Achievements[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
             (SaveData.Achievements[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
             (SaveData.Achievements[Achievements.SilentStruggler.Id] as DurationAchievement)?.StopTracking(trackingKey, MainHub.UID);
@@ -333,11 +354,14 @@ public partial class AchievementManager
             if ((SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
                 (SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.CheckTaskProgress();
         }
+
+        // Update regardless
+        (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(gagData.TotalGagsEquipped());
     }
 
-    private void OnPairGagStateChanged(bool isApplying, GagLayer layer, GagType gag, string assignerUid, string affectedUid)
+    private void OnPairGagStateChanged(GagLayer layer, GagType gag, bool applying, string assignerUid, string affectedUid)
     {
-        if(isApplying)
+        if(applying)
         {
             if (gag is not GagType.None)
             {
@@ -356,7 +380,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid)
+    private void OnGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid)
     {
         if (isLocking)
         {
@@ -368,7 +392,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnPairGagLockStateChange(bool isLocking, GagLayer layer, Padlocks padlock, string assignerUid, string affectedUid)
+    private void OnPairGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid, string affectedUid)
     {
         if (isLocking)
         {
@@ -380,7 +404,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnCharaOnlineCleanupForLatest(UserData user, CharaAppearanceData gagInfo, Guid activeRestraint)
+    private void OnCharaOnlineCleanupForLatest(UserData user, CharaActiveGags gagInfo, CharaActiveRestrictions restrictionsInfo, CharaActiveRestraint restraintInfo)
     {
         var activeGagTrackingKeys = gagInfo.ActiveGagTrackingKeys();
         Logger.LogDebug("Player Character " + user.AliasOrUID + " went online and has new active data. Cleaning up expired information!", LoggerType.AchievementEvents);
@@ -399,25 +423,25 @@ public partial class AchievementManager
         // Checks spesific to the direction of the application.
         if (user.UID == MainHub.UID)
         {
-            (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
+            (SaveData.Achievements[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.AmateurBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.ComfortRestraint.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourBondageMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourRubberMaid.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.TrainedBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.YourRubberSlut.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.ATrueBondageSlave.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
 
-            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(_playerData.TotalGagsEquipped);
+            (SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(gagInfo.TotalGagsEquipped());
         }
         else
         {
-            (SaveData.Achievements[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.SuitsYouBitch.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.TiesThatBind.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.SlaveTrainer.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
-            (SaveData.Achievements[Achievements.CeremonyOfEternalBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { activeRestraint.ToString() });
+            (SaveData.Achievements[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.SuitsYouBitch.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.TiesThatBind.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.SlaveTrainer.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
+            (SaveData.Achievements[Achievements.CeremonyOfEternalBondage.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { restraintInfo.Identifier.ToString() });
         }
 
         // Do stuff if it is a pattern.
@@ -437,10 +461,31 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
     }
 
+    private void OnRestrictionStateChange(Guid restrictionId, bool isEnabling, string enactorUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnRestrictionLock(Guid restrictionId, Padlocks padlock, bool isLocking, string enactorUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnPairRestrictionStateChange(Guid restrictionId, bool isLocking, string enactorUID, string affectedUID)
+    {
+        // Nothing yet.
+    }
+
+    private void OnPairRestrictionLockChange(Guid restrictionId, Padlocks padlock, bool isLocking, string enactorUID, string affectedUID)
+    {
+        // Nothing yet.
+    }
+
+
     private void OnRestraintSetUpdated(RestraintSet set)
     {
         // check for dyes
-        if (set.DrawData.Any(x => x.Value.GameStain.Stain1 != 0 || x.Value.GameStain.Stain2 != 0))
+        if (set.GetGlamour().Any(x => x.GameStain != StainIds.None))
         {
             (SaveData.Achievements[Achievements.ToDyeFor.Id] as ProgressAchievement)?.IncrementProgress();
             (SaveData.Achievements[Achievements.DyeAnotherDay.Id] as ProgressAchievement)?.IncrementProgress();
@@ -456,7 +501,7 @@ public partial class AchievementManager
         // Set is being enabled.
         if (isEnabling)
         {
-            var territory = _clientService.TerritoryId;
+            var territory = _clientMonitor.TerritoryId;
             // Check to see if we qualify for starting any world tour conditions.
             if (SaveData.VisitedWorldTour.ContainsKey(territory) && SaveData.VisitedWorldTour[territory] is false)
             {
@@ -491,8 +536,8 @@ public partial class AchievementManager
                 // track overkill if it is not yet completed
                 if((SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
                 {
-                    if (_clientConfigs.StoredRestraintSets.TryGetItem(x => x.RestraintId == restraintId, out var setMatch))
-                        (SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(setMatch.EquippedSlotsTotal);
+                    if (_restraints.Storage.ByIdentifier(restraintId) is { } match)
+                        (SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(match.GetGlamour().Count());
                 }
 
                 // Track Bondage Bunny
@@ -502,8 +547,8 @@ public partial class AchievementManager
                 if ((SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IsCompleted is false)
                 {
                     // attempt to retrieve the set from our sets.
-                    if (_clientConfigs.StoredRestraintSets.TryGetItem(x => x.RestraintId == restraintId, out var setMatch))
-                        if (setMatch.DrawData.TryGetValue(EquipSlot.Hands, out var handData) && handData.GameItem.Id != ItemIdVars.NothingItem(EquipSlot.Hands).Id)
+                    if (_restraints.Storage.ByIdentifier(restraintId) is { } match)
+                        if (match.GetGlamour().Any(glam => glam.Slot is EquipSlot.Hands))
                             (SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
                 }
             }
@@ -521,7 +566,7 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(0);
 
             // Validate the world tour achievement.
-            var territory = _clientService.TerritoryId;
+            var territory = _clientMonitor.TerritoryId;
             // Ensure it has been longer than 2 minutes since the recorded time. (in UTC)
             if (SaveData.VisitedWorldTour.ContainsKey(territory) && SaveData.VisitedWorldTour[territory] is false)
             {
@@ -571,9 +616,7 @@ public partial class AchievementManager
         }
     }
 
-    /// <summary>
-    /// Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve 
-    /// </summary>
+    /// <summary> Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve  </summary>
     private void OnPairRestraintStateChange(Guid setName, bool isEnabling, string enactorUID, string affectedUID)
     {
         Logger.LogTrace(enactorUID + " is "+ (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);
@@ -626,12 +669,23 @@ public partial class AchievementManager
         }
     }
 
-    private void OnPuppetAccessGiven(bool wasAllPerms)
+    private void OnPuppetAccessGiven(PuppetPerms permissionGiven)
     {
-        if (wasAllPerms) // All Perms access given to another pair.
+        if ((permissionGiven & PuppetPerms.All) != 0)
             (SaveData.Achievements[Achievements.CompleteDevotion.Id] as ProgressAchievement)?.IncrementProgress();
-        else // Emote perms given to another pair.
+
+        if ((permissionGiven & PuppetPerms.Alias) != 0)
+        {
+            // Nothing yet.
+        }
+
+        if ((permissionGiven & PuppetPerms.Emotes) != 0)
             (SaveData.Achievements[Achievements.ControlMyBody.Id] as ProgressAchievement)?.IncrementProgress();
+
+        if ((permissionGiven & PuppetPerms.Sit) != 0)
+        {
+            // Nothing yet.
+        }
     }
 
     private void OnPatternAction(PatternInteractionKind actionType, Guid patternGuid, bool wasAlarm)
@@ -669,7 +723,7 @@ public partial class AchievementManager
                     (SaveData.Achievements[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
 
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
-                    if(_clientService.TerritoryId is 939 && (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
+                    if(_clientMonitor.TerritoryId is 939 && (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
@@ -881,11 +935,6 @@ public partial class AchievementManager
             if (affectedPairIsSelf) ClientHardcoreStayChanged(enactorUID, state);
             else PairHardcoreStayChanged(enactorUID, affectedPairUID, state);
         }
-        else if (actionKind is InteractionType.ForcedBlindfold)
-        {
-            if (affectedPairIsSelf) ClientHardcoreBlindfoldChanged(enactorUID, state);
-            else PairHardcoreBlindfoldChanged(enactorUID, affectedPairUID, state);
-        }
     }
 
     private void OnShockSent()
@@ -908,11 +957,11 @@ public partial class AchievementManager
     }
 
 
-    private void OnChatMessage(XivChatType channel)
+    private void OnChatMessage(ChatChannel.Channels channel)
     {
         (SaveData.Achievements[Achievements.HelplessDamsel.Id] as ConditionalAchievement)?.CheckCompletion();
 
-        if (channel is XivChatType.Say)
+        if (channel is ChatChannel.Channels.Say)
         {
             (SaveData.Achievements[Achievements.OfVoicelessPleas.Id] as ProgressAchievement)?.IncrementProgress();
             (SaveData.Achievements[Achievements.DefianceInSilence.Id] as ProgressAchievement)?.IncrementProgress();
@@ -920,11 +969,11 @@ public partial class AchievementManager
             (SaveData.Achievements[Achievements.TrainedInSubSpeech.Id] as ProgressAchievement)?.IncrementProgress();
 
         }
-        else if (channel is XivChatType.Yell)
+        else if (channel is ChatChannel.Channels.Yell)
         {
             (SaveData.Achievements[Achievements.PublicSpeaker.Id] as ProgressAchievement)?.IncrementProgress();
         }
-        else if (channel is XivChatType.Shout)
+        else if (channel is ChatChannel.Channels.Shout)
         {
             (SaveData.Achievements[Achievements.FromCriesOfHumility.Id] as ProgressAchievement)?.IncrementProgress();
         }
@@ -1020,7 +1069,7 @@ public partial class AchievementManager
         (SaveData.Achievements[Achievements.ThePerfectDoll.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
-    private void OnPuppeteerReceivedEmoteOrder(ushort emoteId)
+    private void OnPuppeteerReceivedEmoteOrder(int emoteId)
     {
         switch(emoteId)
         {
@@ -1086,11 +1135,11 @@ public partial class AchievementManager
     {
 
         // Check if client player is null
-        if (!_clientService.IsPresent)
+        if (!_clientMonitor.IsPresent)
             return;
 
         // Return if not in the gold saucer
-        if (_clientService.TerritoryId is not 144)
+        if (_clientMonitor.TerritoryId is not 144)
             return;
 
         // Check if the GagReflex achievement is already completed
@@ -1114,7 +1163,7 @@ public partial class AchievementManager
         }
 
         // Check if any effects were a knockback effect targeting the local player
-        if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == _clientService.ObjectId))
+        if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == _clientMonitor.ObjectId))
         {
             // Increment progress if the achievement is not yet completed
             gagReflexAchievement.IncrementProgress();

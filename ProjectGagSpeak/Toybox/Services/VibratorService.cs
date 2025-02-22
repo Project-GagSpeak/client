@@ -1,31 +1,27 @@
-using GagSpeak.GagspeakConfiguration.Models;
-using GagSpeak.Services.ConfigurationServices;
+using GagSpeak.CkCommons.Intiface;
+using GagSpeak.PlayerState.Controllers;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Toybox.Controllers;
 using GagSpeak.Toybox.SimulatedVibe;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Enums;
 
 namespace GagSpeak.Toybox.Services;
 // handles the management of the connected devices or simulated vibrator.
-public class VibratorService : DisposableMediatorSubscriberBase
+public class SexToyManager : DisposableMediatorSubscriberBase
 {
-    private readonly ClientConfigurationManager _clientConfigs;
-    private readonly DeviceService _deviceHandler; // handles the actual connected devices.
+    private readonly GagspeakConfigService _clientConfigs;
+    private readonly IntifaceController _deviceHandler; // handles the actual connected devices.
     private readonly VibeSimAudio _vibeSimAudio; // handles the simulated vibrator
 
-    public VibratorService(ILogger<VibratorService> logger,
-        GagspeakMediator mediator, ClientConfigurationManager clientConfigs,
-        DeviceService deviceHandler, VibeSimAudio vibeSimAudio) : base(logger, mediator)
+    public SexToyManager(ILogger<SexToyManager> logger,
+        GagspeakMediator mediator, GagspeakConfigService clientConfigs,
+        IntifaceController deviceHandler, VibeSimAudio vibeSimAudio) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _deviceHandler = deviceHandler;
         _vibeSimAudio = vibeSimAudio;
 
         // restore the chosen simulated audio type from the config
-        _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(_clientConfigs.GagspeakConfig.VibeSimAudio));
+        _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(_clientConfigs.Config.VibeSimAudio));
 
         if (UsingSimulatedVibe)
         {
@@ -35,23 +31,23 @@ public class VibratorService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
-            if (_clientConfigs.GagspeakConfig.IntifaceAutoConnect && !_deviceHandler.ConnectedToIntiface)
+            if (_clientConfigs.Config.IntifaceAutoConnect && !_deviceHandler.ConnectedToIntiface)
             {
-                if (ToyboxHelper.AppPath == string.Empty)
+                if (Intiface.AppPath == string.Empty)
                 {
-                    ToyboxHelper.GetApplicationPath();
+                    Intiface.GetApplicationPath();
                 }
-                ToyboxHelper.OpenIntiface(logger, false);
+                Intiface.OpenIntiface(logger, false);
                 _deviceHandler.ConnectToIntifaceAsync();
             }
         });
     }
 
     // public accessors here.
-    public VibratorMode CurrentVibratorModeUsed => _clientConfigs.GagspeakConfig.VibratorMode;
-    public bool UsingSimulatedVibe => CurrentVibratorModeUsed == VibratorMode.Simulated;
-    public bool UsingRealVibe => CurrentVibratorModeUsed == VibratorMode.Actual;
-    public bool ConnectedToyActive => (CurrentVibratorModeUsed == VibratorMode.Actual) ? _deviceHandler.ConnectedToIntiface && _deviceHandler.AnyDeviceConnected : VibeSimAudioPlaying;
+    public VibratorEnums CurrentVibratorModeUsed => _clientConfigs.Config.VibratorMode;
+    public bool UsingSimulatedVibe => CurrentVibratorModeUsed == VibratorEnums.Simulated;
+    public bool UsingRealVibe => CurrentVibratorModeUsed == VibratorEnums.Actual;
+    public bool ConnectedToyActive => (CurrentVibratorModeUsed == VibratorEnums.Actual) ? _deviceHandler.ConnectedToIntiface && _deviceHandler.AnyDeviceConnected : VibeSimAudioPlaying;
     public bool IntifaceConnected => _deviceHandler.ConnectedToIntiface;
     public bool ScanningForDevices => _deviceHandler.ScanningForDevices;
 
@@ -63,7 +59,7 @@ public class VibratorService : DisposableMediatorSubscriberBase
 
 
     // Grab device handler via toyboxvibeService.
-    public DeviceService DeviceHandler => _deviceHandler;
+    public IntifaceController DeviceHandler => _deviceHandler;
     public VibeSimAudio VibeSimAudio => _vibeSimAudio;
 
     protected override void Dispose(bool disposing)
@@ -78,14 +74,14 @@ public class VibratorService : DisposableMediatorSubscriberBase
         _vibeSimAudio.Dispose();
     }
 
-    public void ExecuteShockAction(string shareCode, ShockTriggerAction shockAction)
+    public void ExecuteShockAction(string shareCode, ShockAction shockAction)
     {
         Mediator.Publish(new PiShockExecuteOperation(shareCode, (int)shockAction.OpCode, shockAction.Intensity, shockAction.Duration));
     }
 
     public void UpdateVibeSimAudioType(VibeSimType newType)
     {
-        _clientConfigs.GagspeakConfig.VibeSimAudio = newType;
+        _clientConfigs.Config.VibeSimAudio = newType;
         _clientConfigs.Save();
 
         _vibeSimAudio.ChangeAudioPath(VibeSimAudioPath(newType));

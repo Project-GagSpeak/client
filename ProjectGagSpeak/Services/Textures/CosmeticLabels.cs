@@ -1,6 +1,3 @@
-using GagSpeak.Achievements;
-using GagspeakAPI.Data.IPC;
-
 namespace GagSpeak.Services.Textures;
 
 public static class CosmeticLabels
@@ -66,30 +63,30 @@ public static class CosmeticLabels
     {
         if (hasBackground)
         {
-            foreach (ProfileStyleBG styleBG in Enum.GetValues<ProfileStyleBG>())
+            foreach (var styleBG in Enum.GetValues<ProfileStyleBG>())
             {
-                string key = component.ToString() + "_Background_" + styleBG.ToString();
-                string value = $"CosmeticImages\\{component}\\Background_{styleBG}.png";
+                var key = component.ToString() + "_Background_" + styleBG.ToString();
+                var value = $"CosmeticImages\\{component}\\Background_{styleBG}.png";
                 dictionary[key] = value;
             }
         }
 
         if (hasBorder)
         {
-            foreach (ProfileStyleBorder styleBorder in Enum.GetValues<ProfileStyleBorder>())
+            foreach (var styleBorder in Enum.GetValues<ProfileStyleBorder>())
             {
-                string key = component.ToString() + "_Border_" + styleBorder.ToString();
-                string value = $"CosmeticImages\\{component}\\Border_{styleBorder}.png";
+                var key = component.ToString() + "_Border_" + styleBorder.ToString();
+                var value = $"CosmeticImages\\{component}\\Border_{styleBorder}.png";
                 dictionary[key] = value;
             }
         }
 
         if (hasOverlay)
         {
-            foreach (ProfileStyleOverlay styleOverlay in Enum.GetValues<ProfileStyleOverlay>())
+            foreach (var styleOverlay in Enum.GetValues<ProfileStyleOverlay>())
             {
-                string key = component.ToString() + "_Overlay_" + styleOverlay.ToString();
-                string value = $"CosmeticImages\\{component}\\Overlay_{styleOverlay}.png";
+                var key = component.ToString() + "_Overlay_" + styleOverlay.ToString();
+                var value = $"CosmeticImages\\{component}\\Overlay_{styleOverlay}.png";
                 dictionary[key] = value;
             }
         }

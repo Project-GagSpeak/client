@@ -12,14 +12,14 @@ using System.Numerics;
 namespace GagSpeak.UI.Components;
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
-    private readonly UiSharedService _uiSharedService;
+    private readonly UiSharedService _uiShared;
     private readonly DtrBarService _dtrBarService;
     private bool ThemePushed = false;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
-        DtrBarService dtrService, UiSharedService uiSharedService) : base(logger, mediator, "##DtrLinker")
+        DtrBarService dtrService, UiSharedService uiShared) : base(logger, mediator, "##DtrLinker")
     {
         _dtrBarService = dtrService;
-        _uiSharedService = uiSharedService;
+        _uiShared = uiShared;
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
     }
 

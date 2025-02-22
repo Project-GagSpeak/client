@@ -1,21 +1,20 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
-using GagSpeak.Services.ConfigurationServices;
 
 namespace GagSpeak.Hardcore.ForcedStay;
 public abstract class SetupSelectListPrompt : BasePrompt
 {
     protected readonly ILogger _logger;
-    protected readonly ClientConfigurationManager _clientConfigs;
+    protected readonly GagspeakConfigService _config;
     protected readonly IAddonLifecycle _addonLifecycle;
     private readonly IGameInteropProvider _gameInterop;
     protected readonly ITargetManager _targets;
 
-    internal SetupSelectListPrompt(ILogger logger, ClientConfigurationManager clientConfigs,
+    internal SetupSelectListPrompt(ILogger logger, GagspeakConfigService config,
         IAddonLifecycle addonLifecycle, IGameInteropProvider gameInterop, ITargetManager targets)
     {
         _logger = logger;
-        _clientConfigs = clientConfigs;
+        _config = config;
         _addonLifecycle = addonLifecycle;
         _gameInterop = gameInterop;
         _targets = targets;
@@ -23,7 +22,7 @@ public abstract class SetupSelectListPrompt : BasePrompt
 
     protected unsafe int? GetMatchingIndex(string[] entries, string nodeLabel)
     {
-        var nodes = _clientConfigs.GetAllNodes().OfType<TextEntryNode>();
+        var nodes = _config.GetAllNodes().OfType<TextEntryNode>();
         foreach (var node in nodes)
         {
             if (!node.Enabled || string.IsNullOrEmpty(node.SelectedOptionText))
@@ -43,17 +42,17 @@ public abstract class SetupSelectListPrompt : BasePrompt
                     if (EntryMatchesTargetName(node, nodeLabel))
                     {
                         _logger.LogDebug($"SelectListPrompt: Matched on {node.TargetNodeLabel} for option ({node.SelectedOptionText})", LoggerType.HardcorePrompt);
-                        _clientConfigs.LastSelectedListNode = node;
+                        _config.LastSelectedListNode = node;
                         return index;
                     }
                 }
                 // Fallback to using LastSeenNodeName if TargetNodeLabel is not provided
-                else if (!string.IsNullOrEmpty(_clientConfigs.LastSeenNodeName))
+                else if (!string.IsNullOrEmpty(_config.LastSeenNodeName))
                 {
-                    if (string.Equals(node.TargetNodeName, _clientConfigs.LastSeenNodeName, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(node.TargetNodeName, _config.LastSeenNodeName, StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogDebug($"SelectListPrompt: Matched on node name for option ({node.SelectedOptionText})", LoggerType.HardcorePrompt);
-                        _clientConfigs.LastSelectedListNode = node;
+                        _config.LastSelectedListNode = node;
                         return index;
                     }
                 }
@@ -61,7 +60,7 @@ public abstract class SetupSelectListPrompt : BasePrompt
             else
             {
                 _logger.LogDebug("SelectListPrompt: Matched on " + node.TargetNodeLabel + " for option (" + node.SelectedOptionText + ")", LoggerType.HardcorePrompt);
-                _clientConfigs.LastSelectedListNode = node;
+                _config.LastSelectedListNode = node;
                 return index;
             }
         }
