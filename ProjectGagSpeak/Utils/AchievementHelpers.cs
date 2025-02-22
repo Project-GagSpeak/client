@@ -22,12 +22,12 @@ public static class AchievementHelpers
     // Bronzes are already categorized as "Treasure" and need no changes to function with cursed loot.
     // Silver and gold chests across every deep dungeon and every language share all attributes aside from name.
     public static unsafe bool IsDeepDungeonCoffer(GameObject* obj)
-        => obj->ObjectKind is FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind.EventObj
-        && obj->SubKind is 0 
-        && obj->EventId.Id is 983600 
-        && obj->EventId.EntryId is 560
-        && obj->EventId.ContentId is FFXIVClientStructs.FFXIV.Client.Game.Event.EventHandlerType.GimmickAccessor
-        && obj->Name.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
+        => obj->ObjectKind == ObjectKind.EventObj
+        && obj->SubKind == 0 
+        && obj->EventHandler->Info.EventId.Id == 983600 
+        && obj->EventHandler->Info.EventId.EntryId == 560
+        && obj->EventHandler->Info.EventId.ContentId == EventHandlerType.GimmickAccessor
+        && obj->NameString.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
 
     public static unsafe bool InDeepDungeon() => GetDirector() != null;
 
