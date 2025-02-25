@@ -1,6 +1,7 @@
 using Dalamud.Plugin;
 using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.PlayerData.Handlers;

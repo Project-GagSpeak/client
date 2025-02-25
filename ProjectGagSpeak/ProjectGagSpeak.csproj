@@ -34,9 +34,11 @@
         <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
         <OutputType>Library</OutputType>
     </PropertyGroup>
+    
     <ItemGroup>
       <None Remove="Localization\jp.json" />
     </ItemGroup>
+    
     <ItemGroup>
       <Compile Include="CustomCombos\.Core\CkFilterComboBase.cs" />
       <Compile Include="CustomCombos\.Core\CkFilterComboButton.cs" />
@@ -184,9 +186,7 @@
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="GagspeakConfiguration\Configurations\" />
       <Folder Include="PlayerClientState\Toybox State\Caches\" />
-      <Folder Include="UpdateMonitoring\DungeonLoot\" />
     </ItemGroup>
 </Project>
 

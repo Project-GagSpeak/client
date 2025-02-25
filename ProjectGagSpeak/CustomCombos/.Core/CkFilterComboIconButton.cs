@@ -34,7 +34,7 @@ public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
     /// <summary> What will occur when the button is pressed. </summary>
     protected abstract void OnButtonPress();
 
-    protected bool Draw(string label, string tt, float width, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
+    public bool DrawComboButton(string label, string tt, float width, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to first extract the width of the button.
         var comboWidth = width - _uiShared.GetIconTextButtonSize(ButtonIcon, ButtonText) - 

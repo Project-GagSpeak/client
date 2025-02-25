@@ -25,7 +25,6 @@ public class EquipmentDrawer
     private readonly ILogger _logger;
     private readonly DictStain _stains;
     private readonly ItemService _items;
-    private readonly UiSharedService _uiShared;
     public readonly TextureService ItemIcons;
     public readonly GameItemCombo[] ItemCombos;
     public readonly BonusItemCombo[] BonusCombo;

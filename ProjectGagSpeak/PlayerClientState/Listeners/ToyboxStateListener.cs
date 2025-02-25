@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;

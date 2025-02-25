@@ -84,12 +84,13 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         // construct the dto to send.
         var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
         {
+            Layer = (GagLayer)CurrentLayer,
             Gag = CurrentSelection,
             Enabler = MainHub.UID,
         };
 
         // push to server.
-        _ = _mainHub.UserPushPairDataGags(dto);
+        _mainHub.UserPushPairDataGags(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
         Log.LogDebug("Applying Selected Gag " + CurrentSelection.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }

@@ -37,14 +37,16 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
 
     /// <summary> The virtual function for all filter combo buttons. </summary>
     /// <returns> True if anything was selected, false otherwise. </returns>
-    protected bool Draw(string label, string tt, float width, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
+    public bool DrawComboButton(string label, string tt, float width, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to first extract the width of the button.
         var comboWidth = width - ImGuiHelpers.GetButtonSize(ButtonText).X - ImGui.GetStyle().ItemInnerSpacing.X - ImGui.GetStyle().ItemSpacing.X;
         InnerWidth = width;
 
         // if we have a new item selected we need to update some conditionals.
-        var ret = Draw(label, tt, string.Empty, comboWidth, itemH, flags);
+
+        var previewLabel = CurrentSelection?.ToString() ?? "Select an Item...";
+        var ret = Draw(label, previewLabel, tt, comboWidth, itemH, flags);
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
 

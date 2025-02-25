@@ -2,14 +2,13 @@ using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Dto.Connection;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.Configs;
 
-/// <summary>
-/// This configuration manager helps manage the various interactions with all config files related to server-end activity.
-/// <para> It provides a comprehensive interface for configuring servers, managing tags and nicknames, and handling authentication keys. </para>
-/// </summary>
+/// <summary> This configuration manager helps manage the various interactions with all config files related to server-end activity </summary>
+/// <remarks> It provides a comprehensive interface for configuring servers, managing tags and nicknames, and handling authentication keys. </remarks>
 public class ServerConfigurationManager
 {
     private readonly ILogger<ServerConfigurationManager> _logger;
@@ -147,17 +146,34 @@ public class ServerConfigurationManager
         Save();
     }
 
-    public void SetSecretKeyAsValid(string secretKey)
+    /// <summary> Updates the authentication after successful connection to set the linked UID or flag good connection. </summary>
+    /// <remarks> This will also remove any listed accounts that have the 1.3 format and whose UID is not in the connection list. </remarks>
+    public void UpdateAuthentication(string secretKey, ConnectionDto connectedInfo)
     {
-        // locate the authentication with the matching key.
+        // Firstly, make sure that we have a valid authentication that just connected.
         var auth = ServerStorage.Authentications.Find(f => f.SecretKey.Key == secretKey);
-        if (auth == null) return;
+        if (auth is null)
+            return;
 
-        // set the authentication as having had a successful connection.
+        // If valid, take this auth and update it with its respective information.
         auth.SecretKey.HasHadSuccessfulConnection = true;
+        auth.SecretKey.LinkedProfileUID = connectedInfo.User.UID;
+
+        // Now, we should iterate through each of our authentications.
+        foreach (var authentication in ServerStorage.Authentications)
+        {
+            // If the LinkedProfileUID is has a UID listed, but it's not in the list of auth UID's, remove the authentication.
+            if (!string.IsNullOrWhiteSpace(authentication.SecretKey.LinkedProfileUID))
+            {
+                if (!connectedInfo.ActiveAccountUidList.Contains(authentication.SecretKey.LinkedProfileUID))
+                {
+                    ServerStorage.Authentications.Remove(authentication);
+                    continue;
+                }
+            }
+        }
         Save();
     }
-
 
     /// <summary> Gets the server API Url </summary>
     public string GetServerApiUrl() => ServerStorage.ServiceUri;

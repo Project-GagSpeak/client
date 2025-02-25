@@ -1,10 +1,8 @@
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Hardcore.ForcedStay;
-using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.UI;
 
-namespace GagSpeak;
+namespace GagSpeak.Services.Configs;
 
 public class GagspeakConfigService : IHybridSavable
 {
@@ -17,6 +15,8 @@ public class GagspeakConfigService : IHybridSavable
     public string JsonSerialize() => JsonConvert.SerializeObject(Config, Formatting.Indented);
     public GagspeakConfigService(HybridSaveService saver)
     {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+
         _saver = saver;
         Load();
     }
@@ -204,13 +204,5 @@ public class GagspeakConfig
     [JsonConverter(typeof(ConcreteNodeConverter))]
     public TextFolderNode ForcedStayPromptList { get; set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
-}
-
-public static class GagspeakConfigEx
-{
-    public static bool HasValidSetup(this GagspeakConfig configuration)
-    {
-        return configuration.AcknowledgementUnderstood && configuration.AccountCreated;
-    }
 }
 

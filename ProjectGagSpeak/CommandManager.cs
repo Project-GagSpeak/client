@@ -3,7 +3,9 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.UI.MainWindow;
@@ -22,6 +24,7 @@ public sealed class CommandManager : IDisposable
     private readonly GagspeakMediator _mediator;
     private readonly PairManager _pairManager;
     private readonly GagspeakConfigService _mainConfig;
+    private readonly ServerConfigService _serverConfig;
     private readonly ChatMonitor _chatMessages;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
@@ -29,13 +32,14 @@ public sealed class CommandManager : IDisposable
     private readonly ICommandManager _commands;
 
     public CommandManager(GagspeakMediator mediator, PairManager pairManager,
-        GagspeakConfigService mainConfig, ChatMonitor chatMessages,
-        DeathRollService deathRolls, IChatGui chat, IClientState clientState,
-        ICommandManager commandManager)
+        GagspeakConfigService mainConfig, ServerConfigService server,
+        ChatMonitor chatMessages, DeathRollService deathRolls, IChatGui chat,
+        IClientState clientState, ICommandManager commandManager)
     {
         _mediator = mediator;
         _pairManager = pairManager;
         _mainConfig = mainConfig;
+        _serverConfig = server;
         _chatMessages = chatMessages;
         _deathRolls = deathRolls;
         _chat = chat;
@@ -81,7 +85,7 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0)
         {
             // Interpret this as toggling the UI
-            if (_mainConfig.Config.HasValidSetup())
+            if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(MainUI)));
             else
                 _mediator.Publish(new UiToggleMessage(typeof(IntroUi)));

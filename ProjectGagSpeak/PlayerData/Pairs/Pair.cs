@@ -50,7 +50,6 @@ public class Pair
     /// <remarks> Thus, any permission modified will be accessing this object directly, and is defined upon a pair being added or marked online. </remarks>
     public UserPairDto UserPair { get; set; }
     public UserData UserData => UserPair.User;
-    public bool OnlineToyboxUser { get; private set; } = false;
     public UserPairPermissions OwnPerms => UserPair.OwnPairPerms;
     public UserEditAccessPermissions OwnPermAccess => UserPair.OwnEditAccessPerms;
     public UserPairPermissions PairPerms => UserPair.OtherPairPerms;
@@ -429,8 +428,4 @@ public class Pair
             _creationSemaphore.Release();
         }
     }
-
-    public void MarkToyboxOffline() => OnlineToyboxUser = false;
-
-    public void MarkToyboxOnline() => OnlineToyboxUser = true;
 }

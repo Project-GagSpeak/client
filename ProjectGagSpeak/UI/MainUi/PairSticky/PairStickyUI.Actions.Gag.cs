@@ -1,8 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 
@@ -15,28 +17,26 @@ public partial class PairStickyUI
 {
     private void DrawGagActions()
     {
-        if(StickyPair.LastGagData is null) return;
-
         // Drawing out gag layers.
         _pairCombos.DrawGagLayerSelection(ImGui.GetContentRegionAvail().X);
 
-        var gagSlot = StickyPair.LastGagData.GagSlots[PairCombos.GagLayer];
+        var gagSlot = SPair.LastGagData.GagSlots[_pairCombos.CurGagLayer];
 
         // register display texts for the buttons.
-        var applyGagText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PairNickOrAliasOrUID : "A " + gagSlot.GagType + " is applied.";
-        var applyGagTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PairNickOrAliasOrUID + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagType;
-        var lockGagText = gagSlot.Padlock is Padlocks.None ? "Lock "+PairNickOrAliasOrUID+"'s Gag" : "Locked with a " + gagSlot.Padlock;
-        var lockGagTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + PairNickOrAliasOrUID+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
+        var applyGagText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermActData.DispName : "A " + gagSlot.GagItem + " is applied.";
+        var applyGagTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermActData.DispName + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagItem;
+        var lockGagText = gagSlot.Padlock is Padlocks.None ? "Lock "+PermActData.DispName+"'s Gag" : "Locked with a " + gagSlot.Padlock;
+        var lockGagTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + PermActData.DispName+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
 
-        var unlockGagText = "Unlock " + PairNickOrAliasOrUID + "'s Gag";
-        var unlockGagTT = "Unlock " + PairUID + "'s Gag. Click to view options.";
-        var removeGagText = "Remove " + PairNickOrAliasOrUID + "'s Gag";
-        var removeGagTT = "Remove " + PairNickOrAliasOrUID + "'s Gag. Click to view options.";
+        var unlockGagText = "Unlock " + PermActData.DispName + "'s Gag";
+        var unlockGagTT = "Unlock " + PermActData.DispName + "'s Gag. Click to view options.";
+        var removeGagText = "Remove " + PermActData.DispName + "'s Gag";
+        var removeGagTT = "Remove " + PermActData.DispName + "'s Gag. Click to view options.";
 
 
         // Expander for ApplyGag
-        var disableApplyExpand = !PairPerms.ApplyGags || gagSlot.Padlock is not Padlocks.None;
-        if (_uiShared.IconTextButton(FontAwesomeIcon.CommentDots, applyGagText, WindowMenuWidth, true, disableApplyExpand))
+        var disableApplyExpand = !SPair.PairPerms.ApplyGags || gagSlot.Padlock is not Padlocks.None;
+        if (_ui.IconTextButton(FontAwesomeIcon.CommentDots, applyGagText, WindowMenuWidth, true, disableApplyExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyGag) ? InteractionType.None : InteractionType.ApplyGag;
         UiSharedService.AttachToolTip(applyGagTT);
 
@@ -44,15 +44,15 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyGag)
         {
             using (ImRaii.Child("###GagApply", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.GagApplyCombos[PairCombos.GagLayer].DrawComboButton("##ApplyGag-" + PairCombos.GagLayer, "Select a Gag to apply", WindowMenuWidth, 1.15f, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.GagApplyCombo.DrawComboButton("##ApplyGag-" + _pairCombos.CurGagLayer, "Select a Gag to apply", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
         // Expander for LockGag
-        var disableLockExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !PairPerms.LockGags;
+        var disableLockExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !SPair.PairPerms.LockGags;
         using (ImRaii.PushColor(ImGuiCol.Text, (gagSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, lockGagText, WindowMenuWidth, true, disableLockExpand))
+            if (_ui.IconTextButton(FontAwesomeIcon.Lock, lockGagText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockGag) ? InteractionType.None : InteractionType.LockGag;
         }
         UiSharedService.AttachToolTip(lockGagTT + 
@@ -62,28 +62,28 @@ public partial class PairStickyUI
         // Interaction Window for LockGag
         if (PairCombos.Opened is InteractionType.LockGag)
         {
-            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockLockWithActiveWindowHeight())))
-                _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawLockComboWithActive(WindowMenuWidth, lockGagText, lockGagTT);
+            using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombo.PadlockLockWindowHeight())))
+                _pairCombos.GagPadlockCombo.DrawLockComboWithActive(WindowMenuWidth, lockGagText, lockGagTT);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = gagSlot.Padlock is Padlocks.None or Padlocks.MimicPadlock || !PairPerms.UnlockGags;
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, unlockGagText, WindowMenuWidth, true, disableUnlockExpand))
+        var disableUnlockExpand = gagSlot.Padlock is Padlocks.None or Padlocks.MimicPadlock || !SPair.PairPerms.UnlockGags;
+        if (_ui.IconTextButton(FontAwesomeIcon.Unlock, unlockGagText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockGag) ? InteractionType.None : InteractionType.UnlockGag;
         UiSharedService.AttachToolTip(unlockGagTT);
 
         // Interaction Window for UnlockGag
         if (PairCombos.Opened is InteractionType.UnlockGag)
         {
-            using (ImRaii.Child("###GagUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombos[PairCombos.GagLayer].PadlockUnlockWindowHeight())))
-                _pairCombos.GagPadlockCombos[PairCombos.GagLayer].DrawUnlockCombo(WindowMenuWidth, unlockGagTT, unlockGagText);
+            using (ImRaii.Child("###GagUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombo.PadlockUnlockWindowHeight())))
+                _pairCombos.GagPadlockCombo.DrawUnlockCombo(WindowMenuWidth, unlockGagTT, unlockGagText);
             ImGui.Separator();
         }
 
         // Expander for removing.
-        var disableRemoveExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !PairPerms.RemoveGags;
-        if (_uiShared.IconTextButton(FontAwesomeIcon.TimesCircle, removeGagText, WindowMenuWidth, true, disableRemoveExpand))
+        var disableRemoveExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveGags;
+        if (_ui.IconTextButton(FontAwesomeIcon.TimesCircle, removeGagText, WindowMenuWidth, true, disableRemoveExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveGag) ? InteractionType.None : InteractionType.RemoveGag;
         UiSharedService.AttachToolTip(removeGagTT);
 
@@ -94,13 +94,18 @@ public partial class PairStickyUI
             {
                 if (ImGui.Button("Remove Gag", ImGui.GetContentRegionAvail()))
                 {
-                    var newAppearance = StickyPair.LastGagData.DeepClone();
-                    if (newAppearance is null) return;
+                    // construct the dto to send.
+                    var dto = new PushPairGagDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
+                    {
+                        Layer = (GagLayer)_pairCombos.CurGagLayer,
+                        Gag = GagType.None,
+                        Enabler = MainHub.UID,
+                    };
 
-                    newAppearance.GagSlots[PairCombos.GagLayer].GagType = GagType.None.GagName();
-                    _ = _hub.UserPushPairDataAppearanceUpdate(new(StickyPair.UserData, MainHub.PlayerUserData, newAppearance, (GagLayer)PairCombos.GagLayer, GagUpdateType.GagRemoved, Padlocks.None, UpdateDir.Other));
-                    _logger.LogDebug("Removing Gag from "+PairNickOrAliasOrUID, LoggerType.Permissions);
+                    // push to server.
+                    _hub.UserPushPairDataGags(dto).ConfigureAwait(false);
                     PairCombos.Opened = InteractionType.None;
+                    _logger.LogDebug("Removing Gag From layer " + (GagLayer)_pairCombos.CurGagLayer, LoggerType.Permissions);
                 }
             }
         }

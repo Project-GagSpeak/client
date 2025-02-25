@@ -183,11 +183,11 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
                 // Load in our initial pairs, then the online ones.
                 await LoadInitialPairs().ConfigureAwait(false);
-                await LoadOnlinePairs().ConfigureAwait(false);
+                await LoadOnlinePairs().ConfigureAwait(false); // Fires OnlinePairsLoaded.
                 await LoadKinksterRequests().ConfigureAwait(false);
 
-                // Save that this connection with this secret key was valid.
-                _serverConfigs.SetSecretKeyAsValid(secretKey);
+                // Update our current authentication to reflect the information provided.
+                _serverConfigs.UpdateAuthentication(secretKey, ConnectionDto!);
             }
             catch (OperationCanceledException)
             {
@@ -365,9 +365,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         }
 
         // if we have not yet made an account, abort this connection.
-        if (_mainConfig.Config.AccountCreated is false)
+        if (_serverConfigs.AuthCount() <= 0)
         {
-            Logger.LogDebug("Primary Account not yet created, Aborting Connection.", LoggerType.ApiCore);
+            Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LoggerType.ApiCore);
             return false;
         }
 

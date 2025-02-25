@@ -7,6 +7,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Controllers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring.Chat;

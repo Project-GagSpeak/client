@@ -3,6 +3,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;

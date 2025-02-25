@@ -1,5 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.Utils;
 using ImGuiNET;
@@ -17,29 +19,28 @@ public partial class PairStickyUI
 {
     private void DrawMoodlesActions()
     {
-        var lastIpcData = StickyPair.LastIpcData;
-        var pairUniquePerms = StickyPair.PairPerms;
+        var lastIpcData = SPair.LastIpcData;
+        var pairUniquePerms = SPair.PairPerms;
 
-        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag.PairCanApplyYourMoodlesToYou || lastIpcData.MoodlesStatuses.Count <= 0;
-        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.PairCanApplyOwnMoodlesToYou || LastCreatedCharacterData == null || LastCreatedCharacterData.MoodlesStatuses.Count <= 0;
-        var RemovePairsMoodlesDisabled = !pairUniquePerms.AllowRemovingMoodles || lastIpcData.MoodlesDataStatuses.Count <= 0;
-        var ClearPairsMoodlesDisabled = !pairUniquePerms.AllowRemovingMoodles || lastIpcData.MoodlesData == string.Empty;
-
+        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou) || lastIpcData.MoodlesStatuses.Count <= 0;
+        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou) || VisualApplierMoodles.LatestIpcData is null || VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Count <= 0;
+        var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.MoodlesDataStatuses.Count <= 0;
+/*
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (_ui.IconTextButton(FontAwesomeIcon.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodle ? InteractionType.None : InteractionType.ApplyPairMoodle;
         }
-        UiSharedService.AttachToolTip("Applies a Moodle from " + StickyPair.UserData.AliasOrUID + "'s Moodles List to them.");
+        UiSharedService.AttachToolTip("Applies a Moodle from " + SPair.UserData.AliasOrUID + "'s Moodles List to them.");
         if (PairCombos.Opened is InteractionType.ApplyPairMoodle)
         {
             using (var child = ImRaii.Child("ApplyPairMoodlesChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
             {
                 if (!child) return;
 
-                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsPairStatusList" + PairUID) ?? Guid.Empty;
+                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsPairStatusList" + PermActData.DispName) ?? Guid.Empty;
 
-                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsPairStatusList" + PairUID, "Apply",
+                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsPairStatusList" + PermActData.DispName, "Apply",
                 ImGui.GetContentRegionAvail().X,
                 lastIpcData.MoodlesStatuses,
                 selectedItem == Guid.Empty,
@@ -51,9 +52,9 @@ public partial class PairStickyUI
                     if (!lastIpcData.MoodlesStatuses.Any(x => x.GUID == onButtonPress)) return;
 
                     var statusInfo = new List<MoodlesStatusInfo> { lastIpcData.MoodlesStatuses.First(x => x.GUID == onButtonPress) };
-                    if (!_moodlesService.ValidatePermissionForApplication(StickyPair.PairPerms, statusInfo)) return;
+                    if (!_moodlesService.ValidatePermissionForApplication(SPair.PairPerms, statusInfo)) return;
 
-                    _ = _hub.UserApplyMoodlesByGuid(new(StickyPair.UserData, new List<Guid> { onButtonPress.Value }, IpcToggleType.MoodlesStatus));
+                    _ = _hub.UserApplyMoodlesByGuid(new(SPair.UserData, new List<Guid> { onButtonPress.Value }, IpcToggleType.MoodlesStatus));
                     PairCombos.Opened = InteractionType.None;
                 });
             }
@@ -61,20 +62,20 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM PAIR's LIST //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (_ui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodlePreset ? InteractionType.None : InteractionType.ApplyPairMoodlePreset;
         }
-        UiSharedService.AttachToolTip("Applies a Preset from " + PairUID + "'s Presets List to them.");
+        UiSharedService.AttachToolTip("Applies a Preset from " + PermActData.DispName + "'s Presets List to them.");
         if (PairCombos.Opened is InteractionType.ApplyPairMoodlePreset)
         {
             using (var child = ImRaii.Child("ApplyPairPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
             {
                 if (!child) return;
 
-                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsPairPresetList" + PairUID) ?? Guid.Empty;
+                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsPairPresetList" + PermActData.DispName) ?? Guid.Empty;
 
-                _moodlesService.DrawMoodlesPresetComboButton("##PermissionActionsPairPresetList" + PairUID, "Apply",
+                _moodlesService.DrawMoodlesPresetComboButton("##PermissionActionsPairPresetList" + PermActData.DispName, "Apply",
                 ImGui.GetContentRegionAvail().X,
                 lastIpcData.MoodlesPresets, lastIpcData.MoodlesStatuses, selectedItem == Guid.Empty,
                 (onSelected) => { _logger.LogDebug("Selected Preset: " + onSelected, LoggerType.Permissions); },
@@ -88,7 +89,7 @@ public partial class PairStickyUI
 
                     if (!_moodlesService.ValidatePermissionForApplication(pairUniquePerms, statusesToApply)) return;
 
-                    _ = _hub.UserApplyMoodlesByGuid(new(StickyPair.UserData, statusesToApply.Select(s => s.GUID).ToList(), IpcToggleType.MoodlesPreset));
+                    _ = _hub.UserApplyMoodlesByGuid(new(SPair.UserData, statusesToApply.Select(s => s.GUID).ToList(), IpcToggleType.MoodlesPreset));
                     PairCombos.Opened = InteractionType.None;
                 });
             }
@@ -96,11 +97,11 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY MOODLES FROM OWN LIST //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (_ui.IconTextButton(FontAwesomeIcon.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodle ? InteractionType.None : InteractionType.ApplyOwnMoodle;
         }
-        UiSharedService.AttachToolTip("Applies a Moodle from your Moodles List to " + PairUID + ".");
+        UiSharedService.AttachToolTip("Applies a Moodle from your Moodles List to " + PermActData.DispName + ".");
         if (PairCombos.Opened is InteractionType.ApplyOwnMoodle)
         {
             using (var child = ImRaii.Child("ApplyOwnMoodlesChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
@@ -109,9 +110,9 @@ public partial class PairStickyUI
 
                 if (LastCreatedCharacterData is null) return;
 
-                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsOwnStatusList" + PairUID) ?? Guid.Empty;
+                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsOwnStatusList" + PermActData.DispName) ?? Guid.Empty;
 
-                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsOwnStatusList" + PairUID, "Apply",
+                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsOwnStatusList" + PermActData.DispName, "Apply",
                 ImGui.GetContentRegionAvail().X,
                 LastCreatedCharacterData.MoodlesStatuses,
                 selectedItem == Guid.Empty,
@@ -125,8 +126,8 @@ public partial class PairStickyUI
                     var statusInfo = new List<MoodlesStatusInfo> { LastCreatedCharacterData.MoodlesStatuses.First(x => x.GUID == onButtonPress) };
                     if (!_moodlesService.ValidatePermissionForApplication(pairUniquePerms, statusInfo)) return;
 
-                    _logger.LogInformation("Applying Moodle: " + onButtonPress + " to " + PairNickOrAliasOrUID);
-                    _ = _hub.UserApplyMoodlesByStatus(new(StickyPair.UserData, statusInfo, IpcToggleType.MoodlesStatus));
+                    _logger.LogInformation("Applying Moodle: " + onButtonPress + " to " + PermActData.DispName);
+                    _ = _hub.UserApplyMoodlesByStatus(new(SPair.UserData, statusInfo, IpcToggleType.MoodlesStatus));
                     PairCombos.Opened = InteractionType.None;
                 });
             }
@@ -134,23 +135,23 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM OWN LIST //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (_ui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodlePreset ? InteractionType.None : InteractionType.ApplyOwnMoodlePreset;
         }
-        UiSharedService.AttachToolTip("Applies a Preset from your Presets List to " + PairUID + ".");
+        UiSharedService.AttachToolTip("Applies a Preset from your Presets List to " + PermActData.DispName + ".");
 
         if (PairCombos.Opened is InteractionType.ApplyOwnMoodlePreset)
         {
-            using (var child = ImRaii.Child("ApplyOwnPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
+            using (ImRaii.Child("ApplyOwnPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
             {
-                if (!child) return;
 
-                if (LastCreatedCharacterData is null) return;
+                if (VisualApplierMoodles.LatestIpcData is null)
+                    return;
 
-                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsOwnPresetList" + PairUID) ?? Guid.Empty;
+                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsOwnPresetList" + PermActData.DispName) ?? Guid.Empty;
 
-                _moodlesService.DrawMoodlesPresetComboButton("##PermissionActionsOwnPresetList" + PairUID, "Apply",
+                _moodlesService.DrawMoodlesPresetComboButton("##PermissionActionsOwnPresetList" + PermActData.DispName, "Apply",
                 ImGui.GetContentRegionAvail().X,
                 LastCreatedCharacterData.MoodlesPresets, LastCreatedCharacterData.MoodlesStatuses, selectedItem == Guid.Empty,
                 (onSelected) => { _logger.LogDebug("Selected Preset: " + onSelected, LoggerType.Permissions); },
@@ -166,7 +167,7 @@ public partial class PairStickyUI
 
                     if (!_moodlesService.ValidatePermissionForApplication(pairUniquePerms, statusesToApply)) return;
 
-                    _ = _hub.UserApplyMoodlesByStatus(new(StickyPair.UserData, statusesToApply, IpcToggleType.MoodlesPreset));
+                    _ = _hub.UserApplyMoodlesByStatus(new(SPair.UserData, statusesToApply, IpcToggleType.MoodlesPreset));
                     PairCombos.Opened = InteractionType.None;
                 });
             }
@@ -175,20 +176,18 @@ public partial class PairStickyUI
 
 
         ////////// REMOVE MOODLES //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.UserMinus, "Remove a Moodle from " + PairNickOrAliasOrUID, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
+        if (_ui.IconTextButton(FontAwesomeIcon.UserMinus, "Remove a Moodle from " + PermActData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.RemoveMoodle ? InteractionType.None : InteractionType.RemoveMoodle;
         }
-        UiSharedService.AttachToolTip("Removes a Moodle from " + PairNickOrAliasOrUID + "'s Statuses.");
+        UiSharedService.AttachToolTip("Removes a Moodle from " + PermActData.DispName + "'s Statuses.");
         if (PairCombos.Opened is InteractionType.RemoveMoodle)
         {
-            using (var child = ImRaii.Child("RemoveMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
+            using (ImRaii.Child("RemoveMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
             {
-                if (!child) return;
+                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsRemoveMoodle" + PermActData.DispName) ?? Guid.Empty;
 
-                Guid selectedItem = _moodlesService.GetSelectedItem("##PermissionActionsRemoveMoodle" + PairUID) ?? Guid.Empty;
-
-                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsRemoveMoodle" + PairUID, "Remove",
+                _moodlesService.DrawMoodleStatusComboButton("##PermissionActionsRemoveMoodle" + PermActData.DispName, "Remove",
                 ImGui.GetContentRegionAvail().X,
                 lastIpcData.MoodlesDataStatuses, selectedItem == Guid.Empty,
                 (onSelected) => { _logger.LogDebug("Selected Moodle to remove: " + onSelected); },
@@ -203,38 +202,12 @@ public partial class PairStickyUI
                     if (!_moodlesService.ValidatePermissionForApplication(pairUniquePerms, statusInfo))
                         return;
 
-                    _logger.LogInformation("Removing Moodle: " + onButtonPress + " from " + PairNickOrAliasOrUID);
-                    _ = _hub.UserRemoveMoodles(new(StickyPair.UserData, new List<Guid> { onButtonPress.Value }));
+                    _logger.LogInformation("Removing Moodle: " + onButtonPress + " from " + PermActData.DispName);
+                    _ = _hub.UserRemoveMoodles(new(SPair.UserData, new List<Guid> { onButtonPress.Value }));
                     PairCombos.Opened = InteractionType.None;
                 });
             }
             ImGui.Separator();
-        }
-
-        ////////// CLEAR MOODLES //////////
-        if (_uiShared.IconTextButton(FontAwesomeIcon.UserSlash, "Clear all Moodles from " + PairNickOrAliasOrUID, WindowMenuWidth, true, ClearPairsMoodlesDisabled))
-        {
-            PairCombos.Opened = PairCombos.Opened == InteractionType.ClearMoodle ? InteractionType.None : InteractionType.ClearMoodle;
-        }
-        UiSharedService.AttachToolTip("Clears all Moodles from " + PairNickOrAliasOrUID + "'s Statuses.");
-
-        if (PairCombos.Opened is InteractionType.ClearMoodle)
-        {
-            using (var child = ImRaii.Child("ClearMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
-            {
-                if (!child) return;
-
-                ImGui.SetNextItemWidth(WindowMenuWidth);
-                if (ImGuiUtil.DrawDisabledButton("Clear All Active Moodles##ClearStatus" + PairUID, new Vector2(), string.Empty, !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
-                {
-                    _logger.LogInformation("Clearing all Moodles from " + PairNickOrAliasOrUID);
-                    _ = _hub.UserClearMoodles(new(StickyPair.UserData));
-                    PairCombos.Opened = InteractionType.None;
-                }
-                UiSharedService.AttachToolTip("Clear all statuses from " + PairNickOrAliasOrUID
-                    + "--SEP--Must be holding SHIFT & CTRL to fire!");
-            }
-        }
-        ImGui.Separator();
+        }*/
     }
 }

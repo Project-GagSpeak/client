@@ -5,6 +5,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UI;
+using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Handlers;
 using GagSpeak.UI.Permissions;
@@ -22,12 +23,13 @@ public class UiFactory
     private readonly GagspeakMediator _gagspeakMediator;
     private readonly PiShockProvider _shockProvider;
     private readonly PairCombos _pairCombos;
+    private readonly PermActData _permData;
 
     // Managers
     private readonly ClientMonitor _clientMonitor;
     private readonly GagGarbler _garbler;
     private readonly PairManager _pairManager;
-    private readonly GlobalData _clientData;
+    private readonly GlobalData _globals;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -35,7 +37,7 @@ public class UiFactory
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly PermissionPresetLogic _presetService;
+    private readonly PresetLogic _presetService;
     private readonly TextureService _textures;
     private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService;
@@ -46,20 +48,22 @@ public class UiFactory
 
     public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
         PiShockProvider shockProvider, GlobalData clientData, ClientMonitor clientMonitor,
-        GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics, IdDisplayHandler displayHandler, 
-        KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates, OnFrameworkService frameworkUtils, 
-        PairCombos pairCombos, PermissionPresetLogic presetService, TextureService textures, UiSharedService uiShared, 
+        GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics,
+        IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates,
+        OnFrameworkService frameworkUtils, PairCombos pairCombos, PermActData permActData,
+        PresetLogic presetService, TextureService textures, UiSharedService uiShared, 
         SexToyManager vibeService, TutorialService guides, MainHub hub)
     {
         _loggerFactory = loggerFactory;
         _gagspeakMediator = gagspeakMediator;
         _shockProvider = shockProvider;
         _pairCombos = pairCombos;
+        _permData = permActData;
 
         _clientMonitor = clientMonitor;
         _garbler = garbler;
         _pairManager = pairManager;
-        _clientData = clientData;
+        _globals = clientData;
 
         _cosmetics = cosmetics;
         _displayHandler = displayHandler;
@@ -91,7 +95,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _gagspeakMediator, pair,
-            drawType, _hub, _clientData, _pairCombos, _shockProvider,
-            _pairManager, _clientMonitor, _presetService, _uiShared);
+            drawType, _pairCombos, _permData, _presetService, _hub, _globals, _shockProvider,
+            _pairManager, _clientMonitor, _uiShared);
     }
 }

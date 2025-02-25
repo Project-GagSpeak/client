@@ -39,7 +39,6 @@ public class DrawUserPair
     }
 
     public Pair Pair => _pair;
-    public UserPairDto UserPair => _pair.UserPair!;
 
     public bool DrawPairedClient(byte ident, bool supporterIcon = true, bool icon = true, bool iconTT = true, bool displayToggles = true, 
         bool displayNameTT = true, bool showHovered = true, bool showRightButtons = true)

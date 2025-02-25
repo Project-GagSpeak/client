@@ -3,17 +3,18 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 using GagSpeak.ChatMessages;
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
@@ -36,6 +37,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly SexToyManager _sexToys;
+    private readonly TraitsManager _traits;
     private readonly ItemService _items;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly CosmeticService _cosmetics;
@@ -67,6 +69,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         AlarmManager alarms,
         TriggerManager triggers,
         SexToyManager sexToys,
+        TraitsManager traits,
         ItemService items,
         OnFrameworkService frameworkUtils,
         CosmeticService cosmetics,
@@ -87,6 +90,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _patterns = patterns;
         _alarms = alarms;
         _triggers = triggers;
+        _traits = traits;
         _items = items;
         _frameworkUtils = frameworkUtils;
         _cosmetics = cosmetics;

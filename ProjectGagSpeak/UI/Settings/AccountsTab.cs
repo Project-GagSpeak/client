@@ -219,7 +219,7 @@ public class AccountsTab
 
             var buttonSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X - ImGui.GetStyle().ItemSpacing.X) / 2;
 
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel, buttonSize, false, (!(KeyMonitor.CtrlPressed() && KeyMonitor.ShiftPressed()))))
+            if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel, buttonSize, false, !(KeyMonitor.CtrlPressed() && KeyMonitor.ShiftPressed())))
             {
                 _ = RemoveAccountAndRelog(account, isPrimary);
             }
@@ -245,6 +245,7 @@ public class AccountsTab
         {
             _logger.LogInformation("Removing Authentication for current character.");
             _serverConfigs.ServerStorage.Authentications.Remove(account);
+            // In theory this should have automatic cleanup once the new account management stuff works out.
             if (isPrimary)
             {
                 _serverConfigs.ServerStorage.Authentications.Clear();
@@ -252,14 +253,23 @@ public class AccountsTab
                 _mainConfig.Config.AccountCreated = false;
             }
             _mainConfig.Config.LastUidLoggedIn = "";
-            _mainConfig.UpdateConfigs(string.Empty); // Should be changing the UID's file the config file provider service.
             _mainConfig.Save();
-
             _logger.LogInformation("Deleting Account from Server.");
             await _hub.UserDelete();           
             DeleteAccountConfirmation = false;
 
-            if (!isPrimary)
+            if (isPrimary)
+            {
+                var allFolders = Directory.GetDirectories(_configFiles.GagSpeakDirectory).Where(c => !c.Contains("eventlog") && !c.Contains("audiofiles")).ToList();
+                foreach (var folder in allFolders)
+                    Directory.Delete(folder, true);
+
+                _logger.LogInformation("Removed all deleted account folders.");
+                _configFiles.ClearUidConfigs();
+                await _hub.Disconnect(ServerState.Disconnected, false);
+                _mediator.Publish(new SwitchToIntroUiMessage());
+            }
+            else
             {
                 var accountProfileFolder = _configFiles.CurrentPlayerDirectory;
                 if (Directory.Exists(accountProfileFolder))
@@ -267,17 +277,8 @@ public class AccountsTab
                     _logger.LogDebug("Deleting Account Profile Folder for current character.", LoggerType.ApiCore);
                     Directory.Delete(accountProfileFolder, true);
                 }
+                _configFiles.ClearUidConfigs();
                 await _hub.Reconnect(false);
-            }
-            else
-            {
-                var allFolders = Directory.GetDirectories(_configFiles.GagSpeakDirectory).Where(c => !c.Contains("eventlog") && !c.Contains("audiofiles")).ToList();
-                foreach (var folder in allFolders) 
-                    Directory.Delete(folder, true);
-                
-                _logger.LogInformation("Removed all deleted account folders.");
-                await _hub.Disconnect(ServerState.Disconnected, false);
-                _mediator.Publish(new SwitchToIntroUiMessage());
             }
         }
         catch (Exception ex)

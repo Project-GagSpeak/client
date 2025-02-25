@@ -10,10 +10,16 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
 {
     private readonly ITextureProvider _iconDrawer;
-    public EmoteCombo(ItemService items, ITextureProvider iconDrawer, ILogger log)
-        : base(() => [
-            ..EmoteMonitor.ValidEmotes.OrderBy(e => e.RowId)
-        ], log)
+    public EmoteCombo(ITextureProvider iconDrawer, ILogger log)
+        : base(() => [ ..EmoteMonitor.ValidEmotes.OrderBy(e => e.RowId) ], log)
+    {
+        _iconDrawer = iconDrawer;
+        SearchByParts = true;
+    }
+
+    // New constructor allowing a custom generator function
+    public EmoteCombo(ITextureProvider iconDrawer, ILogger log, Func<IReadOnlyList<ParsedEmoteRow>> generator)
+        : base(generator, log)
     {
         _iconDrawer = iconDrawer;
         SearchByParts = true;

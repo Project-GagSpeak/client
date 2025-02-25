@@ -30,6 +30,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         ItemService items, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _clientData = clientData;
         _restraints = restraints;
         _favorites = favorites;

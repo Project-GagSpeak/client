@@ -11,7 +11,7 @@ namespace GagSpeak.Services;
 
 // The most fundamentally important service in the entire application.
 // helps revert any active states applied to the player when used.
-public sealed class SafewordService : MediatorSubscriberBase, IHostedService
+public sealed class SafewordService : MediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly GlobalData _playerManager;
@@ -169,7 +169,7 @@ public sealed class SafewordService : MediatorSubscriberBase, IHostedService
                 isolatedPair.OwnPerms.AllowForcedFollow = false;
                 isolatedPair.OwnPerms.AllowForcedSit = false;
                 isolatedPair.OwnPerms.AllowForcedEmote = false;
-                isolatedPair.OwnPerms.AllowForcedToStay = false;
+                isolatedPair.OwnPerms.AllowForcedStay = false;
                 isolatedPair.OwnPerms.AllowBlindfold = false;
                 isolatedPair.OwnPerms.AllowHidingChatBoxes = false;
                 isolatedPair.OwnPerms.AllowHidingChatInput = false;
@@ -190,7 +190,7 @@ public sealed class SafewordService : MediatorSubscriberBase, IHostedService
                     pair.OwnPerms.AllowForcedFollow = false;
                     pair.OwnPerms.AllowForcedSit = false;
                     pair.OwnPerms.AllowForcedEmote = false;
-                    pair.OwnPerms.AllowForcedToStay = false;
+                    pair.OwnPerms.AllowForcedStay = false;
                     pair.OwnPerms.AllowBlindfold = false;
                     pair.OwnPerms.AllowHidingChatBoxes = false;
                     pair.OwnPerms.AllowHidingChatInput = false;
@@ -209,17 +209,5 @@ public sealed class SafewordService : MediatorSubscriberBase, IHostedService
             SafewordOnCD = false;
         if (HardcoreSafewordOnCD && TimeOfLastHardcoreSafewordUsed.AddMinutes(1) < DateTime.Now)
             HardcoreSafewordOnCD = false;
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogInformation("Started Safeword Service.");
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogInformation("Stopped Safeword Service.");
-        return Task.CompletedTask;
     }
 }

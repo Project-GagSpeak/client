@@ -1,4 +1,5 @@
-using GagSpeak.GagspeakConfiguration.Configurations;
+using GagSpeak;
+using GagSpeak.Services.Configs;
 using Newtonsoft.Json;
 
 namespace ProjectGagSpeak.Tests.GagspeakConfiguration.Services;

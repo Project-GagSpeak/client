@@ -40,7 +40,7 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DalamudLogoutMessage>(this, (msg) => RestrictedMoodles.Clear());
     }
 
-    public CharaIPCData LatestIpcData = new CharaIPCData();
+    public static CharaIPCData LatestIpcData = new CharaIPCData();
     // This could be turned into a MoodleStatusInfo tuple, if desired, to preset things at specific stacks or whatever for custom moodles.
     // The integration is there, but right now my sanity is not.
     public HashSet<Guid> RestrictedMoodles = new HashSet<Guid>();

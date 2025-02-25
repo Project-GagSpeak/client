@@ -50,7 +50,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
 
     protected override void OnButtonPress()
     {
-        if (_pairRef.LastToyboxData is null || CurrentSelection is null)
+        if (CurrentSelection is null)
             return;
 
         // Construct the dto, and then send it off.
@@ -58,9 +58,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         {
             AffectedIdentifier = CurrentSelection.Id,
         };
-
-        // Send out the command.
-        _ = _mainHub.UserPushPairDataToybox(dto);
+        _mainHub.UserPushPairDataToybox(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
         Log.LogDebug("Toggling Trigger " + CurrentSelection.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s TriggerList", LoggerType.Permissions);
     }

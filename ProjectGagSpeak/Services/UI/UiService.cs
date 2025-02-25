@@ -3,6 +3,8 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.Interop.IpcHelpers.Penumbra;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 using GagSpeak.UI.Components;
@@ -15,31 +17,31 @@ namespace GagSpeak.Services;
 /// <summary> A sealed class dictating the UI service for the plugin. </summary>
 public sealed class UiService : DisposableMediatorSubscriberBase
 {
-    private readonly List<WindowMediatorSubscriberBase> _createdWindows = [];   // the list of created windows as mediator subscribers
-    private readonly IUiBuilder _uiBuilder;                                     // the basic dalamud UI builder for the plugin
-    private readonly FileDialogManager _fileDialogManager;                      // for importing images
-    private readonly ILogger<UiService> _logger;                                // our logger for the UI service.
-    private readonly GagspeakConfigService _gagspeakConfigService;              // our configuration service for the gagspeak plugin
-    private readonly WindowSystem _windowSystem;                                // the window system for our dalamud plugin.
-    private readonly UiFactory _uiFactory;                                      // the factory for the UI window creation.
-    private readonly PenumbraChangedItemTooltip _penumbraChangedItemTooltip;    // the penumbra changed item tooltip for the plugin.
-    private readonly MainMenuTabs _mainWindowTabMenu;                            // the main window tab menu for the plugin.
+    private readonly List<WindowMediatorSubscriberBase> _createdWindows = [];
+    private readonly MainMenuTabs _mainTabMenu;
 
-    public UiService(ILogger<UiService> logger, IUiBuilder uiBuilder,
-        GagspeakConfigService gagspeakConfigService, WindowSystem windowSystem,
-        IEnumerable<WindowMediatorSubscriberBase> windows, UiFactory uiFactory,
-        MainMenuTabs mainWindowTabMenu, GagspeakMediator gagspeakMediator, 
-        FileDialogManager fileDialogManager, 
-        PenumbraChangedItemTooltip penumbraChangedItemTooltip) : base(logger, gagspeakMediator)
+    private readonly ILogger<UiService> _logger;
+    private readonly GagspeakConfigService _mainConfig;
+    private readonly ServerConfigService _serverConfig;
+    private readonly UiFactory _uiFactory;
+    private readonly WindowSystem _windowSystem;
+    private readonly FileDialogManager _fileDialog;
+    private readonly IUiBuilder _uiBuilder;
+
+    public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
+        GagspeakConfigService mainConfig, ServerConfigService serverConfig,
+        WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
+        UiFactory uiFactory, MainMenuTabs menuTabs, FileDialogManager fileDialog,
+        IUiBuilder uiBuilder) : base(logger, mediator)
     {
         _logger = logger;
         _uiBuilder = uiBuilder;
-        _gagspeakConfigService = gagspeakConfigService;
+        _mainConfig = mainConfig;
         _windowSystem = windowSystem;
         _uiFactory = uiFactory;
-        _mainWindowTabMenu = mainWindowTabMenu;
-        _fileDialogManager = fileDialogManager;
-        _penumbraChangedItemTooltip = penumbraChangedItemTooltip;
+        _serverConfig = serverConfig;
+        _fileDialog = fileDialog;
+        _mainTabMenu = menuTabs;
 
         // disable the UI builder while in gpose 
         _uiBuilder.DisableGposeUiHide = true;
@@ -65,7 +67,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
             foreach (var window in pairPermissionWindows)
             {
-                _logger.LogTrace("Closing pair permission window for pair "+((PairStickyUI)window).StickyPair.UserData.AliasOrUID, LoggerType.Permissions);
+                _logger.LogTrace("Closing pair permission window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
                 _windowSystem.RemoveWindow(window);
                 _createdWindows.Remove(window);
                 window.Dispose();
@@ -135,19 +137,19 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 {
 
                     _logger.LogTrace("Forcing main UI to whitelist tab", LoggerType.Permissions);
-                    _mainWindowTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
+                    _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
                 }
                 else
                 {
                     Mediator.Publish(new UiToggleMessage(typeof(MainUI), ToggleType.Show));
-                    _mainWindowTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
+                    _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
                 }
             }
 
             // Find existing PairStickyUI windows with the same window type and pair UID
             var existingWindow = _createdWindows
                 .FirstOrDefault(p => p is PairStickyUI stickyWindow &&
-                                     stickyWindow.StickyPair.UserData.AliasOrUID == msg.Pair?.UserData.AliasOrUID &&
+                                     stickyWindow.SPair.UserData.AliasOrUID == msg.Pair?.UserData.AliasOrUID &&
                                      stickyWindow.DrawType == msg.PermsWindowType);
 
             if (existingWindow != null && !msg.ForceOpenMainUI)
@@ -175,7 +177,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
                 foreach (var window in otherWindows)
                 {
-                    _logger.LogTrace("Disposing existing sticky window for pair "+((PairStickyUI)window).StickyPair.UserData.AliasOrUID, LoggerType.Permissions);
+                    _logger.LogTrace("Disposing existing sticky window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
                     _windowSystem.RemoveWindow(window);
                     _createdWindows.Remove(window);
                     window.Dispose();
@@ -202,7 +204,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
         foreach (var window in pairPermissionWindows)
         {
-            _logger.LogTrace("Closing pair permission window for pair " + ((PairStickyUI)window).StickyPair.UserData.AliasOrUID, LoggerType.Permissions);
+            _logger.LogTrace("Closing pair permission window for pair " + ((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
             _windowSystem.RemoveWindow(window);
             _createdWindows.Remove(window);
             window.Dispose();
@@ -219,7 +221,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// </summary>
     public void ToggleMainUi()
     {
-        if (_gagspeakConfigService.Config.HasValidSetup())
+        if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
         {
             Mediator.Publish(new UiToggleMessage(typeof(MainUI)));
         }
@@ -239,7 +241,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// </summary>
     public void ToggleUi()
     {
-        if (_gagspeakConfigService.Config.HasValidSetup())
+        if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
         {
             Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
@@ -272,10 +274,10 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         _uiBuilder.OpenMainUi -= ToggleMainUi;
     }
 
-    /// <summary> Draw the windows system and file dialogue managers (not file dialogue hopefully) </summary>
+    /// <summary> Draw the windows system and file dialogue managers </summary>
     private void Draw()
     {
         _windowSystem.Draw();
-        _fileDialogManager.Draw();
+        _fileDialog.Draw();
     }
 }

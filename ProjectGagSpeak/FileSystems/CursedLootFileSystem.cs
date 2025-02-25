@@ -18,6 +18,8 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
     public CursedLootFileSystem(ILogger<CursedLootFileSystem> logger, GagspeakMediator mediator, 
         CursedLootManager manager, HybridSaveService saver)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _logger = logger;
         Mediator = mediator;
         _manager = manager;

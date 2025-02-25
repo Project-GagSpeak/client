@@ -22,6 +22,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         PatternManager patterns, PatternApplier applier, FavoritesManager favorites,
         ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _patterns = patterns;
         _applier = applier;
         _favorites = favorites;

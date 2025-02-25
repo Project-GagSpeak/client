@@ -1,7 +1,12 @@
+using Dalamud.Plugin.Services;
+using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
 using GagSpeak.CustomCombos.PairActions;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services;
+using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 
 namespace GagSpeak.UI.Components.Combos;
@@ -17,19 +22,23 @@ public class PairCombos
     private readonly ILogger<PairCombos> _logger;
     private readonly MainHub _hub;
     private readonly UiSharedService _uiShared;
-
+    private readonly ITextureProvider _tp;
 
     // Make the following static and public to allow global access throughout custom combos.
     public static InteractionType Opened = InteractionType.None;
     private int _gagLayer = 0;
     private int _restrictionLayer = 0;
     private int _restraintLayer = 0;
+    public int CurGagLayer => _gagLayer;
+    public int CurRestrictionLayer => _restrictionLayer;
+    public int CurRestraintLayer => _restraintLayer;
 
-    public PairCombos(ILogger<PairCombos> logger, MainHub hub, UiSharedService uiShared)
+    public PairCombos(ILogger<PairCombos> logger, MainHub hub, UiSharedService uiShared, ITextureProvider tp)
     {
         _logger = logger;
         _hub = hub;
         _uiShared = uiShared;
+        _tp = tp;
     }
 
     public PairGagCombo GagApplyCombo { get; private set; }
@@ -41,6 +50,7 @@ public class PairCombos
     public PairPatternCombo PatternCombo { get; private set; }
     public PairAlarmCombo AlarmToggleCombo { get; private set; }
     public PairTriggerCombo TriggerToggleCombo { get; private set; }
+    public EmoteCombo EmoteCombo { get; private set; }
 
     private static readonly string[] GagLayerNames = new string[] { "Layer 1", "Layer 2", "Layer 3" };
     private static readonly string[] FiveLayerNames = new string[] { "Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5" };
@@ -92,5 +102,14 @@ public class PairCombos
 
         // Create the Triggers combo for trigger toggling.
         TriggerToggleCombo = new PairTriggerCombo(pair, _hub, _logger, _uiShared, "Enable", "Toggle this Trigger for " + pair.GetNickAliasOrUid());
+
+        EmoteCombo = new EmoteCombo(_tp, _logger, () => 
+        [
+            ..pair.PairPerms.AllowForcedEmote
+                ? EmoteMonitor.ValidEmotes.OrderBy(e => e.RowId)
+                : EmoteMonitor.SitEmoteComboList.OrderBy(e => e.RowId)
+        ]);
+
+        Opened = InteractionType.None;
     }
 }

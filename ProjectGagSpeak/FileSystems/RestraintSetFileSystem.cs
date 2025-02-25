@@ -18,6 +18,8 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
     public RestraintSetFileSystem(ILogger<RestraintSetFileSystem> logger, GagspeakMediator mediator,
         RestraintManager manager, HybridSaveService saver)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _logger = logger;
         Mediator = mediator;
         _manager = manager;

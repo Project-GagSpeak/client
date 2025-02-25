@@ -32,6 +32,8 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _gagManager = gagManager;
         _restrictionManager = restrictionManager;
         _restraintManager = restraintManager;

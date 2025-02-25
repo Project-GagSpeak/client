@@ -54,23 +54,23 @@ public class MoodleStatusMonitor
     /// <returns> True if the statuses can be applied.
     public bool CanApplyPairStatus(UserPairPermissions pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        if (!pairPerms.AllowPositiveStatusTypes && statuses.Any(statuses => statuses.Type == StatusType.Positive))
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
             _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.AllowNegativeStatusTypes && statuses.Any(statuses => statuses.Type == StatusType.Negative))
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
         {
             _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.AllowSpecialStatusTypes && statuses.Any(statuses => statuses.Type == StatusType.Special))
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Special))
         {
             _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
-        if (!pairPerms.AllowPermanentMoodles && statuses.Any(statuses => statuses.NoExpire))
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles) && statuses.Any(statuses => statuses.NoExpire))
         {
             _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
             return false;

@@ -1,5 +1,5 @@
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
@@ -8,166 +8,101 @@ using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
-using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
-using System.Numerics;
 
 namespace GagSpeak.UI.Permissions;
 
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
-    private readonly MainHub _hub;
-    private readonly GlobalData _clientData;
-    private readonly PairCombos _pairCombos;
-    private readonly PiShockProvider _shockProvider;
-    private readonly PairManager _pairManager;
-    private readonly ClientMonitor _clientMonitor;
-    private readonly PermissionPresetLogic _presetService;
-    private readonly UiSharedService _uiShared;
+    private PermissionsDrawer _drawer;
 
-    public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pairToDrawFor,
-        StickyWindowType drawType, MainHub hub, GlobalData clientDat, PairCombos pairCombos, 
-        PiShockProvider shockProvider, PairManager pairManager, ClientMonitor clientMonitor,
-        PermissionPresetLogic presets, UiSharedService uiShared) : base(logger, mediator, "PairStickyUI for " + pairToDrawFor.UserData.UID + "pair.")
+    private readonly PairCombos _pairCombos;
+    private readonly PermActData _permData;
+    private readonly PresetLogic _presets;
+
+    private readonly MainHub _hub;
+    private readonly GlobalData _globals;
+    private readonly PairManager _pairs;
+    private readonly ClientMonitor _monitor;
+    private readonly UiSharedService _ui;
+
+    public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pair,
+        StickyWindowType drawType, PairCombos pairCombos, PermActData permData, PresetLogic presets,
+        MainHub hub, GlobalData globals, PiShockProvider shocks, PairManager pairs,
+        ClientMonitor monitor, UiSharedService ui) : base(logger, mediator, "PairStickyUI for " + pair.UserData.UID + "pair.")
     {
-        _hub = hub;
-        _clientData = clientDat;
         _pairCombos = pairCombos;
-        _shockProvider = shockProvider;
-        _pairManager = pairManager;
-        _clientMonitor = clientMonitor;
-        _presetService = presets;
-        _uiShared = uiShared;
+        _permData = permData;
+        _presets = presets;
+        _hub = hub;
+        _globals = globals;
+        _pairs = pairs;
+        _monitor = monitor;
+        _ui = ui;
+
+        // Define the pair.
+        SPair = pair;
+
+        // reset the opened interaction and paircombo drawers.
+        _drawer = new PermissionsDrawer(hub, permData, shocks, ui);
+        _pairCombos.UpdateCombosForPair(pair);
+        _permData.InitForPair(pair.UserData, pair.GetNickAliasOrUid());
         PairCombos.Opened = InteractionType.None;
 
-        StickyPair = pairToDrawFor; // set the pair we're drawing for
-        DrawType = drawType; // set the type of window we're drawing
+        // set the type of window we're drawing
+        DrawType = drawType;
 
-        _pairCombos.UpdateCombosForPair(StickyPair);
-
-        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar
-            | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
-        IsOpen = true; // open the window
+        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
+        IsOpen = true;
     }
 
-    private CharaIPCData? LastCreatedCharacterData => _clientData.LastIpcData;
-    public Pair StickyPair { get; init; } // pair we're drawing the sticky permissions for.
-    private UserGlobalPermissions PairGlobals => StickyPair.PairGlobals;
-    private UserPairPermissions OwnPerms => StickyPair.OwnPerms;
-    private UserPairPermissions PairPerms => StickyPair.PairPerms;
+    public Pair SPair { get; init; }
+    public StickyWindowType DrawType = StickyWindowType.None;
+    private float WindowMenuWidth = -1;
 
-    public StickyWindowType DrawType = StickyWindowType.None; // type of window drawn.
-    public float WindowMenuWidth { get; private set; } = -1; // width of the window menu.
-    public float IconButtonTextWidth => WindowMenuWidth - ImGui.GetFrameHeightWithSpacing();
-    public string PairNickOrAliasOrUID => StickyPair.GetNickAliasOrUid();
-    public string PairUID => StickyPair.UserData.UID;
     protected override void PreDrawInternal()
     {
-        var position = _uiShared.LastMainUIWindowPosition;
-        position.X += _uiShared.LastMainUIWindowSize.X;
+        // Magic that makes the sticky pair window move with the main UI.
+        var position = _ui.LastMainUIWindowPosition;
+        position.X += _ui.LastMainUIWindowSize.X;
         position.Y += ImGui.GetFrameHeightWithSpacing();
         ImGui.SetNextWindowPos(position);
 
         Flags |= ImGuiWindowFlags.NoMove;
 
-        // calculate X size based on the tab we are viewing.     ClientPermsForPair & PairActionFunctions are 100*ImGuiHelpers.GlobalScale, PairPerms is 160*ImGuiHelpers.GlobalScale
         var width = (DrawType == StickyWindowType.PairPerms) ? 160 * ImGuiHelpers.GlobalScale : 110 * ImGuiHelpers.GlobalScale;
-
-        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width,
-            _uiShared.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
-
+        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, _ui.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
         ImGui.SetNextWindowSize(size);
     }
 
     protected override void DrawInternal()
     {
-        // fetch the width
         WindowMenuWidth = ImGui.GetContentRegionAvail().X;
 
-        // draw content based on who's it is.
-        if (DrawType == StickyWindowType.PairPerms)
+        switch (DrawType)
         {
-            ImGuiUtil.Center(PairNickOrAliasOrUID + "'s Permissions for You");
-            ImGui.Separator();
+            case StickyWindowType.PairPerms:
+                ImGuiUtil.Center(PermActData.DispName + "'s Permissions for You");
+                ImGui.Separator();
+                using (ImRaii.Child("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                    DrawPairPermsForClient();
+                break;
+            case StickyWindowType.ClientPermsForPair:
+                ImGuiUtil.Center("Your Permissions for " + PermActData.DispName);
+                _ui.SetCursorXtoCenter(225f);
+                _presets.DrawPresetList(SPair, 225f);
 
-            // create a new child below with no border that spans the rest of the content region and has no scrollbar
-            ImGui.BeginChild("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar);
-            // draw the pair's permissions they have set for you
-            DrawPairPermsForClient();
-
-            ImGui.EndChild();
-        }
-        else if (DrawType == StickyWindowType.ClientPermsForPair)
-        {
-            ImGuiUtil.Center("Your Permissions for " + PairNickOrAliasOrUID);
-            // draw out the permission preset applied.
-            var presetListWidth = 225f;
-            _uiShared.SetCursorXtoCenter(presetListWidth);
-            _presetService.DrawPresetList(StickyPair, presetListWidth);
-
-            ImGui.Separator();
-
-            // create a new child below with no border that spans the rest of the content region and has no scrollbar
-            ImGui.BeginChild("ClientPermsForPairContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar);
-            // draw clients permission edit access page
-            DrawClientPermsForPair();
-
-            ImGui.EndChild();
-        }
-        else if (DrawType == StickyWindowType.PairActionFunctions)
-        {
-            ImGuiUtil.Center("Actions For " + PairNickOrAliasOrUID);
-            if (!_currentErrorMessage.NullOrEmpty())
-                UiSharedService.ColorTextWrapped(_currentErrorMessage, ImGuiColors.DalamudRed);
-
-            ImGui.Separator();
-
-            ImGui.BeginChild("ActionsForPairContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar);
-            // draw the pair action functions
-            DrawPairActionFunctions();
-
-            ImGui.EndChild();
-        }
-        else if (DrawType == StickyWindowType.None)
-        {
-            // Occurs when draw type is set to None
+                ImGui.Separator();
+                using (ImRaii.Child("ClientPermsForPairContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                    DrawClientPermsForPair();
+                break;
+            case StickyWindowType.PairActionFunctions:
+                using (ImRaii.Child("##StickyWinActs", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                    DrawPairActionFunctions();
+                break;
         }
     }
-
-    #region ErrorHandler
-    private string _currentErrorMessage = string.Empty;
-    private CancellationTokenSource? _errorCTS;
-    private async Task DisplayError(string errorMessage)
-    {
-        // Cancel the previous error message display if it exists
-        _errorCTS?.Cancel();
-        _errorCTS = new CancellationTokenSource();
-
-        _currentErrorMessage = errorMessage;
-
-        try
-        {
-            // Wait for 5 seconds or until the task is cancelled
-            await Task.Delay(5000, _errorCTS.Token)
-                .ContinueWith(t =>
-                {
-                    // Clear the error message if the task was not cancelled
-                    if (!t.IsCanceled)
-                    {
-                        _currentErrorMessage = string.Empty;
-                    }
-                }, TaskScheduler.Default);
-        }
-        catch (TaskCanceledException)
-        {
-            // Task was cancelled, do nothing
-        }
-    }
-
-    #endregion ErrorHandler
 
     protected override void PostDrawInternal() { }
 

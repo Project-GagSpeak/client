@@ -135,9 +135,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     public List<IGameObject> GetVisiblePairGameObjects()
         => _allClientPairs.Select(p => p.Value.VisiblePairGameObject).Where(gameObject => gameObject != null).ToList()!;
 
-    /// <summary> Fetch the list of userData UID's for all pairs who have OnlineToyboxUser to true.</summary>
-    public List<Pair> GetOnlineToyboxUsers() => _allClientPairs.Where(p => p.Value.OnlineToyboxUser).Select(p => p.Value).ToList();
-
     // fetch the list of all online user pairs via their UID's
     public List<string> GetOnlineUserUids() => _allClientPairs.Select(p => p.Key.UID).ToList();
 
@@ -196,22 +193,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
             Mediator.Publish(new ClearProfileDataMessage(pair.UserData));
             pair.MarkOffline();
         }
-        RecreateLazy();
-    }
-
-    public void MarkPairToyboxOffline(UserData user)
-    {
-        if (_allClientPairs.TryGetValue(user, out var pair))
-            pair.MarkToyboxOffline();
-
-        RecreateLazy();
-    }
-
-    public void MarkPairToyboxOnline(UserData user)
-    {
-        if (_allClientPairs.TryGetValue(user, out var pair))
-            pair.MarkToyboxOnline();
-
         RecreateLazy();
     }
 

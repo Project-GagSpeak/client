@@ -20,6 +20,8 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         IpcCallerPenumbra penumbra, FavoritesManager favorites, ConfigFileProvider fileNames, 
         HybridSaveService saver, IDalamudPluginInterface pi) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _penumbra = penumbra;
         _favorites = favorites;
         _fileNames = fileNames;

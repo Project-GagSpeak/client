@@ -1,5 +1,4 @@
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.Services.Configs;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services.Configs;
@@ -9,11 +8,14 @@ namespace GagSpeak.Services.Configs;
 public sealed class HybridSaveService : HybridSaveServiceBase<ConfigFileProvider>, IHostedService
 {
     public HybridSaveService(ILogger<HybridSaveService> logger, ConfigFileProvider fileNameStructure)
-        : base(logger, fileNameStructure) { }
+        : base(logger, fileNameStructure)
+    {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        StartChecking();
+        //StartChecking();
         return Task.CompletedTask;
     }
 

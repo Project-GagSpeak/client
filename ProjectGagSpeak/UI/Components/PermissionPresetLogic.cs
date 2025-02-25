@@ -9,15 +9,15 @@ using OtterGui.Text;
 
 namespace GagSpeak.Services;
 
-public class PermissionPresetLogic
+public class PresetLogic
 {
-    private readonly ILogger<PermissionPresetLogic> _logger;
+    private readonly ILogger<PresetLogic> _logger;
     private readonly MainHub _hub;
     private readonly GlobalData _playerManager;
     private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
-    public PermissionPresetLogic(ILogger<PermissionPresetLogic> logger,
+    public PresetLogic(ILogger<PresetLogic> logger,
         MainHub hub, GlobalData playerManager, PairManager pairManager, UiSharedService uiShared)
     {
         _logger = logger;
@@ -346,7 +346,7 @@ public class PermissionPresetLogic
             PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
-            AllowForcedToStay = true,
+            AllowForcedStay = true,
             AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
@@ -405,7 +405,7 @@ public class PermissionPresetLogic
             PairLockedStates = false,
             AllowForcedFollow = false,
             AllowForcedSit = false,
-            AllowForcedToStay = false,
+            AllowForcedStay = false,
             AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
@@ -515,7 +515,7 @@ public class PermissionPresetLogic
             PairLockedStates = false,
             AllowForcedFollow = false,
             AllowForcedSit = true,
-            AllowForcedToStay = false,
+            AllowForcedStay = false,
             AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
@@ -625,7 +625,7 @@ public class PermissionPresetLogic
             PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
-            AllowForcedToStay = true,
+            AllowForcedStay = true,
             AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,

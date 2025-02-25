@@ -18,12 +18,15 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     private readonly GlobalData _clientData;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
+    private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
     public RestrictionManager(ILogger<RestrictionManager> logger, GagspeakMediator mediator,
     GagGarbler garbler, GlobalData clientData, FavoritesManager favorites,
-    ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+    ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
@@ -336,7 +339,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
             };
 
             // Deserialize the item
-            restrictionItem.LoadRestriction(itemJson);
+            restrictionItem.LoadRestriction(itemJson, _items);
             Storage.Add(restrictionItem);
         }
     }

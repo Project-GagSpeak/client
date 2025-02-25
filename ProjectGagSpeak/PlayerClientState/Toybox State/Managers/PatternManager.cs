@@ -20,6 +20,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         PatternApplier applier, FavoritesManager favorites, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _applier = applier;
         _favorites = favorites;
         _fileNames = fileNames;

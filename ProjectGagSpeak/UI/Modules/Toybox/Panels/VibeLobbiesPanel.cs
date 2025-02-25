@@ -1,6 +1,7 @@
 using Dalamud.Interface.Colors;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.VibeLobby;
 

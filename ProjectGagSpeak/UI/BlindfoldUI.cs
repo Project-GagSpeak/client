@@ -1,5 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.Debouncer;
 using GagSpeak.UpdateMonitoring;

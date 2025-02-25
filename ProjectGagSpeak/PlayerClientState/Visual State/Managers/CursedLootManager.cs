@@ -24,6 +24,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _globals = clientData;
         _gags = gags;
         _restrictions = restrictions;

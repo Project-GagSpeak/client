@@ -13,7 +13,14 @@ public class NicknamesConfigService : IHybridSavable
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.Nicknames).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
-    public NicknamesConfigService(HybridSaveService saver) { _saver = saver; Load(); }
+    public NicknamesConfigService(HybridSaveService saver)
+    {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+
+        _saver = saver;
+        Load();
+    }
+
     public void Save() => _saver.Save(this);
     public void Load()
     {
@@ -54,7 +61,14 @@ public class ServerConfigService : IHybridSavable
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.ServerConfig).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
-    public ServerConfigService(HybridSaveService saver) { _saver = saver; Load(); }
+    public ServerConfigService(HybridSaveService saver)
+    {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+
+        _saver = saver;
+        Load();
+    }
+
     public void Save() => _saver.Save(this);
     public void Load()
     {

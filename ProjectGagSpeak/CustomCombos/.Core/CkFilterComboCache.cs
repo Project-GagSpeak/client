@@ -59,7 +59,9 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     /// <remarks> Any selection, or any change, will be stored into the CurrentSelectionIdx. </remarks>
     public bool Draw(string label, string preview, string tooltip, float previewWidth, float itemHeight,
         ImGuiComboFlags flags = ImGuiComboFlags.None)
-        => Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags);
+    {
+        return Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags);
+    }
 
     /// <summary> Fires an event that gives us the previous and new selection. </summary>
     public event Action<T?, T?>? SelectionChanged;

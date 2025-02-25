@@ -20,16 +20,20 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
     private readonly GlobalData _clientData;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
+    private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
     public GagRestrictionManager(ILogger<GagRestrictionManager> logger, GagspeakMediator mediator,
         GagGarbler garbler, GlobalData clientData, FavoritesManager favorites, 
-        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+        ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _garbler = garbler;
         _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
+        _items = items;
         _saver = saver;
         Load();
     }
@@ -304,7 +308,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
             }
 
             var garblerRestriction = new GarblerRestriction(gagType);
-            garblerRestriction.LoadRestriction(gagObject);
+            garblerRestriction.LoadRestriction(gagObject, _items);
             Storage[gagType] = garblerRestriction;
         }
     }

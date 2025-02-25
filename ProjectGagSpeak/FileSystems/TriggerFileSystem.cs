@@ -18,6 +18,8 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
     public TriggerFileSystem(ILogger<TriggerFileSystem> logger, GagspeakMediator mediator,
         TriggerManager manager, HybridSaveService saver)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _logger = logger;
         Mediator = mediator;
         _manager = manager;

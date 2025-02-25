@@ -15,6 +15,7 @@ using Lumina.Text.ReadOnly;
 using OtterGui;
 using OtterGui.Text;
 using System.Numerics;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.UI.MainWindow;
 

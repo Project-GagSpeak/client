@@ -5,6 +5,7 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -264,7 +265,7 @@ public class DebugTab
         DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetVisuals);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
-        DrawPermissionRowString("Global Trigger Phrase", perms.GlobalTriggerPhrase);
+        DrawPermissionRowString("Global Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Sit));
         DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
         DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
@@ -272,7 +273,8 @@ public class DebugTab
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
-        DrawPermissionRowBool("Sex Toy Active", perms.ToysAreActive);
+        DrawPermissionRowBool("Sex Toy Active", perms.ToysAreConnected);
+        DrawPermissionRowBool("Toys In Use", perms.ToysAreInUse);
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
         ImGui.TableNextRow();
         DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
@@ -326,19 +328,18 @@ public class DebugTab
         DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
         DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppetPerms.All));
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Allow Positive Moodles", perms.AllowPositiveStatusTypes);
-        DrawPermissionRowBool("Allow Negative Moodles", perms.AllowNegativeStatusTypes);
-        DrawPermissionRowBool("Allow Neutral Moodles", perms.AllowSpecialStatusTypes);
-        DrawPermissionRowBool("Apply Own Moodles", perms.PairCanApplyOwnMoodlesToYou);
-        DrawPermissionRowBool("Apply Your Moodles", perms.PairCanApplyYourMoodlesToYou);
+        DrawPermissionRowBool("Allow Positive Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
+        DrawPermissionRowBool("Allow Negative Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.NegativeStatusTypes));
+        DrawPermissionRowBool("Allow Special Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.SpecialStatusTypes));
+        DrawPermissionRowBool("Apply Own Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou));
+        DrawPermissionRowBool("Apply Your Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou));
         DrawPermissionRowString("Max Moodle Time", perms.MaxMoodleTime.ToString());
-        DrawPermissionRowBool("Allow Permanent Moodles", perms.AllowPermanentMoodles);
-        DrawPermissionRowBool("Allow Removing Moodles", perms.AllowRemovingMoodles);
+        DrawPermissionRowBool("Allow Permanent Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
+        DrawPermissionRowBool("Allow Removing Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyState);
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToys);
+        DrawPermissionRowBool("Can Use Vibe Remote", perms.RemoteControlAccess);
         DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatterns);
-        DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatterns);
+        DrawPermissionRowBool("Can Stop Patterns", perms.StopPatterns);
         DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarms);
         DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarms);
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggers);
@@ -348,7 +349,7 @@ public class DebugTab
         DrawPermissionRowBool("Allow Forced Follow", perms.AllowForcedFollow);
         DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
         DrawPermissionRowBool("Allow Forced Emote", perms.AllowForcedEmote);
-        DrawPermissionRowBool("Allow Forced To Stay", perms.AllowForcedToStay);
+        DrawPermissionRowBool("Allow Forced To Stay", perms.AllowForcedStay);
         DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
         DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
@@ -427,11 +428,10 @@ public class DebugTab
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
         DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyStateAllowed);
         DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToysAllowed);
-        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatternsAllowed);
+        DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatternsAllowed);
         DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatternsAllowed);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
+        DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarmsAllowed);
+        DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
     }
 
     private void DrawAppearance(string uid, CharaActiveGags appearance)

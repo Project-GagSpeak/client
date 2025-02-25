@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.Services.Configs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 

@@ -1,5 +1,6 @@
 using Dalamud.Plugin;
 using GagSpeak.Localization;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Tutorial;
 using Microsoft.Extensions.Hosting;
 

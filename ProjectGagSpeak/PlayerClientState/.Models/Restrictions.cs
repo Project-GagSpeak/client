@@ -1,5 +1,7 @@
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Newtonsoft;
+using GagSpeak.Services;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 
@@ -86,10 +88,10 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
             ["DoRedraw"] = DoRedraw,
         };
 
-    public void LoadRestriction(JObject json)
+    public void LoadRestriction(JObject json, ItemService items)
     {
         IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false;
-        Glamour.LoadEquip(json["Glamour"]);
+        Glamour = items.ParseGlamourSlot(json["Glamour"]);
         Mod.LoadMod(json["Mod"]);
         Moodle.LoadMoodle(json["Moodle"]);
         Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
@@ -136,11 +138,11 @@ public class RestrictionItem : IRestrictionItem
             ["Traits"] = Traits.ToString(),
         };
 
-    public virtual void LoadRestriction(JObject json)
+    public virtual void LoadRestriction(JObject json, ItemService items)
     {
         Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         Label = json["Label"]?.ToObject<string>() ?? string.Empty;
-        Glamour.LoadEquip(json["Glamour"]);
+        Glamour = items.ParseGlamourSlot(json["Glamour"]);
         Mod.LoadMod(json["Mod"]);
         Moodle.LoadMoodle(json["Moodle"]);
         Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
@@ -174,9 +176,9 @@ public class BlindfoldRestriction : RestrictionItem
         return json;
     }
 
-    public override void LoadRestriction(JObject json)
+    public override void LoadRestriction(JObject json, ItemService items)
     {
-        base.LoadRestriction(json);
+        base.LoadRestriction(json, items);
         HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         VisorState = JParser.FromJObject(json["VisorState"]);
         CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
@@ -205,9 +207,9 @@ public class CollarRestriction : RestrictionItem
         return json;
     }
 
-    public override void LoadRestriction(JObject json)
+    public override void LoadRestriction(JObject json, ItemService items)
     {
-        base.LoadRestriction(json);
+        base.LoadRestriction(json, items);
         OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty;
         CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty;
     }

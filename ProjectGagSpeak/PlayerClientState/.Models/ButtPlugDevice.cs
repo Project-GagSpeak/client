@@ -2,7 +2,7 @@ using Buttplug.Client;
 using Buttplug.Core.Messages;
 using DebounceThrottle;
 
-namespace GagSpeak.Toybox.Data;
+namespace GagSpeak.Toybox;
 
 // at the same time, the payoff of storing disconnected devices could make reconnection faster.
 public class ButtPlugDevice

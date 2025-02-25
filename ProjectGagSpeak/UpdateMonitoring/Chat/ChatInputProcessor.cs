@@ -10,6 +10,8 @@ using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using GagSpeak.ChatMessages;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
@@ -27,9 +29,10 @@ public unsafe class ChatInputDetour : IDisposable
     private readonly ILogger<ChatInputDetour> _logger;
     private readonly GagspeakConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly GlobalData _clientData;
+    private readonly GlobalData _globals;
     private readonly GagGarbler _garbler;
     private readonly EmoteMonitor _emoteMonitor;
+    private readonly GagRestrictionManager _gags;
 
     // define our delegates.
     private unsafe delegate byte ProcessChatInputDelegate(IntPtr uiModule, byte** message, IntPtr a3);
@@ -38,14 +41,15 @@ public unsafe class ChatInputDetour : IDisposable
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
         GagspeakConfigService config, GlobalData clientData, GagGarbler garbler,
-        EmoteMonitor emoteMonitor, ISigScanner scanner, IGameInteropProvider interop)
+        EmoteMonitor emoteMonitor, GagRestrictionManager gags, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes
         _logger = logger;
         _mediator = mediator;
         _config = config;
-        _clientData = clientData;
+        _globals = clientData;
         _garbler = garbler;
+        _gags = gags;
         _emoteMonitor = emoteMonitor;
 
         // try to get the chat-input-interceptor delegate
@@ -61,7 +65,7 @@ public unsafe class ChatInputDetour : IDisposable
         // Put all this shit in a try-catch loop so we can catch any possible thrown exception.
         try
         {
-            if (_clientData.GlobalPerms is null) 
+            if (_globals.GlobalPerms is not { } globals || _gags.ActiveGagsData is not { } gagData)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             // Grab the original string.
@@ -82,7 +86,7 @@ public unsafe class ChatInputDetour : IDisposable
             var newSeStringBuilder = new SeStringBuilder();
 
             // If we are not meant to garble the message, then return original.
-            if (!_clientData.GlobalPerms.ChatGarblerActive || !_clientData.AnyGagActive)
+            if (!globals.ChatGarblerActive || !gagData.AnyGagActive())
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */
@@ -93,7 +97,7 @@ public unsafe class ChatInputDetour : IDisposable
             if (messageDecoded.StartsWith("/"))
             {
                 // Match Command if Command being used is in our list of allowed Channels to translate in.
-                var allowedChannels = _config.Config.ChannelsGagSpeak.GetChatChannelsListAliases();
+                var allowedChannels = globals.ChatGarblerChannelsBitfield.GetChatChannelsListAliases();
                 matchedCommand = allowedChannels.FirstOrDefault(prefix => messageDecoded.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
                 // This means its not a chat channel command and just a normal command, so return original.
@@ -127,7 +131,7 @@ public unsafe class ChatInputDetour : IDisposable
             }
 
             // If current channel message is being sent to is in list of enabled channels, translate it.
-            if (_config.Config.ChannelsGagSpeak.Contains(ChatChannel.GetChatChannel()) || _config.Config.ChannelsGagSpeak.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
+            if (ChatChannel.GetChatChannel().IsChannelEnabled(globals.ChatGarblerChannelsBitfield) || globals.ChatGarblerChannelsBitfield.IsAliasForAnyActiveChannel(matchedChannelType.Trim()))
             {
                 // only obtain the text payloads from this message, as nothing else should madder.
                 var textPayloads = originalSeString.Payloads.OfType<TextPayload>().ToList();

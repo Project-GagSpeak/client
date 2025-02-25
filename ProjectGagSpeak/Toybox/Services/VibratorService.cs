@@ -1,5 +1,6 @@
 using GagSpeak.CkCommons.Intiface;
 using GagSpeak.PlayerState.Controllers;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox.SimulatedVibe;
 using GagspeakAPI.Data;

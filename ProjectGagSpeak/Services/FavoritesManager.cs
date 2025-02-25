@@ -23,6 +23,8 @@ public class FavoritesManager : IHybridSavable
     public string JsonSerialize() => throw new NotImplementedException();
     public FavoritesManager(HybridSaveService saver)
     {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+
         _saver = saver;
         Load();
     }

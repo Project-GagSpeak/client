@@ -2,15 +2,16 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Intiface;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Controllers;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox.Data;
+using GagSpeak.Toybox;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UI.UiRemote;
-using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -82,7 +83,7 @@ public class SexToysPanel
         ImGui.Text("Open Personal Remote");
 
         if (_playerManager.GlobalPerms is not null)
-            ImGui.Text("Active Toys State: " + (_playerManager.GlobalPerms.ToysAreActive ? "Active" : "Inactive"));
+            ImGui.Text("Active Toys State: " + (_playerManager.GlobalPerms.ToysAreConnected ? "Active" : "Inactive"));
 
         ImGui.Text("ConnectedToyActive: " + _vibeService.ConnectedToyActive);
 
@@ -119,13 +120,13 @@ public class SexToysPanel
 
         // draw out the combo for the audio device selection to play to
         ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        int prevDeviceId = _vibeService.VibeSimAudio.ActivePlaybackDeviceId; // to only execute code to update data once it is changed
+        var prevDeviceId = _vibeService.VibeSimAudio.ActivePlaybackDeviceId; // to only execute code to update data once it is changed
         // display the list        
         if (ImGui.BeginCombo("Playback Device##Playback Device", _vibeService.ActiveSimPlaybackDevice))
         {
             foreach (var device in _vibeService.PlaybackDevices)
             {
-                bool isSelected = (_vibeService.ActiveSimPlaybackDevice == device);
+                var isSelected = (_vibeService.ActiveSimPlaybackDevice == device);
                 if (ImGui.Selectable(device, isSelected))
                 {
                     _vibeService.SwitchPlaybackDevice(_vibeService.PlaybackDevices.IndexOf(device));
@@ -218,7 +219,7 @@ public class SexToysPanel
         var buttplugServerAddr = IntifaceController.IntifaceClientName;
         var addrSize = ImGui.CalcTextSize(buttplugServerAddr);
 
-        string intifaceConnectionStr = "Intiface Central Connection";
+        var intifaceConnectionStr = "Intiface Central Connection";
 
         var addrTextSize = ImGui.CalcTextSize(intifaceConnectionStr);
         var totalHeight = ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;

@@ -1,10 +1,10 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
+using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Sharehub;
@@ -274,7 +274,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                     decompressed = patternObject.ToString();
                 }
                 // Deserialize the string back to pattern data
-                Pattern pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
+                var pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
 
                 // Set the active pattern
                 _patterns.CreateClone(pattern, pattern.Label);

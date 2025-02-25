@@ -21,6 +21,8 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         GlobalData clientData, PairManager pairs, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
+        logger.LogCritical("IM BEING INITIALIZED!");
+
         _globals = clientData;
         _pairs = pairs;
         _fileNames = fileNames;

@@ -321,27 +321,42 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
             // Correct these!
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref globalPuppetPerms))
+            var refSits = (globalPuppetPerms & PuppetPerms.Sit) == PuppetPerms.Sit;
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref refSits))
+            {
+                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Sit;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalSitRequests), globalSitRequests), UpdateDir.Own)).ConfigureAwait(false);
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+            }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref globalMotionRequests))
+            var refEmotes = (globalPuppetPerms & PuppetPerms.Emotes) == PuppetPerms.Emotes;
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref refEmotes))
+            {
+                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Emotes;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalMotionRequests), globalMotionRequests), UpdateDir.Own)).ConfigureAwait(false);
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+            }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref globalAliasRequests))
+            var refAlias = (globalPuppetPerms & PuppetPerms.Alias) == PuppetPerms.Alias;
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref refAlias))
+            {
+                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Alias;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalAliasRequests), globalAliasRequests), UpdateDir.Own)).ConfigureAwait(false);
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+            }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref globalAllRequests))
+            var refAllPerms = (globalPuppetPerms & PuppetPerms.All) == PuppetPerms.All;
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref refAllPerms))
+            {
+                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.All;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalAllRequests), globalAllRequests), UpdateDir.Own)).ConfigureAwait(false);
+                    new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+            }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
         }
-
 
         ImGui.Separator();
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);

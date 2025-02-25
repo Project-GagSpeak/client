@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Services;
@@ -95,7 +95,7 @@ public class RemotePersonal : RemoteBase
             var spinArrow = _uiShared.GetImageFromDirectoryFile("RequiredImages\\arrowspin.png");
             if (spinArrow is { } wrap)
             {
-                Vector4 buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("LoopButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
@@ -111,7 +111,7 @@ public class RemotePersonal : RemoteBase
             var circlesDot = _uiShared.GetImageFromDirectoryFile("RequiredImages\\circledot.png");
             if (circlesDot is { } wrap2)
             {
-                Vector4 buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("FloatButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
@@ -127,7 +127,7 @@ public class RemotePersonal : RemoteBase
             var power = _uiShared.GetImageFromDirectoryFile("RequiredImages\\power.png");
             if (power is { } wrap3)
             {
-                Vector4 buttonColor3 = RemoteOnline ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor3 = RemoteOnline ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
                 if (_uiShared.DrawScaledCenterButtonImage("PowerToggleButton"+ WindowBaseName, new Vector2(50, 50),
                     buttonColor3, new Vector2(40, 40), wrap3))

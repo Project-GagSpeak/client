@@ -2,6 +2,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 

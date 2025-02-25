@@ -5,6 +5,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
@@ -24,7 +25,7 @@ namespace GagSpeak.PlayerState.Listener;
 /// <remarks> The Listener is unique in that it can access both the active VisualState, and the Appliers for them.</remarks>
 public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService   _mainConfig;
+    private readonly GagspeakConfigService _mainConfig;
     private readonly PairManager             _pairs;
     private readonly IpcManager              _interop;
     private readonly RestraintManager        _restraints;

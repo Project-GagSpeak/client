@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
@@ -21,6 +22,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using FAI = Dalamud.Interface.FontAwesomeIcon;
 
 
 namespace GagSpeak.UI;
@@ -197,6 +199,24 @@ public partial class UiSharedService
         ImGui.TextUnformatted(text);
     }
 
+    /// <summary> Displays colored text based on the boolean value of true or false. </summary>
+    public static void ColorTextBool(string text, bool value)
+    {
+        var color = value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed;
+        ColorText(text, color);
+    }
+
+    /// <summary> Displays colored text based on the boolean value of true or false. </summary>
+    /// <remarks> Can provide custom colors if desired. </remarks>
+    public static void ColorTextBool(string text, bool value, Vector4 colorTrue = default, Vector4 colorFalse = default)
+    {
+        var color = value
+            ? (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue
+            : (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse;
+
+        ColorText(text, color);
+    }
+
     public static void ColorTextCentered(string text, Vector4 color)
     {
         var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
@@ -285,7 +305,7 @@ public partial class UiSharedService
         return vector2.X + ImGui.GetStyle().FramePadding.X * 2f;
     }
 
-    public float GetIconTextButtonSize(FontAwesomeIcon icon, string text)
+    public float GetIconTextButtonSize(FAI icon, string text)
     {
         Vector2 vector;
         using (_fonts.IconFont.Push())
@@ -380,7 +400,7 @@ public partial class UiSharedService
 
 
     /// <summary> The additional param for an ID is optional. if not provided, the id will be the text. </summary>
-    public bool IconButton(FontAwesomeIcon icon, float? height = null, string? id = null, bool disabled = false, bool inPopup = false)
+    public bool IconButton(FAI icon, float? height = null, string? id = null, bool disabled = false, bool inPopup = false)
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
         var num = 0;
@@ -414,7 +434,7 @@ public partial class UiSharedService
         return result && !disabled;
     }
 
-    private bool IconTextButtonInternal(FontAwesomeIcon icon, string text, Vector4? defaultColor = null, float? width = null, bool disabled = false, string id = "")
+    private bool IconTextButtonInternal(FAI icon, string text, Vector4? defaultColor = null, float? width = null, bool disabled = false, string id = "")
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
         var num = 0;
@@ -450,7 +470,7 @@ public partial class UiSharedService
         return result && !disabled;
     }
 
-    public bool IconTextButton(FontAwesomeIcon icon, string text, float? width = null, bool isInPopup = false, bool disabled = false, string id = "Identifier")
+    public bool IconTextButton(FAI icon, string text, float? width = null, bool isInPopup = false, bool disabled = false, string id = "Identifier")
     {
         return IconTextButtonInternal(icon, text,
             isInPopup ? new Vector4(1.0f, 1.0f, 1.0f, 0.0f) : null,
@@ -458,7 +478,7 @@ public partial class UiSharedService
             disabled, id);
     }
 
-    private bool IconSliderFloatInternal(string id, FontAwesomeIcon icon, string label, ref float valueRef, float min,
+    private bool IconSliderFloatInternal(string id, FAI icon, string label, ref float valueRef, float min,
         float max, Vector4? defaultColor = null, float? width = null, bool disabled = false, string format = "%.1f")
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
@@ -497,7 +517,7 @@ public partial class UiSharedService
         return result && !disabled;
     }
 
-    public bool IconSliderFloat(string id, FontAwesomeIcon icon, string label, ref float valueRef,
+    public bool IconSliderFloat(string id, FAI icon, string label, ref float valueRef,
         float min, float max, float? width = null, bool isInPopup = false, bool disabled = false)
     {
         return IconSliderFloatInternal(id, icon, label, ref valueRef, min, max,
@@ -506,7 +526,7 @@ public partial class UiSharedService
             disabled);
     }
 
-    private bool IconInputTextInternal(string id, FontAwesomeIcon icon, string label, string hint, ref string inputStr,
+    private bool IconInputTextInternal(string id, FAI icon, string label, string hint, ref string inputStr,
         uint maxLength, Vector4? defaultColor = null, float? width = null, bool disabled = false)
     {
         using var dis = ImRaii.PushStyle(ImGuiStyleVar.Alpha, disabled ? 0.5f : 1f);
@@ -545,7 +565,7 @@ public partial class UiSharedService
         return result && !disabled;
     }
 
-    public bool IconInputText(string id, FontAwesomeIcon icon, string label, string hint, ref string inputStr,
+    public bool IconInputText(string id, FAI icon, string label, string hint, ref string inputStr,
         uint maxLength, float? width = null, bool isInPopup = false, bool disabled = false)
     {
         return IconInputTextInternal(id, icon, label, hint, ref inputStr, maxLength,
@@ -774,22 +794,15 @@ public partial class UiSharedService
         return result;
     }
 
-    public void BooleanToColoredIcon(bool value, bool inline = true,
-        FontAwesomeIcon trueIcon = FontAwesomeIcon.Check, FontAwesomeIcon falseIcon = FontAwesomeIcon.Times, Vector4 colorTrue = default, Vector4 colorFalse = default)
+    public void BooleanToColoredIcon(bool value, bool inline = true, FAI trueIcon = FAI.Check, FAI falseIcon = FAI.Times, Vector4 colorTrue = default, Vector4 colorFalse = default)
     {
-        using var colorgreen = ImRaii.PushColor(ImGuiCol.Text, (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue, value);
-        using var colorred = ImRaii.PushColor(ImGuiCol.Text, (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse, !value);
-
-        if (inline) ImGui.SameLine();
+        if (inline)
+            ImGui.SameLine();
 
         if (value)
-        {
-            IconText(trueIcon);
-        }
+            using (ImRaii.PushColor(ImGuiCol.Text, (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue)) IconText(trueIcon);
         else
-        {
-            IconText(falseIcon);
-        }
+            using (ImRaii.PushColor(ImGuiCol.Text, (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse)) IconText(falseIcon);
     }
 
     public void DrawCombo<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
@@ -1115,14 +1128,14 @@ public partial class UiSharedService
         if (inner) { ImUtf8.SameLineInner(); }
         else { ImGui.SameLine(); }
         var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
-        IconText(FontAwesomeIcon.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        IconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
         AttachToolTip(helpText);
     }
 
     public bool DrawOtherPluginState()
     {
-        var check = FontAwesomeIcon.Check;
-        var cross = FontAwesomeIcon.SquareXmark;
+        var check = FAI.Check;
+        var cross = FAI.SquareXmark;
         ImGui.TextUnformatted(GSLoc.Settings.OptionalPlugins);
 
         ImGui.SameLine();
@@ -1160,24 +1173,24 @@ public partial class UiSharedService
         return true;
     }
 
-    public Vector2 GetIconButtonSize(FontAwesomeIcon icon)
+    public Vector2 GetIconButtonSize(FAI icon)
     {
         using var font = _fonts.IconFont.Push();
         return ImGuiHelpers.GetButtonSize(icon.ToIconString());
     }
 
-    public Vector2 GetIconData(FontAwesomeIcon icon)
+    public Vector2 GetIconData(FAI icon)
     {
         using var font = _fonts.IconFont.Push();
         return ImGui.CalcTextSize(icon.ToIconString());
     }
 
-    public void IconText(FontAwesomeIcon icon, uint color)
+    public void IconText(FAI icon, uint color)
     {
         FontText(icon.ToIconString(), _fonts.IconFont, color);
     }
 
-    public void IconText(FontAwesomeIcon icon, Vector4? color = null)
+    public void IconText(FAI icon, Vector4? color = null)
     {
         IconText(icon, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
     }
@@ -1246,20 +1259,20 @@ public partial class UiSharedService
         };
     }
 
-    public FontAwesomeIcon GetServerStateIcon(ServerState state)
+    public FAI GetServerStateIcon(ServerState state)
     {
         return state switch
         {
-            ServerState.Connecting => FontAwesomeIcon.SatelliteDish,
-            ServerState.Reconnecting => FontAwesomeIcon.SatelliteDish,
-            ServerState.Connected => FontAwesomeIcon.Link,
-            ServerState.Disconnected => FontAwesomeIcon.Unlink,
-            ServerState.Disconnecting => FontAwesomeIcon.SatelliteDish,
-            ServerState.Unauthorized => FontAwesomeIcon.Shield,
-            ServerState.VersionMisMatch => FontAwesomeIcon.Unlink,
-            ServerState.Offline => FontAwesomeIcon.Signal,
-            ServerState.NoSecretKey => FontAwesomeIcon.Key,
-            _ => FontAwesomeIcon.ExclamationTriangle
+            ServerState.Connecting => FAI.SatelliteDish,
+            ServerState.Reconnecting => FAI.SatelliteDish,
+            ServerState.Connected => FAI.Link,
+            ServerState.Disconnected => FAI.Unlink,
+            ServerState.Disconnecting => FAI.SatelliteDish,
+            ServerState.Unauthorized => FAI.Shield,
+            ServerState.VersionMisMatch => FAI.Unlink,
+            ServerState.Offline => FAI.Signal,
+            ServerState.NoSecretKey => FAI.Key,
+            _ => FAI.ExclamationTriangle
         };
     }
 

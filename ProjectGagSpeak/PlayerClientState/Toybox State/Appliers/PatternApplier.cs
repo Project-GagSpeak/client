@@ -1,4 +1,5 @@
 using GagSpeak.PlayerState.Models;
+using GagSpeak.Services.Configs;
 using GagSpeak.Toybox.Services;
 using GagspeakAPI.Data.Character;
 

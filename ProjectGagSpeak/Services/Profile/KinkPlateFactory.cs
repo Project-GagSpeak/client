@@ -1,5 +1,3 @@
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;

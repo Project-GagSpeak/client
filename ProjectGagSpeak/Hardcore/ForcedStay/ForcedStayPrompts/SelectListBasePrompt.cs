@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.Hardcore.ForcedStay;
 public abstract class SetupSelectListPrompt : BasePrompt

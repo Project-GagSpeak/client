@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -29,40 +30,40 @@ public partial class PairStickyUI
         // draw the common client functions
         DrawCommonClientMenu();
 
-        if (StickyPair != null && StickyPair.IsOnline)
+        if (SPair != null && SPair.IsOnline)
         {
             // Online Pair Actions
-            if (StickyPair.LastGagData != null)
+            if (SPair.LastGagData != null)
             {
                 ImGui.TextUnformatted("Gag Actions");
                 DrawGagActions();
             }
-            else if (StickyPair.LastRestrictionsData != null)
+            else if (SPair.LastRestrictionsData != null)
             {
                 ImGui.TextUnformatted("Restrictions Actions");
                 // DrawRestrictionsActions();
             }
-            else if (StickyPair.LastRestraintData != null)
+            else if (SPair.LastRestraintData != null)
             {
                 ImGui.TextUnformatted("Wardrobe Actions");
                 DrawWardrobeActions();
             }
-            else if (StickyPair.LastIpcData != null && StickyPair.IsVisible)
+            else if (SPair.LastIpcData != null && SPair.IsVisible)
             {
                 ImGui.TextUnformatted("Moodles Actions");
                 DrawMoodlesActions();
             }
-            else if (StickyPair.LastToyboxData != null)
+            else if (SPair.LastToyboxData != null)
             {
                 ImGui.TextUnformatted("Toybox Actions");
                 DrawToyboxActions();
             }
-            else if (StickyPair.PairPerms.InHardcore)
+            else if (SPair.PairPerms.InHardcore)
             {
                 ImGui.TextUnformatted("Hardcore Actions");
                 DrawHardcoreActions();
             }
-            else if (StickyPair.PairPerms.InHardcore && (UniqueShockCollarPermsExist() || GlobalShockCollarPermsExist()))
+            else if (SPair.PairPerms.InHardcore && (UniqueShockCollarPermsExist() || GlobalShockCollarPermsExist()))
             {
                 ImGui.TextUnformatted("Hardcore Shock Collar Actions.");
                 DrawHardcoreShockCollarActions();
@@ -74,48 +75,48 @@ public partial class PairStickyUI
         DrawIndividualMenu();
     }
 
-    private bool UniqueShockCollarPermsExist() => !StickyPair.PairPerms.HasValidShareCode();
-    private bool GlobalShockCollarPermsExist() => !StickyPair.PairGlobals.HasValidShareCode();
+    private bool UniqueShockCollarPermsExist() => !SPair.PairPerms.HasValidShareCode();
+    private bool GlobalShockCollarPermsExist() => !SPair.PairGlobals.HasValidShareCode();
 
     private void DrawCommonClientMenu()
     {
-        if (!StickyPair.IsPaused)
+        if (!SPair.IsPaused)
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
+            if (_ui.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
             {
-                Mediator.Publish(new KinkPlateOpenStandaloneMessage(StickyPair));
+                Mediator.Publish(new KinkPlateOpenStandaloneMessage(SPair));
                 ImGui.CloseCurrentPopup();
             }
             UiSharedService.AttachToolTip("Opens the profile for this user in a new window");
         }
 
-        if (!StickyPair.IsPaused)
+        if (!SPair.IsPaused)
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PairNickOrAliasOrUID +"'s KinkPlate", WindowMenuWidth, true))
+            if (_ui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermActData.DispName +"'s KinkPlate", WindowMenuWidth, true))
             {
                 ImGui.CloseCurrentPopup();
-                Mediator.Publish(new ReportKinkPlateMessage(StickyPair.UserData));
+                Mediator.Publish(new ReportKinkPlateMessage(SPair.UserData));
             }
-            UiSharedService.AttachToolTip("Snapshot "+ PairNickOrAliasOrUID+"'s KinkPlate and send it as a reported profile.");
+            UiSharedService.AttachToolTip("Snapshot "+ PermActData.DispName+"'s KinkPlate and send it as a reported profile.");
         }
 
-        if (StickyPair.IsOnline)
+        if (SPair.IsOnline)
         {
-            var pauseIcon = OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
-            var pauseText = OwnPerms.IsPaused ? "Unpause " + PairNickOrAliasOrUID : "Pause " + PairNickOrAliasOrUID;
-            if (_uiShared.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
+            var pauseIcon = SPair.OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
+            var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermActData.DispName : "Pause " + PermActData.DispName;
+            if (_ui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
-                _hub.UserUpdateOwnPairPerm(new(StickyPair.UserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>("IsPaused", !OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
+                _hub.UserUpdateOwnPairPerm(new(SPair.UserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>("IsPaused", !SPair.OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
             }
-            UiSharedService.AttachToolTip(!OwnPerms.IsPaused
-                ? "Pause pairing with " + PairNickOrAliasOrUID : "Resume pairing with " + PairNickOrAliasOrUID);
+            UiSharedService.AttachToolTip(!SPair.OwnPerms.IsPaused
+                ? "Pause pairing with " + PermActData.DispName : "Resume pairing with " + PermActData.DispName);
         }
-        if (StickyPair.IsVisible)
+        if (SPair.IsVisible)
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Reload IPC data", WindowMenuWidth, true))
+            if (_ui.IconTextButton(FontAwesomeIcon.Sync, "Reload IPC data", WindowMenuWidth, true))
             {
-                StickyPair.ApplyLastIpcData(forced: true);
+                SPair.ApplyLastIpcData(forced: true);
                 ImGui.CloseCurrentPopup();
             }
             UiSharedService.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
@@ -126,8 +127,8 @@ public partial class PairStickyUI
 
     private void DrawIndividualMenu()
     {
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
-            _hub.UserRemovePair(new(StickyPair.UserData)).ConfigureAwait(false);
-        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PairNickOrAliasOrUID);
+        if (_ui.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
+            _hub.UserRemovePair(new(SPair.UserData)).ConfigureAwait(false);
+        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermActData.DispName);
     }
 }

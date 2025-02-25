@@ -3,6 +3,7 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.Services.Configs;
 using GagSpeak.Utils;
 using System.Runtime.InteropServices;
 using ValType = FFXIVClientStructs.FFXIV.Component.GUI;

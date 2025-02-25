@@ -1,5 +1,5 @@
 using Buttplug.Client;
-using GagSpeak.Toybox.Data;
+using GagSpeak.Toybox;
 
 namespace GagSpeak.UI;
 

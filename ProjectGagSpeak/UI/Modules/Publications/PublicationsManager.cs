@@ -21,20 +21,17 @@ using System.Globalization;
 namespace GagSpeak.UI.Publications;
 public class PublicationsManager
 {
-    private readonly VisualApplierMoodles _moodlesData;
     private readonly ShareHubService _shareHub;
     private readonly UiSharedService _uiShared;
 
-    public PublicationsManager(ILogger<PublicationsManager> logger, VisualApplierMoodles moodleData,
-        MoodleStatusMonitor monitor, FavoritesManager favorites, PatternManager patterns,
-        ShareHubService shareHub, UiSharedService uiShared)
+    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleStatusMonitor monitor, FavoritesManager favorites,
+        PatternManager patterns, ShareHubService shareHub, UiSharedService uiShared)
     {
-        _moodlesData = moodleData;
         _shareHub = shareHub;
         _uiShared = uiShared;
 
         _patternCombo = new PatternCombo(patterns, favorites, uiShared, logger);
-        _statusCombo = new MoodleStatusCombo(1.5f, moodleData.LatestIpcData, monitor, logger);
+        _statusCombo = new MoodleStatusCombo(1.5f, VisualApplierMoodles.LatestIpcData, monitor, logger);
     }
 
     private string _authorName = string.Empty;
@@ -116,7 +113,7 @@ public class PublicationsManager
     public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (_moodlesData.LatestIpcData is null)
+        if (VisualApplierMoodles.LatestIpcData is null)
         {
             UiSharedService.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }

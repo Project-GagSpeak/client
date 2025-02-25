@@ -47,6 +47,8 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
 
     public ConfigFileProvider(GagspeakMediator mediator, IDalamudPluginInterface pi)
     {
+        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
+
         Mediator = mediator;
 
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
@@ -72,11 +74,7 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
 
         Mediator.Subscribe<DalamudLogoutMessage>(this, (msg) =>
         {
-            PerPlayerConfigsInitialized = false;
-            if (_accountConfigLoadTask is not null)
-                _accountConfigLoadTask.Wait();
-            // assign the task.
-            _accountConfigLoadTask = Task.Run(() => UpdateUserUID(null));
+            ClearUidConfigs();
         });
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
@@ -106,6 +104,15 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
 
     // If this is not true, we should not be saving our configs anyways.
     public bool PerPlayerConfigsInitialized { get; private set; } = false;
+
+    public void ClearUidConfigs()
+    {
+        PerPlayerConfigsInitialized = false;
+        if (_accountConfigLoadTask is not null)
+            _accountConfigLoadTask.Wait();
+        // assign the task.
+        _accountConfigLoadTask = Task.Run(() => UpdateUserUID(null));
+    }
 
     private void UpdateUserUID(string? uid)
     {

@@ -2,10 +2,10 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.Services.Configs;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Classes;
@@ -19,12 +19,6 @@ public class SettingsHardcore
     private readonly GagspeakConfigService _clientConfigs;
     private readonly GlobalData _globals;
     private readonly UiSharedService _uiShared;
-
-    private const float ComboWidth = 200;
-    private Vector2 IconSize;
-    private float ComboLength;
-    private readonly GameItemCombo[] GameItemCombo;
-    private readonly GameStainCombo StainCombo;
 
     public SettingsHardcore(ILogger<SettingsHardcore> logger, GagspeakConfigService config,
         GlobalData globals, UiSharedService ui)

@@ -1,4 +1,5 @@
 using Dalamud.Plugin;
+using GagSpeak.Services.Configs;
 using System.Text.RegularExpressions;
 
 // This file has no current use, but is here for any potential future implementations of the IPA parser.

@@ -10,16 +10,12 @@ using Lumina.Excel.Sheets;
 namespace GagSpeak.UI.Components;
 public class MoodleDrawer
 {
-    private readonly VisualApplierMoodles _moodles;
     private readonly UiSharedService _uiShared;
 
-    public MoodleDrawer(VisualApplierMoodles moodles, UiSharedService uiShared)
+    public MoodleDrawer(UiSharedService uiShared)
     {
-        _moodles = moodles;
         _uiShared = uiShared;
     }
-
-    public CharaIPCData CurrentIpc => _moodles.LatestIpcData;
 
     public void thing()
     {

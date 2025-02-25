@@ -154,7 +154,7 @@ public static class ChatChannel
     };
 
     // Get a commands list for given channelList(config) and add extra space for matching to avoid matching emotes.
-    public static List<string> GetChatChannelsListAliases(this IEnumerable<Channels> chatChannelsList)
+/*    public static List<string> GetChatChannelsListAliases(this IEnumerable<Channels> chatChannelsList)
     {
         var result = new List<string>();
         foreach (Channels chatChannel in chatChannelsList)
@@ -163,12 +163,27 @@ public static class ChatChannel
         }
         StaticLogger.Logger.LogDebug($"ChatChannelsListAliases: {string.Join(", ", result)}");
         return result;
+    }*/
+
+    public static List<string> GetChatChannelsListAliases(this int chatChannelsBitfield)
+    {
+        var result = new List<string>();
+
+        foreach (Channels channel in Enum.GetValues(typeof(Channels)))
+            if (channel.IsChannelEnabled(chatChannelsBitfield))
+                result.AddRange(channel.GetChannelAlias().Select(str => str + " "));
+
+        StaticLogger.Logger.LogDebug($"ChatChannelsListAliases (Bitfield): {string.Join(", ", result)}");
+        return result;
     }
 
     // see if the passed in alias is present as an alias in any of our existing channels
-    public static bool IsAliasForAnyActiveChannel(this IEnumerable<Channels> enabledChannels, string alias)
+    public static bool IsAliasForAnyActiveChannel(this int chatChannelsBitfield, string alias)
     {
-        return enabledChannels.Any(channel => channel.GetChannelAlias().Contains(alias));
+        foreach (Channels channel in Enum.GetValues(typeof(Channels)))
+            if (channel.IsChannelEnabled(chatChannelsBitfield) && channel.GetChannelAlias().Contains(alias))
+                return true;
+        return false;
     }
 
     // get the chat channel type from the XIVChatType

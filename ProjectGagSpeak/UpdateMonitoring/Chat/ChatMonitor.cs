@@ -10,6 +10,7 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Listener;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 
