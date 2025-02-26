@@ -29,7 +29,7 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
     private readonly GlobalData _globals;
     private readonly ChatSender _chatSender;
     private readonly PuppeteerManager _manager;
-    private readonly MiscellaneousListener _listener;
+    private readonly TriggerMonitor _triggerMonitor;
     private readonly ClientMonitor _clientMonitor;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
@@ -38,14 +38,14 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
     /// <summary> This is the constructor for the OnChatMsgManager class. </summary>
     public ChatMonitor(ILogger<ChatMonitor> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, GlobalData globals, ChatSender chatSender,
-        PuppeteerManager manager, MiscellaneousListener puppeteer, ClientMonitor client, 
+        PuppeteerManager manager, TriggerMonitor triggerMonitor, ClientMonitor client, 
         DeathRollService deathRolls, IChatGui chat) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _globals = globals;
         _chatSender = chatSender;
         _manager = manager;
-        _listener = puppeteer;
+        _triggerMonitor = triggerMonitor;
         _clientMonitor = client;
         _deathRolls = deathRolls;
         _chat = chat;
@@ -142,18 +142,19 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
         // check for global puppeteer triggers
         var globalTriggers = _globals.GlobalPerms.TriggerPhrase.Split('|').ToList();
         if (IsValidTriggerWord(globalTriggers, message, out var globalMatch))
-            if (_listener.ExecuteGlobalTrigger(globalMatch, message, _globals.GlobalPerms.PuppetPerms))
-                return; // early return to prevent double trigger call.
-
-        // check for puppeteer pair triggers
-        if (_manager.TryGetListenerPairPerms(senderName, senderWorld, out var pair))
         {
-            var triggers = pair.OwnPerms.TriggerPhrase.Split('|').ToList();
-            if (IsValidTriggerWord(triggers, message, out var pairMatch))
+            _triggerMonitor.ExecuteGlobalTrigger(globalMatch, message, _globals.GlobalPerms.PuppetPerms);
+        }
+        else // Yes this is intentionally not an else if to prevent double calls.
+        {
+            if (_manager.TryGetListenerPairPerms(senderName, senderWorld, out var pair))
             {
-                // log success
-                Logger.LogInformation(senderName + " used your pair trigger phrase to make you execute a message!");
-                _listener.ExecutePairTrigger(pairMatch, message, pair.UserData.UID, pair.OwnPerms);
+                var triggers = pair.OwnPerms.TriggerPhrase.Split('|').ToList();
+                if (IsValidTriggerWord(triggers, message, out var pairMatch))
+                {
+                    Logger.LogInformation(senderName + " used your pair trigger phrase to make you execute a message!");
+                    _triggerMonitor.ExecutePairTrigger(pairMatch, message, pair.UserData.UID, pair.OwnPerms);
+                }
             }
         }
     }

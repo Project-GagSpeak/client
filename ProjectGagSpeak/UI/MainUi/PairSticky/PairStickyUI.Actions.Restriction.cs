@@ -21,14 +21,14 @@ public partial class PairStickyUI
 
         // register display texts for the buttons.
         var applyRestrictionText = "Apply Restriction";
-        var applyRestrictionTT = "Applies a Restriction to " + PermActData.DispName + ". Click to select set.";
-        var lockRestrictionText = restrictionSlot.Padlock is Padlocks.None ? "Lock "+PermActData.DispName+"'s Restriction" : "Locked with a " + restrictionSlot.Padlock;
-        var lockRestrictionTT = restrictionSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + PermActData.DispName+ ". Click to view options." : "This Restriction is locked with a " + restrictionSlot.Padlock;
+        var applyRestrictionTT = "Applies a Restriction to " + PermissionData.DispName + ". Click to select set.";
+        var lockRestrictionText = restrictionSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Restriction" : "Locked with a " + restrictionSlot.Padlock;
+        var lockRestrictionTT = restrictionSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + PermissionData.DispName+ ". Click to view options." : "This Restriction is locked with a " + restrictionSlot.Padlock;
 
-        var unlockRestrictionText = "Unlock " + PermActData.DispName + "'s Restriction";
-        var unlockRestrictionTT = "Unlock " + PermActData.DispName + "'s Restriction. Click to view options.";
-        var removeRestrictionText = "Remove " + PermActData.DispName + "'s Restriction";
-        var removeRestrictionTT = "Remove " + PermActData.DispName + "'s Restriction. Click to view options.";
+        var unlockRestrictionText = "Unlock " + PermissionData.DispName + "'s Restriction";
+        var unlockRestrictionTT = "Unlock " + PermissionData.DispName + "'s Restriction. Click to view options.";
+        var removeRestrictionText = "Remove " + PermissionData.DispName + "'s Restriction";
+        var removeRestrictionTT = "Remove " + PermissionData.DispName + "'s Restriction. Click to view options.";
 
 
         // Expander for ApplyRestriction

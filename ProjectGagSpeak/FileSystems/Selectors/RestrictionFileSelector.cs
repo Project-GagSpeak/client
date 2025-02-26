@@ -27,8 +27,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     public new RestrictionFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public RestrictionFileSelector(RestrictionManager manager, GagspeakMediator mediator, RestrictionFileSystem fileSystem,
-        ILogger<RestrictionFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##RestrictionFileSelector")
+    public RestrictionFileSelector(ILogger<RestrictionFileSelector> log, GagspeakMediator mediator, RestrictionManager manager,
+        RestrictionFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##RestrictionFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

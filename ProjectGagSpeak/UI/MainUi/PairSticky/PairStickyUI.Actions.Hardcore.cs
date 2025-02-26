@@ -44,7 +44,7 @@ public partial class PairStickyUI
         var pairlockStates = SPair.PairPerms.PairLockedStates;
 
         var forceFollowIcon = SPair.PairGlobals.IsFollowing() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.PersonWalkingArrowRight;
-        var forceFollowText = SPair.PairGlobals.IsFollowing() ? $"Have {PermActData.DispName} stop following you." : $"Make {PermActData.DispName} follow you.";
+        var forceFollowText = SPair.PairGlobals.IsFollowing() ? $"Have {PermissionData.DispName} stop following you." : $"Make {PermissionData.DispName} follow you.";
         if (_ui.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
             var newStr = SPair.PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
@@ -54,7 +54,7 @@ public partial class PairStickyUI
         DrawForcedEmoteSection();
 
         var forceToStayIcon = SPair.PairGlobals.IsStaying() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.HouseLock;
-        var forceToStayText = SPair.PairGlobals.IsStaying() ? $"Release {PermActData.DispName}." : $"Lock away {PermActData.DispName}.";
+        var forceToStayText = SPair.PairGlobals.IsStaying() ? $"Release {PermissionData.DispName}." : $"Lock away {PermissionData.DispName}.";
         if (_ui.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
@@ -62,7 +62,7 @@ public partial class PairStickyUI
         }
 
         var toggleChatboxIcon = SPair.PairGlobals.IsChatHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
-        var toggleChatboxText = SPair.PairGlobals.IsChatHidden() ? "Make " + PermActData.DispName + "'s Chat Visible." : "Hide "+PermActData.DispName+"'s Chat Window.";
+        var toggleChatboxText = SPair.PairGlobals.IsChatHidden() ? "Make " + PermissionData.DispName + "'s Chat Visible." : "Hide "+PermissionData.DispName+"'s Chat Window.";
         if (_ui.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
@@ -70,7 +70,7 @@ public partial class PairStickyUI
         }
 
         var toggleChatInputIcon = SPair.PairGlobals.IsChatInputHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
-        var toggleChatInputText = SPair.PairGlobals.IsChatInputHidden() ? "Make " + PermActData.DispName + "'s Chat Input Visible." : "Hide "+PermActData.DispName+"'s Chat Input.";
+        var toggleChatInputText = SPair.PairGlobals.IsChatInputHidden() ? "Make " + PermissionData.DispName + "'s Chat Input Visible." : "Hide "+PermissionData.DispName+"'s Chat Input.";
         if (_ui.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
@@ -78,7 +78,7 @@ public partial class PairStickyUI
         }
 
         var toggleChatBlockingIcon = SPair.PairGlobals.IsChatInputBlocked() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentDots;
-        var toggleChatBlockingText = SPair.PairGlobals.IsChatInputBlocked() ? "Reallow "+PermActData.DispName+"'s Chat Input." : "Block "+PermActData.DispName+"'s Chat Input.";
+        var toggleChatBlockingText = SPair.PairGlobals.IsChatInputBlocked() ? "Reallow "+PermissionData.DispName+"'s Chat Input." : "Block "+PermissionData.DispName+"'s Chat Input.";
         if (_ui.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
@@ -96,19 +96,19 @@ public partial class PairStickyUI
         if(!SPair.PairGlobals.ForcedEmoteState.NullOrEmpty())
         {
             //////////////////// DRAW OUT FOR STOPPING FORCED EMOTE HERE /////////////////////
-            if (_ui.IconTextButton(FontAwesomeIcon.StopCircle, "Let "+PermActData.DispName+" move again.", WindowMenuWidth, true, id: "##ForcedToStayHardcoreAction"))
+            if (_ui.IconTextButton(FontAwesomeIcon.StopCircle, "Let "+PermissionData.DispName+" move again.", WindowMenuWidth, true, id: "##ForcedToStayHardcoreAction"))
                 _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", string.Empty), UpdateDir.Other));
         }
         else
         {
             var forceEmoteIcon = SPair.PairPerms.AllowForcedEmote ? FontAwesomeIcon.PersonArrowDownToLine : FontAwesomeIcon.Chair;
-            var forceEmoteText = SPair.PairPerms.AllowForcedEmote ? $"Force {PermActData.DispName} into an Emote State." : $"Force {PermActData.DispName} to Sit.";
+            var forceEmoteText = SPair.PairPerms.AllowForcedEmote ? $"Force {PermissionData.DispName} into an Emote State." : $"Force {PermissionData.DispName} to Sit.";
             //////////////////// DRAW OUT FOR FORCING EMOTE STATE HERE /////////////////////
             if (_ui.IconTextButton(forceEmoteIcon, forceEmoteText, WindowMenuWidth, true, disableForceSit && disableForceEmoteState, "##ForcedEmoteAction"))
             {
                 PairCombos.Opened = PairCombos.Opened == InteractionType.ForcedEmoteState ? InteractionType.None : InteractionType.ForcedEmoteState;
             }
-            UiSharedService.AttachToolTip("Force " + PermActData.DispName + "To Perform any Looped Emote State.");
+            UiSharedService.AttachToolTip("Force " + PermissionData.DispName + "To Perform any Looped Emote State.");
             if (PairCombos.Opened is InteractionType.ForcedEmoteState)
             {
                 using (var actionChild = ImRaii.Child("ForcedEmoteStateActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), false))
@@ -118,7 +118,7 @@ public partial class PairStickyUI
                     var width = WindowMenuWidth - ImGuiHelpers.GetButtonSize("Force State").X - ImGui.GetStyle().ItemInnerSpacing.X;
                     // Have User select the emote they want.
                     var listToShow = disableForceEmoteState ? EmoteMonitor.SitEmoteComboList : EmoteMonitor.ValidEmotes;
-                    _pairCombos.EmoteCombo.Draw("##EmoteCombo" + PermActData.DispName, WindowMenuWidth, 1.3f, ImGui.GetFrameHeightWithSpacing());
+                    _pairCombos.EmoteCombo.Draw("##EmoteCombo" + PermissionData.DispName, WindowMenuWidth, 1.3f, ImGui.GetFrameHeightWithSpacing());
                     // Only allow setting the CPose State if the emote is a sitting one.
                     using (ImRaii.Disabled(!EmoteMonitor.IsAnyPoseWithCyclePose((ushort)_pairCombos.EmoteCombo.CurrentSelection.RowId)))
                     {
@@ -132,7 +132,7 @@ public partial class PairStickyUI
                     ImUtf8.SameLineInner();
                     try
                     {
-                        if (ImGui.Button("Force State##ForceEmoteStateTo" + PermActData.DispName))
+                        if (ImGui.Button("Force State##ForceEmoteStateTo" + PermissionData.DispName))
                         {
                             // Compile the string for sending.
                             var newStr = MainHub.UID + "|" + _pairCombos.EmoteCombo.CurrentSelection.RowId.ToString() + "|" + SelectedCPose.ToString() + (SPair.PairPerms.PairLockedStates ? Globals.DevotedString : string.Empty);
@@ -163,11 +163,11 @@ public partial class PairStickyUI
         var maxVibeDuration = SPair.PairPerms.HasValidShareCode() ? SPair.PairPerms.GetTimespanFromDuration() : SPair.PairGlobals.GetTimespanFromDuration();
         var piShockShareCodePref = SPair.PairPerms.HasValidShareCode() ? SPair.PairPerms.PiShockShareCode : SPair.PairGlobals.GlobalShockShareCode;
 
-        if (_ui.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PermActData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
+        if (_ui.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ShockAction ? InteractionType.None : InteractionType.ShockAction;
         }
-        UiSharedService.AttachToolTip("Perform a Shock action to " + PermActData.DispName + "'s Shock Collar.");
+        UiSharedService.AttachToolTip("Perform a Shock action to " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.ShockAction)
         {
@@ -178,13 +178,13 @@ public partial class PairStickyUI
                 var width = WindowMenuWidth - ImGuiHelpers.GetButtonSize("Send Shock").X - ImGui.GetStyle().ItemInnerSpacing.X;
 
                 ImGui.SetNextItemWidth(WindowMenuWidth);
-                ImGui.SliderInt("##IntensitySliderRef" + PermActData.DispName, ref Intensity, 0, MaxIntensity, "%d%%", ImGuiSliderFlags.None);
+                ImGui.SliderInt("##IntensitySliderRef" + PermissionData.DispName, ref Intensity, 0, MaxIntensity, "%d%%", ImGuiSliderFlags.None);
                 ImGui.SetNextItemWidth(width);
-                ImGui.SliderFloat("##DurationSliderRef" + PermActData.DispName, ref Duration, 0.0f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
+                ImGui.SliderFloat("##DurationSliderRef" + PermissionData.DispName, ref Duration, 0.0f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
                 ImUtf8.SameLineInner();
                 try
                 {
-                    if (ImGui.Button("Send Shock##SendShockToShockCollar" + PermActData.DispName))
+                    if (ImGui.Button("Send Shock##SendShockToShockCollar" + PermissionData.DispName))
                     {
                         int newMaxDuration;
                         if (Duration % 1 == 0 && Duration >= 1 && Duration <= 15) { newMaxDuration = (int)Duration; }
@@ -201,11 +201,11 @@ public partial class PairStickyUI
             ImGui.Separator();
         }
 
-        if (_ui.IconTextButton(FontAwesomeIcon.WaveSquare, "Vibrate " + PermActData.DispName + "'s Shock Collar", WindowMenuWidth, true, false))
+        if (_ui.IconTextButton(FontAwesomeIcon.WaveSquare, "Vibrate " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, false))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.VibrateAction ? InteractionType.None : InteractionType.VibrateAction;
         }
-        UiSharedService.AttachToolTip("Perform a Vibrate action to " + PermActData.DispName + "'s Shock Collar.");
+        UiSharedService.AttachToolTip("Perform a Vibrate action to " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.VibrateAction)
         {
@@ -217,13 +217,13 @@ public partial class PairStickyUI
 
                 // draw a slider float that references the duration, going from 0.1f to 15f by a scaler of 0.1f that displays X.Xs
                 ImGui.SetNextItemWidth(WindowMenuWidth);
-                ImGui.SliderInt("##IntensitySliderRef" + PermActData.DispName, ref VibrateIntensity, 0, 100, "%d%%", ImGuiSliderFlags.None);
+                ImGui.SliderInt("##IntensitySliderRef" + PermissionData.DispName, ref VibrateIntensity, 0, 100, "%d%%", ImGuiSliderFlags.None);
                 ImGui.SetNextItemWidth(width);
-                ImGui.SliderFloat("##DurationSliderRef" + PermActData.DispName, ref VibeDuration, 0.0f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
+                ImGui.SliderFloat("##DurationSliderRef" + PermissionData.DispName, ref VibeDuration, 0.0f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
                 ImUtf8.SameLineInner();
                 try
                 {
-                    if (ImGui.Button("Send Vibration##SendVibrationToShockCollar" + PermActData.DispName))
+                    if (ImGui.Button("Send Vibration##SendVibrationToShockCollar" + PermissionData.DispName))
                     {
                         int newMaxDuration;
                         if (VibeDuration % 1 == 0 && VibeDuration >= 1 && VibeDuration <= 15) { newMaxDuration = (int)VibeDuration; }
@@ -239,11 +239,11 @@ public partial class PairStickyUI
             ImGui.Separator();
         }
 
-        if (_ui.IconTextButton(FontAwesomeIcon.LandMineOn, "Beep " + PermActData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowBeeps))
+        if (_ui.IconTextButton(FontAwesomeIcon.LandMineOn, "Beep " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowBeeps))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.BeepAction ? InteractionType.None : InteractionType.BeepAction;
         }
-        UiSharedService.AttachToolTip("Beep " + PermActData.DispName + "'s Shock Collar.");
+        UiSharedService.AttachToolTip("Beep " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.BeepAction)
         {
@@ -255,11 +255,11 @@ public partial class PairStickyUI
 
                 // draw a slider float that references the duration, going from 0.1f to 15f by a scaler of 0.1f that displays X.Xs
                 ImGui.SetNextItemWidth(width);
-                ImGui.SliderFloat("##DurationSliderRef" + PermActData.DispName, ref VibeDuration, 0.1f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
+                ImGui.SliderFloat("##DurationSliderRef" + PermissionData.DispName, ref VibeDuration, 0.1f, ((float)maxVibeDuration.TotalMilliseconds / 1000f), "%.1fs", ImGuiSliderFlags.None);
                 ImUtf8.SameLineInner();
                 try
                 {
-                    if (ImGui.Button("Send Beep##SendBeepToShockCollar" + PermActData.DispName))
+                    if (ImGui.Button("Send Beep##SendBeepToShockCollar" + PermissionData.DispName))
                     {
                         int newMaxDuration;
                         if (VibeDuration % 1 == 0 && VibeDuration >= 1 && VibeDuration <= 15) { newMaxDuration = (int)VibeDuration; }

@@ -17,20 +17,20 @@ public partial class PairStickyUI
         if (lastToyboxData is null || lastLightStorage is null)
             return;
 
-        var createRemoteText = "Create Vibe Remote with " + PermActData.DispName;
-        var createRemoteTT = "Open a Remote UI that let's you control " + PermActData.DispName + "'s Toys.";
+        var createRemoteText = "Create Vibe Remote with " + PermissionData.DispName;
+        var createRemoteTT = "Open a Remote UI that let's you control " + PermissionData.DispName + "'s Toys.";
 
-        var executePatternText = "Activate " + PermActData.DispName + "'s Patterns";
-        var executePatternTT = "Play one of " + PermActData.DispName + "'s patterns to their active Toy.";
+        var executePatternText = "Activate " + PermissionData.DispName + "'s Patterns";
+        var executePatternTT = "Play one of " + PermissionData.DispName + "'s patterns to their active Toy.";
 
-        var stopPatternText = "Stop " + PermActData.DispName + "'s Active Pattern";
-        var stopPatternTT = "Halt the active pattern on " + PermActData.DispName + "'s Toy";
+        var stopPatternText = "Stop " + PermissionData.DispName + "'s Active Pattern";
+        var stopPatternTT = "Halt the active pattern on " + PermissionData.DispName + "'s Toy";
 
-        var toggleAlarmText = "Toggle " + PermActData.DispName + "'s Alarms";
-        var toggleAlarmTT = "Switch the state of " + PermActData.DispName + "'s Alarms.";
+        var toggleAlarmText = "Toggle " + PermissionData.DispName + "'s Alarms";
+        var toggleAlarmTT = "Switch the state of " + PermissionData.DispName + "'s Alarms.";
 
-        var toggleTriggerText = "Toggle " + PermActData.DispName + "'s Triggers";
-        var toggleTriggerTT = "Toggle the state of a trigger in " + PermActData.DispName + "'s triggerList.";
+        var toggleTriggerText = "Toggle " + PermissionData.DispName + "'s Triggers";
+        var toggleTriggerTT = "Toggle the state of a trigger in " + PermissionData.DispName + "'s triggerList.";
 
 
         var openVibeRemoteDisabled = !SPair.PairPerms.RemoteControlAccess;
@@ -44,7 +44,7 @@ public partial class PairStickyUI
         if (_ui.IconTextButton(FontAwesomeIcon.Mobile, createRemoteText, WindowMenuWidth, true, openVibeRemoteDisabled))
         {
             // open a new private hosted room between the two of you automatically.
-            _logger.LogDebug("Vibe Remote instance button pressed for " + PermActData.DispName);
+            _logger.LogDebug("Vibe Remote instance button pressed for " + PermissionData.DispName);
         }
         UiSharedService.AttachToolTip(createRemoteTT);
 
@@ -59,7 +59,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.StartPattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.PatternCombo.DrawComboButton("##ExecutePattern" + PermActData.DispName, "Execute a Pattern", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.PatternCombo.DrawComboButton("##ExecutePattern" + PermissionData.DispName, "Execute a Pattern", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -74,7 +74,7 @@ public partial class PairStickyUI
             };
             _hub.UserPushPairDataToybox(dto).ConfigureAwait(false);
             PairCombos.Opened = InteractionType.None;
-            _logger.LogDebug("Stopped active Pattern running on " + PermActData.DispName + "'s toy", LoggerType.Permissions);
+            _logger.LogDebug("Stopped active Pattern running on " + PermissionData.DispName + "'s toy", LoggerType.Permissions);
         }
         UiSharedService.AttachToolTip(stopPatternTT);
 
@@ -87,7 +87,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ToggleAlarm)
         {
             using (ImRaii.Child("AlarmToggle", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.AlarmToggleCombo.DrawComboButton("##ToggleAlarm" + PermActData.DispName, "Toggle an Alarm", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.AlarmToggleCombo.DrawComboButton("##ToggleAlarm" + PermissionData.DispName, "Toggle an Alarm", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
             ImGui.Separator();
         }
 
@@ -100,7 +100,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ToggleTrigger)
         {
             using (ImRaii.Child("TriggerToggle", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.TriggerToggleCombo.DrawComboButton("##ToggleTrigger" + PermActData.DispName, "Toggle a Trigger", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.TriggerToggleCombo.DrawComboButton("##ToggleTrigger" + PermissionData.DispName, "Toggle a Trigger", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
         }
 
         ImGui.Separator();

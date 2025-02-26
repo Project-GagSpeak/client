@@ -26,8 +26,8 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     public new PatternFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public PatternFileSelector(PatternManager manager, GagspeakMediator mediator, PatternFileSystem fileSystem, 
-        ILogger<PatternFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##PatternFileSelector")
+    public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, PatternManager manager,
+        PatternFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##PatternFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

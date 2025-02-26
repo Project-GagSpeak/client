@@ -14,9 +14,9 @@ using OtterGui.Text;
 
 namespace GagSpeak.UI;
 
-public class AccountsTab
+public class AccountManagerTab
 {
-    private readonly ILogger<AccountsTab> _logger;
+    private readonly ILogger<AccountManagerTab> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
     private readonly GagspeakConfigService _mainConfig;
@@ -28,7 +28,7 @@ public class AccountsTab
     private bool DeleteAccountConfirmation = false;
     private int ShowKeyIdx = -1;
     private int EditingIdx = -1;
-    public AccountsTab(ILogger<AccountsTab> logger, GagspeakMediator mediator, MainHub hub,
+    public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator, MainHub hub,
         GagspeakConfigService mainConfig, ServerConfigurationManager serverConfigs,
         ConfigFileProvider configDirectory, ClientMonitor clientMonitor, UiSharedService uiShared)
     {

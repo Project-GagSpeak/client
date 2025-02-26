@@ -25,7 +25,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     private readonly HubFactory _hubFactory;
     private readonly VisualStateListener _visualListener;
     private readonly ToyboxStateListener _kinkListener;
-    private readonly MiscellaneousListener _miscListener;
+    private readonly PuppeteerListener _puppetListener;
     private readonly PairManager _pairs;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly GagspeakConfigService _mainConfig;
@@ -46,7 +46,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         HubFactory hubFactory,
         VisualStateListener visualListener,
         ToyboxStateListener kinkListener,
-        MiscellaneousListener miscListener,
+        PuppeteerListener puppetListener,
         PairManager pairs,
         ServerConfigurationManager serverConfigs,
         GagspeakConfigService mainConfig)
@@ -59,7 +59,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         _mainConfig = mainConfig;
         _visualListener = visualListener;
         _kinkListener = kinkListener;
-        _miscListener = miscListener;
+        _puppetListener = puppetListener;
 
         // Create our CTS for the hub connection
         HubConnectionCTS = new CancellationTokenSource();

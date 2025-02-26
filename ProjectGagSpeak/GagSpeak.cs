@@ -6,6 +6,8 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GagSpeak.Achievements;
 using GagSpeak.Achievements.Services;
+using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.FileSystems;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.Interop;
@@ -18,9 +20,12 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.PlayerData.Storage;
+using GagSpeak.PlayerState.Controllers;
 using GagSpeak.PlayerState.Listener;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.RestraintSets;
+using GagSpeak.Restrictions;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Events;
@@ -28,9 +33,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.StateManagers;
-using GagSpeak.Toybox;
 using GagSpeak.Toybox.Services;
 using GagSpeak.Toybox.SimulatedVibe;
+using GagSpeak.Triggers;
 using GagSpeak.UI;
 using GagSpeak.UI.Components;
 using GagSpeak.UI.Components.Combos;
@@ -53,23 +58,20 @@ using GagSpeak.UpdateMonitoring.SpatialAudio.Loaders;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Spawner;
 using GagSpeak.UpdateMonitoring.Triggers;
+using GagSpeak.VibeLobby;
 using GagSpeak.WebAPI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OtterGui.Log;
 using Penumbra.GameData.Data;
+using Penumbra.GameData.DataContainers;
 
 namespace GagSpeak;
 
 public sealed class GagSpeak : IDalamudPlugin
 {
     private readonly IHost _host;  // the host builder for the plugin instance. (What makes everything work)
-
-    // This is useful for classes that should be static for for reasons out of my control are not.
-    // A little hack workaround for dealing with things like Glamourer's ItemData not being static and needing
-    // to be used everywhere, even though its only created once as singleton and should behave like a static.
-    // This stores a reference to the _host, so should not be storing duplicate of the data.
-    public static IServiceProvider ServiceProvider { get; private set; }
-
+    public static Serilog.ILogger StaticDalamudLogger { get; private set; }
     public GagSpeak(IDalamudPluginInterface pi, IPluginLog pluginLog, IAddonLifecycle addonLifecycle,
         IChatGui chatGui, IClientState clientState, ICommandManager commandManager, ICondition condition,
         IContextMenu contextMenu, IDataManager dataManager, IDtrBar dtrBar, IDutyState dutyState,
@@ -77,16 +79,16 @@ public sealed class GagSpeak : IDalamudPlugin
         IKeyState keyState, INotificationManager notificationManager, IObjectTable objectTable, IPartyList partyList,
         ISigScanner sigScanner, ITargetManager targetManager, ITextureProvider textureProvider)
     {
+        StaticDalamudLogger = pluginLog.Logger;
+        StaticDalamudLogger.Warning("TESTING");
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi, pluginLog, addonLifecycle, chatGui, clientState, commandManager, condition,
             contextMenu, dataManager, dtrBar, dutyState, framework, gameGui, gameInteropProvider, controllerBinds,
             keyState, notificationManager, objectTable, partyList, sigScanner, targetManager, textureProvider);
-
-        // store the service provider for the plugin
-        ServiceProvider = _host.Services;
+        StaticDalamudLogger.Warning("TESTING 2");
 
         // start up the host
-        _ = _host.StartAsync();
+        _host.StartAsync().ConfigureAwait(false);
     }
 
     // Method that creates the host builder for the GagSpeak plugin
@@ -96,23 +98,54 @@ public sealed class GagSpeak : IDalamudPlugin
         IObjectTable ot, IPartyList plt, ISigScanner ss, ITargetManager tm, ITextureProvider tp)
     {
         // create a new host builder for the plugin
-        return new HostBuilder()
-            // get the content root for our plugin
-            .UseContentRoot(GetPluginContentRoot(pi))
-            // configure the logging for the plugin
-            .ConfigureLogging((hostContext, loggingBuilder) => GetPluginLogConfiguration(loggingBuilder, pl))
-            // get the plugin service collection for our plugin
-            .ConfigureServices((hostContext, serviceCollection) =>
-            {
-                // First, get the services added to the serviceCollection
-                serviceCollection = GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp);
-
-                // Now, check for circular dependencies
-                serviceCollection.TestForCircularDependencies();  // Call our method from earlier
-
-                // Additional configuration logic for services if needed
-            })
-            .Build();
+        var newHost = new HostBuilder();
+        StaticDalamudLogger.Warning("Testing HOSTBUILDER MADE");
+        newHost.UseContentRoot(GetPluginContentRoot(pi));
+        StaticDalamudLogger.Warning("Testing CONTENT ROOT SET");
+        StaticDalamudLogger.Warning("Testing LOG CONFIGURATION");
+        newHost.ConfigureLogging((hostContext, loggingBuilder) => GetPluginLogConfiguration(loggingBuilder, pl));
+        StaticDalamudLogger.Warning("Testing LOG CONFIGURATION SET");
+        StaticDalamudLogger.Warning("Testing SERVICE COLLECTION");
+        newHost.ConfigureServices((hostcontext, serviceCollection) =>
+        {
+            serviceCollection
+                .AddSingleton(new WindowSystem("GagSpeak"))
+                .AddSingleton<FileDialogManager>()
+                .AddSingleton(new Dalamud.Localization("GagSpeak.Localization.", "", useEmbedded: true))
+                .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
+                .AddSingleton<StaticLoggerInit>()
+                .AddSingleton<GagSpeakHost>()
+                .AddSingleton<GagspeakMediator>()
+                .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientMonitor>(), dm, fw, ot, tm))
+                .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, plt))
+                .AddSingleton<HybridSaveService>()
+                .AddSingleton((s) => new ConfigFileProvider(s.GetRequiredService<GagspeakMediator>(), pi))
+                .AddSingleton<GagspeakConfigService>()
+                .AddSingleton<ServerConfigService>()
+                .AddSingleton<NicknamesConfigService>()
+                .AddSingleton<ServerConfigurationManager>();
+            serviceCollection.ValidateDependancyInjector();
+            // For some reason this passes as valid but then blocks the installer idk why. It does it directly on the build.
+        });
+/*        newHost.ConfigureServices((hostContext, serviceCollection) =>
+        {
+            // First, get the services added to the serviceCollection
+            serviceCollection = GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp);
+            serviceCollection.TestForCircularDependencies(); // <------ USE THIS WHEN DEBUGGING CIRCULAR DEPENDANCY / SINGLETON-SCOPED ISSUES
+        });*/
+        StaticDalamudLogger.Warning("Testing SERVICE COLLECTION SET");
+        try
+        {
+            StaticDalamudLogger.Warning("Testing BUILD");
+            var hoster = newHost.Build(); // blocks installer here?
+            StaticDalamudLogger.Warning("Testing BUILD SUCCESS");
+            return hoster;
+        }
+        catch (Exception e)
+        {
+            StaticDalamudLogger.Error(e, "Error building the host.");
+            throw e;
+        }
     }
     /// <summary> Gets the folder content location to know where the config files are saved. </summary>
     private string GetPluginContentRoot(IDalamudPluginInterface pi) => pi.ConfigDirectory.FullName;
@@ -168,39 +201,40 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
         .AddSingleton<StaticLoggerInit>()
         .AddSingleton<GagSpeakHost>()
-        .AddSingleton<KinkPlateFactory>() // Make scoped???
         .AddSingleton((s) => new EventAggregator(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<EventAggregator>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>()))
         .AddSingleton((s) => new GagSpeakLoc(s.GetRequiredService<ILogger<GagSpeakLoc>>(), s.GetRequiredService<Dalamud.Localization>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<TutorialService>(), pi))
+
 
         // CkCommons
 
 
         // CustomCombos
 
-        // Chat Services
-        .AddSingleton((s) => new ChatMonitor(s.GetRequiredService<ILogger<ChatMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<ChatSender>(),
-            s.GetRequiredService<PuppeteerManager>(), s.GetRequiredService<MiscellaneousListener>(), s.GetRequiredService<ClientMonitor>(),
-            s.GetRequiredService<DeathRollService>(), cg))
-        .AddSingleton((s) => new ChatSender(ss))
-        .AddSingleton((s) => new ChatInputDetour(s.GetRequiredService<ILogger<ChatInputDetour>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagGarbler>(),
-            s.GetRequiredService<EmoteMonitor>(), s.GetRequiredService<GagRestrictionManager>(), ss, gip))
 
         // File System
+        .AddSingleton((s) => new GagRestrictionFileSelector(s.GetRequiredService<ILogger<GagRestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<GagFileSystem>(), ks))
+        .AddSingleton((s) => new RestrictionFileSelector(s.GetRequiredService<ILogger<RestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<RestrictionFileSystem>(), ks))
+        .AddSingleton((s) => new RestraintSetFileSelector(s.GetRequiredService<ILogger<RestraintSetFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<RestraintManager>(), s.GetRequiredService<RestraintSetFileSystem>(), ks))
+        .AddSingleton((s) => new CursedLootFileSelector(s.GetRequiredService<ILogger<CursedLootFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<CursedLootFileSystem>(), ks))
+        .AddSingleton((s) => new PatternFileSelector(s.GetRequiredService<ILogger<PatternFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<PatternManager>(), s.GetRequiredService<PatternFileSystem>(), ks))
+        .AddSingleton((s) => new AlarmFileSelector(s.GetRequiredService<ILogger<AlarmFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<AlarmManager>(), s.GetRequiredService<AlarmFileSystem>(), ks))
+        .AddSingleton((s) => new TriggerFileSelector(s.GetRequiredService<ILogger<TriggerFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerFileSystem>(), ks))
 
         // Hardcore
         .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ForcedStayCallback>(), alc, gip, tm))
         .AddSingleton((s) => new YesNoPrompt(s.GetRequiredService<ILogger<YesNoPrompt>>(), s.GetRequiredService<GagspeakConfigService>(), alc, tm))
         .AddSingleton((s) => new RoomSelectPrompt(s.GetRequiredService<ILogger<RoomSelectPrompt>>(), s.GetRequiredService<GagspeakConfigService>(), alc, tm))
-        .AddSingleton<SettingsHardcore>()
 
-        // Interop
-
-        // Localization
 
         // MufflerCore
         .AddSingleton((s) => new GagDataHandler(s.GetRequiredService<ILogger<GagDataHandler>>(),
@@ -210,16 +244,80 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagGarbler>()
 
 
-        // PlayerClientState
+        // Player Client State (Listener)
+        .AddSingleton((s) => new VisualStateListener(s.GetRequiredService<ILogger<VisualStateListener>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<IpcManager>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<RestraintManager>(),
+            s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<CursedLootManager>(),
+            s.GetRequiredService<ModSettingPresetManager>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<VisualApplierGlamour>(),
+            s.GetRequiredService<VisualApplierPenumbra>(), s.GetRequiredService<VisualApplierMoodles>(), s.GetRequiredService<VisualApplierCPlus>(),
+            s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<OnFrameworkService>(), pi))
+        .AddSingleton<ToyboxStateListener>()
+        .AddSingleton<PuppeteerListener>()
+        // Player Client State (Manager)
+        .AddSingleton<GagRestrictionManager>()
+        .AddSingleton<RestrictionManager>()
+        .AddSingleton<RestraintManager>()
+        .AddSingleton<CursedLootManager>()
+        .AddSingleton<PatternManager>()
+        .AddSingleton<AlarmManager>()
+        .AddSingleton<TriggerManager>()
+        .AddSingleton((s) => new ModSettingPresetManager(s.GetRequiredService<ILogger<ModSettingPresetManager>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<IpcCallerPenumbra>(), s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<HybridSaveService>(), pi))
+        .AddSingleton<PuppeteerManager>()
+        .AddSingleton<TraitsManager>()
+        // Player Client State (Applier)
+        .AddSingleton<PatternApplier>()
+        .AddSingleton<TriggerApplier>()
+        .AddSingleton<VisualApplierCPlus>()
+        .AddSingleton((s) => new VisualApplierGlamour(s.GetRequiredService<ILogger<VisualApplierGlamour>>(), s.GetRequiredService<IpcCallerGlamourer>(),
+            s.GetRequiredService<OnFrameworkService>(), gip))
+        .AddSingleton<VisualApplierMoodles>()
+        .AddSingleton<VisualApplierPenumbra>()
+        // Player Client State (Monitor)
+        .AddSingleton((s) => new CursedLootMonitor(s.GetRequiredService<ILogger<CursedLootMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
+            s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagRestrictionManager>(),
+            s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<OnFrameworkService>(), gip))
+        .AddSingleton((s) => new TriggerMonitor(s.GetRequiredService<ILogger<TriggerMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GlobalData>(),
+            s.GetRequiredService<PairManager>(), s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<PuppeteerManager>(), s.GetRequiredService<TriggerManager>(),
+            s.GetRequiredService<TriggerApplier>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<OnFrameworkService>()))
 
         // PlayerData
         .AddSingleton<GlobalData>()
+        .AddSingleton<IntifaceController>()
         .AddSingleton<GameObjectHandlerFactory>()
         .AddSingleton<PairFactory>()
         .AddSingleton<PairHandlerFactory>()
         .AddSingleton((s) => new PairManager(s.GetRequiredService<ILogger<PairManager>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<PairFactory>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(), cm))
         .AddSingleton<OnConnectedService>()
+
+
+        // Services
+        .AddSingleton<AchievementsService>()
+        .AddSingleton<SafewordService>()
+        .AddSingleton<SexToyManager>()
+        .AddSingleton((s) => new UiFontService(pi))
+        .AddSingleton<GagspeakMediator>()
+        .AddSingleton((s) => new DiscoverService(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<DiscoverService>>(),
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(),
+            s.GetRequiredService<PairManager>(), s.GetRequiredService<CosmeticService>()))
+        .AddSingleton<ShareHubService>()
+        .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
+            s.GetRequiredService<KinkPlateFactory>()))
+        .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(),
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientMonitor>(), dm, fw, ot, tm))
+        .AddSingleton((s) => new CosmeticService(s.GetRequiredService<ILogger<CosmeticService>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<OnFrameworkService>(), pi, tp))
+        .AddSingleton((s) => new NotificationService(s.GetRequiredService<ILogger<NotificationService>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagRestrictionManager>(), cg, nm))
+        .AddSingleton((s) => new DtrBarService(s.GetRequiredService<ILogger<DtrBarService>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<EventAggregator>(),
+            s.GetRequiredService<PairManager>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<ClientMonitor>(), dm, dtr))
+        .AddSingleton((s) => new DeathRollService(s.GetRequiredService<ILogger<DeathRollService>>(), s.GetRequiredService<GlobalData>(),
+            s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerApplier>(), cg))
+        .AddSingleton<FavoritesManager>()
+        .AddSingleton<ItemService>()
 
 
         // Spatial Audio (Depricated)
@@ -232,13 +330,16 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ResourceLoader>(), cs, tm))
 
 
-        // Toybox (Should be all removed)
-        .AddSingleton<ButtPlugDevice>()
+        // Toybox
+        .AddSingleton<VibeRoomManager>()
         .AddSingleton<ToyboxFactory>()
-        .AddSingleton((s) => new DeathRollService(s.GetRequiredService<ILogger<DeathRollService>>(), s.GetRequiredService<GlobalData>(),
-            s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerApplier>(), cg))
+        .AddSingleton((s) => new VibeSimAudio(s.GetRequiredService<ILogger<VibeSimAudio>>(), pi))
 
-        // UI (User Interface) ((Should be mostly scoped))
+
+        // UI Components
+        .AddSingleton<PermissionData>()
+        .AddSingleton<IdDisplayHandler>()
+        .AddSingleton((s) => new AccountInfoExchanger(pi.ConfigDirectory.FullName))
 
         // Unlocks Achievements
         .AddSingleton((s) => new AchievementManager(s.GetRequiredService<ILogger<AchievementManager>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
@@ -251,6 +352,20 @@ public static class GagSpeakServiceExtensions
 
 
         // Update Monitoring
+        .AddSingleton((s) => new ActionEffectMonitor(s.GetRequiredService<ILogger<ActionEffectMonitor>>(), s.GetRequiredService<GagspeakConfigService>(), ss, gip))
+
+        .AddSingleton((s) => new ChatMonitor(s.GetRequiredService<ILogger<ChatMonitor>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<ChatSender>(),
+            s.GetRequiredService<PuppeteerManager>(), s.GetRequiredService<TriggerMonitor>(), s.GetRequiredService<ClientMonitor>(),
+            s.GetRequiredService<DeathRollService>(), cg))
+        .AddSingleton((s) => new ChatSender(ss))
+        .AddSingleton((s) => new ChatInputDetour(s.GetRequiredService<ILogger<ChatInputDetour>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagGarbler>(),
+            s.GetRequiredService<EmoteMonitor>(), s.GetRequiredService<GagRestrictionManager>(), ss, gip))
+
+        .AddSingleton((s) => new OnEmote(s.GetRequiredService<ILogger<OnEmote>>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<OnFrameworkService>(), ss, gip))
+        .AddSingleton((s) => new EmoteMonitor(s.GetRequiredService<ILogger<EmoteMonitor>>(), s.GetRequiredService<ClientMonitor>(), dm))
+
         .AddSingleton((s) => new ActionMonitor(s.GetRequiredService<ILogger<ActionMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GlobalData>(),
             s.GetRequiredService<TraitsManager>(), s.GetRequiredService<ClientMonitor>(), gip))
         .AddSingleton((s) => new MovementMonitor(s.GetRequiredService<ILogger<MovementMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
@@ -260,112 +375,28 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new MoveController(s.GetRequiredService<ILogger<MoveController>>(), gip, ot))
         .AddSingleton((s) => new ForcedStayCallback(s.GetRequiredService<ILogger<ForcedStayCallback>>(), s.GetRequiredService<GagspeakConfigService>(), ss, gip))
 
+        .AddSingleton((s) => new MoodleStatusMonitor(s.GetRequiredService<ILogger<MoodleStatusMonitor>>(), dm, tp))
+
         .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, pl))
-
-        .AddSingleton((s) => new ActionEffectMonitor(s.GetRequiredService<ILogger<ActionEffectMonitor>>(), s.GetRequiredService<GagspeakConfigService>(), ss, gip))
-
-        .AddSingleton((s) => new OnEmote(s.GetRequiredService<ILogger<OnEmote>>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<OnFrameworkService>(), ss, gip))
-        .AddSingleton((s) => new EmoteMonitor(s.GetRequiredService<ILogger<EmoteMonitor>>(), s.GetRequiredService<ClientMonitor>(), dm))
+        .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(),
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientMonitor>(), dm, fw, ot, tm))
 
 
         // WebAPI (Server Connectivity)
-
-
-        // Misc Services
-        .AddSingleton((s) => new DtrBarService(s.GetRequiredService<ILogger<DtrBarService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<EventAggregator>(),
-            s.GetRequiredService<PairManager>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<ClientMonitor>(), dm, dtr))
-
-
-        // Register ItemData and everything else because apparently dependancy injection hates Penumbra.GameData???
-        .AddSingleton<ItemData>()
-/*        .AddSingleton((s) => new DictBonusItems(pi, new Logger(), dm))
-        .AddSingleton((s) => new DictStain(pi, new Logger(), dm))
-        .AddSingleton((s) => new ItemsByType(pi, new Logger(), dm, s.GetRequiredService<DictBonusItems>()))
-        .AddSingleton((s) => new ItemsPrimaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>()))
-        .AddSingleton((s) => new ItemsSecondaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>()))
-        .AddSingleton((s) => new ItemsTertiaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>(), s.GetRequiredService<ItemsSecondaryModel>()))*/
-
-
-        // UI Helpers
-        .AddSingleton<MainMenuTabs>()
-        .AddSingleton<AchievementTabs>()
-        .AddSingleton((s) => new AccountsTab(s.GetRequiredService<ILogger<AccountsTab>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(),
-            s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<UiSharedService>()))
-        .AddSingleton<DebugTab>()
-        .AddSingleton((s) => new AccountInfoExchanger(pi.ConfigDirectory.FullName))
-
-        // UI general services
-        .AddSingleton<GagRestrictionsPanel>()
-        .AddSingleton<PuppeteerComponents>()
-
-        // Toybox UI
-        .AddSingleton<SexToysPanel>()
-        .AddSingleton<VibeLobbiesPanel>()
-        .AddSingleton<PatternsPanel>()
-        .AddSingleton<AlarmsPanel>()
-        .AddSingleton<TriggersPanel>()
-        .AddSingleton((s) => new VibeSimAudio(s.GetRequiredService<ILogger<VibeSimAudio>>(), pi))
-
-        // Orders UI
-        .AddSingleton<OrdersViewActive>()
-        .AddSingleton<OrdersCreator>()
-        .AddSingleton<OrdersAssigner>()
-
-        // Publications UI
-        .AddSingleton<PublicationsManager>()
-
-        // UI Components
-        .AddSingleton<PairCombos>()
-        .AddSingleton<IdDisplayHandler>()
-        .AddSingleton<KinkPlateLight>()
-        .AddSingleton<UserPairListHandler>()
-        .AddSingleton<DrawRequests>()
-        .AddSingleton<HomepageTab>()
-        .AddSingleton<WhitelistTab>()
-        .AddSingleton<PatternHubTab>()
-        .AddSingleton<MoodleHubTab>()
-        .AddSingleton<GlobalChatTab>()
-        .AddSingleton((s) => new AccountTab(s.GetRequiredService<ILogger<AccountTab>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<OnFrameworkService>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<KinkPlateService>(),
-            s.GetRequiredService<TutorialService>(), pi))
-
-        // WebAPI Services
         .AddSingleton<MainHub>()
         .AddSingleton<HubFactory>()
         .AddSingleton<TokenProvider>()
         .AddSingleton<PiShockProvider>()
 
-        // Service Services
-        .AddSingleton<TutorialService>()
-        .AddSingleton<Tutorial>()
-        .AddSingleton<AchievementsService>()
-        .AddSingleton((s) => new CursedLootMonitor(s.GetRequiredService<ILogger<CursedLootMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagRestrictionManager>(),
-            s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<OnFrameworkService>(), gip))
-        .AddSingleton<SafewordService>()
-        .AddSingleton<SexToyManager>()
-        .AddSingleton<GagspeakConfigService>()
-        .AddSingleton<ServerConfigurationManager>()
-        .AddSingleton((s) => new UiFontService(pi))
-        .AddSingleton<GagspeakMediator>()
-        .AddSingleton((s) => new DiscoverService(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<DiscoverService>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(), 
-            s.GetRequiredService<PairManager>(), s.GetRequiredService<CosmeticService>()))
-        .AddSingleton<ShareHubService>()
-        .AddSingleton<PresetLogic>()
-        .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<KinkPlateFactory>()))
-        .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientMonitor>(), dm, fw, ot, tm))
-        .AddSingleton((s) => new CosmeticService(s.GetRequiredService<ILogger<CosmeticService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<OnFrameworkService>(), pi, tp))
-        .AddSingleton((s) => new NotificationService(s.GetRequiredService<ILogger<NotificationService>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagRestrictionManager>(), cg, nm));
+
+        // Penumbra.GameData pain.
+        .AddSingleton<ItemData>()
+        .AddSingleton((s) => new DictBonusItems(pi, new Logger(), dm))
+        .AddSingleton((s) => new DictStain(pi, new Logger(), dm))
+        .AddSingleton((s) => new ItemsByType(pi, new Logger(), dm, s.GetRequiredService<DictBonusItems>()))
+        .AddSingleton((s) => new ItemsPrimaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>()))
+        .AddSingleton((s) => new ItemsSecondaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>()))
+        .AddSingleton((s) => new ItemsTertiaryModel(pi, new Logger(), dm, s.GetRequiredService<ItemsByType>(), s.GetRequiredService<ItemsSecondaryModel>()));
     #endregion GenericServices
 
     #region IpcServices
@@ -395,11 +426,12 @@ public static class GagSpeakServiceExtensions
     #region ConfigServices
     public static IServiceCollection AddGagSpeakConfigs(this IServiceCollection services, IDalamudPluginInterface pi)
     => services
-        // client-end configs
-
         // Config Management
         .AddSingleton((s) => new ConfigFileProvider(s.GetRequiredService<GagspeakMediator>(), pi))
-        .AddSingleton((s) => new GagspeakConfigService(s.GetRequiredService<HybridSaveService>()))
+        .AddSingleton<GagspeakConfigService>()
+        .AddSingleton<ServerConfigService>()
+        .AddSingleton<NicknamesConfigService>()
+        .AddSingleton<ServerConfigurationManager>()
         .AddSingleton<HybridSaveService>();
         // the rest of the config stuff here is not migrated into other parts so see about how we will sort this later.
 
@@ -409,60 +441,138 @@ public static class GagSpeakServiceExtensions
         ICommandManager cm, IDalamudPluginInterface pi, ITextureProvider tp, INotificationManager nm,
         IChatGui cg, IDataManager dm)
     => services
-        // Service Services
+        // Scoped Components
+        .AddScoped<DrawRequests>()
+        .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<ItemService>(),
+            s.GetRequiredService<TextureService>(), dm))
+        .AddScoped<ModPresetDrawer>()
+        .AddScoped<MoodleDrawer>()
+        .AddScoped<PlaybackDrawer>()
+
+        // Scoped Factorys
+        .AddScoped<KinkPlateFactory>()
         .AddScoped<DrawEntityFactory>()
         .AddScoped<UiFactory>()
-        .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
-        .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
-        .AddScoped<WindowMediatorSubscriberBase, KinkPlatePreviewUI>()
-        .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), s.GetRequiredService<UiSharedService>(), pi))
-        .AddScoped<WindowMediatorSubscriberBase, MainUI>((s) => new MainUI(s.GetRequiredService<ILogger<MainUI>>(), s.GetRequiredService<GagspeakMediator>(), 
-            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(), 
-            s.GetRequiredService<ServerConfigurationManager>(), s.GetRequiredService<HomepageTab>(), s.GetRequiredService<WhitelistTab>(),
-            s.GetRequiredService<PatternHubTab>(), s.GetRequiredService<MoodleHubTab>(), s.GetRequiredService<GlobalChatTab>(), s.GetRequiredService<AccountTab>(),
-            s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<TutorialService>(), pi))
-        .AddScoped<WindowMediatorSubscriberBase, PopoutKinkPlateUi>()
-        .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
-        .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
-        .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
-        .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()
-        .AddScoped<WindowMediatorSubscriberBase, RemotePersonal>()
-        .AddScoped<WindowMediatorSubscriberBase, RemotePatternMaker>()
-        // RemoteController made via the factory is defined via the factory and not here.
-        .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
-        .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
-        .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
-        .AddScoped<WindowMediatorSubscriberBase, OrdersUI>()
-        .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
-        .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
-        .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<UiSharedService>(), pi))
-        .AddScoped<WindowMediatorSubscriberBase, KinkPlateEditorUI>()
-        .AddScoped<WindowMediatorSubscriberBase, ProfilePictureEditor>()
+
+        // Scoped Handlers
+        .AddScoped<UserPairListHandler>()
         .AddScoped<WindowMediatorSubscriberBase, PopupHandler>()
         .AddScoped<IPopupHandler, VerificationPopupHandler>()
         .AddScoped<IPopupHandler, SavePatternPopupHandler>()
         .AddScoped<IPopupHandler, ReportPopupHandler>()
-        .AddScoped<TextureService>()
+
+        // Scoped MainUI (Home)
+        .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
+        .AddScoped<WindowMediatorSubscriberBase, MainUI>((s) => new MainUI(s.GetRequiredService<ILogger<MainUI>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(),
+            s.GetRequiredService<ServerConfigurationManager>(), s.GetRequiredService<HomepageTab>(), s.GetRequiredService<WhitelistTab>(),
+            s.GetRequiredService<PatternHubTab>(), s.GetRequiredService<MoodleHubTab>(), s.GetRequiredService<GlobalChatTab>(), s.GetRequiredService<AccountTab>(),
+            s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<TutorialService>(), pi))
+        .AddScoped<MainMenuTabs>()
+        .AddScoped<HomepageTab>()
+        .AddScoped<WhitelistTab>()
+        .AddScoped<PatternHubTab>()
+        .AddScoped<MoodleHubTab>()
+        .AddScoped<GlobalChatTab>()
+        .AddScoped((s) => new AccountTab(s.GetRequiredService<ILogger<AccountTab>>(),
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
+            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<OnFrameworkService>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<KinkPlateService>(),
+            s.GetRequiredService<TutorialService>(), pi))
+        // Scoped UI (Orders)
+        .AddScoped<WindowMediatorSubscriberBase, OrdersUI>()
+        .AddScoped<OrdersViewActive>()
+        .AddScoped<OrdersCreator>()
+        .AddScoped<OrdersAssigner>()
+        // Scoped UI (Wardrobe)
+        .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
+        .AddScoped<GagRestrictionsPanel>()
+        .AddScoped<RestrictionsPanel>()
+        .AddScoped<RestraintsPanel>()
+        .AddScoped<CursedLootPanel>()
+        // Scoped UI (Puppeteer)
+        .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
+        .AddScoped<PuppeteerComponents>()
+        // Scoped UI (Toybox)
+        .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
+        .AddScoped<SexToysPanel>()
+        .AddScoped<VibeLobbiesPanel>()
+        .AddScoped<PatternsPanel>()
+        .AddScoped<AlarmsPanel>()
+        .AddScoped<TriggersPanel>()
+        // Scoped UI (Publications)
+        .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
+        .AddScoped<PublicationsManager>()
+
+        // Scoped UI (Achievements)
+        .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), s.GetRequiredService<UiSharedService>(), pi))
+        .AddScoped<AchievementTabs>()
+
+
+        // StickyWindow
+        .AddScoped<PermissionsDrawer>()
+        .AddScoped((s) => new PairCombos(s.GetRequiredService<ILogger<PairCombos>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<MainHub>(), s.GetRequiredService<UiSharedService>(), tp))
+        .AddScoped<PresetLogicDrawer>()
+
+
+        // Scoped Migrations
+        .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()
+
+
+        // Scoped Profiles
+        .AddScoped<WindowMediatorSubscriberBase, KinkPlatePreviewUI>()
+        .AddScoped<WindowMediatorSubscriberBase, PopoutKinkPlateUi>()
+        .AddScoped<WindowMediatorSubscriberBase, ProfilePictureEditor>()
+        .AddScoped<WindowMediatorSubscriberBase, KinkPlateEditorUI>()
+        .AddScoped<KinkPlateLight>()
+
+
+        // Scoped Remotes
+        .AddScoped<WindowMediatorSubscriberBase, RemotePersonal>()
+        .AddScoped<WindowMediatorSubscriberBase, RemotePatternMaker>()
+
+
+        // Scoped Settings
+        .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
+        .AddScoped<SettingsHardcore>()
+        .AddScoped((s) => new AccountManagerTab(s.GetRequiredService<ILogger<AccountManagerTab>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(),
+            s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<UiSharedService>()))
+        .AddScoped<DebugTab>()
+
+
+        // Scoped Misc
+        .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
+        .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
+        .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
+        .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<UiSharedService>(), pi))
+        .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
+
+
+        // Scoped Services
+        .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagspeakConfigService>(),
+            s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<ChatMonitor>(), s.GetRequiredService<DeathRollService>(), cg, cs, cm))
         .AddScoped<OnlinePairManager>()
         .AddScoped<VisiblePairManager>()
+        .AddScoped<TutorialService>()
         .AddScoped((s) => new TextureService(pi.UiBuilder, dm, tp))
         .AddScoped((s) => new UiService(s.GetRequiredService<ILogger<UiService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<WindowSystem>(), s.GetServices<WindowMediatorSubscriberBase>(), s.GetRequiredService<UiFactory>(),
             s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<FileDialogManager>(), pi.UiBuilder))
-        .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagspeakConfigService>(),
-            s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<ChatMonitor>(), s.GetRequiredService<DeathRollService>(), cg, cs, cm))
         .AddScoped((s) => new UiSharedService(s.GetRequiredService<ILogger<UiSharedService>>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<ServerConfigurationManager>(),
             s.GetRequiredService<UiFontService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<IpcManager>(), pi, tp));
     #endregion ScopedServices
+
     #region HostedServices
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)
     => services
         .AddHostedService(p => p.GetRequiredService<StaticLoggerInit>())
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())
-        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
-        .AddHostedService(p => p.GetRequiredService<NotificationService>())
+/*        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
+*/        .AddHostedService(p => p.GetRequiredService<NotificationService>())
         .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())
         .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())
         .AddHostedService(p => p.GetRequiredService<EventAggregator>())
@@ -475,13 +585,18 @@ public static class GagSpeakServiceExtensions
     #endregion HostedServices
 }
 
-public static class CircularDependencyTestExtensions
+public static class ValidateDependancyInjectorEx
 {
-    public static void TestForCircularDependencies(this IServiceCollection services)
+    public static void ValidateDependancyInjector(this IServiceCollection services)
     {
         try
         {
-            using var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,  // Enforce validation on build
+                ValidateScopes = true    // Ensure proper scope resolution
+
+            });
 
             // Try to resolve all registered services
             foreach (var service in services)
@@ -501,12 +616,16 @@ public static class CircularDependencyTestExtensions
                 }
             }
 
-            // If no exception occurs, print a success message
-            Console.WriteLine("No circular dependencies detected.");
+        }
+        catch (AggregateException ex)
+        {
+            // join all the innterexception strings together by \n newline.
+            var fullException = string.Join("\n\n", ex.InnerExceptions.Select(e => e.Message.ToString()));
+            throw new InvalidOperationException(fullException);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Circular dependency detected.", ex);
+            throw new InvalidOperationException("ValidateDependancyInjector error detected.", ex);
             // Log the exception to catch any circular dependencies
         }
     }

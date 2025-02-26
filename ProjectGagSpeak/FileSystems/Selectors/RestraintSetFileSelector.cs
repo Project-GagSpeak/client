@@ -27,8 +27,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     public new RestraintSetFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public RestraintSetFileSelector(RestraintManager manager, GagspeakMediator mediator, RestraintSetFileSystem fileSystem,
-        ILogger<RestraintSetFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##RestraintSetFileSelector")
+    public RestraintSetFileSelector(ILogger<RestraintSetFileSelector> log, GagspeakMediator mediator, RestraintManager manager, 
+        RestraintSetFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##RestraintSetFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

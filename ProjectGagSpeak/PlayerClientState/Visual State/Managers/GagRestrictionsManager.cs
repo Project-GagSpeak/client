@@ -129,7 +129,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
         // update values & Garbler, then fire achievement ping.
         data.GagSlots[layer.ToIndex()].GagItem = newGag;
         data.GagSlots[layer.ToIndex()].Enabler = enactor;
-        _garbler.UpdateGarblerLogic();
+        _garbler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
 
         // Mark what parts of this item will end up having effective changes.
@@ -212,7 +212,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
         var removedGag = data.GagSlots[layer.ToIndex()].GagItem;
         data.GagSlots[layer.ToIndex()].GagItem = GagType.None;
         data.GagSlots[layer.ToIndex()].Enabler = string.Empty;
-        _garbler.UpdateGarblerLogic();
+        _garbler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGag, enactor);
 
         // Update the affected visual states, if item is enabled.

@@ -1,5 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
@@ -15,11 +16,10 @@ namespace GagSpeak.UI.Permissions;
 
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
-    private PermissionsDrawer _drawer;
-
+    private readonly PermissionData _permData;
+    private readonly PermissionsDrawer _drawer;
     private readonly PairCombos _pairCombos;
-    private readonly PermActData _permData;
-    private readonly PresetLogic _presets;
+    private readonly PresetLogicDrawer _presets;
 
     private readonly MainHub _hub;
     private readonly GlobalData _globals;
@@ -28,12 +28,14 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly UiSharedService _ui;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pair,
-        StickyWindowType drawType, PairCombos pairCombos, PermActData permData, PresetLogic presets,
-        MainHub hub, GlobalData globals, PiShockProvider shocks, PairManager pairs,
-        ClientMonitor monitor, UiSharedService ui) : base(logger, mediator, "PairStickyUI for " + pair.UserData.UID + "pair.")
+        StickyWindowType drawType, PermissionData permData, PermissionsDrawer permDrawer,
+        PairCombos combos, PresetLogicDrawer presets, MainHub hub, GlobalData globals,
+        PiShockProvider shocks, PairManager pairs, ClientMonitor monitor, UiSharedService ui)
+        : base(logger, mediator, "PairStickyUI for " + pair.UserData.UID + "pair.")
     {
-        _pairCombos = pairCombos;
         _permData = permData;
+        _drawer = permDrawer;
+        _pairCombos = combos;
         _presets = presets;
         _hub = hub;
         _globals = globals;
@@ -41,20 +43,16 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _monitor = monitor;
         _ui = ui;
 
-        // Define the pair.
-        SPair = pair;
-
-        // reset the opened interaction and paircombo drawers.
-        _drawer = new PermissionsDrawer(hub, permData, shocks, ui);
-        _pairCombos.UpdateCombosForPair(pair);
-        _permData.InitForPair(pair.UserData, pair.GetNickAliasOrUid());
-        PairCombos.Opened = InteractionType.None;
-
-        // set the type of window we're drawing
-        DrawType = drawType;
-
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
         IsOpen = true;
+
+        // Define the pair and window type.
+        SPair = pair;
+        DrawType = drawType;
+
+        // Publish a mediator event to let us know a new pair was made for the stickyUI.
+        Mediator.Publish(new StickyPairWindowCreated(pair));
+        PairCombos.Opened = InteractionType.None;
     }
 
     public Pair SPair { get; init; }
@@ -83,13 +81,13 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         switch (DrawType)
         {
             case StickyWindowType.PairPerms:
-                ImGuiUtil.Center(PermActData.DispName + "'s Permissions for You");
+                ImGuiUtil.Center(PermissionData.DispName + "'s Permissions for You");
                 ImGui.Separator();
                 using (ImRaii.Child("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
                     DrawPairPermsForClient();
                 break;
             case StickyWindowType.ClientPermsForPair:
-                ImGuiUtil.Center("Your Permissions for " + PermActData.DispName);
+                ImGuiUtil.Center("Your Permissions for " + PermissionData.DispName);
                 _ui.SetCursorXtoCenter(225f);
                 _presets.DrawPresetList(SPair, 225f);
 
@@ -109,5 +107,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     public override void OnClose()
     {
         Mediator.Publish(new RemoveWindowMessage(this));
+
     }
 }

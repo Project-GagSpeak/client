@@ -24,8 +24,8 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     public new GagFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public GagRestrictionFileSelector(GagRestrictionManager manager, GagspeakMediator mediator, GagFileSystem fileSystem, 
-        ILogger<GagRestrictionFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##GarblerFileSelector")
+    public GagRestrictionFileSelector(ILogger<GagRestrictionFileSelector> log, GagspeakMediator mediator, GagRestrictionManager manager,
+        GagFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##GarblerFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

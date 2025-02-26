@@ -13,18 +13,19 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
     private readonly ConcurrentDictionary<string, DalamudLogger> _loggers =
         new(StringComparer.OrdinalIgnoreCase);                              // the concurrent dictionary of loggers that we have created
 
-    private readonly GagspeakConfigService _gagspeakConfigService;          // the config service for the client 
+    private readonly GagspeakConfigService _config;          // the config service for the client 
     private readonly IPluginLog _pluginLog;                                 // the dalamud plugin log interface
 
-    public DalamudLoggingProvider(GagspeakConfigService gagspeakConfigService, IPluginLog pluginLog)
+    public DalamudLoggingProvider(GagspeakConfigService config, IPluginLog pluginLog)
     {
-        _gagspeakConfigService = gagspeakConfigService;
+        _config = config;
         _pluginLog = pluginLog;
+        _pluginLog.Warning("Logger with the name was created.");
         _pluginLog.MinimumLogLevel = LogEventLevel.Verbose;
 
         // initialize the static logger filter with the stored filter list in the config service
         LoggerFilter.ClearAllowedCategories();
-        LoggerFilter.AddAllowedCategories(_gagspeakConfigService.Config.LoggerFilters);
+        LoggerFilter.AddAllowedCategories(_config.Config.LoggerFilters);
     }
 
     public ILogger CreateLogger(string categoryName)
@@ -46,7 +47,11 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
             catName = string.Join("", Enumerable.Range(0, 19 - catName.Length).Select(_ => " ")) + catName;
         }
         // now that we have the name properly, get/add it to our logger for dalamud
-        return _loggers.GetOrAdd(catName, name => new DalamudLogger(name, _gagspeakConfigService, _pluginLog));
+        var logger = _loggers.GetOrAdd(catName, name => new DalamudLogger(name, _config, _pluginLog));
+
+        // log that it was created.
+        _pluginLog.Warning("Logger with the name " + catName + " was created.");
+        return logger;
     }
 
     public void Dispose()

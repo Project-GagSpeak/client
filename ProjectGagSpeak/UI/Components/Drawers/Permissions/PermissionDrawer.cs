@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -8,21 +9,37 @@ using OtterGui.Text;
 
 namespace GagSpeak.UI.Components;
 
-public partial class PermissionsDrawer
+/// <summary> An assister for drawing out the various permissions in the pair action window. </summary>
+/// <remarks> This helps by using predefined data to avoid high calculations each draw frame. </remarks>
+public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
 {
+    public GagspeakMediator Mediator { get; }
     private readonly MainHub _hub;
-    private readonly PermActData _pad;
+    private readonly PermissionData _pad;
     private readonly PiShockProvider _shockies;
     private readonly UiSharedService _uiShared;
     private Dictionary<SPPID, string> _timespanCache = new();
     private DateTime _lastRefresh = DateTime.MinValue;
-    public PermissionsDrawer(MainHub hub, PermActData permActionsData, 
+    public PermissionsDrawer(GagspeakMediator mediator, MainHub hub, PermissionData permData, 
         PiShockProvider shockies, UiSharedService uiShared)
     {
+        Mediator = mediator;
         _hub = hub;
-        _pad = permActionsData;
+        _pad = permData;
         _shockies = shockies;
         _uiShared = uiShared;
+
+        Mediator.Subscribe<StickyPairWindowCreated>(this, _ =>
+        {
+            // cancel any tasks and clear the cached information.
+            _timespanCache.Clear();
+            _lastRefresh = DateTime.MinValue;
+        });
+    }
+
+    public void Dispose()
+    {
+        Mediator.UnsubscribeAll(this);
     }
 
     private Task? UiBlockingTask = null;
@@ -62,10 +79,10 @@ public partial class PermissionsDrawer
             }
             _timespanCache.Remove(perm);
         }
-        UiSharedService.AttachToolTip("The Max Duration " + PermActData.DispName + "Can Lock for.");
+        UiSharedService.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
 
         _uiShared.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
-        UiSharedService.AttachToolTip(editAccess ? PermActData.PairAccessYesTT : PermActData.PairAccessNoTT);
+        UiSharedService.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
     }
 
     private void DrawPermRowPairCommon<T>(float width, SPPID perm, bool curState, bool editAccess, Func<T> newStateFunc)
@@ -91,7 +108,7 @@ public partial class PermissionsDrawer
         UiSharedService.AttachToolTip(data.tt);
 
         _uiShared.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
-        UiSharedService.AttachToolTip(editAccess ? PermActData.PairAccessYesTT : PermActData.PairAccessNoTT);
+        UiSharedService.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
 
         if (button)
         {

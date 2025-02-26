@@ -20,10 +20,11 @@ public class UiFactory
 {
     // Generic Classes
     private readonly ILoggerFactory _loggerFactory;
-    private readonly GagspeakMediator _gagspeakMediator;
-    private readonly PiShockProvider _shockProvider;
+    private readonly GagspeakMediator _mediator;
+    private readonly PiShockProvider _shockies;
     private readonly PairCombos _pairCombos;
-    private readonly PermActData _permData;
+    private readonly PermissionsDrawer _permDrawer;
+    private readonly PermissionData _permData;
 
     // Managers
     private readonly ClientMonitor _clientMonitor;
@@ -37,7 +38,7 @@ public class UiFactory
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly PresetLogic _presetService;
+    private readonly PresetLogicDrawer _presetService;
     private readonly TextureService _textures;
     private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService;
@@ -46,18 +47,19 @@ public class UiFactory
     // API Hubs
     private readonly MainHub _hub;
 
-    public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator, 
-        PiShockProvider shockProvider, GlobalData clientData, ClientMonitor clientMonitor,
+    public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, 
+        PiShockProvider shockies, GlobalData clientData, ClientMonitor clientMonitor,
         GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics,
         IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates,
-        OnFrameworkService frameworkUtils, PairCombos pairCombos, PermActData permActData,
-        PresetLogic presetService, TextureService textures, UiSharedService uiShared, 
-        SexToyManager vibeService, TutorialService guides, MainHub hub)
+        OnFrameworkService frameworkUtils, PairCombos pairCombos, PermissionsDrawer permDrawer,
+        PermissionData permActData, PresetLogicDrawer presetService, TextureService textures,
+        UiSharedService uiShared, SexToyManager vibeService, TutorialService guides, MainHub hub)
     {
         _loggerFactory = loggerFactory;
-        _gagspeakMediator = gagspeakMediator;
-        _shockProvider = shockProvider;
+        _mediator = mediator;
+        _shockies = shockies;
         _pairCombos = pairCombos;
+        _permDrawer = permDrawer;
         _permData = permActData;
 
         _clientMonitor = clientMonitor;
@@ -81,21 +83,21 @@ public class UiFactory
 
     public KinkPlateUI CreateStandaloneKinkPlateUi(Pair pair)
     {
-        return new KinkPlateUI(_loggerFactory.CreateLogger<KinkPlateUI>(), _gagspeakMediator,
+        return new KinkPlateUI(_loggerFactory.CreateLogger<KinkPlateUI>(), _mediator,
             _pairManager, _kinkPlates, _cosmetics, _textures, _uiShared, pair);
     }
 
     public KinkPlateLightUI CreateStandaloneKinkPlateLightUi(UserData pairUserData)
     {
-        return new KinkPlateLightUI(_loggerFactory.CreateLogger<KinkPlateLightUI>(), _gagspeakMediator,
+        return new KinkPlateLightUI(_loggerFactory.CreateLogger<KinkPlateLightUI>(), _mediator,
             _kinkPlateLight, _kinkPlates, _pairManager, _uiShared, pairUserData);
     }
 
     // create a new instance window of the userpair permissions window every time a new pair is selected.
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
-        return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _gagspeakMediator, pair,
-            drawType, _pairCombos, _permData, _presetService, _hub, _globals, _shockProvider,
+        return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
+            _permData, _permDrawer, _pairCombos, _presetService, _hub, _globals, _shockies,
             _pairManager, _clientMonitor, _uiShared);
     }
 }

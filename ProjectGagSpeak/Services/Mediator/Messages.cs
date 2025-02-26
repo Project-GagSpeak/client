@@ -64,7 +64,6 @@ public record UpdateAllOnlineWithCompositeMessage : MessageBase; // for updating
 public record PairWentOnlineMessage(UserData UserData) : MessageBase; // a message indicating a pair has gone online.
 public record PairHandlerVisibleMessage(PairHandler Player) : MessageBase; // a message indicating the visibility of a pair handler.
 public record PairWasRemovedMessage(UserData UserData) : MessageBase; // a message indicating a pair has been removed.
-public record OpenUserPairPermissions(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase; // fired upon request to open the permissions window for a pair
 public record TargetPairMessage(Pair Pair) : MessageBase; // called when publishing a targeted pair connection (see UI)
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
 public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
@@ -90,7 +89,6 @@ public record PlaybackStateToggled(Guid PatternId, NewState NewState) : MessageB
 public record PatternRemovedMessage(Guid PatternId) : MessageBase; // for when a pattern is removed.
 public record TriggersModifiedMessage : MessageBase;
 public record ExecuteHealthPercentTriggerMessage(HealthPercentTrigger Trigger) : MessageBase;
-
 public record PlayerLatestActiveItems(UserData User, CharaActiveGags GagsInfo, CharaActiveRestrictions RestrictionsInfo, CharaActiveRestraint RestraintInfo) : MessageBase;
 
 
@@ -126,6 +124,8 @@ public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHand
 /* ------------------ USER INTERFACE (UI) RECORDS------------------ */
 public enum ToggleType { Toggle, Show, Hide }
 public record UserPairSelected(Pair? Pair) : MessageBase; // Fires whenever a new pair is selected from the userPairListHandler.
+public record OpenUserPairPermissions(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase; // fired upon request to open the permissions window for a pair
+public record StickyPairWindowCreated(Pair newPair) : MessageBase;
 public record RefreshUiMessage : MessageBase;
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase; // For toggling the UI.
 public record SwitchToIntroUiMessage : MessageBase; // indicates that we are in the introduction UI.

@@ -146,41 +146,28 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 }
             }
 
-            // Find existing PairStickyUI windows with the same window type and pair UID
-            var existingWindow = _createdWindows
-                .FirstOrDefault(p => p is PairStickyUI stickyWindow &&
-                                     stickyWindow.SPair.UserData.AliasOrUID == msg.Pair?.UserData.AliasOrUID &&
-                                     stickyWindow.DrawType == msg.PermsWindowType);
-
-            if (existingWindow != null && !msg.ForceOpenMainUI)
+            // Attempt to locate the existing pairstickyUI window.
+            if (_createdWindows.OfType<PairStickyUI>().FirstOrDefault(w => w.SPair.UserData.UID == msg.Pair?.UserData.UID) is PairStickyUI stickyUI)
             {
-                // If a matching window is found, toggle it
-                _logger.LogTrace("Toggling existing sticky window for pair "+msg.Pair?.UserData.AliasOrUID, LoggerType.Permissions);
-                // if it is open, destroy it.
-                if (existingWindow.IsOpen)
-                {
-                    _windowSystem.RemoveWindow(existingWindow);
-                    _createdWindows.Remove(existingWindow);
-                    existingWindow.Dispose();
-                }
+                // Attempt to change the drawtype. But if it is the same drawtype as the current, toggle the window.
+                if (stickyUI.DrawType == msg.PermsWindowType)
+                    stickyUI.Toggle();
                 else
                 {
-                    existingWindow.Toggle();
+                    stickyUI.DrawType = msg.PermsWindowType;
+                    if (!stickyUI.IsOpen)
+                        stickyUI.Toggle();
                 }
+                stickyUI.DrawType = msg.PermsWindowType;
             }
-            else
+            else // We are attempting to open a stickyPairUi for another pair. Let's first destroy the current pairStickyUI's if they exist.
             {
-                // Close and dispose of any other PairStickyUI windows
-                var otherWindows = _createdWindows
-                    .Where(p => p is PairStickyUI)
-                    .ToList();
-
-                foreach (var window in otherWindows)
+                _logger.LogDebug("Destroying other pair's sticky UI's and recreating UI for new pair.", LoggerType.UiCore);
+                foreach (var window in _createdWindows.OfType<PairStickyUI>())
                 {
-                    _logger.LogTrace("Disposing existing sticky window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
                     _windowSystem.RemoveWindow(window);
                     _createdWindows.Remove(window);
-                    window.Dispose();
+                    window?.Dispose();
                 }
 
                 // Create a new sticky pair perms window for the pair

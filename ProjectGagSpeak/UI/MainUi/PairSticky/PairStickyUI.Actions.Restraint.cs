@@ -14,16 +14,16 @@ public partial class PairStickyUI
     private void DrawWardrobeActions()
     {
         var applyRestraintText = "Apply Restraint Set";
-        var applyRestraintTT = "Applies a Restraint Set to " + PermActData.DispName + ". Click to select set.";
+        var applyRestraintTT = "Applies a Restraint Set to " + PermissionData.DispName + ". Click to select set.";
         var lockRestraintText = SPair.LastRestraintData.Padlock is Padlocks.None
             ? "Lock Restraint Set" : "Locked with a " + SPair.LastRestraintData.Padlock;
         var lockRestraintTT = SPair.LastRestraintData.Padlock is Padlocks.None
-            ? "Locks the Restraint Set applied to " + PermActData.DispName + ". Click to view options."
+            ? "Locks the Restraint Set applied to " + PermissionData.DispName + ". Click to view options."
             : "Set is currently locked with a " + SPair.LastRestraintData.Padlock;
         var unlockRestraintText = "Unlock Restraint Set";
-        var unlockRestraintTT = "Unlocks the Restraint Set applied to " + PermActData.DispName + ". Click to view options.";
+        var unlockRestraintTT = "Unlocks the Restraint Set applied to " + PermissionData.DispName + ". Click to view options.";
         var removeRestraintText = "Remove Restraint Set";
-        var removeRestraintTT = "Removes the Restraint Set applied to " + PermActData.DispName + ". Click to view options.";
+        var removeRestraintTT = "Removes the Restraint Set applied to " + PermissionData.DispName + ". Click to view options.";
 
         // Expander for ApplyRestraint
         var disableApplyExpand = !SPair.PairPerms.ApplyRestraintSets || SPair.LastRestraintData.Padlock is not Padlocks.None;
@@ -93,7 +93,7 @@ public partial class PairStickyUI
                     };
                     _hub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
                     PairCombos.Opened = InteractionType.None;
-                    _logger.LogDebug("Removing Restraint from " + PermActData.DispName, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Restraint from " + PermissionData.DispName, LoggerType.Permissions);
                 }
             }
         }

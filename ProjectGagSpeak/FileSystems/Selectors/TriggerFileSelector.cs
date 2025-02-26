@@ -27,8 +27,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     public new TriggerFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public TriggerFileSelector(TriggerManager manager, GagspeakMediator mediator, TriggerFileSystem fileSystem,
-        ILogger<TriggerFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##TriggerFileSelector")
+    public TriggerFileSelector(ILogger<TriggerFileSelector> log, GagspeakMediator mediator, TriggerManager manager,
+        TriggerFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##TriggerFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

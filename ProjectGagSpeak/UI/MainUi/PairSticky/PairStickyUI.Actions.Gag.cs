@@ -23,15 +23,15 @@ public partial class PairStickyUI
         var gagSlot = SPair.LastGagData.GagSlots[_pairCombos.CurGagLayer];
 
         // register display texts for the buttons.
-        var applyGagText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermActData.DispName : "A " + gagSlot.GagItem + " is applied.";
-        var applyGagTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermActData.DispName + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagItem;
-        var lockGagText = gagSlot.Padlock is Padlocks.None ? "Lock "+PermActData.DispName+"'s Gag" : "Locked with a " + gagSlot.Padlock;
-        var lockGagTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + PermActData.DispName+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
+        var applyGagText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermissionData.DispName : "A " + gagSlot.GagItem + " is applied.";
+        var applyGagTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermissionData.DispName + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagItem;
+        var lockGagText = gagSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Gag" : "Locked with a " + gagSlot.Padlock;
+        var lockGagTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + PermissionData.DispName+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
 
-        var unlockGagText = "Unlock " + PermActData.DispName + "'s Gag";
-        var unlockGagTT = "Unlock " + PermActData.DispName + "'s Gag. Click to view options.";
-        var removeGagText = "Remove " + PermActData.DispName + "'s Gag";
-        var removeGagTT = "Remove " + PermActData.DispName + "'s Gag. Click to view options.";
+        var unlockGagText = "Unlock " + PermissionData.DispName + "'s Gag";
+        var unlockGagTT = "Unlock " + PermissionData.DispName + "'s Gag. Click to view options.";
+        var removeGagText = "Remove " + PermissionData.DispName + "'s Gag";
+        var removeGagTT = "Remove " + PermissionData.DispName + "'s Gag. Click to view options.";
 
 
         // Expander for ApplyGag

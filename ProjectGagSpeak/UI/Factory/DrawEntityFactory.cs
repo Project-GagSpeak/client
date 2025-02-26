@@ -1,7 +1,9 @@
+using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.UI.Components.Combos;
 using GagSpeak.UI.Components.UserPairList;
 using GagSpeak.UI.Handlers;
 using GagSpeak.WebAPI;
@@ -36,9 +38,9 @@ public class DrawEntityFactory
         => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs,
             _configs, _uiShared);
 
-    public DrawUserPair CreateDrawPair(string id, Pair user)
-        => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + user.UserData.UID,
-            user, _hub, _nameDisplay, _mediator, _cosmetics, _uiShared);
+    public DrawUserPair CreateDrawPair(string id, Pair kinkster)
+        => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + kinkster.UserData.UID,
+            kinkster, _hub, _nameDisplay, _mediator, _cosmetics, _uiShared);
 
     public KinksterRequestEntry CreateKinsterRequest(string id, UserPairRequestDto request)
         => new KinksterRequestEntry(id, request, _hub, _cosmetics, _uiShared);

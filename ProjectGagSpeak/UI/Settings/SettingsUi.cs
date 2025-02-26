@@ -23,7 +23,7 @@ namespace GagSpeak.UI;
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly AccountsTab _accountsTab;
+    private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly GlobalData _global;
     private readonly IpcManager _ipcManager;
@@ -39,7 +39,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator,
-        MainHub hub, AccountsTab accounts, DebugTab debug, GagspeakConfigService config,
+        MainHub hub, AccountManagerTab accounts, DebugTab debug, GagspeakConfigService config,
         PairManager pairManager, GlobalData global, PiShockProvider shockProvider,
         AvfxManager avfxManager, VfxSpawns vfxSpawns, ServerConfigurationManager serverConfigs,
         IpcManager ipcManager, SettingsHardcore hardcoreSettingsUI, UiSharedService uiShared,

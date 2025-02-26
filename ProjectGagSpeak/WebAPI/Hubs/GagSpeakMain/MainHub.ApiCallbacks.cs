@@ -432,7 +432,7 @@ public partial class MainHub
         if (dataDto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug("OWN Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
-            _miscListener.UpdateListener(dataDto.User.UID, dataDto.NewData.ListenerName);
+            _puppetListener.UpdateListener(dataDto.User.UID, dataDto.NewData.ListenerName);
             return Task.CompletedTask;
         }
         else

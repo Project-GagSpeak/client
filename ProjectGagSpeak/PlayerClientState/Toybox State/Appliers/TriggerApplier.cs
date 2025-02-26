@@ -86,7 +86,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         }
     }
 
-    public async Task HandleMultiActionAsync(IEnumerable<InvokableGsAction> multiAction, string enactor, ActionSource source)
+    public async Task<bool> HandleMultiActionAsync(IEnumerable<InvokableGsAction> multiAction, string enactor, ActionSource source)
     {
         var anySuccess = false;
         foreach (var action in multiAction)
@@ -95,6 +95,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
             if (result && !anySuccess)
                 anySuccess = true;
         }
+        return anySuccess;
     }
 
 

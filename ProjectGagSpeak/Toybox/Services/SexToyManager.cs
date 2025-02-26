@@ -13,9 +13,9 @@ public class SexToyManager : DisposableMediatorSubscriberBase
     private readonly IntifaceController _deviceHandler; // handles the actual connected devices.
     private readonly VibeSimAudio _vibeSimAudio; // handles the simulated vibrator
 
-    public SexToyManager(ILogger<SexToyManager> logger,
-        GagspeakMediator mediator, GagspeakConfigService clientConfigs,
-        IntifaceController deviceHandler, VibeSimAudio vibeSimAudio) : base(logger, mediator)
+    public SexToyManager(ILogger<SexToyManager> logger, GagspeakMediator mediator,
+        GagspeakConfigService clientConfigs, IntifaceController deviceHandler,
+        VibeSimAudio vibeSimAudio) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;
         _deviceHandler = deviceHandler;

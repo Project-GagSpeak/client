@@ -92,25 +92,25 @@ public partial class PairStickyUI
 
         if (!SPair.IsPaused)
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermActData.DispName +"'s KinkPlate", WindowMenuWidth, true))
+            if (_ui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
             {
                 ImGui.CloseCurrentPopup();
                 Mediator.Publish(new ReportKinkPlateMessage(SPair.UserData));
             }
-            UiSharedService.AttachToolTip("Snapshot "+ PermActData.DispName+"'s KinkPlate and send it as a reported profile.");
+            UiSharedService.AttachToolTip("Snapshot "+ PermissionData.DispName+"'s KinkPlate and send it as a reported profile.");
         }
 
         if (SPair.IsOnline)
         {
             var pauseIcon = SPair.OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
-            var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermActData.DispName : "Pause " + PermActData.DispName;
+            var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermissionData.DispName : "Pause " + PermissionData.DispName;
             if (_ui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
                 _hub.UserUpdateOwnPairPerm(new(SPair.UserData, MainHub.PlayerUserData,
                     new KeyValuePair<string, object>("IsPaused", !SPair.OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
             }
             UiSharedService.AttachToolTip(!SPair.OwnPerms.IsPaused
-                ? "Pause pairing with " + PermActData.DispName : "Resume pairing with " + PermActData.DispName);
+                ? "Pause pairing with " + PermissionData.DispName : "Resume pairing with " + PermissionData.DispName);
         }
         if (SPair.IsVisible)
         {
@@ -129,6 +129,6 @@ public partial class PairStickyUI
     {
         if (_ui.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
             _hub.UserRemovePair(new(SPair.UserData)).ConfigureAwait(false);
-        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermActData.DispName);
+        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermissionData.DispName);
     }
 }

@@ -26,8 +26,8 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     public new CursedLootFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public CursedLootFileSelector(CursedLootManager manager, GagspeakMediator mediator, CursedLootFileSystem fileSystem,
-        ILogger<CursedLootFileSelector> log, IKeyState keys) : base(fileSystem, log, keys, "##CursedLootFileSelector")
+    public CursedLootFileSelector(ILogger<CursedLootFileSelector> log, GagspeakMediator mediator, CursedLootManager manager,
+        CursedLootFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##CursedLootFileSelector")
     {
         Mediator = mediator;
         _manager = manager;

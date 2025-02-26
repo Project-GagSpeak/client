@@ -1,6 +1,5 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
@@ -9,21 +8,16 @@ using OtterGui.Text;
 
 namespace GagSpeak.Services;
 
-public class PresetLogic
+public class PresetLogicDrawer
 {
-    private readonly ILogger<PresetLogic> _logger;
+    private readonly ILogger<PresetLogicDrawer> _logger;
     private readonly MainHub _hub;
-    private readonly GlobalData _playerManager;
-    private readonly PairManager _pairManager; // might not need if we use a pair to pass in for this.
     private readonly UiSharedService _uiShared;
 
-    public PresetLogic(ILogger<PresetLogic> logger,
-        MainHub hub, GlobalData playerManager, PairManager pairManager, UiSharedService uiShared)
+    public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub, UiSharedService uiShared)
     {
         _logger = logger;
         _hub = hub;
-        _playerManager = playerManager;
-        _pairManager = pairManager;
         _uiShared = uiShared;
     }
 

@@ -1,3 +1,5 @@
+using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Collections.Immutable;
 using FAI = Dalamud.Interface.FontAwesomeIcon;
@@ -5,7 +7,7 @@ using FAI = Dalamud.Interface.FontAwesomeIcon;
 namespace GagSpeak.UI.Components;
 
 // A helper for providing all the preset variables for various gagspeak permissions.
-public class PermActData
+public class PermissionData : IMediatorSubscriber, IDisposable
 {
     /// <summary> The String of the current pairs Nick, Alias, or UID. </summary>
     public static string DispName = "";
@@ -19,10 +21,18 @@ public class PermActData
     public readonly IReadOnlyDictionary<SPPID, PermDataClient> ClientPermData = _clientPermData;
     public UserData PairUserData { get; private set; }
 
-    /// <summary> Updates the pair reference. </summary>
-    /// <param name="pdn"> The Pair Display Name </param>
-    public void InitForPair(UserData userData, string pdn) => (PairUserData, DispName) = (userData, pdn);
+    public GagspeakMediator Mediator { get; }
+    public PermissionData(GagspeakMediator mediator)
+    {
+        Mediator = mediator;
+        Mediator.Subscribe<StickyPairWindowCreated>(this, (pair) =>
+        {
+            PairUserData = pair.newPair.UserData;
+            DispName = pair.newPair.GetNickAliasOrUid();
+        });
+    }
 
+    public void Dispose() => Mediator.Unsubscribe<StickyPairWindowCreated>(this);
 
     /// <summary> An Immutible record for permission settings recreated on each initialization. </summary>
     public record PermDataPair(FAI IconOn, FAI IconOff, string CondTrue, string CondFalse, string Text)
