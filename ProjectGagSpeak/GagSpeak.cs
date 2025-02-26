@@ -6,7 +6,6 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GagSpeak.Achievements;
 using GagSpeak.Achievements.Services;
-using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
@@ -65,13 +64,15 @@ using Microsoft.Extensions.Hosting;
 using OtterGui.Log;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
+using System.Reflection;
 
 namespace GagSpeak;
 
 public sealed class GagSpeak : IDalamudPlugin
 {
     private readonly IHost _host;  // the host builder for the plugin instance. (What makes everything work)
-    public static Serilog.ILogger StaticDalamudLogger { get; private set; }
+    public static Serilog.ILogger StaticLog { get; private set; } = Serilog.Log.ForContext("Dalamud.PluginName", "UNKN");
+
     public GagSpeak(IDalamudPluginInterface pi, IPluginLog pluginLog, IAddonLifecycle addonLifecycle,
         IChatGui chatGui, IClientState clientState, ICommandManager commandManager, ICondition condition,
         IContextMenu contextMenu, IDataManager dataManager, IDtrBar dtrBar, IDutyState dutyState,
@@ -79,16 +80,16 @@ public sealed class GagSpeak : IDalamudPlugin
         IKeyState keyState, INotificationManager notificationManager, IObjectTable objectTable, IPartyList partyList,
         ISigScanner sigScanner, ITargetManager targetManager, ITextureProvider textureProvider)
     {
-        StaticDalamudLogger = pluginLog.Logger;
-        StaticDalamudLogger.Warning("TESTING");
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi, pluginLog, addonLifecycle, chatGui, clientState, commandManager, condition,
             contextMenu, dataManager, dtrBar, dutyState, framework, gameGui, gameInteropProvider, controllerBinds,
             keyState, notificationManager, objectTable, partyList, sigScanner, targetManager, textureProvider);
-        StaticDalamudLogger.Warning("TESTING 2");
 
+        var name = Assembly.GetCallingAssembly().GetName().Name ?? "Unknown";
+        StaticLog = Serilog.Log.ForContext("Dalamud.PluginName", name);
+        
         // start up the host
-        _host.StartAsync().ConfigureAwait(false);
+        _ = _host.StartAsync();
     }
 
     // Method that creates the host builder for the GagSpeak plugin
@@ -98,57 +99,17 @@ public sealed class GagSpeak : IDalamudPlugin
         IObjectTable ot, IPartyList plt, ISigScanner ss, ITargetManager tm, ITextureProvider tp)
     {
         // create a new host builder for the plugin
-        var newHost = new HostBuilder();
-        StaticDalamudLogger.Warning("Testing HOSTBUILDER MADE");
-        newHost.UseContentRoot(GetPluginContentRoot(pi));
-        StaticDalamudLogger.Warning("Testing CONTENT ROOT SET");
-        StaticDalamudLogger.Warning("Testing LOG CONFIGURATION");
-        newHost.ConfigureLogging((hostContext, loggingBuilder) => GetPluginLogConfiguration(loggingBuilder, pl));
-        StaticDalamudLogger.Warning("Testing LOG CONFIGURATION SET");
-        StaticDalamudLogger.Warning("Testing SERVICE COLLECTION");
-        newHost.ConfigureServices((hostcontext, serviceCollection) =>
-        {
-            serviceCollection
-                .AddSingleton(new WindowSystem("GagSpeak"))
-                .AddSingleton<FileDialogManager>()
-                .AddSingleton(new Dalamud.Localization("GagSpeak.Localization.", "", useEmbedded: true))
-                .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
-                .AddSingleton<StaticLoggerInit>()
-                .AddSingleton<GagSpeakHost>()
-                .AddSingleton<GagspeakMediator>()
-                .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<ClientMonitor>(), dm, fw, ot, tm))
-                .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, plt))
-                .AddSingleton<HybridSaveService>()
-                .AddSingleton((s) => new ConfigFileProvider(s.GetRequiredService<GagspeakMediator>(), pi))
-                .AddSingleton<GagspeakConfigService>()
-                .AddSingleton<ServerConfigService>()
-                .AddSingleton<NicknamesConfigService>()
-                .AddSingleton<ServerConfigurationManager>();
-            serviceCollection.ValidateDependancyInjector();
-            // For some reason this passes as valid but then blocks the installer idk why. It does it directly on the build.
-        });
-/*        newHost.ConfigureServices((hostContext, serviceCollection) =>
-        {
-            // First, get the services added to the serviceCollection
-            serviceCollection = GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp);
-            serviceCollection.TestForCircularDependencies(); // <------ USE THIS WHEN DEBUGGING CIRCULAR DEPENDANCY / SINGLETON-SCOPED ISSUES
-        });*/
-        StaticDalamudLogger.Warning("Testing SERVICE COLLECTION SET");
-        try
-        {
-            StaticDalamudLogger.Warning("Testing BUILD");
-            var hoster = newHost.Build(); // blocks installer here?
-            StaticDalamudLogger.Warning("Testing BUILD SUCCESS");
-            return hoster;
-        }
-        catch (Exception e)
-        {
-            StaticDalamudLogger.Error(e, "Error building the host.");
-            throw e;
-        }
+        return new HostBuilder()
+            // get the content root for our plugin
+            .UseContentRoot(pi.ConfigDirectory.FullName)
+            // configure the logging for the plugin
+            .ConfigureLogging((hostContext, loggingBuilder) => GetPluginLogConfiguration(loggingBuilder, pl))
+            // get the plugin service collection for our plugin
+            .ConfigureServices((hostContext, serviceCollection)
+            => GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp))
+            // Build the host builder so it becomes an IHost object.
+            .Build();
     }
-    /// <summary> Gets the folder content location to know where the config files are saved. </summary>
-    private string GetPluginContentRoot(IDalamudPluginInterface pi) => pi.ConfigDirectory.FullName;
 
     /// <summary> Gets the log configuration for the plugin. </summary>
     private void GetPluginLogConfiguration(ILoggingBuilder lb, IPluginLog pluginLog)
@@ -199,7 +160,6 @@ public static class GagSpeakServiceExtensions
     => services
         // Nessisary Services
         .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
-        .AddSingleton<StaticLoggerInit>()
         .AddSingleton<GagSpeakHost>()
         .AddSingleton((s) => new EventAggregator(pi.ConfigDirectory.FullName, s.GetRequiredService<ILogger<EventAggregator>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>()))
@@ -228,6 +188,13 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<AlarmManager>(), s.GetRequiredService<AlarmFileSystem>(), ks))
         .AddSingleton((s) => new TriggerFileSelector(s.GetRequiredService<ILogger<TriggerFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerFileSystem>(), ks))
+        .AddSingleton<GagFileSystem>()
+        .AddSingleton<RestrictionFileSystem>()
+        .AddSingleton<RestraintSetFileSystem>()
+        .AddSingleton<CursedLootFileSystem>()
+        .AddSingleton<PatternFileSystem>()
+        .AddSingleton<AlarmFileSystem>()
+        .AddSingleton<TriggerFileSystem>()
 
         // Hardcore
         .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), s.GetRequiredService<GagspeakConfigService>(),
@@ -569,10 +536,9 @@ public static class GagSpeakServiceExtensions
     #region HostedServices
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)
     => services
-        .AddHostedService(p => p.GetRequiredService<StaticLoggerInit>())
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())
-/*        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
-*/        .AddHostedService(p => p.GetRequiredService<NotificationService>())
+        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
+        .AddHostedService(p => p.GetRequiredService<NotificationService>())
         .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())
         .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())
         .AddHostedService(p => p.GetRequiredService<EventAggregator>())
@@ -595,13 +561,20 @@ public static class ValidateDependancyInjectorEx
             {
                 ValidateOnBuild = true,  // Enforce validation on build
                 ValidateScopes = true    // Ensure proper scope resolution
-
             });
+
 
             // Try to resolve all registered services
             foreach (var service in services)
             {
-                serviceProvider.GetRequiredService(service.ServiceType);
+                try
+                {
+                    serviceProvider.GetRequiredService(service.ServiceType);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Service {service.ServiceType} failed to resolve.", ex);
+                }
             }
 
             // Test constructor-based DI (check for circular dependencies in parameters)

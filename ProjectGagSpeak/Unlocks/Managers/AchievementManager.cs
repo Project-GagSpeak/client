@@ -384,7 +384,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             // Check and correct achievement data against AchievementMap
             if (!Achievements.AchievementMap.ContainsKey(achievementId))
             {
-                StaticLogger.Logger.LogError("For some reason, your stored achievement ID ["+ achievementId + "] doesn't exist in the AchievementMap. Skipping over it.");
+                GagSpeak.StaticLog.Error("For some reason, your stored achievement ID ["+ achievementId + "] doesn't exist in the AchievementMap. Skipping over it.");
                 continue; // Skip over achievements that failed to load.
 
             }
@@ -408,7 +408,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             }
             else
             {
-                StaticLogger.Logger.LogError("Failed to load Achievement with ID: " + achievementId);
+                GagSpeak.StaticLog.Error("Failed to load Achievement with ID: " + achievementId);
             }
 
         }

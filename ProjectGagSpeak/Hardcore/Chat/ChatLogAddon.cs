@@ -84,7 +84,7 @@ public static unsafe class ChatLogAddonHelper
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogError(ex, "Failed to check chat log panel visibility.");
+            GagSpeak.StaticLog.Error(ex, "Failed to check chat log panel visibility.");
             return false;
         }
     }
@@ -105,7 +105,7 @@ public static unsafe class ChatLogAddonHelper
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogError(ex, "Failed to toggle chat log panels.");
+            GagSpeak.StaticLog.Error(ex, "Failed to toggle chat log panels.");
         }
     }
 

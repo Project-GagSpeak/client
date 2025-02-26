@@ -69,11 +69,11 @@ public class DebugTab
         // display the combo box for setting the log level we wish to have for our plugin
         _uiShared.DrawCombo("Log Level", 400, Enum.GetValues<LogLevel>(), (level) => level.ToString(), (level) =>
         {
-            _mainConfig.Config.LogLevel = level;
+            GagspeakConfigService.LogLevel = level;
             _mainConfig.Save();
-        }, _mainConfig.Config.LogLevel);
+        }, GagspeakConfigService.LogLevel);
 
-        var logFilters = _mainConfig.Config.LoggerFilters;
+        var logFilters = GagspeakConfigService.LoggerFilters;
 
         // draw a collapsible tree node here to draw the logger settings:
         ImGui.Spacing();
@@ -122,18 +122,18 @@ public class DebugTab
                     {
                         ImGui.TableNextColumn();
 
-                        var isEnabled = _mainConfig.Config.LoggerFilters.Contains(checkboxes[i]);
+                        var isEnabled = GagspeakConfigService.LoggerFilters.Contains(checkboxes[i]);
 
                         if (ImGui.Checkbox(checkboxes[i].ToName(), ref isEnabled))
                         {
                             if (isEnabled)
                             {
-                                _mainConfig.Config.LoggerFilters.Add(checkboxes[i]);
+                                GagspeakConfigService.LoggerFilters.Add(checkboxes[i]);
                                 LoggerFilter.AddAllowedCategory(checkboxes[i]);
                             }
                             else
                             {
-                                _mainConfig.Config.LoggerFilters.Remove(checkboxes[i]);
+                                GagspeakConfigService.LoggerFilters.Remove(checkboxes[i]);
                                 LoggerFilter.RemoveAllowedCategory(checkboxes[i]);
                             }
                             _mainConfig.Save();
@@ -146,15 +146,15 @@ public class DebugTab
                         ImGui.TableNextColumn();
                         if (ImGui.Button("All On"))
                         {
-                            _mainConfig.Config.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
+                            GagspeakConfigService.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
                             _mainConfig.Save();
-                            LoggerFilter.AddAllowedCategories(_mainConfig.Config.LoggerFilters);
+                            LoggerFilter.AddAllowedCategories(GagspeakConfigService.LoggerFilters);
                         }
                         ImUtf8.SameLineInner();
                         if (ImGui.Button("All Off"))
                         {
-                            _mainConfig.Config.LoggerFilters.Clear();
-                            _mainConfig.Config.LoggerFilters.Add(LoggerType.None);
+                            GagspeakConfigService.LoggerFilters.Clear();
+                            GagspeakConfigService.LoggerFilters.Add(LoggerType.None);
                             _mainConfig.Save();
                             LoggerFilter.ClearAllowedCategories();
                         }
@@ -175,9 +175,9 @@ public class DebugTab
         }
 
         // Ensure LoggerType.None is always included in the filtered categories
-        if (!_mainConfig.Config.LoggerFilters.Contains(LoggerType.None))
+        if (!GagspeakConfigService.LoggerFilters.Contains(LoggerType.None))
         {
-            _mainConfig.Config.LoggerFilters.Add(LoggerType.None);
+            GagspeakConfigService.LoggerFilters.Add(LoggerType.None);
             LoggerFilter.AddAllowedCategory(LoggerType.None);
         }
     }

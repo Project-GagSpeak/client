@@ -20,8 +20,6 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         IpcCallerPenumbra penumbra, FavoritesManager favorites, ConfigFileProvider fileNames, 
         HybridSaveService saver, IDalamudPluginInterface pi) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _penumbra = penumbra;
         _favorites = favorites;
         _fileNames = fileNames;
@@ -31,13 +29,19 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         _penumbra.OnModMoved = ModMoved.Subscriber(pi, OnModInfoChanged);
         Mediator.Subscribe<PenumbraInitializedMessage>(this, (msg) => OnPenumbraInitialized());
     }
-    
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        _penumbra.OnModMoved?.Dispose();
+    }
+
     /// <summary> The collection of the client's current mods. Useful for the ModCombo. </summary>
     public List<Mod> _modList { get; private set; }
 
     /// <summary> The collection of the clients configured setting presets. </summary>
     /// <remarks> Format: (ModDirectory, (PresetName, Settings)) </remarks>
-    public Dictionary<string, Dictionary<string, ModSettings>> _settingPresetStorage { get; private set; }
+    public Dictionary<string, Dictionary<string, ModSettings>> _settingPresetStorage { get; private set; } = new();
 
 
     /// <summary> Fired when Penumbra is initialized. </summary>
@@ -184,10 +188,12 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
     private void Load()
     {
         var file = _fileNames.CustomModSettings;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         _settingPresetStorage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No RestraintSets file found at {0}", file);
+            Logger.LogWarning("No CustomModSettings file found at {0}", file);
             return;
         }
 

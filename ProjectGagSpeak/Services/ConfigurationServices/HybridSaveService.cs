@@ -9,13 +9,11 @@ public sealed class HybridSaveService : HybridSaveServiceBase<ConfigFileProvider
 {
     public HybridSaveService(ILogger<HybridSaveService> logger, ConfigFileProvider fileNameStructure)
         : base(logger, fileNameStructure)
-    {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-    }
+    { }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        //StartChecking();
+        StartChecking();
         return Task.CompletedTask;
     }
 

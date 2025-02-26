@@ -22,8 +22,6 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
         PatternManager patterns, AlarmManager alarms, FavoritesManager favorites,
         ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _patterns = patterns;
         _alarms = alarms;
         _favorites = favorites;
@@ -224,6 +222,8 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
     private void Load()
     {
         var file = _fileNames.Triggers;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {

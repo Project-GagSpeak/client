@@ -13,14 +13,12 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
     public readonly T FileNames;
     public HybridSaveServiceBase(ILogger logger, T fileNameStructure)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
         _logger = logger;
         FileNames = fileNameStructure;
     }
 
     protected void StartChecking()
     {
-        _logger.LogCritical("IM BEING INITIALIZED!");
         _ = Task.Run(CheckDirtyConfigs, _cts.Token);
     }
 
@@ -92,7 +90,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogCritical($"Failed to save {configPath}: {ex}");
+            GagSpeak.StaticLog.Error($"Failed to save {configPath}: {ex}");
         }
     }
 }

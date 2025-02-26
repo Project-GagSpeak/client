@@ -6,17 +6,25 @@ namespace GagSpeak.Services.Configs;
 
 public class GagspeakConfigService : IHybridSavable
 {
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     private readonly HybridSaveService _saver;
+    [JsonIgnore] public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
+    [JsonIgnore] public HybridSaveType SaveType => HybridSaveType.Json;
     public int ConfigVersion => 0;
-    public HybridSaveType SaveType => HybridSaveType.Json;
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.MainConfig).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
-    public string JsonSerialize() => JsonConvert.SerializeObject(Config, Formatting.Indented);
+    public string JsonSerialize()
+    {
+        return new JObject()
+        {
+            ["Version"] = ConfigVersion,
+            ["Config"] = JObject.FromObject(Config),
+            ["LogLevel"] = LogLevel.ToString(),
+            ["LoggerFilters"] = JArray.FromObject(LoggerFilters)
+        }.ToString(Formatting.Indented);
+    }
+
     public GagspeakConfigService(HybridSaveService saver)
     {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-
         _saver = saver;
         Load();
     }
@@ -25,28 +33,34 @@ public class GagspeakConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.MainConfig;
+        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
         if (!File.Exists(file))
+        {
+            GagSpeak.StaticLog.Warning("Config file not found.");
             return;
-
-        try
-        {
-            var load = JsonConvert.DeserializeObject<GagspeakConfig>(File.ReadAllText(file));
-            if (load is null)
-                throw new Exception("Failed to load Config.");
-
-            Config = load;
-
-            // Help do log checks.
-            if (Config.LoggerFilters.Count is 0 || Config.LoggerFilters.Contains(LoggerType.SpatialAudioLogger))
-                Config.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
         }
-        catch (Exception e)
-        {
-            StaticLogger.Logger.LogCritical(e, "Failed to load Config.");
-        }
+
+        // Read the json from the file.
+        var jsonText = File.ReadAllText(file);
+        var jObject = JObject.Parse(jsonText);
+        var version = jObject["Version"]?.Value<int>() ?? 0;
+
+        // Load instance configuration
+        Config = jObject["Config"]?.ToObject<GagspeakConfig>() ?? new GagspeakConfig();
+
+        // Load static fields safely
+        if (Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel))
+            LogLevel = logLevel;
+        else
+            LogLevel = LogLevel.Trace;  // Default fallback
+
+        LoggerFilters = jObject["LoggerFilters"]?.ToObject<HashSet<LoggerType>>() ?? new HashSet<LoggerType>();
+        GagSpeak.StaticLog.Warning("Config loaded.");
     }
 
     public GagspeakConfig Config { get; private set; } = new GagspeakConfig();
+    public static LogLevel LogLevel = LogLevel.Trace;
+    public static HashSet<LoggerType> LoggerFilters = new HashSet<LoggerType>();
 
     // Hardcore RUNTIME ONLY VARIABLE STORAGE.
     [JsonIgnore] internal string LastSeenNodeName { get; set; } = string.Empty; // The Node Visible Name
@@ -147,6 +161,7 @@ public class GagspeakConfig
     public Version? LastRunVersion { get; set; } = null;
     public string LastUidLoggedIn { get; set; } = "";
 
+
     // used for detecting if in first install.
     public bool AcknowledgementUnderstood { get; set; } = false;
     public bool ButtonUsed { get; set; } = false;
@@ -176,8 +191,6 @@ public class GagspeakConfig
     public bool NotifyForOnlinePairs { get; set; } = true;
     public bool NotifyLimitToNickedPairs { get; set; } = false;
 
-    public LogLevel LogLevel { get; set; } = LogLevel.Trace;
-    public HashSet<LoggerType> LoggerFilters { get; set; } = new HashSet<LoggerType>();
     public NotificationLocation InfoNotification { get; set; } = NotificationLocation.Both;
     public NotificationLocation WarningNotification { get; set; } = NotificationLocation.Both;
     public NotificationLocation ErrorNotification { get; set; } = NotificationLocation.Both;

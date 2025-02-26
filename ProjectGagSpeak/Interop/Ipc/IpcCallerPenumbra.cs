@@ -117,19 +117,16 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         }
 
         // State in which version is invalid.
-        if (API_CurrentMajor != RequiredBreakingVersion || API_CurrentMinor < RequiredFeatureVersion)
-        {
-            Logger.LogError($"Invalid Version {API_CurrentMajor}.{API_CurrentMinor:D4}, required major " +
-                $"Version {RequiredBreakingVersion} with feature greater or equal to {RequiredFeatureVersion}.");
-            APIAvailable = false;
-        }
-        else APIAvailable = true;
+        APIAvailable = (API_CurrentMajor != RequiredBreakingVersion || API_CurrentMinor < RequiredFeatureVersion) ? false : true;
+
         // the penumbra unavailable flag
         _shownPenumbraUnavailable = _shownPenumbraUnavailable && !APIAvailable;
 
         if (!APIAvailable && !_shownPenumbraUnavailable)
         {
             _shownPenumbraUnavailable = true;
+            Logger.LogError($"Invalid Version {API_CurrentMajor}.{API_CurrentMinor:D4}, required major " +
+                $"Version {RequiredBreakingVersion} with feature greater or equal to {RequiredFeatureVersion}.");
             Mediator.Publish(new NotificationMessage("Penumbra inactive", "Features using Penumbra will not function properly.", NotificationType.Error));
         }
     }
@@ -164,7 +161,6 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         TooltipSubscriber.Dispose();
         ItemClickedSubscriber.Dispose();
         OnRedrawFinished.Dispose();
-        OnModMoved.Dispose();
     }
 
     /// <summary> Attempts to perform a manual redraw on the client. </summary>

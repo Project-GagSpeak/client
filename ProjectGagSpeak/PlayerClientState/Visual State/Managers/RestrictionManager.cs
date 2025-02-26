@@ -25,8 +25,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     GagGarbler garbler, GlobalData clientData, FavoritesManager favorites,
     ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
@@ -287,6 +285,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     private void Load()
     {
         var file = _fileNames.Restrictions;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {

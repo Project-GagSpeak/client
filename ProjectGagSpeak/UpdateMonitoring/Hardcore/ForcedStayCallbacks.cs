@@ -168,7 +168,7 @@ public unsafe class ForcedStayCallback : IDisposable
             {
                 CallbackValues.Add($"    Value {i}: [input: {values[i]}/{values[i]?.GetType().Name}] -> {DecodeValue(atkValues[i])})");
             }
-            StaticLogger.Logger.LogTrace($"Firing callback: " + Base->Name.Read() + ", valueCount = " + values.Length + ", updateStatte = " + updateState + ", values:\n" + string.Join("\n", CallbackValues), LoggerType.HardcorePrompt);
+            GagSpeak.StaticLog.Verbose($"Firing callback: " + Base->Name.Read() + ", valueCount = " + values.Length + ", updateStatte = " + updateState + ", values:\n" + string.Join("\n", CallbackValues), LoggerType.HardcorePrompt);
 
             if (FireCallback is not null)
             {
@@ -176,7 +176,7 @@ public unsafe class ForcedStayCallback : IDisposable
             }
             else
             {
-                StaticLogger.Logger.LogError("FireCallback somehow not yet Initialized!");
+                GagSpeak.StaticLog.Error("FireCallback somehow not yet Initialized!");
             }
         }
         finally

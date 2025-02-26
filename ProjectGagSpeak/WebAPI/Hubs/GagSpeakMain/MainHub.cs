@@ -85,7 +85,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         {
             if (_serverStatus != value)
             {
-                StaticLogger.Logger.LogDebug("(Hub-Main): New ServerState: " + value + ", prev ServerState: " + _serverStatus, LoggerType.ApiCore);
+                GagSpeak.StaticLog.Debug("(Hub-Main): New ServerState: " + value + ", prev ServerState: " + _serverStatus, LoggerType.ApiCore);
                 _serverStatus = value;
             }
         }

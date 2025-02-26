@@ -68,7 +68,7 @@ public class EmoteMonitor
     {
         if (!CanUseEmote(emoteId))
         {
-            StaticLogger.Logger.LogWarning("Can't perform this emote!");
+            GagSpeak.StaticLog.Warning("Can't perform this emote!");
             return;
         }
         // set the next allowance.
@@ -147,13 +147,13 @@ public class EmoteMonitor
                 if (condition()) 
                     return true;
 
-                StaticLogger.Logger.LogTrace("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
+                GagSpeak.StaticLog.Verbose("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
                 await Task.Delay(100, timeout.Token);
             }
         }
         catch (TaskCanceledException)
         {
-            StaticLogger.Logger.LogTrace("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
+            GagSpeak.StaticLog.Verbose("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
         }
         return false;
     }

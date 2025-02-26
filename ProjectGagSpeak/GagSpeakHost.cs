@@ -25,14 +25,11 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
-    public GagSpeakHost(ILogger<GagSpeak> logger, GagspeakMediator mediator,
+    public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
         OnFrameworkService frameworkUtils, GagspeakConfigService mainConfig,
         ServerConfigurationManager serverConfigs, ClientMonitor clientMonitor, 
         IServiceScopeFactory scopeFactory) : base(logger, mediator)
     {
-        // Initialize the static logger.
-        StaticLogger.Logger = logger;
-
         // set the services
         _frameworkUtils = frameworkUtils;
         _clientMonitor = clientMonitor;
@@ -130,15 +127,11 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
 
             // if the client does not have a valid setup or config, switch to the intro ui
-            if (!_mainConfig.Config.HasValidSetup() || !_serverConfigs.HasValidConfig())
+            if (!_mainConfig.Config.HasValidSetup() || !_serverConfigs.ServerStorage.HasValidSetup())
             {
                 Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _mainConfig.Config.HasValidSetup(), _serverConfigs.HasValidConfig());
                 // publish the switch to intro ui message to the mediator
-
-                if(_serverConfigs.AuthCount() <= 0)
-                {
-                    _mainConfig.Config.ButtonUsed = false;
-                }
+                _mainConfig.Config.ButtonUsed = false;
 
                 Mediator.Publish(new SwitchToIntroUiMessage());
                 return;

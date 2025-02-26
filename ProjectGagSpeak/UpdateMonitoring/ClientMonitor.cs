@@ -30,7 +30,15 @@ public class ClientMonitor : IHostedService
         IClientState clientState, ICondition condition, IDataManager gameData, IFramework framework,
         IGameGui gameGui, IPartyList partyList)
     {
-        _logger = logger;
+        try
+        {
+            _logger = logger;
+        }
+        catch (Exception e)
+        {
+            GagSpeak.StaticLog.Error("Failed to initialize ClientMonitor" + e.StackTrace);
+            throw;
+        }
         _mediator = mediator;
         _clientState = clientState;
         _condition = condition;
@@ -54,12 +62,17 @@ public class ClientMonitor : IHostedService
         {
             // if the action contains any of the job ids, then append it to the respective id.
             if (battleJobIds.Contains(action.ClassJob.Value.RowId))
-                LoadedActions[(int)action.ClassJob.Value.RowId].Add(new ActionRowLight(action));
+            {
+                if (LoadedActions.ContainsKey((int)action.ClassJob.Value.RowId))
+                    LoadedActions[(int)action.ClassJob.Value.RowId].Add(new ActionRowLight(action));
+                else
+                    LoadedActions[(int)action.ClassJob.Value.RowId] = new List<ActionRowLight> { new ActionRowLight(action) };
+            }
         }
         // Stop the performance timer.
         stopwatch.Stop();
 
-        logger.LogInformation($"Cached {generalGameActions.Count()} actions in {stopwatch.ElapsedMilliseconds}ms " +
+        _logger.LogInformation($"Cached {generalGameActions.Count()} actions in {stopwatch.ElapsedMilliseconds}ms " +
             $"for {ClassJobs.Count()} Jobs.");
 
         _clientState.ClassJobChanged += OnJobChanged;
@@ -174,7 +187,7 @@ public class ClientMonitor : IHostedService
 
     private void OnLogout(int type, int code)
     {
-        StaticLogger.Logger.LogInformation("Player Logged out from their client with type: " + type + " and code: " + code);
+        GagSpeak.StaticLog.Information("Player Logged out from their client with type: " + type + " and code: " + code);
         _mediator.Publish(new DalamudLogoutMessage(type, code));
     }
 
@@ -199,13 +212,13 @@ public class ClientMonitor : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        StaticLogger.Logger.LogInformation("Starting ClientMonitor");
+        GagSpeak.StaticLog.Information("Starting ClientMonitor");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        StaticLogger.Logger.LogInformation("Stopping ClientMonitor");
+        GagSpeak.StaticLog.Information("Stopping ClientMonitor");
         return Task.CompletedTask;
     }
 }

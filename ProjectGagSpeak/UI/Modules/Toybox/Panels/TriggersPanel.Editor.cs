@@ -451,7 +451,7 @@ public partial class TriggersPanel
             {
                 if (string.IsNullOrWhiteSpace(selectedDevice as string))
                 {
-                    StaticLogger.Logger.LogWarning("No device selected to add to the trigger.");
+                    GagSpeak.StaticLog.Warning("No device selected to add to the trigger.");
                     return;
                 }
                 // attempt to find the device by its name.
@@ -476,7 +476,7 @@ public partial class TriggersPanel
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogError(ex, "Error drawing VibeActionSettings");
+            GagSpeak.StaticLog.Error(ex, "Error drawing VibeActionSettings");
         }*/
     }
 }

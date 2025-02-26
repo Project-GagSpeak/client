@@ -9,14 +9,12 @@ namespace GagSpeak.Interop;
 /// </summary>
 internal sealed class DalamudLogger : ILogger
 {
-    private readonly GagspeakConfigService _config; // gagspeaks config service
     private readonly string _name;                  // the name of our plugin
     private readonly IPluginLog _pluginLog;         // the plugin log Dalamud uses
 
-    public DalamudLogger(string name, GagspeakConfigService config, IPluginLog pluginLog)
+    public DalamudLogger(string name, IPluginLog pluginLog)
     {
         _name = name;
-        _config = config;
         _pluginLog = pluginLog;
     }
 
@@ -27,7 +25,7 @@ internal sealed class DalamudLogger : ILogger
     /// <summary> Checks if the log level is enabled for the current log level we are inspecting. </summary>
     public bool IsEnabled(LogLevel logLevel)
     {
-        return (int)_config.Config.LogLevel <= (int)logLevel;
+        return (int)GagspeakConfigService.LogLevel <= (int)logLevel;
     }
 
     /// <summary> This is the Log method that is called by the ILogger interface. </summary>

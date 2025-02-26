@@ -34,7 +34,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                 }
             }
         }
-        catch (Exception ex) { StaticLogger.Logger.LogError($"Error: {ex}"); }
+        catch (Exception ex) { GagSpeak.StaticLog.Error($"Error: {ex}"); }
     }
 
     public static void AddImage(ImDrawListPtr drawList, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, Vector4? tint = null, bool tt = false, string ttText = "")
@@ -53,7 +53,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                 }
             }
         }
-        catch (Exception ex) { StaticLogger.Logger.LogError($"Error: {ex}"); }
+        catch (Exception ex) { GagSpeak.StaticLog.Error($"Error: {ex}"); }
     }
 
     public static void DrawLimitedDescription(string desc, Vector4 color, Vector2 size)

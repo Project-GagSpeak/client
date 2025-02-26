@@ -32,8 +32,6 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _gagManager = gagManager;
         _restrictionManager = restrictionManager;
         _restraintManager = restraintManager;
@@ -285,13 +283,15 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.TraitAllowances;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         if (!File.Exists(file))
             return;
         try
         {
             var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file));
             if (load is null)
-                throw new Exception("Failed to load favorites.");
+                throw new Exception("Failed to load TraitsManager.");
             // Load favorites.
             // (No Migration Needed yet).
 
@@ -303,7 +303,7 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         }
         catch (Exception e)
         {
-            StaticLogger.Logger.LogCritical(e, "Failed to load favorites.");
+            GagSpeak.StaticLog.Error(e, "Failed to load TraitsManager.");
         }
     }
 

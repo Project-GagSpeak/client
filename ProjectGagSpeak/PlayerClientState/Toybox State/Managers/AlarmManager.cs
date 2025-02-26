@@ -22,8 +22,6 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         PatternManager patterns, PatternApplier applier, FavoritesManager favorites,
         ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _patterns = patterns;
         _applier = applier;
         _favorites = favorites;
@@ -186,6 +184,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     private void Load()
     {
         var file = _fileNames.Alarms;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {

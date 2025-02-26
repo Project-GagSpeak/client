@@ -23,8 +23,6 @@ public class FavoritesManager : IHybridSavable
     public string JsonSerialize() => throw new NotImplementedException();
     public FavoritesManager(HybridSaveService saver)
     {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-
         _saver = saver;
         Load();
     }
@@ -44,6 +42,7 @@ public class FavoritesManager : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Favorites;
+        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
         if (!File.Exists(file))
             return;
         try
@@ -64,7 +63,7 @@ public class FavoritesManager : IHybridSavable
         }
         catch (Exception e)
         {
-            StaticLogger.Logger.LogCritical(e, "Failed to load favorites.");
+            GagSpeak.StaticLog.Error(e, "Failed to load favorites.");
         }
     }
 

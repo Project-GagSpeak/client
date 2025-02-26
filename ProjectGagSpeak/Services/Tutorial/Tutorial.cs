@@ -229,7 +229,7 @@ public class Tutorial
         }
         catch (Exception e)
         {
-            StaticLogger.Logger.LogError("EnsureSize Exception:" + e.Message);
+            GagSpeak.StaticLog.Error("EnsureSize Exception:" + e.Message);
         }
         return this;
     }

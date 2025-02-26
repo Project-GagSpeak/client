@@ -30,8 +30,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         ItemService items, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _clientData = clientData;
         _restraints = restraints;
         _favorites = favorites;
@@ -306,6 +304,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     private void Load()
     {
         var file = _fileNames.RestraintSets;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {

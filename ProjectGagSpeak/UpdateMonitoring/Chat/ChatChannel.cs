@@ -161,7 +161,7 @@ public static class ChatChannel
         {
             result.AddRange(chatChannel.GetChannelAlias().Select(str => str + " "));
         }
-        StaticLogger.Logger.LogDebug($"ChatChannelsListAliases: {string.Join(", ", result)}");
+        GagSpeak.StaticLog.Debug($"ChatChannelsListAliases: {string.Join(", ", result)}");
         return result;
     }*/
 
@@ -173,7 +173,7 @@ public static class ChatChannel
             if (channel.IsChannelEnabled(chatChannelsBitfield))
                 result.AddRange(channel.GetChannelAlias().Select(str => str + " "));
 
-        StaticLogger.Logger.LogDebug($"ChatChannelsListAliases (Bitfield): {string.Join(", ", result)}");
+        GagSpeak.StaticLog.Debug($"ChatChannelsListAliases (Bitfield): {string.Join(", ", result)}");
         return result;
     }
 

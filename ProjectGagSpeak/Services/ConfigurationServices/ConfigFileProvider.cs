@@ -47,8 +47,6 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
 
     public ConfigFileProvider(GagspeakMediator mediator, IDalamudPluginInterface pi)
     {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-
         Mediator = mediator;
 
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
@@ -65,12 +63,12 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
         ServerTags = Path.Combine(GagSpeakDirectory, "servertags.json");
 
         // attempt to load in the UID if the config.json exists.
-/*        if(File.Exists(MainConfig))
+        if (File.Exists(MainConfig))
         {
             var json = File.ReadAllText(MainConfig);
             var configJson = JObject.Parse(json);
             CurrentUserUID = configJson["LastUidLoggedIn"]?.Value<string>() ?? string.Empty;
-        }*/
+        }
 
         Mediator.Subscribe<DalamudLogoutMessage>(this, (msg) =>
         {

@@ -156,7 +156,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         }
         catch (Exception e)
         {
-            StaticLogger.Logger.LogCritical("Failed to assign blocking task." + e);
+            GagSpeak.StaticLog.Error("Failed to assign blocking task." + e);
             throw;
         }
     }

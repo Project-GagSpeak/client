@@ -19,8 +19,6 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
     public GagFileSystem(ILogger<GagFileSystem> logger, GagspeakMediator mediator,
         GagRestrictionManager manager, HybridSaveService saver)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _logger = logger;
         Mediator = mediator;
         _manager = manager;

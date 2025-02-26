@@ -25,6 +25,7 @@ public class ServerConfigurationManager
         _clientMonitor = clientMonitor;
         _serverConfig = serverConfig;
         _nicknameConfig = nicksConfig;
+        logger.LogCritical("ServerConfigurationManager has been initialized.");
         // ensure main exists
         if (!string.Equals(_serverConfig.Storage.ServiceUri, MainHub.MainServiceUri, StringComparison.OrdinalIgnoreCase))
         {

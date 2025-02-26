@@ -24,8 +24,6 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _globals = clientData;
         _gags = gags;
         _restrictions = restrictions;
@@ -220,6 +218,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
     private void Load()
     {
         var file = _fileNames.CursedLoot;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {
@@ -331,7 +331,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogError($"Failed to deserialize loot item: {ex}");
+            GagSpeak.StaticLog.Error($"Failed to deserialize loot item: {ex}");
             return false;
         }
     }

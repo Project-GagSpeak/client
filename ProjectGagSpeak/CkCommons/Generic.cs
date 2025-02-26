@@ -15,7 +15,7 @@ public static class Generic
         }
         catch (Exception ex)
         {
-            StaticLogger.Logger.LogCritical("Error on executing safely:" + ex);
+            GagSpeak.StaticLog.Error("Error on executing safely:" + ex);
         }
     }
 

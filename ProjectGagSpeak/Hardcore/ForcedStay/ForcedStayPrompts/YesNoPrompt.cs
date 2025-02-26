@@ -103,17 +103,17 @@ public class YesNoPrompt : BasePrompt
     {
         if (node.TargetNodeLabelIsRegex)
         {
-            StaticLogger.Logger.LogTrace("Entry is regex: " + node.TargetNodeTextRegex);
+            GagSpeak.StaticLog.Verbose("Entry is regex: " + node.TargetNodeTextRegex);
             if (node.TargetNodeTextRegex?.IsMatch(targetNodeLabel) ?? false)
             {
-                StaticLogger.Logger.LogTrace("Matched regex: " + node.TargetNodeTextRegex);
+                GagSpeak.StaticLog.Verbose("Matched regex: " + node.TargetNodeTextRegex);
                 return true;
             }
         }
 
         if (targetNodeLabel.Contains(node.TargetNodeLabel))
         {
-            StaticLogger.Logger.LogTrace("Matched string: " + node.TargetNodeLabel);
+            GagSpeak.StaticLog.Verbose("Matched string: " + node.TargetNodeLabel);
             return true;
         }
         return false;

@@ -1,7 +1,7 @@
 // intended to help with filtering out log message to certain types.
 public static class LoggerFilter
 {
-    public static readonly HashSet<LoggerType> FilteredCategories = new HashSet<LoggerType> { LoggerType.None };
+    public static readonly HashSet<LoggerType> FilteredCategories = GetAllRecommendedFilters();
     public static void AddAllowedCategory(LoggerType category)
     {
         FilteredCategories.Add(category);

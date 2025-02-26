@@ -27,8 +27,6 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
         GagGarbler garbler, GlobalData clientData, FavoritesManager favorites, 
         ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
-
         _garbler = garbler;
         _clientData = clientData;
         _favorites = favorites;
@@ -262,6 +260,8 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
     private void Load()
     {
         var file = _fileNames.GagRestrictions;
+        Logger.LogWarning("Loading in Config for file: " + file);
+
         Storage.Clear();
         if (!File.Exists(file))
         {

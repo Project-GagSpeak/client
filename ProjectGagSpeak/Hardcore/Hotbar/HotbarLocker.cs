@@ -16,7 +16,7 @@ public unsafe static class HotbarLocker
         {
             // see if the node is locked or not.
             var isLocked = hotbarBase->IsLocked;
-            StaticLogger.Logger.LogDebug("Hotbar Locked prior to application?: " + isLocked);
+            GagSpeak.StaticLog.Debug("Hotbar Locked prior to application?: " + isLocked);
             LockStatePriorToActivation = isLocked ? NewState.Locked : NewState.Unlocked;
         }
     }

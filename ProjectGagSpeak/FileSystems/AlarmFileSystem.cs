@@ -18,7 +18,6 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
     public AlarmFileSystem(ILogger<AlarmFileSystem> logger, GagspeakMediator mediator, 
         AlarmManager manager, HybridSaveService saver)
     {
-        logger.LogCritical("IM BEING INITIALIZED!");
         _logger = logger;
         Mediator = mediator;
         _manager = manager;

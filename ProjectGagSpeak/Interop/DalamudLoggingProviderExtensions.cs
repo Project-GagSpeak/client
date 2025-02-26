@@ -10,9 +10,7 @@ public static class DalamudLoggingProviderExtensions
     public static ILoggingBuilder AddDalamudLogging(this ILoggingBuilder builder, IPluginLog pluginLog)
     {
         builder.ClearProviders();
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DalamudLoggingProvider>
-            (b => new DalamudLoggingProvider(b.GetRequiredService<GagspeakConfigService>(), pluginLog)));
-
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DalamudLoggingProvider>(b => new DalamudLoggingProvider(pluginLog)));
         return builder;
     }
 }

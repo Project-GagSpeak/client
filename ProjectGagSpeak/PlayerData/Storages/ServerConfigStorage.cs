@@ -15,8 +15,6 @@ public class NicknamesConfigService : IHybridSavable
     public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
     public NicknamesConfigService(HybridSaveService saver)
     {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-
         _saver = saver;
         Load();
     }
@@ -25,6 +23,8 @@ public class NicknamesConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Nicknames;
+        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
+
         if (!File.Exists(file)) return;
         try
         {
@@ -33,7 +33,7 @@ public class NicknamesConfigService : IHybridSavable
 
             Storage = load;
         }
-        catch (Exception e) { StaticLogger.Logger.LogCritical(e, "Failed to load Config."); }
+        catch (Exception e) { GagSpeak.StaticLog.Error(e, "Failed to load Config."); }
     }
 
     public ServerNicknamesStorage Storage { get; set; } = new ServerNicknamesStorage();
@@ -54,6 +54,7 @@ public class ServerNicknamesStorage
 
 public class ServerConfigService : IHybridSavable
 {
+    private readonly ILogger<ServerConfigService> _logger;
     private readonly HybridSaveService _saver;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public int ConfigVersion => 0;
@@ -61,10 +62,9 @@ public class ServerConfigService : IHybridSavable
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.ServerConfig).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
-    public ServerConfigService(HybridSaveService saver)
+    public ServerConfigService(ILogger<ServerConfigService> logger, HybridSaveService saver)
     {
-        StaticLogger.Logger.LogCritical("IM BEING INITIALIZED!");
-
+        _logger = logger;
         _saver = saver;
         Load();
     }
@@ -73,15 +73,26 @@ public class ServerConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.ServerConfig;
-        if (!File.Exists(file)) return;
+        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
+        if (!File.Exists(file))
+        {
+            GagSpeak.StaticLog.Warning("Config file not found for: " + file);
+            return;
+        }
+
         try
         {
-            var load = JsonConvert.DeserializeObject<ServerStorage>(File.ReadAllText(file));
+            string fileContent = File.ReadAllText(file);
+            GagSpeak.StaticLog.Warning($"Raw Config File Content: {fileContent}");
+            GagSpeak.StaticLog.Warning("ProposedConfigToMatch: " + JsonConvert.SerializeObject(Storage, Formatting.Indented));
+
+            var load = JsonConvert.DeserializeObject<ServerStorage>(fileContent);
             if (load is null) throw new Exception("Failed to load Config.");
 
             Storage = load;
+            GagSpeak.StaticLog.Warning("Loaded Server Config.");
         }
-        catch (Exception e) { StaticLogger.Logger.LogCritical(e, "Failed to load Config."); }
+        catch (Exception e) { GagSpeak.StaticLog.Error(e, "Failed to load Config."); }
     }
 
     public ServerStorage Storage { get; set; } = new ServerStorage();

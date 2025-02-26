@@ -185,7 +185,7 @@ public partial class AchievementManager
                 var movementByte = Marshal.ReadByte((nint)gameControl, 30211);
                 var movementDetection = AgentMap.Instance();
                 var result = movementDetection->IsPlayerMoving;
-                StaticLogger.Logger.LogInformation("IsPlayerMoving Result: " + result +" || IsWalking Byte: "+movementByte);
+                GagSpeak.StaticLog.Information("IsPlayerMoving Result: " + result +" || IsWalking Byte: "+movementByte);
                 return (_gags.ActiveGagsData?.IsGagged() ?? false) && _restraints.EnabledSet is not null && result == 1 && movementByte == 0;
             }
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Funny Conditions Met");
