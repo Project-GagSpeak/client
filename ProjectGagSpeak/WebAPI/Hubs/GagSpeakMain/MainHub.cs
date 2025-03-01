@@ -248,7 +248,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         if (ServerStatus is ServerState.Connected && saveAchievements)
         {
             // only perform the following if SaveData is in a valid state for uploading on Disconnect.
-            if(AchievementManager.CanUploadSaveData)
+            if(AchievementManager.LatestCache.CanUpload())
             {
                 Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
                 await UserUpdateAchievementData(new(new(UID), AchievementManager.GetSaveDataDtoString()));
@@ -498,6 +498,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
             await Disconnect(ServerState.VersionMisMatch).ConfigureAwait(false);
             return false;
         }
+
         // Client is up to date!
         return true;
     }
@@ -632,7 +633,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
         if (arg is System.Net.WebSockets.WebSocketException)
         {
             Logger.LogInformation("System closed unexpectedly, flagging Achievement Manager to not set data on reconnection.");
-            AchievementManager.LastUnhandledDisconnect = DateTime.UtcNow;
+            AchievementManager.LatestCache.LastUnhandledDisconnect = DateTime.UtcNow;
         }
 
         Logger.LogWarning("Connection to " + _serverConfigs.ServerStorage.ServerName + " Closed... Reconnecting. (Reason: " + arg);

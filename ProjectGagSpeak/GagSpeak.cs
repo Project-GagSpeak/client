@@ -256,7 +256,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PairHandlerFactory>()
         .AddSingleton((s) => new PairManager(s.GetRequiredService<ILogger<PairManager>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<PairFactory>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(), cm))
-        .AddSingleton<OnConnectedService>()
+        .AddSingleton<ClientDataSync>()
 
 
         // Services
@@ -394,7 +394,7 @@ public static class GagSpeakServiceExtensions
     public static IServiceCollection AddGagSpeakConfigs(this IServiceCollection services, IDalamudPluginInterface pi)
     => services
         // Config Management
-        .AddSingleton((s) => new ConfigFileProvider(s.GetRequiredService<GagspeakMediator>(), pi))
+        .AddSingleton((s) => new ConfigFileProvider(pi))
         .AddSingleton<GagspeakConfigService>()
         .AddSingleton<ServerConfigService>()
         .AddSingleton<NicknamesConfigService>()
@@ -544,7 +544,6 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<EventAggregator>())
         .AddHostedService(p => p.GetRequiredService<IpcProvider>())
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())
-        .AddHostedService(p => p.GetRequiredService<OnConnectedService>())
 
         // add our main Plugin.cs file as a hosted ;
         .AddHostedService<GagSpeakHost>();

@@ -16,7 +16,7 @@ using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
-public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
+public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GlobalData _clientData;
     private readonly RestrictionManager _restraints;
@@ -36,7 +36,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
         _items = items;
         _fileNames = fileNames;
         _saver = saver;
-        Load();
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
     }
@@ -50,9 +49,18 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     public CharaActiveRestraint? ActiveRestraintData { get; private set; }
     public RestraintStorage Storage { get; private set; } = new RestraintStorage();
 
-    public void OnLogin() { }
+    /// <summary> Updates the manager with the latest data from the server. </summary>
+    /// <param name="serverData"> The data from the server to update with. </param>
+    /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restraint. </remarks>
+    public void LoadServerData(CharaActiveRestraint serverData)
+    {
+        ActiveRestraintData = serverData;
+        if (!serverData.Identifier.IsEmptyGuid())
+            if (Storage.TryGetRestraint(serverData.Identifier, out var item))
+                EnabledSet = item;
 
-    public void OnLogout() { }
+        LatestVisualCache.UpdateCache(EnabledSet);
+    }
 
     /// <summary> Create a new Restriction, where the item can be any restraint item. </summary>
     public RestraintSet CreateNew(string restraintName)
@@ -301,15 +309,17 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
     }
 
     // our CUSTOM defined load and migration.
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.RestraintSets;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Logger.LogInformation("Loading in Restraints Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No RestraintSets file found at {0}", file);
+            Logger.LogWarning("No Restraints Config file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
@@ -328,6 +338,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IVisual
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)

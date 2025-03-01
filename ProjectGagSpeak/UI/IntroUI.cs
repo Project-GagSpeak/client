@@ -330,7 +330,6 @@ public class IntroUi : WindowMediatorSubscriberBase
     {
         try
         {
-            _configService.Config.AccountCreated = true; // set the account created flag to true
             _logger.LogInformation("Attempting to connect to the server for the first time.");
             await _hub.Connect();
             _logger.LogInformation("Connection Attempt finished, marking account as created.");
@@ -343,7 +342,6 @@ public class IntroUi : WindowMediatorSubscriberBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to connect to the server for the first time.");
-            _configService.Config.AccountCreated = false;
             _configService.Save();
         }
         finally
@@ -380,7 +378,6 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             // set the secret key for the character
             _serverConfigs.SetSecretKeyForCharacter(_clientMonitor.ContentId, newKey);
-            _configService.Config.AccountCreated = true;
             _configService.Save();
             // Log the details.
             _logger.LogInformation("UID: " + accountDetails.Item1);
@@ -393,7 +390,6 @@ public class IntroUi : WindowMediatorSubscriberBase
             // Log the error
             _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
             _configService.Config.ButtonUsed = false;
-            _configService.Config.AccountCreated = false;
             _configService.Save();
 
             // set the task back to null and return.

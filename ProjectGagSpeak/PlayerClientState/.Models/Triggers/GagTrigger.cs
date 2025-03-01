@@ -11,7 +11,7 @@ public record GagTrigger : Trigger
     // the state of the gag that invokes it.
     public NewState GagState { get; set; } = NewState.Enabled;
 
-    internal GagTrigger() { }
+    public GagTrigger() { }
 
     public GagTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 

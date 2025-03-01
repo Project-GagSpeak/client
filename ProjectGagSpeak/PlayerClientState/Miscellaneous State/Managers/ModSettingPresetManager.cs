@@ -185,15 +185,15 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.CustomModSettings;
-        Logger.LogWarning("Loading in Config for file: " + file);
-
         _settingPresetStorage.Clear();
         if (!File.Exists(file))
         {
             Logger.LogWarning("No CustomModSettings file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 

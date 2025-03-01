@@ -12,11 +12,18 @@ public class NicknamesConfigService : IHybridSavable
     public HybridSaveType SaveType => HybridSaveType.Json;
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.Nicknames).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
-    public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
+    public string JsonSerialize()
+    {
+        return new JObject()
+        {
+            ["Version"] = ConfigVersion,
+            ["ServerNicknames"] = JObject.FromObject(Storage),
+        }.ToString(Formatting.Indented);
+    }
     public NicknamesConfigService(HybridSaveService saver)
     {
         _saver = saver;
-        Load();
+        Load(); // This doesnt seem to enjoy being called for some reason.
     }
 
     public void Save() => _saver.Save(this);
@@ -24,16 +31,45 @@ public class NicknamesConfigService : IHybridSavable
     {
         var file = _saver.FileNames.Nicknames;
         GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
-
-        if (!File.Exists(file)) return;
-        try
+        if (!File.Exists(file))
         {
-            var load = JsonConvert.DeserializeObject<ServerNicknamesStorage>(File.ReadAllText(file));
-            if (load is null) throw new Exception("Failed to load Config.");
-
-            Storage = load;
+            GagSpeak.StaticLog.Warning("Config file not found for: " + file);
+            return;
         }
-        catch (Exception e) { GagSpeak.StaticLog.Error(e, "Failed to load Config."); }
+
+        // Do not try-catch these, invalid loads of these should not allow the plugin to load.
+        var jsonText = File.ReadAllText(file);
+        var jObject = JObject.Parse(jsonText);
+        var version = jObject["Version"]?.Value<int>() ?? 0;
+
+        // if migrations needed, do logic for that here.
+        if (jObject["ServerNicknames"]?["UidServerComments"] is not null)
+        {
+            // Contains old config, migrate it.
+            jObject = ConfigMigrator.MigrateNicknamesConfig(jObject);
+        }
+
+        switch (version)
+        {
+            case 0:
+                LoadV0(jObject["ServerNicknames"]);
+                break;
+            default:
+                GagSpeak.StaticLog.Error("Invalid Version!");
+                return;
+        }
+        GagSpeak.StaticLog.Information("Config loaded.");
+        Save();
+    }
+
+    private void LoadV0(JToken? data)
+    {
+        if (data is not JObject serverNicknames)
+            return;
+        Storage = serverNicknames.ToObject<ServerNicknamesStorage>() ?? throw new Exception("Failed to load ServerNicknamesStorage.");
+        // clean out any kvp with nullorwhitespace values.
+        foreach (var kvp in Storage.Nicknames.Where(kvp => string.IsNullOrWhiteSpace(kvp.Value)).ToList())
+            Storage.Nicknames.Remove(kvp.Key);
     }
 
     public ServerNicknamesStorage Storage { get; set; } = new ServerNicknamesStorage();
@@ -50,7 +86,6 @@ public class ServerNicknamesStorage
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
 
 public class ServerConfigService : IHybridSavable
 {
@@ -61,7 +96,14 @@ public class ServerConfigService : IHybridSavable
     public HybridSaveType SaveType => HybridSaveType.Json;
     public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.ServerConfig).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
-    public string JsonSerialize() => JsonConvert.SerializeObject(Storage, Formatting.Indented);
+    public string JsonSerialize()
+    {
+        return new JObject()
+        {
+            ["Version"] = ConfigVersion,
+            ["ServerStorage"] = JObject.FromObject(Storage),
+        }.ToString(Formatting.Indented);
+    }
     public ServerConfigService(ILogger<ServerConfigService> logger, HybridSaveService saver)
     {
         _logger = logger;
@@ -80,19 +122,36 @@ public class ServerConfigService : IHybridSavable
             return;
         }
 
-        try
+        var jsonText = File.ReadAllText(file);
+        var jObject = JObject.Parse(jsonText);
+        var version = jObject["Version"]?.Value<int>() ?? 0;
+
+        // if migrations needed, do logic for that here.
+        if (jObject["ServerStorage"]?["ToyboxFullPause"] is not null)
         {
-            string fileContent = File.ReadAllText(file);
-            GagSpeak.StaticLog.Warning($"Raw Config File Content: {fileContent}");
-            GagSpeak.StaticLog.Warning("ProposedConfigToMatch: " + JsonConvert.SerializeObject(Storage, Formatting.Indented));
-
-            var load = JsonConvert.DeserializeObject<ServerStorage>(fileContent);
-            if (load is null) throw new Exception("Failed to load Config.");
-
-            Storage = load;
-            GagSpeak.StaticLog.Warning("Loaded Server Config.");
+            // Contains old config, migrate it.
+            jObject = ConfigMigrator.MigrateServerConfig(jObject, _saver.FileNames);
         }
-        catch (Exception e) { GagSpeak.StaticLog.Error(e, "Failed to load Config."); }
+
+        // execute based on version.
+        switch (version)
+        {
+            case 0:
+                LoadV0(jObject["ServerStorage"]);
+                break;
+            default:
+                GagSpeak.StaticLog.Error("Invalid Version!");
+                return;
+        }
+        GagSpeak.StaticLog.Information("Config loaded.");
+        Save();
+    }
+
+    private void LoadV0(JToken? data)
+    {
+        if (data is not JObject storage)
+            return;
+        Storage = storage.ToObject<ServerStorage>() ?? throw new Exception("Failed to load ServerStorage.");
     }
 
     public ServerStorage Storage { get; set; } = new ServerStorage();

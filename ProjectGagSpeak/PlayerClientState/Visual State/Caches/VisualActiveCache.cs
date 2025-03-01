@@ -3,6 +3,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Restrictions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
+using System.Linq;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -34,7 +35,31 @@ public class VisualRestrictionsCache : IVisualCache
         Glamour = newRestrictions.Values.Select(x => x.Glamour).ToDictionary(x => x.Slot);
         Mods = newRestrictions.Values.Select(x => x.Mod).ToHashSet();
         Moodles = newRestrictions.Values.Select(x => x.Moodle).ToHashSet();
-        Traits = newRestrictions.Values.Select(x => x.Traits).Aggregate((x, y) => x | y);
+        Traits = newRestrictions.Values.Select(x => x.Traits).DefaultIfEmpty(Traits.None).Aggregate((x, y) => x | y);
+    }
+
+    public void UpdateCache(IReadOnlyList<CursedItem> newCursedItems, bool allowTraits)
+    {
+        // Sort the incoming cursed items based on precedence, ensuring override-capable items go first within the same level
+        var sortedItems = newCursedItems
+            .OrderByDescending(x => x.Precedence) // Higher precedence first
+            .ThenByDescending(x => x.CanOverride) // Override-capable items first within the same precedence
+            .ToList();
+
+        Glamour = new Dictionary<EquipSlot, GlamourSlot>();
+        Mods = new HashSet<ModAssociation>(); // HashSet ensures unique Mods based on DirectoryName
+        Moodles = new HashSet<Moodle>(); // HashSet ensures unique Moodles based on Id
+        Traits = allowTraits ? newCursedItems.Select(x => x.RestrictionRef.Traits).DefaultIfEmpty(Traits.None).Aggregate((x, y) => x | y) : 0;
+
+        foreach (var item in sortedItems)
+        {
+            var restriction = item.RestrictionRef;
+            if (!Glamour.ContainsKey(restriction.Glamour.Slot))
+                Glamour[restriction.Glamour.Slot] = restriction.Glamour;
+
+            Mods.Add(restriction.Mod);
+            Moodles.Add(restriction.Moodle);
+        }
     }
 }
 
@@ -70,11 +95,11 @@ public class VisualAdvancedRestrictionsCache : IVisualCache
     {
         Glamour = gagRestrictions.Values.Select(x => x.Glamour).ToDictionary(x => x.Slot);
         Mods = gagRestrictions.Values.Select(x => x.Mod).ToHashSet();
-        Headgear = gagRestrictions.Values.Select(x => x.HeadgearState).Aggregate((x, y) => x | y);
-        Visor = gagRestrictions.Values.Select(x => x.VisorState).Aggregate((x, y) => x | y);
+        Headgear = gagRestrictions.Values.Select(x => x.HeadgearState).DefaultIfEmpty(OptionalBool.Null).Aggregate((x, y) => x | y);
+        Visor = gagRestrictions.Values.Select(x => x.VisorState).DefaultIfEmpty(OptionalBool.Null).Aggregate((x, y) => x | y);
         Moodles = gagRestrictions.Values.Select(x => x.Moodle).ToHashSet();
         CustomizeProfile = gagRestrictions.Values.Select(x => (x.ProfileGuid, x.ProfilePriority)).LastOrDefault(x => x.ProfileGuid != Guid.Empty);
-        Traits = gagRestrictions.Values.Select(x => x.Traits).Aggregate((x, y) => x | y);
+        Traits = gagRestrictions.Values.Select(x => x.Traits).DefaultIfEmpty(Traits.None).Aggregate((x, y) => x | y);
     }
 
     public void UpdateCache(RestraintSet? activeSet)

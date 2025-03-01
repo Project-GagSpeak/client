@@ -15,11 +15,6 @@ public class LightSaveDataDto
     public List<LightAchievement> LightAchievementData { get; set; }
 
     /// <summary>
-    /// easter egg icons
-    /// </summary>
-    public Dictionary<string, bool> EasterEggIcons { get; set; }
-
-    /// <summary>
     /// World Tour Visited Locations
     /// </summary>
     public Dictionary<ushort, bool> VisitedWorldTour { get; set; }

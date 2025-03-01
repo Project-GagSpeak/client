@@ -24,6 +24,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
+        Load();
     }
 
     // Cached Information
@@ -32,10 +33,6 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     // Storage
     public PatternStorage Storage { get; private set; } = new PatternStorage();
-
-    public void OnLogin() { }
-
-    public void OnLogout() { }
 
     public Pattern CreateNew(string patternName)
     {
@@ -165,7 +162,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.Patterns).Item2;
+        => (isAccountUnique = false, files.Patterns).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
@@ -182,21 +179,28 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.Patterns;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Logger.LogInformation("Loading in Patterns Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Patterns file found at {0}", file);
+            Logger.LogWarning("No Patterns Config file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
         // Read the json from the file.
         var jsonText = File.ReadAllText(file);
         var jObject = JObject.Parse(jsonText);
+
+        // Migrate the jObject if it is using the old format.
+        if (jObject["PatternStorage"] is JToken)
+            jObject = ConfigMigrator.MigratePatternConfig(jObject, _fileNames);
+
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -209,6 +213,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
+
     }
 
     private void LoadV0(JToken? data)

@@ -38,10 +38,6 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     // Storage
     public AlarmStorage Storage { get; private set; } = new AlarmStorage();
 
-    public void OnLogin() { }
-
-    public void OnLogout() { }
-
     public Alarm CreateNew(string alarmName)
     {
         var newAlarm = new Alarm() { Label = alarmName };
@@ -173,7 +169,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     public string JsonSerialize()
     {
         // we need to iterate through our list of trigger objects and serialize them.
-        var alarmItems = JsonConvert.SerializeObject(Storage, Formatting.Indented);
+        var alarmItems = JArray.FromObject(Storage);
         return new JObject()
         {
             ["Version"] = ConfigVersion,
@@ -181,21 +177,28 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.Alarms;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Logger.LogInformation("Loading in Alarms Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Alarms file found at {0}", file);
+            Logger.LogWarning("No Alarms Config file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
         // Read the json from the file.
         var jsonText = File.ReadAllText(file);
         var jObject = JObject.Parse(jsonText);
+
+        // Migrate the jObject if it is using the old format.
+        if (jObject["AlarmStorage"] is JObject)
+            jObject = ConfigMigrator.MigrateAlarmsConfig(jObject, _fileNames);
+
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -208,14 +211,30 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)
     {
         if (data is not JArray alarms)
             return;
-        // Attempt this, i have no fucking clue if it will work.
-        Storage = JsonConvert.DeserializeObject<AlarmStorage>(alarms.ToString())!;
+
+        foreach (var alarmToken in alarms)
+        {
+            try
+            {
+                var newAlarm = JsonConvert.DeserializeObject<Alarm>(alarmToken.ToString());
+                if (newAlarm is Alarm)
+                {
+                    Logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
+                    Storage.Add(newAlarm); // try and add it in.
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error deserializing alarm: " + ex);
+            }
+        }
     }
 
     private void MigrateV0toV1(JObject oldConfigJson)

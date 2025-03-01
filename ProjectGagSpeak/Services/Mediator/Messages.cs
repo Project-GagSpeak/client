@@ -145,7 +145,7 @@ public record VerificationPopupMessage(VerificationDto VerificationCode) : Messa
 public record PatternSavePromptMessage(List<byte> StoredData, TimeSpan Duration) : MessageBase; // prompts the popup and passes in savedata
 public record ClosePatternSavePromptMessage : MessageBase; // closes the pattern save prompt.
 
-/* -------------------- DISCOVER TAB RECORDS -------------------- */
+/* -------------------- CHAT RELATED RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
 public record ClientSentChat(ChatChannel.Channels Channel, string Message) : MessageBase; // Client Player sent a chat message.
 public record SafewordUsedMessage(string UID = "") : MessageBase; // for when the safeword is used.

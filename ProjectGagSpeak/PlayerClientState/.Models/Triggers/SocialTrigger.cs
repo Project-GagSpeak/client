@@ -8,7 +8,7 @@ public record SocialTrigger : Trigger
     // the social action to monitor.
     public SocialActionType SocialType { get; set; } = SocialActionType.DeathRollLoss;
 
-    internal SocialTrigger() { }
+    public SocialTrigger() { }
 
     public SocialTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 

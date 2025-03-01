@@ -294,10 +294,12 @@ public class RestraintSet
             .OfType<RestraintSlotAdvanced>()
             .Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Trait))
             .Select(x => x.Ref.Traits)
+            .DefaultIfEmpty(Traits.None)
             .Aggregate((x, y) => x | y)
             | Layers.OfType<RestrictionLayer>()
                 .Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Trait))
                 .Select(x => x.Ref.Traits)
+                .DefaultIfEmpty(Traits.None)
                 .Aggregate((x, y) => x | y);
     }
     #endregion Cache Helpers

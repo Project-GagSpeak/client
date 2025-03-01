@@ -12,7 +12,7 @@ using GagspeakAPI.Extensions;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
+public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GlobalData _globals;
     private readonly GlobalData _clientData;
@@ -29,7 +29,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
-        Load();
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckForExpiredLocks());
     }
@@ -37,19 +36,34 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
     // Cached Information.
     public RestrictionItem? ActiveEditorItem { get; private set; }
     public VisualRestrictionsCache LatestVisualCache { get; private set; } = new();
-    public SortedList<int, RestrictionItem> ActiveRestrictions { get; private set; } // Restrictions applied via primary restriction slots.
+    public SortedList<int, RestrictionItem> ActiveRestrictions { get; private set; } = new();
 
 
     // Stored Information.
-    /// <summary> Holds any restriction active from ANY source. Is not used in Caching information. </summary>
+    /// <summary> Holds any restriction active from OTHER SOURCES. Is not used in Caching information. </summary>
     /// <remarks> <b>Source will ALWAYS be VeryLow</b> unless from a CursedItem, in which it is used for comparison.</remarks>
     public HashSet<(RestrictionItem Item, ManagerPriority Source)> OccupiedRestrictions { get; private set; }
     public CharaActiveRestrictions? ActiveRestrictionsData { get; private set; }
     public RestrictionStorage Storage { get; private set; } = new RestrictionStorage();
 
-    public void OnLogin() { }
+    /// <summary> Updates the manager with the latest data from the server. </summary>
+    /// <param name="serverData"> The data from the server to update with. </param>
+    /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restrictions. </remarks>
+    public void LoadServerData(CharaActiveRestrictions serverData)
+    {
+        ActiveRestrictionsData = serverData;
 
-    public void OnLogout() { }
+        for (var slotIdx = 0; slotIdx < serverData.Restrictions.Length; slotIdx++)
+        {
+            var slot = serverData.Restrictions[slotIdx];
+            if (!slot.Identifier.IsEmptyGuid() && Storage.TryGetRestriction(slot.Identifier, out var item))
+            {
+                ActiveRestrictions[slotIdx] = item;
+                AddOccupiedRestriction(item, ManagerPriority.Restrictions);
+            }
+        }
+        LatestVisualCache.UpdateCache(ActiveRestrictions);
+    }
 
     /// <summary> Create a new Restriction, where the item can be any restriction item. </summary>
     public RestrictionItem CreateNew(string restrictionName)
@@ -156,7 +170,11 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
         => _favorites.RemoveGag(restriction.GagType);
 
     public void AddOccupiedRestriction(RestrictionItem item, ManagerPriority source)
-        => OccupiedRestrictions.Add((item, source));
+    {
+        // dont add the item if it is already existing in the hash set.
+        if (!OccupiedRestrictions.Any(i => i.Item == item))
+            OccupiedRestrictions.Add((item, source));
+    }
 
     public void RemoveOccupiedRestriction(RestrictionItem item, ManagerPriority source)
         => OccupiedRestrictions.Remove((item, source));
@@ -198,6 +216,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
             }
             // Update the activeVisualState, and the cache.
             ActiveRestrictions[layerIdx] = item;
+            AddOccupiedRestriction(item, ManagerPriority.Restrictions);
             LatestVisualCache.UpdateCache(ActiveRestrictions);
         }
         return flags;
@@ -248,6 +267,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
         {
             // Do recalculations first since it doesnt madder here.
             ActiveRestrictions.Remove(layerIdx);
+            RemoveOccupiedRestriction(matchedItem, ManagerPriority.Restrictions);
             LatestVisualCache.UpdateCache(ActiveRestrictions);
 
             // begin by assuming all aspects are removed.
@@ -282,15 +302,16 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.Restrictions;
-        Logger.LogWarning("Loading in Config for file: " + file);
-
+        Logger.LogInformation("Loading in Restrictions Config for file: " + file);
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No GagRestrictions file found at {0}", file);
+            Logger.LogWarning("No Restrictions file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
@@ -309,6 +330,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IVisu
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)

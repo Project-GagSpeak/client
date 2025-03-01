@@ -14,9 +14,9 @@ public abstract record Trigger
     public string Description { get; set; } = string.Empty;
 
     public InvokableActionType ActionType => InvokableAction.ExecutionType;
-    public InvokableGsAction InvokableAction { get; set; }
+    public InvokableGsAction InvokableAction { get; set; } = new TextAction();
 
-    internal Trigger() { }
+    public Trigger() { }
 
     public Trigger(Trigger other, bool copyID)
     {

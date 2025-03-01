@@ -14,7 +14,7 @@ public record EmoteTrigger : Trigger
     // if the 'other' is player spesific, define the player here.
     public string EmotePlayerNameWorld { get; set; } = string.Empty;
 
-    internal EmoteTrigger() { }
+    public EmoteTrigger() { }
 
     public EmoteTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 

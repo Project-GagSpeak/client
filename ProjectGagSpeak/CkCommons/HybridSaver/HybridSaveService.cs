@@ -19,7 +19,25 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
 
     protected void StartChecking()
     {
-        _ = Task.Run(CheckDirtyConfigs, _cts.Token);
+        _ = Task.Run(async () =>
+        {
+            while (!_cts.Token.IsCancellationRequested)
+            {
+                try
+                {
+                    await CheckDirtyConfigs();
+                    await Task.Delay(2000, _cts.Token); // Wait for 2 seconds before checking again
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while checking dirty configs.");
+                }
+            }
+        }, _cts.Token);
     }
 
     protected async Task StopCheckingAsync()
@@ -34,6 +52,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
     {
         _saveLock.Wait();
         _dirtyConfigs.Add(config);
+        _logger.LogDebug($"Config {config.GetType().Name} marked as dirty.");
         _saveLock.Release();
     }
 
@@ -42,6 +61,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
         if (_dirtyConfigs.Count == 0)
             return;
 
+        _logger.LogDebug("Checking for dirty configs.");
         // await for the current semaphore to be released.
         await _saveLock.WaitAsync().ConfigureAwait(false);
         var configs = _dirtyConfigs.ToList();
@@ -55,8 +75,9 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
 
     private void SaveConfigAsync(IHybridConfig<T> config)
     {
+        _logger.LogDebug($"Saving {config.GetType().Name}.");
         var configPath = config.GetFileName(FileNames, out var uniquePerAccount);
-        if (uniquePerAccount && !FileNames.PerPlayerConfigsInitialized)
+        if (uniquePerAccount && !FileNames.HasValidProfileConfigs)
         {
             _logger.LogWarning($"UID is null for {configPath}. Not saving.");
             return;

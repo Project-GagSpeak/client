@@ -9,70 +9,76 @@ namespace GagSpeak.Achievements;
 
 public partial class AchievementManager
 {
+    public void ReInitializeSaveData()
+    {
+        LatestCache = new SaveDataCache();
+        InitializeAchievements();
+    }
+
     public void InitializeAchievements()
     {
         // Module Finished
         #region ORDERS MODULE
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.JustAVolunteer, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.AsYouCommand, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.AnythingForMyOwner, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.GoodDrone, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.JustAVolunteer, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.AsYouCommand, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.AnythingForMyOwner, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.GoodDrone, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Finished");
 
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.BadSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.NeedsTraining, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.UsefulInOtherWays, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.BadSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.NeedsTraining, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.UsefulInOtherWays, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Failed");
 
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.NewSlaveOwner, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.TaskManager, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.MaidMaster, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
-        SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.QueenOfDrones, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.NewSlaveOwner, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.TaskManager, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.MaidMaster, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Orders, Achievements.QueenOfDrones, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Orders Created");
         #endregion ORDERS MODULE
 
         // Module Finished
         #region GAG MODULE
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SelfApplied, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Self-Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SelfApplied, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Self-Applied");
 
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilenceSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.WatchYourTongue, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.TongueTamer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.KinkyLibrarian, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.OrchestratorOfSilence, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilenceSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.WatchYourTongue, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.TongueTamer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.KinkyLibrarian, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.OrchestratorOfSilence, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags to Kinksters", "Applied");
 
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilencedSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.InDeepSilence, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilentObsessions, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.GoldenSilence, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.AKinkForDrool, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.ThePerfectGagSlut, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilencedSlut, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.InDeepSilence, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.SilentObsessions, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.GoldenSilence, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.AKinkForDrool, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.ThePerfectGagSlut, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "times by Kinksters", "Gagged");
 
-        SaveData.AddThreshold(AchievementModuleKind.Gags, Achievements.ShushtainableResource, 3, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Active at Once");
+        LatestCache.SaveData.AddThreshold(AchievementModuleKind.Gags, Achievements.ShushtainableResource, 3, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Active at Once");
 
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.OfVoicelessPleas, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.DefianceInSilence, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.MuffledResilience, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.TrainedInSubSpeech, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.PublicSpeaker, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.FromCriesOfHumility, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.OfVoicelessPleas, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.DefianceInSilence, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.MuffledResilience, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.TrainedInSubSpeech, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.PublicSpeaker, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.FromCriesOfHumility, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Garbled Messages Sent");
 
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.WhispersToWhimpers, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.OfMuffledMoans, TimeSpan.FromMinutes(10), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SilentStruggler, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.QuietedCaptive, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.MessyDrooler, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.DroolingDiva, TimeSpan.FromHours(12), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.EmbraceOfSilence, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SubjugationToSilence, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SpeechSilverSilenceGolden, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.TheKinkyLegend, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.WhispersToWhimpers, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.OfMuffledMoans, TimeSpan.FromMinutes(10), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SilentStruggler, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.QuietedCaptive, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.MessyDrooler, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.DroolingDiva, TimeSpan.FromHours(12), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.EmbraceOfSilence, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SubjugationToSilence, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.SpeechSilverSilenceGolden, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Gags, Achievements.TheKinkyLegend, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days Gagged", "Spent");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SilentButDeadly, 10,
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SilentButDeadly, 10,
             () => _gags.ActiveGagsData is { } gagData && gagData.AnyGagActive(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Roulettes Completed");
 
-        SaveData.AddTimedProgress(AchievementModuleKind.Gags, Achievements.ATrueGagSlut, 10, TimeSpan.FromHours(1), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Received In Hour");
+        LatestCache.SaveData.AddTimedProgress(AchievementModuleKind.Gags, Achievements.ATrueGagSlut, 10, TimeSpan.FromHours(1), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gags Received In Hour");
 
-        SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.GagReflex, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gag Reflexes Experienced");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Gags, Achievements.GagReflex, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Gag Reflexes Experienced");
 
-        SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.QuietNowDear, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.QuietNowDear, () =>
         {
             var targetIsGagged = false;
             if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
@@ -88,56 +94,56 @@ public partial class AchievementManager
             return targetIsGagged;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinkster Hushed");
 
-        SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.SilenceOfShame, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinksters", "Hushed by");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Gags, Achievements.SilenceOfShame, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Kinksters", "Hushed by");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.YourFavoriteNurse, 20,
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.YourFavoriteNurse, 20,
             () => _gags.ActiveGagsData is { } gagData && gagData.GagSlots.Any(x => x.GagItem == GagType.MedicalMask), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Patients Serviced", reqBeginAndFinish: false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SayMmmph, 1, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Photos Taken");
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Gags, Achievements.SayMmmph, 1, () => _gags.ActiveGagsData?.IsGagged() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Photos Taken");
         #endregion GAG MODULE
 
         #region WARDROBE MODULE
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.FirstTiemers, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.Cuffed19, 19, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cuffs Applied");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TheRescuer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Unlocked");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SelfBondageEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DiDEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.FirstTiemers, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.Cuffed19, 19, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cuffs Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TheRescuer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Unlocked");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SelfBondageEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DiDEnthusiast, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Applied");
 
-        SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.CrowdPleaser, 15,
+        LatestCache.SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.CrowdPleaser, 15,
             () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "People Nearby");
-        SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.Humiliation, 5,
+        LatestCache.SaveData.AddConditionalThreshold(AchievementModuleKind.Wardrobe,Achievements.Humiliation, 5,
             () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "GagSpeak Pairs Nearby");
 
-        SaveData.AddTimedProgress(AchievementModuleKind.Wardrobe,Achievements.BondageBunny, 5, TimeSpan.FromHours(2), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Received In 2 Hours");
+        LatestCache.SaveData.AddTimedProgress(AchievementModuleKind.Wardrobe,Achievements.BondageBunny, 5, TimeSpan.FromHours(2), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Received In 2 Hours");
 
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.ToDyeFor, 5, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DyeAnotherDay, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DyeHard, 15, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.ToDyeFor, 5, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DyeAnotherDay, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.DyeHard, 15, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restraints Dyed");
 
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.RiggersFirstSession, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.MyLittlePlaything, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.SuitsYouBitch, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.TiesThatBind, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.SlaveTrainer, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.CeremonyOfEternalBondage, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.RiggersFirstSession, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.MyLittlePlaything, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.SuitsYouBitch, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.TiesThatBind, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.SlaveTrainer, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.CeremonyOfEternalBondage, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days");
 
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.FirstTimeBondage, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.AmateurBondage, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ComfortRestraint, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourBondageMaid, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberMaid, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.TrainedBondageSlave, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
-        SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.FirstTimeBondage, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.AmateurBondage, TimeSpan.FromHours(1), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hour locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ComfortRestraint, TimeSpan.FromHours(6), DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hours locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourBondageMaid, TimeSpan.FromDays(1), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Day locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberMaid, TimeSpan.FromDays(4), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.TrainedBondageSlave, TimeSpan.FromDays(7), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Wardrobe,Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Days locked up", "Spent");
 
-        SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.KinkyExplorer, () => _mainConfig.Config.CursedLootPanel, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Runs Started");
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TemptingFatesTreasure, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BadEndSeeker, 25,
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.KinkyExplorer, () => _mainConfig.Config.CursedLootPanel, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Runs Started");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.TemptingFatesTreasure, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered");
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BadEndSeeker, 25,
             () => _cursedLoot.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EverCursed, 100,
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EverCursed, 100,
             () => _cursedLoot.LockChance <= 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HealSlut, 1, () =>
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HealSlut, 1, () =>
         {
             int activeItems = 0;
             if(_gags.ActiveGagsData?.IsGagged() ?? false) activeItems++;
@@ -146,30 +152,30 @@ public partial class AchievementManager
             return activeItems >= 2;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Duties Completed");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BondagePalace, 1, () 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.BondagePalace, 1, () 
             => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HornyOnHigh, 1, () 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.HornyOnHigh, 1, () 
             => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EurekaWhorethos, 1, () 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EurekaWhorethos, 1, () 
             => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.MyKinkRunsDeep, 1, () 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.MyKinkRunsDeep, 1, () 
             => _restraints.EnabledSet is not null && _traits.ActiveTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinksRunDeeper, 1, ()
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinksRunDeeper, 1, ()
             => _restraints.EnabledSet is not null && _traits.ActiveTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfFocus, 1, () =>
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfFocus, 1, () =>
         {
             if (_clientMonitor.Level < 90)
                 return false;
             return (_restraints.EnabledSet is not null && (_traits.ActiveTraits & Traits.AnyStim) != 0) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
         {
             if (_clientMonitor.Level < 90)
                 return false;
             return (_restraints.EnabledSet is not null && (_traits.ActiveTraits & Traits.ArmsRestrained | Traits.LegsRestrained) != 0) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
         {
             if (_clientMonitor.Level < 90)
                 return false;
@@ -177,7 +183,7 @@ public partial class AchievementManager
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         // While actively moving, incorrectly guess a restraint lock while gagged (Secret)
-        SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.RunningGag, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Wardrobe,Achievements.RunningGag, () =>
         {
             unsafe
             {
@@ -191,13 +197,13 @@ public partial class AchievementManager
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Funny Conditions Met");
 
         // Check this in the action function handler
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.AuctionedOff, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Auctioned Off", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.AuctionedOff, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Auctioned Off", suffix: "Times");
 
         // Check this in the action function handler
-        SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SoldSlave, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Sold off in Bondage ", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Wardrobe,Achievements.SoldSlave, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Sold off in Bondage ", suffix: "Times");
 
         // Bondodge - Within 2 seconds of having a restraint set applied to you, remove it from yourself (might want to add a duration conditional but idk?)
-        SaveData.AddTimeLimitedConditional(AchievementModuleKind.Wardrobe,Achievements.Bondodge,
+        LatestCache.SaveData.AddTimeLimitedConditional(AchievementModuleKind.Wardrobe,Achievements.Bondodge,
             TimeSpan.FromSeconds(2), () => _restraints.EnabledSet is not null, DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false));
 
         #endregion WARDROBE MODULE
@@ -205,111 +211,111 @@ public partial class AchievementManager
         // Module Finished
         #region PUPPETEER MODULE
         // (can work both ways)
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AnObedientPet, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Recieved", suffix: "Sit Orders");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AnObedientPet, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Recieved", suffix: "Sit Orders");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ControlMyBody, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.CompleteDevotion, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ControlMyBody, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.CompleteDevotion, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");
 
-        SaveData.AddTimedProgress(AchievementModuleKind.Puppeteer,Achievements.MasterOfPuppets, 10, TimeSpan.FromHours(1), (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Within the last Hour");
+        LatestCache.SaveData.AddTimedProgress(AchievementModuleKind.Puppeteer,Achievements.MasterOfPuppets, 10, TimeSpan.FromHours(1), (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Within the last Hour");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.KissMyHeels, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered", suffix: "Grovels");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.KissMyHeels, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered", suffix: "Grovels");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.Ashamed, 5, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered to sulk", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.Ashamed, 5, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered to sulk", suffix: "Times");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.HouseServant, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered to sweep", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.HouseServant, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered to sweep", suffix: "Times");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AMaestroOfMyProperty, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered", suffix: "Dances");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AMaestroOfMyProperty, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Ordered", suffix: "Dances");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OrchestratorsApprentice, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.NoStringsAttached, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.PuppetMaster, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MasterOfManipulation, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.TheGrandConductor, 250, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MaestroOfStrings, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OfGrandiousSymphony, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.SovereignMaestro, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OrchestratorOfMinds, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OrchestratorsApprentice, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.NoStringsAttached, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.PuppetMaster, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MasterOfManipulation, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.TheGrandConductor, 250, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MaestroOfStrings, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OfGrandiousSymphony, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.SovereignMaestro, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.OrchestratorOfMinds, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Gave", suffix: "Orders to Kinksters");
 
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.WillingPuppet, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AtYourCommand, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.YourMarionette, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.TheInstrument, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AMannequinsMadness, 250, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.DevotedDoll, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.EnthralledDoll, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ObedientDoll, 1750, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ServiceDoll, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MastersPlaything, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MistressesPlaything, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
-        SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ThePerfectDoll, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.WillingPuppet, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AtYourCommand, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.YourMarionette, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.TheInstrument, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.AMannequinsMadness, 250, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.DevotedDoll, 500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.EnthralledDoll, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ObedientDoll, 1750, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ServiceDoll, 2500, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MastersPlaything, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.MistressesPlaything, 5000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Puppeteer,Achievements.ThePerfectDoll, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Puppeteered", suffix: "Times");
         #endregion PUPPETEER MODULE
 
         // Module Finished
         #region TOYBOX MODULE
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.MyPleasantriesForAll, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Published", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.DeviousComposer, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Published", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.MyPleasantriesForAll, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Published", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.DeviousComposer, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Published", suffix: "Patterns");
 
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.TasteOfTemptation, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SeekerOfSensations, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.CravingPleasure, 30, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.TasteOfTemptation, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SeekerOfSensations, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.CravingPleasure, 30, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Downloaded", suffix: "Patterns");
 
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.GoodVibes, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.DelightfulPleasures, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.PatternLover, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SensualConnoisseur, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.PassionateAdmirer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.GoodVibes, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.DelightfulPleasures, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.PatternLover, 25, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SensualConnoisseur, 50, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.PassionateAdmirer, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Liked", suffix: "Patterns");
 
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.ALittleTease, TimeSpan.FromSeconds(20), DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Seconds", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.ShortButSweet, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.TemptingRythms, TimeSpan.FromMinutes(2), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.MyBuildingDesire, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.WithWavesOfSensation, TimeSpan.FromMinutes(10), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.WithHeightenedSensations, TimeSpan.FromMinutes(15), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.MusicalMoaner, TimeSpan.FromMinutes(20), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.StimulatingExperiences, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.EnduranceKing, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
-        SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.ALittleTease, TimeSpan.FromSeconds(20), DurationTimeUnit.Seconds, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Seconds", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.ShortButSweet, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.TemptingRythms, TimeSpan.FromMinutes(2), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.MyBuildingDesire, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.WithWavesOfSensation, TimeSpan.FromMinutes(10), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.WithHeightenedSensations, TimeSpan.FromMinutes(15), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.MusicalMoaner, TimeSpan.FromMinutes(20), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.StimulatingExperiences, TimeSpan.FromMinutes(30), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.EnduranceKing, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
-        SaveData.AddConditional(AchievementModuleKind.Toybox,Achievements.CollectorOfSinfulTreasures, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Toybox,Achievements.CollectorOfSinfulTreasures, () =>
         { return (_playerData.GlobalPerms?.HasValidShareCode() ?? false) || _sexToys.DeviceHandler.AnyDeviceConnected; }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Devices Connected");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox,Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox,Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
             () => _patterns.ActivePattern is not null, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
 
-        SaveData.AddConditional(AchievementModuleKind.Toybox, Achievements.VulnerableVibrations, () => _patterns.ActivePattern is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Staggers Performed");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Toybox, Achievements.VulnerableVibrations, () => _patterns.ActivePattern is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Staggers Performed");
 
-        SaveData.AddConditional(AchievementModuleKind.Toybox,Achievements.KinkyGambler,
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Toybox,Achievements.KinkyGambler,
             () => _triggers.Storage.Social.Count() > 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "DeathRolls Gambled");
 
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SubtleReminders, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.LostInTheMoment, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.TriggerHappy, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.SubtleReminders, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.LostInTheMoment, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.TriggerHappy, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Triggers Fired");
 
-        SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.HornyMornings, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Alarms Went Off");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Toybox,Achievements.HornyMornings, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Alarms Went Off");
         #endregion TOYBOX MODULE
 
         #region HARDCORE MODULE
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.AllTheCollarsOfTheRainbow, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Forced", suffix: "Pairs To Follow You");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.AllTheCollarsOfTheRainbow, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Forced", suffix: "Pairs To Follow You");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Hardcore,Achievements.UCanTieThis, 1,
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Hardcore,Achievements.UCanTieThis, 1,
             () => _playerData.GlobalPerms?.IsFollowing() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
 
         // Forced follow achievements
-        SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedFollow, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
-        SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedFollow, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
+        LatestCache.SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
 
         // Time for Walkies achievements
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
 
         //Part of the Furniture - Be forced to sit for 1 hour or more
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _playerData.GlobalPerms?.IsSitting() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _playerData.GlobalPerms?.IsSitting() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
             () =>
             {
                 if (_restraints.EnabledSet is not null && (_traits.ActiveTraits & Traits.Blindfolded) != 0 && (_playerData.GlobalPerms?.IsFollowing() ?? false))
@@ -318,7 +324,7 @@ public partial class AchievementManager
                 return false;
             }, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Walked for", suffix: "In a Major City");
 
-        SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.BlindLeadingTheBlind,
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.BlindLeadingTheBlind,
             () =>
             {
                 // This is temporarily impossible until i can make fetching active traits from pairs less cancer to handle.
@@ -328,65 +334,65 @@ public partial class AchievementManager
                 return false;
             }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Pairs Led");
 
-        SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.WhatAView, () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.WhatAView, () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, 
             DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
             DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
             DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
 
         // Shock-related achievements - Give out shocks
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.IndulgingSparks, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockingTemptations, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.TheCrazeOfShockies, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.WickedThunder, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ElectropeHasNoLimits, 25000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.IndulgingSparks, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockingTemptations, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.TheCrazeOfShockies, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.WickedThunder, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ElectropeHasNoLimits, 25000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Sent");
 
         // Shock-related achievements - Get shocked
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ElectrifyingPleasure, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockingExperience, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.WiredForObedience, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockAddiction, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.SlaveToTheShock, 25000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
-        SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockSlut, 50000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ElectrifyingPleasure, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockingExperience, 100, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.WiredForObedience, 1000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockAddiction, 10000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.SlaveToTheShock, 25000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.ShockSlut, 50000, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Shocks Received");
         #endregion HARDCORE MODULE
 
         #region REMOTES MODULE
-        SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.JustVibing, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Remotes Opened");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.JustVibing, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Remotes Opened");
 
         // TODO: Make this turning down someone else's once its implemented.
         // (on second thought this could introduce lots of issues so maybe not? Look into later idk, for now its dormant.)
-        SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.DontKillMyVibe, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Vibes Killed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.DontKillMyVibe, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Vibes Killed");
 
-        SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.VibingWithFriends, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Rooms Joined");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Remotes, Achievements.VibingWithFriends, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Rooms Joined");
         #endregion REMOTES MODULE
 
         #region GENERIC MODULE
-        SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TutorialComplete, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Tutorial Completed");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TutorialComplete, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Tutorial Completed");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.KinkyNovice, () => _pairs.DirectPairs.Count > 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pair Added");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.KinkyNovice, () => _pairs.DirectPairs.Count > 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pair Added");
 
-        SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TheCollector, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pairs Added");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.TheCollector, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pairs Added");
 
-        SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.BoundaryRespecter, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Presets Applied");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.BoundaryRespecter, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Presets Applied");
 
-        SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.HelloKinkyWorld, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Global Messages Sent");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.HelloKinkyWorld, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Global Messages Sent");
 
-        SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.KnowsMyLimits, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Safewords Used");
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Generic, Achievements.KnowsMyLimits, 1, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Safewords Used");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.WarriorOfLewd, 1,
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.WarriorOfLewd, 1,
             () => (_gags.ActiveGagsData?.IsGagged() ?? false) && _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Cutscenes Watched Bound & Gagged");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.EscapingIsNotEasy, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Escape Attempts Made");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.EscapingIsNotEasy, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Escape Attempts Made");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.ICantBelieveYouveDoneThis, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Slaps Received");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.ICantBelieveYouveDoneThis, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Slaps Received");
 
-        SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.WithAKissGoodbye, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Generic, Achievements.WithAKissGoodbye, () =>
         {
             var targetIsImmobile = false;
             if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
@@ -405,7 +411,7 @@ public partial class AchievementManager
             return targetIsImmobile;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Dotes to Helpless Kinksters", "Gave");
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ProlificPetter, 10, () =>
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ProlificPetter, 10, () =>
         {
             var targetIsImmobile = false;
             if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == _clientMonitor.TargetObjectId))
@@ -422,51 +428,51 @@ public partial class AchievementManager
             return targetIsImmobile;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => _clientMonitor.InPvP && (_restraints.EnabledSet is not null || _sexToys.ConnectedToyActive), 
             (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 
         #region SECRETS MODULE
-        SaveData.AddProgress(AchievementModuleKind.Secrets, Achievements.HiddenInPlainSight, 7, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Found", suffix: "Easter Eggs", isSecret: true);
+        LatestCache.SaveData.AddProgress(AchievementModuleKind.Secrets, Achievements.HiddenInPlainSight, 7, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Found", suffix: "Easter Eggs", isSecret: true);
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
         {
             return _gags.ActiveGagsData is { } gags && gags.IsGagged() && _restraints.EnabledSet is not null && _patterns.ActivePattern is not null && _triggers.EnabledTriggers.Count() > 0 && _alarms.ActiveAlarms.Count() > 0 && _sexToys.ConnectedToyActive;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Conditions", isSecret: true);
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
         {
             return _gags.ActiveGagsData is { } gags && gags.IsGagged() && _restraints.EnabledSet is not null && _sexToys.ConnectedToyActive && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
             && _playerData.GlobalPerms is { } globals && (!globals.ForcedFollow.IsNullOrWhitespace() || !globals.ForcedEmoteState.IsNullOrWhitespace());
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Hardcore Conditions", isSecret: true);
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _sexToys.ConnectedToyActive && _gags.ActiveGagsData is { } gags && gags.IsGagged(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
-        SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.EnabledSet is not null && _clientMonitor.IsDead, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ActiveGagsData is { } gags && gags.IsGagged() && _playerData.GlobalPerms is { } globals && globals.ChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _sexToys.ConnectedToyActive && _gags.ActiveGagsData is { } gags && gags.IsGagged(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
+        LatestCache.SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.EnabledSet is not null && _clientMonitor.IsDead, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ActiveGagsData is { } gags && gags.IsGagged() && _playerData.GlobalPerms is { } globals && globals.ChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
         // The above is currently non functional as i dont have the data to know which chat message type contains these request tasks.
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyTeacher, 10, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyProfessor, 50, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
-        SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyMentor, 100, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
-        SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.ExtremeBondageEnjoyer, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restriction Conditions Satisfied", isSecret: true); 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.WildRide, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyTeacher, 10, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyProfessor, 50, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.KinkyMentor, 100, () => _restraints.EnabledSet is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Thanks Received", reqBeginAndFinish: false, isSecret: true);
+        LatestCache.SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.ExtremeBondageEnjoyer, 10, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Restriction Conditions Satisfied", isSecret: true); 
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.WildRide, () =>
         {
             var raceEndVisible = false;
             unsafe
@@ -478,7 +484,7 @@ public partial class AchievementManager
             return _clientMonitor.IsChocoboRacing && raceEndVisible && _restraints.EnabledSet is not null;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Races Won In Unusual Conditions", isSecret: true);
 
-        SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.SlavePresentation, () =>
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.SlavePresentation, () =>
         {
             return _gags.ActiveGagsData is { } gags && gags.IsGagged() && _restraints.EnabledSet is not null;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Presentations Given on Stage", isSecret: true);

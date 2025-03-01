@@ -286,7 +286,13 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         Logger.LogWarning("Loading in Config for file: " + file);
 
         if (!File.Exists(file))
+        {
+            Logger.LogWarning("No Config File found for TraitsManager.");
+            // create a new file with default values.
+            _saver.Save(this);
             return;
+        }
+
         try
         {
             var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file));

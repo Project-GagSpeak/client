@@ -6,12 +6,14 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Data.Character;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
+public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
+    private readonly GagspeakConfigService _mainConfig;
     private readonly GlobalData _globals;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -20,10 +22,11 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
     private readonly HybridSaveService _saver;
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, GagRestrictionManager gags, RestrictionManager restrictions,
-        FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
-        : base(logger, mediator)
+        GagspeakConfigService config, GlobalData clientData, GagRestrictionManager gags,
+        RestrictionManager restrictions, FavoritesManager favorites, ConfigFileProvider fileNames,
+        HybridSaveService saver) : base(logger, mediator)
     {
+        _mainConfig = config;
         _globals = clientData;
         _gags = gags;
         _restrictions = restrictions;
@@ -36,16 +39,19 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
 
     // Cached Information.
     public CursedItem? ActiveEditorItem { get; private set; }
-    public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
+    public VisualRestrictionsCache LatestVisualCache { get; private set; } = new();
 
     // Stored Information.
     public IReadOnlyList<CursedItem> ActiveCursedItems => Storage.ActiveItems;
     public CursedLootStorage Storage { get; private set; } = new CursedLootStorage();
 
-    public void OnLogin() { }
+    public void LoadServerData()
+    {
+        // we have no exact data to load in here, but will need to update the visual cache.
+        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+    }
 
-    public void OnLogout() { }
-
+    #region Generic Methods
     public CursedItem CreateNew(string lootName)
     {
         var newItem = new CursedItem()
@@ -133,6 +139,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
 
     public void RemoveFavorite(CursedItem cursedLoot)
         => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, cursedLoot.Identifier);
+    #endregion Generic Methods
 
 
     public void ActivateCursedItem(CursedItem item, DateTimeOffset endTimeUtc)
@@ -150,6 +157,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         // if it was a restriction manager, be sure to apply its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
             _restrictions.AddOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+        // Update the cache regardless.
+        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
     }
 
     // Scan by id so we dont spam deactivation.
@@ -165,6 +174,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         // if it was a restriction manager, be sure to remove its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
             _restrictions.RemoveOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+        // Update the cache regardless.
+        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -215,21 +226,40 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.CursedLoot;
-        Logger.LogWarning("Loading in Config for file: " + file);
-
+        Logger.LogInformation("Loading in CursedLoot Config for file: " + file);
         Storage.Clear();
-        if (!File.Exists(file))
-        {
-            Logger.LogWarning("No GagRestrictions file found at {0}", file);
-            return;
-        }
 
+        string jsonText = "";
+        JObject jObject = new();
+
+        // if the main file does not exist, attempt to load the text from the backup.
+        if (File.Exists(file))
+        {
+            jsonText = File.ReadAllText(file);
+            jObject = JObject.Parse(jsonText);
+        }
+        else
+        {
+            GagSpeak.StaticLog.Warning("Cursed Loot Config file not found. Attempting to find old config.");
+            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "cursedloot.json");
+            if (File.Exists(oldFormatFile))
+            {
+                jsonText = File.ReadAllText(oldFormatFile);
+                jObject = JObject.Parse(jsonText);
+                jObject = ConfigMigrator.MigrateCursedLootConfig(jObject, _fileNames, oldFormatFile);
+            }
+            else
+            {
+                GagSpeak.StaticLog.Warning("No Config file found for: " + oldFormatFile);
+                // create a new file with default values.
+                _saver.Save(this);
+                return;
+            }
+        }
         // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -242,6 +272,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IVisua
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        // run a save after the load.
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)

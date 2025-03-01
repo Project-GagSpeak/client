@@ -1,5 +1,6 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.Localization;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
@@ -10,7 +11,7 @@ using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.PlayerState.Toybox;
 
-public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualManager, IHybridSavable
+public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
@@ -27,7 +28,6 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
-        Load();
     }
 
     // Cached Information.
@@ -37,10 +37,6 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
 
     // Stored information.
     public TriggerStorage Storage { get; private set; } = new TriggerStorage();
-
-    public void OnLogin() { }
-
-    public void OnLogout() { }
 
     public Trigger CreateNew(string triggerName)
     {
@@ -204,7 +200,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.Alarms).Item2;
+        => (isAccountUnique = true, files.Triggers).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
@@ -219,21 +215,28 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
         }.ToString(Formatting.Indented);
     }
 
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.Triggers;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Logger.LogInformation("Loading in Triggers Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Triggers file found at {0}", file);
+            Logger.LogWarning("No Triggers Config file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
         // Read the json from the file.
         var jsonText = File.ReadAllText(file);
         var jObject = JObject.Parse(jsonText);
+
+        // Migrate the jObject if it is using the old format.
+        if (jObject["TriggerStorage"] is JObject)
+            jObject = ConfigMigrator.MigrateTriggersConfig(jObject, _fileNames, file);
+
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -246,6 +249,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)
@@ -272,7 +276,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IVisualMa
                     _ => throw new Exception("Invalid Trigger Type")
                 };
                 // Safely parse the integer to InvokableActionType
-                if (Enum.TryParse(triggerToken["ExecutionType"]?.ToString(), out InvokableActionType executionType))
+                if (Enum.TryParse(triggerToken["ActionType"]?.ToString(), out InvokableActionType executionType))
                 {
                     InvokableGsAction executableAction = executionType switch
                     {

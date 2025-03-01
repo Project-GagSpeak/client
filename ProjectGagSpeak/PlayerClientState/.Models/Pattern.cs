@@ -14,7 +14,7 @@ public class Pattern
     public bool ShouldLoop { get; set; } = false;
     public List<byte> PatternData { get; set; } = new();
 
-    internal Pattern() { }
+    public Pattern() { }
 
     public Pattern(Pattern other, bool copyIdentifier = true)
     {

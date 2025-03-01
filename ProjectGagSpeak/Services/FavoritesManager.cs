@@ -42,9 +42,13 @@ public class FavoritesManager : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Favorites;
-        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
+        GagSpeak.StaticLog.Warning("Loading in Favorites Config for file: " + file);
         if (!File.Exists(file))
+        {
+            GagSpeak.StaticLog.Warning("No Favorites Config file found at {0}", file);
             return;
+        }
+
         try
         {
             var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file));

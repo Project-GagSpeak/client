@@ -238,7 +238,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         // UpdateAppliedTraits(visualGagItem.Traits, gagData.Enactor.UID, ManagerPriority.Gags);
     }
 
-    /// <summary> Locks the gag with a padlock on a spesified layer. </summary>
+    /// <summary> Locks the gag with a padlock on a specified layer. </summary>
     public void LockGag(CallbackGagDataDto gagData)
     {
         if (!MainHub.IsConnected)
@@ -476,6 +476,16 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
     #endregion Direct Moodle Calls
 
+
+    public async Task ApplyFullUpdate()
+    {
+        // Apply a full update of application for all current caches as they are in their current state.
+
+        // not yet known how atm.
+        Logger.LogInformation("Full Update Applied!");
+    }
+
+
     #region Applier Callers
     private async Task TryAddGlamour(GlamourSlot item, ManagerPriority source)
     {
@@ -505,6 +515,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     private async Task TryUpdateorRemoveGlamour(GlamourSlot item) => await TryUpdateorRemoveGlamour(new[] { item });
+
     /// <summary> A Glamour Slot was removed and we need to perform a recalculation to account for any minor changes. </summary>
     /// <remarks> For now, this will recalculate all slots and reapply all slots. </remarks>
     private async Task TryUpdateorRemoveGlamour(IEnumerable<GlamourSlot> items)

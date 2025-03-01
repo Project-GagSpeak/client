@@ -250,7 +250,6 @@ public class AccountManagerTab
             {
                 _serverConfigs.ServerStorage.Authentications.Clear();
                 _mainConfig.Config.AcknowledgementUnderstood = false;
-                _mainConfig.Config.AccountCreated = false;
             }
             _mainConfig.Config.LastUidLoggedIn = "";
             _mainConfig.Save();

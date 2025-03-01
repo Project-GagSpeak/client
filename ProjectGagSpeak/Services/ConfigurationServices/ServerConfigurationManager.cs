@@ -3,6 +3,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.Connection;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.Configs;
@@ -25,13 +26,12 @@ public class ServerConfigurationManager
         _clientMonitor = clientMonitor;
         _serverConfig = serverConfig;
         _nicknameConfig = nicksConfig;
-        logger.LogCritical("ServerConfigurationManager has been initialized.");
-        // ensure main exists
-        if (!string.Equals(_serverConfig.Storage.ServiceUri, MainHub.MainServiceUri, StringComparison.OrdinalIgnoreCase))
-        {
-            _serverConfig.Storage = new ServerStorage();
-            _serverConfig.Save();
-        }
+    }
+
+    public void Init()
+    {
+        _serverConfig.Load();
+        _nicknameConfig.Load();
     }
 
     /// <summary> The current API URL for the server </summary>
@@ -159,6 +159,7 @@ public class ServerConfigurationManager
         // If valid, take this auth and update it with its respective information.
         auth.SecretKey.HasHadSuccessfulConnection = true;
         auth.SecretKey.LinkedProfileUID = connectedInfo.User.UID;
+        _logger.LogDebug($"Updating authentication for {auth.CharacterName} with UID {connectedInfo.User.UID}");
 
         // Now, we should iterate through each of our authentications.
         foreach (var authentication in ServerStorage.Authentications)

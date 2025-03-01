@@ -1,5 +1,6 @@
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Hardcore.ForcedStay;
+using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
 
 namespace GagSpeak.Services.Configs;
@@ -33,29 +34,52 @@ public class GagspeakConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.MainConfig;
-        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
-        if (!File.Exists(file))
+        GagSpeak.StaticLog.Information("Loading in Config for file: " + file);
+        string jsonText = "";
+        JObject jObject = new();
+        try
         {
-            GagSpeak.StaticLog.Warning("Config file not found.");
-            return;
+            // if the main file does not exist, attempt to load the text from the backup.
+            if (File.Exists(file))
+            {
+                jsonText = File.ReadAllText(file);
+                jObject = JObject.Parse(jsonText);
+            }
+            else
+            {
+                GagSpeak.StaticLog.Warning("Config file not found Attempting to find old config.");
+                var backupFile = file.Insert(file.Length - 5, "-testing");
+                if (File.Exists(backupFile))
+                {
+                    jsonText = File.ReadAllText(backupFile);
+                    jObject = JObject.Parse(jsonText);
+                    jObject = ConfigMigrator.MigrateMainConfig(jObject);
+                    // remove the old file.
+                    File.Delete(backupFile);
+                }
+                else
+                {
+                    GagSpeak.StaticLog.Warning("No Config file found for: " + backupFile);
+                    return;
+                }
+            }
+            // Read the json from the file.
+            var version = jObject["Version"]?.Value<int>() ?? 0;
+
+            // Load instance configuration
+            Config = jObject["Config"]?.ToObject<GagspeakConfig>() ?? new GagspeakConfig();
+
+            // Load static fields safely
+            if (Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel))
+                LogLevel = logLevel;
+            else
+                LogLevel = LogLevel.Trace;  // Default fallback
+
+            LoggerFilters = jObject["LoggerFilters"]?.ToObject<HashSet<LoggerType>>() ?? new HashSet<LoggerType>();
+            GagSpeak.StaticLog.Information("Config loaded.");
+            Save();
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
-        var version = jObject["Version"]?.Value<int>() ?? 0;
-
-        // Load instance configuration
-        Config = jObject["Config"]?.ToObject<GagspeakConfig>() ?? new GagspeakConfig();
-
-        // Load static fields safely
-        if (Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel))
-            LogLevel = logLevel;
-        else
-            LogLevel = LogLevel.Trace;  // Default fallback
-
-        LoggerFilters = jObject["LoggerFilters"]?.ToObject<HashSet<LoggerType>>() ?? new HashSet<LoggerType>();
-        GagSpeak.StaticLog.Warning("Config loaded.");
+        catch (Exception ex) { GagSpeak.StaticLog.Error("Failed to load config." + ex); }
     }
 
     public GagspeakConfig Config { get; private set; } = new GagspeakConfig();
@@ -200,6 +224,7 @@ public class GagspeakConfig
     public string Language { get; set; } = "English"; // MuffleCore
     public string LanguageDialect { get; set; } = "IPA_US"; // MuffleCore
     public bool CursedLootPanel { get; set; } = false; // CursedLootPanel
+    public bool CursedItemsApplyTraits { get; set; } = false; // If Mimics can apply restriction traits to you.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
 
     // GLOBAL VIBRATOR SETTINGS

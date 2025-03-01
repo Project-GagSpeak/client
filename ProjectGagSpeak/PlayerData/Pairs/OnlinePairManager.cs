@@ -180,7 +180,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
                     LightStorageData = new CharaStorageData(), // Handle this later.
                 };*/
                 Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
-                await _hub.UserPushData(new(newOnlinePairs, compiledComposite, false)).ConfigureAwait(false);
+                // await _hub.UserPushData(new(newOnlinePairs, compiledComposite, false)).ConfigureAwait(false);
             });
         }
     }

@@ -40,16 +40,16 @@ public interface IRestrictionItem : IRestriction
 public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
 {
     public GagType GagType { get; init; }
-    public bool IsEnabled { get; internal set; }
-    public GlamourSlot Glamour { get; internal set; }
-    public ModAssociation Mod { get; internal set; }
-    public Moodle Moodle { get; internal set; }
-    public Traits Traits { get; internal set; }
+    public bool IsEnabled { get; internal set; } = false;
+    public GlamourSlot Glamour { get; internal set; } = new GlamourSlot();
+    public ModAssociation Mod { get; internal set; } = new ModAssociation();
+    public Moodle Moodle { get; internal set; } = new Moodle();
+    public Traits Traits { get; internal set; } = Traits.None;
     public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
-    public Guid ProfileGuid { get; set; }
-    public uint ProfilePriority { get; set; }
-    public bool DoRedraw { get; set; }
+    public Guid ProfileGuid { get; set; } = Guid.Empty;
+    public uint ProfilePriority { get; set; } = 0;
+    public bool DoRedraw { get; set; } = false;
     internal GarblerRestriction(GagType gagType) => GagType = gagType;
     public GarblerRestriction(GarblerRestriction other)
     {
@@ -108,10 +108,10 @@ public class RestrictionItem : IRestrictionItem
     public virtual RestrictionType Type { get; } = RestrictionType.Normal;
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; internal set; } = string.Empty;
-    public GlamourSlot Glamour { get; internal set; }
-    public ModAssociation Mod { get; internal set; }
-    public Moodle Moodle { get; internal set; }
-    public Traits Traits { get; internal set; }
+    public GlamourSlot Glamour { get; internal set; } = new GlamourSlot();
+    public ModAssociation Mod { get; internal set; } = new ModAssociation();
+    public Moodle Moodle { get; internal set; } = new Moodle();
+    public Traits Traits { get; internal set; } = Traits.None;
  
     public RestrictionItem() { }
     public RestrictionItem(RestrictionItem other, bool keepIdentifier)
@@ -154,7 +154,7 @@ public class BlindfoldRestriction : RestrictionItem
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
     public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
-    public string CustomPath { get; set; }
+    public string CustomPath { get; set; } = string.Empty;
     public bool IsCustom => !CustomPath.IsNullOrWhitespace();
 
     public BlindfoldRestriction() { }
@@ -188,8 +188,8 @@ public class BlindfoldRestriction : RestrictionItem
 public class CollarRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Collar;
-    public string OwnerUID { get; set; }
-    public string CollarWriting { get; set; }
+    public string OwnerUID { get; set; } = string.Empty;
+    public string CollarWriting { get; set; } = string.Empty;
 
     public CollarRestriction() { }
     public CollarRestriction(CollarRestriction other, bool keepIdentifier)

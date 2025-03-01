@@ -1,7 +1,5 @@
 using Dalamud.Plugin;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI;
 
 namespace GagSpeak.Services.Configs;
 
@@ -9,7 +7,7 @@ namespace GagSpeak.Services.Configs;
 public interface IHybridSavable : IHybridConfig<ConfigFileProvider> { }
 
 /// <summary> Helps encapsulate all the configuration file names into a single place. </summary>
-public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileProvider
+public class ConfigFileProvider : IConfigFileProvider
 {
     // Shared Config Directories
     public readonly string GagSpeakDirectory;
@@ -37,18 +35,11 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
     public string Puppeteer => Path.Combine(CurrentPlayerDirectory, "puppeteer.json");
     public string Alarms => Path.Combine(CurrentPlayerDirectory, "alarms.json");
     public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
-
-    // If anything gets written here, then there are serious issues going on...
     public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
-
-    private Task? _accountConfigLoadTask = null;
-    public GagspeakMediator Mediator { get; }
     public string? CurrentUserUID { get; private set; } = null;
 
-    public ConfigFileProvider(GagspeakMediator mediator, IDalamudPluginInterface pi)
+    public ConfigFileProvider(IDalamudPluginInterface pi)
     {
-        Mediator = mediator;
-
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
@@ -60,56 +51,36 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");
-        ServerTags = Path.Combine(GagSpeakDirectory, "servertags.json");
+        ServerTags = Path.Combine(GagSpeakDirectory, "servertags.json"); // this is depricated.
 
         // attempt to load in the UID if the config.json exists.
         if (File.Exists(MainConfig))
         {
             var json = File.ReadAllText(MainConfig);
             var configJson = JObject.Parse(json);
-            CurrentUserUID = configJson["LastUidLoggedIn"]?.Value<string>() ?? string.Empty;
+            CurrentUserUID = configJson["Config"]!["LastUidLoggedIn"]?.Value<string>() ?? "UNKNOWN_VOID";
         }
-
-        Mediator.Subscribe<DalamudLogoutMessage>(this, (msg) =>
-        {
-            ClearUidConfigs();
-        });
-
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
-        {
-            PerPlayerConfigsInitialized = false;
-            if (MainHub.ConnectionDto is null)
-                return;
-
-            if (MainHub.UID != CurrentUserUID)
-            {
-                if (_accountConfigLoadTask is not null)
-                    _accountConfigLoadTask.Wait();
-                // assign the task.
-                _accountConfigLoadTask = Task.Run(() => UpdateConfigs(MainHub.UID));
-            }
-            else
-            {
-                PerPlayerConfigsInitialized = true;
-            }
-        });
-    }
-
-    public void Dispose()
-    {
-        Mediator.UnsubscribeAll(this);
     }
 
     // If this is not true, we should not be saving our configs anyways.
-    public bool PerPlayerConfigsInitialized { get; private set; } = false;
+    public bool HasValidProfileConfigs { get; private set; } = false;
 
     public void ClearUidConfigs()
     {
-        PerPlayerConfigsInitialized = false;
-        if (_accountConfigLoadTask is not null)
-            _accountConfigLoadTask.Wait();
-        // assign the task.
-        _accountConfigLoadTask = Task.Run(() => UpdateUserUID(null));
+        HasValidProfileConfigs = false;
+        UpdateUserUID(null);
+    }
+
+    public void UpdateConfigs(string uid)
+    {
+        GagSpeak.StaticLog.Information("Updating Configs for UID: " + uid);
+        UpdateUserUID(uid);
+
+        if (!Directory.Exists(CurrentPlayerDirectory))
+            Directory.CreateDirectory(CurrentPlayerDirectory);
+
+        GagSpeak.StaticLog.Information("Configs Updated.");
+        HasValidProfileConfigs = true;
     }
 
     private void UpdateUserUID(string? uid)
@@ -117,7 +88,6 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
         if (CurrentUserUID != uid)
         {
             CurrentUserUID = uid;
-            PerPlayerConfigsInitialized = false;
             UpdateUidInConfig(uid);
         }
     }
@@ -137,7 +107,7 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
             {
                 if (line.Trim().StartsWith("\"LastUidLoggedIn\""))
                 {
-                    writer.WriteLine($"  \"LastUidLoggedIn\": \"{uid ?? ""}\",");
+                    writer.WriteLine($"    \"LastUidLoggedIn\": \"{uid ?? ""}\",");
                 }
                 else
                 {
@@ -146,15 +116,5 @@ public class ConfigFileProvider : IMediatorSubscriber, IDisposable, IConfigFileP
             }
         }
         File.Move(tempFilePath, uidFilePath, true);
-    }
-
-    private void UpdateConfigs(string uid)
-    {
-        UpdateUserUID(uid);
-        // create a directory for the current player if none is set.
-        if (!Directory.Exists(CurrentPlayerDirectory))
-            Directory.CreateDirectory(CurrentPlayerDirectory);
-        // set the flag to true.
-        PerPlayerConfigsInitialized = true;
     }
 }

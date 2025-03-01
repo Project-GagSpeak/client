@@ -11,7 +11,7 @@ public record RestraintTrigger : Trigger
     // the new state of it that will trigger the execution
     public NewState RestraintState { get; set; } = NewState.Enabled;
 
-    internal RestraintTrigger() { }
+    public RestraintTrigger() { }
 
     public RestraintTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 
@@ -29,7 +29,7 @@ public record RestrictionTrigger : Trigger
     public Guid RestrictionId { get; set; } = Guid.Empty;
     public NewState RestrictionState { get; set; } = NewState.Enabled;
 
-    internal RestrictionTrigger() { }
+    public RestrictionTrigger() { }
 
     public RestrictionTrigger(RestrictionTrigger other, bool keepId) : base(other, keepId)
     {

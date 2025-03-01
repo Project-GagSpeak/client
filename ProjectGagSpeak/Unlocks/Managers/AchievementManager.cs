@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using GagSpeak.ChatMessages;
 using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Data;
@@ -20,6 +21,26 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 
 namespace GagSpeak.Achievements;
+
+/// <summary> The current state of the achievement save data. </summary>
+public class SaveDataCache
+{
+    /// <summary> Our Main SaveData instance. </summary>
+    /// <remarks> Dependent on InitializeAchievements() after construction to be configured. </remarks>
+    public AchievementSaveData SaveData { get; private set; } = new AchievementSaveData();
+
+    /// <summary> Marked as false if at any point during connection a loading issue occurs </summary>
+    public bool ContainsValidSaveData = false;
+
+    /// <summary> Only set to true after the saveData has been loaded completely. </summary>
+    public bool SaveDataLoaded = false;
+
+    /// <summary> Flagged upon any unhandled disconnect. </summary>
+    public DateTime LastUnhandledDisconnect = DateTime.MinValue;
+
+    /// <summary> If the SaveData is loaded and valid, we can upload. </summary>
+    public bool CanUpload() => SaveDataLoaded && ContainsValidSaveData;
+}
 
 public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
@@ -48,9 +69,6 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     // Token used for updating achievement data.
     private CancellationTokenSource? _saveDataUpdateCTS;
     private CancellationTokenSource? _achievementCompletedCTS;
-
-    // Our Main SaveData instance.
-    public static AchievementSaveData SaveData { get; private set; } = new AchievementSaveData();
 
     public AchievementManager(
         ILogger<AchievementManager> logger,
@@ -99,18 +117,20 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _dutyState = dutyState;
 
         Logger.LogInformation("Initializing Achievement Save Data Achievements", LoggerType.Achievements);
-        SaveData = new AchievementSaveData();
+        LatestCache = new SaveDataCache();
         InitializeAchievements();
 
         Logger.LogInformation("Achievement Save Data Initialized, default saveData string stored in template.", LoggerType.Achievements);
 
         // Check for when we are connected to the server, use the connection DTO to load our latest stored save data.
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ => OnServerConnection());
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
         {
-            // Revert SaveDataLoaded to false incase we get a disconnect before we can even run the onServerConnection function.
-            SaveDataLoaded = false;
-            ContainsValidSaveData = false;
+            // if the lastUnhandled disconnect is MinValue, then we should reset the cache entirely.
+            if (LatestCache.LastUnhandledDisconnect == DateTime.MinValue)
+            {
+                Logger.LogInformation("Unhandled Disconnect, resetting Achievement Data Cache.", LoggerType.Achievements);
+                ReInitializeSaveData();
+            }
             _saveDataUpdateCTS?.Cancel();
         });
 
@@ -128,93 +148,51 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     }
 
     // Public accessor helpers.
-    public static int Total => SaveData.Achievements.Count;
-    public static int Completed => SaveData.Achievements.Values.Count(a => a.IsCompleted);
-    public static List<AchievementBase> AllBase => SaveData.Achievements.Values.Cast<AchievementBase>().ToList();
-    public static List<AchievementBase> CompletedAchievements => SaveData.Achievements.Values.Where(a => a.IsCompleted).ToList();
-    public static string GetTitleById(int id) => SaveData.Achievements.Values.FirstOrDefault(a => a.AchievementId == id)?.Title ?? "No Title Set";
-    public static List<AchievementBase> GetAchievementsForModule(AchievementModuleKind module) => SaveData.Achievements.Values.Where(a => a.Module == module).ToList();
+    public static int Total => LatestCache.SaveData.Achievements.Count;
+    public static int Completed => LatestCache.SaveData.Achievements.Values.Count(a => a.IsCompleted);
+    public static List<AchievementBase> AllBase => LatestCache.SaveData.Achievements.Values.Cast<AchievementBase>().ToList();
+    public static List<AchievementBase> CompletedAchievements => LatestCache.SaveData.Achievements.Values.Where(a => a.IsCompleted).ToList();
+    public static string GetTitleById(int id) => LatestCache.SaveData.Achievements.Values.FirstOrDefault(a => a.AchievementId == id)?.Title ?? "No Title Set";
+    public static List<AchievementBase> GetAchievementsForModule(AchievementModuleKind module) => LatestCache.SaveData.Achievements.Values.Where(a => a.Module == module).ToList();
     public static bool TryGetAchievement(int id, out AchievementBase achievement)
     {
-        achievement = SaveData.Achievements.Values.FirstOrDefault(a => a.AchievementId == id)!;
+        achievement = LatestCache.SaveData.Achievements.Values.FirstOrDefault(a => a.AchievementId == id)!;
         return achievement is not null;
     }
 
-    /// <summary>
-    /// Required to be true in order for any save data uploads to occur.
-    /// </summary>
-    public static bool CanUploadSaveData => SaveDataLoaded && ContainsValidSaveData;
+    public static SaveDataCache LatestCache = new SaveDataCache();
 
-    // Marked as false if at any point during connection a loading issue occurs
-    private static bool ContainsValidSaveData = false;
-
-    // Only set to true after the saveData has been loaded completely.
-    private static bool SaveDataLoaded = false;
-
-    // Stores the time of the last unhandled disconnect, so we know if we should load previous data in or not.
-    public static DateTime LastUnhandledDisconnect = DateTime.MinValue;
-
-    private void OnServerConnection()
+    public void OnServerConnection(string? connectedAchievementString)
     {
-        // Initial Assumption: SaveData is not loaded or valid.
-        SaveDataLoaded = false;
-        ContainsValidSaveData = false;
-
-        // Cautionary Case 1: the connection DTO is null.
-        // -------------------------------------------
-        //    CONCERN: If null, it means we have no way to fetch what our stored AchievementData is from the server.
-        //     ACTION: Avoid starting any achievement data updates and return early.
-        //   CONSIDER: The SaveData will still contain blank achievement data state after returning. Meaning our saveData
-        //             is still technically valid, but we dont want to allow this.
-        // PREVENTION: Performing the early return will make SaveData updates invalid as ContainsValidSaveData will be false.
-        if (MainHub.ConnectionDto is null)
+        // if the last unhandled disconnect is any value besides MinValue, then load in that data.
+        if(LatestCache.LastUnhandledDisconnect != DateTime.MinValue && LatestCache.CanUpload())
         {
-            Logger.LogError("At the time of processing this function, your ConnectionDto was null." + Environment.NewLine +
-                "To prevent your SaveData from being reset or glitched or broken, until a reconnect " +
-                "with a valid ConnectionDto no achievement updates will be made.", LoggerType.Achievements);
-            return;
-        }
-
-        // Cautionary Case 2: We reconnected after unhandled exception / timeout.
-        // ------------------------------------------------------------------
-        //    CONCERN: If we reconnected after an unhandled exception, any changes made between the last save and the unhandled
-        //             disconnect will be lost.
-        //     ACTION: Load in the stored SaveData instead of the one from the connectionDTO by starting the saveCycle prior to
-        //             loading in or initializing any achievement data, and doing an early return.
-        //   CONSIDER: There is a possibility that the stored saveData could also not be valid data.
-        // PREVENTION: Ensure the stored saveData is valid before loading it in.
-        if (LastUnhandledDisconnect != DateTime.MinValue)
-        {
-            Logger.LogInformation("Our Last Disconnect was due to an exception, loading from existing/stored SaveData (if valid) instead.", LoggerType.Achievements);
-            // set the unhandled disconnect back to its default value so the next save after is accepted.
-            LastUnhandledDisconnect = DateTime.MinValue;
-            Logger.LogInformation("Starting SaveCycle by uploading previous AchievementData String:\n" + GetSaveDataDtoString());
-            // we can run the assumption here that the saveData is loaded in and valid.
-            SaveDataLoaded = true;
-            ContainsValidSaveData = true;
+            Logger.LogInformation("Last Disconnect was due to an exception, loading from existing/stored SaveData (if valid) instead.", LoggerType.Achievements);
+            LatestCache.LastUnhandledDisconnect = DateTime.MinValue;
             BeginAchievementSaveCycle();
             return;
         }
 
-        // Things have loaded in fine, handle how we import the AchievementSaveData.
-        if (string.IsNullOrEmpty(MainHub.ConnectionDto.UserAchievements))
+        // Otherwise, we dont give a fuck what the SaveData was, we should try to reinitialize the data though.
+        if(connectedAchievementString.IsNullOrEmpty())
         {
+            // reinitialize and push update.
             Logger.LogInformation("User has empty achievement Save Data. Creating new Save Data.", LoggerType.Achievements);
-            SaveData = new AchievementSaveData();
-            InitializeAchievements();
+            ReInitializeSaveData();
             Logger.LogDebug("Fresh Achievement Data Created!", LoggerType.Achievements);
-            // we can mark the saveData as 'loaded' and 'valid' since we have no reason to believe it is not.
-            SaveDataLoaded = true;
-            ContainsValidSaveData = true;
+            LatestCache.SaveDataLoaded = true;
+            LatestCache.ContainsValidSaveData = true;
+            // begin the achievement save cycle.
+            BeginAchievementSaveCycle();
         }
-        else
+        else // we have non-null string, so attempt to load it.
         {
             Logger.LogInformation("Loading in AchievementData from ConnectionDto", LoggerType.Achievements);
-            // See Inner Function for additional cautionary details:
-            LoadSaveDataDto(MainHub.ConnectionDto.UserAchievements);
+            LoadSaveDataDto(connectedAchievementString);
+            // if the cache is valid for uploads, begin the save cycle, otherwise do not ever allow it to run a save cycle.
+            if (LatestCache.CanUpload())
+                BeginAchievementSaveCycle();
         }
-        // begin the achievement save cycle.
-        BeginAchievementSaveCycle();
     }
 
     private void BeginAchievementSaveCycle()
@@ -226,9 +204,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _ = AchievementDataPeriodicUpdate(_saveDataUpdateCTS.Token);
     }
 
-    /// <summary>
-    /// Send an update to our achievement data every 20-30 minutes.
-    /// </summary>
+    /// <summary> Send an update to our achievement data every 20-30 minutes. </summary>
     private async Task AchievementDataPeriodicUpdate(CancellationToken ct)
     {
         Logger.LogInformation("Starting SaveData Update Loop", LoggerType.Achievements);
@@ -239,7 +215,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             {
                 Logger.LogInformation("Achievement SaveData Update processing...");
                 // break out of the loop and stop the update cycle if we no longer meet requirements for updating.
-                if (!CanUploadSaveData)
+                if (LatestCache.CanUpload() is false)
                 {
                     Logger.LogWarning("SaveData was either not loaded in or no longer valid, exiting loop to prevent potential data resets!");
                     _saveDataUpdateCTS?.Cancel();
@@ -272,11 +248,11 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             var item = SaveDataDeserialize(decompressed) ?? throw new Exception("Failed to deserialize.");
 
             // Update the local achievement data by loading from the light save data.
-            SaveData.LoadFromLightSaveDataDto(item);
+            LatestCache.SaveData.LoadFromLightSaveDataDto(item);
             Logger.LogInformation("Achievement Data Loaded from Server", LoggerType.Achievements);
             Logger.LogInformation("Achievement Data String Loaded:\n" + Base64saveDataToLoad);
             // Assuming we have not hit the catch statement at this point, we can mark that ContainsValidSaveData is true.
-            ContainsValidSaveData = true;
+            LatestCache.ContainsValidSaveData = true;
         }
         catch (Exception ex)
         {
@@ -287,24 +263,25 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             //     ACTION: Set the ContainsValidSaveData to false, so that even when SaveDataLoaded is true, no updates will be made.
             //   CONSIDER: The SaveDataLoaded will still be true after this finishes. Need a way to make sure both have to be true
             //             to allow upload.
-            // PREVENTION: Make a seperate Boolean that => SaveDataLoaded && ContainsValidSaveData to determine if we can upload.
+            // PREVENTION: Make a separate Boolean that => SaveDataLoaded && ContainsValidSaveData to determine if we can upload.
             Logger.LogError("Failed to load Achievement Data from server. Setting [HadFailedAchievementDataLoad] to true, " +
                 "preventing any further uploads to keep your old data intact. If you wish to pull a manual reset and do not" +
                 "believe this to be a bug, press the reset button, then reconnect.\n[REASON]: " + ex.Message);
-            ContainsValidSaveData = false;
+            LatestCache.ContainsValidSaveData = false;
         }
         finally
         {
             // Ensure that SaveDataLoaded is set to true, so that the SaveCycle can begin.
-            SaveDataLoaded = true;
+            LatestCache.SaveDataLoaded = true;
         }
     }
 
     public async Task ResetAchievementData()
     {
         // Reset SaveData
-        SaveData = new AchievementSaveData();
-        InitializeAchievements();
+        ReInitializeSaveData();
+        LatestCache.ContainsValidSaveData = true;
+        LatestCache.SaveDataLoaded = true;
         Logger.LogInformation("Reset Achievement Data Completely!", LoggerType.Achievements);
         // Send this off to the server.
         await SendUpdatedDataToServer();
@@ -313,16 +290,16 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     // Your existing method to send updated data to the server
     private async Task SendUpdatedDataToServer()
     {
-        var saveDataString = GetSaveDataDtoString();
-        Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
-
-        // Prevent uploads if CanUploadSaveData is not true.
-        if (!CanUploadSaveData)
+        // Prevent uploads if CanUpload() is false.
+        if (LatestCache.CanUpload() is false)
         {
             Logger.LogWarning("Failed to send Achievement SaveData to the server, CanUploadSaveData is not true, meaning " +
                 "either the SaveData is not yet loaded, or that it was not valid.");
             return;
         }
+
+        var saveDataString = GetSaveDataDtoString();
+        Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
 
         // Logic to send base64Data to the server
         Logger.LogInformation("Connected with AchievementData String:\n" + saveDataString);
@@ -332,7 +309,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     public static string GetSaveDataDtoString()
     {
         // get the Dto-Ready data object of our saveData
-        var saveDataDto = SaveData.ToLightSaveDataDto();
+        var saveDataDto = LatestCache.SaveData.ToLightSaveDataDto();
 
         // condense it into the json and compress it.
         var json = SaveDataSerialize(saveDataDto);
@@ -343,17 +320,12 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
     private static string SaveDataSerialize(LightSaveDataDto lightSaveDataDto)
     {
-        // Ensure to set the version and include all necessary properties.
-        var saveDataJsonObject = new JObject
+        return new JObject
         {
             ["Version"] = lightSaveDataDto.Version,
             ["LightAchievementData"] = JArray.FromObject(lightSaveDataDto.LightAchievementData),
-            ["EasterEggIcons"] = JObject.FromObject(lightSaveDataDto.EasterEggIcons),
             ["VisitedWorldTour"] = JObject.FromObject(lightSaveDataDto.VisitedWorldTour)
-        };
-
-        // Convert JObject to formatted JSON string
-        return saveDataJsonObject.ToString(Formatting.Indented);
+        }.ToString(Formatting.Indented);
     }
 
     private static LightSaveDataDto SaveDataDeserialize(string jsonString)
@@ -413,10 +385,6 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         }
 
-        // Extract and validate EasterEggIcons
-        var easterEggIconsObject = saveDataJsonObject["EasterEggIcons"] as JObject ?? new JObject();
-        var easterEggIcons = easterEggIconsObject.ToObject<Dictionary<string, bool>>() ?? new Dictionary<string, bool>();
-
         // Extract and validate VisitedWorldTour
         var visitedWorldTourObject = saveDataJsonObject["VisitedWorldTour"] as JObject ?? new JObject();
         var visitedWorldTour = visitedWorldTourObject.ToObject<Dictionary<ushort, bool>>() ?? new Dictionary<ushort, bool>();
@@ -426,7 +394,6 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         {
             Version = version,
             LightAchievementData = lightAchievementDataList,
-            EasterEggIcons = easterEggIcons,
             VisitedWorldTour = visitedWorldTour
         };
 
@@ -499,7 +466,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
                 clientPlateContent = profileData.Info;
             }
 
-            // Update kinkplate with the new achievement count.
+            // Update KinkPlate™ with the new achievement count.
             Logger.LogDebug("Updating KinkPlate™ with new Achievement Completion count: " + clientPlateContent.CompletedAchievementsTotal, LoggerType.Achievements);
             clientPlateContent.CompletedAchievementsTotal = Completed;
 
@@ -526,7 +493,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Subscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
         _events.Subscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
         _events.Subscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
-        _events.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (LatestCache.SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
 
         _events.Subscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
         _events.Subscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
@@ -540,8 +507,8 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
         _events.Subscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
 
-        _events.Subscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe(UnlocksEvent.AuctionedOff, () => (SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.SoldSlave, () => (LatestCache.SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.AuctionedOff, () => (LatestCache.SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
         _events.Subscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
@@ -552,42 +519,42 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Subscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
-        _events.Subscribe(UnlocksEvent.DeathRollCompleted, () => (SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.DeathRollCompleted, () => (LatestCache.SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
         _events.Subscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
-        _events.Subscribe(UnlocksEvent.RemoteOpened, () => (SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe<NewState>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
 
         _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
-        _events.Subscribe(UnlocksEvent.ClientSlain, () => (SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe(UnlocksEvent.ClientOneHp, () => (SaveData.Achievements[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.ClientSlain, () => (LatestCache.SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.ClientOneHp, () => (LatestCache.SaveData.Achievements[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _events.Subscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
-        _events.Subscribe(UnlocksEvent.TutorialCompleted, () => (SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.TutorialCompleted, () => (LatestCache.SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.PairAdded, OnPairAdded);
-        _events.Subscribe(UnlocksEvent.PresetApplied, () => (SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe(UnlocksEvent.GlobalSent, () => (SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.PresetApplied, () => (LatestCache.SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.GlobalSent, () => (LatestCache.SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
-        _events.Subscribe(UnlocksEvent.ChocoboRaceFinished, () => (SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
-        _events.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
+        _events.Subscribe(UnlocksEvent.ChocoboRaceFinished, () => (LatestCache.SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (LatestCache.SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
+        _events.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (LatestCache.SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
 
         Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, _ => OnPairVisible());
         Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
-        Mediator.Subscribe<PlaybackStateToggled>(this, (msg) => (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        Mediator.Subscribe<PlaybackStateToggled>(this, (msg) => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
 
-        Mediator.Subscribe<SafewordUsedMessage>(this, _ => (SaveData.Achievements[Achievements.KnowsMyLimits.Id] as ProgressAchievement)?.IncrementProgress());
+        Mediator.Subscribe<SafewordUsedMessage>(this, _ => (LatestCache.SaveData.Achievements[Achievements.KnowsMyLimits.Id] as ProgressAchievement)?.IncrementProgress());
 
-        Mediator.Subscribe<GPoseStartMessage>(this, _ => (SaveData.Achievements[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.BeginConditionalTask());
-        Mediator.Subscribe<GPoseEndMessage>(this, _ => (SaveData.Achievements[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.FinishConditionalTask());
-        Mediator.Subscribe<CutsceneBeginMessage>(this, _ => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.BeginConditionalTask()); // starts Timer
-        Mediator.Subscribe<CutsceneEndMessage>(this, _ => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.FinishConditionalTask()); // ends/completes progress.
+        Mediator.Subscribe<GPoseStartMessage>(this, _ => (LatestCache.SaveData.Achievements[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.BeginConditionalTask());
+        Mediator.Subscribe<GPoseEndMessage>(this, _ => (LatestCache.SaveData.Achievements[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.FinishConditionalTask());
+        Mediator.Subscribe<CutsceneBeginMessage>(this, _ => (LatestCache.SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.BeginConditionalTask()); // starts Timer
+        Mediator.Subscribe<CutsceneEndMessage>(this, _ => (LatestCache.SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.FinishConditionalTask()); // ends/completes progress.
 
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => CheckOnZoneSwitchStart(msg.prevZone));
         Mediator.Subscribe<ZoneSwitchEndMessage>(this, _ => CheckOnZoneSwitchEnd());
@@ -606,7 +573,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Unsubscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
         _events.Unsubscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
         _events.Unsubscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
-        _events.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (LatestCache.SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
 
         _events.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
         _events.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
@@ -618,8 +585,8 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestraintStateChange, OnPairRestraintStateChange);
         _events.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
         _events.Unsubscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
-        _events.Unsubscribe(UnlocksEvent.SoldSlave, () => (SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.SoldSlave, () => (LatestCache.SaveData.Achievements[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (LatestCache.SaveData.Achievements[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
         _events.Unsubscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
@@ -630,29 +597,29 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Unsubscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
-        _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Unsubscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (LatestCache.SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
         _events.Unsubscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
-        _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
-        _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe<NewState>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
 
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
-        _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (LatestCache.SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _events.Unsubscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
-        _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (LatestCache.SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
-        _events.Unsubscribe(UnlocksEvent.PresetApplied, () => (SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Unsubscribe(UnlocksEvent.GlobalSent, () => (SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.PresetApplied, () => (LatestCache.SaveData.Achievements[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.GlobalSent, () => (LatestCache.SaveData.Achievements[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Unsubscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
-        _events.Unsubscribe(UnlocksEvent.ChocoboRaceFinished, () => (SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Unsubscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
-        _events.Unsubscribe(UnlocksEvent.CutsceneInturrupted, () => (SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
+        _events.Unsubscribe(UnlocksEvent.ChocoboRaceFinished, () => (LatestCache.SaveData.Achievements[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (LatestCache.SaveData.Achievements[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
+        _events.Unsubscribe(UnlocksEvent.CutsceneInturrupted, () => (LatestCache.SaveData.Achievements[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
 
         Mediator.Unsubscribe<PlayerLatestActiveItems>(this);
         Mediator.Unsubscribe<PairHandlerVisibleMessage>(this);

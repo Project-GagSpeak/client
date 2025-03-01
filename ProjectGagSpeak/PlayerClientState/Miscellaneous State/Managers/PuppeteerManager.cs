@@ -7,6 +7,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Extensions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -34,10 +35,6 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     // Stored Information.
     public AliasStorage GlobalAliasStorage { get; private set; } = new AliasStorage();
     public PairAliasStorage PairAliasStorage { get; private set; } = new PairAliasStorage();
-
-    public void OnLogin() { }
-
-    public void OnLogout() { }
 
     /// <summary> We can only add new items while editing </summary>
     /// <remarks> Append it to the active editors storage. </remarks>
@@ -188,16 +185,18 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         // Convert JObject to string
         return configObject.ToString(Formatting.Indented);
     }
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.Puppeteer;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Logger.LogInformation("Loading in Puppeteer Config for file: " + file);
 
         GlobalAliasStorage.Clear();
         PairAliasStorage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Global Alias Storage or Pair Alias Storage found at {0}", file);
+            Logger.LogWarning("No Puppeteer Config file found at {0}", file);
+            // create a new file with default values.
+            _saver.Save(this);
             return;
         }
 
@@ -216,6 +215,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)

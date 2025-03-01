@@ -1,5 +1,6 @@
 using GagSpeak.Achievements.Services;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerData.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -9,6 +10,7 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.Chat.ChatMonitors;
 using GagSpeak.UpdateMonitoring.Triggers;
+using GagspeakAPI.Data.Character;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
@@ -36,6 +38,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _serviceScopeFactory = scopeFactory;
+        _serverConfigs.Init();
     }
     /// <summary> 
     /// The task to run after all services have been properly constructed.
@@ -150,6 +153,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             //_runtimeServiceScope.ServiceProvider.GetRequiredService<CacheCreationService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<OnlinePairManager>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<VisiblePairManager>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ClientDataSync>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatMonitor>();

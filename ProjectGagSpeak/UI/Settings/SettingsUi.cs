@@ -222,6 +222,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var restrictionVisuals = _global.GlobalPerms.RestrictionVisuals;
         var restraintSetVisuals = _global.GlobalPerms.RestraintSetVisuals;
         bool cursedDungeonLoot = _mainConfig.Config.CursedLootPanel;
+        bool mimicsApplyTraits = _mainConfig.Config.CursedItemsApplyTraits;
 
         var puppeteerEnabled = _global.GlobalPerms.PuppeteerEnabled;
         var globalTriggerPhrase = _global.GlobalPerms.TriggerPhrase;
@@ -302,6 +303,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Save();
             }
             _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.CursedLootActiveTT);
+
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.MimicsApplyTraits, ref mimicsApplyTraits))
+            {
+                _mainConfig.Config.CursedItemsApplyTraits = mimicsApplyTraits;
+                _mainConfig.Save();
+            }
+            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.MimicsApplyTraitsTT);
         }
 
         _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);

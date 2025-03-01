@@ -11,10 +11,11 @@ using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
+using System.Linq;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IGagManager, IHybridSavable
+public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GagGarbler _garbler;
     private readonly GlobalData _clientData;
@@ -33,20 +34,36 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
         _fileNames = fileNames;
         _items = items;
         _saver = saver;
-        Load();
     }
 
     // Cached Information
     public GarblerRestriction? ActiveEditorItem { get; private set; }
-    public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; }
-    public SortedList<GagLayer, GarblerRestriction> ActiveRestrictions { get; private set; }
+    public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
+    public SortedList<GagLayer, GarblerRestriction> ActiveRestrictions { get; private set; } = new();
 
     // Stored Information.
     public CharaActiveGags? ActiveGagsData { get; private set; }
     public GagRestrictionStorage Storage { get; private set; } = new GagRestrictionStorage();
 
-    public void OnLogin() { }
-    public void OnLogout() { }
+    /// <summary> Updates the manager with the latest data from the server. </summary>
+    /// <param name="serverData"> The data from the server to update with. </param>
+    /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restrictions. </remarks>
+    public void LoadServerData(CharaActiveGags serverData)
+    {
+        ActiveGagsData = serverData;
+        for (var slotIdx = 0; slotIdx < serverData.GagSlots.Length; slotIdx++)
+        {
+            var slot = serverData.GagSlots[slotIdx];
+            if (slot.GagItem is not GagType.None)
+            {
+                if (Storage.TryGetEnabledGag(slot.GagItem, out var item))
+                {
+                    ActiveRestrictions[(GagLayer)slotIdx] = item;
+                }
+            }
+        }
+        LatestVisualCache.UpdateCache(ActiveRestrictions);
+    }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
     /// <param name="gagType"> The GagType to get the GagRestriction of for editing. </param>
@@ -238,14 +255,12 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-    {
-        isAccountUnique = true;
-        return files.GagRestrictions;
-    }
+        => (isAccountUnique = true, files.GagRestrictions).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
         var gagRestrictions = new JObject();
+
         foreach (var (gagtype, gagData) in Storage)
             gagRestrictions[gagtype.GagName()] = gagData.Serialize();
 
@@ -257,21 +272,41 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
     }
 
     // our CUSTOM defined load and migration.
-    private void Load()
+    public void Load()
     {
         var file = _fileNames.GagRestrictions;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        Storage = new GagRestrictionStorage();
+        // Migrate to the new filetype if necessary.
+        Logger.LogInformation("Loading GagRestrictions Config from {0}", file);
 
-        Storage.Clear();
-        if (!File.Exists(file))
+        string jsonText = "";
+        JObject jObject = new();
+
+        // if the main file does not exist, attempt to load the text from the backup.
+        if (File.Exists(file))
         {
-            Logger.LogWarning("No GagRestrictions file found at {0}", file);
-            return;
+            jsonText = File.ReadAllText(file);
+            jObject = JObject.Parse(jsonText);
+        }
+        else
+        {
+            Logger.LogWarning("Gag Restrictions Config not found. Attempting to find old config.");
+            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "gag-storage.json");
+            if (File.Exists(oldFormatFile))
+            {
+                jsonText = File.ReadAllText(oldFormatFile);
+                jObject = JObject.Parse(jsonText);
+                jObject = ConfigMigrator.MigrateGagRestrictionsConfig(jObject, _fileNames, oldFormatFile);
+            }
+            else
+            {
+                GagSpeak.StaticLog.Warning("No Config file found for: " + oldFormatFile);
+                _saver.Save(this);
+                return;
+            }
         }
 
         // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -284,6 +319,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IG
                 Logger.LogError("Invalid Version!");
                 return;
         }
+        _saver.Save(this);
     }
 
     private void LoadV0(JToken? data)

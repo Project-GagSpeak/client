@@ -20,7 +20,7 @@ public record HealthPercentTrigger : Trigger
     // the maxValue to display (can either be in percent or normal numbers, based on above option)
     public int MaxHealthValue { get; set; } = 10000000;
 
-    internal HealthPercentTrigger() { }
+    public HealthPercentTrigger() { }
 
     public HealthPercentTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 

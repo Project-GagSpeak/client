@@ -18,11 +18,11 @@ public record SpellActionTrigger : Trigger
     public int ThresholdMinValue { get; set; } = -1;
     public int ThresholdMaxValue { get; set; } = 10000000;
 
-    internal SpellActionTrigger() { }
+    public SpellActionTrigger() { }
 
-    internal SpellActionTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+    public SpellActionTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
 
-    internal SpellActionTrigger(SpellActionTrigger other, bool keepId) : base(other, keepId)
+    public SpellActionTrigger(SpellActionTrigger other, bool keepId) : base(other, keepId)
     {
         ActionKind = other.ActionKind;
         Direction = other.Direction;
