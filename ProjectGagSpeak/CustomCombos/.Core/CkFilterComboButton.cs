@@ -9,22 +9,19 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
 {
-    protected readonly UiSharedService _uiShared;
     protected string ButtonText = string.Empty;
     protected string ButtonToolTip = string.Empty;
 
-    protected CkFilterComboButton(IEnumerable<T> items, ILogger log, UiSharedService ui, string buttonText, string buttonTT)
+    protected CkFilterComboButton(IEnumerable<T> items, ILogger log, string buttonText, string buttonTT)
         : base(items, log)
     {
-        _uiShared = ui;
         ButtonText = buttonText;
         ButtonToolTip = buttonTT;
     }
 
-    protected CkFilterComboButton(Func<IReadOnlyList<T>> generator, ILogger log, UiSharedService ui, string buttonText, string buttonTT)
+    protected CkFilterComboButton(Func<IReadOnlyList<T>> generator, ILogger log, string buttonText, string buttonTT)
         : base(generator, log)
     {
-        _uiShared = ui;
         ButtonText = buttonText;
         ButtonToolTip = buttonTT;
     }
@@ -54,7 +51,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
         using var disabled = ImRaii.Disabled(DisableCondition());
         if (ImGuiUtil.DrawDisabledButton(ButtonText, new Vector2(), string.Empty, DisableCondition()))
             OnButtonPress();
-        UiSharedService.AttachToolTip(ButtonToolTip);
+        CkGui.AttachToolTip(ButtonToolTip);
 
         return ret;
     }

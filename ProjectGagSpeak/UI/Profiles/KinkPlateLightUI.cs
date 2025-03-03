@@ -15,20 +15,18 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
     private readonly KinkPlateLight _lightUI;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly PairManager _pairManager;
-    private readonly UiSharedService _uiShared;
     private bool _showFullUID;
 
     private bool ThemePushed = false;
 
     public KinkPlateLightUI(ILogger<KinkPlateLightUI> logger, GagspeakMediator mediator,
         KinkPlateLight plateLightUi, KinkPlateService KinkPlateManager,
-        PairManager pairManager, UiSharedService uiShared, UserData pairUserData)
-        : base(logger, mediator, "###GagSpeakKinkPlateLight" + pairUserData.UID)
+        PairManager pairManager, UserData pairUserData) : base(logger, mediator, "###KinkPlateLight" + pairUserData.UID)
     {
         _lightUI = plateLightUi;
         _KinkPlateManager = KinkPlateManager;
         _pairManager = pairManager;
-        _uiShared = uiShared;
+
 
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar;
         Size = new(288, 576);

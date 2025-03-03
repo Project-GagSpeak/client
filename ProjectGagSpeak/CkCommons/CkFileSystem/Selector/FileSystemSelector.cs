@@ -1,4 +1,7 @@
+using Dalamud.Interface;
 using Dalamud.Plugin.Services;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.UI;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -92,7 +95,7 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
         => ISortMode<T>.Lexicographical;
 
     // Used by Add and AddFolder buttons.
-    private string _newName = string.Empty;
+    protected string _newName = string.Empty;
 
     private readonly string _label = string.Empty;
 
@@ -138,7 +141,6 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
         Log                    = log;
 
         InitDefaultContext();
-        InitDefaultButtons();
         EnableFileSystemSubscription();
         ExceptionHandler = e => Log.LogWarning(e.ToString());
     }
@@ -168,29 +170,25 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
         ImGui.Selectable("○" + leaf.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
     }
 
-    public void Draw(float width)
+    protected void DrawFolderButton()
     {
-        try
-        {
-            DrawPopups();
-            using var group = ImRaii.Group();
-            if (DrawList(width))
+        const string newFolderName = "folderName";
+        if (CkGui.IconButton(FontAwesomeIcon.FolderPlus))
+            ImGui.OpenPopup(newFolderName);
+        CkGui.AttachToolTip("Create a new, empty folder. Can contain '/' to create a directory structure.");
+
+        // Does not need to be delayed since it is not in the iteration itself.
+        CkFileSystem<T>.Folder? folder = null;
+        if (ImGuiUtil.OpenNameField(newFolderName, ref _newName) && _newName.Length > 0)
+            try
             {
-                ImGui.PopStyleVar();
-                if (width < 0)
-                    width = ImGui.GetWindowWidth() - width;
-                DrawButtons(width);
+                folder = CkFileSystem.FindOrCreateAllFolders(_newName);
+                _newName = string.Empty;
             }
-        }
-        catch (Exception e)
-        {
-            throw new Exception("Exception during CkFileSystemSelector rendering:\n"
-              + $"{_currentIndex} Current Index\n"
-              + $"{_currentDepth} Current Depth\n"
-              + $"{_currentEnd} Current End\n"
-              + $"{_state.Count} Current State Count\n"
-              + $"{_filterDirty} Filter Dirty", e);
-        }
+            catch { /* Consumed */ }
+
+        if (folder != null)
+            _filterDirty |= ExpandAncestors(folder);
     }
 
     // Select a specific leaf in the file system by its value.

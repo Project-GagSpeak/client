@@ -1,3 +1,5 @@
+using GagSpeak.CkCommons.GarblerCore;
+
 namespace GagSpeak.Services.Configs;
 
 /// <summary> Migrates all configs before v1.2 to v1.3+ format. </summary>
@@ -13,9 +15,25 @@ public static class ConfigMigrator
         // Map fields from the old format to the new config object
         config["LastRunVersion"] = mainConfig["LastRunVersion"];
         config["LastUidLoggedIn"] = mainConfig["LastUidLoggedIn"];
+
+        // open the server config file and count how many auth objects there are inside of it. If any are present, set acknoledge to true.
+        if (File.Exists(fileNames.ServerConfig))
+        {
+            var json = File.ReadAllText(fileNames.ServerConfig);
+            var serverConfig = JObject.Parse(json);
+            var authObjects = serverConfig["ServerStorage"]!["Authentications"];
+            if (authObjects != null && authObjects.HasValues)
+                config["AcknowledgementUnderstood"] = true;
+            else
+                config["AcknowledgementUnderstood"] = false;
+        }
+        else
+        {
+            config["AcknowledgementUnderstood"] = false;
+        }
+
         config["AcknowledgementUnderstood"] = mainConfig["AcknowledgementUnderstood"];
         config["ButtonUsed"] = mainConfig["ButtonUsed"];
-        config["AccountCreated"] = mainConfig["AccountCreated"];
         config["EnableDtrEntry"] = mainConfig["EnableDtrEntry"];
         config["ShowPrivacyRadar"] = mainConfig["ShowPrivacyRadar"];
         config["ShowActionNotifs"] = mainConfig["ShowActionNotifs"];
@@ -57,7 +75,12 @@ public static class ConfigMigrator
         config["ErrorNotification"] = mainConfig["ErrorNotification"];
         config["Safeword"] = mainConfig["Safeword"];
         config["Language"] = mainConfig["Language"];
-        config["LanguageDialect"] = mainConfig["LanguageDialect"];
+        // make sure to convert this from the string back to the enum value.
+        string dialectString = mainConfig["LanguageDialect"]?.ToString() ?? throw new Exception("LanguageDialect is missing or null");
+        config["LanguageDialect"] = JToken.FromObject(dialectString.ToDialect());
+
+
+
         config["CursedLootPanel"] = mainConfig["CursedDungeonLoot"];
         config["RemoveRestrictionOnTimerExpire"] = mainConfig["RemoveGagUponLockExpiration"];
         config["VibratorMode"] = mainConfig["VibratorMode"];

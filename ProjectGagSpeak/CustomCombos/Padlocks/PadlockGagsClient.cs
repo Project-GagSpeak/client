@@ -15,8 +15,8 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     private readonly GagRestrictionManager _gagData;
     private static int GagSlotLayer;
 
-    public PadlockGagsClient(int layer, GagspeakMediator mediator, GagRestrictionManager gagData, ILogger log, UiSharedService uiShared)
-        : base(() => gagData.ActiveGagsData?.GagSlots[GagSlotLayer] ?? new ActiveGagSlot(), log, uiShared, "##ClientPadlockGag"+layer)
+    public PadlockGagsClient(int layer, GagspeakMediator mediator, GagRestrictionManager gagData, ILogger log)
+        : base(() => gagData.ActiveGagsData?.GagSlots[GagSlotLayer] ?? new ActiveGagSlot(), log, "##ClientPadlockGag"+layer)
     {
         _mediator = mediator;
         _gagData = gagData;

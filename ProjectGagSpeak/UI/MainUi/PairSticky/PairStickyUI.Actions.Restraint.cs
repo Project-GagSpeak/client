@@ -27,9 +27,9 @@ public partial class PairStickyUI
 
         // Expander for ApplyRestraint
         var disableApplyExpand = !SPair.PairPerms.ApplyRestraintSets || SPair.LastRestraintData.Padlock is not Padlocks.None;
-        if (_ui.IconTextButton(FontAwesomeIcon.Handcuffs, applyRestraintText, WindowMenuWidth, true, disableApplyExpand))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Handcuffs, applyRestraintText, WindowMenuWidth, true, disableApplyExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestraint) ? InteractionType.None : InteractionType.ApplyRestraint;
-        UiSharedService.AttachToolTip(applyRestraintTT);
+        CkGui.AttachToolTip(applyRestraintTT);
 
         // Interaction Window for ApplyRestraint
         if (PairCombos.Opened is InteractionType.ApplyRestraint)
@@ -43,10 +43,10 @@ public partial class PairStickyUI
         var disableLockExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.LockRestraintSets;
         using (ImRaii.PushColor(ImGuiCol.Text, (SPair.LastRestraintData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
-        UiSharedService.AttachToolTip(lockRestraintTT +
+        CkGui.AttachToolTip(lockRestraintTT +
             ((GsPadlockEx.IsTimerLock(SPair.LastRestraintData.Padlock)) ? "--SEP----COL--" + SPair.LastRestraintData.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
@@ -60,9 +60,9 @@ public partial class PairStickyUI
 
         // Expander for unlocking.
         var disableUnlockExpand = SPair.LastRestraintData.Padlock is Padlocks.None || !SPair.PairPerms.UnlockRestraintSets;
-        if (_ui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestraint) ? InteractionType.None : InteractionType.UnlockRestraint;
-        UiSharedService.AttachToolTip(unlockRestraintTT);
+        CkGui.AttachToolTip(unlockRestraintTT);
 
         // Interaction Window for UnlockRestraint
         if (PairCombos.Opened is InteractionType.UnlockRestraint)
@@ -74,9 +74,9 @@ public partial class PairStickyUI
 
         // Expander for removing.
         var disableRemoveExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveRestraintSets;
-        if (_ui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestraintText, WindowMenuWidth, true, disableRemoveExpand))
+        if (CkGui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestraintText, WindowMenuWidth, true, disableRemoveExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestraint) ? InteractionType.None : InteractionType.RemoveRestraint;
-        UiSharedService.AttachToolTip(removeRestraintTT);
+        CkGui.AttachToolTip(removeRestraintTT);
 
         // Interaction Window for RemoveRestraint
         if (PairCombos.Opened is InteractionType.RemoveRestraint)

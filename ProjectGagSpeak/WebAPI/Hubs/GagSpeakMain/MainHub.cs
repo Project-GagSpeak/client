@@ -12,6 +12,7 @@ using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.WebAPI;
 #pragma warning disable MA0040
@@ -19,7 +20,7 @@ namespace GagSpeak.WebAPI;
 /// This connections class maintains the responsibilities for how we connect, disconnect, and reconnect.
 /// Manages GagSpeak Hub.
 /// </summary>
-public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
+public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHostedService
 {
     private readonly GlobalData _globals;
     private readonly HubFactory _hubFactory;
@@ -96,21 +97,19 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
     public static bool IsServerAlive => ServerStatus is ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
     public bool ClientHasConnectionPaused => _serverConfigs.ServerStorage.FullPause;
 
-    protected override void Dispose(bool disposing)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        base.Dispose(disposing);
-        _ = DisposeAsync();
+        Logger.LogInformation("MainHub is starting.");
+        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Async Disposal helps ensure we post achievement Save Data prior to disposing of the connection instance.
-    /// </summary>
-    public async Task DisposeAsync()
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        Logger.LogInformation("Disposal Called! Closing down GagSpeakHub-Main!", LoggerType.ApiCore);
+        Logger.LogInformation("MainHub is stopping. Closing down GagSpeakHub-Main!", LoggerType.ApiCore);
         HubHealthCTS?.Cancel();
         await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
         HubConnectionCTS?.Cancel();
+        return;
     }
 
     public override async Task Connect()
@@ -563,7 +562,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient
 
     protected override async void OnLogin()
     {
-        Logger.LogInformation("Starting connection on login");
+        Logger.LogWarning("Starting connection on login");
         // Run the call to attempt a connection to the server.
         await Connect().ConfigureAwait(false);
     }

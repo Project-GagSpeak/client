@@ -83,17 +83,17 @@ public class EquipmentDrawer
         var right = ImGui.IsItemClicked(ImGuiMouseButton.Right);
         var left = ImGui.IsItemClicked(ImGuiMouseButton.Left);
 
-        var ItemWidth = _comboLength - _uiShared.GetIconButtonSize(FontAwesomeIcon.EyeSlash).X - ImUtf8.ItemInnerSpacing.X;
+        var ItemWidth = _comboLength - CkGui.IconButtonSize(FontAwesomeIcon.EyeSlash).X - ImUtf8.ItemInnerSpacing.X;
 
         using var group = ImRaii.Group();
         DrawItem(ref refRestraintSet, out var label, right, left, slot, ItemWidth);
         ImUtf8.SameLineInner();
         FontAwesomeIcon icon = refRestraintSet.DrawData[slot].IsEnabled ? FontAwesomeIcon.Eye : FontAwesomeIcon.EyeSlash;
-        if (_uiShared.IconButton(icon))
+        if (CkGui.IconButton(icon))
         {
             refRestraintSet.DrawData[slot].IsEnabled = !refRestraintSet.DrawData[slot].IsEnabled;
         }
-        UiSharedService.AttachToolTip("Toggles Apply Style of Item." +
+        CkGui.AttachToolTip("Toggles Apply Style of Item." +
             Environment.NewLine + "EYE Icon (Apply Mode) applies regardless of selected item. (nothing slots make the slot nothing)" +
             Environment.NewLine + "EYE SLASH Icon (Overlay Mode) means that it only will apply the item if it is NOT an nothing slot.");
         DrawStain(ref refRestraintSet, slot, _comboLength);

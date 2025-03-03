@@ -2,6 +2,8 @@ namespace GagSpeak.CkCommons.FileSystem;
 
 public partial class CkFileSystem<T>
 {
+    // For now this will use the inefficient approach of write-insert. Ideally these should all be their own files.
+    // But we wont worry about that right now until it becomes an actual issue.
     /// <summary>
     /// Save a current filesystem to a file, using a function that transforms the data value as well as its full path
     /// to a identifier string for the data as well as a bool whether this data should be saved.
@@ -12,6 +14,7 @@ public partial class CkFileSystem<T>
         using var j = new JsonTextWriter(writer);
         j.Formatting = Formatting.Indented;
 
+        var typeName = typeof(T).Name; // Get the type name (e.g., "CursedItem")
         var emptyFolders = new List<string>();
         j.WriteStartObject();
         j.WritePropertyName("Data");
@@ -78,6 +81,8 @@ public partial class CkFileSystem<T>
     {
         IdCounter = 1;
         Root.Children.Clear();
+
+        var typeName = typeof(T).Name; // Get the type name (e.g., "CursedItem")
         var changes = true;
         if (jObject != null)
         {

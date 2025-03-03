@@ -18,11 +18,8 @@ namespace GagSpeak.Services.Tutorial;
 
 public class Tutorial
 {
-    private readonly UiSharedService _uiShared;
-    public Tutorial(UiSharedService uiShared) => _uiShared = uiShared;
-
     public record struct Step(string Name, string Info, string MoreInfo, bool Enabled);
-
+    public Tutorial() { }
     public uint HighlightColor { get; init; } = 0xFF20FFFF;
     public uint BorderColor { get; init; } = 0xD00000FF;
     public string PopupLabel { get; init; } = "Tutorial";
@@ -124,7 +121,7 @@ public class Tutorial
         var windowSize = ImGui.GetContentRegionAvail();
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 5f);
-        _uiShared.GagspeakBigText(step.Name);
+        CkGui.GagspeakBigText(step.Name);
         int? nextValue = null;
 
         ImGui.Separator();
@@ -147,7 +144,7 @@ public class Tutorial
                 if (text.Length == 0)
                     ImGui.Spacing();
                 else
-                    UiSharedService.ColorText(text, ImGuiColors.DalamudGrey);
+                    CkGui.ColorText(text, ImGuiColors.DalamudGrey);
             }
             ImGui.PopTextWrapPos();
         }
@@ -156,20 +153,20 @@ public class Tutorial
         ImGui.Spacing();
         using (ImRaii.Group())
         {
-/*            if(_uiShared.IconButton(FontAwesomeIcon.ArrowAltCircleLeft, disabled: CurrentStep == 0))
+/*            if(CkGui.IconButton(FontAwesomeIcon.ArrowAltCircleLeft, disabled: CurrentStep == 0))
                 nextValue = nextStepVal-2;
             ImGuiUtil.HoverTooltip("Go back one Step.");
 
             ImUtf8.SameLineInner();*/
             using (ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(_showDetails ? ImGuiColors.DalamudViolet : ImGuiColors.DalamudWhite)))
             {
-                if(_uiShared.IconButton(FontAwesomeIcon.InfoCircle))
+                if(CkGui.IconButton(FontAwesomeIcon.InfoCircle))
                     _showDetails = !_showDetails;
                 ImGuiUtil.HoverTooltip("Shows additional details about each step for anyone curious.");
             }
 
             ImUtf8.SameLineInner();
-            if(_uiShared.IconButton(FontAwesomeIcon.ArrowAltCircleRight))
+            if(CkGui.IconButton(FontAwesomeIcon.ArrowAltCircleRight))
                 nextValue = nextStepVal;
             ImGuiUtil.HoverTooltip("Go to the next Step.");
 

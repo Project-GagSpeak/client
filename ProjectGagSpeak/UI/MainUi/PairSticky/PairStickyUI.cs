@@ -25,12 +25,11 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly GlobalData _globals;
     private readonly PairManager _pairs;
     private readonly ClientMonitor _monitor;
-    private readonly UiSharedService _ui;
 
     public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pair,
         StickyWindowType drawType, PermissionData permData, PermissionsDrawer permDrawer,
         PairCombos combos, PresetLogicDrawer presets, MainHub hub, GlobalData globals,
-        PiShockProvider shocks, PairManager pairs, ClientMonitor monitor, UiSharedService ui)
+        PiShockProvider shocks, PairManager pairs, ClientMonitor monitor)
         : base(logger, mediator, "PairStickyUI for " + pair.UserData.UID + "pair.")
     {
         _permData = permData;
@@ -41,7 +40,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _globals = globals;
         _pairs = pairs;
         _monitor = monitor;
-        _ui = ui;
 
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
         IsOpen = true;
@@ -62,15 +60,15 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     protected override void PreDrawInternal()
     {
         // Magic that makes the sticky pair window move with the main UI.
-        var position = _ui.LastMainUIWindowPosition;
-        position.X += _ui.LastMainUIWindowSize.X;
+        var position = CkGui.LastMainUIWindowPosition;
+        position.X += CkGui.LastMainUIWindowSize.X;
         position.Y += ImGui.GetFrameHeightWithSpacing();
         ImGui.SetNextWindowPos(position);
 
         Flags |= ImGuiWindowFlags.NoMove;
 
         var width = (DrawType == StickyWindowType.PairPerms) ? 160 * ImGuiHelpers.GlobalScale : 110 * ImGuiHelpers.GlobalScale;
-        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, _ui.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
+        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, CkGui.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
         ImGui.SetNextWindowSize(size);
     }
 
@@ -88,7 +86,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
                 break;
             case StickyWindowType.ClientPermsForPair:
                 ImGuiUtil.Center("Your Permissions for " + PermissionData.DispName);
-                _ui.SetCursorXtoCenter(225f);
+                CkGui.SetCursorXtoCenter(225f);
                 _presets.DrawPresetList(SPair, 225f);
 
                 ImGui.Separator();

@@ -23,11 +23,10 @@ public class DrawUserPair
     protected Pair _pair;
     private readonly string _id;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
+
     private Dictionary<byte, bool> IsHovered = new();
     public DrawUserPair(ILogger<DrawUserPair> logger, string id, Pair entry, MainHub hub,
-        IdDisplayHandler uIDDisplayHandler, GagspeakMediator mediator,
-        CosmeticService cosmetics, UiSharedService uiShared)
+        IdDisplayHandler uIDDisplayHandler, GagspeakMediator mediator, CosmeticService cosmetics)
     {
         _id = id;
         _pair = entry;
@@ -35,7 +34,6 @@ public class DrawUserPair
         _displayHandler = uIDDisplayHandler;
         _mediator = mediator;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
     }
 
     public Pair Pair => _pair;
@@ -55,7 +53,7 @@ public class DrawUserPair
         using var id = ImRaii.PushId(GetType() + _id);
         using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), showHovered && IsHovered[ident]))
         {
-            using (ImRaii.Child(GetType() + _id, new Vector2(UiSharedService.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
+            using (ImRaii.Child(GetType() + _id, new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
             {
                 ImUtf8.SameLineInner();
                 if (icon)
@@ -65,8 +63,7 @@ public class DrawUserPair
                 ImGui.SameLine();
                 var posX = ImGui.GetCursorPosX();
 
-                var rightSide = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth()
-                                  - (_uiShared.GetIconButtonSize(FontAwesomeIcon.EllipsisV).X);
+                var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FontAwesomeIcon.EllipsisV).X;
 
                 if (showRightButtons)
                 {
@@ -92,9 +89,9 @@ public class DrawUserPair
         if (Image.SupporterWrap is { } wrap)
         {
             ImGui.SameLine(cursorPos);
-            ImGui.SetCursorPosX(cursorPos - _uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SetCursorPosX(cursorPos - CkGui.IconSize(FontAwesomeIcon.EllipsisV).X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
-            UiSharedService.AttachToolTip(Image.Tooltip);
+            CkGui.AttachToolTip(Image.Tooltip);
         }
         // return to the end of the line.
     }
@@ -108,12 +105,12 @@ public class DrawUserPair
         if (!_pair.IsOnline)
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-            _uiShared.IconText(FontAwesomeIcon.User);
+            CkGui.IconText(FontAwesomeIcon.User);
             userPairText = _pair.UserData.AliasOrUID + " is offline";
         }
         else if (_pair.IsVisible)
         {
-            _uiShared.IconText(FontAwesomeIcon.Eye, ImGuiColors.ParsedGreen);
+            CkGui.IconText(FontAwesomeIcon.Eye, ImGuiColors.ParsedGreen);
             userPairText = _pair.UserData.AliasOrUID + " is visible: " + _pair.PlayerName + Environment.NewLine + "Click to target this player";
             if (ImGui.IsItemClicked())
             {
@@ -123,11 +120,11 @@ public class DrawUserPair
         else
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen);
-            _uiShared.IconText(FontAwesomeIcon.User);
+            CkGui.IconText(FontAwesomeIcon.User);
             userPairText = _pair.UserData.AliasOrUID + " is online";
         }
         if (showToolTip)
-            UiSharedService.AttachToolTip(userPairText);
+            CkGui.AttachToolTip(userPairText);
 
         ImGui.SameLine();
     }
@@ -139,15 +136,15 @@ public class DrawUserPair
 
     private float DrawRightSide()
     {
-        var permissionsButtonSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Cog);
-        var barButtonSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.EllipsisV);
+        var permissionsButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Cog);
+        var barButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.EllipsisV);
         var spacingX = ImGui.GetStyle().ItemSpacing.X / 2;
-        var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
+        var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - barButtonSize.X;
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
-        if (_uiShared.IconButton(FontAwesomeIcon.EllipsisV))
+        if (CkGui.IconButton(FontAwesomeIcon.EllipsisV))
         {
             // open the permission setting window
             _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairActionFunctions, false));
@@ -155,20 +152,20 @@ public class DrawUserPair
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
-        if (_uiShared.IconButton(FontAwesomeIcon.Cog))
+        if (CkGui.IconButton(FontAwesomeIcon.Cog))
         {
             if (Pair != null) _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.ClientPermsForPair, false));
         }
-        UiSharedService.AttachToolTip("Set your Permissions for " + _pair.UserData.AliasOrUID);
+        CkGui.AttachToolTip("Set your Permissions for " + _pair.UserData.AliasOrUID);
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
-        if (_uiShared.IconButton(FontAwesomeIcon.Search))
+        if (CkGui.IconButton(FontAwesomeIcon.Search))
         {
             // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
             _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairPerms, false));
         }
-        UiSharedService.AttachToolTip("Inspect " + _pair.UserData.AliasOrUID + "'s permissions");
+        CkGui.AttachToolTip("Inspect " + _pair.UserData.AliasOrUID + "'s permissions");
 
         return currentRightSide;
     }

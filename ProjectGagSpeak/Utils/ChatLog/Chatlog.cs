@@ -120,7 +120,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 {
                     _mediator.Publish(new KinkPlateOpenStandaloneLightMessage(x.UserData));
                 }
-                UiSharedService.AttachToolTip("Sent @ " + x.TimeStamp.ToString("T", CultureInfo.CurrentCulture) +
+                CkGui.AttachToolTip("Sent @ " + x.TimeStamp.ToString("T", CultureInfo.CurrentCulture) +
                     "--SEP--Right-Click to View Interactions" +
                     "--SEP--Middle-Click to open KinkPlate");
                 ImUtf8.SameLineInner();
@@ -143,7 +143,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     if (msgWidth <= remainingWidth)
                     {
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            UiSharedService.ColorText(x.Message, CkMistressText);
+                            CkGui.ColorText(x.Message, CkMistressText);
                         else
                             ImGui.TextUnformatted(x.Message);
                     }
@@ -168,7 +168,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         // Print the fitting part of the message
                         ImUtf8.SameLineInner();
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            UiSharedService.ColorText(fittingMessage.TrimEnd(), CkMistressText);
+                            CkGui.ColorText(fittingMessage.TrimEnd(), CkMistressText);
                         else
                             ImGui.TextUnformatted(fittingMessage.TrimEnd());
 
@@ -176,9 +176,9 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
                         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            UiSharedService.ColorTextWrapped(wrappedMessage, CkMistressText);
+                            CkGui.ColorTextWrapped(wrappedMessage, CkMistressText);
                         else
-                            UiSharedService.TextWrapped(wrappedMessage);
+                            CkGui.TextWrapped(wrappedMessage);
                     }
                 }
             }
@@ -221,7 +221,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     ImGui.CloseCurrentPopup();
                 }
             }
-            UiSharedService.AttachToolTip("Opens " + _lastInteractedMsg.Name + "'s Light KinkPlate.");
+            CkGui.AttachToolTip("Opens " + _lastInteractedMsg.Name + "'s Light KinkPlate.");
             ImGui.Separator();
 
             using (ImRaii.Disabled(!KeyMonitor.ShiftPressed()))
@@ -233,9 +233,9 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                     _lastInteractedMsg = new ChatMessage();
                     ImGui.CloseCurrentPopup();
                 }
-                if (KeyMonitor.ShiftPressed()) UiSharedService.AttachToolTip("Sends a Kinkster Request to " + _lastInteractedMsg.Name + ".");
+                if (KeyMonitor.ShiftPressed()) CkGui.AttachToolTip("Sends a Kinkster Request to " + _lastInteractedMsg.Name + ".");
             }
-            if (!KeyMonitor.ShiftPressed()) UiSharedService.AttachToolTip("Must be holding SHIFT to select.");
+            if (!KeyMonitor.ShiftPressed()) CkGui.AttachToolTip("Must be holding SHIFT to select.");
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
             ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _lastAttachedMessage, 100);
             ImGui.Separator();
@@ -252,9 +252,9 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         ImGui.CloseCurrentPopup();
                     }
                 }
-                if (KeyMonitor.CtrlPressed()) UiSharedService.AttachToolTip("Hides any other messages from this Kinkster until plugin reload/restart.");
+                if (KeyMonitor.CtrlPressed()) CkGui.AttachToolTip("Hides any other messages from this Kinkster until plugin reload/restart.");
             }
-            if (!KeyMonitor.CtrlPressed()) UiSharedService.AttachToolTip("Must be holding CTRL to select.");
+            if (!KeyMonitor.CtrlPressed()) CkGui.AttachToolTip("Must be holding CTRL to select.");
 
             ImGui.EndPopup();
         }

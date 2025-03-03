@@ -1,20 +1,21 @@
 using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Plugin;
+using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
 
 /// <summary> Manages GagSpeaks custom fonts during plugin lifetime. </summary>
-public sealed class UiFontService : IDisposable
+public sealed class UiFontService : IHostedService
 {
     private readonly IDalamudPluginInterface _pi;
-    public IFontHandle GameFont { get; private set; }
-    public IFontHandle IconFont { get; private set; }
-    public IFontHandle UidFont { get; private set; }
+    public static IFontHandle GameFont { get; private set; }
+    public static IFontHandle IconFont { get; private set; }
+    public static IFontHandle UidFont { get; private set; }
     // the below 3 are the same font at different sizes because idk how to register seperate sizes.
-    public IFontHandle GagspeakFont { get; private set; }
-    public IFontHandle GagspeakLabelFont { get; private set; }
-    public IFontHandle GagspeakTitleFont { get; private set; }
+    public static IFontHandle GagspeakFont { get; private set; }
+    public static IFontHandle GagspeakLabelFont { get; private set; }
+    public static IFontHandle GagspeakTitleFont { get; private set; }
     public UiFontService(IDalamudPluginInterface pi)
     {
         _pi = pi;
@@ -52,14 +53,22 @@ public sealed class UiFontService : IDisposable
         IconFont = _pi.UiBuilder.IconFontFixedWidthHandle;
     }
 
-    public void Dispose()
+    public Task StartAsync(CancellationToken cancellationToken)
     {
+        GagSpeak.StaticLog.Information("UiFontService Started.");
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        GagSpeak.StaticLog.Information("UiFontService Stopped.");
         GagspeakFont?.Dispose();
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
         GameFont?.Dispose();
         IconFont?.Dispose();
+        return Task.CompletedTask;
     }
 
     private ushort[] GetGlyphRanges() // Used for the GagSpeak custom Font Service to be injected properly.

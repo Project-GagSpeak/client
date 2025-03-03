@@ -13,6 +13,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+using System.Windows.Forms;
 
 namespace GagSpeak.UI;
 
@@ -43,11 +44,9 @@ public class DebugTab
     private readonly PatternManager _patterns;
     private readonly PuppeteerManager _alias;
     private readonly TriggerManager _triggers;
-    private readonly UiSharedService _uiShared;
     public DebugTab(GagspeakConfigService config, PairManager pairManager, GlobalData playerData,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
-        CursedLootManager cursedLoot, PatternManager patterns, PuppeteerManager alias,
-        TriggerManager triggers, UiSharedService uiShared)
+        CursedLootManager cursedLoot, PatternManager patterns, PuppeteerManager alias, TriggerManager triggers)
     {
         _mainConfig = config;
         _playerData = playerData;
@@ -59,19 +58,18 @@ public class DebugTab
         _patterns = patterns;
         _alias = alias;
         _triggers = triggers;
-        _uiShared = uiShared;
     }
 
     public void DrawDebugMain()
     {
-        _uiShared.GagspeakBigText("Debug Configuration");
+        CkGui.GagspeakBigText("Debug Configuration");
 
         // display the combo box for setting the log level we wish to have for our plugin
-        _uiShared.DrawCombo("Log Level", 400, Enum.GetValues<LogLevel>(), (level) => level.ToString(), (level) =>
+        if (ImGuiUtil.GenericEnumCombo("Log Level", 400, GagspeakConfigService.LogLevel, out LogLevel newValue, lvl => lvl.ToString()))
         {
-            GagspeakConfigService.LogLevel = level;
+            GagspeakConfigService.LogLevel = newValue;
             _mainConfig.Save();
-        }, GagspeakConfigService.LogLevel);
+        }
 
         var logFilters = GagspeakConfigService.LoggerFilters;
 
@@ -165,7 +163,7 @@ public class DebugTab
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
                 {
                     ImGui.BeginTooltip();
-                    UiSharedService.ColorText(section.Key, ImGuiColors.ParsedGold);
+                    CkGui.ColorText(section.Key, ImGuiColors.ParsedGold);
                     ImGui.EndTooltip();
                 }
             }
@@ -187,7 +185,8 @@ public class DebugTab
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
         DrawAppearance("Player", _gags.ActiveGagsData ?? new CharaActiveGags());
-        DrawWardrobe("Player", _restraints.ActiveRestraintData ?? new CharaActiveRestraint());
+        DrawRestrictions("Player", _restrictions.ActiveRestrictionsData ?? new CharaActiveRestrictions());
+        DrawRestraint("Player", _restraints.ActiveRestraintData ?? new CharaActiveRestraint());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
@@ -224,7 +223,8 @@ public class DebugTab
             DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
             DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
             DrawAppearance(pair.UserData.UID, pair.LastGagData ?? new CharaActiveGags());
-            DrawWardrobe(pair.UserData.UID, pair.LastRestraintData ?? new CharaActiveRestraint());
+            DrawRestrictions(pair.UserData.UID, pair.LastRestrictionsData ?? new CharaActiveRestrictions());
+            DrawRestraint(pair.UserData.UID, pair.LastRestraintData ?? new CharaActiveRestraint());
             DrawAlias(pair.UserData.UID, pair.LastAliasData ?? new CharaAliasData());
             DrawToybox(pair.UserData.UID, pair.LastToyboxData ?? new CharaToyboxData());
             DrawLightStorage(pair.UserData.UID, pair.LastLightStorage ?? new CharaLightStorageData());
@@ -235,7 +235,7 @@ public class DebugTab
     {
         ImGuiUtil.DrawTableColumn(name);
         ImGui.TableNextColumn();
-        _uiShared.IconText(value ? FontAwesomeIcon.Check : FontAwesomeIcon.Times, value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+        CkGui.IconText(value ? FontAwesomeIcon.Check : FontAwesomeIcon.Times, value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
         ImGui.TableNextRow();
     }
 
@@ -260,9 +260,10 @@ public class DebugTab
         DrawPermissionRowBool("Live Chat Garbler", perms.ChatGarblerActive);
         DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLocked);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Gag Glamours", perms.GagVisuals);
         DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
-        DrawPermissionRowBool("Restraint Glamours", perms.RestraintSetVisuals);
+        DrawPermissionRowBool("Gag Visuals", perms.GagVisuals);
+        DrawPermissionRowBool("Restriction Visuals", perms.RestrictionVisuals);
+        DrawPermissionRowBool("Restraint Visuals", perms.RestraintSetVisuals);
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.TriggerPhrase);
@@ -314,11 +315,17 @@ public class DebugTab
         DrawPermissionRowBool("Unlock Gags", perms.UnlockGags);
         DrawPermissionRowBool("Remove Gags", perms.RemoveGags);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSets);
-        DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSets);
-        DrawPermissionRowString("Max Restraint Lock Time", perms.MaxRestraintTime.ToString());
-        DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSets);
-        DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSets);
+        DrawPermissionRowBool("Apply Restrictions", perms.ApplyRestrictions);
+        DrawPermissionRowBool("Lock Restrictions", perms.LockRestrictions);
+        DrawPermissionRowString("Max Restriction Lock Time", perms.MaxRestrictionTime.ToString());
+        DrawPermissionRowBool("Unlock Restrictions", perms.UnlockRestrictions);
+        DrawPermissionRowBool("Remove Restrictions", perms.RemoveRestrictions);
+        ImGui.TableNextRow();
+        DrawPermissionRowBool("Apply Restriction Sets", perms.ApplyRestraintSets);
+        DrawPermissionRowBool("Lock Restriction Sets", perms.LockRestraintSets);
+        DrawPermissionRowString("Max Restriction Lock Time", perms.MaxRestrictionTime.ToString());
+        DrawPermissionRowBool("Unlock Restriction Sets", perms.UnlockRestraintSets);
+        DrawPermissionRowBool("Remove Restriction Sets", perms.RemoveRestraintSets);
         ImGui.TableNextRow();
         DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowString("Start Char", perms.StartChar.ToString());
@@ -384,6 +391,7 @@ public class DebugTab
         ImGui.TableNextRow();
 
         // Gag permissions
+        DrawPermissionRowBool("Gag Visuals Active", perms.GagVisualsAllowed);
         DrawPermissionRowBool("Allows Applying Gags", perms.ApplyGagsAllowed);
         DrawPermissionRowBool("Allows Locking Gags", perms.LockGagsAllowed);
         DrawPermissionRowBool("Max Gag Time", perms.MaxGagTimeAllowed);
@@ -391,15 +399,23 @@ public class DebugTab
         DrawPermissionRowBool("Allows Removing Gags", perms.RemoveGagsAllowed);
         ImGui.TableNextRow();
 
-        // Wardrobe Permissions
         DrawPermissionRowBool("Wardrobe Enabled", perms.WardrobeEnabledAllowed);
-        DrawPermissionRowBool("Auto Equip Items", perms.GagVisualsAllowed);
-        DrawPermissionRowBool("Auto Equip Restraints", perms.RestraintSetVisualsAllowed);
-        DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSetsAllowed);
-        DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSetsAllowed);
+        // Restriction permissions
+        DrawPermissionRowBool("Restriction Visuals Active", perms.RestrictionVisualsAllowed);
+        DrawPermissionRowBool("Allows Applying Restrictions", perms.ApplyRestrictionsAllowed);
+        DrawPermissionRowBool("Allows Locking Restrictions", perms.LockRestrictionsAllowed);
+        DrawPermissionRowBool("Max Restriction Lock Time", perms.MaxRestrictionTimeAllowed);
+        DrawPermissionRowBool("Allows Unlocking Restrictions", perms.UnlockRestrictionsAllowed);
+        DrawPermissionRowBool("Allows Removing Restrictions", perms.RemoveRestrictionsAllowed);
+        ImGui.TableNextRow();
+
+        // Restraint permissions
+        DrawPermissionRowBool("Restraint Visuals Active", perms.RestraintSetVisualsAllowed);
+        DrawPermissionRowBool("Allows Applying Restraints", perms.ApplyRestraintSetsAllowed);
+        DrawPermissionRowBool("Allows Locking Restraints", perms.LockRestraintSetsAllowed);
         DrawPermissionRowBool("Max Restraint Lock Time", perms.MaxRestraintTimeAllowed);
-        DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSetsAllowed);
-        DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSetsAllowed);
+        DrawPermissionRowBool("Allows Unlocking Restraints", perms.UnlockRestraintSetsAllowed);
+        DrawPermissionRowBool("Allows Removing Restraints", perms.RemoveRestraintSetsAllowed);
         ImGui.TableNextRow();
 
         // Puppeteer Permissions
@@ -466,7 +482,7 @@ public class DebugTab
             for (var i = 0; i < 3; i++)
             {
                 ImGui.TableNextColumn();
-                UiSharedService.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+                CkGui.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             }
             ImGui.TableNextRow();
 
@@ -476,22 +492,71 @@ public class DebugTab
         }
     }
 
-    private void DrawWardrobe(string uid, CharaActiveRestraint wardrobe)
+    private void DrawRestrictions(string uid, CharaActiveRestrictions restrictions)
     {
-        using var nodeMain = ImRaii.TreeNode("Wardrobe Data");
+        using var nodeMain = ImRaii.TreeNode("Restrictions Data");
+        if (!nodeMain) return;
+
+        using (ImRaii.Table("##debug-restrictions" + uid, 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("##EmptyHeader");
+            ImGui.TableSetupColumn("Layer 1");
+            ImGui.TableSetupColumn("Layer 2");
+            ImGui.TableSetupColumn("Layer 3");
+            ImGui.TableSetupColumn("Layer 4");
+            ImGui.TableSetupColumn("Layer 5");
+            ImGui.TableHeadersRow();
+
+            ImGuiUtil.DrawTableColumn("Restriction ID:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+                ImGuiUtil.DrawTableColumn(restrictions.Restrictions[i].Identifier.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Enabler:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+                ImGuiUtil.DrawTableColumn(restrictions.Restrictions[i].Enabler);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Padlock:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+                ImGuiUtil.DrawTableColumn(restrictions.Restrictions[i].Padlock.ToName());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Password:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+                ImGuiUtil.DrawTableColumn(restrictions.Restrictions[i].Password);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Time Remaining:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+            {
+                ImGui.TableNextColumn();
+                CkGui.ColorText(restrictions.Restrictions[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+            }
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Assigner:");
+            for (var i = 0; i < restrictions.Restrictions.Length; i++)
+                ImGuiUtil.DrawTableColumn(restrictions.Restrictions[i].PadlockAssigner);
+        }
+    }
+
+    private void DrawRestraint(string uid, CharaActiveRestraint restraint)
+    {
+        using var nodeMain = ImRaii.TreeNode("Restraint Data");
         if (!nodeMain) return;
 
         using (ImRaii.Table("##debug-wardrobe" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            DrawPermissionRowString("Active Set ID", wardrobe.Identifier.ToString());
-            DrawPermissionRowString("Active Set Enabled By", wardrobe.Enabler);
-            DrawPermissionRowString("Padlock", wardrobe.Padlock.ToName());
-            DrawPermissionRowString("Password", wardrobe.Password);
+            DrawPermissionRowString("Active Set ID", restraint.Identifier.ToString());
+            DrawPermissionRowString("Active Set Enabled By", restraint.Enabler);
+            DrawPermissionRowString("Padlock", restraint.Padlock.ToName());
+            DrawPermissionRowString("Password", restraint.Password);
             ImGuiUtil.DrawTableColumn("Expiration Time");
             ImGui.TableNextColumn();
-            UiSharedService.ColorText(wardrobe.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+            CkGui.ColorText(restraint.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             ImGui.TableNextRow();
-            DrawPermissionRowString("Assigner", wardrobe.PadlockAssigner);
+            DrawPermissionRowString("Assigner", restraint.PadlockAssigner);
         }
     }
 
@@ -513,7 +578,7 @@ public class DebugTab
         if (!nodeMain) return;
 
         ImGui.Text("Has Name Stored: ");
-        _uiShared.BooleanToColoredIcon(alias.HasNameStored, true);
+        CkGui.BooleanToColoredIcon(alias.HasNameStored, true);
 
         ImGui.Text("Listener Name: '" + alias.ListenerName + "'");
         ImGui.Text("Extracted Listener Name: '" + alias.ExtractedListenerName + "'");
@@ -586,22 +651,21 @@ public class DebugTab
         }
 
         // lightStorage subnode restraints.
-        using (var subnodeRestraints = ImRaii.TreeNode("Restraints"))
+        using (var subnodeRestrictions = ImRaii.TreeNode("Restrictions"))
         {
-            if (subnodeRestraints)
+            if (subnodeRestrictions)
             {
                 using (ImRaii.Table("##debug-lightstorage-restraints" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGui.TableSetupColumn("Set ID");
-                    ImGui.TableSetupColumn("Restraint Name");
+                    ImGui.TableSetupColumn("Restriction Name");
                     ImGui.TableSetupColumn("Affected Slots");
                     ImGui.TableHeadersRow();
 
-                    foreach (var set in lightStorage.Restraints)
+                    foreach (var set in lightStorage.Restrictions)
                     {
                         ImGuiUtil.DrawTableColumn(set.Id.ToString());
                         ImGuiUtil.DrawTableColumn(set.Label);
-                        ImGuiUtil.DrawTableColumn(string.Join(",", set.AffectedSlots.Select(x => ((EquipSlot)x.Slot).ToString())));
                         ImGui.TableNextRow();
                     }
                 }

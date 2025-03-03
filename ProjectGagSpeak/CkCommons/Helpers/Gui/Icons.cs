@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
+using GagSpeak.UI;
 using ImGuiNET;
 using OtterGui;
 using Penumbra.GameData.Enums;
@@ -82,19 +83,19 @@ public static class Icons
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
-        using var font = ImRaii.PushFont(UiBuilder.IconFont);
-        using var c = ImRaii.PushColor(ImGuiCol.Text, hovering 
-            ? ImGuiColors.DalamudWhite2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3);
-
-        ImGui.TextUnformatted(FontAwesomeIcon.Star.ToIconString());
-        if (!ImGui.IsItemClicked())
-            return false;
-
-        if (isFavorite)
-            favorites.RemoveRestriction(type, id);
-        else
-            favorites.TryAddRestriction(type, id);
-        return true;
+        var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
+        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        {
+            if (isFavorite)
+                favorites.RemoveRestriction(type, id);
+            else
+                favorites.TryAddRestriction(type, id);
+            
+            return true;
+        }
+        return false;
     }
 
     public static bool DrawFavoriteStar(FavoritesManager favorites, GagType gag)
@@ -103,19 +104,19 @@ public static class Icons
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
-        using var font = ImRaii.PushFont(UiBuilder.IconFont);
-        using var c = ImRaii.PushColor(ImGuiCol.Text, hovering 
-            ? ImGuiColors.DalamudWhite2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3);
+        var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
+        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        {
+            if (isFavorite)
+                favorites.RemoveGag(gag);
+            else
+                favorites.TryAddGag(gag);
 
-        ImGui.TextUnformatted(FontAwesomeIcon.Star.ToIconString());
-        if (!ImGui.IsItemClicked())
-            return false;
-
-        if (isFavorite)
-            favorites._favoriteGags.Remove(gag);
-        else
-            favorites.TryAddGag(gag);
-        return true;
+            return true;
+        }
+        return false;
     }
 
     public static bool DrawFavoriteStar(FavoritesManager favorites, string kinksterUid)
@@ -124,19 +125,19 @@ public static class Icons
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
-        using var font = ImRaii.PushFont(UiBuilder.IconFont);
-        using var c = ImRaii.PushColor(ImGuiCol.Text, hovering 
-            ? ImGuiColors.DalamudWhite2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3);
+        var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
+        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        {
+            if (isFavorite)
+                favorites.RemoveKinkster(kinksterUid);
+            else
+                favorites.TryAddKinkster(kinksterUid);
 
-        ImGui.TextUnformatted(FontAwesomeIcon.Star.ToIconString());
-        if (!ImGui.IsItemClicked())
-            return false;
-
-        if (isFavorite)
-            favorites._favoriteKinksters.Remove(kinksterUid);
-        else
-            favorites.TryAddKinkster(kinksterUid);
-        return true;
+            return true;
+        }
+        return false;
     }
 }
 

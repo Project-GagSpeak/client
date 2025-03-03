@@ -15,20 +15,17 @@ public class OrdersUI : WindowMediatorSubscriberBase
     private readonly OrdersCreator _creatorPanel;
     private readonly OrdersAssigner _assignerPanel;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
 
     public OrdersUI(ILogger<OrdersUI> logger, GagspeakMediator mediator, 
         OrdersViewActive activePanel, OrdersCreator creatorPanel, 
-        OrdersAssigner assignerPanel, CosmeticService cosmetics,
-        UiSharedService uiShared) : base(logger, mediator, "Orders UI")
+        OrdersAssigner assignerPanel, CosmeticService cosmetics) : base(logger, mediator, "Orders UI")
     {
         _activePanel = activePanel;
         _creatorPanel = creatorPanel;
         _assignerPanel = assignerPanel;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
 
-        _tabMenu = new OrderTabs(_uiShared);
+        _tabMenu = new OrderTabs();
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {

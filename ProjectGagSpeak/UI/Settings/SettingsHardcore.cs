@@ -18,15 +18,12 @@ public class SettingsHardcore
     private readonly ILogger<SettingsHardcore> _logger;
     private readonly GagspeakConfigService _clientConfigs;
     private readonly GlobalData _globals;
-    private readonly UiSharedService _uiShared;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger, GagspeakConfigService config,
-        GlobalData globals, UiSharedService ui)
+    public SettingsHardcore(ILogger<SettingsHardcore> logger, GagspeakConfigService config, GlobalData globals)
     {
         _logger = logger;
         _clientConfigs = config;
         _globals = globals;
-        _uiShared = ui;
     }
 
     public void DrawHardcoreSettings()
@@ -47,7 +44,7 @@ public class SettingsHardcore
         var BlindfoldDrawData = _wardrobeHandler.GetBlindfoldDrawData();
 
         // go to first column.
-        _uiShared.GagspeakBigText("Blindfold Item");
+        CkGui.GagspeakBigText("Blindfold Item");
         using (ImRaii.Group())
         {
             BlindfoldDrawData.GameItem.DrawIcon(_itemStainHandler.IconData, IconSize, BlindfoldDrawData.Slot);
@@ -93,13 +90,13 @@ public class SettingsHardcore
                 _clientConfigs.Config.ForceLockFirstPerson = forceLockFirstPerson;
                 _clientConfigs.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
 
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
                 // draw the lace type selection
                 var selectedBlindfoldType = _clientConfigs.Config.BlindfoldStyle;
-                _uiShared.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
+                CkGui.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
                 (i) =>
                 {
                     _clientConfigs.Config.BlindfoldStyle = i;
@@ -107,7 +104,7 @@ public class SettingsHardcore
                     _logger.LogTrace($"Blindfold Style changed to {i}");
                 }, selectedBlindfoldType);
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
 
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
@@ -119,7 +116,7 @@ public class SettingsHardcore
                     _clientConfigs.Save();
                 }
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
         }
         ImGui.Separator();
         var filePath = _clientConfigs.Config.BlindfoldStyle switch
@@ -129,7 +126,7 @@ public class SettingsHardcore
             _ => "INVALID_FILE",
         };
 
-        var previewImage = _uiShared.GetImageFromDirectoryFile(filePath);
+        var previewImage = CkGui.GetImageFromDirectoryFile(filePath);
         if (previewImage is { } wrap)
         {
             // calculate the height of the available region and compare it to the ImGuiHandles Y height, to get how long we should display the X.
@@ -138,7 +135,7 @@ public class SettingsHardcore
             var finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
             // display the image.
             ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldOpacity));
-            UiSharedService.AttachToolTip("Preview of the Blindfold Style");
+            CkGui.AttachToolTip("Preview of the Blindfold Style");
         }
     }
 */
@@ -148,25 +145,25 @@ public class SettingsHardcore
             return;
 
         // replace disabled with ForcedStay == true
-        if (_uiShared.IconTextButton(FontAwesomeIcon.SearchPlus, "Last Seen TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FontAwesomeIcon.SearchPlus, "Last Seen TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.AddLastSeenNode();
         }
-        UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeLastSeenTT);
+        CkGui.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeLastSeenTT);
 
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FontAwesomeIcon.PlusCircle, "New TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateTextNode();
         }
-        UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewTT);
+        CkGui.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewTT);
 
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.PlusCircle, "New ChamberNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FontAwesomeIcon.PlusCircle, "New ChamberNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateChamberNode();
         }
-        UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewChamberTT);
+        CkGui.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewChamberTT);
 
         ImGui.SameLine();
         using (ImRaii.Disabled(globals.ForcedStay.IsNullOrEmpty()))
@@ -178,7 +175,7 @@ public class SettingsHardcore
                 _clientConfigs.Save();
             }
         }
-        UiSharedService.AttachToolTip(GSLoc.Settings.Hardcore.ChamberAutoMoveTT);
+        CkGui.AttachToolTip(GSLoc.Settings.Hardcore.ChamberAutoMoveTT);
 
         ImGui.Separator();
     }
@@ -221,7 +218,7 @@ public class SettingsHardcore
 
         if (ImGui.BeginPopup($"{node.GetHashCode()}-popup"))
         {
-            if (_uiShared.IconButton(FontAwesomeIcon.TrashAlt, disabled: disableElements || !KeyMonitor.ShiftPressed()))
+            if (CkGui.IconButton(FontAwesomeIcon.TrashAlt, disabled: disableElements || !KeyMonitor.ShiftPressed()))
             {
                 if (_clientConfigs.TryFindParent(node, out var parentNode))
                 {
@@ -231,7 +228,7 @@ public class SettingsHardcore
                         _clientConfigs.CreateTextNode();
                 }
             }
-            UiSharedService.AttachToolTip("Delete Custom Addition");
+            CkGui.AttachToolTip("Delete Custom Addition");
 
             ImGui.SameLine();
             var nodeEnabled = node.Enabled;
@@ -263,7 +260,7 @@ public class SettingsHardcore
                     node.FriendlyName = friendlyName;
                     _clientConfigs.Save();
                 }
-                UiSharedService.AttachToolTip("The Friendly name that will display in the ForcedStay Prompt List.");
+                CkGui.AttachToolTip("The Friendly name that will display in the ForcedStay Prompt List.");
 
                 // Display the label
                 var nodeName = node.TargetNodeName;
@@ -277,7 +274,7 @@ public class SettingsHardcore
                     node.TargetNodeName = nodeName;
                     _clientConfigs.Save();
                 }
-                UiSharedService.AttachToolTip("The name of the node to look for when interacting with it.");
+                CkGui.AttachToolTip("The name of the node to look for when interacting with it.");
 
                 // Draw unique fields if text node
                 if (node is TextEntryNode textNode)
@@ -306,7 +303,7 @@ public class SettingsHardcore
             node.TargetNodeLabel = nodeLabel;
             _clientConfigs.Save();
         }
-        UiSharedService.AttachToolTip("The text that is displayed in the prompt menu for this node.");
+        CkGui.AttachToolTip("The text that is displayed in the prompt menu for this node.");
 
         // Display the target text to select from the list of options.
         ImGui.SetNextItemWidth(ImGuiHelpers.GlobalScale * 225);
@@ -321,7 +318,7 @@ public class SettingsHardcore
             node.SelectedOptionText = selectedOption;
             _clientConfigs.Save();
         }
-        UiSharedService.AttachToolTip("The option within the prompt that we should automatically select.");
+        CkGui.AttachToolTip("The option within the prompt that we should automatically select.");
     }
 
     private void DrawChambersUniqueFields(ChambersTextNode node)
@@ -338,7 +335,7 @@ public class SettingsHardcore
             node.ChamberRoomSet = roomSetIdxRef;
             _clientConfigs.Save();
         }
-        UiSharedService.AttachToolTip("This is the index to select from the (001-015) RoomSet list. Leave blank for first.");
+        CkGui.AttachToolTip("This is the index to select from the (001-015) RoomSet list. Leave blank for first.");
 
         // Display the room index to automatically join into.
         var roomListIdxRef = node.ChamberListIdx;
@@ -348,7 +345,7 @@ public class SettingsHardcore
             node.ChamberListIdx = roomListIdxRef;
             _clientConfigs.Save();
         }
-        UiSharedService.AttachToolTip("This is NOT the room number, it is the index from\ntop to bottom in the room listings, starting at 0.");
+        CkGui.AttachToolTip("This is NOT the room number, it is the index from\ntop to bottom in the room listings, starting at 0.");
 
     }
 
@@ -356,7 +353,7 @@ public class SettingsHardcore
     private LowerString PairSearchString = LowerString.Empty;
     public void DrawUidSearchFilter(float availableWidth)
     {
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
         ImGui.SetNextItemWidth(availableWidth - buttonSize - ImGui.GetStyle().ItemInnerSpacing.X);
         string filter = PairSearchString;
         if (ImGui.InputTextWithHint("##filter", "Filter for UID/notes", ref filter, 255))
@@ -365,7 +362,7 @@ public class SettingsHardcore
         }
         ImUtf8.SameLineInner();
         using var disabled = ImRaii.Disabled(string.IsNullOrEmpty(PairSearchString));
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
         {
             PairSearchString = string.Empty;
         }

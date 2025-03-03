@@ -26,13 +26,13 @@ public class UserPairListHandler
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
     private readonly GagspeakConfigService _configService;
-    private readonly UiSharedService _uiShared;
+
     private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
         PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
-        GagspeakConfigService configService, UiSharedService uiShared)
+        GagspeakConfigService configService, CkGui uiShared)
     {
         _logger = logger;
         _mediator = mediator;
@@ -40,7 +40,7 @@ public class UserPairListHandler
         _drawEntityFactory = drawEntityFactory;
         _drawRequests = drawRequests;
         _configService = configService;
-        _uiShared = uiShared;
+
 
         _drawRequests.UpdateKinksterRequests();
         UpdateDrawFoldersAndUserPairDraws();
@@ -91,7 +91,7 @@ public class UserPairListHandler
         // display a message is no pairs are present.
         if (AllPairDrawsDistinct.Count <= 0)
         {
-            UiSharedService.ColorTextCentered("You Have No Pairs Added!", ImGuiColors.DalamudYellow);
+            CkGui.ColorTextCentered("You Have No Pairs Added!", ImGuiColors.DalamudYellow);
         }
         else
         {
@@ -120,7 +120,7 @@ public class UserPairListHandler
 
         var folderDrawPairs = showOffline ? ((DrawFolderBase)allTagFolder).DrawPairs.ToList() : ((DrawFolderBase)allTagFolder).DrawPairs.Where(x => x.Pair.IsOnline).ToList();
 
-        using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+        using var indent = ImRaii.PushIndent(CkGui.IconSize(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
 
         if (!folderDrawPairs.Any())
         {
@@ -150,8 +150,8 @@ public class UserPairListHandler
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
 
         var buttonOneSize = showClearText
-            ? _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
-            : _uiShared.GetIconButtonSize(FontAwesomeIcon.Ban).X + spacing;
+            ? CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
+            : CkGui.IconButtonSize(FontAwesomeIcon.Ban).X + spacing;
 
         var searchWidth = width - buttonOneSize;
 
@@ -164,15 +164,15 @@ public class UserPairListHandler
         ImUtf8.SameLineInner();
         if (showClearText)
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
                 Filter = string.Empty;
         }
         else
         {
-            if (_uiShared.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
+            if (CkGui.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
                 Filter = string.Empty;
         }
-        UiSharedService.AttachToolTip("Clears the filter");
+        CkGui.AttachToolTip("Clears the filter");
     }
 
     public void UpdateKinksterRequests() => _drawRequests.UpdateKinksterRequests();

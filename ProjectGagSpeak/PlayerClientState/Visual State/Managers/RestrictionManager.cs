@@ -331,6 +331,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 return;
         }
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.Restriction));
     }
 
     private void LoadV0(JToken? data)

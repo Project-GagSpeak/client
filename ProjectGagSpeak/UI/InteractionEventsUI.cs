@@ -10,13 +10,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using OtterGui.Text;
+using OtterGui;
 
 namespace GagSpeak.UI;
 
 internal class InteractionEventsUI : WindowMediatorSubscriberBase
 {
     private readonly EventAggregator _eventAggregator;
-    private readonly UiSharedService _uiShared;
     private bool ThemePushed = false;
 
     private List<InteractionEvent> CurrentEvents => _eventAggregator.EventList.Value.OrderByDescending(f => f.EventTime).ToList();
@@ -25,14 +25,14 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
     private InteractionFilter FilterCatagory = InteractionFilter.All;
 
     public InteractionEventsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        EventAggregator eventAggregator, UiSharedService uiShared) : base(logger, mediator, "Interaction Events Viewer")
+        EventAggregator eventAggregator, CkGui uiShared) : base(logger, mediator, "Interaction Events Viewer")
     {
         Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse;
         AllowClickthrough = false;
         AllowPinning = false;
         
         _eventAggregator = eventAggregator;
-        _uiShared = uiShared;
+
         SizeConstraints = new()
         {
             MinimumSize = new(500, 300),
@@ -66,7 +66,6 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
     private void ClearFilters()
     {
         FilterText = string.Empty;
-        _uiShared._selectedComboItems["Type##InteractionViewerFilterType"] = InteractionFilter.All;
         FilterCatagory = InteractionFilter.All;
     }
 
@@ -100,7 +99,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
         using (ImRaii.Group())
         {
             // Draw out the clear filters button
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
                 ClearFilters();
 
             // On the same line, draw out the search bar.
@@ -110,14 +109,15 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
 
             // On the same line, draw out the filter category dropdown
             ImUtf8.SameLineInner();
-            _uiShared.DrawCombo("Type##InteractionViewerFilterType", 110f, Enum.GetValues<InteractionFilter>(), (type) => type.ToName(),
-                (i) => FilterCatagory = i, FilterCatagory, flags: ImGuiComboFlags.NoArrowButton);
+            if(ImGuiUtil.GenericEnumCombo("##EventFilterType", 110f, FilterCatagory, out InteractionFilter newValue, i => i.ToName()))
+                FilterCatagory = newValue;
+
 
             // On the same line, at the very end, draw the button to open the event folder.
-            var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FolderOpen, "EventLogs");
+            var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FolderOpen, "EventLogs");
             var distance = ImGui.GetContentRegionAvail().X - buttonSize;
             ImGui.SameLine(distance);
-            if (_uiShared.IconTextButton(FontAwesomeIcon.FolderOpen, "EventLogs"))
+            if (CkGui.IconTextButton(FontAwesomeIcon.FolderOpen, "EventLogs"))
             {
                 ProcessStartInfo ps = new()
                 {
@@ -177,7 +177,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             }
             ImGui.TextUnformatted(msg);
             if (!string.Equals(msg, ev.InteractionContent, StringComparison.Ordinal))
-                UiSharedService.AttachToolTip(ev.InteractionContent);
+                CkGui.AttachToolTip(ev.InteractionContent);
         }
     }
 }

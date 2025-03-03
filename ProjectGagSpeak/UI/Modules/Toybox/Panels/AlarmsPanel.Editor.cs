@@ -21,28 +21,28 @@ public partial class AlarmsPanel
         // define our sizes
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
-        var toggleSize = _uiShared.GetIconButtonSize(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
+        var toggleSize = CkGui.IconButtonSize(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
         var nameTextSize = ImGui.CalcTextSize(alarm.Label);
         Vector2 alarmTextSize;
         var frequencyTextSize = ImGui.CalcTextSize(_handler.GetAlarmFrequencyString(alarm.RepeatFrequency));
         var patternNameSize = ImGui.CalcTextSize(patternName);
         string patternToPlayName = _handler.PatternName(alarm.PatternToPlay);
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             alarmTextSize = ImGui.CalcTextSize($"{localTime}");
         }
         using var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), LastHoveredIndex == idx);
-        using (ImRaii.Child($"##EditAlarmHeader{alarm.Identifier}", new Vector2(UiSharedService.GetWindowContentRegionWidth(), 65f)))
+        using (ImRaii.Child($"##EditAlarmHeader{alarm.Identifier}", new Vector2(CkGui.GetWindowContentRegionWidth(), 65f)))
         {
             // create a group for the bounding area
             using (var group = ImRaii.Group())
             {
                 // scooch over a bit like 5f
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
-                _uiShared.BigText($"{localTime}");
+                CkGui.BigText($"{localTime}");
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((alarmTextSize.Y - nameTextSize.Y) / 2) + 5f);
-                UiSharedService.ColorText(alarm.Label, ImGuiColors.DalamudGrey2);
+                CkGui.ColorText(alarm.Label, ImGuiColors.DalamudGrey2);
             }
 
             // now draw the lower section out.
@@ -50,16 +50,16 @@ public partial class AlarmsPanel
             {
                 // scooch over a bit like 5f
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 5f);
-                UiSharedService.ColorText(_handler.GetAlarmFrequencyString(alarm.RepeatFrequency), ImGuiColors.DalamudGrey3);
+                CkGui.ColorText(_handler.GetAlarmFrequencyString(alarm.RepeatFrequency), ImGuiColors.DalamudGrey3);
                 ImGui.SameLine();
-                UiSharedService.ColorText("| " + patternToPlayName, ImGuiColors.DalamudGrey3);
+                CkGui.ColorText("| " + patternToPlayName, ImGuiColors.DalamudGrey3);
             }
 
             // now, head to the sameline of the full width minus the width of the button
-            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - toggleSize.X - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - toggleSize.X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (65f - toggleSize.Y) / 2);
             // draw out the icon button
-            if (_uiShared.IconButton(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff))
+            if (CkGui.IconButton(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff))
             {
                 // set the enabled state of the alarm based on its current state so that we toggle it
                 if (alarm.Enabled)
@@ -78,29 +78,29 @@ public partial class AlarmsPanel
     private void DrawAlarmEditor(Alarm alarmToCreate)
     {
         // Display the local time zone
-        var textlength = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName);
+        var textlength = CkGui.IconTextButtonSize(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName);
         var localTime = alarmToCreate.SetTimeUTC.ToLocalTime();
         var hour = localTime.Hour;
         var minute = localTime.Minute;
         // set the x position to center the icontext button
         ImGui.Spacing();
-        ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - textlength) / 2);
-        _uiShared.IconTextButton(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName, null!, true, true);
+        ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - textlength) / 2);
+        CkGui.IconTextButton(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName, null!, true, true);
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.AlarmLocalTimeZone, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         // Draw out using the big pushed font, a large, blank button canvas
-        using (ImRaii.Child("TimezoneFancyUI", new Vector2(UiSharedService.GetWindowContentRegionWidth(), 90f)))
+        using (ImRaii.Child("TimezoneFancyUI", new Vector2(CkGui.GetWindowContentRegionWidth(), 90f)))
         {
             // define the scales 
             Vector2 hourTextSize;
             Vector2 minuteTextSize;
-            using (_uiShared.UidFont.Push())
+            using (UiFontService.UidFont.Push())
             {
                 hourTextSize = ImGui.CalcTextSize($"{hour:00}");
                 minuteTextSize = ImGui.CalcTextSize($"{minute:00}");
             }
 
-            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth()) / 2 - (minuteTextSize.X + ImGui.GetStyle().ItemSpacing.X * 2));
+            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - (minuteTextSize.X + ImGui.GetStyle().ItemSpacing.X * 2));
             using (ImRaii.Child("FancyHourDisplay", new Vector2(hourTextSize.X + ImGui.GetStyle().ItemSpacing.X * 2, ImGui.GetContentRegionAvail().Y)))
             {
                 var prevHour = $"{(hour - 1 + 24) % 24:00}";
@@ -110,7 +110,7 @@ public partial class AlarmsPanel
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (hourTextSize.X - ImGui.CalcTextSize(prevHour).X) / 2);
                 ImGui.TextDisabled(prevHour); // Previous hour (centered)
 
-                _uiShared.BigText(currentHour);
+                CkGui.BigText(currentHour);
                 // adjust the hour with the mouse wheel
                 if (ImGui.IsItemHovered() && ImGui.GetIO().MouseWheel != 0)
                 {
@@ -123,9 +123,9 @@ public partial class AlarmsPanel
                 ImGui.TextDisabled(nextHour); // Next hour (centered)
             }
 
-            ImGui.SameLine((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth()) / 2 - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.Y);
-            _uiShared.BigText(":");
+            CkGui.BigText(":");
             ImGui.SameLine();
 
             using (ImRaii.Child("FancyMinuteDisplay", new Vector2(minuteTextSize.X + ImGui.GetStyle().ItemSpacing.X * 2, ImGui.GetContentRegionAvail().Y)))
@@ -137,7 +137,7 @@ public partial class AlarmsPanel
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (minuteTextSize.X - ImGui.CalcTextSize(prevMinute).X) / 2);
                 ImGui.TextDisabled(prevMinute); // Previous hour (centered)
 
-                _uiShared.BigText(currentMinute);
+                CkGui.BigText(currentMinute);
                 // adjust the hour with the mouse wheel
                 if (ImGui.IsItemHovered() && ImGui.GetIO().MouseWheel != 0)
                 {
@@ -158,7 +158,7 @@ public partial class AlarmsPanel
 
         // Input field for the Alarm name
         var name = alarmToCreate.Label;
-        ImGui.SetNextItemWidth(UiSharedService.GetWindowContentRegionWidth() / 2);
+        ImGui.SetNextItemWidth(CkGui.GetWindowContentRegionWidth() / 2);
         ImGui.InputText("Alarm Name", ref name, 32);
         if (ImGui.IsItemDeactivatedAfterEdit())
             alarmToCreate.Label = name;
@@ -167,7 +167,7 @@ public partial class AlarmsPanel
         // Input field for the pattern the alarm will play
         var pattern = alarmToCreate.PatternToPlay;
         // draw the selector on the left
-        _uiShared.DrawComboSearchable("Alarm Pattern", UiSharedService.GetWindowContentRegionWidth() / 2, _patternHandler.Patterns, (i) => i.Name, true, (i) => alarmToCreate.PatternToPlay = i?.UniqueIdentifier ?? Guid.Empty);
+        CkGui.DrawComboSearchable("Alarm Pattern", CkGui.GetWindowContentRegionWidth() / 2, _patternHandler.Patterns, (i) => i.Name, true, (i) => alarmToCreate.PatternToPlay = i?.UniqueIdentifier ?? Guid.Empty);
         // tutorial stuff for the above combo.
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmPattern, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
@@ -177,7 +177,7 @@ public partial class AlarmsPanel
         var PlaybackDuration = alarmToCreate.PatternDuration;
 
         var formatStart = durationTotal.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-        _uiShared.DrawTimeSpanCombo("Playback Start-Point", durationTotal, ref StartPointTimeSpan, UiSharedService.GetWindowContentRegionWidth() / 2, formatStart, true);
+        CkGui.DrawTimeSpanCombo("Playback Start-Point", durationTotal, ref StartPointTimeSpan, CkGui.GetWindowContentRegionWidth() / 2, formatStart, true);
         alarmToCreate.PatternStartPoint = StartPointTimeSpan;
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmStartPoint, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
@@ -188,7 +188,7 @@ public partial class AlarmsPanel
 
         // playback duration
         var formatDuration = PlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-        _uiShared.DrawTimeSpanCombo("Playback Duration", maxPlaybackDuration, ref PlaybackDuration, UiSharedService.GetWindowContentRegionWidth() / 2, formatDuration, true);
+        CkGui.DrawTimeSpanCombo("Playback Duration", maxPlaybackDuration, ref PlaybackDuration, CkGui.GetWindowContentRegionWidth() / 2, formatDuration, true);
         alarmToCreate.PatternDuration = PlaybackDuration;
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmDuration, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 

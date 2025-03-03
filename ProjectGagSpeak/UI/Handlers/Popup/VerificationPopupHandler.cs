@@ -2,6 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -11,12 +12,12 @@ namespace GagSpeak.UI.Components.Popup;
 
 internal class VerificationPopupHandler : IPopupHandler
 {
-    private readonly UiSharedService _uiShared;
+
     private string _verificationCode = string.Empty;
 
-    public VerificationPopupHandler(UiSharedService uiShared)
+    public VerificationPopupHandler(CkGui uiShared)
     {
-        _uiShared = uiShared;
+
     }
 
     public Vector2 PopupSize => new(600, 160);
@@ -28,11 +29,11 @@ internal class VerificationPopupHandler : IPopupHandler
     {
         var width = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
         // push the title for the popup.
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var headerTextSize = ImGui.CalcTextSize("Verification Code for " + MainHub.DisplayName);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - (headerTextSize.X / 2));
-            UiSharedService.TextWrapped("Verification Code for " + MainHub.DisplayName);
+            CkGui.TextWrapped("Verification Code for " + MainHub.DisplayName);
 
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGuiHelpers.GlobalScale * 5);
             ImGui.Separator();
@@ -42,7 +43,7 @@ internal class VerificationPopupHandler : IPopupHandler
             ImGui.SetCursorPosX(width / 2 - ((ImGui.CalcTextSize(_verificationCode).X + ImGuiHelpers.GlobalScale * 12) / 2));
 
             ImGui.TextColored(ImGuiColors.ParsedPink, _verificationCode);
-            UiSharedService.CopyableDisplayText(_verificationCode, "Click to copy verification code to clipboard");
+            CkGui.CopyableDisplayText(_verificationCode, "Click to copy verification code to clipboard");
         }
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGuiHelpers.GlobalScale * 10);
         ImGui.Separator();
@@ -51,13 +52,13 @@ internal class VerificationPopupHandler : IPopupHandler
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X / 2 - ImGui.CalcTextSize("Close Popup window &&& Be sure verification is successful before closing.").X / 2);
         using (ImRaii.Disabled(string.IsNullOrEmpty(_verificationCode)))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Close Popup Window"))
+            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Close Popup Window"))
             {
                 ImGui.CloseCurrentPopup();
             }
         }
         ImGui.SameLine();
-        UiSharedService.ColorTextWrapped($"Be sure verification is successful before closing.", ImGuiColors.DalamudYellow);
+        CkGui.ColorTextWrapped($"Be sure verification is successful before closing.", ImGuiColors.DalamudYellow);
 
     }
 

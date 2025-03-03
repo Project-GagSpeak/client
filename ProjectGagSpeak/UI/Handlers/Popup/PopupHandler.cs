@@ -1,11 +1,8 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using Microsoft.Extensions.Logging;
-using System.Numerics;
+using ImGuiNET;
 
 namespace GagSpeak.UI.Components.Popup;
 
@@ -14,12 +11,11 @@ public class PopupHandler : WindowMediatorSubscriberBase
 {
     protected bool _openPopup = false;
     private readonly HashSet<IPopupHandler> _handlers;
-    private readonly UiSharedService _uiShared;
     private IPopupHandler? _currentHandler = null;
     private bool ThemePushed = false;
 
     public PopupHandler(ILogger<PopupHandler> logger, GagspeakMediator mediator, IEnumerable<IPopupHandler> popupHandlers,
-        UiSharedService uiShared) : base(logger, mediator, "GagspeakPopupHandler")
+        CkGui uiShared) : base(logger, mediator, "GagspeakPopupHandler")
     {
         // Adjust to restore some functionality?
         Flags = ImGuiWindowFlags.NoBringToFrontOnFocus
@@ -75,10 +71,6 @@ public class PopupHandler : WindowMediatorSubscriberBase
             // set is open to true after processing the open function.
             IsOpen = true;
         });
-
-
-
-        _uiShared = uiShared;
     }
 
     protected override void PreDrawInternal()
@@ -145,7 +137,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
         if (_currentHandler.ShowClosed)
         {
             ImGui.Separator();
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Times, "Close", ImGui.GetContentRegionAvail().X))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Times, "Close", ImGui.GetContentRegionAvail().X))
             {
                 ImGui.CloseCurrentPopup();
             }

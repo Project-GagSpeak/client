@@ -15,8 +15,8 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
     private readonly CharaIPCData _ownMoodles;
     private int longestPresetCount => _pairRef.LastIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
     public OwnMoodlePresetToPairCombo(float iconScale, MoodleStatusMonitor monitor, CharaIPCData data,
-        Pair pair, MainHub hub, ILogger log, UiSharedService ui, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, ui, bText, bTT, () =>
+        Pair pair, MainHub hub, ILogger log, string bText, string bTT)
+        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
         [
             ..data.MoodlesPresets.OrderBy(x => x.Title),
         ])

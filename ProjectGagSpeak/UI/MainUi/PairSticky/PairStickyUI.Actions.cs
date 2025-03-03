@@ -82,44 +82,44 @@ public partial class PairStickyUI
     {
         if (!SPair.IsPaused)
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
             {
                 Mediator.Publish(new KinkPlateOpenStandaloneMessage(SPair));
                 ImGui.CloseCurrentPopup();
             }
-            UiSharedService.AttachToolTip("Opens the profile for this user in a new window");
+            CkGui.AttachToolTip("Opens the profile for this user in a new window");
         }
 
         if (!SPair.IsPaused)
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
             {
                 ImGui.CloseCurrentPopup();
                 Mediator.Publish(new ReportKinkPlateMessage(SPair.UserData));
             }
-            UiSharedService.AttachToolTip("Snapshot "+ PermissionData.DispName+"'s KinkPlate and send it as a reported profile.");
+            CkGui.AttachToolTip("Snapshot "+ PermissionData.DispName+"'s KinkPlate and send it as a reported profile.");
         }
 
         if (SPair.IsOnline)
         {
             var pauseIcon = SPair.OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
             var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermissionData.DispName : "Pause " + PermissionData.DispName;
-            if (_ui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
+            if (CkGui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
                 _hub.UserUpdateOwnPairPerm(new(SPair.UserData, MainHub.PlayerUserData,
                     new KeyValuePair<string, object>("IsPaused", !SPair.OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
             }
-            UiSharedService.AttachToolTip(!SPair.OwnPerms.IsPaused
+            CkGui.AttachToolTip(!SPair.OwnPerms.IsPaused
                 ? "Pause pairing with " + PermissionData.DispName : "Resume pairing with " + PermissionData.DispName);
         }
         if (SPair.IsVisible)
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.Sync, "Reload IPC data", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Reload IPC data", WindowMenuWidth, true))
             {
                 SPair.ApplyLastIpcData(forced: true);
                 ImGui.CloseCurrentPopup();
             }
-            UiSharedService.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
+            CkGui.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
         }
 
         ImGui.Separator();
@@ -127,8 +127,8 @@ public partial class PairStickyUI
 
     private void DrawIndividualMenu()
     {
-        if (_ui.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
             _hub.UserRemovePair(new(SPair.UserData)).ConfigureAwait(false);
-        UiSharedService.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermissionData.DispName);
+        CkGui.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermissionData.DispName);
     }
 }

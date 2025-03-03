@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerState.Models;
 using ImGuiNET;
 
@@ -14,36 +15,36 @@ public partial class PatternsPanel
         if(_manager.ActiveEditorItem is not { } pattern)
             return;
 
-        UiSharedService.ColorText("ID:", ImGuiColors.ParsedGold);
+        CkGui.ColorText("ID:", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        UiSharedService.ColorText(pattern.Identifier.ToString(), ImGuiColors.DalamudGrey);
+        CkGui.ColorText(pattern.Identifier.ToString(), ImGuiColors.DalamudGrey);
 
-        UiSharedService.ColorText("Pattern Name", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Pattern Name", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
         var refName = pattern.Label;
         if (ImGui.InputTextWithHint("##PatternName", "Name Here...", ref refName, 50))
             pattern.Label = refName;
-        _ui.DrawHelpText("Define the name for the Pattern.");
+        CkGui.DrawHelpText("Define the name for the Pattern.");
 
         // description
         var refDescription = pattern.Description;
-        UiSharedService.ColorText("Description", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Description", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
-        if (UiSharedService.InputTextWrapMultiline("##PatternDescription", ref refDescription, 100, 3, 225f))
+        if (ImGui.InputTextMultiline("##PatternDescription", ref refDescription, 100, new Vector2(225f, ImGui.GetFrameHeightWithSpacing()*3)))
             pattern.Description = refDescription;
-        _ui.DrawHelpText("Define the description for the Pattern.\n(Shown on tooltip hover if uploaded)");
+        CkGui.DrawHelpText("Define the description for the Pattern.\n(Shown on tooltip hover if uploaded)");
 
         // total duration
         ImGui.Spacing();
-        UiSharedService.ColorText("Total Duration", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Total Duration", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.TextUnformatted(pattern.Duration.Hours > 0 ? pattern.Duration.ToString("hh\\:mm\\:ss") : pattern.Duration.ToString("mm\\:ss"));
 
         // looping
         ImGui.Spacing();
-        UiSharedService.ColorText("Pattern Loop State", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Pattern Loop State", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        if (_ui.IconTextButton(FontAwesomeIcon.Repeat, pattern.ShouldLoop ? "Looping" : "Not Looping", null, true))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Repeat, pattern.ShouldLoop ? "Looping" : "Not Looping", null, true))
             pattern.ShouldLoop = !pattern.ShouldLoop;
 
         var patternDurationTimeSpan = pattern.Duration;
@@ -51,9 +52,9 @@ public partial class PatternsPanel
         var patternPlaybackDuration = pattern.PlaybackDuration;
 
         // playback start point
-        UiSharedService.ColorText("Pattern Start-Point Timestamp", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Pattern Start-Point Timestamp", ImGuiColors.ParsedGold);
         var formatStart = patternDurationTimeSpan.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-        _ui.DrawTimeSpanCombo("PatternStartPointTimeCombo", patternDurationTimeSpan, ref patternStartPointTimeSpan, 150f, formatStart, false);
+        CkGuiUtils.DrawTimeSpanCombo("PatternStartPointTimeCombo", patternDurationTimeSpan, ref patternStartPointTimeSpan, 150f, formatStart, false);
         pattern.StartPoint = patternStartPointTimeSpan;
 
         // time difference calculation.
@@ -62,9 +63,9 @@ public partial class PatternsPanel
 
         // playback duration
         ImGui.Spacing();
-        UiSharedService.ColorText("Pattern Playback Duration", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Pattern Playback Duration", ImGuiColors.ParsedGold);
         var formatDuration = patternPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-        _ui.DrawTimeSpanCombo("Pattern Playback Duration", maxPlaybackDuration, ref patternPlaybackDuration, 150f, formatDuration, false);
+        CkGuiUtils.DrawTimeSpanCombo("Pattern Playback Duration", maxPlaybackDuration, ref patternPlaybackDuration, 150f, formatDuration, false);
         pattern.PlaybackDuration = patternPlaybackDuration;
     }
 

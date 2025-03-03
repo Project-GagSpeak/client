@@ -160,5 +160,5 @@ public record ConfigCursedItemChanged(StorageItemChangeType Type, CursedItem Ite
 public record ConfigPatternChanged(StorageItemChangeType Type, Pattern Item, string? OldString) : MessageBase;
 public record ConfigAlarmChanged(StorageItemChangeType Type, Alarm Item, string? OldString) : MessageBase;
 public record ConfigTriggerChanged(StorageItemChangeType Type, Trigger Item, string? OldString) : MessageBase;
-
+public record ReloadFileSystem(ModuleSection Module) : MessageBase; // for reloading the file system.
 #pragma warning restore S2094, MA0048

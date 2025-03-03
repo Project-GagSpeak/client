@@ -22,7 +22,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly CursedLootManager _manager;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public CursedLootPanel(
@@ -33,7 +33,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
         CursedLootManager manager,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
@@ -67,7 +67,12 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
         }
         ImGui.SameLine();
         using (ImRaii.Group())
@@ -96,7 +101,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     {
         using (ImRaii.Group())
         {
-            _ui.BigText("Enabled Pool");
+            CkGui.BigText("Enabled Pool");
             ImGui.Separator();
             // Draw all items in the pool that are active, in order of their application, (Longest timer is top)
             DrawActiveCursedItems();
@@ -115,7 +120,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.HealerGreen);
         using var bgCol = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        var size = new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeightWithSpacing());
+        var size = new Vector2(CkGui.GetWindowContentRegionWidth(), ImGui.GetFrameHeightWithSpacing());
 
         using var group = ImRaii.Group();
 
@@ -130,7 +135,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
         using var bgCol = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        var size = new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeightWithSpacing());
+        var size = new Vector2(CkGui.GetWindowContentRegionWidth(), ImGui.GetFrameHeightWithSpacing());
 
         using var group = ImRaii.Group();
 
@@ -146,7 +151,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         ImGui.AlignTextToFramePadding();
         ImGui.TextUnformatted(item.Label);
         ImGui.SameLine();
-        UiSharedService.ColorText(item.ReleaseTime.ToGsRemainingTimeFancy(), ImGuiColors.HealerGreen);
+        CkGui.ColorText(item.ReleaseTime.ToGsRemainingTimeFancy(), ImGuiColors.HealerGreen);
     }
 
     private bool InactiveItemInPool(CursedItem item, Vector2 size)
@@ -154,19 +159,19 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         using var child = ImRaii.Child($"##InactiveSelectable" + item.Identifier, size, true);
         ImGui.AlignTextToFramePadding();
         ImGui.TextUnformatted(item.Label);
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - _ui.GetIconButtonSize(FontAwesomeIcon.ArrowLeft).X);
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FontAwesomeIcon.ArrowLeft).X);
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
         {
-            if (_ui.IconButton(FontAwesomeIcon.ArrowLeft, inPopup: true))
+            if (CkGui.IconButton(FontAwesomeIcon.ArrowLeft, inPopup: true))
                 return true;
-            UiSharedService.AttachToolTip("Remove this Item to the Cursed Loot Pool.");
+            CkGui.AttachToolTip("Remove this Item to the Cursed Loot Pool.");
         }
         return false;
     }
 
     private void DrawCursedLootTimeChance(float width)
     {
-        var inputWidth = (width - _ui.GetIconData(FontAwesomeIcon.HourglassHalf).X - ImGui.GetStyle().ItemInnerSpacing.X * 2 - ImGui.CalcTextSize("100.9%  ").X) / 2;
+        var inputWidth = (width - CkGui.IconSize(FontAwesomeIcon.HourglassHalf).X - ImGui.GetStyle().ItemInnerSpacing.X * 2 - ImGui.CalcTextSize("100.9%  ").X) / 2;
 
         // Ensure persistent references
         LowerBound ??= new TimeSpanTextEditor(() => _manager.LockRangeLower, _manager.SetLowerLimit);
@@ -175,15 +180,15 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         // Draw UI
         LowerBound.DrawInputTimer("##TimerInputLower", inputWidth, "Ex: 0h2m7s");
-        UiSharedService.AttachToolTip("Min Cursed Lock Time.");
+        CkGui.AttachToolTip("Min Cursed Lock Time.");
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.LowerLockTimer, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
 
         ImUtf8.SameLineInner();
-        _ui.IconText(FontAwesomeIcon.HourglassHalf, ImGuiColors.ParsedGold);
+        CkGui.IconText(FontAwesomeIcon.HourglassHalf, ImGuiColors.ParsedGold);
         ImUtf8.SameLineInner();
 
         UpperBound.DrawInputTimer("##TimerInputUpper", inputWidth, "Ex: 0h2m7s");
-        UiSharedService.AttachToolTip("Max Cursed Lock Time.");
+        CkGui.AttachToolTip("Max Cursed Lock Time.");
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
 
         ImUtf8.SameLineInner();
@@ -195,7 +200,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             _manager.SetLockChance(Chance);
             Chance = -1;
         }
-        UiSharedService.AttachToolTip("The % Chance that opening Dungeon Loot will contain Cursed Bondage Loot.");
+        CkGui.AttachToolTip("The % Chance that opening Dungeon Loot will contain Cursed Bondage Loot.");
         _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.RollChance, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
     }
 }

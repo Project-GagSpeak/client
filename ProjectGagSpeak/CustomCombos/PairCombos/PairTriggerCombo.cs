@@ -18,10 +18,10 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairTriggerCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bText, string bTT)
+    public PairTriggerCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
         : base(() => [
             .. pairData.LastLightStorage.Triggers.OrderBy(x => x.Label),
-        ], log, uiShared, FontAwesomeIcon.Bell, bText, bTT)
+        ], log, FontAwesomeIcon.Bell, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -42,7 +42,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         var ret = ImGui.Selectable(trigger.Label, selected);
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+        CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
         DrawItemTooltip(trigger);
 
         return ret;
@@ -80,10 +80,10 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (item.Desc.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+                if (item.Desc.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = item.Desc.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = item.Desc.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {
@@ -101,16 +101,16 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             }
 
             // draw trigger priority
-            UiSharedService.ColorText("Priority:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Priority:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             ImGui.Text(item.Priority.ToString());
 
             // Draw the alarm time.
-            UiSharedService.ColorText("Trigger Kind:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Trigger Kind:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             ImGui.TextUnformatted(item.Type.ToName());
 
-            UiSharedService.ColorText("Action Kind Performed:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Action Kind Performed:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             ImGui.Text(item.ActionOnTrigger.ToName());
 

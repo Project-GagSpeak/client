@@ -17,7 +17,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _clientConfigs;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly UiSharedService _uiShared;
+    private readonly CkGui _ckGui;
     private readonly IDalamudPluginInterface _pi;
 
 
@@ -36,11 +36,11 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
 
     public BlindfoldUI(ILogger<BlindfoldUI> logger, GagspeakMediator mediator,
         GagspeakConfigService clientConfigs, OnFrameworkService frameworkUtils,
-        UiSharedService uiShared, IDalamudPluginInterface pi) : base(logger, mediator, "BlindfoldWindowUI###BlindfoldWindowUI")
+        CkGui uiShared, IDalamudPluginInterface pi) : base(logger, mediator, "BlindfoldWindowUI###BlindfoldWindowUI")
     {
         _clientConfigs = clientConfigs;
         _frameworkUtils = frameworkUtils;
-        _uiShared = uiShared;
+        _ckGui = uiShared;
         _pi = pi;
 
         Flags = ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoNavFocus;
@@ -256,7 +256,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         // Draw the image with the updated alpha value
         if (_clientConfigs.Config.BlindfoldStyle is BlindfoldType.Light)
         {
-            var imageLight = _uiShared.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Light.png");
+            var imageLight = _ckGui.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Light.png");
             if (imageLight is { } wrapLight)
             {
                 ImGui.Image(wrapLight!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
@@ -264,7 +264,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         }
         else
         {
-            var imageSensual = _uiShared.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Sensual.png");
+            var imageSensual = _ckGui.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Sensual.png");
             if (imageSensual is { } wrapSensual)
             {
                 ImGui.Image(wrapSensual!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));

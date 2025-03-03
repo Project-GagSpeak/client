@@ -19,10 +19,10 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
     private Pair _pairRef;
     private int CurrentLayer;
     
-    public PairGagCombo(int layer, Pair pair, MainHub hub, ILogger log, UiSharedService ui, string bText, string bTT)
+    public PairGagCombo(int layer, Pair pair, MainHub hub, ILogger log, string bText, string bTT)
         : base(() => [
             .. Enum.GetValues<GagType>().Except(new[] { GagType.None }),
-        ], log, ui, bText, bTT)
+        ], log, bText, bTT)
     {
         CurrentLayer = layer;
         _mainHub = hub;
@@ -63,7 +63,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         if (_pairRef.LastLightStorage.GagItems.ContainsKey(gagItem))
         {
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-            _uiShared.IconText(FontAwesomeIcon.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
+            CkGui.IconText(FontAwesomeIcon.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
             DrawItemTooltip(gagItem, _pairRef.GetNickAliasOrUid() + " set a Glamour for this Gag.");
         }
         return ret;
@@ -109,10 +109,10 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
             // push the text wrap position to the font size times 35
             ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
             // we will then check to see if the text contains a tooltip
-            if (headerText.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+            if (headerText.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
             {
                 // if it does, we will split the text by the tooltip
-                var splitText = headerText.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                var splitText = headerText.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                 // for each of the split text, we will display the text unformatted
                 for (var i = 0; i < splitText.Length; i++)
                 {

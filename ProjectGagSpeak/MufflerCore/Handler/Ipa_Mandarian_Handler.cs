@@ -30,9 +30,9 @@ public class Ipa_Mandarian_Handler
         LoadConversionRules();
     }
 
-    private string DetermineDataFilePath(string dialect)
+    private string DetermineDataFilePath(GarbleCoreDialect dialect)
     {
-        switch (dialect)
+/*        switch (dialect)
         {
             case "IPA_zu_Hans":
                 return "MufflerCore\\StoredDictionaries\\zu_hans.json";
@@ -40,7 +40,8 @@ public class Ipa_Mandarian_Handler
                 return "MufflerCore\\StoredDictionaries\\zu_hant.json";
             default:
                 return "MufflerCore\\StoredDictionaries\\zu_hans.json";
-        }
+        }*/
+        return "MufflerCore\\StoredDictionaries\\zu_hans.json";
     }
 
     private void LoadConversionRules()
@@ -66,7 +67,7 @@ public class Ipa_Mandarian_Handler
         }
     }
 
-    /// <summary> Function for converting an input string to IPA notation.
+/*    /// <summary> Function for converting an input string to IPA notation.
     /// <list type="Bullet"><item><c>input</c><param name="input"> - string to convert</param></item></list>
     /// </summary><returns> The input string converted to IPA notation</returns>
     public string UpdateResult(string input)
@@ -133,7 +134,7 @@ public class Ipa_Mandarian_Handler
         else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);       // kuɔˊ
 
         return f_str;
-    }
+    }*/
 
     private string FormatIPANum(string x)
     {         // kuɔ35

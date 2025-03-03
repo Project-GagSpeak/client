@@ -1,4 +1,5 @@
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Data;
@@ -65,6 +66,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     /// <summary> Create a new Restriction, where the item can be any restraint item. </summary>
     public RestraintSet CreateNew(string restraintName)
     {
+        // Ensure that the new name is unique.
+        restraintName = RegexEx.EnsureUniqueName(restraintName, Storage, rs => rs.Label);
         var restraint = new RestraintSet { Label = restraintName };
         Storage.Add(restraint);
         _saver.Save(this);
@@ -76,6 +79,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     /// <summary> Create a clone of a Restriction. </summary>
     public RestraintSet CreateClone(RestraintSet clone, string newName)
     {
+        // Ensure that the new name is unique.
+        newName = RegexEx.EnsureUniqueName(newName, Storage, rs => rs.Label);
         var clonedItem = new RestraintSet(clone, false) { Label = newName };
         Storage.Add(clonedItem);
         _saver.Save(this);
@@ -290,16 +295,25 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.RestraintSets).RestraintSets;
+        => (isAccountUnique = true, files.RestraintSets).Item2;
 
     public void WriteToStream(StreamWriter writer)
         => throw new NotImplementedException();
 
     public string JsonSerialize()
     {
-        var restraintSets = new JObject();
+        var restraintSets = new JArray();
         foreach (var set in Storage)
-            restraintSets.Add(set.Serialize());
+        {
+            try
+            {
+                restraintSets.Add(set.Serialize());
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e.InnerException, "Failed to serialize RestraintSet.");
+            }
+        }
 
         return new JObject()
         {
@@ -339,6 +353,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 return;
         }
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.Restraint));
     }
 
     private void LoadV0(JToken? data)
@@ -348,8 +363,17 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
         // otherwise, parse it out and stuff YIPPEE
         foreach (var setToken in restraintSetList)
-            if(TryLoadRestraintSet(setToken, out var loadedSet))
+        {
+            if (TryLoadRestraintSet(setToken, out var loadedSet))
+            {
                 Storage.Add(loadedSet);
+            }
+            else
+            {
+                Logger.LogError("Failed to load RestraintSet from JSON.");
+            }
+        }
+
     }
 
     private void MigrateV0toV1(JObject oldConfigJson)

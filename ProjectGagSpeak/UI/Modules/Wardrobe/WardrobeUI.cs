@@ -1,5 +1,9 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.FileSystems;
+using GagSpeak.RestraintSets;
+using GagSpeak.Restrictions;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -10,34 +14,42 @@ namespace GagSpeak.UI.Wardrobe;
 
 public class WardrobeUI : WindowMediatorSubscriberBase
 {
-    private readonly WardrobeTabs _tabMenu;
+    private readonly WardrobeTabs _tabMenu = new WardrobeTabs();
+    private readonly RestraintSetFileSelector _restraintSelector;
+    private readonly RestrictionFileSelector _restrictionSelector;
+    private readonly GagRestrictionFileSelector _gagSelector;
+    private readonly CursedLootFileSelector _cursedLootSelector;
     private readonly RestraintsPanel _restraintPanel;
     private readonly RestrictionsPanel _restrictionsPanel;
     private readonly GagRestrictionsPanel _gagRestrictionsPanel;
     private readonly CursedLootPanel _cursedLootPanel;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     public WardrobeUI(
         ILogger<WardrobeUI> logger,
         GagspeakMediator mediator,
+        RestraintSetFileSelector restraintSetFileSelector,
+        RestrictionFileSelector restrictionFileSelector,
+        GagRestrictionFileSelector gagRestrictionFileSelector,
+        CursedLootFileSelector cursedLootFileSelector,
         RestraintsPanel restraintPanel,
         RestrictionsPanel restrictionsPanel,
         GagRestrictionsPanel gagRestrictionsPanel,
         CursedLootPanel cursedLootPanel,
         CosmeticService cosmetics,
-        UiSharedService uiShared,
         TutorialService guides) : base(logger, mediator, "Wardrobe UI")
     {
+        _restraintSelector = restraintSetFileSelector;
+        _restrictionSelector = restrictionFileSelector;
+        _gagSelector = gagRestrictionFileSelector;
+        _cursedLootSelector = cursedLootFileSelector;
         _restraintPanel = restraintPanel;
         _restrictionsPanel = restrictionsPanel;
         _gagRestrictionsPanel = gagRestrictionsPanel;
         _cursedLootPanel = cursedLootPanel;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
-        _guides = guides;
 
-        _tabMenu = new WardrobeTabs(_uiShared);
+        _guides = guides;
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -54,7 +66,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                 ShowTooltip = () =>
                 {
                     ImGui.BeginTooltip();
-                    ImGui.Text("Migrate Old Restraint Sets");
+                    ImGui.Text("Migrate Old Restriction Sets");
                     ImGui.EndTooltip();
                 }
             },
@@ -84,8 +96,8 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(760, 470),
-            MaximumSize = new Vector2(760*1.5f, 1000f)
+            MinimumSize = new Vector2(550, 470),
+            MaximumSize = new Vector2(550*1.5f, 1000f)
         };
         RespectCloseHotkey = false;
     }
@@ -119,43 +131,65 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     {
         LastWinPos = ImGui.GetWindowPos();
         LastWinSize = ImGui.GetWindowSize();
-        //_logger.LogInformation(LastWinSize.ToString()); // <-- USE FOR DEBUGGING ONLY.
-        var region = ImGui.GetContentRegionAvail();
-        // Store styles to restore later.
-        var itemSpacing = ImGui.GetStyle().ItemSpacing;
-        var cellPadding = ImGui.GetStyle().CellPadding;
 
-        // We should first begin by drawing the search bar and the selector on the left, as in the final design the buttons will be to the right.
+/*        // Draw out the area for the filter section then draw that.
+        using (ImRaii.Group())
+        {
 
-        // For now, instead, simply display the horizontal region for the tab selection.
-        _tabMenu.Draw(GetSelectorSize());
+
+        }
+
+        // The Splitter can happen later i guess idk.
+        ImGui.SameLine();
+        var wdl = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+        wdl.AddLine(pos, pos with { Y = wdl.GetClipRectMax().Y }, CkGui.Color(ImGuiColors.ParsedPink), 5f);
+        ImGui.SameLine();
+
+        _tabMenu.Draw(ImGui.GetContentRegionAvail().X);
 
         ImGui.Separator();
+
+        using (ImRaii.Child("##WardrobePanelChild", ImGui.GetContentRegionAvail(), false))*/
+        _tabMenu.Draw(ImGui.GetContentRegionAvail().X);
+
+        var region = ImGui.GetContentRegionAvail();
         // Now we should draw out the contents of the respective tab. Each tab having their own set of rules.
-        switch (_tabMenu.TabSelection)
+        using (ImRaii.Group())
         {
-            case WardrobeTabs.SelectedTab.MyRestraints:
-                _restraintPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case WardrobeTabs.SelectedTab.MyRestrictions:
-                _restrictionsPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case WardrobeTabs.SelectedTab.MyGags:
-                _gagRestrictionsPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case WardrobeTabs.SelectedTab.MyCursedLoot:
-                _cursedLootPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case WardrobeTabs.SelectedTab.MyModPresets:
-                ImGui.Text("Mod Presets Content");
-                break;
+            switch (_tabMenu.TabSelection)
+            {
+                case WardrobeTabs.SelectedTab.MyRestraints:
+                    _restraintPanel.DrawPanel(region, LeftWidth());
+                    break;
+                case WardrobeTabs.SelectedTab.MyRestrictions:
+                    _restrictionsPanel.DrawPanel(region, LeftWidth());
+                    break;
+                case WardrobeTabs.SelectedTab.MyGags:
+                    _gagRestrictionsPanel.DrawPanel(region, LeftWidth());
+                    break;
+                case WardrobeTabs.SelectedTab.MyCursedLoot:
+                    _cursedLootPanel.DrawPanel(region, LeftWidth());
+                    break;
+                case WardrobeTabs.SelectedTab.MyModPresets:
+                    ImGui.Text("Mod Presets Content");
+                    break;
+            }
         }
 
         // All content should be drawn by this point.
         // if we want to move the tutorial down to the bottom right we can draw that here.
     }
 
-    private float GetSelectorSize() => 300f * ImGuiHelpers.GlobalScale;
+
+
+
+
+
+
+
+
+    private float LeftWidth() => 300f * ImGuiHelpers.GlobalScale;
 
 
     private void TutorialClickedAction()
@@ -166,12 +200,12 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                 if (_guides.IsTutorialActive(TutorialType.Restraints))
                 {
                     _guides.SkipTutorial(TutorialType.Restraints);
-                    _logger.LogInformation("Skipping Restraints Tutorial");
+                    _logger.LogInformation("Skipping Restrictions Tutorial");
                 }
                 else
                 {
                     _guides.StartTutorial(TutorialType.Restraints);
-                    _logger.LogInformation("Starting Restraints Tutorial");
+                    _logger.LogInformation("Starting Restrictions Tutorial");
                 }
                 return;
             case WardrobeTabs.SelectedTab.MyRestrictions:

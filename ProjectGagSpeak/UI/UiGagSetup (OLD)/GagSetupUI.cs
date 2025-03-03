@@ -18,23 +18,23 @@ public class GagSetupUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionsPanel _gagStorage;
     private readonly GlobalData _playerManager;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
+    private readonly CkGui CkGui.;
     private readonly TutorialService _guides;
 
     public GagSetupUI(ILogger<GagSetupUI> logger, GagspeakMediator mediator,
         ActiveGagsPanel activeGags, LockPickerSim lockPickSim, GagRestrictionsPanel gagStorage, 
         GlobalData playerManager, CosmeticService cosmetics,
-        UiSharedService uiShared, TutorialService guides) : base(logger, mediator, "Gag Setup UI")
+        CkGui uiShared, TutorialService guides) : base(logger, mediator, "Gag Setup UI")
     {
         _playerManager = playerManager;
         _activeGags = activeGags;
         _lockPickSim = lockPickSim;
         _gagStorage = gagStorage;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
+        CkGui. = uiShared;
         _guides = guides;
 
-        _tabMenu = new GagSetupTabMenu(_uiShared);
+        _tabMenu = new GagSetupTabMenu(CkGui.);
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -143,7 +143,7 @@ public class GagSetupUI : WindowMediatorSubscriberBase
         var topLeftSideHeight = region.Y;
 
         // create the draw-table for the selectable and viewport displays
-        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(5f * _uiShared.GetFontScalerFloat(), 0));
+        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(5f * CkGui..GetFontScalerFloat(), 0));
         try
         {
             using (var table = ImRaii.Table($"GagSetupUiWindowTable", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerV))
@@ -160,14 +160,14 @@ public class GagSetupUI : WindowMediatorSubscriberBase
                 using (var leftChild = ImRaii.Child($"###GagSetupLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
                 {
                     // get the gag setup logo image
-                    //var iconTexture = _uiShared.GetImageFromDirectoryFile("icon.png");
+                    //var iconTexture = CkGui..GetImageFromDirectoryFile("icon.png");
                     var iconTexture = _cosmetics.CorePluginTextures[CorePluginTexture.Logo256];
                     if (iconTexture is { } wrap)
                     {
                         // aligns the image in the center like we want.
                         UtilsExtensions.ImGuiLineCentered("###GagSetupLogo", () =>
                         {
-                            ImGui.Image(wrap.ImGuiHandle, new(125f * _uiShared.GetFontScalerFloat(), 125f * _uiShared.GetFontScalerFloat()));
+                            ImGui.Image(wrap.ImGuiHandle, new(125f * CkGui..GetFontScalerFloat(), 125f * CkGui..GetFontScalerFloat()));
                             if (ImGui.IsItemHovered())
                             {
                                 ImGui.BeginTooltip();

@@ -32,9 +32,9 @@ public partial class PairStickyUI
 
 
         // Expander for ApplyRestriction
-        if (_ui.IconTextButton(FontAwesomeIcon.CommentDots, applyRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
+        if (CkGui.IconTextButton(FontAwesomeIcon.CommentDots, applyRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestriction) ? InteractionType.None : InteractionType.ApplyRestriction;
-        UiSharedService.AttachToolTip(applyRestrictionTT);
+        CkGui.AttachToolTip(applyRestrictionTT);
 
         // Interaction Window for ApplyRestriction
         if (PairCombos.Opened is InteractionType.ApplyRestriction)
@@ -47,10 +47,10 @@ public partial class PairStickyUI
         // Expander for LockRestriction
         using (ImRaii.PushColor(ImGuiCol.Text, (restrictionSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (_ui.IconTextButton(FontAwesomeIcon.Lock, lockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Lock, lockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestriction) ? InteractionType.None : InteractionType.LockRestriction;
         }
-        UiSharedService.AttachToolTip(lockRestrictionTT + 
+        CkGui.AttachToolTip(lockRestrictionTT + 
             ((GsPadlockEx.IsTimerLock(restrictionSlot.Padlock)) ? "--SEP----COL--" + restrictionSlot.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
@@ -63,9 +63,9 @@ public partial class PairStickyUI
         }
 
         // Expander for unlocking.
-        if (_ui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestriction) ? InteractionType.None : InteractionType.UnlockRestriction;
-        UiSharedService.AttachToolTip(unlockRestrictionTT);
+        CkGui.AttachToolTip(unlockRestrictionTT);
 
         // Interaction Window for UnlockRestriction
         if (PairCombos.Opened is InteractionType.UnlockRestriction)
@@ -76,9 +76,9 @@ public partial class PairStickyUI
         }
 
         // Expander for removing.
-        if (_ui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
+        if (CkGui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestriction) ? InteractionType.None : InteractionType.RemoveRestriction;
-        UiSharedService.AttachToolTip(removeRestrictionTT);
+        CkGui.AttachToolTip(removeRestrictionTT);
 
         // Interaction Window for RemoveRestriction
         if (PairCombos.Opened is InteractionType.RemoveRestriction)

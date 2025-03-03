@@ -11,16 +11,14 @@ public class KinkPlateFactory
     private readonly GagspeakMediator _mediator;
     private readonly GlobalData _playerData;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
 
     public KinkPlateFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
-        GlobalData playerData, CosmeticService cosmetics, UiSharedService uiShared)
+        GlobalData playerData, CosmeticService cosmetics)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
         _playerData = playerData;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
     }
 
     public KinkPlate CreateProfileData(KinkPlateContent kinkPlateInfo, string Base64ProfilePicture)

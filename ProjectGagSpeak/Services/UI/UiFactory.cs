@@ -40,7 +40,7 @@ public class UiFactory
     private readonly OnFrameworkService _frameworkUtils;
     private readonly PresetLogicDrawer _presetService;
     private readonly TextureService _textures;
-    private readonly UiSharedService _uiShared;
+
     private readonly SexToyManager _vibeService;
     private readonly TutorialService _guides;
 
@@ -53,7 +53,7 @@ public class UiFactory
         IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates,
         OnFrameworkService frameworkUtils, PairCombos pairCombos, PermissionsDrawer permDrawer,
         PermissionData permActData, PresetLogicDrawer presetService, TextureService textures,
-        UiSharedService uiShared, SexToyManager vibeService, TutorialService guides, MainHub hub)
+        CkGui uiShared, SexToyManager vibeService, TutorialService guides, MainHub hub)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
@@ -74,7 +74,7 @@ public class UiFactory
         _frameworkUtils = frameworkUtils;
         _presetService = presetService;
         _textures = textures;
-        _uiShared = uiShared;
+
         _vibeService = vibeService;
         _guides = guides;
 
@@ -84,13 +84,13 @@ public class UiFactory
     public KinkPlateUI CreateStandaloneKinkPlateUi(Pair pair)
     {
         return new KinkPlateUI(_loggerFactory.CreateLogger<KinkPlateUI>(), _mediator,
-            _pairManager, _kinkPlates, _cosmetics, _textures, _uiShared, pair);
+            _pairManager, _kinkPlates, _cosmetics, _textures, pair);
     }
 
     public KinkPlateLightUI CreateStandaloneKinkPlateLightUi(UserData pairUserData)
     {
         return new KinkPlateLightUI(_loggerFactory.CreateLogger<KinkPlateLightUI>(), _mediator,
-            _kinkPlateLight, _kinkPlates, _pairManager, _uiShared, pairUserData);
+            _kinkPlateLight, _kinkPlates, _pairManager, pairUserData);
     }
 
     // create a new instance window of the userpair permissions window every time a new pair is selected.
@@ -98,6 +98,6 @@ public class UiFactory
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
             _permData, _permDrawer, _pairCombos, _presetService, _hub, _globals, _shockies,
-            _pairManager, _clientMonitor, _uiShared);
+            _pairManager, _clientMonitor);
     }
 }

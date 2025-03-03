@@ -40,7 +40,7 @@ public class SelectPairForTagUi
         if (_show && !_opened)
         {
             ImGui.SetNextWindowSize(minSize);
-            UiSharedService.CenterNextWindow(minSize.X, minSize.Y, ImGuiCond.Always);
+            CkGui.CenterNextWindow(minSize.X, minSize.Y, ImGuiCond.Always);
             ImGui.OpenPopup(popupName);
             _opened = true;
         }

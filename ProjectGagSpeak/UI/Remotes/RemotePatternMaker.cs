@@ -11,47 +11,27 @@ using System.Timers;
 
 namespace GagSpeak.UI.UiRemote;
 
-/// <summary>
-/// I Blame ImPlot for its messiness as a result for this abyssmal display of code here.
-/// </summary>
 public class RemotePatternMaker : RemoteBase
 {
     // the class includes are shared however (i think), so dont worry about that.
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService; // these SHOULD all be shared. but if not put into Service.
     private readonly string _windowName;
     public RemotePatternMaker(ILogger<RemotePatternMaker> logger, GagspeakMediator mediator,
-        CosmeticService cosmetics, UiSharedService uiShared, SexToyManager vibeService,
-        TutorialService guides, string windowName = "Pattern Creator") 
-        : base(logger, mediator, uiShared, vibeService, guides, windowName)
+        CosmeticService cosmetics, SexToyManager vibeService, TutorialService guides, string windowName = "Pattern Creator") 
+        : base(logger, mediator, vibeService, guides, windowName)
     {
-        // grab the shared services
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
         _vibeService = vibeService;
         _windowName = windowName;
     }
 
     // The storage buffer of all recorded vibration data in byte format. Eventually stored into a pattern.
     public List<byte> StoredVibrationData = new List<byte>();
-
-    // If we are currently recording data to be stored as a pattern 
     public bool IsRecording { get; protected set; } = false;
-
-    // If we have finished recording the data to be stored as a pattern
     public bool FinishedRecording { get; protected set; } = false;
 
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        // anything else we should add here we can add here.
-    }
-
-
-    /// <summary>
-    /// Will display personal devices, their motors and additional options. </para>
-    /// </summary>
+    /// <summary> Will display personal devices, their motors and additional options. </summary>
     public override void DrawCenterBar(ref float xPos, ref float yPos, ref float width)
     {
         // grab the content region of the current section
@@ -107,12 +87,11 @@ public class RemotePatternMaker : RemoteBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
 
             // attempt to obtain an image wrap for it
-            var spinArrow = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\arrowspin.png");
-            if (spinArrow is { } wrap)
+            if (_cosmetics.CorePluginTextures[CorePluginTexture.ArrowSpin] is { } wrap)
             {
                 var buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
-                if (_uiShared.DrawScaledCenterButtonImage("LoopButton"+ _windowName, new Vector2(50, 50),
+                if (CkGui.DrawScaledCenterButtonImage("LoopButton"+ _windowName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
                 {
                     IsLooping = !IsLooping;
@@ -125,12 +104,11 @@ public class RemotePatternMaker : RemoteBase
             // move it down from current position by another .2f scale
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + CurrentRegion.Y * .05f);
 
-            var circlesDot = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\circledot.png");
-            if (circlesDot is { } wrap2)
+            if (_cosmetics.CorePluginTextures[CorePluginTexture.CircleDot] is { } wrap2)
             {
                 var buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
-                if (_uiShared.DrawScaledCenterButtonImage("FloatButton" + _windowName, new Vector2(50, 50),
+                if (CkGui.DrawScaledCenterButtonImage("FloatButton" + _windowName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
                 {
                     IsFloating = !IsFloating;
@@ -145,10 +123,9 @@ public class RemotePatternMaker : RemoteBase
             // display the stop or play icon depending on if we are recording or not.
             if (!IsRecording)
             {
-                var play = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\play.png");
-                if (play is { } wrap3)
+                if (_cosmetics.CorePluginTextures[CorePluginTexture.Play] is { } wrap3)
                 {
-                    if (_uiShared.DrawScaledCenterButtonImage("RecordStartButton" + _windowName, new Vector2(50, 50),
+                    if (CkGui.DrawScaledCenterButtonImage("RecordStartButton" + _windowName, new Vector2(50, 50),
                         buttonColor3, new Vector2(40, 40), wrap3))
                     {
                         _logger.LogTrace("Starting Recording!");
@@ -160,10 +137,9 @@ public class RemotePatternMaker : RemoteBase
             // we are recording so display stop
             else
             {
-                var stop = _cosmetics.GetImageFromDirectoryFile("RequiredImages\\stop.png");
-                if (stop is { } wrap4)
+                if (_cosmetics.CorePluginTextures[CorePluginTexture.Stop] is { } wrap4)
                 {
-                    if (_uiShared.DrawScaledCenterButtonImage("RecordStopButton" + _windowName, new Vector2(50, 50),
+                    if (CkGui.DrawScaledCenterButtonImage("RecordStopButton" + _windowName, new Vector2(50, 50),
                         buttonColor3, new Vector2(40, 40), wrap4))
                     {
                         _logger.LogTrace("Stopping Recording!");

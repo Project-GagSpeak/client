@@ -10,11 +10,11 @@ using Lumina.Excel.Sheets;
 namespace GagSpeak.UI.Components;
 public class MoodleDrawer
 {
-    private readonly UiSharedService _uiShared;
 
-    public MoodleDrawer(UiSharedService uiShared)
+
+    public MoodleDrawer(CkGui uiShared)
     {
-        _uiShared = uiShared;
+
     }
 
     public void thing()
@@ -53,7 +53,7 @@ public class MoodleDrawer
             // draw out all the active associated moodles in the restraint set with thier icon beside them.
             using (ImRaii.Group())
             {
-                UiSharedService.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
+                CkGui.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
                 ImGui.Separator();
 
                 foreach (var moodle in associatedMoodles)
@@ -64,7 +64,7 @@ public class MoodleDrawer
                         var currentPos = ImGui.GetCursorPos();
                         if (moodle.IconID != 0 && currentPos != Vector2.Zero)
                         {
-                            var statusIcon = _uiShared.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
+                            var statusIcon = CkGui.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
 
                             if (statusIcon is { } wrap)
                             {

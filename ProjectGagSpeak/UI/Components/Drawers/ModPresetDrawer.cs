@@ -5,11 +5,9 @@ namespace GagSpeak.UI.Components;
 public class ModPresetDrawer
 {
     private readonly ModSettingPresetManager _manager;
-    private readonly UiSharedService _uiShared;
 
-    public ModPresetDrawer(ModSettingPresetManager manager, UiSharedService uiShared)
+    public ModPresetDrawer(ModSettingPresetManager manager, CkGui uiShared)
     {
         _manager = manager;
-        _uiShared = uiShared;
     }
 }

@@ -10,7 +10,6 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.Chat.ChatMonitors;
 using GagSpeak.UpdateMonitoring.Triggers;
-using GagspeakAPI.Data.Character;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
@@ -129,6 +128,16 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<UiService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
 
+            // display changelog if we should.
+            if (_mainConfig.Config.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
+            {
+                // update the version and toggle the UI.
+                Logger?.LogInformation("Version was different, displaying UI");
+                _mainConfig.Config.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
+                _mainConfig.Save();
+                Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
+            }
+
             // if the client does not have a valid setup or config, switch to the intro ui
             if (!_mainConfig.Config.HasValidSetup() || !_serverConfigs.ServerStorage.HasValidSetup())
             {
@@ -137,16 +146,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
                 _mainConfig.Config.ButtonUsed = false;
 
                 Mediator.Publish(new SwitchToIntroUiMessage());
-                return;
-            }
-
-            // display changelog if we should.
-            if (_mainConfig.Config.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
-            {
-                // update the version and toggle the UI.
-                Logger?.LogInformation("Version was different, displaying UI");
-                _mainConfig.Config.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
-                Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
             }
 
             // get the required service for the online player manager (and notification service if we add it)
@@ -166,7 +165,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ActionEffectMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<OnEmote>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteMonitor>();
+            //_runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteMonitor>();
 
             // stuff that should probably be a hosted service but isnt yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();

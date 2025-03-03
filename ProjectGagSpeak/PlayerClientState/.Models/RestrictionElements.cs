@@ -121,7 +121,7 @@ public class GlamourBonusSlot
         => new JObject
         {
             ["Slot"] = Slot.ToString(),
-            ["CustomItemId"] = GameItem.Id.ToString(),
+            ["CustomItemId"] = GameItem.Id.BonusItem.ToString(),
         };
 }
 

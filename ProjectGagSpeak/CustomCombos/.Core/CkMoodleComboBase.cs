@@ -6,7 +6,6 @@ using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
 
 namespace GagSpeak.CustomCombos;
 
@@ -52,30 +51,30 @@ public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
             }
 
             ImGui.Separator();
-            UiSharedService.ColorText("Stacks:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Stacks:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Stacks.ToString());
             if (item.StackOnReapply)
             {
                 ImGui.SameLine();
-                UiSharedService.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
+                CkGui.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
             }
 
-            UiSharedService.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text($"{item.Days}d {item.Hours}h {item.Minutes}m {item.Seconds}");
 
-            UiSharedService.ColorText("Category:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Category:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Type.ToString());
 
-            UiSharedService.ColorText("Dispellable:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Dispellable:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Dispelable ? "Yes" : "No");
 
             if (!item.StatusOnDispell.IsEmptyGuid())
             {
-                UiSharedService.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 var status = _moodleData.MoodlesStatuses
                     .FirstOrDefault(x => x.GUID == item.StatusOnDispell).Title ?? "Unknown";

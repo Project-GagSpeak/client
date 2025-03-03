@@ -30,20 +30,18 @@ public class KinkPlateLight
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
-    private readonly UiSharedService _uiShared;
     public KinkPlateLight(ILogger<KinkPlateLight> logger, GagspeakMediator mediator,
         PairManager pairManager, ServerConfigurationManager serverConfigs,
-        KinkPlateService profileService, CosmeticService cosmetics,
-        TextureService textureService, UiSharedService uiShared)
+        KinkPlateService profiles, CosmeticService cosmetics, TextureService textures)
     {
         _logger = logger;
         _mediator = mediator;
         _pairManager = pairManager;
         _serverConfigs = serverConfigs;
-        _profileService = profileService;
+        _profileService = profiles;
         _cosmetics = cosmetics;
-        _textures = textureService;
-        _uiShared = uiShared;
+        _textures = textures;
+
     }
 
     public Vector2 RectMin { get; set; } = Vector2.Zero;
@@ -77,7 +75,7 @@ public class KinkPlateLight
         DrawDescription(drawList, profile, userData, isPair);
 
         // Now let's draw out the chosen achievement Name..
-        using (_uiShared.GagspeakLabelFont.Push())
+        using (UiFontService.GagspeakLabelFont.Push())
         {
             var titleName = AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
@@ -151,7 +149,7 @@ public class KinkPlateLight
 
         // draw out the UID here. We must make it centered. To do this, we must fist calculate how to center it.
         var widthToCenterOn = ProfilePictureBorderSize.X;
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(displayName);
             ImGui.SetCursorScreenPos(new Vector2(ProfilePictureBorderPos.X + widthToCenterOn / 2 - aliasOrUidSize.X / 2, ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y + 5));
@@ -159,7 +157,7 @@ public class KinkPlateLight
             ImGui.TextColored(ImGuiColors.ParsedPink, displayName);
         }
 #if DEBUG
-        UiSharedService.CopyableDisplayText(userData.UID);
+        CkGui.CopyableDisplayText(userData.UID);
 #endif
     }
 
@@ -248,7 +246,7 @@ public class KinkPlateLight
             currentLines++; // Increment the line count for the final line
         }
 
-        UiSharedService.ColorTextWrapped(newDescText.TrimEnd(), color);
+        CkGui.ColorTextWrapped(newDescText.TrimEnd(), color);
     }
 
     private bool DrawStats(ImDrawListPtr drawList, KinkPlateContent info, string displayName, UserData userData, bool hoveringReport)
@@ -268,16 +266,16 @@ public class KinkPlateLight
         // set the cursor screen pos to the right of the clock, and draw out the joined date.
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
-        UiSharedService.ColorText(createdDate, ImGuiColors.ParsedGold);
-        UiSharedService.AttachToolTip("The date " + displayName + " first joined GagSpeak.");
+        CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip("The date " + displayName + " first joined GagSpeak.");
 
         statsPos.X += dateWidth + spacing;
         KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
 
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
-        UiSharedService.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
-        UiSharedService.AttachToolTip("The total achievements " + displayName + " has earned.");
+        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip("The total achievements " + displayName + " has earned.");
 
         statsPos.X += achievementWidth + spacing;
         statsPos.Y += 2f;
@@ -286,7 +284,7 @@ public class KinkPlateLight
             ? ImGui.GetColorU32(ImGuiColors.DalamudRed) 
             : hoveringReport ? ImGui.GetColorU32(ImGuiColors.DalamudGrey)
                              : ImGui.GetColorU32(ImGuiColors.DalamudGrey3);
-        using (_uiShared.IconFont.Push())
+        using (UiFontService.IconFont.Push())
         {
             drawList.AddText(statsPos, color, FontAwesomeIcon.Flag.ToIconString());
         }
@@ -298,7 +296,7 @@ public class KinkPlateLight
                 _mediator.Publish(new ReportKinkPlateMessage(userData));
 
         }
-        UiSharedService.AttachToolTip("Report " + displayName + "'s KinkPlate™" +
+        CkGui.AttachToolTip("Report " + displayName + "'s KinkPlate™" +
             "--SEP--Press CTRL+SHIFT to report.\n" +
             "(Opens Report Submission Window)");
 

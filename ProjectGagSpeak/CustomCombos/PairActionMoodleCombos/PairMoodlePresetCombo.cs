@@ -13,8 +13,8 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
 {
     private int longestPresetCount => _pairRef.LastIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
     public PairMoodlePresetCombo(float iconScale, MoodleStatusMonitor monitor, Pair pair, MainHub hub,
-        ILogger log, UiSharedService ui, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, ui, bText, bTT, () =>
+        ILogger log, CkGui ui, string bText, string bTT)
+        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
         [
             ..pair.LastIpcData.MoodlesPresets.OrderBy(x => x.Title),
         ])

@@ -18,7 +18,7 @@ public class DrawRequests : IRequestsFolder
     private readonly GlobalData _clientData;
     private readonly DrawEntityFactory _pairRequestFactory;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
+
     private bool _wasHovered = false;
     private bool _isRequestFolderOpen = false;
     private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
@@ -34,13 +34,13 @@ public class DrawRequests : IRequestsFolder
 
     public DrawRequests(MainHub mainHub, GlobalData clientData,
         DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
-        UiSharedService uiShared)
+        CkGui uiShared)
     {
         _hub = mainHub;
         _clientData = clientData;
         _pairRequestFactory = pairRequestFactory;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
+
     }
 
     public void Draw()
@@ -51,7 +51,7 @@ public class DrawRequests : IRequestsFolder
         // Begin drawing out the header section for the requests folder dropdown thingy.
         using var id = ImRaii.PushId("folder_" + ID);
         var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), _wasHovered);
-        using (ImRaii.Child("folder__" + ID, new System.Numerics.Vector2(UiSharedService.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
+        using (ImRaii.Child("folder__" + ID, new System.Numerics.Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
         {
             // draw opener
             var icon = _isRequestFolderOpen ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight;
@@ -59,7 +59,7 @@ public class DrawRequests : IRequestsFolder
             ImGui.AlignTextToFramePadding();
 
             // toggle folder state on click
-            _uiShared.IconText(icon);
+            CkGui.IconText(icon);
 
             ImGui.SameLine();
             var folderIconEndPos = DrawFolderIcon();
@@ -91,7 +91,7 @@ public class DrawRequests : IRequestsFolder
                 return;
             }
 
-            using var indent = ImRaii.PushIndent(_uiShared.GetIconData(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+            using var indent = ImRaii.PushIndent(CkGui.IconSize(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             // draw the entries based on the type selected.
             if (_viewingMode is DrawRequestsType.Outgoing)
             {
@@ -139,7 +139,7 @@ public class DrawRequests : IRequestsFolder
     private float DrawFolderIcon()
     {
         ImGui.AlignTextToFramePadding();
-        _uiShared.IconText(FontAwesomeIcon.Inbox);
+        CkGui.IconText(FontAwesomeIcon.Inbox);
         ImGui.SameLine();
         return ImGui.GetCursorPosX();
     }
@@ -149,9 +149,9 @@ public class DrawRequests : IRequestsFolder
         var icon = viewingOutgoing ? FontAwesomeIcon.PersonArrowUpFromLine : FontAwesomeIcon.PersonArrowDownToLine;
         var text = viewingOutgoing ? "View Incoming (" + TotalIncoming + ")" : "View Outgoing (" + TotalOutgoing + ")";
         var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";
-        var buttonSize = _uiShared.GetIconTextButtonSize(icon, text);
+        var buttonSize = CkGui.IconTextButtonSize(icon, text);
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
-        var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
+        var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
 
         var disabled = viewingOutgoing ? TotalIncoming is 0 : TotalOutgoing is 0;
         var rightSideStart = windowEndX - (buttonSize + spacingX);
@@ -159,9 +159,9 @@ public class DrawRequests : IRequestsFolder
 
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
         {
-            if (_uiShared.IconTextButton(icon, text, null, true, disabled))
+            if (CkGui.IconTextButton(icon, text, null, true, disabled))
                 _viewingMode = viewingOutgoing ? DrawRequestsType.Incoming : DrawRequestsType.Outgoing;
         }
-        UiSharedService.AttachToolTip(disabled ? "There are 0 entries here!" : toolTip);
+        CkGui.AttachToolTip(disabled ? "There are 0 entries here!" : toolTip);
     }
 }

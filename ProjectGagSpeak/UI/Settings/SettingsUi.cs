@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
+using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
@@ -16,6 +17,7 @@ using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Spawner;
 using GagSpeak.WebAPI;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.UI;
@@ -32,7 +34,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly GagspeakConfigService _mainConfig;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly SettingsHardcore _hardcoreSettingsUI;
-    private readonly UiSharedService _uiShared;
     private readonly PiShockProvider _shockProvider;
     private readonly AvfxManager _avfxManager;
     private readonly VfxSpawns _vfxSpawns;
@@ -42,7 +43,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         MainHub hub, AccountManagerTab accounts, DebugTab debug, GagspeakConfigService config,
         PairManager pairManager, GlobalData global, PiShockProvider shockProvider,
         AvfxManager avfxManager, VfxSpawns vfxSpawns, ServerConfigurationManager serverConfigs,
-        IpcManager ipcManager, SettingsHardcore hardcoreSettingsUI, UiSharedService uiShared,
+        IpcManager ipcManager, SettingsHardcore hardcoreSettingsUI, CkGui uiShared,
         OnFrameworkService frameworkUtil) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
@@ -58,22 +59,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _ipcManager = ipcManager;
         _frameworkUtil = frameworkUtil;
         _hardcoreSettingsUI = hardcoreSettingsUI;
-        _uiShared = uiShared;
 
         Flags = ImGuiWindowFlags.NoScrollbar;
         AllowClickthrough = false;
         AllowPinning = false;
-
-        // load the dropdown info
-        LanguagesDialects = new Dictionary<string, string[]> {
-            { "English", new string[] { "US", "UK" } },
-            { "Spanish", new string[] { "Spain", "Mexico" } },
-            { "French", new string[] { "France", "Quebec" } },
-            { "Japanese", new string[] { "Japan" } }
-        };
-        _currentDialects = LanguagesDialects[_mainConfig.Config.Language];
-        _activeDialect = GetDialectFromConfigDialect();
-
 
         SizeConstraints = new WindowSizeConstraints()
         {
@@ -85,49 +74,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
     }
 
-    // Everything below here is temporary until I figure out something better.
-    public Dictionary<string, string[]> LanguagesDialects { get; init; } // Languages and Dialects for Chat Garbler.
-    private string[] _currentDialects; // Array of Dialects for each Language
-    private string _activeDialect; // Selected Dialect for Language
-
-
-    private string GetDialectFromConfigDialect()
-    {
-        switch (_mainConfig.Config.LanguageDialect)
-        {
-            case "IPA_UK": return "en-GB";
-            case "IPA_US": return "en-US";
-            case "IPA_SPAIN": return "es-ES";
-            case "IPA_MEXICO": return "es-MX";
-            case "IPA_FRENCH": return "fr-FR";
-            case "IPA_QUEBEC": return "fr-CA";
-            case "IPA_JAPAN": return "ja-JP";
-            default: return "en-US";
-        }
-    }
-
-    private void SetConfigDialectFromDialect(string dialect)
-    {
-        switch (dialect)
-        {
-            case "US": _mainConfig.Config.LanguageDialect = "IPA_US"; _mainConfig.Save(); break;
-            case "UK": _mainConfig.Config.LanguageDialect = "IPA_UK"; _mainConfig.Save(); break;
-            case "France": _mainConfig.Config.LanguageDialect = "IPA_FRENCH"; _mainConfig.Save(); break;
-            case "Quebec": _mainConfig.Config.LanguageDialect = "IPA_QUEBEC"; _mainConfig.Save(); break;
-            case "Japan": _mainConfig.Config.LanguageDialect = "IPA_JAPAN"; _mainConfig.Save(); break;
-            case "Spain": _mainConfig.Config.LanguageDialect = "IPA_SPAIN"; _mainConfig.Save(); break;
-            case "Mexico": _mainConfig.Config.LanguageDialect = "IPA_MEXICO"; _mainConfig.Save(); break;
-            default: _mainConfig.Config.LanguageDialect = "IPA_US"; _mainConfig.Save(); break;
-        }
-    }
-
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
         {
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
             ThemePushed = true;
         }
     }
@@ -144,7 +96,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        _uiShared.DrawOtherPluginState();
+        CkGui.DrawOptionalPlugins();
         ImGui.AlignTextToFramePadding();
         ImGui.TextUnformatted(GSLoc.Settings.AccountClaimText);
         ImGui.SameLine();
@@ -152,11 +104,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             Util.OpenLink("https://discord.gg/kinkporium");
         }
-
-        if (MainHub.IsConnected)
+        // draw out the tab bar for us.
+        if (ImGui.BeginTabBar("mainTabBar"))
         {
-            // draw out the tab bar for us.
-            if (ImGui.BeginTabBar("mainTabBar"))
+
+            if (MainHub.IsConnected)
             {
                 if (ImGui.BeginTabItem(GSLoc.Settings.TabsGlobal))
                 {
@@ -173,40 +125,28 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     DrawPreferences();
                     ImGui.EndTabItem();
                 }
+            }
 
-                if (ImGui.BeginTabItem(GSLoc.Settings.TabsAccounts))
-                {
-                    _accountsTab.DrawManager();
-                    ImGui.EndTabItem();
-                }
+            if (ImGui.BeginTabItem(GSLoc.Settings.TabsAccounts))
+            {
+                _accountsTab.DrawManager();
+                ImGui.EndTabItem();
+            }
 
-                if (ImGui.BeginTabItem("Debug"))
-                {
-                    _debugTab.DrawDebugMain();
-                    ImGui.EndTabItem();
-                }
+            if (ImGui.BeginTabItem("Debug"))
+            {
+                _debugTab.DrawDebugMain();
+                ImGui.EndTabItem();
+            }
 
 #if DEBUG
-                if (ImGui.BeginTabItem("Dev"))
-                {
-                    _debugTab.DrawDevDebug();
-                    ImGui.EndTabItem();
-                }
-#endif
-                ImGui.EndTabBar();
-            }
-        }
-        else
-        {
-            if (ImGui.BeginTabBar("offlineTabBar"))
+            if (ImGui.BeginTabItem("Dev"))
             {
-                if (ImGui.BeginTabItem(GSLoc.Settings.TabsAccounts))
-                {
-                    _accountsTab.DrawManager();
-                    ImGui.EndTabItem();
-                }
-                ImGui.EndTabBar();
+                _debugTab.DrawDevDebug();
+                ImGui.EndTabItem();
             }
+#endif
+            ImGui.EndTabBar();
         }
     }
 
@@ -245,29 +185,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var maxGlobalShockDuration = _global.GlobalPerms.GetTimespanFromDuration();
         var maxGlobalVibrateDuration = (int)_global.GlobalPerms.ShockVibrateDuration.TotalSeconds;
 
-        _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderGags);
+        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderGags);
         using (ImRaii.Disabled(liveChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ChatGarblerActive), liveChatGarblerActive), UpdateDir.Own)).ConfigureAwait(false);
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GagVisuals), gagVisuals), UpdateDir.Own)).ConfigureAwait(false);
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GagGlamoursTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GagGlamoursTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagPadlockTimer, ref removeGagOnLockExpiration))
         {
             _mainConfig.Config.RemoveRestrictionOnTimerExpire = removeGagOnLockExpiration;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GagPadlockTimerTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GagPadlockTimerTT);
 
         ImGui.Separator();
-        _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderWardrobe);
+        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderWardrobe);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
@@ -283,40 +223,40 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Save();
             }
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.WardrobeActiveTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.WardrobeActiveTT);
 
         using (ImRaii.Disabled(!wardrobeEnabled))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restrictionVisuals))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestrictionVisuals), restrictionVisuals), UpdateDir.Own)).ConfigureAwait(false);
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.RestraintSetVisuals), restraintSetVisuals), UpdateDir.Own)).ConfigureAwait(false);
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.CursedLootActive, ref cursedDungeonLoot))
             {
                 _mainConfig.Config.CursedLootPanel = cursedDungeonLoot;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.CursedLootActiveTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.CursedLootActiveTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.MimicsApplyTraits, ref mimicsApplyTraits))
             {
                 _mainConfig.Config.CursedItemsApplyTraits = mimicsApplyTraits;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.MimicsApplyTraitsTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.MimicsApplyTraitsTT);
         }
 
-        _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);
+        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.PuppeteerActive, ref puppeteerEnabled))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppeteerEnabled), puppeteerEnabled), UpdateDir.Own)).ConfigureAwait(false);
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
 
         using (ImRaii.Disabled(!puppeteerEnabled))
         {
@@ -326,7 +266,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.InputText(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, ref globalTriggerPhrase, 100, ImGuiInputTextFlags.EnterReturnsTrue))
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.TriggerPhrase), globalTriggerPhrase), UpdateDir.Own)).ConfigureAwait(false);
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
             // Correct these!
             var refSits = (globalPuppetPerms & PuppetPerms.Sit) == PuppetPerms.Sit;
@@ -336,7 +276,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
 
             var refEmotes = (globalPuppetPerms & PuppetPerms.Emotes) == PuppetPerms.Emotes;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref refEmotes))
@@ -345,7 +285,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
 
             var refAlias = (globalPuppetPerms & PuppetPerms.Alias) == PuppetPerms.Alias;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref refAlias))
@@ -354,7 +294,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
 
             var refAllPerms = (globalPuppetPerms & PuppetPerms.All) == PuppetPerms.All;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref refAllPerms))
@@ -363,16 +303,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(_global.GlobalPerms.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
+            CkGui.DrawHelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
         }
 
         ImGui.Separator();
-        _uiShared.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);
+        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.ToyboxActive, ref toyboxEnabled))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ToyboxEnabled), toyboxEnabled), UpdateDir.Own)).ConfigureAwait(false);
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
 
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.IntifaceAutoConnect, ref intifaceAutoConnect))
@@ -380,7 +320,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.IntifaceAutoConnect = intifaceAutoConnect;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.IntifaceAutoConnectTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.IntifaceAutoConnectTT);
 
         ImGui.SetNextItemWidth(200f);
         if (ImGui.InputTextWithHint($"Server Address##ConnectionWSaddr", "Leave blank for default...", ref intifaceConnectionAddr, 100))
@@ -395,12 +335,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Save();
             }
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.IntifaceAddressTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.IntifaceAddressTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.SpatialAudioActive, ref spatialVibratorAudio))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.SpatialAudio), spatialVibratorAudio), UpdateDir.Own)).ConfigureAwait(false);
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
         ImGui.Spacing();
 
@@ -410,7 +350,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.PiShockApiKey = piShockApiKey;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockKeyTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.PiShockKeyTT);
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputText("PiShock Username", ref piShockUsername, 100, ImGuiInputTextFlags.EnterReturnsTrue))
@@ -418,16 +358,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.PiShockUsername = piShockUsername;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockUsernameTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.PiShockUsernameTT);
 
 
-        ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - CkGui.IconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
         if (ImGui.InputText("##Global PiShock Share Code", ref globalPiShockShareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.GlobalShockShareCode), globalPiShockShareCode), UpdateDir.Own)).ConfigureAwait(false);
 
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
         {
             _lastRefresh = DateTime.UtcNow;
             // Send Mediator Event to grab updated settings for pair.
@@ -449,11 +389,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 await _hub.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, newGlobalPerms, UpdateDir.Own));
             });
         }
-        UiSharedService.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
+        CkGui.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
 
         ImUtf8.SameLineInner();
         ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockShareCode);
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
         if (ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxGlobalVibrateDuration, 0, 30))
@@ -467,10 +407,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
                 new KeyValuePair<string, object>(nameof(_global.GlobalPerms.ShockVibrateDuration), ticks), UpdateDir.Own)).ConfigureAwait(false);
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
+        CkGui.DrawHelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
         // make this section readonly
-        UiSharedService.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
+        CkGui.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
         using (ImRaii.Disabled(true))
         {
             using (ImRaii.Group())
@@ -483,11 +423,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
             ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockMaxShockIntensity);
             ImGui.SameLine();
-            UiSharedService.ColorText(maxGlobalShockCollarIntensity.ToString() + "%", ImGuiColors.ParsedGold);
+            CkGui.ColorText(maxGlobalShockCollarIntensity.ToString() + "%", ImGuiColors.ParsedGold);
 
             ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockMaxShockDuration);
             ImGui.SameLine();
-            UiSharedService.ColorText(maxGlobalShockDuration.Seconds.ToString() + "." + maxGlobalShockDuration.Milliseconds.ToString() + "s", ImGuiColors.ParsedGold);
+            CkGui.ColorText(maxGlobalShockDuration.Seconds.ToString() + "." + maxGlobalShockDuration.Milliseconds.ToString() + "s", ImGuiColors.ParsedGold);
         }
     }
 
@@ -501,7 +441,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(2, "PreferencesColumns", true);
         ImGui.SetColumnWidth(0, width);
 
-        _uiShared.GagspeakBigText("Live Chat Garbler");
+        CkGui.GagspeakBigText("Live Chat Garbler");
         using (ImRaii.Group())
         {
             var i = 0;
@@ -528,24 +468,24 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.SameLine();
 
             // voodoo magic from old code i cant be asked to polish.
-            _uiShared.DrawCombo("##Language", 65, LanguagesDialects.Keys.ToArray(), (item) => item, (i) =>
+            if(ImGuiUtil.GenericEnumCombo("##Language", 65, _mainConfig.Config.Language, out GarbleCoreLang newLang, i => i.ToName()))
             {
-                if (i is null || i == _mainConfig.Config.Language) return;
-                _mainConfig.Config.Language = i;
-                _currentDialects = LanguagesDialects[_mainConfig.Config.Language]; // update the dialects for the new language
-                _activeDialect = _currentDialects[0]; // set the active dialect to the first dialect of the new language
-                SetConfigDialectFromDialect(_activeDialect);
-            }, _mainConfig.Config.Language, flags: ImGuiComboFlags.NoArrowButton);
-            UiSharedService.AttachToolTip(GSLoc.Settings.Preferences.LangTT);
+                if(newLang != _mainConfig.Config.Language)
+                    _mainConfig.Config.LanguageDialect = newLang.GetDialects().First();
+
+                _mainConfig.Config.Language = newLang;
+                _mainConfig.Save();
+            }
+            CkGui.AttachToolTip(GSLoc.Settings.Preferences.LangTT);
 
             ImGui.SameLine();
-            _uiShared.DrawCombo("##Dialect", 55, LanguagesDialects[_mainConfig.Config.Language], (item) => item, (i) =>
+            if(ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Config.LanguageDialect, out GarbleCoreDialect newDialect,
+                _mainConfig.Config.Language.GetDialects(), i => i.ToName()))
             {
-                if (i is null || i == _activeDialect) return;
-                _activeDialect = i;
-                SetConfigDialectFromDialect(_activeDialect);
-            }, _activeDialect, flags: ImGuiComboFlags.NoArrowButton);
-            UiSharedService.AttachToolTip(GSLoc.Settings.Preferences.DialectTT);
+                _mainConfig.Config.LanguageDialect = newDialect;
+                _mainConfig.Save();
+            }
+            CkGui.AttachToolTip(GSLoc.Settings.Preferences.DialectTT);
         }
     }
     private void DrawPreferences()
@@ -553,7 +493,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         DrawChannelPreferences();
 
         ImGui.NextColumn();
-        _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderPuppet);
+        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderPuppet);
         using (ImRaii.Group())
         {
             var j = 0;
@@ -577,7 +517,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(1);
 
         ImGui.Separator();
-        _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderUiPrefs);
+        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderUiPrefs);
 
         var showMainUiOnStart = _mainConfig.Config.OpenMainUiOnStartup;
 
@@ -600,7 +540,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.OpenMainUiOnStartup = showMainUiOnStart;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowMainUiOnStartTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ShowMainUiOnStartTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.EnableDtrLabel, ref enableDtrEntry))
         {
@@ -613,7 +553,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.EnableDtrTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.EnableDtrTT);
 
         using (ImRaii.Disabled(!enableDtrEntry))
         {
@@ -623,21 +563,21 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Config.ShowPrivacyRadar = dtrPrivacyRadar;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Preferences.PrivacyRadarTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Preferences.PrivacyRadarTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.Preferences.ActionsNotifLabel, ref dtrActionNotifs))
             {
                 _mainConfig.Config.ShowActionNotifs = dtrActionNotifs;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ActionsNotifTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Preferences.ActionsNotifTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.Preferences.VibeStatusLabel, ref dtrVibeStatus))
             {
                 _mainConfig.Config.ShowVibeStatus = dtrVibeStatus;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Preferences.VibeStatusTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Preferences.VibeStatusTT);
             ImGui.Unindent();
         }
 
@@ -647,7 +587,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Save();
             Mediator.Publish(new RefreshUiMessage());
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowVisibleSeparateTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ShowVisibleSeparateTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowOfflineSeparateLabel, ref showOfflineSeparate))
         {
@@ -655,14 +595,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Save();
             Mediator.Publish(new RefreshUiMessage());
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PrefThreeCharaAnonName, ref preferThreeCharaAnonName))
         {
             _mainConfig.Config.PreferThreeCharaAnonName = preferThreeCharaAnonName;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.PrefThreeCharaAnonNameTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.PrefThreeCharaAnonNameTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PreferNicknamesLabel, ref preferNicknamesInsteadOfName))
         {
@@ -670,7 +610,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Save();
             Mediator.Publish(new RefreshUiMessage());
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.PreferNicknamesTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.PreferNicknamesTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowProfilesLabel, ref showProfiles))
         {
@@ -678,7 +618,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.ShowProfiles = showProfiles;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ShowProfilesTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ShowProfilesTT);
 
         using (ImRaii.Disabled(!showProfiles))
         {
@@ -689,7 +629,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Config.ProfileDelay = profileDelay;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ProfileDelayTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Preferences.ProfileDelayTT);
             ImGui.Unindent();
         }
 
@@ -698,11 +638,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.ShowContextMenus = showContextMenus;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ContextMenusTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ContextMenusTT);
 
         /* --------------- Separator for moving onto the Notifications Section ----------- */
         ImGui.Separator();
-        _uiShared.GagspeakBigText(GSLoc.Settings.Preferences.HeaderNotifications);
+        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderNotifications);
 
         var liveGarblerZoneChangeWarn = _mainConfig.Config.LiveGarblerZoneChangeWarn;
         var serverConnectionNotifs = _mainConfig.Config.NotifyForServerConnections;
@@ -714,14 +654,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _mainConfig.Config.LiveGarblerZoneChangeWarn = liveGarblerZoneChangeWarn;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ZoneChangeWarnTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ZoneChangeWarnTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ConnectedNotifLabel, ref serverConnectionNotifs))
         {
             _mainConfig.Config.NotifyForServerConnections = serverConnectionNotifs;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.ConnectedNotifTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.ConnectedNotifTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.OnlineNotifLabel, ref onlineNotifs))
         {
@@ -729,7 +669,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (!onlineNotifs) _mainConfig.Config.NotifyLimitToNickedPairs = false;
             _mainConfig.Save();
         }
-        _uiShared.DrawHelpText(GSLoc.Settings.Preferences.OnlineNotifTT);
+        CkGui.DrawHelpText(GSLoc.Settings.Preferences.OnlineNotifTT);
 
         using (ImRaii.Disabled(!onlineNotifs))
         {
@@ -738,28 +678,37 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Config.NotifyLimitToNickedPairs = onlineNotifsNickLimited;
                 _mainConfig.Save();
             }
-            _uiShared.DrawHelpText(GSLoc.Settings.Preferences.LimitForNicksTT);
+            CkGui.DrawHelpText(GSLoc.Settings.Preferences.LimitForNicksTT);
         }
 
-        _uiShared.DrawCombo("Info Location##settingsUiInfo", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
-        (i) => { _mainConfig.Config.InfoNotification = i; _mainConfig.Save(); }, _mainConfig.Config.InfoNotification);
-        _uiShared.DrawHelpText("The location where \"Info\" notifications will display."
+        if(ImGuiUtil.GenericEnumCombo("Info Location##notifInfo", 125f, _mainConfig.Config.InfoNotification, out NotificationLocation newInfo, i => i.ToString()))
+        {
+            _mainConfig.Config.InfoNotification = newInfo;
+            _mainConfig.Save();
+        }
+        CkGui.DrawHelpText("The location where \"Info\" notifications will display."
                       + Environment.NewLine + "'Nowhere' will not show any Info notifications"
                       + Environment.NewLine + "'Chat' will print Info notifications in chat"
                       + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
                       + Environment.NewLine + "'Both' will show chat as well as the toast notification");
 
-        _uiShared.DrawCombo("Warning Location##settingsUiWarn", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
-        (i) => { _mainConfig.Config.WarningNotification = i; _mainConfig.Save(); }, _mainConfig.Config.WarningNotification);
-        _uiShared.DrawHelpText("The location where \"Warning\" notifications will display."
+        if (ImGuiUtil.GenericEnumCombo("Warning Location##notifWarn", 125f, _mainConfig.Config.WarningNotification, out NotificationLocation newWarn, i => i.ToString()))
+        {
+            _mainConfig.Config.WarningNotification = newWarn;
+            _mainConfig.Save();
+        }
+        CkGui.DrawHelpText("The location where \"Warning\" notifications will display."
                               + Environment.NewLine + "'Nowhere' will not show any Warning notifications"
                               + Environment.NewLine + "'Chat' will print Warning notifications in chat"
                               + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
                               + Environment.NewLine + "'Both' will show chat as well as the toast notification");
 
-        _uiShared.DrawCombo("Error Location##settingsUi", 125f, (NotificationLocation[])Enum.GetValues(typeof(NotificationLocation)), (i) => i.ToString(),
-        (i) => { _mainConfig.Config.ErrorNotification = i; _mainConfig.Save(); }, _mainConfig.Config.ErrorNotification);
-        _uiShared.DrawHelpText("The location where \"Error\" notifications will display."
+        if (ImGuiUtil.GenericEnumCombo("Error Location##notifError", 125f, _mainConfig.Config.ErrorNotification, out NotificationLocation newError, i => i.ToString()))
+        {
+            _mainConfig.Config.ErrorNotification = newError;
+            _mainConfig.Save();
+        }
+        CkGui.DrawHelpText("The location where \"Error\" notifications will display."
                               + Environment.NewLine + "'Nowhere' will not show any Error notifications"
                               + Environment.NewLine + "'Chat' will print Error notifications in chat"
                               + Environment.NewLine + "'Toast' will show Error toast notifications in the bottom right corner"

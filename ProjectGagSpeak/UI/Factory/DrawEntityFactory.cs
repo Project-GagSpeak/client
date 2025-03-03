@@ -20,11 +20,10 @@ public class DrawEntityFactory
     private readonly ServerConfigurationManager _configs;
     private readonly IdDisplayHandler _nameDisplay;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
 
     public DrawEntityFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, MainHub hub,
         ServerConfigurationManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics,
-        UiSharedService uiShared)
+        CkGui uiShared)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
@@ -32,16 +31,15 @@ public class DrawEntityFactory
         _configs = configs;
         _nameDisplay = nameDisplay;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
+
     }
     public DrawFolderTag CreateDrawTagFolder(string tag, List<Pair> filteredPairs, IImmutableList<Pair> allPairs)
-        => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs,
-            _configs, _uiShared);
+        => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs, _configs);
 
     public DrawUserPair CreateDrawPair(string id, Pair kinkster)
         => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + kinkster.UserData.UID,
-            kinkster, _hub, _nameDisplay, _mediator, _cosmetics, _uiShared);
+            kinkster, _hub, _nameDisplay, _mediator, _cosmetics);
 
     public KinksterRequestEntry CreateKinsterRequest(string id, UserPairRequestDto request)
-        => new KinksterRequestEntry(id, request, _hub, _cosmetics, _uiShared);
+        => new KinksterRequestEntry(id, request, _hub, _cosmetics);
 }

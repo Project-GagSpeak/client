@@ -274,6 +274,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         }
         // run a save after the load.
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.CursedLoot));
     }
 
     private void LoadV0(JToken? data)

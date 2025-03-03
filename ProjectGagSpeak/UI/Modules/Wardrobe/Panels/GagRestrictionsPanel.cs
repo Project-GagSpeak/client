@@ -19,7 +19,7 @@ public partial class GagRestrictionsPanel
     private readonly MoodleDrawer _moodleDrawer;
     private readonly GagRestrictionManager _manager;
     private readonly PairManager _pairs;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public GagRestrictionsPanel(
@@ -30,7 +30,7 @@ public partial class GagRestrictionsPanel
         MoodleDrawer moodleDrawer,
         GagRestrictionManager manager,
         PairManager pairs,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
@@ -59,7 +59,12 @@ public partial class GagRestrictionsPanel
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {

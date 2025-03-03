@@ -17,17 +17,17 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
     private readonly MainHub _hub;
     private readonly PermissionData _pad;
     private readonly PiShockProvider _shockies;
-    private readonly UiSharedService _uiShared;
+
     private Dictionary<SPPID, string> _timespanCache = new();
     private DateTime _lastRefresh = DateTime.MinValue;
     public PermissionsDrawer(GagspeakMediator mediator, MainHub hub, PermissionData permData, 
-        PiShockProvider shockies, UiSharedService uiShared)
+        PiShockProvider shockies, CkGui uiShared)
     {
         Mediator = mediator;
         _hub = hub;
         _pad = permData;
         _shockies = shockies;
-        _uiShared = uiShared;
+
 
         Mediator.Subscribe<StickyPairWindowCreated>(this, _ =>
         {
@@ -68,7 +68,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         var str = _timespanCache.TryGetValue(perm, out var value) ? value : curState.ToGsRemainingTime();
         var data = _pad.PairPermData[perm];
 
-        if (_uiShared.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
+        if (CkGui.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
         {
             if (str != curState.ToGsRemainingTime() && GsPadlockEx.TryParseTimeSpan(str, out var newTime))
             {
@@ -79,10 +79,10 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
             }
             _timespanCache.Remove(perm);
         }
-        UiSharedService.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
+        CkGui.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
 
-        _uiShared.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
-        UiSharedService.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
+        CkGui.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
+        CkGui.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
     }
 
     private void DrawPermRowPairCommon<T>(float width, SPPID perm, bool curState, bool editAccess, Func<T> newStateFunc)
@@ -97,18 +97,18 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         ImGui.SetCursorScreenPos(pos);
         using (ImRaii.Group())
         {
-            _uiShared.IconText(data.icon);
+            CkGui.IconText(data.icon);
             ImUtf8.SameLineInner();
             ImGui.Text(data.prefix);
             ImGui.SameLine();
-            UiSharedService.ColorTextBool(data.condText, curState);
+            CkGui.ColorTextBool(data.condText, curState);
             ImGui.SameLine();
             ImGui.Text(data.suffix);
         }
-        UiSharedService.AttachToolTip(data.tt);
+        CkGui.AttachToolTip(data.tt);
 
-        _uiShared.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
-        UiSharedService.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
+        CkGui.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
+        CkGui.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
 
         if (button)
         {

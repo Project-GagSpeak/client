@@ -142,7 +142,7 @@ public partial class GagRestrictionsPanel
                 .Where(moodle => UnsavedDrawData.AssociatedMoodles.Contains(moodle.GUID))
                 .ToList();
             // draw out all the active associated moodles in the restraint set with thier icon beside them.
-            UiSharedService.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
+            CkGui.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
             ImGui.Separator();
             foreach (var moodle in associatedMoodles)
             {
@@ -152,7 +152,7 @@ public partial class GagRestrictionsPanel
                     var currentPos = ImGui.GetCursorPos();
                     if (moodle.IconID != 0 && currentPos != Vector2.Zero)
                     {
-                        var statusIcon = _uiShared.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
+                        var statusIcon = CkGui.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
 
                         if (statusIcon is { } wrap)
                         {

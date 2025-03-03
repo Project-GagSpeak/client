@@ -24,16 +24,17 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.CursedLoot) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, RestrictionToIdentifier, RestrictionToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_CursedLoot), _manager.Storage, RestrictionToIdentifier, RestrictionToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded restrictions filesystem.");
+        _logger.LogDebug("Reloaded cursed items filesystem with " + _manager.Storage.Count + " cursed items.");
     }
 
     public void Dispose()
@@ -110,7 +111,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_CursedLoot).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

@@ -18,7 +18,6 @@ public class PairCombos : DisposableMediatorSubscriberBase
     private const int MaxRestraintSetLayers = 5;
 
     private readonly MainHub _hub;
-    private readonly UiSharedService _uiShared;
     private readonly ITextureProvider _tp;
 
     // Make the following static and public to allow global access throughout custom combos.
@@ -27,11 +26,9 @@ public class PairCombos : DisposableMediatorSubscriberBase
     private int _restrictionLayer = 0;
     private int _restraintLayer = 0;
 
-    public PairCombos(ILogger<PairCombos> logger, GagspeakMediator mediator, MainHub hub,
-        UiSharedService uiShared, ITextureProvider tp) : base(logger, mediator)
+    public PairCombos(ILogger<PairCombos> logger, GagspeakMediator mediator, MainHub hub, ITextureProvider tp) : base(logger, mediator)
     {
         _hub = hub;
-        _uiShared = uiShared;
         _tp = tp;
 
         Mediator.Subscribe<StickyPairWindowCreated>(this, (pair) => UpdateCombosForPair(pair.newPair));
@@ -60,7 +57,7 @@ public class PairCombos : DisposableMediatorSubscriberBase
         ImGui.SetNextItemWidth(comboWidth);
         if (ImGui.Combo("##GagLayer", ref _gagLayer, GagLayerNames, 3))
             GagApplyCombo.SetLayer(_gagLayer);
-        UiSharedService.AttachToolTip("Select the layer to apply a Gag to.");
+        CkGui.AttachToolTip("Select the layer to apply a Gag to.");
     }
 
     public void DrawRestrictionLayerSelection(float comboWidth)
@@ -68,14 +65,14 @@ public class PairCombos : DisposableMediatorSubscriberBase
         ImGui.SetNextItemWidth(comboWidth);
         if (ImGui.Combo("##RestrictionLayer", ref _restrictionLayer, FiveLayerNames, 5))
             RestrictionApplyCombo.SetLayer(_restrictionLayer);
-        UiSharedService.AttachToolTip("Select the layer to apply a Restriction to.");
+        CkGui.AttachToolTip("Select the layer to apply a Restriction to.");
     }
 
     public void DrawRestraintLayerSelection(float comboWidth)
     {
         ImGui.SetNextItemWidth(comboWidth);
         if (ImGui.Combo("##RestraintLayer", ref _restraintLayer, FiveLayerNames, 5)) { }
-        UiSharedService.AttachToolTip("Select the layer to apply a Restraint to.");
+        CkGui.AttachToolTip("Select the layer to apply a Restraint to.");
     }
 
     private void UpdateCombosForPair(Pair pair)
@@ -84,22 +81,22 @@ public class PairCombos : DisposableMediatorSubscriberBase
         _restrictionLayer = 0;
         _restraintLayer = 0;
 
-        GagApplyCombo = new PairGagCombo(_gagLayer, pair, _hub, Logger, _uiShared, "Apply", "Apply a Gag to " + pair.GetNickAliasOrUid());
-        GagPadlockCombo = new PairGagPadlockCombo(_gagLayer, pair, _hub, Logger, _uiShared, "GagPadlock");
+        GagApplyCombo = new PairGagCombo(_gagLayer, pair, _hub, Logger, "Apply", "Apply a Gag to " + pair.GetNickAliasOrUid());
+        GagPadlockCombo = new PairGagPadlockCombo(_gagLayer, pair, _hub, Logger,  "GagPadlock");
 
 
         // Create the Restraint Combos for the Pair.
-        RestraintApplyCombo = new PairRestraintCombo(pair, _hub, Logger, _uiShared, "Apply", "Apply a Restraint to " + pair.GetNickAliasOrUid());
-        RestraintPadlockCombo = new PairRestraintPadlockCombo(pair, _hub, Logger, _uiShared);
+        RestraintApplyCombo = new PairRestraintCombo(pair, _hub, Logger, "Apply", "Apply a Restraint to " + pair.GetNickAliasOrUid());
+        RestraintPadlockCombo = new PairRestraintPadlockCombo(pair, _hub, Logger);
 
         // Create the Pattern Combo for the Pair.
-        PatternCombo = new PairPatternCombo(pair, _hub, Logger, _uiShared, "Execute", "Apply a Pattern to " + pair.GetNickAliasOrUid());
+        PatternCombo = new PairPatternCombo(pair, _hub, Logger, "Execute", "Apply a Pattern to " + pair.GetNickAliasOrUid());
 
         // Create the pattern Combo for alarm Toggling.
-        AlarmToggleCombo = new PairAlarmCombo(pair, _hub, Logger, _uiShared, "Enable", "Toggle this Alarm for " + pair.GetNickAliasOrUid());
+        AlarmToggleCombo = new PairAlarmCombo(pair, _hub, Logger, "Enable", "Toggle this Alarm for " + pair.GetNickAliasOrUid());
 
         // Create the Triggers combo for trigger toggling.
-        TriggerToggleCombo = new PairTriggerCombo(pair, _hub, Logger, _uiShared, "Enable", "Toggle this Trigger for " + pair.GetNickAliasOrUid());
+        TriggerToggleCombo = new PairTriggerCombo(pair, _hub, Logger, "Enable", "Toggle this Trigger for " + pair.GetNickAliasOrUid());
 
         EmoteCombo = new EmoteCombo(_tp, Logger, () => 
         [

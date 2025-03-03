@@ -21,16 +21,14 @@ using System.Globalization;
 namespace GagSpeak.UI.Publications;
 public class PublicationsManager
 {
+    private readonly MoodleStatusMonitor _monitor;
     private readonly ShareHubService _shareHub;
-    private readonly UiSharedService _uiShared;
-
     public PublicationsManager(ILogger<PublicationsManager> logger, MoodleStatusMonitor monitor, FavoritesManager favorites,
-        PatternManager patterns, ShareHubService shareHub, UiSharedService uiShared)
+        PatternManager patterns, ShareHubService shareHub, CkGui uiShared)
     {
+        _monitor = monitor;
         _shareHub = shareHub;
-        _uiShared = uiShared;
-
-        _patternCombo = new PatternCombo(patterns, favorites, uiShared, logger);
+        _patternCombo = new PatternCombo(patterns, favorites, logger);
         _statusCombo = new MoodleStatusCombo(1.5f, VisualApplierMoodles.LatestIpcData, monitor, logger);
     }
 
@@ -41,19 +39,19 @@ public class PublicationsManager
 
     public void DrawPatternPublications()
     {
-        _uiShared.GagspeakBigText("Publish A Pattern");
+        CkGui.GagspeakBigText("Publish A Pattern");
 
         _patternCombo.Draw(200f);
 
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
-        UiSharedService.ColorText("Chosen Pattern", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Chosen Pattern", ImGuiColors.ParsedGold);
         
         ImGui.SetNextItemWidth(200f);
         ImGui.InputTextWithHint("##AuthorName", "Author DisplayName...", ref _authorName, 50);
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
-        UiSharedService.ColorText("Author Name", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Author Name", ImGuiColors.ParsedGold);
 
         ImGui.SetNextItemWidth(200);
         ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref _tagList, 250);
@@ -69,27 +67,24 @@ public class PublicationsManager
                 _tagList = string.Join(", ", tags.Take(5));
             }
         }
-        UiSharedService.AttachToolTip("You can have a maximum of 5 tags."); 
+        CkGui.AttachToolTip("You can have a maximum of 5 tags."); 
         
         ImUtf8.SameLineInner();
-        // Copy Brios Tag Appender here or something later because it looks wonderful.
-        _uiShared.DrawCombo("##patternTagsFilter", ImGui.GetContentRegionAvail().X, _shareHub.FetchedTags.ToImmutableList(), (i) => i,
-            (tag) =>
+        DrawTagCombo("##patternTagsFilter", ImGui.GetContentRegionAvail().X, (tag) =>
+        {
+            var commaCount = _tagList.Count(c => c == ',');
+            if (commaCount >= 4) return;
+
+            // Handle new tab
+            if (!_tagList.Contains(tag))
             {
-                if(tag.IsNullOrEmpty()) return;
-                var commaCount = _tagList.Count(c => c == ',');
-                if (commaCount >= 4) return;
+                if (_tagList.Length > 0 && _tagList[^1] != ',')
+                    _tagList += ",";
+                _tagList += tag.ToLower();
+            }
+        });
 
-                // Handle new tab
-                if (!_tagList.Contains(tag))
-                {
-                    if (_tagList.Length > 0 && _tagList[^1] != ',')
-                        _tagList += ",";
-                    _tagList += tag.ToLower();
-                }
-            }, shouldShowLabel: false, defaultPreviewText: "Add Existing Tags..");
-
-        if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
+        if (CkGui.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
             false, _authorName.IsNullOrEmpty() || _patternCombo.CurrentSelection is null))
         {
             if (_patternCombo.CurrentSelection is null)
@@ -97,7 +92,7 @@ public class PublicationsManager
             // upload itttt
             _shareHub.UploadPattern(_patternCombo.CurrentSelection, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
         }
-        UiSharedService.AttachToolTip("Must have a selected pattern and author name to upload.");
+        CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
         ImGui.Spacing();
         ImGui.Separator();
         ImGuiUtil.Center("Your Currently Published Patterns");
@@ -115,24 +110,24 @@ public class PublicationsManager
         // start by selecting the pattern.
         if (VisualApplierMoodles.LatestIpcData is null)
         {
-            UiSharedService.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
+            CkGui.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }
         else
         {
             // draw the create section.
-            _uiShared.GagspeakBigText("Publish A Moodle");
+            CkGui.GagspeakBigText("Publish A Moodle");
 
             _statusCombo.Draw(200f);
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
-            UiSharedService.ColorText("Chosen Moodle", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Chosen Moodle", ImGuiColors.ParsedGold);
 
             ImGui.SetNextItemWidth(200f);
             ImGui.InputTextWithHint("##AuthorName", "Author DisplayName...", ref _authorName, 50);
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
-            UiSharedService.ColorText("Author Name", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Author Name", ImGuiColors.ParsedGold);
 
             ImGui.SetNextItemWidth(200);
             ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref _tagList, 250);
@@ -148,28 +143,25 @@ public class PublicationsManager
                     _tagList = string.Join(", ", tags.Take(5));
                 }
             }
-            UiSharedService.AttachToolTip("You can have a maximum of 5 tags.");
+            CkGui.AttachToolTip("You can have a maximum of 5 tags.");
 
             ImUtf8.SameLineInner();
-            _uiShared.DrawCombo("##moodleTagsFilter", ImGui.GetContentRegionAvail().X, _shareHub.FetchedTags.ToImmutableList(), (i) => i,
-                (tag) =>
+            DrawTagCombo("##moodleTagsFilter", ImGui.GetContentRegionAvail().X, (tag) =>
+            {
+                var commaCount = _tagList.Count(c => c == ',');
+                if (commaCount >= 4) return;
+
+                // Handle new tab
+                if (!_tagList.Contains(tag))
                 {
-                    if (tag.IsNullOrEmpty()) return;
-                    var commaCount = _tagList.Count(c => c == ',');
-                    if (commaCount >= 4) return;
+                    if (_tagList.Length > 0 && _tagList[^1] != ',')
+                        _tagList += ",";
+                    _tagList += tag.ToLower();
+                }
+            });
+            CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Moodles!");
 
-                    // Handle new tab
-                    if (!_tagList.Contains(tag))
-                    {
-                        if (_tagList.Length > 0 && _tagList[^1] != ',')
-                            _tagList += ",";
-                        _tagList += tag.ToLower();
-                    }
-                }, shouldShowLabel: false, defaultPreviewText: "Add Existing Tags..");
-            UiSharedService.AttachToolTip("Select an existing tag on the Server." +
-                "--SEP--This makes it easier for people to find your Moodles!");
-
-            if (_uiShared.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
+            if (CkGui.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
                 false, _authorName.IsNullOrEmpty() || _statusCombo.CurrentSelection.GUID.IsEmptyGuid()))
             {
                 if (_statusCombo.CurrentSelection.GUID.IsEmptyGuid())
@@ -177,7 +169,7 @@ public class PublicationsManager
 
                 _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.CurrentSelection);
             }
-            UiSharedService.AttachToolTip("Must have a selected Moodle and author name to upload.");
+            CkGui.AttachToolTip("Must have a selected Moodle and author name to upload.");
             ImGui.Spacing();
             ImGui.Separator();
             ImGuiUtil.Center("Your Currently Published Moodles");
@@ -229,7 +221,7 @@ public class PublicationsManager
 
     private void PublishedPatternItem(PublishedPattern pattern)
     {
-        var unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var unpublishButton = CkGui.IconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##PatternResult_{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
@@ -238,46 +230,46 @@ public class PublicationsManager
             {
                 // display name, then display the downloads and likes on the other side.
                 ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText(pattern.Label, ImGuiColors.DalamudWhite);
-                if(!pattern.Description.IsNullOrEmpty()) _uiShared.DrawHelpText(pattern.Description, true);
+                CkGui.ColorText(pattern.Label, ImGuiColors.DalamudWhite);
+                if(!pattern.Description.IsNullOrEmpty()) CkGui.DrawHelpText(pattern.Description, true);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (_uiShared.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
                         _shareHub.RemovePattern(pattern.Identifier);
-                UiSharedService.AttachToolTip("Removes this pattern publication from the pattern hub." +
+                CkGui.AttachToolTip("Removes this pattern publication from the pattern hub." +
                     "--SEP--Must hold SHIFT");
             }
             // next line:
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                _uiShared.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FontAwesomeIcon.UserCircle);
                 ImUtf8.SameLineInner();
-                UiSharedService.ColorText(pattern.Author, ImGuiColors.DalamudGrey);
-                UiSharedService.AttachToolTip("The Author Name you gave yourself when publishing this pattern.");
+                CkGui.ColorText(pattern.Author, ImGuiColors.DalamudGrey);
+                CkGui.AttachToolTip("The Author Name you gave yourself when publishing this pattern.");
                 ImGui.SameLine();
-                UiSharedService.ColorText("(" + pattern.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture) + ")", ImGuiColors.DalamudGrey);
-                UiSharedService.AttachToolTip("The date this pattern was published.");
+                CkGui.ColorText("(" + pattern.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture) + ")", ImGuiColors.DalamudGrey);
+                CkGui.AttachToolTip("The date this pattern was published.");
 
                 var formatDuration = pattern.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 var timerText = pattern.Length.ToString(formatDuration);
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - _uiShared.GetIconData(FontAwesomeIcon.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - CkGui.IconSize(FontAwesomeIcon.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
                 
                 using (ImRaii.Group())
                 {
-                    _uiShared.IconText(FontAwesomeIcon.Stopwatch);
+                    CkGui.IconText(FontAwesomeIcon.Stopwatch);
                     ImUtf8.SameLineInner();
                     ImGui.TextUnformatted(pattern.Length.ToString(formatDuration));
                 }
-                UiSharedService.AttachToolTip("Total Pattern Duration");
+                CkGui.AttachToolTip("Total Pattern Duration");
             }
         }
     }
 
     private void PublishedMoodleItem(PublishedMoodle moodle)
     {
-        var unpublishButton = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var unpublishButton = CkGui.IconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##MoodleResult_{moodle.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
         {
@@ -291,79 +283,80 @@ public class PublicationsManager
                 if(ImGui.IsItemHovered())
                 {
                     if(!moodle.MoodleStatus.Description.IsNullOrEmpty()) 
-                        UiSharedService.AttachToolTip(moodle.MoodleStatus.Description.StripColorTags());
+                        CkGui.AttachToolTip(moodle.MoodleStatus.Description.StripColorTags());
                 }
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText(moodle.MoodleStatus.Title.StripColorTags(), ImGuiColors.DalamudWhite);
+                CkGui.ColorText(moodle.MoodleStatus.Title.StripColorTags(), ImGuiColors.DalamudWhite);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (_uiShared.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
                         _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID);
-                UiSharedService.AttachToolTip("Remove this publication from the Moodle ShareHub!" +
+                CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!" +
                     "--SEP--Must hold SHIFT");
             }
             ImGui.Spacing();
             // next line:
             using (ImRaii.Group())
             {
-                var stacksSize = _uiShared.GetIconData(FontAwesomeIcon.LayerGroup).X;
-                var dispellableSize = _uiShared.GetIconData(FontAwesomeIcon.Eraser).X;
-                var permanentSize = _uiShared.GetIconData(FontAwesomeIcon.Infinity).X;
-                var stickySize = _uiShared.GetIconData(FontAwesomeIcon.MapPin).X;
-                var customVfxPath = _uiShared.GetIconData(FontAwesomeIcon.Magic).X;
-                var stackOnReapply = _uiShared.GetIconData(FontAwesomeIcon.PersonCirclePlus).X;
+                var stacksSize = CkGui.IconSize(FontAwesomeIcon.LayerGroup).X;
+                var dispellableSize = CkGui.IconSize(FontAwesomeIcon.Eraser).X;
+                var permanentSize = CkGui.IconSize(FontAwesomeIcon.Infinity).X;
+                var stickySize = CkGui.IconSize(FontAwesomeIcon.MapPin).X;
+                var customVfxPath = CkGui.IconSize(FontAwesomeIcon.Magic).X;
+                var stackOnReapply = CkGui.IconSize(FontAwesomeIcon.PersonCirclePlus).X;
 
                 ImGui.AlignTextToFramePadding();
-                _uiShared.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FontAwesomeIcon.UserCircle);
                 ImUtf8.SameLineInner();
-                UiSharedService.ColorText(moodle.AuthorName, ImGuiColors.DalamudGrey);
-                UiSharedService.AttachToolTip("Publisher of the Moodle");
+                CkGui.ColorText(moodle.AuthorName, ImGuiColors.DalamudGrey);
+                CkGui.AttachToolTip("Publisher of the Moodle");
 
 
                 // jump to the right side to draw all the icon data.
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
                     - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
                 ImGui.AlignTextToFramePadding();
-                _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.Stacks > 1, false, FontAwesomeIcon.LayerGroup, FontAwesomeIcon.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.Stacks > 1 ? "Has " + moodle.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Stacks > 1, false, FontAwesomeIcon.LayerGroup, FontAwesomeIcon.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.MoodleStatus.Stacks > 1 ? "Has " + moodle.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
 
                 ImUtf8.SameLineInner();
-                _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.Dispelable, false, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Dispelable, false, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
 
                 ImUtf8.SameLineInner();
-                _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.AsPermanent, false, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.AsPermanent, false, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
 
                 ImUtf8.SameLineInner();
-                _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.Persistent, false, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Persistent, false, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
 
                 ImUtf8.SameLineInner();
-                _uiShared.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath), false, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
+                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath), false, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 ImUtf8.SameLineInner();
-                _uiShared.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.PersonCirclePlus, FontAwesomeIcon.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                UiSharedService.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks " + moodle.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.PersonCirclePlus, FontAwesomeIcon.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks " + moodle.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
-            try
-            {
-                if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                {
-                    var statusIcon = _uiShared.GetGameStatusIcon((uint)((uint)moodle.MoodleStatus.IconID + moodle.MoodleStatus.Stacks - 1));
+            if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
+                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleStatusMonitor.DefaultSize);
+        }
+    }
 
-                    if (statusIcon is { } wrap)
-                    {
-                        ImGui.SetCursorPos(imagePos);
-                        ImGui.Image(statusIcon.ImGuiHandle, MoodleStatusMonitor.DefaultSize);
-                    }
-                }
-            }
-            catch (Exception) { }
+    private void DrawTagCombo(string label, float width, Action<string> onSelected)
+    {
+        var tagList = _shareHub.FetchedTags.ToImmutableList();
+        ImGui.SetNextItemWidth(width);
+        using (var tagCombo = ImRaii.Combo(label, tagList.FirstOrDefault() ?? "Select Tag.."))
+        {
+            if (tagCombo)
+                foreach (var tag in tagList)
+                    if (ImGui.Selectable(tag, false))
+                        onSelected(tag);
         }
     }
 }

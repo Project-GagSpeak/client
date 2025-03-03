@@ -1,25 +1,20 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
-using Microsoft.VisualBasic.ApplicationServices;
-using OtterGui;
-using System.Numerics;
 
 namespace GagSpeak.UI.Components;
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
-    private readonly UiSharedService _uiShared;
     private readonly DtrBarService _dtrBarService;
     private bool ThemePushed = false;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
-        DtrBarService dtrService, UiSharedService uiShared) : base(logger, mediator, "##DtrLinker")
+        DtrBarService dtrService, CkGui uiShared) : base(logger, mediator, "##DtrLinker")
     {
         _dtrBarService = dtrService;
-        _uiShared = uiShared;
+
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
     }
 
@@ -36,7 +31,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         Flags |= ImGuiWindowFlags.NoMove;
 
-        int cnt = NonGagspeakUsers.Count > 10 ? 10+2 : NonGagspeakUsers.Count+2;
+        var cnt = NonGagspeakUsers.Count > 10 ? 10+2 : NonGagspeakUsers.Count+2;
         var size = new Vector2(200f, (ImGui.GetTextLineHeightWithSpacing() * cnt) - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y + ImGuiHelpers.GlobalScale);
 
         ImGui.SetNextWindowSize(size);
@@ -59,7 +54,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         for(var i=0; i<displayedPlayers.Count; i++)
         {
-            string text = displayedPlayers[i].GetName() + "  " + displayedPlayers[i].HomeWorldName();
+            var text = displayedPlayers[i].GetName() + "  " + displayedPlayers[i].HomeWorldName();
             if(ImGui.Selectable(text, SelectedIndex == i))
             {
                 SelectedIndex = i;
@@ -68,7 +63,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
         }
         if (remainingCount > 0)
         {
-            UiSharedService.ColorTextCentered("And " + remainingCount + " more...", ImGuiColors.ParsedPink);
+            CkGui.ColorTextCentered("And " + remainingCount + " more...", ImGuiColors.ParsedPink);
         }
 
         // close window if its not focused.

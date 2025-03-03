@@ -10,10 +10,9 @@ namespace GagSpeak.UI.Components.UserPairList;
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
 {
-
     public DrawFolderTag(string id, IImmutableList<DrawUserPair> drawPairs, 
-        IImmutableList<Pair> allPairs, ServerConfigurationManager configs,
-        UiSharedService uiShared) : base(id, drawPairs, allPairs, configs, uiShared)
+        IImmutableList<Pair> allPairs, ServerConfigurationManager configs)
+        : base(id, drawPairs, allPairs, configs)
     { }
 
     protected override bool RenderIfEmpty => _id switch
@@ -46,7 +45,7 @@ public class DrawFolderTag : DrawFolderBase
         };
 
         ImGui.AlignTextToFramePadding();
-        _uiShared.IconText(icon);
+        CkGui.IconText(icon);
 
         if (RenderCount)
         {
@@ -57,7 +56,7 @@ public class DrawFolderTag : DrawFolderBase
 
                 ImGui.TextUnformatted("[" + OnlinePairs.ToString() + "]");
             }
-            UiSharedService.AttachToolTip(OnlinePairs + " online" + Environment.NewLine + TotalPairs + " total");
+            CkGui.AttachToolTip(OnlinePairs + " online" + Environment.NewLine + TotalPairs + " total");
         }
         ImGui.SameLine();
         return ImGui.GetCursorPosX();

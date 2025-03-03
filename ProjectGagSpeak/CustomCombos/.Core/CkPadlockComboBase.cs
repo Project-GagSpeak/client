@@ -12,8 +12,6 @@ namespace GagSpeak.CustomCombos;
 // The true core of the abstract combos for padlocks. Handles all shared logic operations.
 public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 {
-    protected readonly UiSharedService _uiShared;
-
     private readonly HashSet<uint> _popupState = [];
 
     /// <summary> Contains the list of padlocks. </summary>
@@ -32,10 +30,9 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     public Padlocks SelectedLock { get; protected set; } = Padlocks.None;
 
-    protected CkPadlockComboBase(Func<T> monitorGenerator, ILogger log, UiSharedService uiShared, string label)
+    protected CkPadlockComboBase(Func<T> monitorGenerator, ILogger log, string label)
     {
         Log = log;
-        _uiShared = uiShared;
         _label = label;
 
         MonitoredItem = monitorGenerator();
@@ -76,7 +73,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     public virtual void DrawLockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
-        var buttonWidth = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Lock, "Lock");
+        var buttonWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Lock, "Lock");
         var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
         // draw the combo box.
@@ -88,7 +85,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             // display the tooltip for the combo with visible.
             using (ImRaii.Enabled())
             {
-                UiSharedService.AttachToolTip(tt);
+                CkGui.AttachToolTip(tt);
                 // Handle right click clearing.
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     ResetSelection();
@@ -105,9 +102,9 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         // draw button thing for locking / unlocking.
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
             OnLockButtonPress();
-        UiSharedService.AttachToolTip(btt);
+        CkGui.AttachToolTip(btt);
 
         // on next line show lock fields.
         ShowLockFields(width);
@@ -116,7 +113,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     public virtual void DrawUnlockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
-        var buttonWidth = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Unlock, "Unlock");
+        var buttonWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Unlock, "Unlock");
         var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
         var lastPadlock = MonitoredItem.Padlock;
 
@@ -129,9 +126,9 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         // draw button thing.
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: MonitoredItem.Padlock is Padlocks.None, id: "##" + _label + "-UnlockButton"))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: MonitoredItem.Padlock is Padlocks.None, id: "##" + _label + "-UnlockButton"))
             OnUnlockButtonPress();
-        UiSharedService.AttachToolTip(btt);
+        CkGui.AttachToolTip(btt);
 
         // on next line show lock fields.
         ShowUnlockFields(lastPadlock, width);

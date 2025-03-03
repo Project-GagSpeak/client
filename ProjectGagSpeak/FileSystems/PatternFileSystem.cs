@@ -24,16 +24,17 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Pattern) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, PatternToIdentifier, PatternToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_Patterns), _manager.Storage, PatternToIdentifier, PatternToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded patterns filesystem.");
+        _logger.LogDebug("Reloaded patterns filesystem with " + _manager.Storage.Count + " patterns.");
     }
 
     public void Dispose()
@@ -110,7 +111,7 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_Patterns).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

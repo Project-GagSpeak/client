@@ -18,7 +18,6 @@ namespace GagSpeak.UI.MainWindow;
 public class AccountTab : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly UiSharedService _uiShared;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly GagspeakConfigService _config;
     private readonly KinkPlateService _profileManager;
@@ -26,12 +25,12 @@ public class AccountTab : DisposableMediatorSubscriberBase
     private readonly IDalamudPluginInterface _pi;
 
     public AccountTab(ILogger<AccountTab> logger, GagspeakMediator mediator,
-        MainHub hub, UiSharedService uiShared, OnFrameworkService frameworkUtils,
+        MainHub hub, CkGui uiShared, OnFrameworkService frameworkUtils,
         GagspeakConfigService config, KinkPlateService profileManager, TutorialService guides,
         IDalamudPluginInterface pi) : base(logger, mediator)
     {
         _hub = hub;
-        _uiShared = uiShared;
+
         _frameworkUtils = frameworkUtils;
         _config = config;
         _profileManager = profileManager;
@@ -46,14 +45,14 @@ public class AccountTab : DisposableMediatorSubscriberBase
     public void DrawAccountSection()
     {
         // get the width of the window content region we set earlier
-        var _windowContentWidth = UiSharedService.GetWindowContentRegionWidth();
+        var _windowContentWidth = CkGui.GetWindowContentRegionWidth();
         LastWinPos = ImGui.GetWindowPos();
         LastWinSize = ImGui.GetWindowSize();
         var _spacingX = ImGui.GetStyle().ItemSpacing.X;
 
         // make this whole thing a scrollable child window.
         // (keep the border because we will style it later and helps with alignment visual)
-        using (ImRaii.Child("AccountPageChild", new Vector2(UiSharedService.GetWindowContentRegionWidth(), 0), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("AccountPageChild", new Vector2(CkGui.GetWindowContentRegionWidth(), 0), false, ImGuiWindowFlags.NoScrollbar))
         {
             try
             {
@@ -66,7 +65,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
                     ImGui.Spacing();
                     var imgSize = new Vector2(180f, 180f);
                     // move the x position so that it centeres the image to the center of the window.
-                    _uiShared.SetCursorXtoCenter(imgSize.X);
+                    CkGui.SetCursorXtoCenter(imgSize.X);
                     var currentPosition = ImGui.GetCursorPos();
 
                     var pos = ImGui.GetCursorScreenPos();
@@ -165,21 +164,21 @@ public class AccountTab : DisposableMediatorSubscriberBase
     private void DrawUIDHeader()
     {
         // fetch the Uid Text of yourself
-        var uidText = _uiShared.GetUidText();
+        var uidText = CkGui.GetUidText();
 
         // push the big boi font for the UID
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
             // display it, it should be green if connected and red when not.
-            ImGui.TextColored(_uiShared.GetUidColor(), uidText);
+            ImGui.TextColored(CkGui.UidColor(), uidText);
         }
 
         // if we are connected
         if (MainHub.ServerStatus is ServerState.Connected)
         {
-            UiSharedService.CopyableDisplayText(MainHub.DisplayName);
+            CkGui.CopyableDisplayText(MainHub.DisplayName);
 
             // if the UID does not equal the display name
             if (!string.Equals(MainHub.DisplayName, MainHub.UID, StringComparison.Ordinal))
@@ -188,9 +187,9 @@ public class AccountTab : DisposableMediatorSubscriberBase
                 var origTextSize = ImGui.CalcTextSize(MainHub.UID);
                 // adjust the cursor and redraw the UID (really not sure why this is here but we can trial and error later.
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - origTextSize.X / 2);
-                ImGui.TextColored(_uiShared.GetUidColor(), MainHub.UID);
+                ImGui.TextColored(CkGui.UidColor(), MainHub.UID);
                 // give it the same functionality.
-                UiSharedService.CopyableDisplayText(MainHub.UID);
+                CkGui.CopyableDisplayText(MainHub.UID);
             }
         }
     }
@@ -200,22 +199,22 @@ public class AccountTab : DisposableMediatorSubscriberBase
     {
         var height = 35f; // static height
         Vector2 textSize;
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             textSize = ImGui.CalcTextSize($"No Safeword Set");
         }
-        var iconSize = _uiShared.GetIconData(FontAwesomeIcon.ExclamationTriangle);
-        var editButtonSize = _uiShared.GetIconData(FontAwesomeIcon.Edit);
+        var iconSize = CkGui.IconSize(FontAwesomeIcon.ExclamationTriangle);
+        var editButtonSize = CkGui.IconSize(FontAwesomeIcon.Edit);
         var bigTextPaddingDistance = ((height - textSize.Y) / 2);
         var iconFontCenterY = (height - iconSize.Y) / 2;
         var editButtonCenterY = (height - editButtonSize.Y) / 2;
 
-        using (ImRaii.Child($"##DrawSafewordChild", new Vector2(UiSharedService.GetWindowContentRegionWidth(), height), false))
+        using (ImRaii.Child($"##DrawSafewordChild", new Vector2(CkGui.GetWindowContentRegionWidth(), height), false))
         {
             // We love ImGui....
             var childStartYpos = ImGui.GetCursorPosY();
             ImGui.SetCursorPosY(childStartYpos + iconFontCenterY);
-            _uiShared.IconText(FontAwesomeIcon.ExclamationTriangle, ImGuiColors.DalamudYellow);
+            CkGui.IconText(FontAwesomeIcon.ExclamationTriangle, ImGuiColors.DalamudYellow);
 
             ImGui.SameLine(iconSize.X + ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosX(ImGui.GetCursorPosX());
@@ -232,28 +231,28 @@ public class AccountTab : DisposableMediatorSubscriberBase
                     EditingSafeword = false;
                 }
                 // now, head to the same line of the full width minus the width of the button
-                ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
                 ImGui.SetCursorPosY(childStartYpos + ((height - editButtonSize.Y) / 2) - 2f);
             }
             else
             {
                 ImGui.SetCursorPosY(bigTextPaddingDistance - 2f); // -2f accounts for font visual offset
-                using (_uiShared.UidFont.Push())
+                using (UiFontService.UidFont.Push())
                 {
-                    UiSharedService.ColorText(safewordText, ImGuiColors.DalamudYellow);
+                    CkGui.ColorText(safewordText, ImGuiColors.DalamudYellow);
                 }
                 // now, head to the same line of the full width minus the width of the button
-                ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
                 ImGui.SetCursorPosY(childStartYpos + ((height - editButtonSize.Y) / 2) + 1f);
             }
             // draw out the icon button
-            _uiShared.IconText(FontAwesomeIcon.Edit);
+            CkGui.IconText(FontAwesomeIcon.Edit);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 EditingSafeword = !EditingSafeword;
             }
         }
-        UiSharedService.AttachToolTip("Set a safeword to quickly revert any changes made by the plugin.");
+        CkGui.AttachToolTip("Set a safeword to quickly revert any changes made by the plugin.");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartOne, LastWinPos, LastWinSize);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartTwo, LastWinPos, LastWinSize);
     }
@@ -264,33 +263,33 @@ public class AccountTab : DisposableMediatorSubscriberBase
         var startYpos = ImGui.GetCursorPosY();
 
         var textSize = ImGui.CalcTextSize(displayText);
-        var iconSize = _uiShared.GetIconData(leftIcon);
-        var arrowRightSize = _uiShared.GetIconData(FontAwesomeIcon.ChevronRight);
+        var iconSize = CkGui.IconSize(leftIcon);
+        var arrowRightSize = CkGui.IconSize(FontAwesomeIcon.ChevronRight);
         var textCenterY = ((height - textSize.Y) / 2);
         var iconFontCenterY = (height - iconSize.Y) / 2;
         var arrowRightCenterY = (height - arrowRightSize.Y) / 2;
         // text height == 17, padding on top and bottom == 2f, so 21f
-        using (ImRaii.Child($"##DrawSetting{displayText + hoverTT}", new Vector2(UiSharedService.GetWindowContentRegionWidth(), height)))
+        using (ImRaii.Child($"##DrawSetting{displayText + hoverTT}", new Vector2(CkGui.GetWindowContentRegionWidth(), height)))
         {
             // We love ImGui....
             var childStartYpos = ImGui.GetCursorPosY();
             ImGui.SetCursorPosY(childStartYpos + iconFontCenterY);
-            _uiShared.IconText(leftIcon);
+            CkGui.IconText(leftIcon);
 
             ImGui.SameLine(iconSize.X + ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(childStartYpos + textCenterY);
             ImGui.TextUnformatted(displayText);
 
             // Position the button on the same line, aligned to the right
-            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - arrowRightSize.X - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - arrowRightSize.X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(childStartYpos + arrowRightCenterY);
             // Draw the icon button and perform the action when pressed
-            _uiShared.IconText(FontAwesomeIcon.ChevronRight);
+            CkGui.IconText(FontAwesomeIcon.ChevronRight);
         }
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
         {
             buttonAction.Invoke();
         }
-        UiSharedService.AttachToolTip(hoverTT);
+        CkGui.AttachToolTip(hoverTT);
     }
 }

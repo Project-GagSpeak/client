@@ -19,8 +19,8 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
     protected float _iconScale;
 
     protected CkMoodleComboButtonBase(float iconScale, MoodleStatusMonitor monitor, Pair pair, MainHub hub,
-        ILogger log, UiSharedService ui, string bText, string bTT, Func<IReadOnlyList<T>> itemSource)
-        : base(itemSource, log, ui, bText, bTT)
+        ILogger log, string bText, string bTT, Func<IReadOnlyList<T>> itemSource)
+        : base(itemSource, log, bText, bTT)
     {
         _statuses = monitor;
         _mainHub = hub;
@@ -71,30 +71,30 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
             }
 
             ImGui.Separator();
-            UiSharedService.ColorText("Stacks:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Stacks:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Stacks.ToString());
             if (item.StackOnReapply)
             {
                 ImGui.SameLine();
-                UiSharedService.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
+                CkGui.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
             }
 
-            UiSharedService.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text($"{item.Days}d {item.Hours}h {item.Minutes}m {item.Seconds}");
 
-            UiSharedService.ColorText("Category:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Category:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Type.ToString());
 
-            UiSharedService.ColorText("Dispellable:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Dispellable:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(item.Dispelable ? "Yes" : "No");
 
             if (!item.StatusOnDispell.IsEmptyGuid())
             {
-                UiSharedService.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(dispellMoodleTitle);
             }

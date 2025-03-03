@@ -13,10 +13,8 @@ public class PublicationTabs : IconTabBarBase<PublicationTabs.SelectedTab>
         Moodles,
     }
 
-    private readonly UiSharedService _ui;
-    public PublicationTabs(UiSharedService ui)
+    public PublicationTabs()
     {
-        _ui = ui;
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Patterns, "Pattern Publisher");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Moodles, "Moodle Publisher");
     }
@@ -29,7 +27,7 @@ public class PublicationTabs : IconTabBarBase<PublicationTabs.SelectedTab>
         using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
 

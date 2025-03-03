@@ -23,10 +23,8 @@ public class AchievementTabs : IconTabBarBase<AchievementTabs.SelectedTab>
         Secrets
     }
 
-    private readonly UiSharedService _ui;
-    public AchievementTabs(UiSharedService uiShared)
+    public AchievementTabs()
     {
-        _ui = uiShared;
         AddDrawButton(FontAwesomeIcon.Book, SelectedTab.Generic, "Generic");
         AddDrawButton(FontAwesomeIcon.ClipboardList, SelectedTab.Orders, "Orders");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Gags, "Gags");
@@ -46,7 +44,7 @@ public class AchievementTabs : IconTabBarBase<AchievementTabs.SelectedTab>
         using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
 

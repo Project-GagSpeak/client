@@ -12,8 +12,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairRestraintPadlockCombo(Pair pair, MainHub hub, ILogger log, UiSharedService ui)
-        : base(() => pair.LastRestraintData, log, ui, "PairRestraintPadlock")
+    public PairRestraintPadlockCombo(Pair pair, MainHub hub, ILogger log)
+        : base(() => pair.LastRestraintData, log, "PairRestraintPadlock")
     {
         _mainHub = hub;
         _pairRef = pair;

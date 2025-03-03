@@ -24,17 +24,18 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Trigger) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, TriggerToIdentifier, TriggerToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_Triggers), _manager.Storage, TriggerToIdentifier, TriggerToName))
             _hybridSaver.Save(this);
 
 
-        _logger.LogDebug("Reloaded triggers filesystem.");
+        _logger.LogDebug("Reloaded triggers filesystem with " + _manager.Storage.Count + " triggers.");
     }
 
     public void Dispose()
@@ -111,7 +112,7 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_Triggers).Item2;
 
     public string JsonSerialize()
         => throw new NotImplementedException();

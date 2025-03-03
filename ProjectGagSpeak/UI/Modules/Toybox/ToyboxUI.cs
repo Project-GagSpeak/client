@@ -11,7 +11,7 @@ namespace GagSpeak.UI.Toybox;
 
 public class ToyboxUI : WindowMediatorSubscriberBase
 {
-    private readonly ToyboxTabs _tabMenu;
+    private readonly ToyboxTabs _tabMenu = new ToyboxTabs();
     private readonly SexToysPanel _sexToysPanel;
     private readonly VibeLobbiesPanel _vibeLobbyPanel;
     private readonly PatternsPanel _patternsPanel;
@@ -19,7 +19,6 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     private readonly TriggersPanel _triggersPanel;
     private readonly PlaybackDrawer _playback;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
     public ToyboxUI(
         ILogger<ToyboxUI> logger,
@@ -31,7 +30,6 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         TriggersPanel triggersPanel,
         PlaybackDrawer playback,
         CosmeticService cosmetics,
-        UiSharedService uiShared,
         TutorialService guides) : base(logger, mediator, "Toybox UI")
     {
         _sexToysPanel = sexToysPanel;
@@ -41,10 +39,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         _triggersPanel = triggersPanel;
         _playback = playback;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
         _guides = guides;
-
-        _tabMenu = new ToyboxTabs(_uiShared);
 
         AllowPinning = false;
         AllowClickthrough = false;

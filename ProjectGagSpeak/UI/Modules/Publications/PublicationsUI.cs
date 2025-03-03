@@ -8,22 +8,19 @@ namespace GagSpeak.UI.Publications;
 
 public class PublicationsUI : WindowMediatorSubscriberBase
 {
-    private readonly PublicationTabs _tabMenu;
+    private readonly PublicationTabs _tabMenu = new PublicationTabs();
     private readonly PublicationsManager _publicationsPanel;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
+
 
     public PublicationsUI(ILogger<PublicationsUI> logger, GagspeakMediator mediator,
-        PublicationsManager publicationsPanel, CosmeticService cosmetics,
-        UiSharedService uiShared) : base(logger, mediator, "My Publications")
+        PublicationsManager publicationsPanel, CosmeticService cosmetics) : base(logger, mediator, "My Publications")
     {
         _publicationsPanel = publicationsPanel;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
 
-        _tabMenu = new PublicationTabs(_uiShared);
         // define initial size of window and to not respect the close hotkey.
-        this.SizeConstraints = new WindowSizeConstraints
+        SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(525, 450),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)

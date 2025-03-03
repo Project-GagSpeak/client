@@ -13,8 +13,8 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
     private int CurrentLayer;
-    public PairGagPadlockCombo(int layer, Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string label)
-        : base(() => pairData.LastGagData.GagSlots[layer], log, uiShared, label)
+    public PairGagPadlockCombo(int layer, Pair pairData, MainHub mainHub, ILogger log, string label)
+        : base(() => pairData.LastGagData.GagSlots[layer], log, label)
     {
         CurrentLayer = layer;
         _mainHub = mainHub;

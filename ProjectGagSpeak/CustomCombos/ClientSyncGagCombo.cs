@@ -18,19 +18,17 @@ public sealed class ClientSyncGagCombo : CkFilterComboCacheSync<GagType>
 {
     private readonly GagspeakMediator _mediator;
     private readonly GagRestrictionManager _gags;
-    private readonly UiSharedService _ui;
     private GagLayer Layer { get; init; }
 
-    public ClientSyncGagCombo(GagLayer layer, ILogger log, GagspeakMediator mediator, GagRestrictionManager gags, UiSharedService uiShared)
+    public ClientSyncGagCombo(GagLayer layer, ILogger log, GagspeakMediator mediator, GagRestrictionManager gags)
         : base(GetGagList, log)
     {
         _mediator = mediator;
         _gags = gags;
-        _ui = uiShared;
         Layer = layer;
     }
 
-    private static IReadOnlyList<GagType> GetGagList() => Enum.GetValues<GagType>().Where(x => x != GagType.None).ToList();
+    private static IReadOnlyList<GagType> GetGagList() => Enum.GetValues<GagType>().Except([GagType.None]).ToList();
 
     protected override string ToString(GagType obj) => obj.GagName();
 
@@ -45,7 +43,7 @@ public sealed class ClientSyncGagCombo : CkFilterComboCacheSync<GagType>
         {
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
             // This means that the GagType is active, and has an active Glamour, Mod, or Moodle attached.
-            _ui.IconText(FontAwesomeIcon.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
+            CkGui.IconText(FontAwesomeIcon.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
         }
         return ret;
     }

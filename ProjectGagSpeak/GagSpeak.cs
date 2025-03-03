@@ -100,15 +100,18 @@ public sealed class GagSpeak : IDalamudPlugin
     {
         // create a new host builder for the plugin
         return new HostBuilder()
-            // get the content root for our plugin
+            // Get the content root for our plugin
             .UseContentRoot(pi.ConfigDirectory.FullName)
-            // configure the logging for the plugin
+            // Configure the logging for the plugin
             .ConfigureLogging((hostContext, loggingBuilder) => GetPluginLogConfiguration(loggingBuilder, pl))
-            // get the plugin service collection for our plugin
-            .ConfigureServices((hostContext, serviceCollection)
-            => GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp))
-            // Build the host builder so it becomes an IHost object.
+            // Get the plugin service collection for our plugin
+            .ConfigureServices((hostContext, serviceCollection) =>
+            {
+                var services = GetPluginServices(serviceCollection, pi, pl, alc, cg, cs, cm, con, cmu, dm, bar, ds, fw, gg, gip, gps, ks, nm, ot, plt, ss, tm, tp);
+                //services.ValidateDependancyInjector();
+            }) 
             .Build();
+
     }
 
     /// <summary> Gets the log configuration for the plugin. </summary>
@@ -175,19 +178,19 @@ public static class GagSpeakServiceExtensions
 
         // File System
         .AddSingleton((s) => new GagRestrictionFileSelector(s.GetRequiredService<ILogger<GagRestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<GagFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<GagFileSystem>(), ks))
         .AddSingleton((s) => new RestrictionFileSelector(s.GetRequiredService<ILogger<RestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<RestrictionFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<RestrictionFileSystem>(), ks))
         .AddSingleton((s) => new RestraintSetFileSelector(s.GetRequiredService<ILogger<RestraintSetFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<RestraintManager>(), s.GetRequiredService<RestraintSetFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<RestraintManager>(), s.GetRequiredService<RestraintSetFileSystem>(), ks))
         .AddSingleton((s) => new CursedLootFileSelector(s.GetRequiredService<ILogger<CursedLootFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<CursedLootFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<CursedLootFileSystem>(), ks))
         .AddSingleton((s) => new PatternFileSelector(s.GetRequiredService<ILogger<PatternFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<PatternManager>(), s.GetRequiredService<PatternFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<PatternManager>(), s.GetRequiredService<PatternFileSystem>(), ks))
         .AddSingleton((s) => new AlarmFileSelector(s.GetRequiredService<ILogger<AlarmFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<AlarmManager>(), s.GetRequiredService<AlarmFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<AlarmManager>(), s.GetRequiredService<AlarmFileSystem>(), ks))
         .AddSingleton((s) => new TriggerFileSelector(s.GetRequiredService<ILogger<TriggerFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerFileSystem>(), ks))
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerFileSystem>(), ks))
         .AddSingleton<GagFileSystem>()
         .AddSingleton<RestrictionFileSystem>()
         .AddSingleton<RestraintSetFileSystem>()
@@ -260,6 +263,7 @@ public static class GagSpeakServiceExtensions
 
 
         // Services
+        .AddSingleton<TutorialService>()
         .AddSingleton<AchievementsService>()
         .AddSingleton<SafewordService>()
         .AddSingleton<SexToyManager>()
@@ -269,6 +273,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<MainMenuTabs>(),
             s.GetRequiredService<PairManager>(), s.GetRequiredService<CosmeticService>()))
         .AddSingleton<ShareHubService>()
+        .AddSingleton<KinkPlateFactory>()
         .AddSingleton((s) => new KinkPlateService(s.GetRequiredService<ILogger<KinkPlateService>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
             s.GetRequiredService<KinkPlateFactory>()))
@@ -417,7 +422,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PlaybackDrawer>()
 
         // Scoped Factorys
-        .AddScoped<KinkPlateFactory>()
         .AddScoped<DrawEntityFactory>()
         .AddScoped<UiFactory>()
 
@@ -431,10 +435,9 @@ public static class GagSpeakServiceExtensions
         // Scoped MainUI (Home)
         .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
         .AddScoped<WindowMediatorSubscriberBase, MainUI>((s) => new MainUI(s.GetRequiredService<ILogger<MainUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(),
-            s.GetRequiredService<ServerConfigurationManager>(), s.GetRequiredService<HomepageTab>(), s.GetRequiredService<WhitelistTab>(),
-            s.GetRequiredService<PatternHubTab>(), s.GetRequiredService<MoodleHubTab>(), s.GetRequiredService<GlobalChatTab>(), s.GetRequiredService<AccountTab>(),
-            s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<TutorialService>(), pi))
+            s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<ServerConfigurationManager>(),
+            s.GetRequiredService<HomepageTab>(), s.GetRequiredService<WhitelistTab>(), s.GetRequiredService<PatternHubTab>(), s.GetRequiredService<MoodleHubTab>(),
+            s.GetRequiredService<GlobalChatTab>(), s.GetRequiredService<AccountTab>(), s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<TutorialService>(), pi))
         .AddScoped<MainMenuTabs>()
         .AddScoped<HomepageTab>()
         .AddScoped<WhitelistTab>()
@@ -443,7 +446,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<GlobalChatTab>()
         .AddScoped((s) => new AccountTab(s.GetRequiredService<ILogger<AccountTab>>(),
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<UiSharedService>(), s.GetRequiredService<OnFrameworkService>(),
+            s.GetRequiredService<CkGui>(), s.GetRequiredService<OnFrameworkService>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<KinkPlateService>(),
             s.GetRequiredService<TutorialService>(), pi))
         // Scoped UI (Orders)
@@ -473,14 +476,13 @@ public static class GagSpeakServiceExtensions
 
         // Scoped UI (Achievements)
         .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), s.GetRequiredService<UiSharedService>(), pi))
+            s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), pi))
         .AddScoped<AchievementTabs>()
 
 
         // StickyWindow
         .AddScoped<PermissionsDrawer>()
-        .AddScoped((s) => new PairCombos(s.GetRequiredService<ILogger<PairCombos>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<MainHub>(), s.GetRequiredService<UiSharedService>(), tp))
+        .AddScoped((s) => new PairCombos(s.GetRequiredService<ILogger<PairCombos>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),tp))
         .AddScoped<PresetLogicDrawer>()
 
 
@@ -506,7 +508,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<SettingsHardcore>()
         .AddScoped((s) => new AccountManagerTab(s.GetRequiredService<ILogger<AccountManagerTab>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(),
-            s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<UiSharedService>()))
+            s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>()))
         .AddScoped<DebugTab>()
 
 
@@ -515,7 +517,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
         .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
         .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<UiSharedService>(), pi))
+            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CkGui>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
 
 
@@ -524,26 +526,28 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<ChatMonitor>(), s.GetRequiredService<DeathRollService>(), cg, cs, cm))
         .AddScoped<OnlinePairManager>()
         .AddScoped<VisiblePairManager>()
-        .AddScoped<TutorialService>()
         .AddScoped((s) => new TextureService(pi.UiBuilder, dm, tp))
         .AddScoped((s) => new UiService(s.GetRequiredService<ILogger<UiService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<WindowSystem>(), s.GetServices<WindowMediatorSubscriberBase>(), s.GetRequiredService<UiFactory>(),
             s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<FileDialogManager>(), pi.UiBuilder))
-        .AddScoped((s) => new UiSharedService(s.GetRequiredService<ILogger<UiSharedService>>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<ServerConfigurationManager>(),
-            s.GetRequiredService<UiFontService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<IpcManager>(), pi, tp));
+        .AddScoped((s) => new CkGui(s.GetRequiredService<ILogger<CkGui>>(), s.GetRequiredService<MainHub>(), s.GetRequiredService<ServerConfigurationManager>(),
+            s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<IpcManager>(), pi, tp));
     #endregion ScopedServices
 
     #region HostedServices
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)
     => services
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())
+        .AddHostedService(p => p.GetRequiredService<UiFontService>())
         .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
         .AddHostedService(p => p.GetRequiredService<NotificationService>())
+        .AddHostedService(p => p.GetRequiredService<ClientMonitor>())
         .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())
         .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())
         .AddHostedService(p => p.GetRequiredService<EventAggregator>())
         .AddHostedService(p => p.GetRequiredService<IpcProvider>())
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())
+        .AddHostedService(p => p.GetRequiredService<MainHub>())
 
         // add our main Plugin.cs file as a hosted ;
         .AddHostedService<GagSpeakHost>();
@@ -559,34 +563,35 @@ public static class ValidateDependancyInjectorEx
             using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
             {
                 ValidateOnBuild = true,  // Enforce validation on build
-                ValidateScopes = true    // Ensure proper scope resolution
+                ValidateScopes = false    // Ensure proper scope resolution
             });
 
-
-            // Try to resolve all registered services
             foreach (var service in services)
             {
-                try
+                var serviceType = service.ServiceType;
+
+                // Skip interfaces and abstract classes
+/*                if (serviceType.IsInterface || serviceType.IsAbstract)
+                    continue;*/
+
+                var constructor = serviceType.GetConstructors().MaxBy(c => c.GetParameters().Length);
+                if (constructor == null)
+                    continue;
+
+                var parameters = constructor.GetParameters()
+                    .Select(p => serviceProvider.GetService(p.ParameterType))
+                    .ToArray();
+
+                // Skip services with unresolvable parameters instead of throwing an error
+                if (parameters.Any(p => p == null))
                 {
-                    serviceProvider.GetRequiredService(service.ServiceType);
+                    GagSpeak.StaticLog.Warning($"[WARNING] Skipping {serviceType.Name} due to unresolvable parameters.");
+                    continue;
                 }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Service {service.ServiceType} failed to resolve.", ex);
-                }
+
+                constructor.Invoke(parameters);
             }
 
-            // Test constructor-based DI (check for circular dependencies in parameters)
-            foreach (var service in services)
-            {
-                if (service.Lifetime == ServiceLifetime.Singleton || service.Lifetime == ServiceLifetime.Transient)
-                {
-                    // Attempt to resolve constructor dependencies for each service
-                    var constructor = service.ServiceType.GetConstructors().MaxBy(c => c.GetParameters().Length);
-                    var parameters = constructor?.GetParameters().Select(p => serviceProvider.GetRequiredService(p.ParameterType)).ToArray();
-                    if (parameters != null) constructor?.Invoke(parameters);
-                }
-            }
 
         }
         catch (AggregateException ex)

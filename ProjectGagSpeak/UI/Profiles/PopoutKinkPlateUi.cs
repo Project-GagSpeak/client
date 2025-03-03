@@ -13,20 +13,16 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
     private readonly KinkPlateService _KinkPlateManager;
     private readonly PairManager _pairManager;
     private readonly ServerConfigurationManager _serverConfigs;
-    private readonly UiSharedService _uiShared;
     private UserData? _userDataToDisplay;
     private bool _showFullUID;
 
     private bool ThemePushed = false;
 
     public PopoutKinkPlateUi(ILogger<PopoutKinkPlateUi> logger, GagspeakMediator mediator,
-        UiSharedService uiBuilder, ServerConfigurationManager serverManager,
-        GagspeakConfigService gagspeakConfigService, KinkPlateLight plateLightUi,
-        KinkPlateService KinkPlateManager, PairManager pairManager)
-        : base(logger, mediator, "###GagSpeakPopoutProfileUI")
+        ServerConfigurationManager serverManager, KinkPlateLight plateLightUi,
+        KinkPlateService KinkPlateManager, PairManager pairManager) : base(logger, mediator, "###GagSpeakPopoutProfileUI")
     {
         _lightUI = plateLightUi;
-        _uiShared = uiBuilder;
         _serverConfigs = serverManager;
         _KinkPlateManager = KinkPlateManager;
         _pairManager = pairManager;
@@ -52,7 +48,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
             ThemePushed = true;
         }
 
-        var position = _uiShared.LastMainUIWindowPosition;
+        var position = CkGui.LastMainUIWindowPosition;
         position.X -= 288;
         ImGui.SetNextWindowPos(position);
 

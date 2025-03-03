@@ -43,7 +43,7 @@ public class NicknamesConfigService : IHybridSavable
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // if migrations needed, do logic for that here.
-        if (jObject["ServerNicknames"]?["UidServerComments"] is not null)
+        if (jObject["ServerNicknames"]?["UidServerComments"] is JToken)
         {
             // Contains old config, migrate it.
             jObject = ConfigMigrator.MigrateNicknamesConfig(jObject);
@@ -67,7 +67,7 @@ public class NicknamesConfigService : IHybridSavable
         if (data is not JObject serverNicknames)
             return;
         Storage = serverNicknames.ToObject<ServerNicknamesStorage>() ?? throw new Exception("Failed to load ServerNicknamesStorage.");
-        // clean out any kvp with nullorwhitespace values.
+        // clean out any kvp with null or whitespace values.
         foreach (var kvp in Storage.Nicknames.Where(kvp => string.IsNullOrWhiteSpace(kvp.Value)).ToList())
             Storage.Nicknames.Remove(kvp.Key);
     }

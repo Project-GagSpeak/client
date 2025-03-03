@@ -10,13 +10,13 @@ namespace GagSpeak.UI;
 internal class ChangelogUI : WindowMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _configService;
-    private readonly UiSharedService _uiShared;
+    private readonly CkGui _ckGui;
     public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator,
-        GagspeakConfigService configService, UiSharedService uiShared) 
+        GagspeakConfigService configService, CkGui uiShared) 
         : base(logger, mediator, "GagSpeak ChangeLog")
     {
         _configService = configService;
-        _uiShared = uiShared;
+        _ckGui = uiShared;
         SizeConstraints = new()
         {
             MinimumSize = new(600, 300),
@@ -42,7 +42,7 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var topLeftSideHeight = region.Y;
         // create the draw-table for the selectable and viewport displays
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(5f * _uiShared.GetFontScalerFloat(), 0));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(5f * _ckGui.GetFontScalerFloat(), 0));
         using (var table = ImRaii.Table($"ChangelogUITable", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerV))
         {
             if (!table) return;

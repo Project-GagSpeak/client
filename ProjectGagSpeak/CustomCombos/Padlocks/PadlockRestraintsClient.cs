@@ -12,9 +12,8 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
     private readonly GagspeakMediator _mediator;
     private readonly RestraintManager _restraints;
-    public PadlockRestraintsClient(GagspeakMediator mediator, RestraintManager restraints,
-        ILogger log, UiSharedService ui, string label)
-        : base(() => restraints.ActiveRestraintData ?? new CharaActiveRestraint(), log, ui, label)
+    public PadlockRestraintsClient(GagspeakMediator mediator, RestraintManager restraints, ILogger log, string label)
+        : base(() => restraints.ActiveRestraintData ?? new CharaActiveRestraint(), log, label)
     {
         _mediator = mediator;
         _restraints = restraints;

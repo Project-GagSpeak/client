@@ -21,10 +21,10 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
     private Pair _pairRef;
     private int CurrentLayer;
 
-    public PairRestrictionCombo(int layer, Pair pair, MainHub hub, ILogger log, UiSharedService ui, string bText, string bTT)
+    public PairRestrictionCombo(int layer, Pair pair, MainHub hub, ILogger log, string bText, string bTT)
         : base(() => [
             .. pair.LastLightStorage.Restrictions.OrderBy(x => x.Label),
-        ], log, ui, bText, bTT)
+        ], log, bText, bTT)
     {
         CurrentLayer = layer;
         _mainHub = hub;
@@ -61,7 +61,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(restriction.Label, selected);
         
-        var iconWidth = _uiShared.GetIconData(FontAwesomeIcon.InfoCircle).X;
+        var iconWidth = CkGui.IconSize(FontAwesomeIcon.InfoCircle).X;
         var hasGlamour = restriction.AffectedSlot.CustomItemId != ulong.MaxValue;
         var hasDesc = !restriction.Desc.IsNullOrWhitespace();
         var hasTraits = restriction.TraitAllowances.Contains(MainHub.UID);
@@ -72,13 +72,13 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 
         if (hasTraits || hasDesc)
         {
-            _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
             DrawItemTooltip(restriction);
             ImGui.SameLine();
         }
 
         // icon for the glamour preview.
-        _uiShared.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        CkGui.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
         // if (hasGlamour) _ttPreview.DrawLightRestraintOnHover(restraintItem);
         return ret;
     }
@@ -126,10 +126,10 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (setItem.Desc.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+                if (setItem.Desc.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = setItem.Desc.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = setItem.Desc.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {

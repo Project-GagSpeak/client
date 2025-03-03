@@ -19,17 +19,14 @@ public class KinksterRequestEntry
     private UserPairRequestDto _requestEntry;
     private readonly MainHub _hub;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
 
     private bool IsHovered = false;
-    public KinksterRequestEntry(string id, UserPairRequestDto requestEntry, 
-        MainHub hub, CosmeticService cosmetics, UiSharedService uiShared)
+    public KinksterRequestEntry(string id, UserPairRequestDto requestEntry, MainHub hub, CosmeticService cosmetics)
     {
         _id = id;
         _requestEntry = requestEntry;
         _hub = hub;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
 
         _viewingMode = requestEntry.User.UID == MainHub.UID ? DrawRequestsType.Outgoing : DrawRequestsType.Incoming;
     }
@@ -43,7 +40,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), IsHovered))
         {
             // Draw the main component of the request entry
-            using (ImRaii.Child(GetType() + _id, new Vector2(UiSharedService.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
+            using (ImRaii.Child(GetType() + _id, new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
             {
                 // draw here the left side icon and the name that follows it.
                 ImUtf8.SameLineInner();
@@ -71,55 +68,55 @@ public class KinksterRequestEntry
     private void DrawLeftSide()
     {
         ImGui.AlignTextToFramePadding();
-        _uiShared.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
+        CkGui.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
         var displayText = "Request Expires in " + TimeLeft.Days + "d " + TimeLeft.Hours + "h " + TimeLeft.Minutes + "m.";
         if(!_requestEntry.AttachedMessage.IsNullOrWhitespace()) displayText += "--SEP----COL--Message: --COL--" + _requestEntry.AttachedMessage;
-        UiSharedService.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
+        CkGui.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
         ImGui.SameLine();
     }
 
     private void DrawAcceptReject()
     {
-        var acceptButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonCircleCheck, "Accept");
-        var rejectButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Reject");
+        var acceptButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleCheck, "Accept");
+        var rejectButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Reject");
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
-        var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
+        var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - acceptButtonSize;
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
                 _hub.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
-        UiSharedService.AttachToolTip("Accept the Request");
+        CkGui.AttachToolTip("Accept the Request");
 
         currentRightSide -= acceptButtonSize + spacingX;
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
                 _hub.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
-        UiSharedService.AttachToolTip("Reject the Request");
+        CkGui.AttachToolTip("Reject the Request");
     }
 
     private void DrawPendingCancel()
     {
-        var cancelButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Cancel Request");
+        var cancelButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Cancel Request");
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
-        var windowEndX = ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth();
+        var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - cancelButtonSize;
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
+            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
                 _hub.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
         }
-        UiSharedService.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
+        CkGui.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
     }
 }

@@ -18,10 +18,10 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairRestraintCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bText, string bTT)
+    public PairRestraintCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
         : base(() => [
             .. pairData.LastLightStorage.Restraints.OrderBy(x => x.Label),
-        ], log, uiShared, bText, bTT)
+        ], log, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -43,7 +43,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(restraintSet.Label, selected);
         
-        var iconWidth = _uiShared.GetIconData(FontAwesomeIcon.InfoCircle).X;
+        var iconWidth = CkGui.IconSize(FontAwesomeIcon.InfoCircle).X;
         var hasGlamour = restraintSet.AffectedSlots.Any();
         var hasInfo = !restraintSet.Desc.IsNullOrWhitespace() || restraintSet.TraitAllowances.Contains(MainHub.UID);
         var shiftOffset = hasInfo ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
@@ -53,13 +53,13 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
 
         if (hasInfo)
         {
-            _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
             DrawItemTooltip(restraintSet);
             ImGui.SameLine();
         }
 
         // icon for the glamour preview.
-        _uiShared.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        CkGui.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
         // if (hasGlamour) _ttPreview.DrawLightRestraintOnHover(restraintItem);
         return ret;
     }
@@ -102,10 +102,10 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (setItem.Desc.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+                if (setItem.Desc.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = setItem.Desc.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = setItem.Desc.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {

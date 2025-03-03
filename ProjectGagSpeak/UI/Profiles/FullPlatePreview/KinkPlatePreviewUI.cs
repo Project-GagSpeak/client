@@ -19,19 +19,19 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
-    private readonly UiSharedService _uiShared;
+
 
     private bool ThemePushed = false;
     public KinkPlatePreviewUI(ILogger<KinkPlatePreviewUI> logger, GagspeakMediator mediator,
         PairManager pairManager, KinkPlateService profileService,
-        CosmeticService cosmetics, TextureService textureService, UiSharedService uiShared)
+        CosmeticService cosmetics, TextureService textureService, CkGui uiShared)
         : base(logger, mediator, "Our User's KinkPlate##GagspeakKinkPlatePreviewUI")
     {
         _pairManager = pairManager;
         _profileService = profileService;
         _cosmetics = cosmetics;
         _textures = textureService;
-        _uiShared = uiShared;
+
 
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar;
         Size = new Vector2(750, 450);
@@ -85,7 +85,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         DrawDescription(drawList, profile);
 
         // Now let's draw out the chosen achievement Name..
-        using (_uiShared.GagspeakTitleFont.Push())
+        using (UiFontService.GagspeakTitleFont.Push())
         {
             var titleName = AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
@@ -151,7 +151,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         var widthToCenterOn = ProfilePictureBorderSize.X;
         // determine the height gap between the icon overview and bottom of the profile picture.
         var gapHeight = IconOverviewListPos.Y - (ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y);
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(MainHub.PlayerUserData.AliasOrUID);
             var yHeight = (gapHeight - aliasOrUidSize.Y) / 2;
@@ -285,7 +285,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         var formattedDate = MainHub.PlayerUserData.CreatedOn ?? DateTime.MinValue;
         string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
 
-        UiSharedService.ColorText(createdDate, ImGuiColors.ParsedGold);
+        CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
         var textWidth = ImGui.CalcTextSize($"MM-DD-YYYY").X;
         statsPos += new Vector2(textWidth + 4, 0);
         // to the right of this, draw out the achievement icon.
@@ -293,8 +293,8 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
-        UiSharedService.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
-        UiSharedService.AttachToolTip("The total achievements " + MainHub.PlayerUserData.AliasOrUID + " has earned.");
+        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip("The total achievements " + MainHub.PlayerUserData.AliasOrUID + " has earned.");
     }
 
     private void DrawBlockedSlots(ImDrawListPtr drawList, KinkPlateContent info)

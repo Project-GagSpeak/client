@@ -7,23 +7,20 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
 {
-    protected readonly UiSharedService _uiShared;
     protected FontAwesomeIcon ButtonIcon = FontAwesomeIcon.None;
     protected string ButtonText = string.Empty;
     protected string ButtonToolTip = string.Empty;
 
-    protected CkFilterComboIconButton(IEnumerable<T> items, ILogger log, UiSharedService ui, FontAwesomeIcon icon, string buttonText, string buttonTT)
+    protected CkFilterComboIconButton(IEnumerable<T> items, ILogger log, FontAwesomeIcon icon, string buttonText, string buttonTT)
         : base(items, log)
     {
-        _uiShared = ui;
         ButtonText = buttonText;
         ButtonToolTip = buttonTT;
     }
 
-    protected CkFilterComboIconButton(Func<IReadOnlyList<T>> generator, ILogger log, UiSharedService ui, FontAwesomeIcon icon, string buttonText, string buttonTT)
+    protected CkFilterComboIconButton(Func<IReadOnlyList<T>> generator, ILogger log, FontAwesomeIcon icon, string buttonText, string buttonTT)
         : base(generator, log)
     {
-        _uiShared = ui;
         ButtonText = buttonText;
         ButtonToolTip = buttonTT;
     }
@@ -37,16 +34,16 @@ public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
     public bool DrawComboButton(string label, string tt, float width, float itemH, ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to first extract the width of the button.
-        var comboWidth = width - _uiShared.GetIconTextButtonSize(ButtonIcon, ButtonText) - 
+        var comboWidth = width - CkGui.IconTextButtonSize(ButtonIcon, ButtonText) - 
             ImGui.GetStyle().ItemInnerSpacing.X - ImGui.GetStyle().ItemSpacing.X;
         InnerWidth = width;
 
         // if we have a new item selected we need to update some conditionals.
         var ret = Draw(label, tt, string.Empty, comboWidth, itemH, flags);
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(ButtonIcon, ButtonText, disabled: DisableCondition(), id: label + "-Button"))
+        if (CkGui.IconTextButton(ButtonIcon, ButtonText, disabled: DisableCondition(), id: label + "-Button"))
             OnButtonPress();
-        UiSharedService.AttachToolTip(ButtonToolTip);
+        CkGui.AttachToolTip(ButtonToolTip);
 
         return ret;
     }

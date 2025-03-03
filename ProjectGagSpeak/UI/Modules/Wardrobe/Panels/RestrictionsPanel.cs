@@ -18,7 +18,7 @@ public partial class RestrictionsPanel
     private readonly MoodleDrawer _moodleDrawer;
     private readonly RestrictionManager _manager;
     private readonly PairManager _pairs;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public RestrictionsPanel(
@@ -29,7 +29,7 @@ public partial class RestrictionsPanel
         MoodleDrawer moodleDrawer,
         RestrictionManager manager,
         PairManager pairs,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
@@ -58,7 +58,12 @@ public partial class RestrictionsPanel
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {

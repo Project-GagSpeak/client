@@ -61,7 +61,7 @@ public partial class RestrictionsPanel
             ImGui.Text("Collar Owner: ");
             ImGui.SameLine();
             var ownerName = _pairs.TryGetNickAliasOrUid(collar.OwnerUID, out var name) ? name : collar.OwnerUID;
-            UiSharedService.ColorText(ownerName, ImGuiColors.ParsedGold);
+            CkGui.ColorText(ownerName, ImGuiColors.ParsedGold);
 
             ImGui.Text("Enscription: " + collar.CollarWriting);
         }

@@ -36,14 +36,14 @@ public partial class RestraintsPanel
         ImGui.SetNextItemWidth(width);
         if (ImGui.InputTextWithHint("##Name", "Set Name...", ref refName, 48))
             _manager.ActiveEditorItem!.Label = refName;
-        UiSharedService.AttachToolTip("Gives the Restraint Set a name!");
+        CkGui.AttachToolTip("Gives the Restraint Set a name!");
 
         ImGui.Text("Restraint Set Description:");
         var desc = _manager.ActiveEditorItem!.Description;
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey2))
             if (ImGui.InputTextMultiline("##Description", ref desc, 150, new Vector2(width, 100f)))
                 _manager.ActiveEditorItem!.Description = desc;
-        UiSharedService.AttachToolTip("Gives the Restraint Set a description!");
+        CkGui.AttachToolTip("Gives the Restraint Set a description!");
     }
 
     // Needs major rework.
@@ -67,7 +67,7 @@ public partial class RestraintsPanel
 
     private void DrawSpatialAudio()
     {
-        _uiShared.BigText("Select if Restraint Set Uses:\nRopes, Chains, Leather, Latex, ext* here.");
+        CkGui.BigText("Select if Restraint Set Uses:\nRopes, Chains, Leather, Latex, ext* here.");
         ImGui.Text("They will then play immersive spatial audio on queue.");
     }
 }

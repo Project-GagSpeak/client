@@ -17,17 +17,17 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     private readonly GlobalData _gagData; // for grabbing lock data
     private readonly ClientConfigurationManager _clientConfigs;
     private readonly TutorialService _guides;
-    private readonly UiSharedService _uiShared;
+
 
     public ActiveGagsPanel(ILogger<ActiveGagsPanel> logger, GagspeakMediator mediator, GlobalData gagData,
         ClientConfigurationManager clientConfigs,
-        TutorialService guides, UiSharedService uiShared) : base(logger, mediator)
+        TutorialService guides, CkGui uiShared) : base(logger, mediator)
     {
         _gagData = gagData;
         _clientConfigs = clientConfigs;
         _appearance = appearance;
         _guides = guides;
-        _uiShared = uiShared;
+
 
         _gagItemCombos = new ClientSyncGagCombo[3]
         {
@@ -54,7 +54,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
     {
         var bigTextSize = new Vector2(0, 0);
 
-        using (_uiShared.GagspeakLabelFont.Push()) bigTextSize = ImGui.CalcTextSize("HeightDummy");
+        using (CkGui.GagspeakLabelFont.Push()) bigTextSize = ImGui.CalcTextSize("HeightDummy");
 
         var region = ImGui.GetContentRegionAvail();
 
@@ -113,7 +113,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 
     private void DrawGagSlotHeader(int slotNumber, Vector2 bigTextSize)
     {
-        _uiShared.GagspeakBigText(Labels[slotNumber]);
+        CkGui.GagspeakBigText(Labels[slotNumber]);
         if (_gagData.AppearanceData is null)
             return;
 
@@ -130,7 +130,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 
     private void DrawImage(string gagTypePath)
     {
-        var gagTexture = _uiShared.GetImageFromDirectoryFile(gagTypePath);
+        var gagTexture = CkGui.GetImageFromDirectoryFile(gagTypePath);
         if (gagTexture is { } wrapGag)
             ImGui.Image(wrapGag.ImGuiHandle, new Vector2(80, 80));
         else
@@ -163,10 +163,10 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
         }
         ImGui.SameLine();
         ImGui.SetCursorPosY(yPos);
-        UiSharedService.ColorText(prefixText + gagText, color);
+        CkGui.ColorText(prefixText + gagText, color);
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(yPos);
-        UiSharedService.ColorText(endTime.ToGsRemainingTimeFancy(), color);
+        CkGui.ColorText(endTime.ToGsRemainingTimeFancy(), color);
     }
 }
 */

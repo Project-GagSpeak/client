@@ -27,11 +27,11 @@ public partial class PairStickyUI
         var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.MoodlesDataStatuses.Count <= 0;
 /*
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
-        if (_ui.IconTextButton(FontAwesomeIcon.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodle ? InteractionType.None : InteractionType.ApplyPairMoodle;
         }
-        UiSharedService.AttachToolTip("Applies a Moodle from " + SPair.UserData.AliasOrUID + "'s Moodles List to them.");
+        CkGui.AttachToolTip("Applies a Moodle from " + SPair.UserData.AliasOrUID + "'s Moodles List to them.");
         if (PairCombos.Opened is InteractionType.ApplyPairMoodle)
         {
             using (var child = ImRaii.Child("ApplyPairMoodlesChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
@@ -62,11 +62,11 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM PAIR's LIST //////////
-        if (_ui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodlePreset ? InteractionType.None : InteractionType.ApplyPairMoodlePreset;
         }
-        UiSharedService.AttachToolTip("Applies a Preset from " + PermissionData.DispName + "'s Presets List to them.");
+        CkGui.AttachToolTip("Applies a Preset from " + PermissionData.DispName + "'s Presets List to them.");
         if (PairCombos.Opened is InteractionType.ApplyPairMoodlePreset)
         {
             using (var child = ImRaii.Child("ApplyPairPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
@@ -97,11 +97,11 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY MOODLES FROM OWN LIST //////////
-        if (_ui.IconTextButton(FontAwesomeIcon.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodle ? InteractionType.None : InteractionType.ApplyOwnMoodle;
         }
-        UiSharedService.AttachToolTip("Applies a Moodle from your Moodles List to " + PermissionData.DispName + ".");
+        CkGui.AttachToolTip("Applies a Moodle from your Moodles List to " + PermissionData.DispName + ".");
         if (PairCombos.Opened is InteractionType.ApplyOwnMoodle)
         {
             using (var child = ImRaii.Child("ApplyOwnMoodlesChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))
@@ -135,11 +135,11 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM OWN LIST //////////
-        if (_ui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodlePreset ? InteractionType.None : InteractionType.ApplyOwnMoodlePreset;
         }
-        UiSharedService.AttachToolTip("Applies a Preset from your Presets List to " + PermissionData.DispName + ".");
+        CkGui.AttachToolTip("Applies a Preset from your Presets List to " + PermissionData.DispName + ".");
 
         if (PairCombos.Opened is InteractionType.ApplyOwnMoodlePreset)
         {
@@ -176,11 +176,11 @@ public partial class PairStickyUI
 
 
         ////////// REMOVE MOODLES //////////
-        if (_ui.IconTextButton(FontAwesomeIcon.UserMinus, "Remove a Moodle from " + PermissionData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.UserMinus, "Remove a Moodle from " + PermissionData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.RemoveMoodle ? InteractionType.None : InteractionType.RemoveMoodle;
         }
-        UiSharedService.AttachToolTip("Removes a Moodle from " + PermissionData.DispName + "'s Statuses.");
+        CkGui.AttachToolTip("Removes a Moodle from " + PermissionData.DispName + "'s Statuses.");
         if (PairCombos.Opened is InteractionType.RemoveMoodle)
         {
             using (ImRaii.Child("RemoveMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight()), false))

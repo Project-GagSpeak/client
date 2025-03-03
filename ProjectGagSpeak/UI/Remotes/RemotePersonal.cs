@@ -2,6 +2,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox.Services;
 using ImGuiNET;
@@ -10,32 +11,20 @@ using System.Timers;
 
 namespace GagSpeak.UI.UiRemote;
 
-/// <summary>
-/// I Blame ImPlot for its messiness as a result for this abyssmal display of code here.
-/// </summary>
 public class RemotePersonal : RemoteBase
 {
     // the class includes are shared however (i think), so dont worry about that.
-    private readonly UiSharedService _uiShared;
-    private readonly SexToyManager _vibeService; // these SHOULD all be shared. but if not put into Service.
-    public RemotePersonal(ILogger<RemotePersonal> logger,GagspeakMediator mediator, 
-        UiSharedService uiShared, SexToyManager vibeService,
-        TutorialService guides, string windowName = "Personal") 
-        : base(logger, mediator, uiShared, vibeService, guides, windowName)
+    private readonly SexToyManager _vibeService;
+    private readonly CosmeticService _cosmetics;
+    public RemotePersonal(ILogger<RemotePersonal> logger,GagspeakMediator mediator,
+        SexToyManager vibeService, CosmeticService images, TutorialService guides,
+        string windowName = "Personal") : base(logger, mediator, vibeService, guides, windowName)
     {
-        _uiShared = uiShared;
+        _cosmetics = images;
         _vibeService = vibeService;
     }
 
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        // anything else we should add here we can add here.
-    }
-
-    /// <summary>
-    /// Will display personal devices, their motors and additional options. </para>
-    /// </summary>
+    /// <summary> Will display personal devices, their motors and additional options. </summary>
     public override void DrawCenterBar(ref float xPos, ref float yPos, ref float width)
     {
         // grab the content region of the current section
@@ -92,12 +81,11 @@ public class RemotePersonal : RemoteBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
 
             // attempt to obtain an image wrap for it
-            var spinArrow = _uiShared.GetImageFromDirectoryFile("RequiredImages\\arrowspin.png");
-            if (spinArrow is { } wrap)
+            if (_cosmetics.CorePluginTextures[CorePluginTexture.ArrowSpin] is { } wrap)
             {
                 var buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
-                if (_uiShared.DrawScaledCenterButtonImage("LoopButton" + WindowBaseName, new Vector2(50, 50),
+                if (CkGui.DrawScaledCenterButtonImage("LoopButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
                 {
                     ProcessLoopToggle();
@@ -108,12 +96,11 @@ public class RemotePersonal : RemoteBase
             // move it down from current position by another .2f scale
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + CurrentRegion.Y * .05f);
 
-            var circlesDot = _uiShared.GetImageFromDirectoryFile("RequiredImages\\circledot.png");
-            if (circlesDot is { } wrap2)
+            if (_cosmetics.CorePluginTextures[CorePluginTexture.CircleDot] is { } wrap2)
             {
                 var buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
-                if (_uiShared.DrawScaledCenterButtonImage("FloatButton" + WindowBaseName, new Vector2(50, 50),
+                if (CkGui.DrawScaledCenterButtonImage("FloatButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
                 {
                     ProcessFloatToggle();
@@ -124,12 +111,11 @@ public class RemotePersonal : RemoteBase
 
             ImGui.SetCursorPosY(CurrentRegion.Y * .775f);
 
-            var power = _uiShared.GetImageFromDirectoryFile("RequiredImages\\power.png");
-            if (power is { } wrap3)
+            if (_cosmetics.CorePluginTextures[CorePluginTexture.Power] is { } wrap3)
             {
                 var buttonColor3 = RemoteOnline ? CkColors.LushPinkButton : CkColors.SideButton;
                 // aligns the image in the center like we want.
-                if (_uiShared.DrawScaledCenterButtonImage("PowerToggleButton"+ WindowBaseName, new Vector2(50, 50),
+                if (CkGui.DrawScaledCenterButtonImage("PowerToggleButton"+ WindowBaseName, new Vector2(50, 50),
                     buttonColor3, new Vector2(40, 40), wrap3))
                 {
                     if (!RemoteOnline)

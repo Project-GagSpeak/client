@@ -7,14 +7,14 @@ public class OrdersAssigner
 {
     private readonly ILogger<OrdersAssigner> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly UiSharedService _uiShared;
+
 
     public OrdersAssigner(ILogger<OrdersAssigner> logger, GagspeakMediator mediator,
-        UiSharedService uiShared)
+        CkGui uiShared)
     {
         _logger = logger;
         _mediator = mediator;
-        _uiShared = uiShared;
+
     }
 
     public void DrawOrderAssignerPanel()

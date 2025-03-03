@@ -24,16 +24,18 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Restraint) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, RestraintSetToIdentifier, RestraintSetToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_RestraintSets), _manager.Storage, RestraintSetToIdentifier, RestraintSetToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded restraintSets filesystem.");
+        _logger.LogDebug("Reloaded restraintSets filesystem with " + _manager.Storage.Count + " restraintSets.");
+
     }
 
     public void Dispose()
@@ -110,7 +112,7 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_RestraintSets).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

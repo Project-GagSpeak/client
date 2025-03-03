@@ -56,13 +56,13 @@ public class GagDataHandler : DisposableMediatorSubscriberBase
         List<string> masterList;
         switch (_mainConfig.Config.LanguageDialect)
         {
-            case "IPA_UK": masterList = GagPhonetics.MasterListEN_UK; break;
-            case "IPA_US": masterList = GagPhonetics.MasterListEN_US; break;
-            case "IPA_SPAIN": masterList = GagPhonetics.MasterListSP_SPAIN; break;
-            case "IPA_MEXICO": masterList = GagPhonetics.MasterListSP_MEXICO; break;
-            case "IPA_FRENCH": masterList = GagPhonetics.MasterListFR_FRENCH; break;
-            case "IPA_QUEBEC": masterList = GagPhonetics.MasterListFR_QUEBEC; break;
-            case "IPA_JAPAN": masterList = GagPhonetics.MasterListJP; break;
+            case GarbleCoreDialect.UK: masterList = GagPhonetics.MasterListEN_UK; break;
+            case GarbleCoreDialect.US: masterList = GagPhonetics.MasterListEN_US; break;
+            case GarbleCoreDialect.Spain: masterList = GagPhonetics.MasterListSP_SPAIN; break;
+            case GarbleCoreDialect.Mexico: masterList = GagPhonetics.MasterListSP_MEXICO; break;
+            case GarbleCoreDialect.France: masterList = GagPhonetics.MasterListFR_FRENCH; break;
+            case GarbleCoreDialect.Quebec: masterList = GagPhonetics.MasterListFR_QUEBEC; break;
+            case GarbleCoreDialect.Japan: masterList = GagPhonetics.MasterListJP; break;
             default: throw new Exception("Invalid language");
         }
 

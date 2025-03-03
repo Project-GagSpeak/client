@@ -13,15 +13,9 @@ namespace GagSpeak.Services.Tutorial;
 /// <summary> Service for the in-game tutorial. </summary>
 public class TutorialService
 {
-    private readonly UiSharedService _uiShared;
-
     private readonly Dictionary<TutorialType, Tutorial> _tutorials = new();
 
-    public TutorialService(UiSharedService uiShared)
-    {
-        _uiShared = uiShared;
-    }
-
+    public TutorialService() { }
     public bool IsTutorialActive(TutorialType type) => _tutorials[type].CurrentStep is not -1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,7 +83,7 @@ public class TutorialService
     public void InitializeTutorialStrings()
     {
         var mainUiStr = GSLoc.Tutorials.HelpMainUi;
-        _tutorials[TutorialType.MainUi] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.MainUi] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -119,7 +113,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.MainUi]);
 
         var remoteStr = GSLoc.Tutorials.HelpRemote;
-        _tutorials[TutorialType.Remote] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Remote] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -135,7 +129,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Remote]);
 
         var gagsStr = GSLoc.Tutorials.HelpGags;
-        _tutorials[TutorialType.Gags] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Gags] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -151,7 +145,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Gags]);
 
         var gagsStorageStr = GSLoc.Tutorials.HelpGagStorage;
-        _tutorials[TutorialType.GagStorage] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.GagStorage] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -166,7 +160,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.GagStorage]);
 
         var restraintsStr = GSLoc.Tutorials.HelpRestraints;
-        _tutorials[TutorialType.Restraints] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Restraints] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -201,7 +195,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Restraints]);
 
         var cursedLootStr = GSLoc.Tutorials.HelpCursedLoot;
-        _tutorials[TutorialType.CursedLoot] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.CursedLoot] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -221,7 +215,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.CursedLoot]);
 
         var toyboxStr = GSLoc.Tutorials.HelpToybox;
-        _tutorials[TutorialType.Toybox] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Toybox] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -236,7 +230,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Toybox]);
 
         var patternsStr = GSLoc.Tutorials.HelpPatterns;
-        _tutorials[TutorialType.Patterns] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Patterns] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -263,7 +257,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Patterns]);
 
         var triggersStr = GSLoc.Tutorials.HelpTriggers;
-        _tutorials[TutorialType.Triggers] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Triggers] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -287,7 +281,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Triggers]);
 
         var alarmsStr = GSLoc.Tutorials.HelpAlarms;
-        _tutorials[TutorialType.Alarms] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Alarms] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -307,7 +301,7 @@ public class TutorialService
         .EnsureSize(_tutorialSizes[TutorialType.Alarms]);
 
         var achievementsStr = GSLoc.Tutorials.HelpAchievements;
-        _tutorials[TutorialType.Achievements] = new Tutorial(_uiShared)
+        _tutorials[TutorialType.Achievements] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),

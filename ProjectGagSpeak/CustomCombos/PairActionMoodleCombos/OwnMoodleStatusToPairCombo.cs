@@ -14,8 +14,8 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
 {
     private readonly CharaIPCData _ownMoodles;
     public OwnMoodleStatusToPairCombo(float iconScale, MoodleStatusMonitor monitor, CharaIPCData data,
-        Pair pair, MainHub hub, ILogger log, UiSharedService ui, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, ui, bText, bTT, () =>
+        Pair pair, MainHub hub, ILogger log, string bText, string bTT)
+        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
         [
             ..data.MoodlesStatuses.OrderBy(x => x.Title),
         ])

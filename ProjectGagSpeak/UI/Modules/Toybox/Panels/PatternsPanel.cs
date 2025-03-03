@@ -14,14 +14,14 @@ public partial class PatternsPanel
     private readonly ILogger<PatternsPanel> _logger;
     private readonly PatternFileSelector _selector;
     private readonly PatternManager _manager;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public PatternsPanel(
         ILogger<PatternsPanel> logger,
         PatternFileSelector selector,
         PatternManager manager,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
@@ -43,7 +43,12 @@ public partial class PatternsPanel
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {
@@ -64,8 +69,8 @@ public partial class PatternsPanel
         using (ImRaii.Group())
         {
             // display name, then display the downloads and likes on the other side.
-            _ui.GagspeakText(activeItem.Label);
-            _ui.DrawHelpText("Description:--SEP--" + activeItem.Description);
+            CkGui.GagspeakText(activeItem.Label);
+            CkGui.DrawHelpText("Description:--SEP--" + activeItem.Description);
 
             // playback button
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X);
@@ -76,21 +81,21 @@ public partial class PatternsPanel
         using (var group2 = ImRaii.Group())
         {
             ImGui.AlignTextToFramePadding();
-            _ui.IconText(FontAwesomeIcon.Clock);
+            CkGui.IconText(FontAwesomeIcon.Clock);
             ImUtf8.SameLineInner();
-            UiSharedService.ColorText(durationTxt, ImGuiColors.DalamudGrey);
-            UiSharedService.AttachToolTip("Total Length of the Pattern.");
+            CkGui.ColorText(durationTxt, ImGuiColors.DalamudGrey);
+            CkGui.AttachToolTip("Total Length of the Pattern.");
 
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            _ui.IconText(FontAwesomeIcon.Stopwatch20);
+            CkGui.IconText(FontAwesomeIcon.Stopwatch20);
             ImUtf8.SameLineInner();
-            UiSharedService.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
-            UiSharedService.AttachToolTip("Start Point of the Pattern.");
+            CkGui.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
+            CkGui.AttachToolTip("Start Point of the Pattern.");
 
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - _ui.GetIconData(FontAwesomeIcon.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
-            _ui.IconText(FontAwesomeIcon.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
-            UiSharedService.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FontAwesomeIcon.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
+            CkGui.IconText(FontAwesomeIcon.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
+            CkGui.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
         }
     }
 

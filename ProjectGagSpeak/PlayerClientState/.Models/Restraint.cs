@@ -164,9 +164,9 @@ public class RestraintSet
     public string Description { get; internal set; } = string.Empty;
     public bool DoRedraw { get; internal set; } = false;
 
-    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; internal set; }
-    public GlamourBonusSlot Glasses { get; internal set; }
-    public List<IRestraintLayer> Layers { get; internal set; }
+    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; internal set; } = new Dictionary<EquipSlot, IRestraintSlot>();
+    public GlamourBonusSlot Glasses { get; internal set; } = new GlamourBonusSlot();
+    public List<IRestraintLayer> Layers { get; internal set; } = new List<IRestraintLayer>();
 
     // Satisfy IMetaToggles
     public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
@@ -174,8 +174,8 @@ public class RestraintSet
     public OptionalBool WeaponState { get; internal set; } = OptionalBool.Null;
 
     // Additional Appends
-    public List<ModAssociation> RestraintMods { get; internal set; }
-    public List<Moodle> RestraintMoodles { get; internal set; }
+    public List<ModAssociation> RestraintMods { get; internal set; } = new List<ModAssociation>();
+    public List<Moodle> RestraintMoodles { get; internal set; } = new List<Moodle>();
 
     internal RestraintSet() { }
 

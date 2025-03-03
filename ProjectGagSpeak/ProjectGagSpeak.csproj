@@ -186,6 +186,7 @@
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
     <ItemGroup>
+      <Folder Include="CkCommons\CkGui\Utils\" />
       <Folder Include="PlayerClientState\Toybox State\Caches\" />
     </ItemGroup>
 </Project>

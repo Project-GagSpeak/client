@@ -9,25 +9,23 @@ public class WardrobeTabs : IconTabBarBase<WardrobeTabs.SelectedTab>
 {
     public enum SelectedTab
     {
-        MyGags,
-        MyRestrictions,
         MyRestraints,
+        MyRestrictions,
+        MyGags,
         MyCursedLoot,
         MyModPresets,
     }
 
-    private readonly UiSharedService _ui;
-    public WardrobeTabs(UiSharedService ui)
+    public WardrobeTabs()
     {
-        _ui = ui;
-        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.MyGags, "Gags" +
-            "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-        
+        AddDrawButton(FontAwesomeIcon.DoorOpen, SelectedTab.MyRestraints, "Restraints" +
+            "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
+
         AddDrawButton(FontAwesomeIcon.Ring, SelectedTab.MyRestrictions, "Restrictions" +
             "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
 
-        AddDrawButton(FontAwesomeIcon.DoorOpen, SelectedTab.MyRestraints, "Restraints" +
-            "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
+        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.MyGags, "Gags" +
+            "--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
 
         AddDrawButton(FontAwesomeIcon.Gem, SelectedTab.MyCursedLoot, "Cursed Loot" +
             "--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
@@ -44,7 +42,7 @@ public class WardrobeTabs : IconTabBarBase<WardrobeTabs.SelectedTab>
         using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
 

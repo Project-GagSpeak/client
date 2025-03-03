@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -19,7 +20,6 @@ namespace GagSpeak.UI.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUI : WindowMediatorSubscriberBase
 {
-    private readonly UiSharedService _uiShared;
     private readonly MainHub _hub;
     private readonly GagspeakConfigService _configService;
     private readonly PairManager _pairManager;
@@ -38,15 +38,14 @@ public class MainUI : WindowMediatorSubscriberBase
     public string _pairToAdd = string.Empty; // the pair to add
     public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
 
-    public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator,
-        UiSharedService uiShared, MainHub hub, GagspeakConfigService configService,
-        PairManager pairManager, ServerConfigurationManager serverConfigs, HomepageTab homepage,
-        WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
+    public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
+        GagspeakConfigService config, PairManager pairManager, ServerConfigurationManager serverConfigs,
+        HomepageTab homepage, WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
         GlobalChatTab globalChat, AccountTab account, MainMenuTabs tabMenu, TutorialService tutorialService,
         IDalamudPluginInterface pi) : base(logger, mediator, "###GagSpeakMainUI")
     {
         _hub = hub;
-        _configService = configService;
+        _configService = config;
         _pairManager = pairManager;
         _serverConfigs = serverConfigs;
         _homepage = homepage;
@@ -57,7 +56,7 @@ public class MainUI : WindowMediatorSubscriberBase
         _account = account;
         _guides = tutorialService;
         _pi = pi;
-        _uiShared = uiShared;
+
         _tabMenu = tabMenu;
 
         AllowPinning = false;
@@ -164,7 +163,7 @@ public class MainUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // get the width of the window content region we set earlier
-        _windowContentWidth = UiSharedService.GetWindowContentRegionWidth();
+        _windowContentWidth = CkGui.GetWindowContentRegionWidth();
 
         if (MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized))
         {
@@ -192,7 +191,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 _ => "Unknown Reasoning for this error."
             };
             // push the notice that we are unsupported
-            using (_uiShared.UidFont.Push())
+            using (UiFontService.UidFont.Push())
             {
                 var uidTextSize = ImGui.CalcTextSize(errorTitle);
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X + ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
@@ -200,7 +199,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 ImGui.TextColored(ImGuiColors.ParsedPink, errorTitle);
             }
             // the wrapped text explanation based on the error.
-            UiSharedService.ColorTextWrapped(errorText, ImGuiColors.DalamudWhite);
+            CkGui.ColorTextWrapped(errorText, ImGuiColors.DalamudWhite);
         }
         else
         {
@@ -252,24 +251,24 @@ public class MainUI : WindowMediatorSubscriberBase
 
         var pos = ImGui.GetWindowPos();
         var size = ImGui.GetWindowSize();
-        if (_uiShared.LastMainUIWindowSize != size || _uiShared.LastMainUIWindowPosition != pos)
+        if (CkGui.LastMainUIWindowSize != size || CkGui.LastMainUIWindowPosition != pos)
         {
-            _uiShared.LastMainUIWindowSize = size;
-            _uiShared.LastMainUIWindowPosition = pos;
+            CkGui.LastMainUIWindowSize = size;
+            CkGui.LastMainUIWindowPosition = pos;
             Mediator.Publish(new CompactUiChange(size, pos));
         }
     }
 
     public void DrawAddPair(float availableXWidth, float spacingX)
     {
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
         ImGui.SetNextItemWidth(availableXWidth - buttonSize - spacingX);
         ImGui.InputTextWithHint("##otheruid", "Other players UID/Alias", ref _pairToAdd, 20);
         ImUtf8.SameLineInner();
         var existingUser = _pairManager.DirectPairs.Exists(p => string.Equals(p.UserData.UID, _pairToAdd, StringComparison.Ordinal) || string.Equals(p.UserData.Alias, _pairToAdd, StringComparison.Ordinal));
         using (ImRaii.Disabled(existingUser || string.IsNullOrEmpty(_pairToAdd)))
         {
-            if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
+            if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
             {
                 // call the UserAddPair function on the server with the user data transfer object
                 _ = _hub.UserSendPairRequest(new(new(_pairToAdd), _pairToAddMessage));
@@ -278,7 +277,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 _addingNewUser = false;
             }
         }
-        UiSharedService.AttachToolTip("Pair with " + (_pairToAdd.IsNullOrEmpty() ? "other user" : _pairToAdd));
+        CkGui.AttachToolTip("Pair with " + (_pairToAdd.IsNullOrEmpty() ? "other user" : _pairToAdd));
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
         ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _pairToAddMessage, 100);        
@@ -288,21 +287,21 @@ public class MainUI : WindowMediatorSubscriberBase
     private void DrawUIDHeader()
     {
         // fetch the Uid Text of yourself
-        var uidText = _uiShared.GetUidText();
+        var uidText = CkGui.GetUidText();
 
         // push the big boi font for the UID
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
             // display it, it should be green if connected and red when not.
-            ImGui.TextColored(_uiShared.GetUidColor(), uidText);
+            ImGui.TextColored(CkGui.UidColor(), uidText);
         }
 
         // if we are connected
         if (MainHub.ServerStatus is ServerState.Connected)
         {
-            UiSharedService.CopyableDisplayText(MainHub.DisplayName);
+            CkGui.CopyableDisplayText(MainHub.DisplayName);
 
             // if the UID does not equal the display name
             if (!string.Equals(MainHub.DisplayName, MainHub.UID, StringComparison.Ordinal))
@@ -311,9 +310,9 @@ public class MainUI : WindowMediatorSubscriberBase
                 var origTextSize = ImGui.CalcTextSize(MainHub.UID);
                 // adjust the cursor and redraw the UID (really not sure why this is here but we can trial and error later.
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - origTextSize.X / 2);
-                ImGui.TextColored(_uiShared.GetUidColor(), MainHub.UID);
+                ImGui.TextColored(CkGui.UidColor(), MainHub.UID);
                 // give it the same functionality.
-                UiSharedService.CopyableDisplayText(MainHub.UID);
+                CkGui.CopyableDisplayText(MainHub.UID);
             }
         }
     }
@@ -326,8 +325,8 @@ public class MainUI : WindowMediatorSubscriberBase
     {
         var windowPadding = ImGui.GetStyle().WindowPadding;
         var addUserIcon = FontAwesomeIcon.UserPlus;
-        var connectionButtonSize = _uiShared.GetIconButtonSize(FontAwesomeIcon.Link);
-        var addUserButtonSize = _uiShared.GetIconButtonSize(addUserIcon);
+        var connectionButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Link);
+        var addUserButtonSize = CkGui.IconButtonSize(addUserIcon);
 
         var userCount = MainHub.MainOnlineUsers.ToString(CultureInfo.InvariantCulture);
         var userSize = ImGui.CalcTextSize(userCount);
@@ -348,11 +347,11 @@ public class MainUI : WindowMediatorSubscriberBase
             // draw the add user button
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
-            if (_uiShared.IconButton(addUserIcon, disabled: !MainHub.IsConnected))
+            if (CkGui.IconButton(addUserIcon, disabled: !MainHub.IsConnected))
             {
                 _addingNewUser = !_addingNewUser;
             }
-            UiSharedService.AttachToolTip("Add New User to Whitelist");
+            CkGui.AttachToolTip("Add New User to Whitelist");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             // in the next column, draw the centered status.
@@ -361,7 +360,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (MainHub.IsConnected)
             {
                 // fancy math shit for clean display, adjust when moving things around
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth())
+                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth())
                     / 2 - (userSize.X + textSize.X) / 2 - ImGui.GetStyle().ItemSpacing.X / 2);
                 ImGui.TextColored(ImGuiColors.ParsedPink, userCount);
                 ImGui.SameLine();
@@ -370,21 +369,21 @@ public class MainUI : WindowMediatorSubscriberBase
             // otherwise, if we are not connected, display that we aren't connected.
             else
             {
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth())
+                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth())
                     / 2 - ImGui.CalcTextSize("Not connected to any server").X / 2 - ImGui.GetStyle().ItemSpacing.X / 2);
                 ImGui.TextColored(ImGuiColors.DalamudRed, "Not connected to any server");
             }
 
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().ItemSpacing.Y);
-            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth()) / 2 - shardTextSize.X / 2);
+            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - shardTextSize.X / 2);
             ImGui.TextUnformatted(serverText);
 
             // draw the connection link button
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
             // now we need to display the connection link button beside it.
-            var color = _uiShared.GetServerStateColor();
-            var connectedIcon = _uiShared.GetServerStateIcon(MainHub.ServerStatus);
+            var color = CkGui.ServerStateColor();
+            var connectedIcon = CkGui.ServerStateIcon(MainHub.ServerStatus);
 
             // if the server is reconnecting or disconnecting
             using (ImRaii.Disabled(MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting))
@@ -393,7 +392,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 using (ImRaii.PushColor(ImGuiCol.Text, color))
                 {
                     // then display it
-                    if (_uiShared.IconButton(connectedIcon))
+                    if (CkGui.IconButton(connectedIcon))
                     {
                         // If its true, make sure our ServerStatus is Connected, or if its false, make sure our ServerStatus is Disconnected or offline.
                         if (MainHub.ServerStatus is ServerState.Connected)
@@ -413,7 +412,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     }
                 }
                 // attach the tooltip for the connection / disconnection button)
-                UiSharedService.AttachToolTip(MainHub.IsConnected
+                CkGui.AttachToolTip(MainHub.IsConnected
                     ? "Disconnect from " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus
                     : "Connect to " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus);
             }

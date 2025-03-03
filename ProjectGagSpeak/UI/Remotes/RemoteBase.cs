@@ -20,16 +20,13 @@ namespace GagSpeak.UI.UiRemote;
 public abstract class RemoteBase : WindowMediatorSubscriberBase
 {
     // the class includes are shared however (i think), so dont worry about that.
-    private readonly UiSharedService _uiShared;
     private readonly SexToyManager _vibeService;
     protected readonly TutorialService _guides;
 
     public RemoteBase(ILogger logger, GagspeakMediator mediator, 
-        UiSharedService uiShared, SexToyManager vibeService,
-        TutorialService guides, 
-        string windowName): base(logger, mediator, windowName + " Remote")
+        SexToyManager vibeService, TutorialService guides, string windowName)
+        : base(logger, mediator, windowName + " Remote")
     {
-        _uiShared = uiShared;
         _vibeService = vibeService;
         _guides = guides;
 

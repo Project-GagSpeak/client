@@ -8,13 +8,11 @@ namespace GagSpeak.UI;
 public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 {
     private readonly GlobalChatTab _globalChat;
-    private readonly UiSharedService _uiShared;
     private readonly CosmeticService _cosmetics;
     public GlobalChatPopoutUI(ILogger<GlobalChatPopoutUI> logger, GagspeakMediator mediator,
-        GlobalChatTab globalChat, UiSharedService uiShared, CosmeticService cosmetics) : base(logger, mediator, "Global Chat Popout UI")
+        GlobalChatTab globalChat, CosmeticService cosmetics) : base(logger, mediator, "Global Chat Popout UI")
     {
         _globalChat = globalChat;
-        _uiShared = uiShared;
         _cosmetics = cosmetics;
 
         IsOpen = false;
@@ -54,7 +52,7 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        UiSharedService.AttachToolTip("Right-Click this area to close Global Chat Popout!");
+        CkGui.AttachToolTip("Right-Click this area to close Global Chat Popout!");
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
         {
             IsOpen = false;

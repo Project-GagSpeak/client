@@ -320,6 +320,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 return;
         }
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.Gag));
     }
 
     private void LoadV0(JToken? data)

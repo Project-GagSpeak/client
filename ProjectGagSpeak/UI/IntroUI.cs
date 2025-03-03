@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -20,8 +21,8 @@ public class IntroUi : WindowMediatorSubscriberBase
     private readonly GagspeakConfigService _configService;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly ClientMonitor _clientMonitor;
-    private readonly UiSharedService _uiShared;
     private readonly TutorialService _guides;
+
     private bool ThemePushed = false;
     private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
     private Task? _fetchAccountDetailsTask = null;
@@ -30,14 +31,14 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
         GagspeakConfigService configService, ServerConfigurationManager serverConfigs,
-        ClientMonitor clientMonitor, UiSharedService uiShared, TutorialService guides)
+        ClientMonitor clientMonitor, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {
         _hub = mainHub;
         _configService = configService;
         _serverConfigs = serverConfigs;
         _clientMonitor = clientMonitor;
-        _uiShared = uiShared;
+
         _guides = guides;
 
         IsOpen = false;
@@ -95,7 +96,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             DrawAcknowledgement();
         }
         // if the user has read the acknowledgements and the server is not alive, display the account creation window.
-        else if (!MainHub.IsServerAlive || !_configService.Config.AccountCreated)
+        else if (!MainHub.IsServerAlive || !_serverConfigs.HasValidConfig())
         {
             DrawAccountSetup();
         }
@@ -112,49 +113,49 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void DrawWelcomePage()
     {
-        _uiShared.GagspeakTitleText("Welcome to Project GagSpeak!");
+        CkGui.GagspeakTitleText("Welcome to Project GagSpeak!");
 
         ImGui.Separator();
         ImGui.TextWrapped("Project GagSpeak is a highly ambitious project that has been devloped over the course of a year in closed Beta, " +
             "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.");
         ImGui.Spacing();
-        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink)) _uiShared.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink)) CkGui.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
         // if the title text is pressed, proceed.
         if (ImGui.IsItemClicked()) _readFirstPage = true;
 
-        UiSharedService.ColorText("- KinkPlates™", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- KinkPlates™", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Customizable GagSpeak AdventurePlate to present yourself and/or predicament!");
 
-        UiSharedService.ColorText("- Puppeteer", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Puppeteer", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" A PuppetMaster Variant with Alias Lists, Per-Player triggers, and more!");
 
-        UiSharedService.ColorText("- Triggers & Patterns", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Triggers & Patterns", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Improved FFXIV-VibePlugin Variant with *all* functionalities");
 
-        UiSharedService.ColorText("- Alarms", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Alarms", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Behaves just like Lovense Alarms");
 
-        UiSharedService.ColorText("- GagSpeak Vibe Remotes", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- GagSpeak Vibe Remotes", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Mimiced Replica of Lovense Remote with Keybinds");
 
-        UiSharedService.ColorText("- Realistic Gag Garble Speech", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Realistic Gag Garble Speech", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Can account for up to 3 gags!");
 
-        UiSharedService.ColorText("- Restraint Sets", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Restriction Sets", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Lockable Glamour's on your Character.");
 
-        UiSharedService.ColorText("- Cursed Loot", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Cursed Loot", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Brings Bondage Mimic Chests to FFXIV duties!");
 
-        UiSharedService.ColorText("- Hardcore Control", ImGuiColors.ParsedGold);
+        CkGui.ColorText("- Hardcore Control", ImGuiColors.ParsedGold);
         ImGui.SameLine();
         ImGui.Text(" Maximize Immersion and Helplessness with others (at your own risk!)");
 
@@ -165,22 +166,22 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void DrawAcknowledgement()
     {
-        using (_uiShared.GagspeakTitleFont.Push())
+        using (UiFontService.GagspeakTitleFont.Push())
         {
             ImGuiUtil.Center("Acknowledgement Of Usage & Privacy");
         }
         ImGui.Separator();
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
-            UiSharedService.ColorTextCentered("YOU WILL ONLY SEE THIS PAGE ONCE.", ImGuiColors.DalamudRed);
-            UiSharedService.ColorTextCentered("PLEASE READ CAREFULLY BEFORE PROCEEDING.", ImGuiColors.DalamudRed);
+            CkGui.ColorTextCentered("YOU WILL ONLY SEE THIS PAGE ONCE.", ImGuiColors.DalamudRed);
+            CkGui.ColorTextCentered("PLEASE READ CAREFULLY BEFORE PROCEEDING.", ImGuiColors.DalamudRed);
         }
         ImGui.Separator();
 
         ImGui.TextWrapped("Being a Server-Side Plugin, and a plugin full of kinky individuals, we all know there will always be some of *those* people " +
             "who will try to ruin the fun for everyone.");
         ImGui.Spacing();
-        UiSharedService.ColorTextWrapped("As Such, by joining GagSpeak, you must acknowledge & accept the following:", ImGuiColors.DalamudRed);
+        CkGui.ColorTextWrapped("As Such, by joining GagSpeak, you must acknowledge & accept the following:", ImGuiColors.DalamudRed);
 
         using var borderColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.DalamudRed);
         using var scrollbarSize = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
@@ -188,20 +189,20 @@ public class IntroUi : WindowMediatorSubscriberBase
         using (ImRaii.Child("AgreementWindow", new Vector2(ImGui.GetContentRegionAvail().X, 300f), true))
         {
             ImGui.Spacing();
-            UiSharedService.ColorText("Consent:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Consent:", ImGuiColors.ParsedGold);
             ImGui.TextWrapped("BDSM, at its foundation, highly values the aspest of consent. By using GagSpeak, you understand that you must abide by boundaries " +
                 "others set for you, and the limits that they define. If you push these limits against their will or pressure them to give you more than they are comfortable with, it will not be tolerated.");
             ImGui.Spacing();
             ImGui.Spacing();
 
 
-            UiSharedService.ColorText("Privacy:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Privacy:", ImGuiColors.ParsedGold);
             ImGui.TextWrapped("You Acknowledge that when using GagSpeak, your personal information such as Character Name and Homeworld are censored and replaced with " +
                 "an anonymous identity. If you give up this information about you and it is used against you, that is of your own fault. Be responsible about how you go about meeting up with others.");
             ImGui.Spacing();
             ImGui.Spacing();
 
-            UiSharedService.ColorText("Hardcore Control:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Hardcore Control:", ImGuiColors.ParsedGold);
             ImGui.TextWrapped("Hardcore Functionality in GagSpeak directly affects your game at a core level, such as preventing you from typing, blocking your sight, restricting you from movement, " +
                 "forcing you to perform emotes, blocking out certain actions from being used, and controling the GCD's of your actions.");
             ImGui.Spacing();
@@ -210,7 +211,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             ImGui.Spacing();
             ImGui.Spacing();
 
-            UiSharedService.ColorText("Predatory Behavior:", ImGuiColors.DalamudRed);
+            CkGui.ColorText("Predatory Behavior:", ImGuiColors.DalamudRed);
             ImGui.TextWrapped("The Main Dev of GagSpeak has endured years of manipulative predatory abuse, and as such with firsthand experience, is familiar with what kinds of reports and behaviors to " +
                 "identify as 'bait reports' or 'actual reports'. Reports are handled very carefully by our team, and taken very seriously.");
             ImGui.Spacing();
@@ -220,7 +221,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         }
 
         ImGui.Spacing();
-        UiSharedService.ColorTextCentered("Click this Button below once you have read and understood the above.", ImGuiColors.DalamudRed);
+        CkGui.ColorTextCentered("Click this Button below once you have read and understood the above.", ImGuiColors.DalamudRed);
         if(ImGui.Button("Proceed To Account Creation.", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeightWithSpacing())))
         {
             _configService.Config.AcknowledgementUnderstood = true;
@@ -231,27 +232,27 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void DrawAccountSetup()
     {
-        using (_uiShared.GagspeakTitleFont.Push())
+        using (UiFontService.GagspeakTitleFont.Push())
         {
             ImGuiUtil.Center("Primary Account Creation");
         }
         ImGui.Separator();
         ImGui.Spacing();
 
-        UiSharedService.ColorText("Generating your Primary Account", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Generating your Primary Account", ImGuiColors.ParsedGold);
         ImGui.TextWrapped("You can ONLY PRESS THE BUTTON BELOW ONCE.");
-        UiSharedService.ColorTextWrapped("The Primary Account IS LINKED TO YOUR CURRENTLY LOGGED IN CHARACTER.", ImGuiColors.DalamudRed);
+        CkGui.ColorTextWrapped("The Primary Account IS LINKED TO YOUR CURRENTLY LOGGED IN CHARACTER.", ImGuiColors.DalamudRed);
         ImGui.TextWrapped("If you wish have your primary account on another character, log into them first!");
         ImGui.Spacing();
 
         ImGui.AlignTextToFramePadding();
-        UiSharedService.ColorText("Generate Primary Account: ", ImGuiColors.ParsedGold);
+        CkGui.ColorText("Generate Primary Account: ", ImGuiColors.ParsedGold);
 
         // Under the condition that we are not recovering an account, display the primary account generator:
         if (_secretKey.IsNullOrWhitespace())
         {
             // generate a secret key for the user and attempt initial connection when pressed.
-            if (_uiShared.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
+            if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
             {
                 _configService.Config.ButtonUsed = true;
                 _configService.Save();
@@ -260,7 +261,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             // while we are awaiting to fetch the details and connect display a please wait text.
             if (_fetchAccountDetailsTask != null && !_fetchAccountDetailsTask.IsCompleted)
             {
-                UiSharedService.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
+                CkGui.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
             }
         }
 
@@ -271,19 +272,19 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         // Below this we will provide the user with a space to insert an existing UID & Key to
         // log back into a account they already have if they needed to reset for any reason.
-        _uiShared.GagspeakBigText("Does your Character already have a Primary Account?");
-        UiSharedService.ColorText("Retreive the key from where you saved it, or the discord bot, and insert it below.", ImGuiColors.ParsedGold);
+        CkGui.GagspeakBigText("Does your Character already have a Primary Account?");
+        CkGui.ColorText("Retreive the key from where you saved it, or the discord bot, and insert it below.", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * .85f);
         ImGui.InputText("Key##RefNewKey", ref _secretKey, 64);
 
         ImGui.Spacing();
-        UiSharedService.ColorText("ServerState (For Debug Purposes): " + MainHub.ServerStatus, ImGuiColors.DalamudGrey);
-        UiSharedService.ColorText("Auth Exists for character (Debug): " + _serverConfigs.AuthExistsForCurrentLocalContentId(), ImGuiColors.DalamudGrey);
+        CkGui.ColorText("ServerState (For Debug Purposes): " + MainHub.ServerStatus, ImGuiColors.DalamudGrey);
+        CkGui.ColorText("Auth Exists for character (Debug): " + _serverConfigs.AuthExistsForCurrentLocalContentId(), ImGuiColors.DalamudGrey);
         if(_secretKey.Length == 64)
         {
-            UiSharedService.ColorText("Connect with existing Key?", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Connect with existing Key?", ImGuiColors.ParsedGold);
             ImGui.SameLine();
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
             {
                 _logger.LogInformation("Creating Authentication for current character.");
                 try
@@ -317,12 +318,12 @@ public class IntroUi : WindowMediatorSubscriberBase
                     _logger.LogError(ex, "Failed to create authentication for current character.");
                 }
             }
-            UiSharedService.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
+            CkGui.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
         }
 
         if (_initialAccountCreationTask is not null && !_initialAccountCreationTask.IsCompleted)
         {
-            UiSharedService.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
+            CkGui.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
         }
     }
 

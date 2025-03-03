@@ -41,19 +41,19 @@ public partial class PairStickyUI
 
 
         // Button to open vibe remote for a select pair.
-        if (_ui.IconTextButton(FontAwesomeIcon.Mobile, createRemoteText, WindowMenuWidth, true, openVibeRemoteDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Mobile, createRemoteText, WindowMenuWidth, true, openVibeRemoteDisabled))
         {
             // open a new private hosted room between the two of you automatically.
             _logger.LogDebug("Vibe Remote instance button pressed for " + PermissionData.DispName);
         }
-        UiSharedService.AttachToolTip(createRemoteTT);
+        CkGui.AttachToolTip(createRemoteTT);
 
 
         // Expander for executing a pattern on another pair.
         var disablePatternExpand = !SPair.PairPerms.ExecutePatterns || !SPair.PairGlobals.ToysAreConnected;
-        if (_ui.IconTextButton(FontAwesomeIcon.PlayCircle, executePatternText, WindowMenuWidth, true, patternExecuteDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.PlayCircle, executePatternText, WindowMenuWidth, true, patternExecuteDisabled))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.StartPattern) ? InteractionType.None : InteractionType.StartPattern;
-        UiSharedService.AttachToolTip(executePatternTT);
+        CkGui.AttachToolTip(executePatternTT);
 
         // Pattern Execution
         if (PairCombos.Opened is InteractionType.StartPattern)
@@ -64,7 +64,7 @@ public partial class PairStickyUI
         }
 
         // Stop a Pattern
-        if (_ui.IconTextButton(FontAwesomeIcon.StopCircle, stopPatternText, WindowMenuWidth, true, patternStopDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.StopCircle, stopPatternText, WindowMenuWidth, true, patternStopDisabled))
         {
             var idToStop = SPair.LastToyboxData.ActivePattern;
             // Construct the dto, and then send it off.
@@ -76,13 +76,13 @@ public partial class PairStickyUI
             PairCombos.Opened = InteractionType.None;
             _logger.LogDebug("Stopped active Pattern running on " + PermissionData.DispName + "'s toy", LoggerType.Permissions);
         }
-        UiSharedService.AttachToolTip(stopPatternTT);
+        CkGui.AttachToolTip(stopPatternTT);
 
         // Expander for toggling an alarm.
         var disableAlarmExpand = !SPair.PairPerms.ToggleAlarms || !lastLightStorage.Alarms.Any();
-        if (_ui.IconTextButton(FontAwesomeIcon.Clock, toggleAlarmText, WindowMenuWidth, true, alarmToggleDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Clock, toggleAlarmText, WindowMenuWidth, true, alarmToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleAlarm ? InteractionType.None : InteractionType.ToggleAlarm;
-        UiSharedService.AttachToolTip(toggleAlarmTT);
+        CkGui.AttachToolTip(toggleAlarmTT);
 
         if (PairCombos.Opened is InteractionType.ToggleAlarm)
         {
@@ -93,9 +93,9 @@ public partial class PairStickyUI
 
         // Expander for toggling a trigger.
         var disableTriggerExpand = !SPair.PairPerms.ToggleTriggers || !lastLightStorage.Triggers.Any();
-        if (_ui.IconTextButton(FontAwesomeIcon.LandMineOn, toggleTriggerText, WindowMenuWidth, true, triggerToggleDisabled))
+        if (CkGui.IconTextButton(FontAwesomeIcon.LandMineOn, toggleTriggerText, WindowMenuWidth, true, triggerToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleTrigger ? InteractionType.None : InteractionType.ToggleTrigger;
-        UiSharedService.AttachToolTip(toggleTriggerTT);
+        CkGui.AttachToolTip(toggleTriggerTT);
 
         if (PairCombos.Opened is InteractionType.ToggleTrigger)
         {

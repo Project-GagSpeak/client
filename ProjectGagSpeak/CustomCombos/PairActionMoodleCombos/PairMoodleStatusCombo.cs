@@ -11,9 +11,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    public PairMoodleStatusCombo(float iconScale, MoodleStatusMonitor monitor, Pair pair, MainHub hub,
-        ILogger log, UiSharedService ui, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, ui, bText, bTT, () =>
+    public PairMoodleStatusCombo(float iconScale, MoodleStatusMonitor monitor, Pair pair,
+        MainHub hub, ILogger log, string bText, string bTT)
+        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
         [
             ..pair.LastIpcData.MoodlesStatuses.OrderBy(x => x.Title),
         ])

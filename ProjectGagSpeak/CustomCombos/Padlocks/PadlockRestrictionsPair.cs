@@ -13,8 +13,8 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
     private int CurrentLayer;
-    public PairRestrictionPadlockCombo(int layer, Pair pair, MainHub hub, ILogger log, UiSharedService ui)
-        : base(() => pair.LastRestrictionsData.Restrictions[layer], log, ui, "PairRestrictionPadlock" + layer)
+    public PairRestrictionPadlockCombo(int layer, Pair pair, MainHub hub, ILogger log)
+        : base(() => pair.LastRestrictionsData.Restrictions[layer], log, "PairRestrictionPadlock" + layer)
     {
         CurrentLayer = layer;
         _mainHub = hub;

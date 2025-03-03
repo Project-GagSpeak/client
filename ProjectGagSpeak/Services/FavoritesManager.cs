@@ -19,7 +19,7 @@ public class FavoritesManager : IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = true, ser.Favorites).Item2;
+    public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = false, ser.Favorites).Item2;
     public string JsonSerialize() => throw new NotImplementedException();
     public FavoritesManager(HybridSaveService saver)
     {
@@ -46,6 +46,7 @@ public class FavoritesManager : IHybridSavable
         if (!File.Exists(file))
         {
             GagSpeak.StaticLog.Warning("No Favorites Config file found at {0}", file);
+            _saver.Save(this);
             return;
         }
 
@@ -85,7 +86,11 @@ public class FavoritesManager : IHybridSavable
             _ => false
         };
 
-        if (res) _saver.Save(this);
+        if (res)
+        {
+            GagSpeak.StaticLog.Information("Added {0} to favorites.", type);
+            _saver.Save(this);
+        }
 
         return res;
     }

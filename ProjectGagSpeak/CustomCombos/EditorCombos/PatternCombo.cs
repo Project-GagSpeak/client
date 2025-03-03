@@ -18,12 +18,10 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class PatternCombo : CkFilterComboCache<Pattern>
 {
     private readonly FavoritesManager _favorites;
-    private readonly UiSharedService _uiShared;
-    public PatternCombo(PatternManager patterns, FavoritesManager favorites, UiSharedService ui, ILogger log)
+    public PatternCombo(PatternManager patterns, FavoritesManager favorites, ILogger log)
         : base(() => GetPatterns(favorites, patterns), log)
     {
         _favorites = favorites;
-        _uiShared = ui;
         SearchByParts = true;
     }
 
@@ -58,12 +56,12 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
 
             // draw the shouldLoop icon.
-            _uiShared.IconText(FontAwesomeIcon.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
-            if (pattern.ShouldLoop) UiSharedService.AttachToolTip("This is a Looping Pattern.");
+            CkGui.IconText(FontAwesomeIcon.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+            if (pattern.ShouldLoop) CkGui.AttachToolTip("This is a Looping Pattern.");
 
             // draw the info icon.
             ImGui.SameLine();
-            _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
             DrawItemTooltip(pattern);
         }
 
@@ -94,10 +92,10 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (item.Description.Contains(UiSharedService.TooltipSeparator, StringComparison.Ordinal))
+                if (item.Description.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = item.Description.Split(UiSharedService.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = item.Description.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {
@@ -114,12 +112,12 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
                 ImGui.Separator();
             }
 
-            UiSharedService.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             var durationStr = item.Duration.Hours > 0 ? item.Duration.ToString("hh\\:mm\\:ss") : item.Duration.ToString("mm\\:ss");
             ImGui.Text(durationStr);
 
-            UiSharedService.ColorText("Loops?:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Loops?:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             ImGui.Text(item.ShouldLoop ? "Yes" : "No");
 

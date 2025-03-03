@@ -12,6 +12,7 @@ public class ConfigFileProvider : IConfigFileProvider
     // Shared Config Directories
     public readonly string GagSpeakDirectory;
     public readonly string EventDirectory;
+    public readonly string FileSystemDirectory;
 
     // Shared Client Configs
     public readonly string MainConfig;
@@ -19,8 +20,14 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string RecentGlobalChat;
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
-    public readonly string SortFilers;
     public readonly string Favorites;
+    public string CKFS_GagRestrictions => Path.Combine(FileSystemDirectory, "fs-gagrestrictions.json");
+    public string CKFS_Restrictions => Path.Combine(FileSystemDirectory, "fs-restrictions.json");
+    public string CKFS_RestraintSets => Path.Combine(FileSystemDirectory, "fs-restraintsets.json");
+    public string CKFS_CursedLoot => Path.Combine(FileSystemDirectory, "fs-cursedloot.json");
+    public string CKFS_Patterns => Path.Combine(FileSystemDirectory, "fs-patterns.json");
+    public string CKFS_Alarms => Path.Combine(FileSystemDirectory, "fs-alarms.json");
+    public string CKFS_Triggers => Path.Combine(FileSystemDirectory, "fs-triggers.json");
 
     // Shared Server Configs
     public readonly string Nicknames;
@@ -42,12 +49,12 @@ public class ConfigFileProvider : IConfigFileProvider
     {
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
+        FileSystemDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
         RecentGlobalChat = Path.Combine(GagSpeakDirectory, "global-chat-recent.json");
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
-        SortFilers = Path.Combine(GagSpeakDirectory, "file-system-arrangements.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");

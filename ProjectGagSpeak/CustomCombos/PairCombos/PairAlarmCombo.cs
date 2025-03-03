@@ -18,10 +18,10 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairAlarmCombo(Pair pairData, MainHub mainHub, ILogger log, UiSharedService uiShared, string bText, string bTT) 
+    public PairAlarmCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT) 
         : base(() => [
             .. pairData.LastLightStorage.Alarms.OrderBy(x => x.Label),
-        ], log, uiShared, FontAwesomeIcon.Bell, bText, bTT)
+        ], log, FontAwesomeIcon.Bell, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -45,14 +45,14 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
         var localTime = alarm.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
         using (ImRaii.Group())
         {
-            _uiShared.IconText(FontAwesomeIcon.Stopwatch, ImGuiColors.ParsedGold);
+            CkGui.IconText(FontAwesomeIcon.Stopwatch, ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
-            UiSharedService.ColorText(localTime + "(Your Time)", ImGuiColors.ParsedGold);
+            CkGui.ColorText(localTime + "(Your Time)", ImGuiColors.ParsedGold);
         }
 
         // shift over to draw an info button.
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        _uiShared.IconText(FontAwesomeIcon.WaveSquare, ImGuiColors.ParsedPink);
+        CkGui.IconText(FontAwesomeIcon.WaveSquare, ImGuiColors.ParsedPink);
         DrawItemTooltip(alarm);
 
         return ret;
@@ -89,7 +89,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
             ImGui.Separator();
 
             // Draw the alarm time.
-            UiSharedService.ColorText("Goes Off @", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Goes Off @", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             var localTime = item.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
             ImGui.Text(localTime);
@@ -98,7 +98,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
             if(_pairRef.LastLightStorage.Patterns.FirstOrDefault(x => x.Id == item.Id) is { } pattern)
             {
-                UiSharedService.ColorText("Alarm plays the Pattern:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Alarm plays the Pattern:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(pattern.Label);
             }

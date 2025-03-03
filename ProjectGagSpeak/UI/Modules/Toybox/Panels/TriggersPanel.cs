@@ -22,7 +22,7 @@ public partial class TriggersPanel
     private readonly RestraintManager _restraints;
     private readonly TriggerManager _manager;
     private readonly VisualApplierMoodles _moodles;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     // Custom Combo's:
@@ -38,7 +38,7 @@ public partial class TriggersPanel
         RestraintManager restraints,
         TriggerManager manager,
         VisualApplierMoodles moodles,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
@@ -60,7 +60,12 @@ public partial class TriggersPanel
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {

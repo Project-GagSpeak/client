@@ -5,6 +5,7 @@ using Dalamud.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Visual;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
@@ -32,14 +33,13 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private readonly VisualApplierMoodles _moodles;
     private readonly UserPairListHandler _pairList;
     private readonly ClientMonitor _clientMonitor;
-    private readonly UiSharedService _uiShared;
-
+    private readonly CkGui _ckGui;
     public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
         MainHub hub, GlobalData clientData, PuppeteerComponents components,
         GagRestrictionManager gags, RestrictionManager restrictions,
         RestraintManager restraints, PuppeteerManager manager,
         VisualApplierMoodles moodles, UserPairListHandler pairList,
-        ClientMonitor clientMonitor, UiSharedService uiShared) : base(logger, mediator, "Puppeteer UI")
+        ClientMonitor clientMonitor, CkGui uiShared) : base(logger, mediator, "Puppeteer UI")
     {
         _hub = hub;
         _clientData = clientData;
@@ -51,9 +51,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         _moodles = moodles;
         _pairList = pairList;
         _clientMonitor = clientMonitor;
-        _uiShared = uiShared;
+        _ckGui = uiShared;
 
-        _tabMenu = new PuppeteerTabs(manager, uiShared);
+        _tabMenu = new PuppeteerTabs(manager);
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -91,8 +91,6 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                 _puppetManager.StopEditing();
             }
         }
-        _components.ExpandedAliasItems.Clear();
-
     }
 
 
@@ -153,17 +151,17 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawGlobalPuppeteer()
     {
-        using (_uiShared.GagspeakTitleFont.Push()) ImGuiUtil.Center("Global Alias Triggers");
+        using (UiFontService.GagspeakTitleFont.Push()) ImGuiUtil.Center("Global Alias Triggers");
         ImGui.Separator();
         DrawAliasList(_puppetManager.GlobalAliasStorage);
     }
 
     private void DrawTriggerPhrases()
     {
-        using (_uiShared.GagspeakTitleFont.Push()) ImGuiUtil.Center("Trigger Phrases");
+        using (UiFontService.GagspeakTitleFont.Push()) ImGuiUtil.Center("Trigger Phrases");
         ImGui.Separator();
 
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(5f * _uiShared.GetFontScalerFloat(), 0));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(5f * _ckGui.GetFontScalerFloat(), 0));
         using (ImRaii.Table("##TriggersDisplayForPair", 2, ImGuiTableFlags.BordersInnerV))
         {
             ImGui.TableSetupColumn("##LeftColumn", ImGuiTableColumnFlags.WidthFixed, ImGui.GetContentRegionAvail().X / 2);
@@ -247,7 +245,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             // setup the listener name if any.
             using (ImRaii.PushFont(UiBuilder.MonoFont))
                 ImGui.TextUnformatted(_puppetManager.PairAliasStorage[pair.UserData.UID].StoredNameWorld);
-            UiSharedService.AttachToolTip("The In Game Character that can use your trigger phrases below on you");
+            CkGui.AttachToolTip("The In Game Character that can use your trigger phrases below on you");
 
             // draw the trigger phrase box based on if we are editing or not.
             if (isEditingTriggerOptions)
@@ -342,7 +340,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             {
                 if (_puppetManager.ActiveEditorItem is not null)
                 {
-                    _components.DrawAliasItemEditBox(aliasItem, lightSets, ipcData, out var wasRemoved);
+                    _components.DrawAliasItemEditBox(aliasItem, out var wasRemoved);
                     if (wasRemoved)
                     {
                         // delete and early return to prevent null draws.
@@ -350,8 +348,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
                         return;
                     }
                 }
-                // otherwise, draw the normal box.
-                _components.DrawAliasItemBox(aliasItem.Identifier.ToString(), aliasItem, lightSets, ipcData);
+                else _components.DrawAliasItemBox(aliasItem.Identifier.ToString(), aliasItem);
             }
         }
     }
@@ -364,7 +361,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         // if any of our data is invalid, do not show.
         if (MainHub.ServerStatus is not ServerState.Connected || pair.LastAliasData is null)
         {
-            _uiShared.BigText("Not Connected, or required Data is null!");
+            CkGui.BigText("Not Connected, or required Data is null!");
             return;
         }
 
@@ -383,7 +380,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
             if (pair.LastAliasData.AliasList.Count <= 0)
             {
-                _uiShared.GagspeakBigText("No Alias's found from this Kinkster!");
+                CkGui.GagspeakBigText("No Alias's found from this Kinkster!");
                 return;
             }
 
@@ -395,7 +392,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
             // Draw out the pairs list
             foreach (var alias in items)
-                _components.DrawAliasItemBox(alias.Identifier.ToString(), alias, lightRestraints, moodlesInfo);
+                _components.DrawAliasItemBox(alias.Identifier.ToString(), alias);
         }
     }
 
@@ -403,9 +400,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         Action? onAdd = null, Action<bool>? onEditToggle = null)
     {
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
-        var editSize = showEdit ? _uiShared.GetIconButtonSize(FontAwesomeIcon.Edit).X + spacing : 0;
-        var addNewSize = showAdd ? _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Plus, "New Alias") + spacing : 0;
-        var clearSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing;
+        var editSize = showEdit ? CkGui.IconButtonSize(FontAwesomeIcon.Edit).X + spacing : 0;
+        var addNewSize = showAdd ? CkGui.IconTextButtonSize(FontAwesomeIcon.Plus, "New Alias") + spacing : 0;
+        var clearSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing;
 
         var spaceLeft = editSize + addNewSize + clearSize;
 
@@ -413,29 +410,29 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255);
 
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
             AliasSearchString = string.Empty;
-        UiSharedService.AttachToolTip("Clear the search filter.");
+        CkGui.AttachToolTip("Clear the search filter.");
 
         // Dont show the rest if we are not editing.
         if (showAdd)
         {
             ImUtf8.SameLineInner();
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: !isEditing))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: !isEditing))
             {
                 _logger.LogDebug("Adding new Alias");
                 onAdd?.Invoke();
             }
-            UiSharedService.AttachToolTip("Add a new Alias to the list.");
+            CkGui.AttachToolTip("Add a new Alias to the list.");
         }
 
         if (showEdit)
         {
             ImUtf8.SameLineInner();
             using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))
-                if (_uiShared.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
+                if (CkGui.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
                     onEditToggle?.Invoke(!isEditing);
-            UiSharedService.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
+            CkGui.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
         }
     }
 }

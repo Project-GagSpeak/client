@@ -18,10 +18,8 @@ public class MigrationTabs : IconTabBarBase<MigrationTabs.SelectedTab>
         Triggers,
     }
 
-    private readonly UiSharedService _ui;
-    public MigrationTabs(UiSharedService ui)
+    public MigrationTabs()
     {
-        _ui = ui;
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Gags, "Transfer Gag Storage Data" +
             "--SEP--Migrate Gag Storage from another Account!");
 
@@ -52,7 +50,7 @@ public class MigrationTabs : IconTabBarBase<MigrationTabs.SelectedTab>
         using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
 

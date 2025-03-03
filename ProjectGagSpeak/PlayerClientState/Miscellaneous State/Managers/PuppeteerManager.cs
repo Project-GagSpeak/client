@@ -8,6 +8,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
+using OtterGui.Text.Widget.Editors;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -216,6 +217,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 return;
         }
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.Puppeteer));
     }
 
     private void LoadV0(JToken? data)

@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using GagSpeak.Achievements;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
@@ -21,19 +22,16 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     private readonly AchievementManager _achievementManager;
     private readonly AchievementTabs _tabMenu;
     private readonly CosmeticService _cosmeticTextures;
-    private readonly UiSharedService _uiShared;
-    // for theme management
     public bool ThemePushed = false;
 
     public AchievementsUI(ILogger<AchievementsUI> logger, GagspeakMediator mediator,
         AchievementManager achievementManager, AchievementTabs tabMenu,
-        CosmeticService cosmeticTextures, UiSharedService uiShared, IDalamudPluginInterface pi)
+        CosmeticService cosmeticTextures, IDalamudPluginInterface pi)
         : base(logger, mediator, "###GagSpeakAchievementsUI")
     {
         _achievementManager = achievementManager;
         _tabMenu = tabMenu;
         _cosmeticTextures = cosmeticTextures;
-        _uiShared = uiShared;
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -73,7 +71,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // get the width of the window content region we set earlier
-        var contentRegion = UiSharedService.GetWindowContentRegionWidth();
+        var contentRegion = CkGui.GetWindowContentRegionWidth();
 
         using (ImRaii.PushId("AchievementsHeader")) CenteredHeader();
 
@@ -122,7 +120,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     private void CenteredHeader()
     {
         var text = "GagSpeak Achievements (" + AchievementManager.Completed + "/" + AchievementManager.Total + ")";
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(text);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
@@ -160,16 +158,16 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     public void DrawSearchFilter(float availableWidth, float spacingX)
     {
-        var clearButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
-        var resetButtonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.SyncAlt, "Reset");
+        var clearButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var resetButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.SyncAlt, "Reset");
 
 #if DEBUG 
-        if (_uiShared.IconTextButton(FontAwesomeIcon.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
+        if (CkGui.IconTextButton(FontAwesomeIcon.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
         {
             // fire and forget.
             _ = _achievementManager.ResetAchievementData();
         }
-        UiSharedService.AttachToolTip("Reset all Achievement Progress and Data.--SEP--Must hold CTRL+SHIFT to execute.--SEP--THIS ACTION IS NOT REVERSABLE.");
+        CkGui.AttachToolTip("Reset all Achievement Progress and Data.--SEP--Must hold CTRL+SHIFT to execute.--SEP--THIS ACTION IS NOT REVERSABLE.");
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(availableWidth - clearButtonSize - resetButtonSize - spacingX * 2);
 #else
@@ -181,11 +179,11 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             AchievementSearchString = filter;
         }
         ImUtf8.SameLineInner();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
         {
             AchievementSearchString = string.Empty;
         }
-        UiSharedService.AttachToolTip("Clear the search filter.");
+        CkGui.AttachToolTip("Clear the search filter.");
     }
 
     private static Vector2 AchievementIconSize = new(96, 96);
@@ -225,33 +223,33 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                         var color = achievementItem.IsCompleted ? ImGuiColors.ParsedGold : (progress != 0 ? ImGuiColors.DalamudGrey : ImGuiColors.DalamudGrey3);
                         var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
                         ImGui.AlignTextToFramePadding();
-                        _uiShared.IconText(icon, color);
-                        UiSharedService.AttachToolTip(tooltip);
+                        CkGui.IconText(icon, color);
+                        CkGui.AttachToolTip(tooltip);
 
                         // beside it, draw out the achievement's Title in white text.
                         ImUtf8.SameLineInner();
                         ImGui.AlignTextToFramePadding();
-                        using (ImRaii.PushFont(UiBuilder.MonoFont)) UiSharedService.ColorText(achievementItem.Title, ImGuiColors.ParsedGold);
+                        using (ImRaii.PushFont(UiBuilder.MonoFont)) CkGui.ColorText(achievementItem.Title, ImGuiColors.ParsedGold);
                         // Split between the title and description
                         ImGui.Separator();
 
                         ImGui.AlignTextToFramePadding();
-                        _uiShared.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+                        CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
 
                         ImUtf8.SameLineInner();
                         ImGui.AlignTextToFramePadding();
                         var descText = achievementItem.IsSecretAchievement ? "????" : achievementItem.Description;
-                        UiSharedService.TextWrapped(descText);
+                        CkGui.TextWrapped(descText);
                         if (achievementItem.IsSecretAchievement)
                         {
-                            UiSharedService.AttachToolTip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
+                            CkGui.AttachToolTip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
                         }
                     }
                     // underneath this, we should draw the current progress towards the goal.
                     DrawProgressForAchievement(achievementItem);
                     if(ImGui.IsItemHovered() && achievementItem is DurationAchievement)
                     {
-                        UiSharedService.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
+                        CkGui.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
                     }
 
                     // draw the text in the second column.
@@ -329,21 +327,21 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         drawList.AddRectFilled( // The Outer Border of the progress bar
             progressBarDrawStart with { X = progressBarDrawStart.X - ProgressBarBorder - 1, Y = progressBarDrawStart.Y - ProgressBarBorder - 1 },
             progressBarDrawEnd with { X = progressBarDrawEnd.X + ProgressBarBorder + 1, Y = progressBarDrawEnd.Y + ProgressBarBorder + 1 },
-            UiSharedService.Color(0, 0, 0, Transparency),
+            CkGui.Color(0, 0, 0, Transparency),
             25f,
             ImDrawFlags.RoundCornersAll);
 
         drawList.AddRectFilled( // The inner Border of the progress bar
             progressBarDrawStart with { X = progressBarDrawStart.X - ProgressBarBorder, Y = progressBarDrawStart.Y - ProgressBarBorder },
             progressBarDrawEnd with { X = progressBarDrawEnd.X + ProgressBarBorder, Y = progressBarDrawEnd.Y + ProgressBarBorder },
-            UiSharedService.Color(220, 220, 220, Transparency),
+            CkGui.Color(220, 220, 220, Transparency),
             25f,
             ImDrawFlags.RoundCornersAll);
 
         drawList.AddRectFilled( // The progress bar background
             progressBarDrawStart,
             progressBarDrawEnd,
-            UiSharedService.Color(0, 0, 0, Transparency),
+            CkGui.Color(0, 0, 0, Transparency),
             25f,
             ImDrawFlags.RoundCornersAll);
 
@@ -353,17 +351,17 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             drawList.AddRectFilled( // The progress bar fill
                 progressBarDrawStart,
                 progressBarDrawEnd with { X = progressBarDrawStart.X + (float)(completionPercentage * (float)progressWidth) },
-                UiSharedService.Color(225, 104, 168, 255),
+                CkGui.Color(225, 104, 168, 255),
                 45f,
                 ImDrawFlags.RoundCornersAll);
         }
 
-        UiSharedService.DrawOutlinedFont(
+        CkGui.DrawOutlinedFont(
             drawList,
             progressBarString,
             pos with { X = pos.X + ((progressWidth - progressBarStringTextSize.X) / 2f) - 1, Y = pos.Y + ((progressHeight - progressBarStringTextSize.Y) / 2f) - 1 },
-            UiSharedService.Color(255, 255, 255, 255),
-            UiSharedService.Color(53, 24, 39, 255),
+            CkGui.Color(255, 255, 255, 255),
+            CkGui.Color(53, 24, 39, 255),
             1);
     }
 }

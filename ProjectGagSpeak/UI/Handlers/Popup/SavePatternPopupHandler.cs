@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
@@ -14,7 +15,7 @@ public class SavePatternPopupHandler : IPopupHandler
 {
     private readonly GagspeakMediator _mediator;
     private readonly PatternManager _patterns;
-    private readonly UiSharedService _uiShared;
+
     private readonly TutorialService _guides;
     private Pattern CompiledPatternData = new Pattern(); // compile a new pattern to save
 
@@ -23,11 +24,11 @@ public class SavePatternPopupHandler : IPopupHandler
     private float RevertWidth;
     private const float PopupWidth = 270;
     public SavePatternPopupHandler(GagspeakMediator mediator, PatternManager patterns, 
-        UiSharedService uiShared, TutorialService guides)
+        CkGui uiShared, TutorialService guides)
     {
         _mediator = mediator;
         _patterns = patterns;
-        _uiShared = uiShared;
+
         _guides = guides;
     }
 
@@ -40,10 +41,10 @@ public class SavePatternPopupHandler : IPopupHandler
 
     public void DrawContent()
     {
-        SaveWidth = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Save, "Save Pattern Data");
-        RevertWidth = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Undo, "Discard Pattern");
+        SaveWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Save, "Save Pattern Data");
+        RevertWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Undo, "Discard Pattern");
         var start = 0f;
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             start = ImGui.GetCursorPosY() - ImGui.CalcTextSize("Create New Pattern").Y;
             ImGui.Text("Create New Pattern");
@@ -73,7 +74,7 @@ public class SavePatternPopupHandler : IPopupHandler
         string text = CompiledPatternData.Duration.Hours > 0
                     ? CompiledPatternData.Duration.ToString("hh\\:mm\\:ss")
                     : CompiledPatternData.Duration.ToString("mm\\:ss");
-        UiSharedService.ColorText(text, ImGuiColors.ParsedPink);
+        CkGui.ColorText(text, ImGuiColors.ParsedPink);
         // loop field
         var loop = CompiledPatternData.ShouldLoop;
         if (ImGui.Checkbox("Loop Pattern", ref loop))
@@ -84,12 +85,12 @@ public class SavePatternPopupHandler : IPopupHandler
 
         // display save options
         ImGui.Separator();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Save, "Save Pattern Data", SaveWidth))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Save, "Save Pattern Data", SaveWidth))
             Close();
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FinalizingSave, ImGui.GetWindowPos(), _size, () => _mediator.Publish(new ClosePatternSavePromptMessage()));
 
         ImGui.SameLine();
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
         {
             CompiledPatternData = new Pattern();
             ImGui.CloseCurrentPopup();

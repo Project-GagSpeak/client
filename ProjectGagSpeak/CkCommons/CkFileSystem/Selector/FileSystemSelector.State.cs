@@ -1,6 +1,10 @@
+using Dalamud.Interface;
+using Dalamud.Utility;
+using GagSpeak.UI;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
+using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
 
@@ -39,17 +43,13 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
 
     protected string FilterTooltip = string.Empty;
 
-    /// <summary> Customization point that gets triggered whenever FilterValue is changed. </summary>
-    /// <param name="filterValue"> the new filter value. </param>
-    /// <returns> Whether the filter is to be set dirty afterwards. </returns>
-    protected virtual bool ChangeFilter(string filterValue)
-        => true;
 
     /// <summary> Internal method to change the filter value. </summary>
     /// <param name="filterValue"> the new filter value. </param>
     /// <returns> If the filter was changed. </returns>
     private bool ChangeFilterInternal(string filterValue)
     {
+        GagSpeak.StaticLog.Debug($"Changed the filter to {filterValue} from {FilterValue}.");
         if (filterValue == FilterValue)
             return false;
 
@@ -61,50 +61,31 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
     /// <param name="width"> The width of the filter row. </param>
     /// <remarks> Parameters are start position for the filter input field and selector width. </remarks>
     /// <returns> The remaining width for the text input. </returns>
-    protected virtual (float RemainingWidth, bool ClearText) CustomFilters(float width)
-        => (width, false);
+    protected virtual float CustomFilters(float width)
+        => width;
 
     /// <summary> Draw the default filter row of a given width. </summary>
     /// <param name="width"> The width of the filter row. </param>
-    private void DrawFilterRow(float width)
+    /// <remarks> Also contains the buttons to add new items and folders if desired. </remarks>
+    public void DrawFilterRow(float width)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero).Push(ImGuiStyleVar.FrameRounding, 0);
-        (width, var clear) = CustomFilters(width);
+        width = CustomFilters(width);
         ImGui.SetNextItemWidth(width);
         var       tmp    = FilterValue;
-        using var id     = ImRaii.PushId(0, clear);
+        using var id     = ImRaii.PushId(0);
         var       change = ImGui.InputTextWithHint("##Filter", "Filter...", ref tmp, 128);
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && !ImGui.IsItemFocused())
-        {
-            try
-            {
-                var x = ImGui.GetClipboardText();
-                if (x.Length > 0)
-                {
-                    tmp    = x;
-                    change = true;
-                }
-            }
-            catch
-            {
-                // ignored
-            }
-        }
 
-        if (clear)
-            tmp = string.Empty;
+        // Update this later to use brios fancy search filter clear display operation thingy. Dont worry about it rn.
 
-        if (clear || change)
+        // the filter box had its value updated.
+        if (change)
         {
-            if (ChangeFilterInternal(tmp) && ChangeFilter(tmp))
-            {
+            if (ChangeFilterInternal(tmp))
                 SetFilterDirty();
-            }
         }
 
-        style.Pop();
         if (FilterTooltip.Length > 0)
-            ImGuiUtil.HoverTooltip(FilterTooltip);
+            CkGui.AttachToolTip(FilterTooltip);
     }
 
     /// <summary> Customization point on how a path should be filtered. Checks whether the FullName contains the current string by default. </summary>

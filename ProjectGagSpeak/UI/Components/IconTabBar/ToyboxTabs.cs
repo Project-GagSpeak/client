@@ -16,10 +16,8 @@ public class ToyboxTabs : IconTabBarBase<ToyboxTabs.SelectedTab>
         AlarmManager, // manage, create, or send alarms.
     }
 
-    private readonly UiSharedService _ui;
-    public ToyboxTabs(UiSharedService ui)
+    public ToyboxTabs()
     {
-        _ui = ui;
         AddDrawButton(FontAwesomeIcon.PersonBooth, SelectedTab.ToyOverview, "Device Manager" +
             "--SEP--Configure either Simulated Vibrators, or Intiface connected devices.");
 
@@ -44,7 +42,7 @@ public class ToyboxTabs : IconTabBarBase<ToyboxTabs.SelectedTab>
         using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
-        var buttonY = _ui.GetIconButtonSize(FontAwesomeIcon.Pause).Y;
+        var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();
 

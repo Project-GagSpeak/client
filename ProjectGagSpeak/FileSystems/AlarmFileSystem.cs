@@ -24,16 +24,17 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Alarm) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, AlarmToIdentifier, AlarmToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_Alarms), _manager.Storage, AlarmToIdentifier, AlarmToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded alarms filesystem.");
+        _logger.LogDebug("Reloaded alarms filesystem with " + _manager.Storage.Count + " alarms.");
     }
 
     public void Dispose()
@@ -110,7 +111,7 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_Alarms).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

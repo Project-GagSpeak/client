@@ -19,7 +19,7 @@ internal class ReportPopupHandler : IPopupHandler
     private readonly PairManager _pairs;
     private readonly CosmeticService _cosmetics;
     private readonly KinkPlateService _kinkPlates;
-    private readonly UiSharedService _uiShared;
+
     private UserData _reportedKinkster = new("BlankKinkster");
     private string _reportedDisplayName = "Kinkster-XXX";
     private string _reportReason = DefaultReportReason;
@@ -28,13 +28,13 @@ internal class ReportPopupHandler : IPopupHandler
 
     public ReportPopupHandler(MainHub hub, PairManager pairs,
         CosmeticService cosmetics, KinkPlateService kinkplates, 
-        UiSharedService uiShared)
+        CkGui uiShared)
     {
         _hub = hub;
         _pairs = pairs;
         _cosmetics = cosmetics;
         _kinkPlates = kinkplates;
-        _uiShared = uiShared;
+
     }
 
     public Vector2 PopupSize => new(800, 450);
@@ -91,23 +91,23 @@ internal class ReportPopupHandler : IPopupHandler
         ImGui.SetCursorScreenPos(rectMin + new Vector2(235, 24));
         var desc = KinkPlate.KinkPlateInfo.Description;
         DrawLimitedDescription(desc, ImGuiColors.DalamudWhite, new Vector2(230, 185));
-        UiSharedService.AttachToolTip("The Description being Reported");
+        CkGui.AttachToolTip("The Description being Reported");
 
         // Beside it we should draw out the rules.
         ImGui.SetCursorScreenPos(rectMin + new Vector2(475, 15));
 
         using (ImRaii.Group())
         {
-            UiSharedService.ColorText("Only Report Pictures if they are:", ImGuiColors.ParsedGold);
-            UiSharedService.TextWrapped("- Harassing another player. Directly or Indirectly.");
-            UiSharedService.TextWrapped("- Impersonating another player.");
-            UiSharedService.TextWrapped("- Displays Content that displays NFSL content.");
+            CkGui.ColorText("Only Report Pictures if they are:", ImGuiColors.ParsedGold);
+            CkGui.TextWrapped("- Harassing another player. Directly or Indirectly.");
+            CkGui.TextWrapped("- Impersonating another player.");
+            CkGui.TextWrapped("- Displays Content that displays NFSL content.");
             ImGui.Spacing();
-            UiSharedService.ColorText("Only Report Descriptions if they are:", ImGuiColors.ParsedGold);
-            UiSharedService.TextWrapped("- Harassing another player. Directly or Indirectly.");
-            UiSharedService.TextWrapped("- Used to share topics that dont belong here.");
+            CkGui.ColorText("Only Report Descriptions if they are:", ImGuiColors.ParsedGold);
+            CkGui.TextWrapped("- Harassing another player. Directly or Indirectly.");
+            CkGui.TextWrapped("- Used to share topics that dont belong here.");
             ImGui.Spacing();
-            UiSharedService.ColorTextWrapped("Miss-use of reporting will result in your account being Timed out.", ImGuiColors.DalamudRed);
+            CkGui.ColorTextWrapped("Miss-use of reporting will result in your account being Timed out.", ImGuiColors.DalamudRed);
         }
 
         // Draw the gold line split.
@@ -122,17 +122,17 @@ internal class ReportPopupHandler : IPopupHandler
         ImGui.SetCursorScreenPos(rectMin + new Vector2(475, 235));
         using (ImRaii.Group())
         {
-            using (_uiShared.GagspeakFont.Push())
+            using (UiFontService.GagspeakFont.Push())
             {
-                UiSharedService.ColorTextWrapped("We will analyze reports with care. Cordy has been a victum " +
+                CkGui.ColorTextWrapped("We will analyze reports with care. Cordy has been a victum " +
                 "of manipulation and abuse multiple times, and will do her best to ensure her team does not allow " +
                 "predators to exploit this reporting system on you.", ImGuiColors.DalamudWhite2);
             }
 
             ImGui.Spacing();
 
-            _uiShared.GagspeakTitleText("Report " + _reportedDisplayName + "?", ImGuiColors.ParsedGold);
-            if (_uiShared.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report Kinkster", 
+            CkGui.GagspeakTitleText("Report " + _reportedDisplayName + "?", ImGuiColors.ParsedGold);
+            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report Kinkster", 
                 disabled: _reportReason.IsNullOrWhitespace() || string.Equals(_reportReason, DefaultReportReason, StringComparison.OrdinalIgnoreCase)))
             {
                 ImGui.CloseCurrentPopup();
@@ -185,7 +185,7 @@ internal class ReportPopupHandler : IPopupHandler
             currentLines++; // Increment the line count for the final line
         }
 
-        UiSharedService.ColorTextWrapped(newDescText.TrimEnd(), color);
+        CkGui.ColorTextWrapped(newDescText.TrimEnd(), color);
     }
 
     public void Open(ReportKinkPlateMessage msg)

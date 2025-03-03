@@ -25,16 +25,17 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigGagRestrictionChanged>(this, (msg) => OnGagChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Gag) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage.Values, GagToIdentifier, GagToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_GagRestrictions), _manager.Storage.Values, GagToIdentifier, GagToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded gags filesystem.");
+        _logger.LogDebug("Reloaded gags filesystem with " + _manager.Storage.Count + " gags.");
     }
 
     public void Dispose()
@@ -87,7 +88,7 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_GagRestrictions).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

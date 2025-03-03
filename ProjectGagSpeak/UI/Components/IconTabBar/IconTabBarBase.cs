@@ -64,11 +64,11 @@ public abstract class IconTabBarBase<ITab> where ITab : Enum
                 {
                     var messageCountPosition = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
                     var messageText = DiscoverService.NewMessages > 99 ? "99+" : DiscoverService.NewMessages.ToString();
-                    UiSharedService.DrawOutlinedFont(ImGui.GetWindowDrawList(), messageText, messageCountPosition, ImGui.ColorConvertFloat4ToU32(ImGuiColors.ParsedGold), 0xFF000000, 1);
+                    CkGui.DrawOutlinedFont(ImGui.GetWindowDrawList(), messageText, messageCountPosition, ImGui.ColorConvertFloat4ToU32(ImGuiColors.ParsedGold), 0xFF000000, 1);
                 }
             }
         }
-        UiSharedService.AttachToolTip(tab.Tooltip);
+        CkGui.AttachToolTip(tab.Tooltip);
 
         // Execute custom action if provided
         tab.CustomAction?.Invoke();

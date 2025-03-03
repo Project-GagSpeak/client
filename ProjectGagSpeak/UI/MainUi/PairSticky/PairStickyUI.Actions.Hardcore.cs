@@ -45,7 +45,7 @@ public partial class PairStickyUI
 
         var forceFollowIcon = SPair.PairGlobals.IsFollowing() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.PersonWalkingArrowRight;
         var forceFollowText = SPair.PairGlobals.IsFollowing() ? $"Have {PermissionData.DispName} stop following you." : $"Make {PermissionData.DispName} follow you.";
-        if (_ui.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
+        if (CkGui.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
             var newStr = SPair.PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", newStr), UpdateDir.Other));
@@ -55,7 +55,7 @@ public partial class PairStickyUI
 
         var forceToStayIcon = SPair.PairGlobals.IsStaying() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.HouseLock;
         var forceToStayText = SPair.PairGlobals.IsStaying() ? $"Release {PermissionData.DispName}." : $"Lock away {PermissionData.DispName}.";
-        if (_ui.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
+        if (CkGui.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedStay", newStr), UpdateDir.Other));
@@ -63,7 +63,7 @@ public partial class PairStickyUI
 
         var toggleChatboxIcon = SPair.PairGlobals.IsChatHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
         var toggleChatboxText = SPair.PairGlobals.IsChatHidden() ? "Make " + PermissionData.DispName + "'s Chat Visible." : "Hide "+PermissionData.DispName+"'s Chat Window.";
-        if (_ui.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
+        if (CkGui.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatBoxesHidden", newStr), UpdateDir.Other));
@@ -71,7 +71,7 @@ public partial class PairStickyUI
 
         var toggleChatInputIcon = SPair.PairGlobals.IsChatInputHidden() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentSlash;
         var toggleChatInputText = SPair.PairGlobals.IsChatInputHidden() ? "Make " + PermissionData.DispName + "'s Chat Input Visible." : "Hide "+PermissionData.DispName+"'s Chat Input.";
-        if (_ui.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
+        if (CkGui.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputHidden", newStr), UpdateDir.Other));
@@ -79,7 +79,7 @@ public partial class PairStickyUI
 
         var toggleChatBlockingIcon = SPair.PairGlobals.IsChatInputBlocked() ? FontAwesomeIcon.StopCircle : FontAwesomeIcon.CommentDots;
         var toggleChatBlockingText = SPair.PairGlobals.IsChatInputBlocked() ? "Reallow "+PermissionData.DispName+"'s Chat Input." : "Block "+PermissionData.DispName+"'s Chat Input.";
-        if (_ui.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
+        if (CkGui.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
         {
             var newStr = SPair.PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputBlocked", newStr), UpdateDir.Other));
@@ -96,7 +96,7 @@ public partial class PairStickyUI
         if(!SPair.PairGlobals.ForcedEmoteState.NullOrEmpty())
         {
             //////////////////// DRAW OUT FOR STOPPING FORCED EMOTE HERE /////////////////////
-            if (_ui.IconTextButton(FontAwesomeIcon.StopCircle, "Let "+PermissionData.DispName+" move again.", WindowMenuWidth, true, id: "##ForcedToStayHardcoreAction"))
+            if (CkGui.IconTextButton(FontAwesomeIcon.StopCircle, "Let "+PermissionData.DispName+" move again.", WindowMenuWidth, true, id: "##ForcedToStayHardcoreAction"))
                 _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", string.Empty), UpdateDir.Other));
         }
         else
@@ -104,11 +104,11 @@ public partial class PairStickyUI
             var forceEmoteIcon = SPair.PairPerms.AllowForcedEmote ? FontAwesomeIcon.PersonArrowDownToLine : FontAwesomeIcon.Chair;
             var forceEmoteText = SPair.PairPerms.AllowForcedEmote ? $"Force {PermissionData.DispName} into an Emote State." : $"Force {PermissionData.DispName} to Sit.";
             //////////////////// DRAW OUT FOR FORCING EMOTE STATE HERE /////////////////////
-            if (_ui.IconTextButton(forceEmoteIcon, forceEmoteText, WindowMenuWidth, true, disableForceSit && disableForceEmoteState, "##ForcedEmoteAction"))
+            if (CkGui.IconTextButton(forceEmoteIcon, forceEmoteText, WindowMenuWidth, true, disableForceSit && disableForceEmoteState, "##ForcedEmoteAction"))
             {
                 PairCombos.Opened = PairCombos.Opened == InteractionType.ForcedEmoteState ? InteractionType.None : InteractionType.ForcedEmoteState;
             }
-            UiSharedService.AttachToolTip("Force " + PermissionData.DispName + "To Perform any Looped Emote State.");
+            CkGui.AttachToolTip("Force " + PermissionData.DispName + "To Perform any Looped Emote State.");
             if (PairCombos.Opened is InteractionType.ForcedEmoteState)
             {
                 using (var actionChild = ImRaii.Child("ForcedEmoteStateActionChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), false))
@@ -163,11 +163,11 @@ public partial class PairStickyUI
         var maxVibeDuration = SPair.PairPerms.HasValidShareCode() ? SPair.PairPerms.GetTimespanFromDuration() : SPair.PairGlobals.GetTimespanFromDuration();
         var piShockShareCodePref = SPair.PairPerms.HasValidShareCode() ? SPair.PairPerms.PiShockShareCode : SPair.PairGlobals.GlobalShockShareCode;
 
-        if (_ui.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
+        if (CkGui.IconTextButton(FontAwesomeIcon.BoltLightning, "Shock " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowShocks))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ShockAction ? InteractionType.None : InteractionType.ShockAction;
         }
-        UiSharedService.AttachToolTip("Perform a Shock action to " + PermissionData.DispName + "'s Shock Collar.");
+        CkGui.AttachToolTip("Perform a Shock action to " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.ShockAction)
         {
@@ -201,11 +201,11 @@ public partial class PairStickyUI
             ImGui.Separator();
         }
 
-        if (_ui.IconTextButton(FontAwesomeIcon.WaveSquare, "Vibrate " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, false))
+        if (CkGui.IconTextButton(FontAwesomeIcon.WaveSquare, "Vibrate " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, false))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.VibrateAction ? InteractionType.None : InteractionType.VibrateAction;
         }
-        UiSharedService.AttachToolTip("Perform a Vibrate action to " + PermissionData.DispName + "'s Shock Collar.");
+        CkGui.AttachToolTip("Perform a Vibrate action to " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.VibrateAction)
         {
@@ -239,11 +239,11 @@ public partial class PairStickyUI
             ImGui.Separator();
         }
 
-        if (_ui.IconTextButton(FontAwesomeIcon.LandMineOn, "Beep " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowBeeps))
+        if (CkGui.IconTextButton(FontAwesomeIcon.LandMineOn, "Beep " + PermissionData.DispName + "'s Shock Collar", WindowMenuWidth, true, !AllowBeeps))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.BeepAction ? InteractionType.None : InteractionType.BeepAction;
         }
-        UiSharedService.AttachToolTip("Beep " + PermissionData.DispName + "'s Shock Collar.");
+        CkGui.AttachToolTip("Beep " + PermissionData.DispName + "'s Shock Collar.");
 
         if (PairCombos.Opened is InteractionType.BeepAction)
         {

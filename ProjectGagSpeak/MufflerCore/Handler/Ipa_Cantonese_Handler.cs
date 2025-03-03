@@ -43,7 +43,7 @@ public class Ipa_Cantonese_Handler
         }
     }
 
-    /// <summary> Function for converting an input string to IPA notation.
+/*    /// <summary> Function for converting an input string to IPA notation.
     /// <list type="Bullet"><item><c>input</c><param name="input"> - string to convert</param></item></list>
     /// </summary><returns> The input string converted to IPA notation</returns>
     public string UpdateResult(string input)
@@ -102,7 +102,7 @@ public class Ipa_Cantonese_Handler
         else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);  // nei5
 
         return f_str;
-    }
+    }*/
 
     // Below are all the language dialect formatters
     private string FormatIPANum(string x)

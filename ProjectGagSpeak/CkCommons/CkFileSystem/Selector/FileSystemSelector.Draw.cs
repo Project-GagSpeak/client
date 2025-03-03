@@ -69,8 +69,9 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <returns> The adjusted line end. </returns>
     private Vector2 AdjustedLineEnd(Vector2 lineEnd)
     {
+        //ImGui.Text("CurIdx: " + _currentIndex + " CurEnd: " + _currentEnd + " StateCount: " + _state.Count + " CurDepth: " + _currentDepth);
         if (_currentIndex != _currentEnd)
-            return lineEnd;
+            return lineEnd/* with { Y = ImGui.GetCursorScreenPos().Y }*/;
 
         var y = ImGui.GetWindowHeight() + ImGui.GetWindowPos().Y;
         if (y > lineEnd.Y + ImGui.GetTextLineHeight())
@@ -120,13 +121,18 @@ public partial class CkFileSystemSelector<T, TStateStorage>
             if (minRect.X == 0)
                 continue;
 
-            // Draw the notch and increase the line length.
-            var midPoint = (minRect.Y + maxRect.Y) / 2f - 1f;
-            drawList.AddLine(lineStart with { Y = midPoint }, new Vector2(lineStart.X + lineSize, midPoint), FolderLineColor,
-                ImGuiHelpers.GlobalScale);
-            lineEnd.Y = midPoint;
+            // if the item is a folder, draw the indent, otherwise draw the full height.
+            if (state.Path is CkFileSystem<T>.Folder folder)
+            {
+                var midPoint = (minRect.Y + maxRect.Y) / 2f - 1f;
+                drawList.AddLine(lineStart with { Y = midPoint }, new Vector2(lineStart.X + lineSize, midPoint), FolderLineColor, ImGuiHelpers.GlobalScale);
+                lineEnd.Y = midPoint;
+            }
+            else
+            {
+                lineEnd.Y = maxRect.Y;
+            }
         }
-
         // Finally, draw the folder line.
         drawList.AddLine(lineStart, AdjustedLineEnd(lineEnd), FolderLineColor, ImGuiHelpers.GlobalScale);
     }
@@ -194,54 +200,65 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <summary> Draw the whole list. </summary>
     /// <param name="width"> The width of the list. </param>
     /// <returns> If the list was drawn. </returns>
-    private bool DrawList(float width)
+    public bool DrawList(float width)
     {
-        // Filter row is outside the child for scrolling.
-        DrawFilterRow(width);
-
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        using var _     = ImRaii.Child(Label, new Vector2(width, -ImGui.GetFrameHeight()), true);
-        style.Pop();
-        MainContext();
-        if (!_)
-            return false;
-
-        ImGui.SetScrollX(0);
-        style.Push(ImGuiStyleVar.IndentSpacing, 14f * ImGuiHelpers.GlobalScale)
-            .Push(ImGuiStyleVar.ItemSpacing,  new Vector2(ImGui.GetStyle().ItemSpacing.X, ImGuiHelpers.GlobalScale))
-            .Push(ImGuiStyleVar.FramePadding, new Vector2(ImGuiHelpers.GlobalScale,       ImGui.GetStyle().FramePadding.Y));
-        //// Check if filters are dirty and recompute them before the draw iteration if necessary.
-        ApplyFilters();
-        if (_jumpToSelection != null)
+        DrawPopups();
+        try
         {
-            var idx = _state.FindIndex(s => s.Path == _jumpToSelection);
-            if (idx >= 0)
-                ImGui.SetScrollFromPosY(ImGui.GetTextLineHeightWithSpacing() * idx - ImGui.GetScrollY());
+            using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
+                .Push(ImGuiCol.ButtonActive, uint.MinValue);
+            using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+            using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, ImGuiWindowFlags.NoScrollbar);
+            style.Pop();
+            MainContext();
+            if (!_)
+                return false;
 
-            _jumpToSelection = null;
-        }
-
-        using (var clipper = ImUtf8.ListClipper(_state.Count, ImGui.GetTextLineHeightWithSpacing()))
-        {
-            while (clipper.Step())
+            ImGui.SetScrollX(0);
+            style.Push(ImGuiStyleVar.IndentSpacing, 14f * ImGuiHelpers.GlobalScale)
+                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, ImGuiHelpers.GlobalScale))
+                .Push(ImGuiStyleVar.FramePadding, new Vector2(ImGuiHelpers.GlobalScale, ImGui.GetStyle().FramePadding.Y));
+            //// Check if filters are dirty and re-compute them before the draw iteration if necessary.
+            ApplyFilters();
+            if (_jumpToSelection != null)
             {
-                _currentIndex = clipper.DisplayStart;
-                _currentEnd   = Math.Min(_state.Count, clipper.DisplayEnd);
-                if (_currentIndex >= _currentEnd)
-                    continue;
+                var idx = _state.FindIndex(s => s.Path == _jumpToSelection);
+                if (idx >= 0)
+                    ImGui.SetScrollFromPosY(ImGui.GetTextLineHeightWithSpacing() * idx - ImGui.GetScrollY());
 
-                if (_state[_currentIndex].Depth != 0)
-                    DrawPseudoFolders();
-                _currentEnd = Math.Min(_state.Count, _currentEnd);
-                for (; _currentIndex < _currentEnd; ++_currentIndex)
-                    DrawStateStruct(_state[_currentIndex]);
+                _jumpToSelection = null;
             }
-        }
 
-        //// Handle all queued actions at the end of the iteration.
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
-        HandleActions();
-        style.Push(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        return true;
+            using (var clipper = ImUtf8.ListClipper(_state.Count, ImGui.GetTextLineHeightWithSpacing()))
+            {
+                while (clipper.Step())
+                {
+                    _currentIndex = clipper.DisplayStart;
+                    _currentEnd = Math.Min(_state.Count, clipper.DisplayEnd);
+                    if (_currentIndex >= _currentEnd)
+                        continue;
+
+                    if (_state[_currentIndex].Depth != 0)
+                        DrawPseudoFolders();
+                    _currentEnd = Math.Min(_state.Count, _currentEnd);
+                    for (; _currentIndex < _currentEnd; ++_currentIndex)
+                        DrawStateStruct(_state[_currentIndex]);
+                }
+            }
+
+            HandleActions();
+            return true;
+        }
+        catch (Exception e)
+        {
+            // This should be an exception in final version
+            GagSpeak.StaticLog.Error("Exception during CkFileSystemSelector rendering:\n"
+              + $"{_currentIndex} Current Index\n"
+              + $"{_currentDepth} Current Depth\n"
+              + $"{_currentEnd} Current End\n"
+              + $"{_state.Count} Current State Count\n"
+              + $"{_filterDirty} Filter Dirty", e);
+            return false;
+        }
     }
 }

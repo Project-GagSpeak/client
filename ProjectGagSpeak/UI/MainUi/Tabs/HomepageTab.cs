@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Orders;
 using GagSpeak.UI.Publications;
@@ -13,27 +14,22 @@ using ImGuiNET;
 
 namespace GagSpeak.UI.MainWindow;
 
-/// <summary> 
-/// Partial class responsible for drawing the homepage element of the main UI.
-/// The homepage will provide the player with links to open up other windows in the plugin via components.
-/// </summary>
+/// <summary> The homepage will provide the player with links to open up other windows in the plugin via components </summary>
 public class HomepageTab
 {
     private readonly GagspeakMediator _mediator;
     private readonly ClientMonitor _client;
     private readonly OnFrameworkService _framework;
-    private readonly UiSharedService _uiShared;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
     public HomepageTab(GagspeakMediator mediator, ClientMonitor client, 
-        OnFrameworkService framework, UiSharedService uiShared)
+        OnFrameworkService framework, CkGui uiShared)
     {
         _mediator = mediator;
         _client = client;
         _framework = framework;
-        _uiShared = uiShared;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Type)>
@@ -54,10 +50,10 @@ public class HomepageTab
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 4f);
         using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(6, 1));
         using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        using var homepageChild = ImRaii.Child("##Homepage", new Vector2(UiSharedService.GetWindowContentRegionWidth(), 0), false, ImGuiWindowFlags.NoScrollbar);
+        using var homepageChild = ImRaii.Child("##Homepage", new Vector2(CkGui.GetWindowContentRegionWidth(), 0), false, ImGuiWindowFlags.NoScrollbar);
 
-        var sizeFont = _uiShared.CalcFontTextSize("Achievements Module", _uiShared.GagspeakLabelFont);
-        var selectableSize = new Vector2(UiSharedService.GetWindowContentRegionWidth(), sizeFont.Y + ImGui.GetStyle().WindowPadding.Y * 2);
+        var sizeFont = CkGui.CalcFontTextSize("Achievements Module", UiFontService.GagspeakLabelFont);
+        var selectableSize = new Vector2(CkGui.GetWindowContentRegionWidth(), sizeFont.Y + ImGui.GetStyle().WindowPadding.Y * 2);
         var itemGotHovered = false;
 
         for (var i = 0; i < Modules.Count; i++)
@@ -98,14 +94,14 @@ public class HomepageTab
             using var group = ImRaii.Group();
             var height = ImGui.GetContentRegionAvail().Y;
 
-            _uiShared.GagspeakBigText(label);
+            CkGui.GagspeakBigText(label);
             ImGui.SetWindowFontScale(1.5f);
 
-            var size = _uiShared.GetIconData(FontAwesomeIcon.WaveSquare);
+            var size = CkGui.IconSize(FontAwesomeIcon.WaveSquare);
             var color = hovered ? ImGuiColors.ParsedGold : ImGuiColors.DalamudWhite;
-            ImGui.SameLine(UiSharedService.GetWindowContentRegionWidth() - size.X - ImGui.GetStyle().ItemInnerSpacing.X);
+            ImGui.SameLine(CkGui.GetWindowContentRegionWidth() - size.X - ImGui.GetStyle().ItemInnerSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (height - size.Y) / 2);
-            _uiShared.IconText(icon, color);
+            CkGui.IconText(icon, color);
 
             ImGui.SetWindowFontScale(1.0f);
         }

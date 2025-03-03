@@ -24,16 +24,17 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Restriction) Reload(); });
         Changed += OnChange;
         Reload();
     }
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.SortFilers), _manager.Storage, RestrictionToIdentifier, RestrictionToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_Restrictions), _manager.Storage, RestrictionToIdentifier, RestrictionToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug("Reloaded restrictions filesystem.");
+        _logger.LogDebug("Reloaded restrictions filesystem with " + _manager.Storage.Count + " restriction items.");
     }
 
     public void Dispose()
@@ -110,7 +111,7 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.SortFilers).Item2;
+        => (isAccountUnique = false, files.CKFS_Restrictions).Item2;
 
     public string JsonSerialize() 
         => throw new NotImplementedException();

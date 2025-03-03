@@ -12,13 +12,12 @@ public class PresetLogicDrawer
 {
     private readonly ILogger<PresetLogicDrawer> _logger;
     private readonly MainHub _hub;
-    private readonly UiSharedService _uiShared;
-
-    public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub, UiSharedService uiShared)
+    private readonly CkGui _ckGui;
+    public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub, CkGui ckGui)
     {
         _logger = logger;
         _hub = hub;
-        _uiShared = uiShared;
+        _ckGui = ckGui;
     }
 
     public DateTime LastApplyTime { get; private set; } = DateTime.MinValue;
@@ -30,19 +29,19 @@ public class PresetLogicDrawer
         // It's OK if things are active for the player, since it doesn't actually trigger everything at once.
         var disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
 
-        var comboWidth = width - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Apply Preset");
+        var comboWidth = width - CkGui.IconTextButtonSize(FontAwesomeIcon.Sync, "Apply Preset");
         using (var disabled = ImRaii.Disabled(disabledCondition))
         {
-            _uiShared.DrawCombo("Permission Preset Selector", comboWidth, Enum.GetValues<PresetName>(),
+            _ckGui.DrawCombo("Permission Preset Selector", comboWidth, Enum.GetValues<PresetName>(),
             (preset) => preset.ToName(), (i) => SelectedPreset = (PresetName)i, SelectedPreset, false);
             ImUtf8.SameLineInner();
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
             {
                 ApplySelectedPreset(pairToDrawListFor);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PresetApplied);
             }
         }
-        UiSharedService.AttachToolTip(pairToDrawListFor.OwnPerms.InHardcore
+        CkGui.AttachToolTip(pairToDrawListFor.OwnPerms.InHardcore
             ? "Cannot execute presets while in Hardcore mode."
             : disabledCondition
                 ? "You must wait 10 seconds between applying presets."

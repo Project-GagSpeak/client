@@ -19,19 +19,17 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
-    private readonly UiSharedService _uiShared;
 
     private bool ThemePushed = false;
     public KinkPlateUI(ILogger<KinkPlateUI> logger, GagspeakMediator mediator,
-        PairManager pairManager, KinkPlateService profileService,
-        CosmeticService cosmetics, TextureService textureService, UiSharedService uiShared,
-        Pair pair) : base(logger, mediator, pair.UserData.AliasOrUID + "'s KinkPlate##GagspeakKinkPlateUI" + pair.UserData.AliasOrUID)
+        PairManager pairManager, KinkPlateService profileService, CosmeticService cosmetics,
+        TextureService textureService, Pair pair) 
+        : base(logger, mediator, pair.UserData.AliasOrUID + "'s KinkPlate##GagspeakKinkPlateUI" + pair.UserData.AliasOrUID)
     {
         _pairManager = pairManager;
         _profileService = profileService;
         _cosmetics = cosmetics;
         _textures = textureService;
-        _uiShared = uiShared;
         Pair = pair;
 
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar;
@@ -92,7 +90,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         DrawDescription(drawList, profile);
 
         // Now let's draw out the chosen achievement Name..
-        using (_uiShared.GagspeakTitleFont.Push())
+        using (UiFontService.GagspeakTitleFont.Push())
         {
             var titleName = AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
@@ -166,7 +164,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // determine the height gap between the icon overview and bottom of the profile picture.
         var gapHeight = IconOverviewListPos.Y - (ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y);
         var ttText = DisplayName == PairUID ? "This Pairs UID" : "This Pairs Alias --SEP-- Their UID is: " + PairUID;
-        using (_uiShared.UidFont.Push())
+        using (UiFontService.UidFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(DisplayName);
             var yHeight = (gapHeight - aliasOrUidSize.Y) / 2;
@@ -175,7 +173,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             // display it, it should be green if connected and red when not.
             ImGui.TextColored(ImGuiColors.ParsedPink, DisplayName);
         }
-        UiSharedService.AttachToolTip(ttText);
+        CkGui.AttachToolTip(ttText);
+        CkGui.CopyableDisplayText(Pair.UserData.UID);
     }
 
     private void DrawIconSummary(ImDrawListPtr drawList, KinkPlate profile)
@@ -367,7 +366,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var formattedDate = Pair.UserData.CreatedOn ?? DateTime.MinValue;
         var createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
 
-        UiSharedService.ColorText(createdDate, ImGuiColors.ParsedGold);
+        CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
         var textWidth = ImGui.CalcTextSize($"MM-DD-YYYY").X;
         statsPos += new Vector2(textWidth + 4, 0);
         // to the right of this, draw out the achievement icon.
@@ -375,8 +374,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
-        UiSharedService.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
-        UiSharedService.AttachToolTip("The total achievements " + DisplayName + " has earned.");
+        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip("The total achievements " + DisplayName + " has earned.");
     }
 
     private void DrawBlockedSlots(ImDrawListPtr drawList, KinkPlateContent info)

@@ -127,7 +127,7 @@ public class IdDisplayHandler
             {
                 _editEntry = string.Empty;
             }
-            UiSharedService.AttachToolTip("Hit ENTER to save\nRight click to cancel");
+            CkGui.AttachToolTip("Hit ENTER to save\nRight click to cancel");
         }
         return returnVal;
     }

@@ -1,34 +1,32 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
 using ImGuiNET;
+using OtterGui;
 
 namespace GagSpeak.UI;
 
 internal class MigrationsUI : WindowMediatorSubscriberBase
 {
-    private readonly MigrationTabs _tabMenu;
+    private readonly MigrationTabs _tabMenu = new MigrationTabs();
     private readonly AccountInfoExchanger _infoExchanger;
     private readonly GagspeakConfigService _mainConfig;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
     private bool ThemePushed = false;
 
     // Come back to this when we actually have everything working properly.
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        AccountInfoExchanger infoExchanger, GagspeakConfigService config, CosmeticService cosmetics,
-        UiSharedService uiShared) : base(logger, mediator, "GagSpeak Migrations")
+        AccountInfoExchanger infoExchanger, GagspeakConfigService config,
+        CosmeticService cosmetics) : base(logger, mediator, "GagSpeak Migrations")
     {
         _infoExchanger = infoExchanger;
         _mainConfig = config;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
-
-        _tabMenu = new MigrationTabs(_uiShared);
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -44,7 +42,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
     // The temporary data storage containers that we will use to store the data we are migrating.
     private Dictionary<GagType, GarblerRestriction> LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
-    private List<RestraintSet> LoadedRestraints = new List<RestraintSet>();
+    private List<RestraintSet> LoadedRestrictions = new List<RestraintSet>();
     private List<CursedItem> LoadedCursedItems = new List<CursedItem>();
     private List<Trigger> LoadedTriggers = new List<Trigger>();
     private List<Alarm> LoadedAlarms = new List<Alarm>();
@@ -87,10 +85,10 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         {
             switch (_tabMenu.TabSelection)
             {
-                case MigrationTabs.SelectedTab.Restraints:
-                    DrawTransferRestraints();
-                    break;
                 case MigrationTabs.SelectedTab.Restrictions:
+                    DrawTransferRestrictions();
+                    break;
+                case MigrationTabs.SelectedTab.Restraints:
                     break;
                 case MigrationTabs.SelectedTab.Gags:
                     DrawTransferGags();
@@ -114,20 +112,20 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     {
         /*DrawUidSelector();
         ImGui.Separator();
-        _uiShared.GagspeakBigText(" Transfer GagData:");
+        CkGui.GagspeakBigText(" Transfer GagData:");
 
         IEnumerable<GagType> GagsToMigrate = LoadedGagData.Keys;
         if (SelectedGag is GagType.None)
             SelectedGag = GagsToMigrate.FirstOrDefault();
 
         ImGui.SameLine();
-        var size = _uiShared.CalcFontTextSize("A", _uiShared.GagspeakLabelFont);
+        var size = CkGui.CalcFontTextSize("A", CkGui.GagspeakLabelFont);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("GagStorage Gag Type", 175f, GagsToMigrate, (gag) => gag.GagName(), false, (i) => SelectedGag = i, SelectedGag);
+        CkGui.DrawComboSearchable("GagStorage Gag Type", 175f, GagsToMigrate, (gag) => gag.GagName(), false, (i) => SelectedGag = i, SelectedGag);
 
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedGagData.Count == 0))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedGagData.Count == 0))
         {
             foreach (var (gag, gagData) in LoadedGagData)
                 _clientConfigs.GagStorageConfig.GagStorage.GagEquipData[gag] = gagData;
@@ -146,7 +144,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         if (LoadedGagData.TryGetValue(SelectedGag, out var data))
         {
-            _uiShared.GagspeakBigText("Gag Data Glamour:");
+            CkGui.GagspeakBigText("Gag Data Glamour:");
             using (ImRaii.Group())
             {
                 _previewer.DrawEquipSlotPreview(data, 100f);
@@ -158,44 +156,44 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
                     ImGui.Text($"GameItem: {data.GameItem.Name}");
                 }
             }
-            _uiShared.GagspeakBigText("Adjustments:");
+            CkGui.GagspeakBigText("Adjustments:");
             ImGui.Text("IsEnabled:");
             ImGui.SameLine();
-            _uiShared.BooleanToColoredIcon(data.IsEnabled);
+            CkGui.BooleanToColoredIcon(data.IsEnabled);
 
             ImGui.Text("ForceHeadgear:");
             ImGui.SameLine();
-            _uiShared.BooleanToColoredIcon(data.ForceHeadgear);
+            CkGui.BooleanToColoredIcon(data.ForceHeadgear);
 
             ImGui.Text("ForceVisor:");
             ImGui.SameLine();
-            _uiShared.BooleanToColoredIcon(data.ForceVisor);
+            CkGui.BooleanToColoredIcon(data.ForceVisor);
 
             ImGui.Text("Contains Gag Moodles:");
             ImGui.SameLine();
-            _uiShared.BooleanToColoredIcon(data.AssociatedMoodles.Count > 0);
+            CkGui.BooleanToColoredIcon(data.AssociatedMoodles.Count > 0);
         }*/
     }
 
-    private void DrawTransferRestraints()
+    private void DrawTransferRestrictions()
     {/*
         // only display the restraint sets that we do not already have in our client config.
-        IEnumerable<RestraintSet> RestraintsToMigrate = LoadedRestraints;
+        IEnumerable<RestraintSet> RestrictionsToMigrate = LoadedRestrictions;
         if (SelectedRestraintSet is null)
         {
-            SelectedRestraintSet = RestraintsToMigrate.FirstOrDefault();
+            SelectedRestraintSet = RestrictionsToMigrate.FirstOrDefault();
         }
 
         DrawUidSelector();
         ImGui.Separator();
 
-        _uiShared.GagspeakBigText(" Transfer Restraints:");
-        var size = _uiShared.CalcFontTextSize(" Transfer Restraints:", _uiShared.GagspeakLabelFont);
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
+        CkGui.GagspeakBigText(" Transfer Restrictions:");
+        var size = CkGui.CalcFontTextSize(" Transfer Restrictions:", CkGui.GagspeakLabelFont);
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("Restraint Set List Items.", 175f, RestraintsToMigrate, (item) => item.Name, false, (i) =>
+        CkGui.DrawComboSearchable("Restriction Set List Items.", 175f, RestrictionsToMigrate, (item) => item.Name, false, (i) =>
         {
             if (i is not null)
             {
@@ -203,51 +201,51 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             }
         }, SelectedRestraintSet ?? default);
 
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedRestraints.Count == 0))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedRestrictions.Count == 0))
         {
-            _clientConfigs.AddNewRestraintSets(LoadedRestraints);
+            _clientConfigs.AddNewRestraintSets(LoadedRestrictions);
         }
 
         ImGui.Separator();
         if (SelectedRestraintSet is not null)
         {
-            using (ImRaii.Table("Restraint Information", 2, ImGuiTableFlags.BordersInnerV))
+            using (ImRaii.Table("Restriction Information", 2, ImGuiTableFlags.BordersInnerV))
             {
                 ImGui.TableSetupColumn("##Info", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableSetupColumn("##Preview", ImGuiTableColumnFlags.WidthFixed, 200f * ImGuiHelpers.GlobalScale);
                 ImGui.TableNextColumn();
 
-                if (ImGui.Button("Transfer Restraint: " + SelectedRestraintSet.Name, new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight())))
+                if (ImGui.Button("Transfer Restriction: " + SelectedRestraintSet.Name, new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight())))
                 {
                     _clientConfigs.AddNewRestraintSet(SelectedRestraintSet);
                 }
                 ImGui.Separator();
                 // info here....
-                _uiShared.GagspeakBigText("Restraint Info:");
+                CkGui.GagspeakBigText("Restriction Info:");
                 ImGui.Text("Name: " + SelectedRestraintSet.Name);
                 ImGui.Text("Description: " + SelectedRestraintSet.Description);
 
                 ImGui.Text("ForceHeadgear:");
                 ImGui.SameLine();
-                _uiShared.BooleanToColoredIcon(SelectedRestraintSet.ForceHeadgear);
+                CkGui.BooleanToColoredIcon(SelectedRestraintSet.ForceHeadgear);
 
                 ImGui.Text("ForceVisor:");
                 ImGui.SameLine();
-                _uiShared.BooleanToColoredIcon(SelectedRestraintSet.ForceVisor);
+                CkGui.BooleanToColoredIcon(SelectedRestraintSet.ForceVisor);
 
                 ImGui.Text("Has Customize Data:");
                 ImGui.SameLine();
-                _uiShared.BooleanToColoredIcon(SelectedRestraintSet.CustomizeObject != null);
+                CkGui.BooleanToColoredIcon(SelectedRestraintSet.CustomizeObject != null);
 
                 ImGui.Text("Has Attached Mods:");
                 ImGui.SameLine();
-                _uiShared.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMods.Count > 0);
+                CkGui.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMods.Count > 0);
 
                 ImGui.Text("Contains Gag Moodles:");
                 ImGui.SameLine();
-                _uiShared.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMoodles.Count > 0);
+                CkGui.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMoodles.Count > 0);
 
                 ImGui.TableNextColumn();
                 // for some wierd ass reason when we calculate the centered preview text you need to take away the window padding or else it will never fit???
@@ -269,18 +267,18 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             SelectedCursedItem = CursedItemsToMigrate.FirstOrDefault();
         }
 
-        _uiShared.GagspeakBigText(" Transfer Cursed Loot:");
-        var size = _uiShared.CalcFontTextSize(" Transfer Cursed Loot:", _uiShared.GagspeakLabelFont);
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
+        CkGui.GagspeakBigText(" Transfer Cursed Loot:");
+        var size = CkGui.CalcFontTextSize(" Transfer Cursed Loot:", CkGui.GagspeakLabelFont);
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("Cursed Loot Migration Items", 175f, CursedItemsToMigrate, (item) => item.Name, false,
+        CkGui.DrawComboSearchable("Cursed Loot Migration Items", 175f, CursedItemsToMigrate, (item) => item.Name, false,
             (i) => { if (i is not null) { SelectedCursedItem = i; } }, SelectedCursedItem ?? default);
 
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedCursedItems.Count == 0))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedCursedItems.Count == 0))
         {
             foreach (var item in LoadedCursedItems)
                 _clientConfigs.AddCursedItem(item);
@@ -299,43 +297,43 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         if (SelectedCursedItem is not null)
         {
-            _uiShared.GagspeakBigText("Cursed Item Info:");
-            UiSharedService.ColorText("Name:", ImGuiColors.ParsedGold);
+            CkGui.GagspeakBigText("Cursed Item Info:");
+            CkGui.ColorText("Name:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedCursedItem.Name);
 
-            UiSharedService.ColorText("In Pool: ", ImGuiColors.ParsedGold);
-            _uiShared.BooleanToColoredIcon(SelectedCursedItem.InPool, true);
+            CkGui.ColorText("In Pool: ", ImGuiColors.ParsedGold);
+            CkGui.BooleanToColoredIcon(SelectedCursedItem.InPool, true);
 
-            UiSharedService.ColorText("Cursed Item Type:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Cursed Item Type:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedCursedItem.IsGag ? "Gag" : "Equip");
 
             if (SelectedCursedItem.IsGag)
             {
-                UiSharedService.ColorText("Gag Type:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Gag Type:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.GagType.GagName());
             }
             else
             {
                 // display equip stuff.
-                UiSharedService.ColorText("Can Override: ", ImGuiColors.ParsedGold);
-                _uiShared.BooleanToColoredIcon(SelectedCursedItem.CanOverride, true);
+                CkGui.ColorText("Can Override: ", ImGuiColors.ParsedGold);
+                CkGui.BooleanToColoredIcon(SelectedCursedItem.CanOverride, true);
 
-                UiSharedService.ColorText("Override Precedence: ", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Override Precedence: ", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.OverridePrecedence.ToString());
 
-                UiSharedService.ColorText("Applied Item:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Applied Item:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.AppliedItem.GameItem.Name);
 
-                UiSharedService.ColorText("Associated Mod:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Associated Mod:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.AssociatedMod.Mod.Name);
 
-                UiSharedService.ColorText("Moodle Type:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("Moodle Type:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.MoodleType.ToString());
             }
@@ -354,18 +352,18 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             SelectedTrigger = TriggersToMigrate.FirstOrDefault();
         }
 
-        _uiShared.GagspeakBigText(" Transfer Triggers:");
-        var size = _uiShared.CalcFontTextSize(" Transfer Triggers:", _uiShared.GagspeakLabelFont);
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
+        CkGui.GagspeakBigText(" Transfer Triggers:");
+        var size = CkGui.CalcFontTextSize(" Transfer Triggers:", CkGui.GagspeakLabelFont);
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("Trigger Migration Items", 175f, TriggersToMigrate, (item) => item.Name, false,
+        CkGui.DrawComboSearchable("Trigger Migration Items", 175f, TriggersToMigrate, (item) => item.Name, false,
             (i) => { if (i is not null) { SelectedTrigger = i; } }, SelectedTrigger ?? default);
 
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedTriggers.Count == 0))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedTriggers.Count == 0))
         {
             foreach (var item in LoadedTriggers)
                 _clientConfigs.AddNewTrigger(item);
@@ -378,24 +376,24 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
                 _clientConfigs.AddNewTrigger(SelectedTrigger);
             ImGui.Separator();
 
-            _uiShared.GagspeakBigText("Trigger Info:");
-            UiSharedService.ColorText("Name:", ImGuiColors.ParsedGold);
+            CkGui.GagspeakBigText("Trigger Info:");
+            CkGui.ColorText("Name:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedTrigger.Name);
 
-            UiSharedService.ColorText("Type:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Type:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedTrigger.Type.ToString());
 
-            UiSharedService.ColorText("Priority:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Priority:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedTrigger.Priority.ToString());
 
-            UiSharedService.ColorText("Description:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Description:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
-            UiSharedService.TextWrapped(SelectedTrigger.Description);
+            CkGui.TextWrapped(SelectedTrigger.Description);
 
-            UiSharedService.ColorText("Trigger Action Kind:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Trigger Action Kind:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedTrigger.GetTypeName().ToName());
         }*/
@@ -413,18 +411,18 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             SelectedAlarm = AlarmsToMigrate.FirstOrDefault();
         }
 
-        _uiShared.GagspeakBigText(" Transfer Alarms:");
-        var size = _uiShared.CalcFontTextSize(" Transfer Alarms:", _uiShared.GagspeakLabelFont);
-        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
+        CkGui.GagspeakBigText(" Transfer Alarms:");
+        var size = CkGui.CalcFontTextSize(" Transfer Alarms:", CkGui.GagspeakLabelFont);
+        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        _uiShared.DrawComboSearchable("Alarm Migration Items", 175f, AlarmsToMigrate, (item) => item.Name, false,
+        CkGui.DrawComboSearchable("Alarm Migration Items", 175f, AlarmsToMigrate, (item) => item.Name, false,
             (i) => { if (i is not null) { SelectedAlarm = i; } }, SelectedAlarm ?? default);
 
-        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (_uiShared.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedAlarms.Count == 0))
+        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedAlarms.Count == 0))
         {
             foreach (var item in LoadedAlarms)
                 _clientConfigs.AddNewAlarm(item);
@@ -437,28 +435,28 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
                 _clientConfigs.AddNewAlarm(SelectedAlarm);
             ImGui.Separator();
 
-            _uiShared.GagspeakBigText("Alarm Info:");
-            UiSharedService.ColorText("Name:", ImGuiColors.ParsedGold);
+            CkGui.GagspeakBigText("Alarm Info:");
+            CkGui.ColorText("Name:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedAlarm.Name);
 
-            UiSharedService.ColorText("Set Time:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Set Time:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedAlarm.SetTimeUTC.ToLocalTime().ToString("HH:mm"));
 
-            UiSharedService.ColorText("Pattern to Play:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Pattern to Play:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedAlarm.PatternToPlay.ToString());
 
-            UiSharedService.ColorText("StartPoint:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("StartPoint:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedAlarm.PatternStartPoint.ToString(@"mm\:ss"));
 
-            UiSharedService.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(SelectedAlarm.PatternDuration.ToString(@"mm\:ss"));
 
-            UiSharedService.ColorText("Set Alarm on Days:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Set Alarm on Days:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
             ImGui.Text(string.Join(", ", SelectedAlarm.RepeatFrequency.Select(day => day.ToString())));
         }*/
@@ -476,31 +474,33 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
         Vector2 textSize;
-        using (_uiShared.UidFont.Push()) { textSize = ImGui.CalcTextSize("Select Account UID"); }
+        using (UiFontService.UidFont.Push()) { textSize = ImGui.CalcTextSize("Select Account UID"); }
         var centerYpos = (textSize.Y - ImGui.GetFrameHeight());
 
-        using (ImRaii.Child("MigrationsHeader", new Vector2(UiSharedService.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + (centerYpos - startYpos) * 2)))
+        using (ImRaii.Child("MigrationsHeader", new Vector2(CkGui.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + (centerYpos - startYpos) * 2)))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemSpacing.X);
-            using (_uiShared.UidFont.Push())
+            using (UiFontService.UidFont.Push())
             {
                 ImGui.AlignTextToFramePadding();
-                UiSharedService.ColorText("Select Account UID", ImGuiColors.ParsedPink);
+                CkGui.ColorText("Select Account UID", ImGuiColors.ParsedPink);
             }
             // now calculate it so that the cursors Yposition centers the button in the middle height of the text
-            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + UiSharedService.GetWindowContentRegionWidth() - 175f - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerYpos);
 
             // let them pick what account they want to have migrations for.
-            _uiShared.DrawCombo("##Account UID", 175f, CurrentAccountUids, (name) => name, (selected) =>
+            var current = SelectedAccountUid;
+            using (var combo = ImRaii.Combo("##Account UID", SelectedAccountUid))
             {
-                if (selected is not null && selected != SelectedAccountUid)
-                {
-                    // Set the new selected item, and load in all data from that profile (temporarily)
-                    SelectedAccountUid = selected;
-                    LoadDataForUid(SelectedAccountUid);
-                }
-            }, SelectedAccountUid);
+                if (combo)
+                    foreach(var accountUid in CurrentAccountUids)
+                        if (ImGui.Selectable(accountUid, accountUid == SelectedAccountUid))
+                        {
+                            SelectedAccountUid = accountUid;
+                            LoadDataForUid(SelectedAccountUid);
+                        }
+            }
         }
     }
 
@@ -512,9 +512,9 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         LoadedGagData = gagStorage.GagEquipData.Where(kvp => kvp.Value.GameItem.ItemId != ItemService.NothingItem(kvp.Value.Slot).ItemId).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         var importedSets = _infoExchanger.GetRestraintSetsFromUID(uid);
-        LoadedRestraints = importedSets.Where(x => _clientConfigs.GetSetIdxByGuid(x.RestraintId) == -1).ToList();
+        LoadedRestrictions = importedSets.Where(x => _clientConfigs.GetSetIdxByGuid(x.RestrictionId) == -1).ToList();
         // Ensure that the restraint sets are not enabled and don't have an active lock.
-        foreach (var restraint in LoadedRestraints)
+        foreach (var restraint in LoadedRestrictions)
         {
             restraint.Enabled = false;
             restraint.EnabledBy = string.Empty;
@@ -547,7 +547,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         // clear out the temporary data storage containers.
         LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
-        LoadedRestraints = new List<RestraintSet>();
+        LoadedRestrictions = new List<RestraintSet>();
         LoadedCursedItems = new List<CursedItem>();
         LoadedTriggers = new List<Trigger>();
         LoadedAlarms = new List<Alarm>();

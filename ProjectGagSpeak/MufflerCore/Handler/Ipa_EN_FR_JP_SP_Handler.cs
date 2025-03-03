@@ -207,13 +207,20 @@ public class Ipa_EN_FR_JP_SP_Handler
     {
         switch (_config.Config.LanguageDialect)
         {
-            case "IPA_UK": return "MufflerCore\\StoredDictionaries\\en_UK.json";
-            case "IPA_US": return "MufflerCore\\StoredDictionaries\\en_US.json";
-            case "IPA_SPAIN": return "MufflerCore\\StoredDictionaries\\es_ES.json";
-            case "IPA_MEXICO": return "MufflerCore\\StoredDictionaries\\es_MX.json";
-            case "IPA_FRENCH": return "MufflerCore\\StoredDictionaries\\fr_FR.json";
-            case "IPA_QUEBEC": return "MufflerCore\\StoredDictionaries\\fr_QC.json";
-            case "IPA_JAPAN": return "MufflerCore\\StoredDictionaries\\ja.json";
+            case GarbleCoreDialect.UK:
+                return "MufflerCore\\StoredDictionaries\\en_UK.json";
+            case GarbleCoreDialect.US:
+                return "MufflerCore\\StoredDictionaries\\en_US.json";
+            case GarbleCoreDialect.Spain:
+                return "MufflerCore\\StoredDictionaries\\es_ES.json";
+            case GarbleCoreDialect.Mexico:
+                return "MufflerCore\\StoredDictionaries\\es_MX.json";
+            case GarbleCoreDialect.France:
+                return "MufflerCore\\StoredDictionaries\\fr_FR.json";
+            case GarbleCoreDialect.Quebec:
+                return "MufflerCore\\StoredDictionaries\\fr_QC.json";
+            case GarbleCoreDialect.Japan:
+                return "MufflerCore\\StoredDictionaries\\ja.json";
             default: throw new Exception("Invalid language Dialect");
         }
     }
@@ -225,17 +232,29 @@ public class Ipa_EN_FR_JP_SP_Handler
     {
         switch (_config.Config.LanguageDialect)
         {
-            case "IPA_UK": return GagPhonetics.MasterListEN_UK;
-            case "IPA_US": return GagPhonetics.MasterListEN_US;
-            case "IPA_SPAIN": return GagPhonetics.MasterListSP_SPAIN;
-            case "IPA_MEXICO": return GagPhonetics.MasterListSP_MEXICO;
-            case "IPA_FRENCH": return GagPhonetics.MasterListFR_FRENCH;
-            case "IPA_QUEBEC": return GagPhonetics.MasterListFR_QUEBEC;
-            case "IPA_JAPAN": return GagPhonetics.MasterListJP;
-            default: throw new Exception("Invalid language Dialect");
+            case GarbleCoreDialect.UK:
+                return GagPhonetics.MasterListEN_UK;
+            case GarbleCoreDialect.US:
+                return GagPhonetics.MasterListEN_US;
+            case GarbleCoreDialect.Spain:
+                return GagPhonetics.MasterListSP_SPAIN;
+            case GarbleCoreDialect.Mexico:
+                return GagPhonetics.MasterListSP_MEXICO;
+            case GarbleCoreDialect.France:
+                return GagPhonetics.MasterListFR_FRENCH;
+            case GarbleCoreDialect.Quebec:
+                return GagPhonetics.MasterListFR_QUEBEC;
+            case GarbleCoreDialect.Japan:
+                return GagPhonetics.MasterListJP;
+            default:
+                throw new Exception("Invalid language dialect");
         }
     }
 
+
+    /// <summary>
+    /// Sets the uniqueSymbolsString to the master list of phonemes for the selected language
+    /// </summary>
     /// <summary>
     /// Sets the uniqueSymbolsString to the master list of phonemes for the selected language
     /// </summary>
@@ -243,15 +262,31 @@ public class Ipa_EN_FR_JP_SP_Handler
     {
         switch (_config.Config.LanguageDialect)
         {
-            case "IPA_UK": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_UK); break;
-            case "IPA_US": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_US); break;
-            case "IPA_SPAIN": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListSP_SPAIN); break;
-            case "IPA_MEXICO": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListSP_MEXICO); break;
-            case "IPA_FRENCH": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListFR_FRENCH); break;
-            case "IPA_QUEBEC": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListFR_QUEBEC); break;
-            case "IPA_JAPAN": uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListJP); break;
-            default: throw new Exception("Invalid language Dialect");
+            case GarbleCoreDialect.UK:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_UK);
+                break;
+            case GarbleCoreDialect.US:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListEN_US);
+                break;
+            case GarbleCoreDialect.Spain:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListSP_SPAIN);
+                break;
+            case GarbleCoreDialect.Mexico:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListSP_MEXICO);
+                break;
+            case GarbleCoreDialect.France:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListFR_FRENCH);
+                break;
+            case GarbleCoreDialect.Quebec:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListFR_QUEBEC);
+                break;
+            case GarbleCoreDialect.Japan:
+                uniqueSymbolsString = string.Join(",", GagPhonetics.MasterListJP);
+                break;
+            default:
+                throw new Exception("Invalid language dialect");
         }
     }
+
 }
 

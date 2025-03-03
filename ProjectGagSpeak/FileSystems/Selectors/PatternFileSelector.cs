@@ -1,16 +1,29 @@
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface;
 using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
+using static GagSpeak.Restrictions.RestrictionFileSelector;
+using Dalamud.Interface.Utility.Raii;
+using OtterGui.Text;
 
 namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternFileSelector.PatternState>, IMediatorSubscriber, IDisposable
 {
+    private readonly FavoritesManager _favorites;
     private readonly PatternManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -26,10 +39,11 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     public new PatternFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, PatternManager manager,
-        PatternFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##PatternFileSelector")
+    public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, FavoritesManager favorites,
+        PatternManager manager, PatternFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##PatternsFS")
     {
         Mediator = mediator;
+        _favorites = favorites;
         _manager = manager;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
@@ -66,7 +80,51 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    // if desired, can override the DrawLeafName and DrawFolderNames
+    protected override void DrawLeafName(CkFileSystem<Pattern>.Leaf leaf, in PatternState state, bool selected)
+    {
+        using var id = ImRaii.PushId((int)leaf.Identifier);
+        using var leafInternalGroup = ImRaii.Group();
+        DrawLeafInternal(leaf, state, selected);
+    }
+
+    private void DrawLeafInternal(CkFileSystem<Pattern>.Leaf leaf, in PatternState state, bool selected)
+    {
+        // must be a valid drag-drop source, so use invisible button.
+        ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var rectMin = ImGui.GetItemRectMin();
+        var rectMax = ImGui.GetItemRectMax();
+        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+
+        using (ImRaii.Group())
+        {
+            ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
+            ImGui.AlignTextToFramePadding();
+            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
+            ImGui.SameLine();
+            ImGui.Text(leaf.Value.Label);
+            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FontAwesomeIcon.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+            if (CkGui.IconButton(FontAwesomeIcon.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+                _manager.Delete(leaf.Value);
+            CkGui.AttachToolTip("Delete this pattern. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+        }
+
+        // the border if selected.
+        if (selected)
+        {
+            ImGui.GetWindowDrawList().AddRectFilled(
+                rectMin,
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+                CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
+    }
+
+    protected override void DrawFolderName(CkFileSystem<Pattern>.Folder folder, bool selected)
+    {
+        using var id = ImRaii.PushId((int)folder.Identifier);
+        using var group = ImRaii.Group();
+        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
+    }
 
     // if desired, can override the colors for expanded, collapsed, and folder line colors.
     // Can also define if the folders are open by default or not.
@@ -76,11 +134,42 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         => SetFilterDirty();
 
 
-    // Any custom popups or buttons can be setup here.
+    /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
+    protected override float CustomFilters(float width)
+    {
+        var pos = ImGui.GetCursorPos();
+        var remainingWidth = width
+            - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X
+            - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X
+            - ImGui.GetStyle().ItemInnerSpacing.X;
 
-    // any custom filters, if any, can be setup here, though they should likely be removed as
-    // they should end up embedded within the custom filter applier inside the file system later on.
+        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
 
-    // If you need help understanding more about this reference Glamourer and Penumbra again.
+        ImGui.SetCursorPos(buttonsPos);
+        if (CkGui.IconButton(FontAwesomeIcon.Plus))
+            ImGui.OpenPopup("##NewPattern");
+        CkGui.AttachToolTip("Create a new Pattern.");
+
+        ImUtf8.SameLineInner();
+        DrawFolderButton();
+
+        ImGui.SetCursorPos(pos);
+        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+    }
+
+    protected override void DrawPopups()
+    {
+        // make this pull up the pattern maker later down the line.
+        NewPatternPopup();
+    }
+
+    private void NewPatternPopup()
+    {
+        if (!ImGuiUtil.OpenNameField("##NewPattern", ref _newName))
+            return;
+
+        _manager.CreateNew(_newName);
+        _newName = string.Empty;
+    }
 }
 

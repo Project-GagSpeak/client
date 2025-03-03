@@ -80,7 +80,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                 // get the text both before and after it.
                 var split = word.Split("\n\n");
                 currentLine += split[0];
-                UiSharedService.ColorText(currentLine, color);
+                CkGui.ColorText(currentLine, color);
                 ImGui.SetCursorScreenPos(new Vector2(startX, ImGui.GetCursorScreenPos().Y + 5f));
                 currentLine = split[1];
                 currentLines += 1.5;
@@ -91,7 +91,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             {
                 // Current word exceeds line width; finalize the current line
                 currentLine += "\n";
-                UiSharedService.ColorText(currentLine, color);
+                CkGui.ColorText(currentLine, color);
                 ImGui.SetCursorScreenPos(new Vector2(startX, ImGui.GetCursorScreenPos().Y));
                 currentLine = word;
                 currentLines++;
@@ -113,7 +113,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             newDescText += currentLine;
             currentLines++; // Increment the line count for the final line
         }
-        UiSharedService.ColorTextWrapped(newDescText.TrimEnd(), color);
+        CkGui.ColorTextWrapped(newDescText.TrimEnd(), color);
     }
 
     public static void AddRelativeTooltip(Vector2 pos, Vector2 size, string text)
@@ -121,6 +121,6 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // add a scaled dummy over this area.
         ImGui.SetCursorScreenPos(pos);
         ImGuiHelpers.ScaledDummy(size);
-        UiSharedService.AttachToolTip(text);
+        CkGui.AttachToolTip(text);
     }
 }

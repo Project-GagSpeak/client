@@ -24,8 +24,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly RestraintManager _manager;
-    private readonly PairManager _pairs; // For help displaying the nick or alias names of enablers and assigners.
-    private readonly UiSharedService _uiShared;
+    private readonly PairManager _pairs;
     private readonly TutorialService _guides;
 
     public RestraintsPanel(
@@ -37,7 +36,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         MoodleDrawer moodleDrawer,
         RestraintManager manager,
         PairManager pairs,
-        UiSharedService ui,
         TutorialService guides) : base(logger, mediator)
     {
         _logger = logger;
@@ -47,7 +45,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer = moodleDrawer;
         _manager = manager;
         _pairs = pairs;
-        _uiShared = ui;
         _guides = guides;
 
         Mediator.Subscribe<TooltipSetItemToEditorMessage>(this, (msg) =>
@@ -75,7 +72,12 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {
@@ -100,18 +102,18 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             // Move the Y pos down a bit, only for drawing this text
             ImGui.SetCursorPosY(originalCursorPos.Y + 2.5f);
             // Draw the text with the desired color
-            UiSharedService.ColorText(activeSet.Label, ImGuiColors.DalamudWhite2);
+            CkGui.ColorText(activeSet.Label, ImGuiColors.DalamudWhite2);
         }
         if (activeData.IsLocked())
         {
             using (ImRaii.Group())
             {
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2.5f);
-                UiSharedService.ColorText("Locked By:", ImGuiColors.DalamudGrey2);
+                CkGui.ColorText("Locked By:", ImGuiColors.DalamudGrey2);
                 ImGui.SameLine();
                 if (_pairs.TryGetNickAliasOrUid(activeData.PadlockAssigner, out var nick))
-                    UiSharedService.ColorText(nick, ImGuiColors.DalamudGrey3);
-                else UiSharedService.ColorText(activeData.PadlockAssigner, ImGuiColors.DalamudGrey3);
+                    CkGui.ColorText(nick, ImGuiColors.DalamudGrey3);
+                else CkGui.ColorText(activeData.PadlockAssigner, ImGuiColors.DalamudGrey3);
             }
         }
         // draw the padlock dropdown
@@ -120,9 +122,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         // beside draw the remaining time.
         if (activeData.Padlock.IsTimerLock())
         {
-            UiSharedService.ColorText("Time Remaining:", ImGuiColors.DalamudGrey2);
+            CkGui.ColorText("Time Remaining:", ImGuiColors.DalamudGrey2);
             ImGui.SameLine();
-            UiSharedService.ColorText(activeData.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+            CkGui.ColorText(activeData.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
         }
         else
         {
@@ -151,7 +153,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     /// <summary> Get this to be an override for the selector at some point (with revisions). </summary>
     public void DrawSearchFilter(float availableWidth, float spacingX)
     {
-/*        var buttonSize = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+/*        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
         ImGui.SetNextItemWidth(availableWidth - buttonSize - spacingX);
         string filter = RestraintSetSearchString;
         if (ImGui.InputTextWithHint("##RestraintFilter", "Search for Restraint Set", ref filter, 255))
@@ -161,7 +163,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
         ImUtf8.SameLineInner();
         using var disabled = ImRaii.Disabled(string.IsNullOrEmpty(RestraintSetSearchString));
-        if (_uiShared.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
+        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
         {
             RestraintSetSearchString = string.Empty;
             LastHoveredIndex = -1;

@@ -11,14 +11,14 @@ public partial class AlarmsPanel
     private readonly ILogger<AlarmsPanel> _logger;
     private readonly AlarmFileSelector _selector;
     private readonly AlarmManager _manager;
-    private readonly UiSharedService _ui;
+    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public AlarmsPanel(
         ILogger<AlarmsPanel> logger,
         AlarmFileSelector selector,
         AlarmManager manager,
-        UiSharedService ui,
+        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
@@ -40,7 +40,12 @@ public partial class AlarmsPanel
         }
         else
         {
-            _selector.Draw(selectorSize);
+            using (ImRaii.Group())
+            {
+                _selector.DrawFilterRow(selectorSize);
+                ImGui.Spacing();
+                _selector.DrawList(selectorSize);
+            }
             ImGui.SameLine();
             using (ImRaii.Group())
             {

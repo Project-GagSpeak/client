@@ -147,19 +147,19 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         }
     }
 
-    public bool TrySetTraits(TraitApplyType type, string enactor, Traits traitsToSet)
+    public bool TrySetTraits(ModuleSection type, string enactor, Traits traitsToSet)
     {
         if (traitsToSet is 0)
             return false;
 
         var canApply = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints.Contains(enactor),
-            TraitApplyType.Restriction => TraitAllowancesRestrictions.Contains(enactor),
-            TraitApplyType.Gag => TraitAllowancesGags.Contains(enactor),
-            TraitApplyType.Pattern => TraitAllowancesPatterns.Contains(enactor), // TBD
-            TraitApplyType.Trigger => TraitAllowancesTriggers.Contains(enactor), // TBD
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints.Contains(enactor),
+            ModuleSection.Restriction => TraitAllowancesRestrictions.Contains(enactor),
+            ModuleSection.Gag => TraitAllowancesGags.Contains(enactor),
+            ModuleSection.Pattern => TraitAllowancesPatterns.Contains(enactor), // TBD
+            ModuleSection.Trigger => TraitAllowancesTriggers.Contains(enactor), // TBD
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
 
         if (!canApply)
@@ -183,80 +183,80 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public readonly HashSet<string> TraitAllowancesPatterns = []; // Unsure how yet.
     public readonly HashSet<string> TraitAllowancesTriggers = []; // Probably Not.
 
-    public void AddAllowance(TraitApplyType type, string kinksterUid)
+    public void AddAllowance(ModuleSection type, string kinksterUid)
     {
         var allowances = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints,
-            TraitApplyType.Restriction => TraitAllowancesRestrictions,
-            TraitApplyType.Gag => TraitAllowancesGags,
-            TraitApplyType.Pattern => TraitAllowancesPatterns,
-            TraitApplyType.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints,
+            ModuleSection.Restriction => TraitAllowancesRestrictions,
+            ModuleSection.Gag => TraitAllowancesGags,
+            ModuleSection.Pattern => TraitAllowancesPatterns,
+            ModuleSection.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
 
         allowances.Add(kinksterUid);
         _saver.Save(this);
     }
 
-    public void AddAllowance(TraitApplyType type, IEnumerable<string> allowances)
+    public void AddAllowance(ModuleSection type, IEnumerable<string> allowances)
     {
         var set = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints,
-            TraitApplyType.Restriction => TraitAllowancesRestrictions,
-            TraitApplyType.Gag => TraitAllowancesGags,
-            TraitApplyType.Pattern => TraitAllowancesPatterns,
-            TraitApplyType.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints,
+            ModuleSection.Restriction => TraitAllowancesRestrictions,
+            ModuleSection.Gag => TraitAllowancesGags,
+            ModuleSection.Pattern => TraitAllowancesPatterns,
+            ModuleSection.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
 
         set.UnionWith(allowances);
         _saver.Save(this);
     }
 
-    public void RemoveAllowance(TraitApplyType type, string kinksterUid)
+    public void RemoveAllowance(ModuleSection type, string kinksterUid)
     {
         var allowances = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints,
-            TraitApplyType.Restriction => TraitAllowancesRestrictions,
-            TraitApplyType.Gag => TraitAllowancesGags,
-            TraitApplyType.Pattern => TraitAllowancesPatterns,
-            TraitApplyType.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints,
+            ModuleSection.Restriction => TraitAllowancesRestrictions,
+            ModuleSection.Gag => TraitAllowancesGags,
+            ModuleSection.Pattern => TraitAllowancesPatterns,
+            ModuleSection.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
 
         allowances.Remove(kinksterUid);
         _saver.Save(this);
     }
 
-    public void RemoveAllowance(TraitApplyType type, IEnumerable<string> allowances)
+    public void RemoveAllowance(ModuleSection type, IEnumerable<string> allowances)
     {
         var set = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints,
-            TraitApplyType.Restriction => TraitAllowancesRestrictions,
-            TraitApplyType.Gag => TraitAllowancesGags,
-            TraitApplyType.Pattern => TraitAllowancesPatterns,
-            TraitApplyType.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints,
+            ModuleSection.Restriction => TraitAllowancesRestrictions,
+            ModuleSection.Gag => TraitAllowancesGags,
+            ModuleSection.Pattern => TraitAllowancesPatterns,
+            ModuleSection.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
         
         set.ExceptWith(allowances);
         _saver.Save(this);
     }
 
-    public void ResetAllowances(TraitApplyType type)
+    public void ResetAllowances(ModuleSection type)
     {
         var set = type switch
         {
-            TraitApplyType.Restraint => TraitAllowancesRestraints,
-            TraitApplyType.Restriction => TraitAllowancesRestrictions,
-            TraitApplyType.Gag => TraitAllowancesGags,
-            TraitApplyType.Pattern => TraitAllowancesPatterns,
-            TraitApplyType.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid TraitApplyType!"),
+            ModuleSection.Restraint => TraitAllowancesRestraints,
+            ModuleSection.Restriction => TraitAllowancesRestrictions,
+            ModuleSection.Gag => TraitAllowancesGags,
+            ModuleSection.Pattern => TraitAllowancesPatterns,
+            ModuleSection.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
 
         set.Clear();

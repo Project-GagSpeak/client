@@ -212,6 +212,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                 return;
         }
         _saver.Save(this);
+        Mediator.Publish(new ReloadFileSystem(ModuleSection.Alarm));
     }
 
     private void LoadV0(JToken? data)

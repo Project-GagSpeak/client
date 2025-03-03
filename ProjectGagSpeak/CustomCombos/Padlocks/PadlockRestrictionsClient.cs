@@ -14,8 +14,8 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     private readonly RestrictionManager _restrictions;
     private static int CurrentLayer;
 
-    public PadlockRestrictionsClient(int layer, GagspeakMediator mediator, RestrictionManager restrictions, ILogger log, UiSharedService ui)
-        : base(() => GetActiveRestriction(restrictions), log, ui, "Restrictions" + layer)
+    public PadlockRestrictionsClient(int layer, GagspeakMediator mediator, RestrictionManager restrictions, ILogger log)
+        : base(() => GetActiveRestriction(restrictions), log, "Restrictions" + layer)
     {
         _mediator = mediator;
         _restrictions = restrictions;

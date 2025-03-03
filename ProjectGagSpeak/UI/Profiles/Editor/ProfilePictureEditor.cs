@@ -26,10 +26,10 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
     private readonly FileDialogManager _fileDialogManager;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly CosmeticService _cosmetics;
-    private readonly UiSharedService _uiShared;
+
     public ProfilePictureEditor(ILogger<ProfilePictureEditor> logger, GagspeakMediator mediator,
         MainHub hub, FileDialogManager fileDialogManager, KinkPlateService KinkPlateManager,
-        CosmeticService cosmetics, UiSharedService uiShared)
+        CosmeticService cosmetics, CkGui uiShared)
         : base(logger, mediator, "Edit KinkPlate Profile Picture###KinkPlateProfilePictureUI")
     {
         IsOpen = false;
@@ -41,7 +41,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         _fileDialogManager = fileDialogManager;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
-        _uiShared = uiShared;
+
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
     }
@@ -87,7 +87,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         // check if flagged
         if (profile.KinkPlateInfo.Flagged)
         {
-            UiSharedService.ColorTextWrapped(profile.KinkPlateInfo.Description, ImGuiColors.DalamudRed);
+            CkGui.ColorTextWrapped(profile.KinkPlateInfo.Description, ImGuiColors.DalamudRed);
             return;
         }
 
@@ -112,23 +112,23 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         // we need here to draw the group for content.
         using (ImRaii.Group())
         {
-            _uiShared.GagspeakTitleText("Current Image");
+            CkGui.GagspeakTitleText("Current Image");
             ImGui.Separator();
-            UiSharedService.ColorText("Square Image Preview:", ImGuiColors.ParsedGold);
-            UiSharedService.TextWrapped("Meant to display the original display of the stored image data.");
+            CkGui.ColorText("Square Image Preview:", ImGuiColors.ParsedGold);
+            CkGui.TextWrapped("Meant to display the original display of the stored image data.");
             ImGui.Spacing();
-            UiSharedService.ColorText("Rounded Image Preview:", ImGuiColors.ParsedGold);
-            UiSharedService.TextWrapped("This is what's seen in the account page, and inside of KinkPlates™");
+            CkGui.ColorText("Rounded Image Preview:", ImGuiColors.ParsedGold);
+            CkGui.TextWrapped("This is what's seen in the account page, and inside of KinkPlates™");
             ImGui.Spacing();
 
-            var width = _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Trash, "Clear uploaded profile picture");
+            var width = CkGui.IconTextButtonSize(FontAwesomeIcon.Trash, "Clear uploaded profile picture");
             // move down to the newline and draw the buttons for adding and removing images
-            if (_uiShared.IconTextButton(FontAwesomeIcon.FileUpload, "Upload new profile picture", width))
+            if (CkGui.IconTextButton(FontAwesomeIcon.FileUpload, "Upload new profile picture", width))
                 HandleFileDialog();
-            UiSharedService.AttachToolTip("Select and upload a new profile picture");
+            CkGui.AttachToolTip("Select and upload a new profile picture");
 
             // let them clean their image too if they desire.
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))
             {
                 _uploadedImageData = null!;
                 _croppedImageData = null!;
@@ -137,11 +137,11 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 _useCompressedImage = false;
                 _ = _hub.UserSetKinkPlatePicture(new UserKinkPlatePictureDto(new UserData(MainHub.UID), string.Empty));
             }
-            UiSharedService.AttachToolTip("Clear your currently uploaded profile picture--SEP--Must be holding SHIFT to clear.");
+            CkGui.AttachToolTip("Clear your currently uploaded profile picture--SEP--Must be holding SHIFT to clear.");
 
             // show file dialog error if we had one.
             if (_showFileDialogError)
-                UiSharedService.ColorTextWrapped("The profile picture must be a PNG file", ImGuiColors.DalamudRed);
+                CkGui.ColorTextWrapped("The profile picture must be a PNG file", ImGuiColors.DalamudRed);
         }
 
         ImGui.Spacing();
@@ -250,7 +250,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
         using (ImRaii.Group())
         {
-            _uiShared.GagspeakTitleText("Image Editor");
+            CkGui.GagspeakTitleText("Image Editor");
             ImGui.Separator();
             if (_croppedImageData != null)
             {
@@ -272,7 +272,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 if (ImGui.SliderFloat("Rotation", ref _rotationAngle, 0.0f, 360.0f, "%.2f"))
                     if (rotationRef != _rotationAngle)
                         UpdateCroppedImagePreview();
-                UiSharedService.AttachToolTip("DOES NOT WORK YET!");
+                CkGui.AttachToolTip("DOES NOT WORK YET!");
 
                 // Add zoom slider
                 var zoomRef = _zoomFactor;
@@ -292,13 +292,13 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             ImGui.TextUnformatted("Cropped Image Size: " + CroppedFileSize);
 
             // draw the compress & upload.
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Compress, "Compress"))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Compress, "Compress"))
                 CompressImage();
-            UiSharedService.AttachToolTip("Shrinks the image to a 512x512 ratio for better performance");
+            CkGui.AttachToolTip("Shrinks the image to a 512x512 ratio for better performance");
 
             ImGui.SameLine();
 
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Upload, "Upload to Server", disabled: _croppedImageData is null))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Upload, "Upload to Server", disabled: _croppedImageData is null))
                 _ = UploadToServer(profile);
         }
     }

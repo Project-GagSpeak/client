@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Services.Mediator;
@@ -53,9 +54,9 @@ public class GagspeakConfigService : IHybridSavable
                 {
                     jsonText = File.ReadAllText(backupFile);
                     jObject = JObject.Parse(jsonText);
-                    jObject = ConfigMigrator.MigrateMainConfig(jObject);
+                    jObject = ConfigMigrator.MigrateMainConfig(jObject, _saver.FileNames);
                     // remove the old file.
-                    File.Delete(backupFile);
+                    // File.Delete(backupFile);
                 }
                 else
                 {
@@ -189,7 +190,6 @@ public class GagspeakConfig
     // used for detecting if in first install.
     public bool AcknowledgementUnderstood { get; set; } = false;
     public bool ButtonUsed { get; set; } = false;
-    public bool AccountCreated { get; set; } = false;
 
     // DTR bar preferences
     public bool EnableDtrEntry { get; set; } = false;
@@ -221,8 +221,8 @@ public class GagspeakConfig
 
     // GLOBAL SETTINGS for client user.
     public string Safeword { get; set; } = "";
-    public string Language { get; set; } = "English"; // MuffleCore
-    public string LanguageDialect { get; set; } = "IPA_US"; // MuffleCore
+    public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
+    public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
     public bool CursedLootPanel { get; set; } = false; // CursedLootPanel
     public bool CursedItemsApplyTraits { get; set; } = false; // If Mimics can apply restriction traits to you.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.

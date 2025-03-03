@@ -36,7 +36,7 @@ public partial class PermissionsDrawer
         var str = _timespanCache.TryGetValue(perm, out var value) ? value : curState.ToGsRemainingTime();
         var data = _pad.ClientPermData[perm];
 
-        if (_uiShared.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
+        if (CkGui.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
         {
             if (str != curState.ToGsRemainingTime() && GsPadlockEx.TryParseTimeSpan(str, out var newTime))
             {
@@ -47,13 +47,13 @@ public partial class PermissionsDrawer
             }
             _timespanCache.Remove(perm);
         }
-        UiSharedService.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
+        CkGui.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
 
         ImGui.SameLine(buttonW);
         var refVar = editAccess;
         if (ImGui.Checkbox("##" + perm + "edit", ref refVar))
             UiBlockingTask = AssignBlockingTask(perm.ToPermAccessValue(), refVar, PermissionType.UniquePairPermEditAccess, UpdateDir.Own);
-        UiSharedService.AttachToolTip(editAccess ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
+        CkGui.AttachToolTip(editAccess ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
     }
 
     private void DrawPermRowClientCommon<T>(float width, SPPID perm, bool inHardcore, bool curState, bool editAccess, Func<T> newStateFunc)
@@ -70,15 +70,15 @@ public partial class PermissionsDrawer
         ImGui.SetCursorScreenPos(pos);
         using (ImRaii.Group())
         {
-            _uiShared.IconText(curState ? data.IconOn : data.IconOff);
+            CkGui.IconText(curState ? data.IconOn : data.IconOff);
             ImUtf8.SameLineInner();
             ImGui.Text(data.TextPrefix);
             ImGui.SameLine();
-            UiSharedService.ColorTextBool(curState ? data.CondTrue : data.CondFalse, curState);
+            CkGui.ColorTextBool(curState ? data.CondTrue : data.CondFalse, curState);
             ImGui.SameLine();
             ImGui.Text(data.TextSuffix);
         }
-        UiSharedService.AttachToolTip(data.Tooltip(curState));
+        CkGui.AttachToolTip(data.Tooltip(curState));
 
         if (button)
         {
@@ -94,7 +94,7 @@ public partial class PermissionsDrawer
         var refVar = editAccess;
         if (ImGui.Checkbox("##" + perm + "edit", ref refVar))
             UiBlockingTask = AssignBlockingTask(perm.ToPermAccessValue(), refVar, PermissionType.UniquePairPermEditAccess, UpdateDir.Own);
-        UiSharedService.AttachToolTip(editAccess ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
+        CkGui.AttachToolTip(editAccess ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
     }
 
     public void DrawHardcorePermRowClient(float width, SPPID perm, bool inHardcore, string curState, bool permAllowed)
@@ -113,15 +113,15 @@ public partial class PermissionsDrawer
             ImGui.SetCursorScreenPos(pos);
             using (ImRaii.Group())
             {
-                _uiShared.IconText(isActive ? data.IconOn : data.IconOff);
+                CkGui.IconText(isActive ? data.IconOn : data.IconOff);
                 ImUtf8.SameLineInner();
                 ImGui.Text(data.TextPrefix);
                 ImGui.SameLine();
-                UiSharedService.ColorTextBool(isActive ? data.CondTrue : data.CondFalse, isActive);
+                CkGui.ColorTextBool(isActive ? data.CondTrue : data.CondFalse, isActive);
                 ImGui.SameLine();
                 ImGui.Text(data.TextSuffix);
             }
-            UiSharedService.AttachToolTip(data.Tooltip(isActive));
+            CkGui.AttachToolTip(data.Tooltip(isActive));
 
             if (button)
             {
@@ -137,7 +137,7 @@ public partial class PermissionsDrawer
         var refVar = permAllowed;
         if (ImGui.Checkbox("##" + perm + "edit", ref refVar))
             UiBlockingTask = AssignBlockingTask(perm.ToPermAccessValue(), refVar, PermissionType.UniquePairPermEditAccess, UpdateDir.Own);
-        UiSharedService.AttachToolTip(permAllowed ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
+        CkGui.AttachToolTip(permAllowed ? PermissionData.ClientAccessYesTT : PermissionData.ClientAccessNoTT);
     }
 
     public void DrawHardcorePermRowClient(float width, bool inHardcore, string curState, bool editAccess, bool editAccess2)
@@ -153,28 +153,28 @@ public partial class PermissionsDrawer
         {
             using (ImRaii.Group())
             {
-                _uiShared.IconText(isActive ? data.IconOn : data.IconOff);
+                CkGui.IconText(isActive ? data.IconOn : data.IconOff);
                 ImUtf8.SameLineInner();
                 ImGui.Text(data.TextPrefix);
                 ImGui.SameLine();
-                UiSharedService.ColorTextBool(isActive ? data.CondTrue : data.CondFalse, isActive);
+                CkGui.ColorTextBool(isActive ? data.CondTrue : data.CondFalse, isActive);
                 ImGui.SameLine();
                 ImGui.Text(data.TextSuffix);
             }
-            UiSharedService.AttachToolTip(data.Tooltip(isActive));
+            CkGui.AttachToolTip(data.Tooltip(isActive));
         }
 
         ImGui.SameLine(buttonW);
         var refVar = editAccess;
         if (ImGui.Checkbox("##" + SPPID.ForcedEmoteState + "edit", ref refVar))
             UiBlockingTask = AssignBlockingTask(SPPID.ForcedEmoteState.ToPermAccessValue(), refVar, PermissionType.UniquePairPermEditAccess, UpdateDir.Own);
-        UiSharedService.AttachToolTip("Limit " + PermissionData.DispName + " to only force GroundSit, Sit, and CyclePose.");
+        CkGui.AttachToolTip("Limit " + PermissionData.DispName + " to only force GroundSit, Sit, and CyclePose.");
 
         ImUtf8.SameLineInner();
         var refVar2 = editAccess2;
         if (ImGui.Checkbox("##" + SPPID.ForcedEmoteState + "edit2", ref refVar2))
             UiBlockingTask = AssignBlockingTask(SPPID.ForcedEmoteState.ToPermAccessValue(true), refVar2, PermissionType.UniquePairPermEditAccess, UpdateDir.Own);
-        UiSharedService.AttachToolTip("Allow " + PermissionData.DispName + " to force you into any looped Emote.");
+        CkGui.AttachToolTip("Allow " + PermissionData.DispName + " to force you into any looped Emote.");
     }
 
     /// <summary> This function is messy because it is independant of everything else due to a bad conflict between pishock HTML and gagspeak signalR. </summary>
@@ -183,19 +183,19 @@ public partial class PermissionsDrawer
         // First row must be drawn.
         using (ImRaii.Group())
         {
-            var length = width - _uiShared.GetIconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") + ImGui.GetFrameHeight();
+            var length = width - CkGui.IconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") + ImGui.GetFrameHeight();
             var refCode = pairPerms.PiShockShareCode;
-            if (_uiShared.IconInputText("Code" + PermissionData.DispName, FontAwesomeIcon.ShareAlt, string.Empty, "Unique Share Code",
+            if (CkGui.IconInputText("Code" + PermissionData.DispName, FontAwesomeIcon.ShareAlt, string.Empty, "Unique Share Code",
                 ref refCode, 40, width, true, false))
             {
                 UiBlockingTask = AssignBlockingTask(SPPID.PiShockShareCode.ToPermValue().name, refCode, PermissionType.UniquePairPerm, UpdateDir.Own);
             }
-            UiSharedService.AttachToolTip($"Unique Share Code for " + PermissionData.DispName + "." +
+            CkGui.AttachToolTip($"Unique Share Code for " + PermissionData.DispName + "." +
                 "--SEP--This should be a separate Share Code from your Global Share Code." +
                 "--SEP--A Unique Share Code can have permissions elevated higher than the Global Share Code that only " + PermissionData.DispName + " can use.");
 
             ImUtf8.SameLineInner();
-            if (_uiShared.IconTextButton(FontAwesomeIcon.Sync, "Refresh", disabled: DateTime.Now - _lastRefresh < TimeSpan.FromSeconds(15) || refCode.IsNullOrWhitespace()))
+            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Refresh", disabled: DateTime.Now - _lastRefresh < TimeSpan.FromSeconds(15) || refCode.IsNullOrWhitespace()))
             {
                 _lastRefresh = DateTime.Now;
                 UiBlockingTask = Task.Run(async () =>
@@ -215,7 +215,7 @@ public partial class PermissionsDrawer
         float seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
         using (var group = ImRaii.Group())
         {
-            if (_uiShared.IconSliderFloat("##maxVibeTime" + PermissionData.DispName, FontAwesomeIcon.Stopwatch, "Max Vibe Duration",
+            if (CkGui.IconSliderFloat("##maxVibeTime" + PermissionData.DispName, FontAwesomeIcon.Stopwatch, "Max Vibe Duration",
                 ref seconds, 0.1f, 15f, width * .65f, true, pairPerms.HasValidShareCode()))
             {
                 pairPerms.MaxVibrateDuration = TimeSpan.FromSeconds(seconds);
@@ -226,7 +226,7 @@ public partial class PermissionsDrawer
                 ulong ticks = (ulong)timespanValue.Ticks;
                 UiBlockingTask = AssignBlockingTask(SPPID.MaxVibrateDuration.ToPermValue().name, ticks, PermissionType.UniquePairPerm, UpdateDir.Own);
             }
-            UiSharedService.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");
+            CkGui.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");
         }
     }
 }

@@ -15,9 +15,9 @@ public class ItemService
     public const string SmallClothesNpc = "Smallclothes (NPC)";
     public const ushort SmallClothesNpcModel = 9903;
 
-    public readonly DictStain      Stains;
-    public readonly ItemData       ItemData;
-    public readonly DictBonusItems BonusData;
+    public readonly DictStain            Stains;
+    public readonly ItemData             ItemData;
+    public readonly DictBonusItems       BonusData;
 
     public ItemService(DictStain stains, ItemData itemData, DictBonusItems bonusData)
     {
@@ -99,6 +99,31 @@ public class ItemService
     public EquipItem Resolve(BonusItemFlag slot, BonusItemId id)
         => IsBonusItemValid(slot, id, out var item) ? item : new EquipItem($"Invalid ({id.Id})", id, 0, 0, 0, 0, slot.ToEquipType(), 0, 0, 0);
 
+    public EquipItem Resolve(BonusItemFlag slot, CustomItemId id)
+    {
+        // Only from early designs as migration.
+        if (!id.IsBonusItem || id.Id == 0)
+        {
+            IsBonusItemValid(slot, (BonusItemId)id.Id, out var item);
+            return item;
+        }
+
+        if (!id.IsCustom)
+        {
+            if (IsBonusItemValid(slot, id.BonusItem, out var item))
+                return item;
+
+            return EquipItem.BonusItemNothing(slot);
+        }
+
+        var (model, variant, slot2) = id.SplitBonus;
+        if (slot != slot2)
+            return EquipItem.BonusItemNothing(slot);
+
+        return Resolve(slot, id.BonusItem);
+    }
+
+
     /// <summary> Serializes the GlamourSlot into a JToken. </summary>
     /// <param name="slot"> The GlamourSlot to serialize. </param>
     /// <returns> The JToken representing the GlamourSlot. </returns>
@@ -136,7 +161,7 @@ public class ItemService
         => new JObject
         {
             ["Slot"] = slot.Slot.ToString(),
-            ["CustomItemId"] = slot.GameItem.Id.ToString(),
+            ["CustomItemId"] = slot.GameItem.Id.BonusItem.ToString(),
         };
 
     public GlamourBonusSlot ParseBonusSlot(JToken? item)
@@ -148,7 +173,7 @@ public class ItemService
         return new GlamourBonusSlot()
         {
             Slot = slot,
-            GameItem = Resolve(slot, new BonusItemId(json["CustomItemId"]?.Value<ushort>() ?? ushort.MaxValue)),
+            GameItem = Resolve(slot, json["CustomItemId"]?.Value<ushort>() ?? ushort.MaxValue),
         };
     }
 

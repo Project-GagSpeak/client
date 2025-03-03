@@ -77,7 +77,7 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     // Lists are sorted on priority, then subscription order.
     private readonly List<(Action<CkFileSystem<T>.Folder>, int)> _rightClickOptionsFolder = new(4);
     private readonly List<(Action<CkFileSystem<T>.Leaf>, int)>   _rightClickOptionsLeaf   = new(1);
-    private readonly List<(Action, int)>                       _rightClickOptionsMain   = new(4);
+    private readonly List<(Action, int)>                         _rightClickOptionsMain   = new(4);
 
     private void InitDefaultContext()
     {
