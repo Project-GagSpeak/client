@@ -10,7 +10,7 @@ using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.CkCommons.Helpers;
+namespace GagSpeak.CkCommons.Drawers;
 
 public static class Icons
 {

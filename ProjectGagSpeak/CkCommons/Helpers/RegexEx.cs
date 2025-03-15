@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak.CkCommons.Helpers;
 
-public static class RegexEx
+public static partial class RegexEx
 {
     public static Match TryMatchTriggerWord(string message, string triggerWord)
     {
@@ -70,5 +70,8 @@ public static class RegexEx
             return str;
         }
     }
+
+    [GeneratedRegex(@"(\[color=[0-9a-zA-Z]+\])|(\[\/color\])|(\[glow=[0-9a-zA-Z]+\])|(\[\/glow\])|(\[i\])|(\[\/i\])", RegexOptions.IgnoreCase, "en-US")]
+    public static partial Regex SplitRegex();
 }
 

@@ -173,7 +173,7 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
     protected void DrawFolderButton()
     {
         const string newFolderName = "folderName";
-        if (CkGui.IconButton(FontAwesomeIcon.FolderPlus))
+        if (CkGui.IconButton(FontAwesomeIcon.FolderPlus, inPopup: true))
             ImGui.OpenPopup(newFolderName);
         CkGui.AttachToolTip("Create a new, empty folder. Can contain '/' to create a directory structure.");
 

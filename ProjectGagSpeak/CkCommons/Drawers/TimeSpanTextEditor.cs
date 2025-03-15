@@ -1,7 +1,7 @@
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Helpers;
+namespace GagSpeak.CkCommons.Drawers;
 
 /// <summary> A stateful text editor for timeSpan that uses GsString formatting. </summary>
 /// <remarks> Uses functions for getters and setters. </remarks>

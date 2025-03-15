@@ -60,14 +60,13 @@ public class CkGui
         _selectedComboItems = new(StringComparer.Ordinal);
         SearchStrings = new(StringComparer.Ordinal);
     }
+    // Nessisary for the sticky window to attach properly.
     public static Vector2 LastMainUIWindowPosition { get; set; } = Vector2.Zero;
     public static Vector2 LastMainUIWindowSize { get; set; } = Vector2.Zero;
 
+    // TODO: Remove and move to core textures.
     public IDalamudTextureWrap GetImageFromDirectoryFile(string path)
         => _textureProvider.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
-
-    public IDalamudTextureWrap GetGameStatusIcon(uint IconId)
-        => _textureProvider.GetFromGameIcon(new GameIconLookup(IconId)).GetWrapOrEmpty();
 
     /// <summary> A helper function to attach a tooltip to a section in the UI currently hovered. </summary>
     public static void AttachToolTip(string text, float borderSize = 1f, Vector4? color = null)
@@ -161,6 +160,14 @@ public class CkGui
         return ret;
     }
 
+    /// <summary> An Unformatted Text version of ImGui.TextColored accepting UINT </summary>
+    public static void ColorText(string text, uint color)
+    {
+        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
+        ImGui.TextUnformatted(text);
+    }
+
+
     /// <summary> An Unformatted Text version of ImGui.TextColored </summary>
     public static void ColorText(string text, Vector4 color)
     {
@@ -233,6 +240,40 @@ public class CkGui
             ImGui.TextUnformatted(text);
         }
     }
+
+    public static void DrawOutlinedFont(string text, uint fontColor, uint outlineColor, int thickness)
+    {
+        var original = ImGui.GetCursorPos();
+
+        using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
+        {
+            ImGui.SetCursorPos(original with { Y = original.Y - thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X - thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { Y = original.Y + thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X + thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
+            ImGui.TextUnformatted(text);
+        }
+
+        using (ImRaii.PushColor(ImGuiCol.Text, fontColor))
+        {
+            ImGui.SetCursorPos(original);
+            ImGui.TextUnformatted(text);
+            ImGui.SetCursorPos(original);
+            ImGui.TextUnformatted(text);
+        }
+    }
+
 
     public static void DrawOutlinedFont(ImDrawListPtr drawList, string text, Vector2 textPos, uint fontColor, uint outlineColor, int thickness)
     {

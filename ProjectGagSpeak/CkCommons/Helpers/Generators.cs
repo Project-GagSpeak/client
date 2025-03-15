@@ -18,13 +18,12 @@ public static class Generators
 
     public static TimeSpan GetRandomTimeSpan(TimeSpan min, TimeSpan max)
     {
-        // if the min is greater than the max, make the timespan 1 second and return.
+        // if the min is greater than the max, make the timespan 5 second and return.
         if (min > max) return TimeSpan.FromSeconds(5);
 
-        var random = new Random();
         var minSeconds = min.TotalSeconds;
         var maxSeconds = max.TotalSeconds;
-        var randomSeconds = random.NextDouble() * (maxSeconds - minSeconds) + minSeconds;
+        var randomSeconds = new Random().NextDouble() * (maxSeconds - minSeconds) + minSeconds;
         return TimeSpan.FromSeconds(randomSeconds);
     }
 }

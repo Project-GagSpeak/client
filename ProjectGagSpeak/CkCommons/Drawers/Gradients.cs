@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons.Helpers;
+namespace GagSpeak.CkCommons.Drawers;
 
 // Yoinked from ECommons
 // https://github.com/NightmareXIV/ECommons/blob/master/ECommons/ImGuiMethods/GradientColor.cs

@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Utility;
 using GagSpeak.UI;
+using GagSpeak.UI.Components;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -49,7 +50,6 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
     /// <returns> If the filter was changed. </returns>
     private bool ChangeFilterInternal(string filterValue)
     {
-        GagSpeak.StaticLog.Debug($"Changed the filter to {filterValue} from {FilterValue}.");
         if (filterValue == FilterValue)
             return false;
 
@@ -61,21 +61,22 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
     /// <param name="width"> The width of the filter row. </param>
     /// <remarks> Parameters are start position for the filter input field and selector width. </remarks>
     /// <returns> The remaining width for the text input. </returns>
-    protected virtual float CustomFilters(float width)
+    protected virtual float CustomFiltersWidth(float width)
         => width;
+
+    protected virtual void DrawCustomFilters() { }
 
     /// <summary> Draw the default filter row of a given width. </summary>
     /// <param name="width"> The width of the filter row. </param>
     /// <remarks> Also contains the buttons to add new items and folders if desired. </remarks>
     public void DrawFilterRow(float width)
     {
-        width = CustomFilters(width);
-        ImGui.SetNextItemWidth(width);
+        using var group = ImRaii.Group();
+
+        var       searchWidth = CustomFiltersWidth(width);
         var       tmp    = FilterValue;
         using var id     = ImRaii.PushId(0);
-        var       change = ImGui.InputTextWithHint("##Filter", "Filter...", ref tmp, 128);
-
-        // Update this later to use brios fancy search filter clear display operation thingy. Dont worry about it rn.
+        var       change = DrawerHelpers.FancySearchFilter("Filter", width, searchWidth, ref tmp, 128);
 
         // the filter box had its value updated.
         if (change)
@@ -86,6 +87,9 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
 
         if (FilterTooltip.Length > 0)
             CkGui.AttachToolTip(FilterTooltip);
+
+        ImGui.SameLine(searchWidth);
+        DrawCustomFilters();
     }
 
     /// <summary> Customization point on how a path should be filtered. Checks whether the FullName contains the current string by default. </summary>

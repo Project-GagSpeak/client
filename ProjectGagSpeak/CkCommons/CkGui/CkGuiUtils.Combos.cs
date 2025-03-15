@@ -37,4 +37,27 @@ public static partial class CkGuiUtils
         return false;
     }
 
+    /// <summary> a generic string combo for string usage. </summary>
+    /// <returns> True if the value was changed. </returns>
+    /// <remarks> Useful for non-enum based dropdowns for simplistic options. </remarks>
+    public static bool StringCombo(string label, float width, string current, out string newValue,
+    IEnumerable<string> options, string defaultText = "Select Item...")
+    {
+        ImGui.SetNextItemWidth(width);
+        var previewText = options.Contains(current) ? current.ToString() : defaultText;
+        using var combo = ImRaii.Combo(label, previewText);
+        if (combo)
+            foreach (var data in options)
+            {
+                if (data.Length == 0 || !ImGui.Selectable(data, data.Equals(current)) || data.Equals(current))
+                    continue;
+
+                newValue = data;
+                return true;
+            }
+
+        newValue = current;
+        return false;
+    }
+
 }

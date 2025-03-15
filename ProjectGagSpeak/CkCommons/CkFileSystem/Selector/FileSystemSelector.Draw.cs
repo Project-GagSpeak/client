@@ -203,12 +203,14 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     public bool DrawList(float width)
     {
         DrawPopups();
+
+        // Idk maybe this will fix the annoying assertion that occurs on the first drawframe or whatever.
+        using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
+            .Push(ImGuiCol.ButtonActive, uint.MinValue);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, ImGuiWindowFlags.NoScrollbar);
         try
         {
-            using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
-                .Push(ImGuiCol.ButtonActive, uint.MinValue);
-            using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-            using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, ImGuiWindowFlags.NoScrollbar);
             style.Pop();
             MainContext();
             if (!_)
