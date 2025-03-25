@@ -52,7 +52,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
 
         // make this whole thing a scrollable child window.
         // (keep the border because we will style it later and helps with alignment visual)
-        using (ImRaii.Child("AccountPageChild", new Vector2(CkGui.GetWindowContentRegionWidth(), 0), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("AccountPageChild", new Vector2(CkGui.GetWindowContentRegionWidth(), 0), false, WFlags.NoScrollbar))
         {
             try
             {
@@ -95,21 +95,21 @@ public class AccountTab : DisposableMediatorSubscriberBase
             ImGui.Spacing();
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.PenSquare, "My Profile", "Open and Customize your Profile!", () => Mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
+            DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => Mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
 
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.Cog, "My Settings", "Opens the Settings UI", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
+            DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.Bell, "Actions Notifier", "See who did what actions on you!", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
+            DrawAccountSettingChild(FAI.Bell, "Actions Notifier", "See who did what actions on you!", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
 
             // now do one for ko-fi
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
+            DrawAccountSettingChild(FAI.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
                 Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
                 Environment.NewLine + "any support or tips are much appreciated ♥", () =>
                 {
@@ -120,7 +120,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
 
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
+            DrawAccountSettingChild(FAI.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
                 Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
                 Environment.NewLine + "any support / tips are much appreciated ♥", () =>
             {
@@ -129,21 +129,21 @@ public class AccountTab : DisposableMediatorSubscriberBase
             });
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
+            DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
                 catch (Exception e) { Logger.LogError($"Failed to open the google form. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
+            DrawAccountSettingChild(FAI.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://docs.google.com/document/d/1nluBM2tsLzTrRdZEZN8FnpvOSPzdPrcH9R-SL78mJdA/edit?tab=t.0", UseShellExecute = true }); }
                 catch (Exception e) { Logger.LogError($"Failed to open the google doc. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FontAwesomeIcon.Wrench, "Open Configs", "Opens the Plugin Config Folder", () =>
+            DrawAccountSettingChild(FAI.Wrench, "Open Configs", "Opens the Plugin Config Folder", () =>
             {
                 try
                 {
@@ -203,8 +203,8 @@ public class AccountTab : DisposableMediatorSubscriberBase
         {
             textSize = ImGui.CalcTextSize($"No Safeword Set");
         }
-        var iconSize = CkGui.IconSize(FontAwesomeIcon.ExclamationTriangle);
-        var editButtonSize = CkGui.IconSize(FontAwesomeIcon.Edit);
+        var iconSize = CkGui.IconSize(FAI.ExclamationTriangle);
+        var editButtonSize = CkGui.IconSize(FAI.Edit);
         var bigTextPaddingDistance = ((height - textSize.Y) / 2);
         var iconFontCenterY = (height - iconSize.Y) / 2;
         var editButtonCenterY = (height - editButtonSize.Y) / 2;
@@ -214,7 +214,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
             // We love ImGui....
             var childStartYpos = ImGui.GetCursorPosY();
             ImGui.SetCursorPosY(childStartYpos + iconFontCenterY);
-            CkGui.IconText(FontAwesomeIcon.ExclamationTriangle, ImGuiColors.DalamudYellow);
+            CkGui.IconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
 
             ImGui.SameLine(iconSize.X + ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosX(ImGui.GetCursorPosX());
@@ -246,7 +246,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
                 ImGui.SetCursorPosY(childStartYpos + ((height - editButtonSize.Y) / 2) + 1f);
             }
             // draw out the icon button
-            CkGui.IconText(FontAwesomeIcon.Edit);
+            CkGui.IconText(FAI.Edit);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 EditingSafeword = !EditingSafeword;
@@ -264,7 +264,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
 
         var textSize = ImGui.CalcTextSize(displayText);
         var iconSize = CkGui.IconSize(leftIcon);
-        var arrowRightSize = CkGui.IconSize(FontAwesomeIcon.ChevronRight);
+        var arrowRightSize = CkGui.IconSize(FAI.ChevronRight);
         var textCenterY = ((height - textSize.Y) / 2);
         var iconFontCenterY = (height - iconSize.Y) / 2;
         var arrowRightCenterY = (height - arrowRightSize.Y) / 2;
@@ -284,7 +284,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
             ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - arrowRightSize.X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(childStartYpos + arrowRightCenterY);
             // Draw the icon button and perform the action when pressed
-            CkGui.IconText(FontAwesomeIcon.ChevronRight);
+            CkGui.IconText(FAI.ChevronRight);
         }
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
         {

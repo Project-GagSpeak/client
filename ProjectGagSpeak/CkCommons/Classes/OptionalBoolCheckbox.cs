@@ -35,14 +35,16 @@ public class OptionalBoolCheckbox(uint crossColor = 0xFF0000FF, uint checkColor 
     /// <param name="value"> The input/output value. </param>
     /// <returns> True when <paramref name="value"/> changed in this frame. </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public virtual bool Draw(ReadOnlySpan<char> label, ref OptionalBool value, bool disabled)
+    public virtual bool Draw(ReadOnlySpan<char> label, OptionalBool current, out OptionalBool newValue, bool disabled = false)
     {
+        newValue = current;
+
         using (ImRaii.Disabled(disabled))
         {
-            if (Draw(label, ref value))
+            if (Draw(label, ref newValue))
                 return true;
         }
-        CkGui.AttachToolTip("This attribute will " + (value.Value switch
+        CkGui.AttachToolTip("This attribute will " + (newValue.Value switch
         {
             true => "be enabled.",
             false => "be disabled.",

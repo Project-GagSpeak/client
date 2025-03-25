@@ -1,5 +1,5 @@
 using FFXIVClientStructs.FFXIV.Client.System.Resource;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 using Penumbra.String;
 using Penumbra.String.Classes;
 using System.Runtime.InteropServices;

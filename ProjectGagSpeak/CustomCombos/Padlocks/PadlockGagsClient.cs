@@ -1,10 +1,7 @@
-using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Padlockable;
 
@@ -12,15 +9,10 @@ namespace GagSpeak.CustomCombos.Padlockable;
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly GagspeakMediator _mediator;
-    private readonly GagRestrictionManager _gagData;
-    private static int GagSlotLayer;
-
-    public PadlockGagsClient(int layer, GagspeakMediator mediator, GagRestrictionManager gagData, ILogger log)
-        : base(() => gagData.ActiveGagsData?.GagSlots[GagSlotLayer] ?? new ActiveGagSlot(), log, "##ClientPadlockGag"+layer)
+    public PadlockGagsClient(ILogger log, GagspeakMediator mediator, Func<int, ActiveGagSlot> monitoredItemGenerator)
+        : base(monitoredItemGenerator, log)
     {
         _mediator = mediator;
-        _gagData = gagData;
-        GagSlotLayer = layer;
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
@@ -29,21 +21,17 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
 
-    public void DrawPadlockComboSection(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
-    {
-        // grab the latest padlock. If it is not none, we should draw the unlock base, otherwise, draw the lock base.
-        if (MonitoredItem.IsLocked())
-            DrawUnlockCombo(width, tt, btt, flags);
-        else
-            DrawLockCombo(width, tt, btt, flags);
-    }
+    protected override bool DisableCondition()
+        => MonitoredItem.GagItem is GagType.None;
 
-    protected override bool DisableCondition() =>
-        _gagData.ActiveGagsData is null || _gagData.ActiveGagsData.GagSlots[GagSlotLayer].GagItem is GagType.None;
+    public void DrawLockCombo(float width, int layerIdx, string tooltip)
+        => DrawLockCombo("ClientGagLock_"+ layerIdx, width, layerIdx, string.Empty, tooltip, false);
 
-    protected override void OnLockButtonPress()
+    public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
+        => DrawUnlockCombo("ClientGagUnlock_" + layerIdx, width, layerIdx, string.Empty, tooltip);
+
+    protected override void OnLockButtonPress(int layerIdx)
     {
-        // make a general common sense assumption logic check here, the rest can be handled across the server.
         if (MonitoredItem.CanLock())
         {
             var newData = new ActiveGagSlot()
@@ -53,7 +41,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
                 Timer = Timer.GetEndTimeUTC(),
                 PadlockAssigner = MainHub.UID // use the same assigner. (To remove devotional timers)
             };
-            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, (GagLayer)GagSlotLayer, newData));
+            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
             ResetSelection();
         }
         else
@@ -62,7 +50,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         }
     }
 
-    protected override void OnUnlockButtonPress()
+    protected override void OnUnlockButtonPress(int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
         if (MonitoredItem.CanUnlock())
@@ -73,7 +61,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
                 Password = MonitoredItem.Password,
                 PadlockAssigner = MainHub.UID
             };
-            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, (GagLayer)GagSlotLayer, newData));
+            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));
             ResetSelection();
         }
         else

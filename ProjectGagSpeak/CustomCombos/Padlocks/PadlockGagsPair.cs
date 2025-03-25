@@ -1,6 +1,6 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -12,11 +12,9 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    private int CurrentLayer;
-    public PairGagPadlockCombo(int layer, Pair pairData, MainHub mainHub, ILogger log, string label)
-        : base(() => pairData.LastGagData.GagSlots[layer], log, label)
+    public PairGagPadlockCombo(ILogger log, Pair pairData, MainHub mainHub, Func<int, ActiveGagSlot> generator)
+        : base(generator, log)
     {
-        CurrentLayer = layer;
         _mainHub = mainHub;
         _pairRef = pairData;
     }
@@ -26,15 +24,15 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
     protected override bool DisableCondition()
-        => _pairRef.LastGagData.GagSlots[CurrentLayer].GagItem is GagType.None || _pairRef.PairPerms.ApplyGags is false;
+        => MonitoredItem.GagItem is GagType.None;
 
-    protected override void OnLockButtonPress()
+    protected override void OnLockButtonPress(int layerIdx)
     {
         if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockGags)
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
-                Layer = (GagLayer)CurrentLayer,
+                Layer = (GagLayer)layerIdx,
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
@@ -51,13 +49,13 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         ResetInputs();
     }
 
-    protected override void OnUnlockButtonPress()
+    protected override void OnUnlockButtonPress(int layerIdx)
     {
         if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockGags)
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
-                Layer = (GagLayer)CurrentLayer,
+                Layer = (GagLayer)layerIdx,
                 Padlock = MonitoredItem.Padlock,
                 Password = Password, // Our guessed password.
                 Assigner = MainHub.UID,

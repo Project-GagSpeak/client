@@ -24,7 +24,7 @@ public partial class PatternsPanel
         var refName = pattern.Label;
         if (ImGui.InputTextWithHint("##PatternName", "Name Here...", ref refName, 50))
             pattern.Label = refName;
-        CkGui.DrawHelpText("Define the name for the Pattern.");
+        CkGui.HelpText("Define the name for the Pattern.");
 
         // description
         var refDescription = pattern.Description;
@@ -32,7 +32,7 @@ public partial class PatternsPanel
         ImGui.SetNextItemWidth(200f);
         if (ImGui.InputTextMultiline("##PatternDescription", ref refDescription, 100, new Vector2(225f, ImGui.GetFrameHeightWithSpacing()*3)))
             pattern.Description = refDescription;
-        CkGui.DrawHelpText("Define the description for the Pattern.\n(Shown on tooltip hover if uploaded)");
+        CkGui.HelpText("Define the description for the Pattern.\n(Shown on tooltip hover if uploaded)");
 
         // total duration
         ImGui.Spacing();
@@ -44,7 +44,7 @@ public partial class PatternsPanel
         ImGui.Spacing();
         CkGui.ColorText("Pattern Loop State", ImGuiColors.ParsedGold);
         ImGui.SameLine();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Repeat, pattern.ShouldLoop ? "Looping" : "Not Looping", null, true))
+        if (CkGui.IconTextButton(FAI.Repeat, pattern.ShouldLoop ? "Looping" : "Not Looping", null, true))
             pattern.ShouldLoop = !pattern.ShouldLoop;
 
         var patternDurationTimeSpan = pattern.Duration;

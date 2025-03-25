@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
@@ -12,12 +13,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private int longestPresetCount => _pairRef.LastIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
-    public PairMoodlePresetCombo(float iconScale, MoodleStatusMonitor monitor, Pair pair, MainHub hub,
+    public PairMoodlePresetCombo(float iconScale, MoodlesDisplayer monitor, Pair pair, MainHub hub,
         ILogger log, CkGui ui, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
-        [
-            ..pair.LastIpcData.MoodlesPresets.OrderBy(x => x.Title),
-        ])
+        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesPresets.OrderBy(x => x.Title)])
     { }
 
     private float ComboBoxWidth => IconSize.X * (longestPresetCount - 1);

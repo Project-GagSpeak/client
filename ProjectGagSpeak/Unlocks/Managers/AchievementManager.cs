@@ -436,7 +436,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             Title = "Achievement Completed!",
             Content = "Completed: " + title,
             Type = NotificationType.Info,
-            Icon = INotificationIcon.From(FontAwesomeIcon.Award),
+            Icon = INotificationIcon.From(FAI.Award),
             Minimized = false,
             InitialDuration = TimeSpan.FromSeconds(10)
         });

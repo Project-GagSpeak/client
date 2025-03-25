@@ -122,7 +122,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
 
         // Dunno why we arent using a pair selector here instead but whatever.
-        using (ImRaii.Child("##PuppetPairs", new Vector2(region.X/4, region.Y), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("##PuppetPairs", new Vector2(region.X/4, region.Y), false, WFlags.NoScrollbar))
         {
             _pairList.DrawSearchFilter(false);
             _pairList.DrawPairListSelectable(true, 2);
@@ -183,7 +183,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
         using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         // create the child window.
-        using (ImRaii.Child("##TriggerDataForClient", new Vector2(ImGui.GetContentRegionAvail().X, 0), true, ImGuiWindowFlags.ChildWindow | ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("##TriggerDataForClient", new Vector2(ImGui.GetContentRegionAvail().X, 0), true, WFlags.ChildWindow | WFlags.NoScrollbar))
         {
             // Draw the client change actions.
             _components.DrawListenerClientGroup(isEditingTriggerOptions,
@@ -272,7 +272,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         // push a less transparent very dark grey background color.
         using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         // create the child window.
-        using (ImRaii.Child("##TriggerDataForPair" + name, new Vector2(ImGui.GetContentRegionAvail().X, 0), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child("##TriggerDataForPair" + name, new Vector2(ImGui.GetContentRegionAvail().X, 0), true, WFlags.ChildWindow))
         {
             // draw the listener top row.
             _components.DrawListenerPairGroup(onSendName: () =>
@@ -300,7 +300,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawAliasList(List<AliasTrigger> aliasList)
     {
-        using (ImRaii.Child("##AliasListChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("##AliasListChild", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
         {
             // Formatting.
             using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
@@ -365,7 +365,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
             return;
         }
 
-        using (ImRaii.Child("##PairAliasListChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("##PairAliasListChild", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
         {
             // Formatting.
             using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
@@ -400,9 +400,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         Action? onAdd = null, Action<bool>? onEditToggle = null)
     {
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
-        var editSize = showEdit ? CkGui.IconButtonSize(FontAwesomeIcon.Edit).X + spacing : 0;
-        var addNewSize = showAdd ? CkGui.IconTextButtonSize(FontAwesomeIcon.Plus, "New Alias") + spacing : 0;
-        var clearSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing;
+        var editSize = showEdit ? CkGui.IconButtonSize(FAI.Edit).X + spacing : 0;
+        var addNewSize = showAdd ? CkGui.IconTextButtonSize(FAI.Plus, "New Alias") + spacing : 0;
+        var clearSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear") + spacing;
 
         var spaceLeft = editSize + addNewSize + clearSize;
 
@@ -410,7 +410,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##AliasSearchStringFilter", "Search for an Alias", ref AliasSearchString, 255);
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
+        if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(AliasSearchString)))
             AliasSearchString = string.Empty;
         CkGui.AttachToolTip("Clear the search filter.");
 
@@ -418,7 +418,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         if (showAdd)
         {
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Plus, "New Alias", disabled: !isEditing))
+            if (CkGui.IconTextButton(FAI.Plus, "New Alias", disabled: !isEditing))
             {
                 _logger.LogDebug("Adding new Alias");
                 onAdd?.Invoke();
@@ -430,7 +430,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         {
             ImUtf8.SameLineInner();
             using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.ParsedPink : ImGuiColors.DalamudWhite))
-                if (CkGui.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit))
+                if (CkGui.IconButton(isEditing ? FAI.Save : FAI.Edit))
                     onEditToggle?.Invoke(!isEditing);
             CkGui.AttachToolTip(isEditing ? "Save Changes." : "Start Editing Alias List");
         }

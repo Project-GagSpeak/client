@@ -15,13 +15,6 @@ public class VisualApplierPenumbra
         _penumbra = penumbra;
     }
 
-    /// <summary> Gets all of the clients mods from penumbra. </summary>
-    /// <remarks> The settings returned with this only provide the options selected, not all options. </remarks>
-    public IEnumerable<(Mod, ModSettings)> GetClientMods()
-    {
-        return _penumbra.GetModInfos();
-    }
-
     public ModSettingOptions GetAllModOptions(ModAssociation mod)
         => _penumbra.GetAllOptionsForMod(mod.ModInfo);
 

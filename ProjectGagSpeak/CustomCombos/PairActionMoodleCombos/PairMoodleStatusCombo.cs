@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
@@ -11,12 +12,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    public PairMoodleStatusCombo(float iconScale, MoodleStatusMonitor monitor, Pair pair,
+    public PairMoodleStatusCombo(float iconScale, MoodlesDisplayer monitor, Pair pair,
         MainHub hub, ILogger log, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
-        [
-            ..pair.LastIpcData.MoodlesStatuses.OrderBy(x => x.Title),
-        ])
+        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
     { }
 
     protected override bool DisableCondition()

@@ -163,17 +163,17 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
     /// <param name="state"> The state storage for the leaf. </param>
     /// <param name="selected"> Whether the leaf is currently selected. </param>
     /// <remarks> Can add additional icons or buttons if wanted. Everything drawn in here is wrapped in a group. </remarks>
-    protected virtual void DrawLeafName(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
+    protected virtual bool DrawLeafName(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
     {
         // Can add custom color application in any override.
         using var id = ImRaii.PushId((int)leaf.Identifier);
-        ImGui.Selectable("○" + leaf.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
+        return ImGui.Selectable("○" + leaf.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
     }
 
     protected void DrawFolderButton()
     {
         const string newFolderName = "folderName";
-        if (CkGui.IconButton(FontAwesomeIcon.FolderPlus, inPopup: true))
+        if (CkGui.IconButton(FAI.FolderPlus, inPopup: true))
             ImGui.OpenPopup(newFolderName);
         CkGui.AttachToolTip("Create a new, empty folder. Can contain '/' to create a directory structure.");
 

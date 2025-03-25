@@ -7,8 +7,7 @@ using OtterGui.Text;
 using System.Runtime.CompilerServices;
 
 namespace GagSpeak.CkCommons.Classes;
-public class OptionalBoolIconCheckbox(FontAwesomeIcon icon, uint crossColor = 0xFF0000FF, uint checkColor = 0xFF00FF00, uint dotColor = 0xFFD0D0D0)
-    : OptionalBoolCheckbox(crossColor, checkColor, dotColor)
+public class OptionalBoolIconCheckbox(FontAwesomeIcon icon, uint crossColor = 0xFF0000FF, uint checkColor = 0xFF00FF00, uint dotColor = 0xFFD0D0D0) : OptionalBoolCheckbox
 {
     /// <inheritdoc/>
     protected override void RenderSymbol(OptionalBool value, Vector2 position, float size)
@@ -37,14 +36,17 @@ public class OptionalBoolIconCheckbox(FontAwesomeIcon icon, uint crossColor = 0x
     /// <param name="value"> The input/output value. </param>
     /// <returns> True when <paramref name="value"/> changed in this frame. </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override bool Draw(ReadOnlySpan<char> label, ref OptionalBool value, bool disabled)
+    public bool Draw(ReadOnlySpan<char> label, OptionalBool current, out OptionalBool newValue, bool disabled = false)
     {
+        // Initialize newValue to the current state initially
+        newValue = current;
+
         using (ImRaii.Disabled(disabled))
         {
-            if (Draw(label, ref value))
+            if (Draw(label, ref newValue))
                 return true;
         }
-        CkGui.AttachToolTip("This attribute will " + (value.Value switch
+        CkGui.AttachToolTip("This attribute will " + (newValue.Value switch
         {
             true => "be enabled.",
             false => "be disabled.",

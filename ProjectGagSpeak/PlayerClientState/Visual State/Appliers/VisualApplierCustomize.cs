@@ -22,7 +22,7 @@ public class VisualApplierCPlus : DisposableMediatorSubscriberBase
         Mediator.Subscribe<CustomizeReady>(this, (msg) => OnCustomizeReady());
     }
 
-    public List<CustomizeProfile> LatestCustomizeProfiles { get; private set; } = new List<CustomizeProfile>();
+    public static List<CustomizeProfile> LatestProfiles { get; private set; } = new List<CustomizeProfile>();
     // This is the profile that we must ensure stays restricted at all times.
     private Tuple<Guid, int> RestrictedProfile = new Tuple<Guid, int>(Guid.Empty, 0);
 
@@ -32,7 +32,7 @@ public class VisualApplierCPlus : DisposableMediatorSubscriberBase
     /// <remarks> This will fire every time that Moodles Plugin initializes. </remarks>
     public void OnCustomizeReady()
     {
-        LatestCustomizeProfiles = _customize.GetAllProfiles();
+        LatestProfiles = _customize.GetAllProfiles();
         Logger.LogInformation("All CustomizePlus Profiles Retrieved!", LoggerType.IpcCustomize);
     }
 

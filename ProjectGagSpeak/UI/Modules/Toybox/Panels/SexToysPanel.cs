@@ -74,7 +74,7 @@ public class SexToysPanel
         }
 
         // display the wide list of connected devices, along with if they are active or not, below some scanner options
-        if (CkGui.IconTextButton(FontAwesomeIcon.TabletAlt, "Personal Remote", 125f))
+        if (CkGui.IconTextButton(FAI.TabletAlt, "Personal Remote", 125f))
         {
             // open the personal remote window
             _mediator.Publish(new UiToggleMessage(typeof(RemotePersonal)));
@@ -139,7 +139,7 @@ public class SexToysPanel
 
     public void DrawDevicesTable()
     {
-        if (CkGui.IconTextButton(FontAwesomeIcon.Search, "Device Scanner", null, false, !_vibeService.IntifaceConnected))
+        if (CkGui.IconTextButton(FAI.Search, "Device Scanner", null, false, !_vibeService.IntifaceConnected))
         {
             // search scanning if we are not scanning, otherwise stop scanning.
             if (_vibeService.ScanningForDevices)
@@ -212,10 +212,10 @@ public class SexToysPanel
     {
         var windowPadding = ImGui.GetStyle().WindowPadding;
         // push the style var to supress the Y window padding.
-        var intifaceOpenIcon = FontAwesomeIcon.ArrowUpRightFromSquare;
+        var intifaceOpenIcon = FAI.ArrowUpRightFromSquare;
         var intifaceIconSize = CkGui.IconButtonSize(intifaceOpenIcon);
-        var connectedIcon = !_vibeService.IntifaceConnected ? FontAwesomeIcon.Link : FontAwesomeIcon.Unlink;
-        var buttonSize = CkGui.IconButtonSize(FontAwesomeIcon.Link);
+        var connectedIcon = !_vibeService.IntifaceConnected ? FAI.Link : FAI.Unlink;
+        var buttonSize = CkGui.IconButtonSize(FAI.Link);
         var buttplugServerAddr = IntifaceController.IntifaceClientName;
         var addrSize = ImGui.CalcTextSize(buttplugServerAddr);
 

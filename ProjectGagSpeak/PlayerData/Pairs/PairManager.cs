@@ -172,14 +172,14 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         );
 
         var uniquePerms = (
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes),
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes),
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes),
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou),
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou),
-            pair.OwnPerms.MaxMoodleTime,
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles),
-            pair.OwnPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles)
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes),
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes),
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes),
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou),
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou),
+            pair.PairPerms.MaxMoodleTime,
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles),
+            pair.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles)
         );
 
         return (ownPerms, uniquePerms);

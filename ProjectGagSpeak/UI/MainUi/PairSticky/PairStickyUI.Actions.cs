@@ -82,7 +82,7 @@ public partial class PairStickyUI
     {
         if (!SPair.IsPaused)
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.User, "Open Profile", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FAI.User, "Open Profile", WindowMenuWidth, true))
             {
                 Mediator.Publish(new KinkPlateOpenStandaloneMessage(SPair));
                 ImGui.CloseCurrentPopup();
@@ -92,7 +92,7 @@ public partial class PairStickyUI
 
         if (!SPair.IsPaused)
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
             {
                 ImGui.CloseCurrentPopup();
                 Mediator.Publish(new ReportKinkPlateMessage(SPair.UserData));
@@ -102,7 +102,7 @@ public partial class PairStickyUI
 
         if (SPair.IsOnline)
         {
-            var pauseIcon = SPair.OwnPerms.IsPaused ? FontAwesomeIcon.Play : FontAwesomeIcon.Pause;
+            var pauseIcon = SPair.OwnPerms.IsPaused ? FAI.Play : FAI.Pause;
             var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermissionData.DispName : "Pause " + PermissionData.DispName;
             if (CkGui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
@@ -114,7 +114,7 @@ public partial class PairStickyUI
         }
         if (SPair.IsVisible)
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Reload IPC data", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FAI.Sync, "Reload IPC data", WindowMenuWidth, true))
             {
                 SPair.ApplyLastIpcData(forced: true);
                 ImGui.CloseCurrentPopup();
@@ -127,7 +127,7 @@ public partial class PairStickyUI
 
     private void DrawIndividualMenu()
     {
-        if (CkGui.IconTextButton(FontAwesomeIcon.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
+        if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
             _hub.UserRemovePair(new(SPair.UserData)).ConfigureAwait(false);
         CkGui.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermissionData.DispName);
     }

@@ -57,33 +57,26 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     public Action<HardcoreTraits, HardcoreTraits>? OnHardcoreStateChanged;
     public Action<Traits, Traits>? OnTraitStateChanged;
-    private HardcoreTraits _previousHcTraits = HardcoreTraits.None;
-    private Traits _previousTraits = Traits.None;
+    public Action<Stimulation, Stimulation>? OnStimulationStateChanged;
+    private HardcoreTraits _prevHcTraits = HardcoreTraits.None;
+    private Traits _prevTraits = Traits.None;
+    private Stimulation _prevStim = Stimulation.None;
     public HardcoreTraits ActiveHcTraits
     {
-        get => _previousHcTraits;
-        private set
-        {
-            if (_previousHcTraits != value)
-            {
-                OnHardcoreStateChanged?.Invoke(_previousHcTraits, value);
-                _previousHcTraits = value;
-
-            }
-        }
+        get => _prevHcTraits;
+        private set { if (_prevHcTraits != value) { OnHardcoreStateChanged?.Invoke(_prevHcTraits, value); _prevHcTraits = value; } }
     }
+
     public Traits ActiveTraits
     {
-        get => _previousTraits;
-        private set
-        {
-            // Check if the value has changed
-            if (_previousTraits != value)
-            {
-                OnTraitStateChanged?.Invoke(_previousTraits, value);
-                _previousTraits = value;
-            }
-        }
+        get => _prevTraits;
+        private set { if (_prevTraits != value) { OnTraitStateChanged?.Invoke(_prevTraits, value); _prevTraits = value; } }
+    }
+
+    public Stimulation ActiveStim
+    {
+        get => _prevStim;
+        private set { if (_prevStim != value) { OnStimulationStateChanged?.Invoke(_prevStim, value); _prevStim = value; } }
     }
 
     /// <summary> Cache the Movement Mode of our player during ForcedFollow </summary>
@@ -98,21 +91,20 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public bool IsImmobile => ActiveTraits.HasAny(Traits.Immobile) || ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote);
     public bool ForceWalking => ActiveTraits.HasAny(Traits.Weighty) || ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow);
     public bool ShouldBlockKeys => ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow) || IsImmobile;
+    public bool ActiveBlindfoldForcesFirstPerson => false;
 
     // Helper functions for our Action & Movement monitors & Controllers.
     public float GetVibeMultiplier()
     {
-        var baseMultiplier = 1f;
-        var product = 1f;
-        if((ActiveTraits & Traits.StimLight) != 0)
-            product += 0.125f;
-        if((ActiveTraits & Traits.StimMild) != 0)
-            product += 0.25f;
-        if((ActiveTraits & Traits.StimHeavy) != 0)
-            product += 0.5f;
-        return baseMultiplier * product;
+        return ActiveStim switch
+        {
+            Stimulation.None    => 1f,
+            Stimulation.Light   => 1.125f,
+            Stimulation.Mild    => 1.375f,
+            Stimulation.Heavy   => 1.875f,
+            _ => 1f,
+        };
     }
-
     public async Task HandleBlindfoldLogic(NewState newState)
     {
         // toggle our window based on conditions
@@ -210,7 +202,7 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
             ModuleSection.Trigger => TraitAllowancesTriggers,
             _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
         };
-
+        Logger.LogDebug("Adding Allowances: " + string.Join(", ", allowances));
         set.UnionWith(allowances);
         _saver.Save(this);
     }

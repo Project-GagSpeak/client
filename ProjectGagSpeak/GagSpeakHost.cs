@@ -1,4 +1,5 @@
 using GagSpeak.Achievements.Services;
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Services;
 using GagSpeak.Services;
@@ -8,7 +9,7 @@ using GagSpeak.StateManagers;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.UpdateMonitoring.Chat.ChatMonitors;
+using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.Triggers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

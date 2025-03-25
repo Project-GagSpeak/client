@@ -37,9 +37,6 @@ using GagSpeak.Toybox.SimulatedVibe;
 using GagSpeak.Triggers;
 using GagSpeak.UI;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
-using GagSpeak.UI.Components.Popup;
-using GagSpeak.UI.Components.UserPairList;
 using GagSpeak.UI.Handlers;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UI.Orders;
@@ -52,10 +49,7 @@ using GagSpeak.UI.UiToybox;
 using GagSpeak.UI.Wardrobe;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.UpdateMonitoring.Chat.ChatMonitors;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Loaders;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Spawner;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.UpdateMonitoring.Triggers;
 using GagSpeak.VibeLobby;
 using GagSpeak.WebAPI;
@@ -347,7 +341,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new MoveController(s.GetRequiredService<ILogger<MoveController>>(), gip, ot))
         .AddSingleton((s) => new ForcedStayCallback(s.GetRequiredService<ILogger<ForcedStayCallback>>(), s.GetRequiredService<GagspeakConfigService>(), ss, gip))
 
-        .AddSingleton((s) => new MoodleStatusMonitor(s.GetRequiredService<ILogger<MoodleStatusMonitor>>(), dm, tp))
+        .AddSingleton((s) => new MoodlesDisplayer(s.GetRequiredService<ILogger<MoodlesDisplayer>>(), dm, tp))
 
         .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, pl))
         .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(),
@@ -405,7 +399,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<NicknamesConfigService>()
         .AddSingleton<ServerConfigurationManager>()
         .AddSingleton<HybridSaveService>();
-        // the rest of the config stuff here is not migrated into other parts so see about how we will sort this later.
+    // the rest of the config stuff here is not migrated into other parts so see about how we will sort this later.
 
     #endregion ConfigServices
     #region ScopedServices
@@ -415,11 +409,14 @@ public static class GagSpeakServiceExtensions
     => services
         // Scoped Components
         .AddScoped<DrawRequests>()
-        .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<ItemService>(),
-            s.GetRequiredService<TextureService>(), dm))
+        .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<RestrictionManager>(),
+            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ItemService>(), s.GetRequiredService<TextureService>(),
+            s.GetRequiredService<CosmeticService>(), dm))
+        .AddScoped<TraitsDrawer>()
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<PlaybackDrawer>()
+        .AddScoped<ActiveItemsDrawer>()
 
         // Scoped Factorys
         .AddScoped<DrawEntityFactory>()
@@ -456,9 +453,13 @@ public static class GagSpeakServiceExtensions
         .AddScoped<OrdersAssigner>()
         // Scoped UI (Wardrobe)
         .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
-        .AddScoped<GagRestrictionsPanel>()
-        .AddScoped<RestrictionsPanel>()
         .AddScoped<RestraintsPanel>()
+        .AddScoped<RestraintEditorInfo>()
+        .AddScoped<RestraintEditorEquipment>()
+        .AddScoped<RestraintEditorLayers>()
+        .AddScoped<RestraintEditorModsMoodles>()
+        .AddScoped<RestrictionsPanel>()
+        .AddScoped<GagRestrictionsPanel>()
         .AddScoped<CursedLootPanel>()
         // Scoped UI (Puppeteer)
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
@@ -470,6 +471,14 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PatternsPanel>()
         .AddScoped<AlarmsPanel>()
         .AddScoped<TriggersPanel>()
+        // Scoped UI (Mod Presets)
+        .AddScoped<WindowMediatorSubscriberBase, ModPresetsUI>()
+        .AddScoped<ModPresetSelector>()
+        .AddScoped<ModPresetsPanel>()
+        // Scoped UI (Trait Allowances Presets)
+        .AddScoped<WindowMediatorSubscriberBase, TraitAllowanceUI>()
+        .AddScoped<TraitAllowanceSelector>()
+        .AddScoped<TraitAllowancePanel>()
         // Scoped UI (Publications)
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
         .AddScoped<PublicationsManager>()
@@ -517,7 +526,8 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
         .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
         .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CkGui>(), pi))
+            s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<GagspeakConfigService>(),
+            s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CosmeticService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
 
 

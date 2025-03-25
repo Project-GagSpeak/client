@@ -116,8 +116,7 @@ public abstract class CkFilterComboBase<T>
             // `NewSelection` is cleared at the end of the parent DrawFunction.
             DrawList(width, itemHeight);
             // If we should close the popup (after selection), do so.
-            if (_closePopup)
-                ClosePopup(id, label);
+            ClosePopup(id, label);
         }
         else if (_popupState.Remove(id))
         {
@@ -171,7 +170,7 @@ public abstract class CkFilterComboBase<T>
             ImGui.SetScrollFromPosY(_lastSelection * itemHeight - ImGui.GetScrollY());
 
         // Draw all available objects with their name.
-        Dalamud.Interface.Utility.ImGuiClip.ClippedDraw(_available, DrawSelectableInternal, itemHeight);
+        OtterGui.ImGuiClip.ClippedDraw(_available, DrawSelectableInternal, itemHeight);
     }
 
     protected virtual bool DrawSelectable(int globalIdx, bool selected)
@@ -201,10 +200,13 @@ public abstract class CkFilterComboBase<T>
             return;
 
         // Close the popup and reset state.
+        Log.LogTrace("Closing popup for {Label}.", label);
         ImGui.CloseCurrentPopup();
         _popupState.Remove(id);
         OnClosePopup();
         ClearStorage(label);
+        // Reset the close popup state.
+        _closePopup = false;
     }
 
     /// <summary> MAIN DRAW CALL LOGIC FUNC. Should ALWAYS be called by the Filter Combo Cache unless instructed otherwise. </summary>

@@ -7,7 +7,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components.UserPairList;
+namespace GagSpeak.UI.Components;
 
 /// <summary>
 /// The base for the draw folder, which is a dropdown section in the list of paired users, and handles the basic draw functionality
@@ -54,7 +54,7 @@ public class DrawRequests : IRequestsFolder
         using (ImRaii.Child("folder__" + ID, new System.Numerics.Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
         {
             // draw opener
-            var icon = _isRequestFolderOpen ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight;
+            var icon = _isRequestFolderOpen ? FAI.CaretDown : FAI.CaretRight;
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
 
@@ -91,7 +91,7 @@ public class DrawRequests : IRequestsFolder
                 return;
             }
 
-            using var indent = ImRaii.PushIndent(CkGui.IconSize(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+            using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             // draw the entries based on the type selected.
             if (_viewingMode is DrawRequestsType.Outgoing)
             {
@@ -139,14 +139,14 @@ public class DrawRequests : IRequestsFolder
     private float DrawFolderIcon()
     {
         ImGui.AlignTextToFramePadding();
-        CkGui.IconText(FontAwesomeIcon.Inbox);
+        CkGui.IconText(FAI.Inbox);
         ImGui.SameLine();
         return ImGui.GetCursorPosX();
     }
     private void DrawViewTypeSelection()
     {
         bool viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
-        var icon = viewingOutgoing ? FontAwesomeIcon.PersonArrowUpFromLine : FontAwesomeIcon.PersonArrowDownToLine;
+        var icon = viewingOutgoing ? FAI.PersonArrowUpFromLine : FAI.PersonArrowDownToLine;
         var text = viewingOutgoing ? "View Incoming (" + TotalIncoming + ")" : "View Outgoing (" + TotalOutgoing + ")";
         var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";
         var buttonSize = CkGui.IconTextButtonSize(icon, text);

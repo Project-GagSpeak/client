@@ -114,6 +114,13 @@ public class FavoritesManager : IHybridSavable
         }
         return false;
     }
+
+    public void AddKinksters(IEnumerable<string> kinksters)
+    {
+        _favoriteKinksters.UnionWith(kinksters);
+        _saver.Save(this);
+    }
+
     #endregion Additions
 
     #region Removals
@@ -151,6 +158,12 @@ public class FavoritesManager : IHybridSavable
             return true;
         }
         return false;
+    }
+
+    public void RemoveKinksters(IEnumerable<string> kinksters)
+    {
+        _favoriteKinksters.ExceptWith(kinksters);
+        _saver.Save(this);
     }
 
     #endregion Removals

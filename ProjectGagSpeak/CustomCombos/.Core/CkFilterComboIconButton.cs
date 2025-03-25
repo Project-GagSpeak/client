@@ -7,7 +7,7 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
 {
-    protected FontAwesomeIcon ButtonIcon = FontAwesomeIcon.None;
+    protected FontAwesomeIcon ButtonIcon = FAI.None;
     protected string ButtonText = string.Empty;
     protected string ButtonToolTip = string.Empty;
 

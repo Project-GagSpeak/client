@@ -1,12 +1,67 @@
 using Dalamud.Plugin;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using OtterGui;
 using Penumbra.Api.IpcSubscribers;
+using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
+
+public sealed class ModPresetEditorCache
+{
+    /// <summary> The Mod being edited. </summary>
+    public readonly Mod CurrentMod;
+
+    /// <summary> The name of the preset. </summary>
+    public readonly string PresetName;
+
+    /// <summary> All of the Mod's available Options. </summary>
+    public readonly ModSettingOptions AllModOptions;
+
+    /// <summary> The Selected Settings for the preset. Edits are made through modified settings var. </summary>
+    public readonly ModSettings SelectedSettings;
+
+    /// <summary> The settings adjusted during editing. </summary>
+    public Dictionary<string, string[]> ModifiedSettings { get; private set; } = new();
+
+    // Make the only constructor require everything
+    public ModPresetEditorCache(Mod mod, string presetName, ModSettingOptions options, ModSettings settings)
+    {
+        CurrentMod = mod;
+        PresetName = presetName;
+        AllModOptions = options;
+        SelectedSettings = settings;
+        // set up the modified settings.
+        ModifiedSettings = settings.Settings.ToDictionary(k => k.Key, v => v.Value.ToArray());
+    }
+
+    public string GroupSelectedOption(string key)
+        => ModifiedSettings.GetValueOrDefault(key)?[0] ?? string.Empty;
+
+    public string[] GroupSelectedOptions(string key)
+        => ModifiedSettings.GetValueOrDefault(key) ?? new string[0];
+
+    public void UpdateSetting(string key, string value)
+        => ModifiedSettings[key] = new string[] { value };
+
+    public void UpdateSetting(string key, string[] value)
+        => ModifiedSettings[key] = value;
+}
+
+
+// MAINTAINERS NOTE: (And possibly future corby that will be pissed off to read this)
+// - There is a lot of checking going on because it is difficult to know if the containers are in sync.
+// - Idealy in the future, make it so that there is a container updater / syncer to prevent this.
+// But for now, it will look messy...
+//
+
 
 /// <summary> Responsible for tracking the custom settings we have configured for a mod. </summary>
 public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -28,16 +83,39 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
 
         _penumbra.OnModMoved = ModMoved.Subscriber(pi, OnModInfoChanged);
         Mediator.Subscribe<PenumbraInitializedMessage>(this, (msg) => OnPenumbraInitialized());
+
+        // if penumbra api is connected, immidiately run a onpenumbrainitialized after our load.
+        if (IpcCallerPenumbra.APIAvailable)
+            OnPenumbraInitialized();
+
+        // This Mod Combo needs to ping preset combo on selection.
+        ModCombo = new ModCombo(logger, () => [ .. _modOptionsAvailable.Keys.OrderBy(m => m.DirectoryName) ]);
+        PresetCombo = new ModPresetCombo(logger, () => [
+            // Dependant on ModCombo. Can look into how glamourer updates current design selection to fix this, but otherwise idk.
+            .. _settingPresetStorage
+                .TryGetValue(ModCombo.CurrentSelection.DirectoryName, out var presets)
+                ? presets.Select(p => (p.Key, p.Value)).ToList()
+                : new List<(string, ModSettings)>()
+            ]);
     }
+
+    // Should be moved over to the drawer. This is a mess currently.
+    public ModCombo ModCombo { get; private set; }
+    public ModPresetCombo PresetCombo { get; private set; }
 
     protected override void Dispose(bool disposing)
     {
+        // unsubscribe from the penumbra events.
         base.Dispose(disposing);
         _penumbra.OnModMoved?.Dispose();
     }
 
+    // Internal Cache for editing.
+    public ModPresetEditorCache? CurrentEditCache { get; private set; } = null;
+
     /// <summary> The collection of the client's current mods. Useful for the ModCombo. </summary>
-    public List<Mod> _modList { get; private set; }
+    public IReadOnlyList<Mod> _modList => _modOptionsAvailable.Keys.ToList();
+    public Dictionary<Mod, ModSettingOptions> _modOptionsAvailable { get; private set; } = new();
 
     /// <summary> The collection of the clients configured setting presets. </summary>
     /// <remarks> Format: (ModDirectory, (PresetName, Settings)) </remarks>
@@ -48,30 +126,30 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
     private void OnPenumbraInitialized()
     {
         Logger.LogInformation("Penumbra initialized. Loading mod list.");
-        _modList = _penumbra.GetMods();
-        // Validate the _settingPresetStorage with our current arrangement of mods.
-        foreach (var directory in _settingPresetStorage.Keys.ToList())
+        _modOptionsAvailable = _penumbra.GetModsWithAllOptions();
+
+        // Remove any invalid entries from the preset storage
+        var invalidMods = _settingPresetStorage.Keys
+            .Where(dir => !_modOptionsAvailable.Keys.Any(m => m.DirectoryName == dir))
+            .ToList();
+
+        foreach (var mod in invalidMods)
         {
-            // if the directory no longer exists in the mod list, we should remove it from the storage.
-            if (!_modList.Any(m => m.DirectoryName == directory))
-            {
-                Logger.LogWarning($"Mod {directory} was not found in the mod list. Removing it from the settings.");
-                _settingPresetStorage.Remove(directory);
-                // we should also send out a mediator update that this mod is no longer valid and to reset to default.
-                Mediator.Publish(new ModSettingPresetRemoved(directory));
-            }
+            Logger.LogWarning($"Removing invalid mod preset: {mod}");
+            _settingPresetStorage.Remove(mod);
+            Mediator.Publish(new ModSettingPresetRemoved(mod));
         }
+        _saver.Save(this);
     }
 
-    /// <summary> Fired whenever a mod is moved. </summary>
+    /// <summary> Fired whenever a MOD DIRECTORY (not mod name) is moved or renamed in penumbra. We should get a full recalculation if this occurs. </summary>
     private void OnModInfoChanged(string oldPath, string newPath)
     {
         // First, see if the old path is null, this means a mod was added.
         if (oldPath is null)
         {
             Logger.LogInformation($"Mod added: {newPath}, updating mod list.");
-            _modList = _penumbra.GetMods();
-            // no need for cleanup, nothing was changed.
+            _modOptionsAvailable = _penumbra.GetModsWithAllOptions();
             return;
         }
 
@@ -79,87 +157,175 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         if (newPath is null)
         {
             Logger.LogInformation($"Mod removed: {oldPath}, updating mod list.");
-            _modList.Remove(_modList.FirstOrDefault(m => m.DirectoryName == oldPath));
+            _modOptionsAvailable.Remove(_modList.FirstOrDefault(m => m.DirectoryName == oldPath));
             return;
         }
 
         // if both paths are not null, it means a mod directory was changed.
-        Logger.LogInformation($"Mod Directory Changed: {oldPath} -> {newPath}, updating mod list.");
-        _modList = _penumbra.GetMods();
-        if(_settingPresetStorage.ContainsKey(oldPath))
+        Logger.LogInformation($"Mod renamed: {oldPath} → {newPath}");
+        if (_settingPresetStorage.TryGetValue(oldPath, out var settings))
         {
-            _settingPresetStorage[newPath] = _settingPresetStorage[oldPath];
+            _settingPresetStorage[newPath] = settings;
             _settingPresetStorage.Remove(oldPath);
+            _saver.Save(this);
         }
     }
 
-    /// <summary> Gets the count of custom setting presets for a particular mod. </summary>
-    public int PresetCountForMod(string dir) 
-        => _settingPresetStorage.TryGetValue(dir, out var presets) ? presets.Count : 0;
+    public ModSettings CurrentModSettings(Mod mod)
+        => _penumbra.GetSettingsForMod(mod);
+
+    public IReadOnlyDictionary<string, ModSettings> GetModPresets(string modDirectory)
+        => _settingPresetStorage.TryGetValue(modDirectory, out var presets)
+            ? presets : new Dictionary<string, ModSettings>();
 
     /// <summary> Adds a new custom setting preset, or updates the existing. </summary>
-    public void AddOrUpdateSettingPreset(string dir, string name, ModSettings settings)
+    public void AddModPreset(Mod modItem, string presetName)
     {
-        if (!_settingPresetStorage.ContainsKey(dir))
-            _settingPresetStorage[dir] = new Dictionary<string, ModSettings>();
+        // if the storage does not yet contain a directory path for our mod, create it.
+        if (!_settingPresetStorage.ContainsKey(modItem.DirectoryName))
+            _settingPresetStorage[modItem.DirectoryName] = new Dictionary<string, ModSettings>();
 
-        _settingPresetStorage[dir][name] = settings;
-        Logger.LogInformation($"Added new preset '{name}' for mod path '{dir}'.");
+        // grab the current settings for the default.
+        var settings = CurrentModSettings(modItem);
+        // if we are trying to add a preset name that already exists, modify the name
+        var finalName = RegexEx.EnsureUniqueName(presetName, _settingPresetStorage[modItem.DirectoryName].Keys, p => p);
+        // add the new preset to the storage.
+        _settingPresetStorage[modItem.DirectoryName][finalName] = settings;
+        _saver.Save(this);
+        Logger.LogInformation($"Adding preset '{finalName}' for mod '{modItem}'");
+    }
+
+    public void UpdateSettingPreset(Mod modItem, string presetName, ModSettings modSettings)
+    {
+        if (!_settingPresetStorage.ContainsKey(modItem.DirectoryName))
+            _settingPresetStorage[modItem.DirectoryName] = new Dictionary<string, ModSettings>();
+
+        _settingPresetStorage[modItem.DirectoryName][presetName] = modSettings;
+        _saver.Save(this);
+        Logger.LogInformation($"Updated preset '{presetName}' for mod '{modItem}'");
+    }
+
+    public void RenameModPreset(Mod modItem, string oldName, string newName)
+    {
+        if (!_settingPresetStorage.TryGetValue(modItem.DirectoryName, out var presets))
+            return;
+
+        if (!presets.TryGetValue(oldName, out var settings))
+            return;
+
+        presets.Remove(oldName);
+        presets[newName] = settings;
+        _saver.Save(this);
+        Logger.LogInformation($"Renamed preset '{oldName}' to '{newName}' for mod '{modItem}'");
     }
 
     /// <summary> Removes a custom setting preset. </summary>
     /// <remarks> If no other presets exist for this mod, the directory key is removed from the main dictionary. </remarks>
-    public void RemoveSettingPreset(string dir, string name)
+    public void RemoveSettingPreset(string modDirectory, string presetName)
     {
-        if (_settingPresetStorage.TryGetValue(dir, out var presets) && presets.Remove(name))
+        if (_settingPresetStorage.TryGetValue(modDirectory, out var presets) && presets.Remove(presetName))
         {
-            Logger.LogInformation($"Removed preset '{name}' from mod '{dir}'.");
-            if (presets.Count == 0)
-                _settingPresetStorage.Remove(dir);
-        }
-    }
-
-    /// <summary> Renames a custom setting preset. </summary>
-    public void RenameSettingPreset(string dir, string oldPresetName, string newPresetName)
-    {
-        if (_settingPresetStorage.TryGetValue(dir, out var presets) && presets.ContainsKey(oldPresetName))
-        {
-            presets[newPresetName] = presets[oldPresetName];
-            presets.Remove(oldPresetName);
-            Logger.LogInformation($"Renamed preset '{oldPresetName}' to '{newPresetName}' in mod '{dir}'.");
+            Logger.LogInformation($"Removed preset '{presetName}' from mod '{modDirectory}'.");
+            _saver.Save(this);
         }
     }
 
     /// <summary> Gets the custom settings for a particular preset. </summary>
-    public ModSettings GetSettingPreset(string dir, string name)
-    {
-        return _settingPresetStorage.Keys.Contains(dir) && _settingPresetStorage[dir].TryGetValue(name, out var settings)
+    public ModSettings GetSettingPreset(string dir, string presetName)
+        => _settingPresetStorage.TryGetValue(dir, out var presets) && presets.TryGetValue(presetName, out var settings)
             ? settings : ModSettings.Empty;
-    }
 
-    /// <summary> Gets the current settings for the passed in mod or directory. </summary>
-    public ModSettings GetCurrentModSettings(string dir)
+    public bool StartEditingCustomPreset(Mod chosenMod, string chosenModsPreset)
     {
-        if (!_modList.Any(m => m.DirectoryName == dir))
-            return ModSettings.Empty;
+        // If we are already editing, we should not be able to start another edit.
+        if (CurrentEditCache != null)
+        {
+            Logger.LogError("Already editing a preset.");
+            return false;
+        }
 
-        return _penumbra.GetSettingsForMod(_modList.First(m => m.DirectoryName == dir));
+        // Verify the integrity of the directory paramater.
+        if (!_modOptionsAvailable.ContainsKey(chosenMod))
+        {
+            Logger.LogError($"Mod {chosenMod.DirectoryName} not found in available options.");
+            return false;
+        }
+
+        if (!_settingPresetStorage.ContainsKey(chosenMod.DirectoryName))
+        {
+            Logger.LogError($"Mod {chosenMod.DirectoryName} not found in preset storage.");
+            return false;
+        }
+
+        if (!_settingPresetStorage[chosenMod.DirectoryName].ContainsKey(chosenModsPreset))
+        {
+            Logger.LogError($"Preset {chosenModsPreset} not found in preset storage for mod {chosenMod.DirectoryName}.");
+            return false;
+        }
+
+        // By now we are 100% certain all values exist, so get them.
+        CurrentEditCache = new ModPresetEditorCache(
+            chosenMod,
+            chosenModsPreset,
+            _modOptionsAvailable[chosenMod],
+            _settingPresetStorage[chosenMod.DirectoryName][chosenModsPreset]
+            );
+
+        return true;
     }
 
-    public ModSettings GetCurrentModSettings(Mod mod)
-        => _penumbra.GetSettingsForMod(mod);
-
-    /// <summary> Gets all settings of a particular mod by directory for editing. </summary>
-    public ModSettingOptions GetAllOptionsForMod(string dir)
+    public bool ExitEditingAndSave()
     {
-        // grab the Mod item from the modlist with the matching directory.
-        if (!_modList.Any(m => m.DirectoryName == dir))
-            return ModSettingOptions.Empty;
+        if (CurrentEditCache is null)
+        {
+            Logger.LogError("No current edit cache to save.");
+            return false;
+        }
 
-        // obtain the mod from the list, since it exists.
-        var mod = _modList.First(m => m.DirectoryName == dir);
-        return _penumbra.GetAllOptionsForMod(mod);
+        UpdateSettingPreset(
+            CurrentEditCache.CurrentMod,
+            CurrentEditCache.PresetName,
+            CurrentEditCache.SelectedSettings with { Settings = CurrentEditCache.ModifiedSettings.ToDictionary(k => k.Key, v => v.Value.ToList()) }
+            );
+        CurrentEditCache = null;
+        return true;
     }
+
+    public bool ExitEditingAndDiscard()
+    {
+        CurrentEditCache = null;
+        return true;
+    }
+
+
+    // Primarily for previewing.
+    public bool TryGetModOptions(Mod mod, string presetName, out ModSettingOptions options, out ModSettings chosen)
+    {
+        options = ModSettingOptions.Empty;
+        chosen = new ModSettings();
+        if (!_modOptionsAvailable.TryGetValue(mod, out options))
+            return false;
+
+        if (_settingPresetStorage.TryGetValue(mod.DirectoryName, out var p) && p.TryGetValue(presetName, out var preset))
+            chosen = preset;
+
+        return true;
+    }
+
+    /// <summary> Used by ModCombos for associations that do not yet exist. </summary>
+    /// <remarks> Unsure at the moment how much this is really needed. </remarks>
+    public ModAssociation GenerateModAssociation(string modDir)
+    {
+        var mod = _modOptionsAvailable.Keys.FirstOrDefault(m => m.DirectoryName == modDir);
+        var ret = new ModAssociation { ModInfo = mod };
+
+        ret.CustomSettings = _settingPresetStorage.TryGetValue(modDir, out var presets)
+            ? presets.Keys.FirstOrDefault() ?? string.Empty
+            : string.Empty;
+
+        return ret;
+    }
+
 
     #region HybridSavable
     public int ConfigVersion => 0;
@@ -170,13 +336,28 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
-        var customPresets = new JObject(
-            _settingPresetStorage.ToDictionary( // Maps mod directory keys to preset containers
-                modDirectory => modDirectory.Key,
-                modDirectory => new JObject(
-                    modDirectory.Value.ToDictionary( // Maps preset names to settings
-                        preset => preset.Key,
-                        preset => JToken.FromObject(preset.Value.Settings))))); // Converts settings to JSON
+        // Create a JObject to hold all the preset data
+        JObject customPresets = new JObject();
+
+        // Loop through each mod directory in _settingPresetStorage
+        foreach (var modDirectory in _settingPresetStorage)
+        {
+            // Create a JObject for each mod directory's presets
+            JObject presetContainer = new JObject();
+
+            // Loop through each preset within the mod directory
+            foreach (var preset in modDirectory.Value)
+            {
+                // Serialize the ModSettings for each preset as a JObject
+                JObject presetSettings = JObject.FromObject(preset.Value.Settings);
+
+                // Add the preset settings to the preset container
+                presetContainer[preset.Key] = presetSettings;
+            }
+
+            // Add the preset container to the main customPresets JObject
+            customPresets[modDirectory.Key] = presetContainer;
+        }
 
         return new JObject
         {
@@ -235,7 +416,14 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
                 foreach (var (key, value) in settingsDict)
                     loadedSettings.Add(key, value);
                 var modSettings = new ModSettings(loadedSettings, 0, false, false, false);
-                AddOrUpdateSettingPreset(modDir, presetName, modSettings);
+
+                if (!_settingPresetStorage.TryGetValue(modDir, out var storagePresets))
+                {
+                    storagePresets = new Dictionary<string, ModSettings>();
+                    _settingPresetStorage[modDir] = storagePresets;
+                }
+                storagePresets[presetName] = modSettings;
+                Logger.LogInformation($"Added/Updated preset '{presetName}' for mod '{modDir}'");
             }
         }
     }

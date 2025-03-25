@@ -8,7 +8,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using System.Numerics;
 
-namespace GagSpeak.UI.Components.Popup;
+namespace GagSpeak.UI.Components;
 
 internal class VerificationPopupHandler : IPopupHandler
 {
@@ -52,7 +52,7 @@ internal class VerificationPopupHandler : IPopupHandler
         ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X / 2 - ImGui.CalcTextSize("Close Popup window &&& Be sure verification is successful before closing.").X / 2);
         using (ImRaii.Disabled(string.IsNullOrEmpty(_verificationCode)))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Close Popup Window"))
+            if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Close Popup Window"))
             {
                 ImGui.CloseCurrentPopup();
             }

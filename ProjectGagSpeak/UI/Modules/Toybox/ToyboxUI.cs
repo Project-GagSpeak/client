@@ -1,4 +1,5 @@
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -6,6 +7,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using GagSpeak.UI.UiToybox;
 using ImGuiNET;
+using System.Windows.Forms;
 
 namespace GagSpeak.UI.Toybox;
 
@@ -47,7 +49,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         {
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.CloudDownloadAlt,
+                Icon = FAI.CloudDownloadAlt,
                 Click = (msg) =>
                 {
                     Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI)));
@@ -57,7 +59,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
             },
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.QuestionCircle,
+                Icon = FAI.QuestionCircle,
                 Click = (msg) => TutorialClickedAction(),
                 IconOffset = new (2, 1),
                 ShowTooltip = () =>
@@ -111,6 +113,13 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
+        var wdl = ImGui.GetWindowDrawList();
+        var mainMinPos = wdl.GetClipRectMin();
+        var mainMaxPos = wdl.GetClipRectMax();
+        var padding = ImGui.GetStyle().WindowPadding;
+        var fdl = ImGui.GetForegroundDrawList();
+        fdl.AddRectFilled(mainMinPos with { X = mainMinPos.X - padding.X / 2 }, mainMaxPos with { X = mainMinPos.X}, ImGui.GetColorU32(ImGuiCol.ButtonActive));
+
         var region = ImGui.GetContentRegionAvail();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var cellPadding = ImGui.GetStyle().CellPadding;

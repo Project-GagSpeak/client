@@ -15,7 +15,6 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
 {
     public readonly string Label;
     public ItemId _currentItem;
-    private float _innerWidth;
     public PrimaryId CustomSetId { get; private set; }
     public Variant CustomVariant { get; private set; }
     public GameItemCombo(IDataManager gameData, EquipSlot slot, ItemData itemData, ILogger log)
@@ -45,14 +44,11 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
 
     public bool Draw(string previewName, ItemId previewIdx, float width, float innerWidth, string labelDisp = "")
     {
-        _innerWidth = innerWidth;
+        InnerWidth = innerWidth;
         _currentItem = previewIdx;
         CustomVariant = 0;
         return Draw($"{labelDisp}##Test{Label}", previewName, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
-
-    protected override float GetFilterWidth()
-        => _innerWidth - 2 * ImGui.GetStyle().FramePadding.X;
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

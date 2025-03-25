@@ -61,7 +61,7 @@ public class GagspeakConfigService
                                  "PiShockUsername": "",
                                  "BlindfoldStyle": 0,
                                  "ForceLockFirstPerson": false,
-                                 "BlindfoldOpacity": 1.0,
+                                 "BlindfoldMaxOpacity": 1.0,
                                  "ForcedStayPromptList": {
                                      "$type": "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak",
                                      "Enabled": true,

@@ -1,4 +1,5 @@
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
@@ -44,7 +45,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     // Cached Information.
     public RestraintSet? ActiveEditorItem = null;
     public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
-    public RestraintSet? EnabledSet = null;
+    public RestraintSet? ActiveRestraint = null;
 
     // Stored Information
     public CharaActiveRestraint? ActiveRestraintData { get; private set; }
@@ -58,9 +59,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         ActiveRestraintData = serverData;
         if (!serverData.Identifier.IsEmptyGuid())
             if (Storage.TryGetRestraint(serverData.Identifier, out var item))
-                EnabledSet = item;
+                ActiveRestraint = item;
 
-        LatestVisualCache.UpdateCache(EnabledSet);
+        LatestVisualCache.UpdateCache(ActiveRestraint);
     }
 
     /// <summary> Create a new Restriction, where the item can be any restraint item. </summary>
@@ -217,8 +218,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             if(set.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
             if(set.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
         }
-        EnabledSet = set;
-        LatestVisualCache.UpdateCache(EnabledSet);
+        ActiveRestraint = set;
+        LatestVisualCache.UpdateCache(ActiveRestraint);
         return flags;
     }
 
@@ -274,8 +275,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (Storage.TryGetRestraint(removedRestraint, out var matchedItem))
         {
             // Do recalculations first since it doesnt madder here.
-            EnabledSet = null;
-            LatestVisualCache.UpdateCache(EnabledSet);
+            ActiveRestraint = null;
+            LatestVisualCache.UpdateCache(ActiveRestraint);
 
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;

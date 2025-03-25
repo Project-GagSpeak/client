@@ -1,6 +1,6 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -12,11 +12,9 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    private int CurrentLayer;
-    public PairRestrictionPadlockCombo(int layer, Pair pair, MainHub hub, ILogger log)
-        : base(() => pair.LastRestrictionsData.Restrictions[layer], log, "PairRestrictionPadlock" + layer)
+    public PairRestrictionPadlockCombo(ILogger log, Pair pair, MainHub hub, Func<int, ActiveRestriction> generator)
+        : base(generator, log)
     {
-        CurrentLayer = layer;
         _mainHub = hub;
         _pairRef = pair;
     }
@@ -27,24 +25,22 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         => _pairRef.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
             ? restriction.Label : "None";
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.ApplyRestrictions is false
-        || SelectedLock == MonitoredItem.Padlock
-        || MonitoredItem.CanLock() is false;
+        => !_pairRef.PairPerms.ApplyRestrictions || SelectedLock == MonitoredItem.Padlock || !MonitoredItem.CanLock();
 
-    protected override void OnLockButtonPress()
+    protected override void OnLockButtonPress(int layerIdx)
     {
         if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockRestrictions)
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
-                AffectedIndex = CurrentLayer,
+                AffectedIndex = layerIdx,
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
                 Assigner = MainHub.UID,
             };
 
-            _ = _mainHub.UserPushPairDataRestrictions(dto);
+            _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
             Log.LogDebug("Locking Restriction with " + SelectedLock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
             PairCombos.Opened = InteractionType.None;
             ResetSelection();
@@ -54,18 +50,18 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         ResetInputs();
     }
 
-    protected override void OnUnlockButtonPress()
+    protected override void OnUnlockButtonPress(int layerIdx)
     {
         if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockRestrictions)
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
-                AffectedIndex = CurrentLayer,
+                AffectedIndex = layerIdx,
                 Padlock = MonitoredItem.Padlock,
                 Password = Password,
                 Assigner = MainHub.UID,
             };
-            _ = _mainHub.UserPushPairDataRestrictions(dto);
+            _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
             Log.LogDebug("Unlocking Restriction with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
             PairCombos.Opened = InteractionType.None;
             ResetSelection();

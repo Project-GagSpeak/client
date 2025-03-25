@@ -8,7 +8,7 @@ using GagspeakAPI.Dto.UserPair;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components.UserPairList;
+namespace GagSpeak.UI.Components;
 
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)
@@ -68,7 +68,7 @@ public class KinksterRequestEntry
     private void DrawLeftSide()
     {
         ImGui.AlignTextToFramePadding();
-        CkGui.IconText(FontAwesomeIcon.QuestionCircle, ImGuiColors.DalamudYellow);
+        CkGui.IconText(FAI.QuestionCircle, ImGuiColors.DalamudYellow);
         var displayText = "Request Expires in " + TimeLeft.Days + "d " + TimeLeft.Hours + "h " + TimeLeft.Minutes + "m.";
         if(!_requestEntry.AttachedMessage.IsNullOrWhitespace()) displayText += "--SEP----COL--Message: --COL--" + _requestEntry.AttachedMessage;
         CkGui.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
@@ -77,8 +77,8 @@ public class KinksterRequestEntry
 
     private void DrawAcceptReject()
     {
-        var acceptButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleCheck, "Accept");
-        var rejectButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Reject");
+        var acceptButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleCheck, "Accept");
+        var rejectButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleXmark, "Reject");
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - acceptButtonSize;
@@ -87,7 +87,7 @@ public class KinksterRequestEntry
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleCheck, "Accept", null, true))
+            if (CkGui.IconTextButton(FAI.PersonCircleCheck, "Accept", null, true))
                 _hub.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Accept the Request");
@@ -97,7 +97,7 @@ public class KinksterRequestEntry
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Reject", null, true))
+            if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Reject", null, true))
                 _hub.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Reject the Request");
@@ -105,7 +105,7 @@ public class KinksterRequestEntry
 
     private void DrawPendingCancel()
     {
-        var cancelButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleXmark, "Cancel Request");
+        var cancelButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleXmark, "Cancel Request");
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - cancelButtonSize;
@@ -114,7 +114,7 @@ public class KinksterRequestEntry
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleXmark, "Cancel Request", null, true))
+            if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Cancel Request", null, true))
                 _hub.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");

@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -27,7 +27,7 @@ public partial class PairStickyUI
 
         // Expander for ApplyRestraint
         var disableApplyExpand = !SPair.PairPerms.ApplyRestraintSets || SPair.LastRestraintData.Padlock is not Padlocks.None;
-        if (CkGui.IconTextButton(FontAwesomeIcon.Handcuffs, applyRestraintText, WindowMenuWidth, true, disableApplyExpand))
+        if (CkGui.IconTextButton(FAI.Handcuffs, applyRestraintText, WindowMenuWidth, true, disableApplyExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestraint) ? InteractionType.None : InteractionType.ApplyRestraint;
         CkGui.AttachToolTip(applyRestraintTT);
 
@@ -35,7 +35,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyRestraint)
         {
             using (ImRaii.Child("SetApplyChild", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.RestraintApplyCombo.DrawComboButton("##ApplyRestraint", applyRestraintText, WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.RestraintItemCombo.DrawComboButton("##PairApplyRestraint", WindowMenuWidth, -1, "Apply", applyRestraintText);
             ImGui.Separator();
         }
 
@@ -43,7 +43,7 @@ public partial class PairStickyUI
         var disableLockExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.LockRestraintSets;
         using (ImRaii.PushColor(ImGuiCol.Text, (SPair.LastRestraintData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
+            if (CkGui.IconTextButton(FAI.Lock, lockRestraintText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
         CkGui.AttachToolTip(lockRestraintTT +
@@ -54,13 +54,13 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.LockRestraint)
         {
             using (ImRaii.Child("SetLockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombo.PadlockLockWindowHeight())))
-                _pairCombos.RestraintPadlockCombo.DrawLockComboWithActive(WindowMenuWidth, lockRestraintText, lockRestraintTT);
+                _pairCombos.RestraintPadlockCombo.DrawLockComboWithActive("PairLockRestraint", WindowMenuWidth, 0, lockRestraintText, lockRestraintTT, false);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
         var disableUnlockExpand = SPair.LastRestraintData.Padlock is Padlocks.None || !SPair.PairPerms.UnlockRestraintSets;
-        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
+        if (CkGui.IconTextButton(FAI.Unlock, unlockRestraintText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestraint) ? InteractionType.None : InteractionType.UnlockRestraint;
         CkGui.AttachToolTip(unlockRestraintTT);
 
@@ -68,13 +68,13 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.UnlockRestraint)
         {
             using (ImRaii.Child("SetUnlockChild", new Vector2(WindowMenuWidth, _pairCombos.RestraintPadlockCombo.PadlockUnlockWindowHeight())))
-                _pairCombos.RestraintPadlockCombo.DrawUnlockCombo(WindowMenuWidth, unlockRestraintText, unlockRestraintTT);
+                _pairCombos.RestraintPadlockCombo.DrawUnlockCombo("PairUnlockRestraint", WindowMenuWidth, 0, unlockRestraintText, unlockRestraintTT);
             ImGui.Separator();
         }
 
         // Expander for removing.
         var disableRemoveExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveRestraintSets;
-        if (CkGui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestraintText, WindowMenuWidth, true, disableRemoveExpand))
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeRestraintText, WindowMenuWidth, true, disableRemoveExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestraint) ? InteractionType.None : InteractionType.RemoveRestraint;
         CkGui.AttachToolTip(removeRestraintTT);
 

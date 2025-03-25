@@ -27,15 +27,45 @@ public readonly record struct Mod(string DirectoryName, string Name) : IComparab
 
 /// <summary> gets the settings for the mod that are currently selected/chosen. </summary>
 /// <remarks> The ForceInherit and Remove inputs currently have unknown purpose / effect. </remarks>
+//                                                  GROUPNAME, CHOSEN OPTIONS,
 public readonly record struct ModSettings(Dictionary<string, List<string>> Settings, int Priority, bool Enabled, bool ForceInherit, bool Remove)
 {
     public ModSettings() : this(new Dictionary<string, List<string>>(), 0, false, false, false) { }
 
     public static ModSettings Empty => new();
+
+    public string SelectedOption(string groupName)
+    {
+        try
+        {
+            return Settings.TryGetValue(groupName, out var options) && options.Count > 0 ? options[0] : string.Empty;
+        }
+        catch (Exception ex)
+        {
+            GagSpeak.StaticLog.Warning("Mod Settings During Fail:" + ToString());
+            return string.Empty;
+        }
+    }
+
+    public string[] SelectedOptions(string groupName)
+        => Settings.TryGetValue(groupName, out var options) ? options.ToArray() : new string[0];
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append($"Priority: {Priority}, Enabled: {Enabled}, ForceInherit: {ForceInherit}, Remove: {Remove}\n");
+        foreach (var (group, options) in Settings)
+        {
+            sb.Append($"{group}: {string.Join(", ", options)}\n");
+        }
+        return sb.ToString();
+    
+    }
 }
 
 /// <summary> The Storage of all a Mods Groups and options for each group of the mod. </summary>
 /// <remarks> Useful for obtaining when we want to edit what our temporary mod settings will be. </remarks>
+//                                                                 GROUPNAME, (OPTIONNAMES, GROUPTYPE)
 public readonly record struct ModSettingOptions(IReadOnlyDictionary<string, (string[] Options, GroupType GroupType)> Options)
 {
     public ModSettingOptions() : this(new Dictionary<string, (string[] Options, GroupType GroupType)>()) { }
@@ -179,8 +209,22 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         return allMods.Select(m => new Mod(m)).OrderByDescending(mod => mod.Name).ToList();
     }
 
+    /// <summary> Should only be called on initialization or a requested refresh. Gets all mods, and all available settings for each of the mods. </summary>
+    /// <returns> A list of mods with all available settings for each mod. </returns>
+    public Dictionary<Mod, ModSettingOptions> GetModsWithAllOptions()
+    {
+        if (!APIAvailable)
+            return new Dictionary<Mod, ModSettingOptions>();
 
-    // for our get mod list for the table
+        var allMods = GetModList.Invoke();
+        return allMods
+            .Select(m => (new Mod(m), GetModSettingsAll.Invoke(m.Key)))
+            .Where(t => t.Item2 is not null)
+            .ToDictionary(t => t.Item1, t => new ModSettingOptions(t.Item2!));
+    }
+
+
+    // This can technically be removed, since we never really need to care about what our current options are.
     public IReadOnlyList<(Mod Mod, ModSettings Settings)> GetModInfos()
     {
         if (!APIAvailable)

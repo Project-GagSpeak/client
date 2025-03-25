@@ -42,7 +42,7 @@ public class GagSetupUI : WindowMediatorSubscriberBase
         {
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.CloudDownloadAlt,
+                Icon = FAI.CloudDownloadAlt,
                 Click = (msg) =>
                 {
                     Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI)));
@@ -57,7 +57,7 @@ public class GagSetupUI : WindowMediatorSubscriberBase
             },
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.QuestionCircle,
+                Icon = FAI.QuestionCircle,
                 Click = (msg) =>
                 {
                     if(_tabMenu.SelectedTab == GagSetupTabs.Tabs.ActiveGags)
@@ -157,11 +157,11 @@ public class GagSetupUI : WindowMediatorSubscriberBase
                 var regionSize = ImGui.GetContentRegionAvail();
                 ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-                using (var leftChild = ImRaii.Child($"###GagSetupLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
+                using (var leftChild = ImRaii.Child($"###GagSetupLeft", regionSize with { Y = topLeftSideHeight }, false, WFlags.NoDecoration))
                 {
                     // get the gag setup logo image
-                    //var iconTexture = CkGui..GetImageFromDirectoryFile("icon.png");
-                    var iconTexture = _cosmetics.CorePluginTextures[CorePluginTexture.Logo256];
+                    //var iconTexture = CkGui..GetImageFromAssetsFolder("icon.png");
+                    var iconTexture = _cosmetics.CoreTextures[CoreTexture.Logo256];
                     if (iconTexture is { } wrap)
                     {
                         // aligns the image in the center like we want.

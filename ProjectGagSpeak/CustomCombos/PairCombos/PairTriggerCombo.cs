@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -21,7 +21,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
     public PairTriggerCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
         : base(() => [
             .. pairData.LastLightStorage.Triggers.OrderBy(x => x.Label),
-        ], log, FontAwesomeIcon.Bell, bText, bTT)
+        ], log, FAI.Bell, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -42,7 +42,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         var ret = ImGui.Selectable(trigger.Label, selected);
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
         DrawItemTooltip(trigger);
 
         return ret;

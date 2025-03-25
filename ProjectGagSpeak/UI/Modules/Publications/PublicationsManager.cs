@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Toybox;
@@ -13,6 +14,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
@@ -21,9 +23,9 @@ using System.Globalization;
 namespace GagSpeak.UI.Publications;
 public class PublicationsManager
 {
-    private readonly MoodleStatusMonitor _monitor;
+    private readonly MoodlesDisplayer _monitor;
     private readonly ShareHubService _shareHub;
-    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleStatusMonitor monitor, FavoritesManager favorites,
+    public PublicationsManager(ILogger<PublicationsManager> logger, MoodlesDisplayer monitor, FavoritesManager favorites,
         PatternManager patterns, ShareHubService shareHub, CkGui uiShared)
     {
         _monitor = monitor;
@@ -84,7 +86,7 @@ public class PublicationsManager
             }
         });
 
-        if (CkGui.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
+        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
             false, _authorName.IsNullOrEmpty() || _patternCombo.CurrentSelection is null))
         {
             if (_patternCombo.CurrentSelection is null)
@@ -117,7 +119,7 @@ public class PublicationsManager
             // draw the create section.
             CkGui.GagspeakBigText("Publish A Moodle");
 
-            _statusCombo.Draw(200f);
+            _statusCombo.Draw("PublicationStatuses", 200f);
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
@@ -161,7 +163,7 @@ public class PublicationsManager
             });
             CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Moodles!");
 
-            if (CkGui.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
+            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
                 false, _authorName.IsNullOrEmpty() || _statusCombo.CurrentSelection.GUID.IsEmptyGuid()))
             {
                 if (_statusCombo.CurrentSelection.GUID.IsEmptyGuid())
@@ -221,9 +223,9 @@ public class PublicationsManager
 
     private void PublishedPatternItem(PublishedPattern pattern)
     {
-        var unpublishButton = CkGui.IconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var unpublishButton = CkGui.IconTextButtonSize(FAI.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##PatternResult_{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child($"##PatternResult_{pattern.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
 
             using (ImRaii.Group())
@@ -231,11 +233,11 @@ public class PublicationsManager
                 // display name, then display the downloads and likes on the other side.
                 ImGui.AlignTextToFramePadding();
                 CkGui.ColorText(pattern.Label, ImGuiColors.DalamudWhite);
-                if(!pattern.Description.IsNullOrEmpty()) CkGui.DrawHelpText(pattern.Description, true);
+                if(!pattern.Description.IsNullOrEmpty()) CkGui.HelpText(pattern.Description, true);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
                         _shareHub.RemovePattern(pattern.Identifier);
                 CkGui.AttachToolTip("Removes this pattern publication from the pattern hub." +
                     "--SEP--Must hold SHIFT");
@@ -244,7 +246,7 @@ public class PublicationsManager
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FAI.UserCircle);
                 ImUtf8.SameLineInner();
                 CkGui.ColorText(pattern.Author, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("The Author Name you gave yourself when publishing this pattern.");
@@ -254,11 +256,11 @@ public class PublicationsManager
 
                 var formatDuration = pattern.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 var timerText = pattern.Length.ToString(formatDuration);
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - CkGui.IconSize(FontAwesomeIcon.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - CkGui.IconSize(FAI.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
                 
                 using (ImRaii.Group())
                 {
-                    CkGui.IconText(FontAwesomeIcon.Stopwatch);
+                    CkGui.IconText(FAI.Stopwatch);
                     ImUtf8.SameLineInner();
                     ImGui.TextUnformatted(pattern.Length.ToString(formatDuration));
                 }
@@ -269,16 +271,16 @@ public class PublicationsManager
 
     private void PublishedMoodleItem(PublishedMoodle moodle)
     {
-        var unpublishButton = CkGui.IconTextButtonSize(FontAwesomeIcon.Globe, "Unpublish");
+        var unpublishButton = CkGui.IconTextButtonSize(FAI.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##MoodleResult_{moodle.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child($"##MoodleResult_{moodle.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
             var imagePos = Vector2.Zero;
             using (ImRaii.Group())
             {
                 // display name, then display the downloads and likes on the other side.
                 imagePos = ImGui.GetCursorPos();
-                ImGuiHelpers.ScaledDummy(MoodleStatusMonitor.DefaultSize);
+                ImGuiHelpers.ScaledDummy(MoodlesDisplayer.DefaultSize);
                 // if the scaled dummy is hovered, display the description, if any.
                 if(ImGui.IsItemHovered())
                 {
@@ -291,7 +293,7 @@ public class PublicationsManager
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FontAwesomeIcon.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
                         _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID);
                 CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!" +
                     "--SEP--Must hold SHIFT");
@@ -300,15 +302,15 @@ public class PublicationsManager
             // next line:
             using (ImRaii.Group())
             {
-                var stacksSize = CkGui.IconSize(FontAwesomeIcon.LayerGroup).X;
-                var dispellableSize = CkGui.IconSize(FontAwesomeIcon.Eraser).X;
-                var permanentSize = CkGui.IconSize(FontAwesomeIcon.Infinity).X;
-                var stickySize = CkGui.IconSize(FontAwesomeIcon.MapPin).X;
-                var customVfxPath = CkGui.IconSize(FontAwesomeIcon.Magic).X;
-                var stackOnReapply = CkGui.IconSize(FontAwesomeIcon.PersonCirclePlus).X;
+                var stacksSize = CkGui.IconSize(FAI.LayerGroup).X;
+                var dispellableSize = CkGui.IconSize(FAI.Eraser).X;
+                var permanentSize = CkGui.IconSize(FAI.Infinity).X;
+                var stickySize = CkGui.IconSize(FAI.MapPin).X;
+                var customVfxPath = CkGui.IconSize(FAI.Magic).X;
+                var stackOnReapply = CkGui.IconSize(FAI.PersonCirclePlus).X;
 
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FAI.UserCircle);
                 ImUtf8.SameLineInner();
                 CkGui.ColorText(moodle.AuthorName, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("Publisher of the Moodle");
@@ -318,32 +320,32 @@ public class PublicationsManager
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
                     - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
                 ImGui.AlignTextToFramePadding();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Stacks > 1, false, FontAwesomeIcon.LayerGroup, FontAwesomeIcon.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodle.MoodleStatus.Stacks > 1 ? "Has " + moodle.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Dispelable, false, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Dispelable, false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodle.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.AsPermanent, false, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.AsPermanent, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodle.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Persistent, false, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Persistent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodle.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath), false, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.PersonCirclePlus, FontAwesomeIcon.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks " + moodle.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
             if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleStatusMonitor.DefaultSize);
+                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodlesDisplayer.DefaultSize);
         }
     }
 

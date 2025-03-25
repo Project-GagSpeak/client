@@ -52,7 +52,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             if (_lastGagData is null || !Equals(newData, _lastGagData))
             {
                 _lastGagData = newData;
-                PushGagData(_pairManager.GetOnlineUserDatas(), msg.UpdateType, msg.AffectedLayer);
+                PushGagData(_pairManager.GetOnlineUserDatas(), msg.UpdateType, (GagLayer)msg.AffectedIdx);
             }
             else
             {

@@ -70,7 +70,7 @@ public partial class PatternsPanel
         {
             // display name, then display the downloads and likes on the other side.
             CkGui.GagspeakText(activeItem.Label);
-            CkGui.DrawHelpText("Description:--SEP--" + activeItem.Description);
+            CkGui.HelpText("Description:--SEP--" + activeItem.Description);
 
             // playback button
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X);
@@ -81,20 +81,20 @@ public partial class PatternsPanel
         using (var group2 = ImRaii.Group())
         {
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.Clock);
+            CkGui.IconText(FAI.Clock);
             ImUtf8.SameLineInner();
             CkGui.ColorText(durationTxt, ImGuiColors.DalamudGrey);
             CkGui.AttachToolTip("Total Length of the Pattern.");
 
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.Stopwatch20);
+            CkGui.IconText(FAI.Stopwatch20);
             ImUtf8.SameLineInner();
             CkGui.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
             CkGui.AttachToolTip("Start Point of the Pattern.");
 
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FontAwesomeIcon.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
-            CkGui.IconText(FontAwesomeIcon.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
+            CkGui.IconText(FAI.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
             CkGui.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
         }
     }

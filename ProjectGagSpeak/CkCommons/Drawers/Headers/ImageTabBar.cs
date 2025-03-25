@@ -64,7 +64,7 @@ public abstract class ImageTabBar<ITab> where ITab : Enum
 
             // draw a scaled dummy over the region.
             ImGuiHelpers.ScaledDummy(buttonSize);
-            if(isHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            if(isHovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 TabSelection = tab.TargetTab;
         }
         CkGui.AttachToolTip(tab.Tooltip);

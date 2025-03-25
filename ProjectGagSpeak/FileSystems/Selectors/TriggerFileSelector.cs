@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
@@ -18,6 +18,8 @@ using OtterGui;
 using static GagSpeak.Restrictions.RestrictionFileSelector;
 using Dalamud.Interface.Utility.Raii;
 using OtterGui.Text;
+using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Drawers;
 
 namespace GagSpeak.Triggers;
 
@@ -81,20 +83,21 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    protected override void DrawLeafName(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
+    protected override bool DrawLeafName(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
     {
         using var id = ImRaii.PushId((int)leaf.Identifier);
         using var leafInternalGroup = ImRaii.Group();
-        DrawLeafInternal(leaf, state, selected);
+        return DrawLeafInternal(leaf, state, selected);
     }
 
-    private void DrawLeafInternal(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
+    private bool DrawLeafInternal(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
         using (ImRaii.Group())
@@ -104,8 +107,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
             Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
             ImGui.SameLine();
             ImGui.Text(leaf.Value.Label);
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FontAwesomeIcon.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            if (CkGui.IconButton(FontAwesomeIcon.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
@@ -118,6 +121,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
                 new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
+
+        return hovered;
     }
 
     protected override void DrawFolderName(CkFileSystem<Trigger>.Folder folder, bool selected)
@@ -136,18 +141,18 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
 
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
-    protected override float CustomFilters(float width)
+    protected override float CustomFiltersWidth(float width)
     {
         var pos = ImGui.GetCursorPos();
         var remainingWidth = width
-            - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X
-            - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X
+            - CkGui.IconButtonSize(FAI.Plus).X
+            - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
 
         var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
 
         ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FontAwesomeIcon.Plus))
+        if (CkGui.IconButton(FAI.Plus))
             ImGui.OpenPopup("##NewTrigger");
         CkGui.AttachToolTip("Create a new Trigger.");
 

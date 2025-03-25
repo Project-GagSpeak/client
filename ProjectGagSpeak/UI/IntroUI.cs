@@ -52,7 +52,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             MinimumSize = new Vector2(600, 500),
             MaximumSize = new Vector2(600, 1000),
         };
-        Flags = ImGuiWindowFlags.NoScrollbar;
+        Flags = WFlags.NoScrollbar;
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = false);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = true);
@@ -252,7 +252,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         if (_secretKey.IsNullOrWhitespace())
         {
             // generate a secret key for the user and attempt initial connection when pressed.
-            if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
+            if (CkGui.IconTextButton(FAI.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
             {
                 _configService.Config.ButtonUsed = true;
                 _configService.Save();
@@ -284,7 +284,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             CkGui.ColorText("Connect with existing Key?", ImGuiColors.ParsedGold);
             ImGui.SameLine();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
+            if (CkGui.IconTextButton(FAI.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
             {
                 _logger.LogInformation("Creating Authentication for current character.");
                 try

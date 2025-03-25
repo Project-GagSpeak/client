@@ -28,6 +28,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
+        _items = items;
         _saver = saver;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckForExpiredLocks());
@@ -66,9 +67,15 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     }
 
     /// <summary> Create a new Restriction, where the item can be any restriction item. </summary>
-    public RestrictionItem CreateNew(string restrictionName)
+    public RestrictionItem CreateNew(string restrictionName, RestrictionType type)
     {
-        var restriction = new RestrictionItem { Label = restrictionName };
+        var restriction = type switch
+        {
+            RestrictionType.Blindfold => new BlindfoldRestriction(),
+            RestrictionType.Collar => new CollarRestriction(),
+            _ => new RestrictionItem()
+        };
+        restriction.Label = restrictionName;
         Storage.Add(restriction);
         _saver.Save(this);
         Logger.LogDebug($"Created new restriction {restriction.Identifier}.");
@@ -178,6 +185,43 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
 
     public void RemoveOccupiedRestriction(RestrictionItem item, ManagerPriority source)
         => OccupiedRestrictions.Remove((item, source));
+
+    #region Validators
+    public bool CanApply(int layer)
+    {
+        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanApply())
+            return true;
+        Logger.LogTrace("Not able to Apply at this time due to errors!");
+        return false;
+    }
+
+    public bool CanLock(int layer)
+    {
+        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanLock())
+            return true;
+        Logger.LogTrace("Not able to Lock at this time due to errors!");
+        return false;
+    }
+
+    public bool CanUnlock(int layer)
+    {
+        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanUnlock())
+            return true;
+        Logger.LogTrace("Not able to Unlock at this time due to errors!");
+        return false;
+    }
+
+    public bool CanRemove(int layer)
+    {
+        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanRemove())
+            return true;
+        Logger.LogTrace("Not able to Remove at this time due to errors!");
+        return false;
+    }
+    #endregion Validators
+
+
+
 
     #region Active Restriction Updates
     public VisualUpdateFlags ApplyRestriction(int layerIdx, Guid id, string enactor, out RestrictionItem? item)
@@ -346,7 +390,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 continue;
 
             // Identify the type of restriction
-            var typeString = itemJson["Type"]?.Value<string>();
+            var typeString = itemJson["Type"]?.ToObject<string>();
             if (!Enum.TryParse<RestrictionType>(typeString, out var restrictionType))
             {
                 Logger.LogError($"Unknown RestrictionType: {typeString}");

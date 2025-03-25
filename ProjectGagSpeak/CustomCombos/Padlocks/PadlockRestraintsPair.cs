@@ -1,6 +1,7 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
+using GagSpeak.UI.MainWindow;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -12,8 +13,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairRestraintPadlockCombo(Pair pair, MainHub hub, ILogger log)
-        : base(() => pair.LastRestraintData, log, "PairRestraintPadlock")
+    public PairRestraintPadlockCombo(ILogger log, Pair pair, MainHub hub, Func<int, CharaActiveRestraint> generator)
+        : base(generator, log)
     {
         _mainHub = hub;
         _pairRef = pair;
@@ -25,11 +26,9 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         => _pairRef.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
             ? restraint.Label : "None";
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.ApplyRestraintSets is false
-        || SelectedLock == MonitoredItem.Padlock
-        || MonitoredItem.CanLock() is false;
+        => !_pairRef.PairPerms.ApplyRestraintSets || SelectedLock == MonitoredItem.Padlock || !MonitoredItem.CanLock();
 
-    protected override void OnLockButtonPress()
+    protected override void OnLockButtonPress(int _)
     {
         if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockRestraintSets)
         {
@@ -41,7 +40,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Assigner = MainHub.UID,
             };
 
-            _ = _mainHub.UserPushPairDataRestraint(dto);
+            _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
             Log.LogDebug("Locking Restraint with " + SelectedLock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
             PairCombos.Opened = InteractionType.None;
             ResetSelection();
@@ -51,7 +50,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         ResetInputs();
     }
 
-    protected override void OnUnlockButtonPress()
+    protected override void OnUnlockButtonPress(int _)
     {
         if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockRestraintSets)
         {
@@ -61,7 +60,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Password = Password,
                 Assigner = MainHub.UID,
             };
-            _ = _mainHub.UserPushPairDataRestraint(dto);
+            _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
             Log.LogDebug("Unlocking Restraint with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
             PairCombos.Opened = InteractionType.None;
             ResetSelection();

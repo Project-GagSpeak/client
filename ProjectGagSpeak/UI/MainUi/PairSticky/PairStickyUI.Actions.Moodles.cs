@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
@@ -27,7 +27,7 @@ public partial class PairStickyUI
         var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.MoodlesDataStatuses.Count <= 0;
 /*
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
-        if (CkGui.IconTextButton(FontAwesomeIcon.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FAI.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodle ? InteractionType.None : InteractionType.ApplyPairMoodle;
         }
@@ -62,7 +62,7 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM PAIR's LIST //////////
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyPairMoodlePreset ? InteractionType.None : InteractionType.ApplyPairMoodlePreset;
         }
@@ -97,7 +97,7 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY MOODLES FROM OWN LIST //////////
-        if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FAI.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodle ? InteractionType.None : InteractionType.ApplyOwnMoodle;
         }
@@ -135,7 +135,7 @@ public partial class PairStickyUI
         }
 
         ////////// APPLY PRESETS FROM OWN LIST //////////
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.ApplyOwnMoodlePreset ? InteractionType.None : InteractionType.ApplyOwnMoodlePreset;
         }
@@ -176,7 +176,7 @@ public partial class PairStickyUI
 
 
         ////////// REMOVE MOODLES //////////
-        if (CkGui.IconTextButton(FontAwesomeIcon.UserMinus, "Remove a Moodle from " + PermissionData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
+        if (CkGui.IconTextButton(FAI.UserMinus, "Remove a Moodle from " + PermissionData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
         {
             PairCombos.Opened = PairCombos.Opened == InteractionType.RemoveMoodle ? InteractionType.None : InteractionType.RemoveMoodle;
         }

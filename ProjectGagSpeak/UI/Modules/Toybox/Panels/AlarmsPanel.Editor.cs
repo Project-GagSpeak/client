@@ -21,7 +21,7 @@ public partial class AlarmsPanel
         // define our sizes
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
-        var toggleSize = CkGui.IconButtonSize(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff);
+        var toggleSize = CkGui.IconButtonSize(alarm.Enabled ? FAI.ToggleOn : FAI.ToggleOff);
         var nameTextSize = ImGui.CalcTextSize(alarm.Label);
         Vector2 alarmTextSize;
         var frequencyTextSize = ImGui.CalcTextSize(_handler.GetAlarmFrequencyString(alarm.RepeatFrequency));
@@ -59,7 +59,7 @@ public partial class AlarmsPanel
             ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - toggleSize.X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (65f - toggleSize.Y) / 2);
             // draw out the icon button
-            if (CkGui.IconButton(alarm.Enabled ? FontAwesomeIcon.ToggleOn : FontAwesomeIcon.ToggleOff))
+            if (CkGui.IconButton(alarm.Enabled ? FAI.ToggleOn : FAI.ToggleOff))
             {
                 // set the enabled state of the alarm based on its current state so that we toggle it
                 if (alarm.Enabled)
@@ -78,14 +78,14 @@ public partial class AlarmsPanel
     private void DrawAlarmEditor(Alarm alarmToCreate)
     {
         // Display the local time zone
-        var textlength = CkGui.IconTextButtonSize(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName);
+        var textlength = CkGui.IconTextButtonSize(FAI.Clock, TimeZoneInfo.Local.StandardName);
         var localTime = alarmToCreate.SetTimeUTC.ToLocalTime();
         var hour = localTime.Hour;
         var minute = localTime.Minute;
         // set the x position to center the icontext button
         ImGui.Spacing();
         ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - textlength) / 2);
-        CkGui.IconTextButton(FontAwesomeIcon.Clock, TimeZoneInfo.Local.StandardName, null!, true, true);
+        CkGui.IconTextButton(FAI.Clock, TimeZoneInfo.Local.StandardName, null!, true, true);
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.AlarmLocalTimeZone, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
 
         // Draw out using the big pushed font, a large, blank button canvas

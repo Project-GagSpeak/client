@@ -235,7 +235,7 @@ public class DebugTab
     {
         ImGuiUtil.DrawTableColumn(name);
         ImGui.TableNextColumn();
-        CkGui.IconText(value ? FontAwesomeIcon.Check : FontAwesomeIcon.Times, value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+        CkGui.IconText(value ? FAI.Check : FAI.Times, value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
         ImGui.TableNextRow();
     }
 

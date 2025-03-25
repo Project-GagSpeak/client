@@ -62,14 +62,14 @@ public partial class TriggersPanel
             return;
 
         CkGui.ColorText("Action Type", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("The type of action to monitor for.");
+        CkGui.HelpText("The type of action to monitor for.");
 
         CkGui.DrawCombo("##ActionKindCombo", 150f, Enum.GetValues<LimitedActionEffectType>(), (ActionKind) => ActionKind.ToName(),
         (i) => spellActionTrigger.ActionKind = i, spellActionTrigger.ActionKind);
 
         // the name of the action to listen to.
         CkGui.ColorText("Action Name", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("Action To listen for." + Environment.NewLine + Environment.NewLine
+        CkGui.HelpText("Action To listen for." + Environment.NewLine + Environment.NewLine
             + "NOTE: Effects Divine Benison or regen, that cast no heal value, do not count as heals.");
 
         bool anyChecked = spellActionTrigger.ActionID == uint.MaxValue;
@@ -77,7 +77,7 @@ public partial class TriggersPanel
         {
             spellActionTrigger.ActionID = anyChecked ? uint.MaxValue : 0;
         }
-        CkGui.DrawHelpText("If checked, will listen for any action from any class for this type.");
+        CkGui.HelpText("If checked, will listen for any action from any class for this type.");
 
         using (var disabled = ImRaii.Disabled(anyChecked))
         {
@@ -116,7 +116,7 @@ public partial class TriggersPanel
     private void DrawDirection(SpellActionTrigger spellActionTrigger)
     {
         CkGui.ColorText("Direction", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("Determines how the trigger is fired. --SEP--" +
+        CkGui.HelpText("Determines how the trigger is fired. --SEP--" +
             "From Self ⇒ ActionType was performed BY YOU (Target can be anything)--SEP--" +
             "Self to Others ⇒ ActionType was performed by you, and the target was NOT you--SEP--" +
             "From Others ⇒ ActionType was performed by someone besides you. (Target can be anything)--SEP--" +
@@ -131,7 +131,7 @@ public partial class TriggersPanel
     private void DrawThresholds(SpellActionTrigger spellActionTrigger)
     {
 /*        CkGui.ColorText("Threshold Min Value: ", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("Minimum Damage/Heal number to trigger effect.\nLeave -1 for any.");
+        CkGui.HelpText("Minimum Damage/Heal number to trigger effect.\nLeave -1 for any.");
         var minVal = spellActionTrigger.ThresholdMinValue;
         ImGui.SetNextItemWidth(200f);
         if (ImGui.InputInt("##ThresholdMinValue", ref minVal))
@@ -140,7 +140,7 @@ public partial class TriggersPanel
         }
 
         CkGui.ColorText("Threshold Max Value: ", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("Maximum Damage/Heal number to trigger effect.");
+        CkGui.HelpText("Maximum Damage/Heal number to trigger effect.");
         var maxVal = spellActionTrigger.ThresholdMaxValue;
         ImGui.SetNextItemWidth(200f);
         if (ImGui.InputInt("##ThresholdMaxValue", ref maxVal))
@@ -158,7 +158,7 @@ public partial class TriggersPanel
         {
             healthPercentTrigger.PlayerToMonitor = playerName;
         }
-        CkGui.DrawHelpText("Must follow the format Player Name@World." + Environment.NewLine + "Example: Y'shtola Rhul@Mateus");
+        CkGui.HelpText("Must follow the format Player Name@World." + Environment.NewLine + "Example: Y'shtola Rhul@Mateus");
 
         CkGui.ColorText("Use % Threshold: ", ImGuiColors.ParsedGold);
         var usePercentageHealth = healthPercentTrigger.UsePercentageHealth;
@@ -166,13 +166,13 @@ public partial class TriggersPanel
         {
             healthPercentTrigger.UsePercentageHealth = usePercentageHealth;
         }
-        CkGui.DrawHelpText("When Enabled, will watch for when health goes above or below a specific %" +
+        CkGui.HelpText("When Enabled, will watch for when health goes above or below a specific %" +
             Environment.NewLine + "Otherwise, listens for when it goes above or below a health range.");
 
         CkGui.ColorText("Pass Kind: ", ImGuiColors.ParsedGold);
         CkGui.DrawCombo("##PassKindCombo", 150f, Enum.GetValues<ThresholdPassType>(), (passKind) => passKind.ToString(),
             (i) => healthPercentTrigger.PassKind = i, healthPercentTrigger.PassKind);
-        CkGui.DrawHelpText("If the trigger should fire when the health passes above or below the threshold.");
+        CkGui.HelpText("If the trigger should fire when the health passes above or below the threshold.");
 
         if (healthPercentTrigger.UsePercentageHealth)
         {
@@ -182,7 +182,7 @@ public partial class TriggersPanel
             {
                 healthPercentTrigger.MinHealthValue = minHealth;
             }
-            CkGui.DrawHelpText("The Health % that must be crossed to activate the trigger.");
+            CkGui.HelpText("The Health % that must be crossed to activate the trigger.");
         }
         else
         {
@@ -192,7 +192,7 @@ public partial class TriggersPanel
             {
                 healthPercentTrigger.MinHealthValue = minHealth;
             }
-            CkGui.DrawHelpText("Lowest HP Value the health should be if triggered upon going below");
+            CkGui.HelpText("Lowest HP Value the health should be if triggered upon going below");
 
             CkGui.ColorText("Max Health Range Threshold: ", ImGuiColors.ParsedGold);
             int maxHealth = healthPercentTrigger.MaxHealthValue;
@@ -200,14 +200,14 @@ public partial class TriggersPanel
             {
                 healthPercentTrigger.MaxHealthValue = maxHealth;
             }
-            CkGui.DrawHelpText("Highest HP Value the health should be if triggered upon going above");
+            CkGui.HelpText("Highest HP Value the health should be if triggered upon going above");
         }*/
     }
 
     private void DrawRestraintTriggerEditor(RestraintTrigger restraintTrigger)
     {
 /*        CkGui.ColorText("Restraint Set to Monitor", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("The Restraint Set to listen to for this trigger.");
+        CkGui.HelpText("The Restraint Set to listen to for this trigger.");
 
         ImGui.SetNextItemWidth(200f);
         var setList = _clientConfigs.StoredRestraintSets.Select(x => x.ToLightData()).ToList();
@@ -229,13 +229,13 @@ public partial class TriggersPanel
         var gagTypes = Enum.GetValues<GagType>().Where(gag => gag != GagType.None).ToArray();
         ImGui.SetNextItemWidth(200f);
         CkGui.DrawComboSearchable("GagTriggerGagType" + gagTrigger.Identifier, 250, gagTypes, (gag) => gag.GagName(), false, (i) => gagTrigger.Gag = i, gagTrigger.Gag);
-        CkGui.DrawHelpText("The Gag to listen to for this trigger.");
+        CkGui.HelpText("The Gag to listen to for this trigger.");
 
         CkGui.ColorText("Gag State that fires Trigger", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(200f);
         CkGui.DrawCombo("GagStateToMonitor" + gagTrigger.Identifier, 200f, GenericHelpers.RestrictedTriggerStates, (state) => state.ToString(),
             (i) => gagTrigger.GagState = i, gagTrigger.GagState, false, ImGuiComboFlags.None, "No Layer Selected");
-        CkGui.DrawHelpText("Trigger should be fired when the gag state changes to this.");*/
+        CkGui.HelpText("Trigger should be fired when the gag state changes to this.");*/
     }
 
     private void DrawSocialTriggerEditor(SocialTrigger socialTrigger)
@@ -259,7 +259,7 @@ public partial class TriggersPanel
     private void DrawTriggerActions(Trigger trigger)
     {
         /*CkGui.ColorText("Trigger Action Kind", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("The kind of action to perform when the trigger is activated.");
+        CkGui.HelpText("The kind of action to perform when the trigger is activated.");
 
         // Prevent Loopholes
         var allowedKinds = trigger is RestraintTrigger
@@ -311,7 +311,7 @@ public partial class TriggersPanel
             _logger.LogTrace($"Selected Gag Type for Trigger: {i}", LoggerType.GagHandling);
             gagAction.GagType = i;
         }, gagAction.GagType, "No Gag Type Selected");
-        CkGui.DrawHelpText("Apply this Gag to your character when the trigger is fired.");
+        CkGui.HelpText("Apply this Gag to your character when the trigger is fired.");
     }
 
     public void DrawRestraintSettings(Guid id, RestraintAction restraintAction)
@@ -324,7 +324,7 @@ public partial class TriggersPanel
 
         CkGui.DrawCombo("ApplyRestraintSetActionCombo" + id, 200f, lightRestraintItems, (item) => item.Label,
             (i) => restraintAction.OutputIdentifier = i?.Identifier ?? Guid.Empty, defaultItem, defaultPreviewText: "No Set Selected...");
-        CkGui.DrawHelpText("Apply restraint set to your character when the trigger is fired.");*/
+        CkGui.HelpText("Apply restraint set to your character when the trigger is fired.");*/
     }
 
     public void DrawMoodlesSettings(Guid id, MoodleAction moodleAction)
@@ -359,7 +359,7 @@ public partial class TriggersPanel
                 _logger.LogTrace($"Selected Moodle Status for Trigger: {i}", LoggerType.IpcMoodles);
                 moodleAction.Identifier = i ?? Guid.Empty;
             }, initialSelectedItem: moodleAction.Identifier);
-            CkGui.DrawHelpText("This Moodle will be applied when the trigger is fired.");
+            CkGui.HelpText("This Moodle will be applied when the trigger is fired.");
         }
         else
         {
@@ -370,14 +370,14 @@ public partial class TriggersPanel
             _moodlesService.DrawMoodlesPresetCombo("##MoodlePresetTriggerAction" + id, ImGui.GetContentRegionAvail().X,
                 _clientData.LastIpcData.MoodlesPresets, _clientData.LastIpcData.MoodlesStatuses,
                 (i) => moodleAction.Identifier = i ?? Guid.Empty);
-            CkGui.DrawHelpText("This Moodle Preset will be applied when the trigger is fired.");
+            CkGui.HelpText("This Moodle Preset will be applied when the trigger is fired.");
         }*/
     }
 
     public void DrawShockSettings(Guid id, PiShockAction shockAction)
     {
         CkGui.ColorText("Shock Collar Action", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("What kind of action to inflict on the shock collar.");
+        CkGui.HelpText("What kind of action to inflict on the shock collar.");
 
         if(CkGuiUtils.EnumCombo("##OpCode" + id, 100f, shockAction.ShockInstruction.OpCode, out var newType, defaultText: "Select Action...", skip: 1))
             shockAction.ShockInstruction.OpCode = newType;
@@ -387,7 +387,7 @@ public partial class TriggersPanel
             ImGui.Spacing();
             // draw the intensity slider
             CkGui.ColorText(shockAction.ShockInstruction.OpCode + " Intensity", ImGuiColors.ParsedGold);
-            CkGui.DrawHelpText("Adjust the intensity level that will be sent to the shock collar.");
+            CkGui.HelpText("Adjust the intensity level that will be sent to the shock collar.");
 
             var intensity = shockAction.ShockInstruction.Intensity;
             if (ImGui.SliderInt("##ShockCollarIntensity" + id, ref intensity, 0, 100))
@@ -399,7 +399,7 @@ public partial class TriggersPanel
         ImGui.Spacing();
         // draw the duration slider
         CkGui.ColorText(shockAction.ShockInstruction.OpCode + " Duration", ImGuiColors.ParsedGold);
-        CkGui.DrawHelpText("Adjust the Duration the action is played for on the shock collar.");
+        CkGui.HelpText("Adjust the Duration the action is played for on the shock collar.");
 
         var duration = shockAction.ShockInstruction.Duration;
         var timeSpanFormat = (duration > 15 && duration < 100)
@@ -432,7 +432,7 @@ public partial class TriggersPanel
             sexToyAction.EndAfter = runFor;
 
 
-            float width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X - ImGui.GetStyle().ItemInnerSpacing.X;
+            float width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Plus).X - ImGui.GetStyle().ItemInnerSpacing.X;
 
             // concatinate the currently stored device names with the list of connected devices so that we dont delete unconnected devices.
             HashSet<string> unionDevices = new HashSet<string>(_deviceController.ConnectedDevices?.Select(device => device.DeviceName) ?? new List<string>())
@@ -448,7 +448,7 @@ public partial class TriggersPanel
             // try and get the current device.
             CkGui._selectedComboItems.TryGetValue("VibeDeviceTriggerSelector", out var selectedDevice);
             ImGui.Text("Selected Device Name: " + selectedDevice as string);
-            if (CkGui.IconButton(FontAwesomeIcon.Plus, null, null, string.IsNullOrEmpty(selectedDevice as string)))
+            if (CkGui.IconButton(FAI.Plus, null, null, string.IsNullOrEmpty(selectedDevice as string)))
             {
                 if (string.IsNullOrWhiteSpace(selectedDevice as string))
                 {

@@ -7,9 +7,9 @@ namespace GagSpeak.CustomCombos;
 
 public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>
 {
-    private readonly float _comboWidth;
     private readonly ImRaii.Color _color = new();
     private Vector2 _buttonSize;
+    private float _comboWidth;
     private uint _currentColor;
     private bool _currentGloss;
 
@@ -25,10 +25,10 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
         return currentSelected;
     }
 
-    public CkFilterComboColors(float comboWidth, Func<IReadOnlyList<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>> colors, ILogger log)
+    public CkFilterComboColors(Func<IReadOnlyList<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>> colors, ILogger log)
         : base(colors, log)
     {
-        _comboWidth = comboWidth;
+        _comboWidth = ImGui.GetFrameHeight();
         SearchByParts = true;
     }
 
@@ -75,8 +75,9 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
         return ret;
     }
 
-    public virtual bool Draw(string label, uint color, string name, bool found, bool gloss, float previewWidth)
+    public bool Draw(string label, float width, float previewWidth, uint color, string name, bool found, bool gloss)
     {
+        _comboWidth = width;
         _currentColor = color;
         _currentGloss = gloss;
         var preview = found && ImGui.CalcTextSize(name).X <= previewWidth ? name : string.Empty;
@@ -98,7 +99,4 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
                 0x50000000, 0x50FFFFFF, 0x50000000);
         }
     }
-
-    public bool Draw(string label, uint color, string name, bool found, bool gloss)
-        => Draw(label, color, name, found, gloss, ImGui.GetFrameHeight());
 }

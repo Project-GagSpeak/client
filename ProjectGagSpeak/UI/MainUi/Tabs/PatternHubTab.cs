@@ -46,7 +46,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
 
         // set the scrollbar width to be shorter than normal
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        using var patternResultChild = ImRaii.Child("##PatternResultChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+        using var patternResultChild = ImRaii.Child("##PatternResultChild", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysVerticalScrollbar);
         // result styles.
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
         using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
@@ -60,7 +60,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
     private void DrawPatternResultBox(ServerPatternInfo patternInfo)
     {
         var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##PatternResult_{patternInfo.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child($"##PatternResult_{patternInfo.Identifier}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
 
             using (ImRaii.Group())
@@ -70,11 +70,11 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
                 CkGui.AttachToolTip(patternInfo.Description);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X
-                    - CkGui.IconTextButtonSize(FontAwesomeIcon.Heart, patternInfo.Likes.ToString())
-                    - CkGui.IconTextButtonSize(FontAwesomeIcon.Download, patternInfo.Downloads.ToString()));
+                    - CkGui.IconTextButtonSize(FAI.Heart, patternInfo.Likes.ToString())
+                    - CkGui.IconTextButtonSize(FAI.Download, patternInfo.Downloads.ToString()));
                 using (var color = ImRaii.PushColor(ImGuiCol.Text, patternInfo.HasLiked ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey))
                 {
-                    if (CkGui.IconTextButton(FontAwesomeIcon.Heart, patternInfo.Likes.ToString(), null, true))
+                    if (CkGui.IconTextButton(FAI.Heart, patternInfo.Likes.ToString(), null, true))
                     {
                         _shareHub.PerformPatternLikeAction(patternInfo.Identifier);
                     }
@@ -83,7 +83,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
                 ImGui.SameLine();
                 using (var color = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudWhite2))
                 {
-                    if (CkGui.IconTextButton(FontAwesomeIcon.Download, patternInfo.Downloads.ToString(), null, true,
+                    if (CkGui.IconTextButton(FAI.Download, patternInfo.Downloads.ToString(), null, true,
                         _patterns.Storage.Contains(patternInfo.Identifier), "DownloadPattern" + patternInfo.Identifier))
                     {
                         _shareHub.DownloadPattern(patternInfo.Identifier);
@@ -95,7 +95,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FAI.UserCircle);
                 ImUtf8.SameLineInner();
                 CkGui.ColorText(patternInfo.Author +
                     " (" + patternInfo.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture) + ")", ImGuiColors.DalamudGrey);
@@ -104,8 +104,8 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
 
                 var formatDuration = patternInfo.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 var timerText = patternInfo.Length.ToString(formatDuration);
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - CkGui.IconSize(FontAwesomeIcon.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
-                CkGui.IconText(FontAwesomeIcon.Stopwatch);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(timerText).X - CkGui.IconSize(FAI.Stopwatch).X - ImGui.GetStyle().ItemSpacing.X);
+                CkGui.IconText(FAI.Stopwatch);
                 CkGui.AttachToolTip("Total Pattern Duration");
                 ImUtf8.SameLineInner();
                 ImGui.TextUnformatted(patternInfo.Length.ToString(formatDuration));
@@ -115,12 +115,12 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             // next line:
             using (ImRaii.Group())
             {
-                var vibeSize = CkGui.IconSize(FontAwesomeIcon.Water);
-                var rotationSize = CkGui.IconSize(FontAwesomeIcon.GroupArrowsRotate);
+                var vibeSize = CkGui.IconSize(FAI.Water);
+                var rotationSize = CkGui.IconSize(FAI.GroupArrowsRotate);
                 var allowedLength = ImGui.GetContentRegionAvail().X - vibeSize.X - rotationSize.X - ImGui.GetStyle().ItemSpacing.X;
 
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.Tags);
+                CkGui.IconText(FAI.Tags);
 
                 CkGui.AttachToolTip("Tags for the Pattern");
                 ImGui.SameLine();
@@ -132,9 +132,9 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
                 ImGui.TextUnformatted(tagsString);
                 var rightEnd = ImGui.GetContentRegionAvail().X - vibeSize.X - rotationSize.X - ImGui.GetStyle().ItemSpacing.X;
                 ImGui.SameLine(rightEnd);
-                CkGui.BooleanToColoredIcon(patternInfo.UsesVibrations, false, FontAwesomeIcon.Water, FontAwesomeIcon.Water, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(patternInfo.UsesVibrations, false, FAI.Water, FAI.Water, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(patternInfo.UsesVibrations ? "Uses Vibrations" : "Does not use Vibrations");
-                CkGui.BooleanToColoredIcon(patternInfo.UsesRotations, true, FontAwesomeIcon.Sync, FontAwesomeIcon.Sync, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(patternInfo.UsesRotations, true, FAI.Sync, FAI.Sync, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(patternInfo.UsesRotations ? "Uses Rotations" : "Does not use Rotations");
             }
         }
@@ -146,11 +146,11 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(2, ImGui.GetStyle().ItemInnerSpacing.Y));
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
-        var updateSize = CkGui.IconButtonSize(FontAwesomeIcon.Search).X;
-        var sortIconSize = CkGui.IconButtonSize(FontAwesomeIcon.SortAmountUp).X;
+        var updateSize = CkGui.IconButtonSize(FAI.Search).X;
+        var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
         var filterTypeSize = 80f;
         var durationFilterSize = 60f;
-        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FontAwesomeIcon.SortAmountUp : FontAwesomeIcon.SortAmountDown;
+        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
 
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         using (ImRaii.Group())
@@ -162,7 +162,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FontAwesomeIcon.Search, disabled: !_shareHub.CanShareHubTask))
+            if (CkGui.IconButton(FAI.Search, disabled: !_shareHub.CanShareHubTask))
                 _shareHub.PerformPatternSearch();
             CkGui.AttachToolTip("Update Search Results");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubUpdate, ImGui.GetWindowPos(), ImGui.GetWindowSize());

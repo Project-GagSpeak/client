@@ -3,6 +3,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
@@ -35,6 +37,11 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     /// <remarks> This allows each item in here to be accessed efficiently at runtime during the draw loop. </remarks>
     public record struct RestrictionState(uint Color) { }
 
+    // Helper operations used for creating new items and cloning them.
+    private string? _clipboardText;
+    private RestrictionType _newType;
+    private RestrictionItem? _clonedRestrictionItem;
+
     /// <summary> This is the currently selected leaf in the file system. </summary>
     public new RestrictionFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
@@ -47,8 +54,6 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         _manager = manager;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
-
-        // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
     }
 
     private void RenameLeafRestriction(RestrictionFileSystem.Leaf leaf)
@@ -80,20 +85,20 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    protected override void DrawLeafName(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
+    protected override bool DrawLeafName(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
     {
         using var id = ImRaii.PushId((int)leaf.Identifier);
         using var leafInternalGroup = ImRaii.Group();
-        DrawLeafInternal(leaf, state, selected);
+        return DrawLeafInternal(leaf, state, selected);
     }
 
-    private void DrawLeafInternal(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
+    private bool DrawLeafInternal(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
     {
-        // must be a valid drag-drop source, so use invisible button.
         ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
         using (ImRaii.Group())
@@ -103,8 +108,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
             ImGui.SameLine();
             ImGui.Text(leaf.Value.Label);
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FontAwesomeIcon.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            if (CkGui.IconButton(FontAwesomeIcon.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
@@ -117,6 +122,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
+
+        return hovered;
     }
 
     protected override void DrawFolderName(CkFileSystem<RestrictionItem>.Folder folder, bool selected)
@@ -135,40 +142,62 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
-    protected override float CustomFilters(float width)
+    protected override float CustomFiltersWidth(float width)
     {
-        var pos = ImGui.GetCursorPos();
-        var remainingWidth = width
-            - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X
-            - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X
+        return width
+            - CkGui.IconButtonSize(FAI.Plus).X
+            - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
+    }
 
-        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
-
-        ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FontAwesomeIcon.Plus))
+    protected override void DrawCustomFilters()
+    {
+        if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestriction");
         CkGui.AttachToolTip("Create a new Restriction Item.");
 
         ImUtf8.SameLineInner();
         DrawFolderButton();
-
-        ImGui.SetCursorPos(pos);
-        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
     }
 
     protected override void DrawPopups()
-    {
-        NewRestrictionPopup();
-    }
+        => NewRestrictionPopup();
 
     private void NewRestrictionPopup()
     {
-        if (!ImGuiUtil.OpenNameField("##NewRestriction", ref _newName))
+        if (!OpenRestrictionNameField("##NewRestriction", ref _newName))
             return;
 
-        _manager.CreateNew(_newName);
+        _manager.CreateNew(_newName, _newType);
         _newName = string.Empty;
+        _newType = RestrictionType.Normal;
+    }
+
+    private bool OpenRestrictionNameField(string popupName, ref string newName)
+    {
+        using var popup = ImRaii.Popup(popupName);
+        if (!popup)
+            return false;
+
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+            ImGui.CloseCurrentPopup();
+
+        ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
+        if (ImGui.IsWindowAppearing())
+            ImGui.SetKeyboardFocusHere();
+        var enterPressed = ImGui.InputTextWithHint("##newName", "Enter New Name...", ref newName, 512, ImGuiInputTextFlags.EnterReturnsTrue);
+
+        if (CkGuiUtils.EnumCombo("Restriction Kind", 100, _newType, out RestrictionType newType,
+            Enum.GetValues<RestrictionType>().SkipLast(1), defaultText: "Select Type.."))
+        {
+            _newType = newType;
+        }
+
+        if (!enterPressed)
+            return false;
+
+        ImGui.CloseCurrentPopup();
+        return true;
     }
 }
 

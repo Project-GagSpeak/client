@@ -14,48 +14,6 @@ namespace GagSpeak.UI.Profile;
 /// </summary>
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
 {
-    public static void AddImageRounded(ImDrawListPtr drawList, IDalamudTextureWrap? wrap, Vector2 topLeftPos, Vector2 size, float rounding, bool tt = false, string ttText = "")
-    {
-        try
-        {
-            if (wrap is { } validWrap)
-            {
-                ImGui.GetWindowDrawList().AddImageRounded(
-                    validWrap.ImGuiHandle,
-                    topLeftPos,
-                    topLeftPos + size,
-                    Vector2.Zero,
-                    Vector2.One,
-                    ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)),
-                    rounding);
-                if(tt)
-                {
-                    AddRelativeTooltip(topLeftPos, size, ttText);
-                }
-            }
-        }
-        catch (Exception ex) { GagSpeak.StaticLog.Error($"Error: {ex}"); }
-    }
-
-    public static void AddImage(ImDrawListPtr drawList, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, Vector4? tint = null, bool tt = false, string ttText = "")
-    {
-        try
-        {
-            if (wrap is { } validWrap)
-            {
-                // handle tint.
-                var actualTint = tint ?? new Vector4(1f, 1f, 1f, 1f);
-                // handle image.
-                drawList.AddImage(validWrap.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, ImGui.GetColorU32(actualTint));
-                if(tt)
-                {
-                    AddRelativeTooltip(pos, size, ttText);
-                }
-            }
-        }
-        catch (Exception ex) { GagSpeak.StaticLog.Error($"Error: {ex}"); }
-    }
-
     public static void DrawLimitedDescription(string desc, Vector4 color, Vector2 size)
     {
         // Calculate the line height and determine the max lines based on available height
@@ -114,13 +72,5 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             currentLines++; // Increment the line count for the final line
         }
         CkGui.ColorTextWrapped(newDescText.TrimEnd(), color);
-    }
-
-    public static void AddRelativeTooltip(Vector2 pos, Vector2 size, string text)
-    {
-        // add a scaled dummy over this area.
-        ImGui.SetCursorScreenPos(pos);
-        ImGuiHelpers.ScaledDummy(size);
-        CkGui.AttachToolTip(text);
     }
 }

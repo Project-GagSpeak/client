@@ -1,13 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ManagedFontAtlas;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
@@ -17,17 +14,15 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
-using OtterGui.Text;
-using System.Runtime.InteropServices;
-using FAI = Dalamud.Interface.FontAwesomeIcon;
 
 // please dont change this namespace or you will mess up so many references i dont want to deal with fixing.
 // unless you are willing to, then by all means please do.
 namespace GagSpeak.UI;
 
-public class CkGui
+// Primary Partial Class
+public partial class CkGui
 {
-    public static readonly ImGuiWindowFlags PopupWindowFlags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
+    public static readonly ImGuiWindowFlags PopupWindowFlags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoScrollWithMouse;
 
     public const string TooltipSeparator = "--SEP--";
     public const string ColorToggleSeparator = "--COL--";
@@ -64,73 +59,6 @@ public class CkGui
     public static Vector2 LastMainUIWindowPosition { get; set; } = Vector2.Zero;
     public static Vector2 LastMainUIWindowSize { get; set; } = Vector2.Zero;
 
-    // TODO: Remove and move to core textures.
-    public IDalamudTextureWrap GetImageFromDirectoryFile(string path)
-        => _textureProvider.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
-
-    /// <summary> A helper function to attach a tooltip to a section in the UI currently hovered. </summary>
-    public static void AttachToolTip(string text, float borderSize = 1f, Vector4? color = null)
-    {
-        if (text.IsNullOrWhitespace()) return;
-
-        // if the item is currently hovered, with the ImGuiHoveredFlags set to allow when disabled
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, borderSize);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-            // begin the tooltip interface
-            ImGui.BeginTooltip();
-            // push the text wrap position to the font size times 35
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-            // we will then check to see if the text contains a tooltip
-            if (text.Contains(TooltipSeparator, StringComparison.Ordinal))
-            {
-                // if it does, we will split the text by the tooltip
-                var splitText = text.Split(TooltipSeparator, StringSplitOptions.None);
-                // for each of the split text, we will display the text unformatted
-                for (var i = 0; i < splitText.Length; i++)
-                {
-                    if (splitText[i].Contains(ColorToggleSeparator, StringComparison.Ordinal) && color.HasValue)
-                    {
-                        var colorSplitText = splitText[i].Split(ColorToggleSeparator, StringSplitOptions.None);
-                        var useColor = false;
-
-                        for (var j = 0; j < colorSplitText.Length; j++)
-                        {
-                            if (useColor)
-                            {
-                                ImGui.SameLine(0, 0); // Prevent new line
-                                ImGui.TextColored(color.Value, colorSplitText[j]);
-                            }
-                            else
-                            {
-                                if (j > 0) ImGui.SameLine(0, 0); // Prevent new line
-                                ImGui.TextUnformatted(colorSplitText[j]);
-                            }
-                            // Toggle the color for the next segment
-                            useColor = !useColor;
-                        }
-                    }
-                    else
-                    {
-                        ImGui.TextUnformatted(splitText[i]);
-                    }
-                    if (i != splitText.Length - 1) ImGui.Separator();
-                }
-            }
-            // otherwise, if it contains no tooltip, then we will display the text unformatted
-            else
-            {
-                ImGui.TextUnformatted(text);
-            }
-            // finally, pop the text wrap position and end the tooltip
-            ImGui.PopTextWrapPos();
-            ImGui.EndTooltip();
-        }
-    }
-
     /// <summary> A helper function for centering the next displayed window. </summary>
     /// <param name="width"> The width of the window. </param>
     /// <param name="height"> The height of the window. </param>
@@ -158,144 +86,6 @@ public class CkGui
         ret <<= 8;
         ret += (byte)(color.X * 255);
         return ret;
-    }
-
-    /// <summary> An Unformatted Text version of ImGui.TextColored accepting UINT </summary>
-    public static void ColorText(string text, uint color)
-    {
-        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
-        ImGui.TextUnformatted(text);
-    }
-
-
-    /// <summary> An Unformatted Text version of ImGui.TextColored </summary>
-    public static void ColorText(string text, Vector4 color)
-    {
-        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
-        ImGui.TextUnformatted(text);
-    }
-
-    /// <summary> Displays colored text based on the boolean value of true or false. </summary>
-    public static void ColorTextBool(string text, bool value)
-    {
-        var color = value ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed;
-        ColorText(text, color);
-    }
-
-    /// <summary> Displays colored text based on the boolean value of true or false. </summary>
-    /// <remarks> Can provide custom colors if desired. </remarks>
-    public static void ColorTextBool(string text, bool value, Vector4 colorTrue = default, Vector4 colorFalse = default)
-    {
-        var color = value
-            ? (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue
-            : (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse;
-
-        ColorText(text, color);
-    }
-
-    public static void ColorTextCentered(string text, Vector4 color)
-    {
-        var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-        ColorText(text, color);
-    }
-
-    /// <summary> What it says on the tin. </summary>
-    public static void ColorTextWrapped(string text, Vector4 color)
-    {
-        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
-        TextWrapped(text);
-    }
-
-    /// <summary> Helper function to draw the outlined font in ImGui. </summary>
-    public static void DrawOutlinedFont(string text, Vector4 fontColor, Vector4 outlineColor, int thickness)
-    {
-        var original = ImGui.GetCursorPos();
-
-        using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
-        {
-            ImGui.SetCursorPos(original with { Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-        }
-
-        using (ImRaii.PushColor(ImGuiCol.Text, fontColor))
-        {
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-        }
-    }
-
-    public static void DrawOutlinedFont(string text, uint fontColor, uint outlineColor, int thickness)
-    {
-        var original = ImGui.GetCursorPos();
-
-        using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
-        {
-            ImGui.SetCursorPos(original with { Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-        }
-
-        using (ImRaii.PushColor(ImGuiCol.Text, fontColor))
-        {
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-        }
-    }
-
-
-    public static void DrawOutlinedFont(ImDrawListPtr drawList, string text, Vector2 textPos, uint fontColor, uint outlineColor, int thickness)
-    {
-        drawList.AddText(textPos with { Y = textPos.Y - thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { X = textPos.X - thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { Y = textPos.Y + thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { X = textPos.X + thickness },
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y - thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y + thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y + thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y - thickness),
-            outlineColor, text);
-
-        drawList.AddText(textPos, fontColor, text);
-        drawList.AddText(textPos, fontColor, text);
     }
 
     public static Vector4 GetBoolColor(bool input) => input ? ImGuiColors.ParsedGreen : ImGuiColors.DalamudRed;
@@ -329,15 +119,6 @@ public class CkGui
     {
         using var font = UiFontService.IconFont.Push();
         return ImGui.CalcTextSize(icon.ToIconString());
-    }
-
-    public static Vector2 CalcFontTextSize(string text, IFontHandle fontHandle = null!)
-    {
-        if (fontHandle is null)
-            return ImGui.CalcTextSize(text);
-
-        using (fontHandle.Push())
-            return ImGui.CalcTextSize(text);
     }
 
     public static float GetWindowContentRegionWidth() => ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
@@ -391,7 +172,6 @@ public class CkGui
             ImGui.GetItemRectMax() + ImGui.GetStyle().ItemInnerSpacing,
             Color(color), rounding);
     }
-
 
     /// <summary> The additional param for an ID is optional. if not provided, the id will be the text. </summary>
     public static bool IconButton(FAI icon, float? height = null, string? id = null, bool disabled = false, bool inPopup = false)
@@ -592,38 +372,8 @@ public class CkGui
         ImGui.SetWindowSize(new Vector2(x, y));
     }
 
-    public static void CopyableDisplayText(string text, string tooltip = "Click to copy")
-    {
-        // then when the item is clicked, copy it to clipboard so we can share with others
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText(text);
-        }
-        AttachToolTip(tooltip);
-    }
-
     public static void SetCursorXtoCenter(float width)
         => ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - width / 2);
-
-
-    public static void TextWrapped(string text)
-    {
-        ImGui.PushTextWrapPos(0);
-        ImGui.TextUnformatted(text);
-        ImGui.PopTextWrapPos();
-    }
-
-    public static void GagspeakText(string text, Vector4? color = null)
-        => FontText(text, UiFontService.GagspeakFont, color);
-
-    public static void GagspeakBigText(string text, Vector4? color = null)
-        => FontText(text, UiFontService.GagspeakLabelFont, color);
-
-    public static void GagspeakTitleText(string text, Vector4? color = null)
-        => FontText(text, UiFontService.GagspeakTitleFont, color);
-
-    public static void BigText(string text, Vector4? color = null)
-        => FontText(text, UiFontService.UidFont, color);
 
     public static void BooleanToColoredIcon(bool value, bool inline = true, FAI trueIcon = FAI.Check, FAI falseIcon = FAI.Times, Vector4 colorTrue = default, Vector4 colorFalse = default)
     {
@@ -631,18 +381,9 @@ public class CkGui
             ImGui.SameLine();
 
         if (value)
-            using (ImRaii.PushColor(ImGuiCol.Text, (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue)) IconText(trueIcon);
+            using (ImRaii.PushColor(ImGuiCol.Text, (colorTrue == default) ? ImGuiColors.HealerGreen : colorTrue)) FramedIconText(trueIcon);
         else
-            using (ImRaii.PushColor(ImGuiCol.Text, (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse)) IconText(falseIcon);
-    }
-
-    public static void DrawHelpText(string helpText, bool inner = false)
-    {
-        if (inner) { ImUtf8.SameLineInner(); }
-        else { ImGui.SameLine(); }
-        var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
-        IconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        AttachToolTip(helpText);
+            using (ImRaii.PushColor(ImGuiCol.Text, (colorFalse == default) ? ImGuiColors.DalamudRed : colorFalse)) FramedIconText(falseIcon);
     }
 
     public static void DrawOptionalPlugins()
@@ -684,32 +425,10 @@ public class CkGui
         ImGui.Spacing();
     }
 
-    public static void IconText(FAI icon, uint color)
-    {
-        FontText(icon.ToIconString(), UiFontService.IconFont, color);
-    }
-
-    public static void IconText(FAI icon, Vector4? color = null)
-    {
-        IconText(icon, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
-    }
-
     private static void CenterWindow(float width, float height, ImGuiCond cond = ImGuiCond.None)
     {
         var center = ImGui.GetMainViewport().GetCenter();
         ImGui.SetWindowPos(new Vector2(center.X - width / 2, center.Y - height / 2), cond);
-    }
-
-    private static void FontText(string text, IFontHandle font, Vector4? color = null)
-    {
-        FontText(text, font, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
-    }
-
-    private static void FontText(string text, IFontHandle font, uint color)
-    {
-        using var pushedFont = font.Push();
-        using var pushedColor = ImRaii.PushColor(ImGuiCol.Text, color);
-        ImGui.TextUnformatted(text);
     }
 
     /// <summary> Retrieves the various UID text color based on the current server state. </summary>

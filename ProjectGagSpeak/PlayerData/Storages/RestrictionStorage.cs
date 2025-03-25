@@ -48,28 +48,6 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
     /// <summary> Gets if the respective gag is enabled, if it exists. </summary>
     /// <returns> True if it exists and is enabled, false otherwise. </returns>
     public bool IsEnabled(GagType gag) => ContainsKey(gag) && this[gag].IsEnabled;
-
-    /// <summary> Used by client-side dropdown combos to identify if the gag has any attached data. </summary>
-    /// <returns> True if any Glamour, Gags, or Mods are attached (and is enabled), false otherwise. </returns>
-    /// <remarks> This accesses the sorted list directly. Calling an unstored item will throw unhandled. </remarks>
-    public bool IsActiveWithData(GagType gag)
-    {
-        if (!ContainsKey(gag))
-            return false;
-
-        var restriction = this[gag];
-        // we should return true if there is any attached Glamour, moodle, or mods.
-        if (restriction.Glamour.GameItem.ItemId != ItemService.NothingItem(restriction.Glamour.Slot).ItemId)
-            return true;
-
-        if (restriction.Moodle.Id != Guid.Empty)
-            return true;
-
-        if (restriction.Mod != null)
-            return true;
-        // did not match any, return false.
-        return false;
-    }
 }
 
 public class RestraintStorage : List<RestraintSet>
@@ -113,9 +91,10 @@ public class CursedLootStorage : List<CursedItem>
         .OrderBy(x => x.AppliedTime)
         .ToList();
 
-    public IReadOnlyList<CursedItem> ActiveItemsDecending => this
-        .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
+    public IReadOnlyList<CursedItem> AllItemsInPoolByActive => this
+        .Where(x => x.InPool)
         .OrderByDescending(x => x.AppliedTime)
+        .ThenBy(x => x.Label)
         .ToList();
 
     public IReadOnlyList<CursedItem> InactiveItemsInPool => this

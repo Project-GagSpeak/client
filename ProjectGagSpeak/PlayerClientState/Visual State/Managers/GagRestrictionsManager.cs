@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
@@ -39,11 +40,13 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     // Cached Information
     public GarblerRestriction? ActiveEditorItem { get; private set; }
     public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
-    public SortedList<GagLayer, GarblerRestriction> ActiveRestrictions { get; private set; } = new();
+    // Using a sorted list over a fixed array size, as at any point a Garbler restriction on any layer could not exist.
+    public SortedList<int, GarblerRestriction> ActiveRestrictions { get; private set; } = new();
 
     // Stored Information.
     public CharaActiveGags? ActiveGagsData { get; private set; }
     public GagRestrictionStorage Storage { get; private set; } = new GagRestrictionStorage();
+
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
     /// <param name="serverData"> The data from the server to update with. </param>
@@ -58,7 +61,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             {
                 if (Storage.TryGetEnabledGag(slot.GagItem, out var item))
                 {
-                    ActiveRestrictions[(GagLayer)slotIdx] = item;
+                    ActiveRestrictions[slotIdx] = item;
                 }
             }
         }
@@ -157,7 +160,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             foreach (var restriction in ActiveRestrictions)
             {
                 // these properties should not be updated if an item with higher priority contains it.
-                if (restriction.Key > layer)
+                if (restriction.Key > (int)layer)
                 {
                     if (item.Glamour is not null && restriction.Value.Glamour.Slot == item.Glamour.Slot)
                         flags &= ~VisualUpdateFlags.Glamour;
@@ -180,7 +183,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     flags &= ~VisualUpdateFlags.CustomizeProfile;
             }
             // Update the activeVisualState, and the cache.
-            ActiveRestrictions[layer] = item;
+            ActiveRestrictions[(int)layer] = item;
             LatestVisualCache.UpdateCache(ActiveRestrictions);
         }
         return flags;
@@ -234,7 +237,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         if (Storage.TryGetEnabledGag(removedGag, out var matchedItem))
         {
             // Do recalculations first since it doesnt madder here.
-            ActiveRestrictions.Remove(layer);
+            ActiveRestrictions.Remove((int)layer);
             LatestVisualCache.UpdateCache(ActiveRestrictions);
 
             // begin by assuming all aspects are removed.
@@ -376,7 +379,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     Password = gagSlot.Password, // use the same password.
                     PadlockAssigner = gagSlot.PadlockAssigner // use the same assigner. (To remove devotional timers)
                 };
-                Mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, (GagLayer)index, newData));
+                Mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, index, newData));
             }
     }
 }

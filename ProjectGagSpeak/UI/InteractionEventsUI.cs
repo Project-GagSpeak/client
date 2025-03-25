@@ -27,7 +27,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
     public InteractionEventsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
         EventAggregator eventAggregator, CkGui uiShared) : base(logger, mediator, "Interaction Events Viewer")
     {
-        Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse;
+        Flags = WFlags.NoScrollbar | WFlags.NoCollapse;
         AllowClickthrough = false;
         AllowPinning = false;
         
@@ -99,7 +99,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
         using (ImRaii.Group())
         {
             // Draw out the clear filters button
-            if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
+            if (CkGui.IconTextButton(FAI.Ban, "Clear"))
                 ClearFilters();
 
             // On the same line, draw out the search bar.
@@ -114,10 +114,10 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
 
 
             // On the same line, at the very end, draw the button to open the event folder.
-            var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FolderOpen, "EventLogs");
+            var buttonSize = CkGui.IconTextButtonSize(FAI.FolderOpen, "EventLogs");
             var distance = ImGui.GetContentRegionAvail().X - buttonSize;
             ImGui.SameLine(distance);
-            if (CkGui.IconTextButton(FontAwesomeIcon.FolderOpen, "EventLogs"))
+            if (CkGui.IconTextButton(FAI.FolderOpen, "EventLogs"))
             {
                 ProcessStartInfo ps = new()
                 {

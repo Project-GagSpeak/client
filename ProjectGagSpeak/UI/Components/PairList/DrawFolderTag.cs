@@ -5,7 +5,7 @@ using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Components.UserPairList;
+namespace GagSpeak.UI.Components;
 
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
@@ -37,11 +37,11 @@ public class DrawFolderTag : DrawFolderBase
     {
         var icon = _id switch
         {
-            Globals.CustomOnlineTag => FontAwesomeIcon.Link,
-            Globals.CustomOfflineTag => FontAwesomeIcon.Unlink,
-            Globals.CustomVisibleTag => FontAwesomeIcon.Eye,
-            Globals.CustomAllTag => FontAwesomeIcon.User,
-            _ => FontAwesomeIcon.Folder
+            Globals.CustomOnlineTag => FAI.Link,
+            Globals.CustomOfflineTag => FAI.Unlink,
+            Globals.CustomVisibleTag => FAI.Eye,
+            Globals.CustomAllTag => FAI.User,
+            _ => FAI.Folder
         };
 
         ImGui.AlignTextToFramePadding();

@@ -1,90 +1,149 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.Services.Tutorial;
 using GagSpeak.Services;
-using GagSpeak.UI.Wardrobe;
-using GagspeakAPI.Data.Character;
+using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
+using OtterGui.Text;
+using Penumbra.GameData.Enums;
 
 namespace GagSpeak.UI.Components;
 public class MoodleDrawer
 {
-
-
-    public MoodleDrawer(CkGui uiShared)
+    private readonly ILogger<MoodleDrawer> _logger;
+    private readonly MoodlesDisplayer _statusMonitor;
+    private MoodleStatusCombo _statusCombo { get; init; }
+    private MoodlePresetCombo _presetCombo { get; init; }
+    public MoodleDrawer(ILogger<MoodleDrawer> logger, MoodlesDisplayer statusMonitor)
     {
-
+        _logger = logger;
+        _statusMonitor = statusMonitor;
+        _statusCombo = new MoodleStatusCombo(1.15f, VisualApplierMoodles.LatestIpcData, statusMonitor, logger);
+        _presetCombo = new MoodlePresetCombo(1.15f, VisualApplierMoodles.LatestIpcData, statusMonitor, logger);
     }
 
-    public void thing()
+    /// <summary> Draw the items associated moodle. This can be either a Moodle Status or Moodle Preset. </summary>
+    public void DrawAssociatedMoodle(string id, IRestriction item, float width)
     {
-        /*try
+        // construct a child object here.
+        var pos = ImGui.GetCursorScreenPos();
+        var style = ImGui.GetStyle();
+        var moodleDisplayHeight = MoodlesDisplayer.DefaultSize.Y + style.FramePadding.Y * 2;
+        var statusRowHeight = ImGui.GetFrameHeight() + style.ItemSpacing.Y;
+        var winSize = new Vector2(width, moodleDisplayHeight + statusRowHeight);
+        using (CkComponents.CenterHeaderChild(id, "Associated Moodle", winSize, WFlags.AlwaysUseWindowPadding))
         {
-            using var table = ImRaii.Table("MoodlesSelections", 2, ImGuiTableFlags.BordersInnerV);
-            if (!table) return;
+            // get the innder width after the padding is applied.
+            var widthInner = ImGui.GetContentRegionAvail().X;
 
-            ImGui.TableSetupColumn("MoodleSelection", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("FinalizedPreviewList", ImGuiTableColumnFlags.WidthFixed, 200f);
-
-            ImGui.TableNextRow(); ImGui.TableNextColumn();
-
-            using (var child = ImRaii.Child("##RestraintMoodleStatusSelection", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2), false))
-            {
-                if (!child) return;
-                _relatedMoodles.DrawMoodlesStatusesListForItem(refRestraintSet, LastCreatedCharacterData, cellPaddingY, false);
-            }
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlesStatuses, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
-
-
-            ImGui.Separator();
-            using (var child2 = ImRaii.Child("##RestraintMoodlePresetSelection", -Vector2.One, false))
-            {
-                if (!child2) return;
-                _relatedMoodles.DrawMoodlesStatusesListForItem(refRestraintSet, LastCreatedCharacterData, cellPaddingY, true);
-            }
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlesPresets, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
-
-            ImGui.TableNextColumn();
-            // Filter the MoodlesStatuses list to get only the moodles that are in AssociatedMoodles
-            var associatedMoodles = LastCreatedCharacterData.MoodlesStatuses
-                .Where(moodle => refRestraintSet.AssociatedMoodles.Contains(moodle.GUID))
-                .ToList();
-            // draw out all the active associated moodles in the restraint set with thier icon beside them.
+            // group together the first row.
             using (ImRaii.Group())
             {
-                CkGui.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
-                ImGui.Separator();
-
-                foreach (var moodle in associatedMoodles)
+                var buttonTooltip = item.Moodle switch
                 {
-                    using (ImRaii.Group())
+                    MoodlePreset => "Switch Moodle Types. (Hold Shift)--SEP--Current: Moodle Preset",
+                    Moodle       => "Switch Moodle Types. (Hold Shift)--SEP--Current: Moodle Status",
+                    _            => "Switch Moodle Types.--SEP--Current: Unknown",
+                };
+                if (CkGui.IconButton(FAI.ArrowsLeftRight, disabled: !KeyMonitor.ShiftPressed()))
+                {
+                    // convert the type.
+                    item.Moodle = item.Moodle switch
                     {
+                        MoodlePreset => new Moodle(),
+                        Moodle => new MoodlePreset(),
+                        _ => throw new ArgumentOutOfRangeException(nameof(item.Moodle), item.Moodle, "Unknown Moodle Type"),
+                    };
+                }
+                CkGui.AttachToolTip(buttonTooltip);
 
-                        var currentPos = ImGui.GetCursorPos();
-                        if (moodle.IconID != 0 && currentPos != Vector2.Zero)
-                        {
-                            var statusIcon = CkGui.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
+                ImUtf8.SameLineInner();
+                // draw the dropdown for the status/preset selection. This is based on the type of moodle.
+                if (item.Moodle is MoodlePreset preset)
+                {
+                    var change = _presetCombo.Draw("GagMoodlePreset", preset.Id, ImGui.GetContentRegionAvail().X);
+                    if (change && !preset.Id.Equals(_presetCombo.CurrentSelection.GUID))
+                    {
+                        _logger.LogTrace($"Item changed to {_presetCombo.CurrentSelection.GUID} " +
+                            $"[{_presetCombo.CurrentSelection.Title}] from {preset.Id}");
+                        preset.Id = _presetCombo.CurrentSelection.GUID;
+                        preset.StatusIds = _presetCombo.CurrentSelection.Statuses;
+                    }
 
-                            if (statusIcon is { } wrap)
-                            {
-                                ImGui.SetCursorPos(currentPos);
-                                ImGui.Image(statusIcon.ImGuiHandle, MoodlesService.StatusSize);
-                            }
-                        }
-                        ImGui.SameLine();
-                        var shiftAmmount = (MoodlesService.StatusSize.Y - ImGui.GetTextLineHeight()) / 2;
-                        ImGui.SetCursorPosY(currentPos.Y + shiftAmmount);
-                        ImGui.Text(moodle.Title);
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    {
+                        _logger.LogTrace("Combo Was Right Clicked, and Cleared the Moodle Preset.");
+                        preset.Id = Guid.Empty;
+                        preset.StatusIds = Enumerable.Empty<Guid>();
+                    }
+                }
+                else if (item.Moodle is Moodle status)
+                {
+                    var change = _statusCombo.Draw("GagMoodleStatus", status.Id, ImGui.GetContentRegionAvail().X);
+                    if (change && !status.Id.Equals(_statusCombo.CurrentSelection.GUID))
+                    {
+                        _logger.LogTrace($"Item changed to {_statusCombo.CurrentSelection.GUID} " +
+                            $"[{_statusCombo.CurrentSelection.Title}] from {status.Id}");
+                        status.Id = _statusCombo.CurrentSelection.GUID;
+                    }
+                    if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    {
+                        _logger.LogTrace("Combo Was Right Clicked, and Cleared the Moodle Status.");
+                        status.Id = Guid.Empty;
                     }
                 }
             }
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AppendedMoodles, WardrobeUI.LastWinPos, WardrobeUI.LastWinSize);
+            // Below this, we need to draw the display field of the moodles that the selected status has.
+            DrawMoodleIconRow(item.Moodle, new Vector2(ImGui.GetContentRegionAvail().X, MoodlesDisplayer.DefaultSize.Y + ImGui.GetStyle().FramePadding.Y * 2));
         }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error Drawing Moodles Options for Restraint Set.");
-        }*/
     }
 
+    private void DrawMoodleIconRow(Moodle moodle, Vector2 region)
+    {
+        var padding = ImGui.GetStyle().FramePadding;
+        var pos = ImGui.GetCursorScreenPos();
+        using (CkComponents.FramedChild("MoodleRowDrawn", CkColor.FancyHeaderContrast.Uint(), region))
+        {
+            // if no moodle is selected, draw nothing and early return.
+            if (moodle.Id.IsEmptyGuid())
+                return;
+
+            ImGui.SetCursorScreenPos(pos + new Vector2(padding.X, padding.Y * 3));
+            DrawMoodles(moodle, MoodlesDisplayer.DefaultSize);
+        }
+    }
+
+    public void DrawMoodles(Moodle moodleItem, Vector2 size)
+    {
+        using (ImRaii.Group())
+        {
+            // determine what moodle statuses we are drawing.
+            IEnumerable<MoodlesStatusInfo> moodleStatuses = moodleItem switch
+            {
+                MoodlePreset preset => VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Where(x => preset.StatusIds.Contains(x.GUID)),
+                Moodle status => new[] { VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == status.Id) },
+                _ => Enumerable.Empty<MoodlesStatusInfo>(),
+            };
+
+            // Calculate the remaining height in the region.
+            foreach (var status in moodleStatuses)
+            {
+                _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, size);
+                if (ImGui.IsItemHovered())
+                    _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
+                ImGui.SameLine();
+            }
+            ImGui.NewLine();
+        }
+    }
 }

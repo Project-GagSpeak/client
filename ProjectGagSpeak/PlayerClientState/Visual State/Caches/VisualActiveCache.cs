@@ -91,7 +91,7 @@ public class VisualAdvancedRestrictionsCache : IVisualCache
         Traits = 0;
     }
 
-    public void UpdateCache(SortedList<GagLayer, GarblerRestriction> gagRestrictions)
+    public void UpdateCache(SortedList<int, GarblerRestriction> gagRestrictions)
     {
         Glamour = gagRestrictions.Values.Select(x => x.Glamour).ToDictionary(x => x.Slot);
         Mods = gagRestrictions.Values.Select(x => x.Mod).ToHashSet();

@@ -1,5 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -52,7 +54,7 @@ public class RemotePersonal : RemoteBase
         // push our styles
         using var styleColor = ImRaii.PushColor(ImGuiCol.Button, new Vector4(.2f, .2f, .2f, .2f))
             .Push(ImGuiCol.ButtonHovered, new Vector4(.3f, .3f, .3f, .4f))
-            .Push(ImGuiCol.ButtonActive, CkColors.LushPinkButton);
+            .Push(ImGuiCol.ButtonActive, CkColor.LushPinkButton.Uint());
         using var styleVar = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 40);
 
         // grab the content region of the current section
@@ -60,7 +62,7 @@ public class RemotePersonal : RemoteBase
         var yPos2 = ImGui.GetCursorPosY();
 
         // setup a child for the table cell space
-        using (var leftChild = ImRaii.Child($"###ButtonsList", CurrentRegion with { Y = region.Y }, false, ImGuiWindowFlags.NoDecoration))
+        using (var leftChild = ImRaii.Child($"###ButtonsList", CurrentRegion with { Y = region.Y }, false, WFlags.NoDecoration))
         {
             var InitPos = ImGui.GetCursorPosY();
             if (RemoteOnline)
@@ -81,9 +83,9 @@ public class RemotePersonal : RemoteBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
 
             // attempt to obtain an image wrap for it
-            if (_cosmetics.CorePluginTextures[CorePluginTexture.ArrowSpin] is { } wrap)
+            if (_cosmetics.CoreTextures[CoreTexture.ArrowSpin] is { } wrap)
             {
-                var buttonColor = IsLooping ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor = IsLooping ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
                 if (CkGui.DrawScaledCenterButtonImage("LoopButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor, new Vector2(40, 40), wrap))
@@ -96,9 +98,9 @@ public class RemotePersonal : RemoteBase
             // move it down from current position by another .2f scale
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + CurrentRegion.Y * .05f);
 
-            if (_cosmetics.CorePluginTextures[CorePluginTexture.CircleDot] is { } wrap2)
+            if (_cosmetics.CoreTextures[CoreTexture.CircleDot] is { } wrap2)
             {
-                var buttonColor2 = IsFloating ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor2 = IsFloating ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
                 if (CkGui.DrawScaledCenterButtonImage("FloatButton" + WindowBaseName, new Vector2(50, 50),
                     buttonColor2, new Vector2(40, 40), wrap2))
@@ -111,9 +113,9 @@ public class RemotePersonal : RemoteBase
 
             ImGui.SetCursorPosY(CurrentRegion.Y * .775f);
 
-            if (_cosmetics.CorePluginTextures[CorePluginTexture.Power] is { } wrap3)
+            if (_cosmetics.CoreTextures[CoreTexture.Power] is { } wrap3)
             {
-                var buttonColor3 = RemoteOnline ? CkColors.LushPinkButton : CkColors.SideButton;
+                var buttonColor3 = RemoteOnline ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
                 if (CkGui.DrawScaledCenterButtonImage("PowerToggleButton"+ WindowBaseName, new Vector2(50, 50),
                     buttonColor3, new Vector2(40, 40), wrap3))

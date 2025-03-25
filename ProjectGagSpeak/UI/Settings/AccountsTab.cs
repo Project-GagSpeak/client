@@ -89,24 +89,24 @@ public class AccountManagerTab
         // create the child window.
 
         var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
-        using var child = ImRaii.Child($"##AuthAccountListing" + idx + account.CharacterPlayerContentId, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow);
+        using var child = ImRaii.Child($"##AuthAccountListing" + idx + account.CharacterPlayerContentId, new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow);
         if (!child) return;
 
         using (var group = ImRaii.Group())
         {
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.UserCircle);
+            CkGui.IconText(FAI.UserCircle);
             ImUtf8.SameLineInner();
             CkGui.ColorText(account.CharacterName, isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
             CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaNameLabel);
 
             // head over to the end to make the delete button.
             var cannotDelete = (!(KeyMonitor.CtrlPressed() && KeyMonitor.ShiftPressed()) || !(MainHub.IsServerAlive && MainHub.IsConnected && isOnlineUser));
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconTextButtonSize(FontAwesomeIcon.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel));
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconTextButtonSize(FAI.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel));
 
             var hadEstablishedConnection = account.SecretKey.HasHadSuccessfulConnection;
 
-            if (CkGui.IconTextButton(FontAwesomeIcon.Trash, "Delete Account", isInPopup: true, disabled: !hadEstablishedConnection || cannotDelete, id: "DeleteAccount" + account.CharacterPlayerContentId))
+            if (CkGui.IconTextButton(FAI.Trash, "Delete Account", isInPopup: true, disabled: !hadEstablishedConnection || cannotDelete, id: "DeleteAccount" + account.CharacterPlayerContentId))
             {
                 DeleteAccountConfirmation = true;
                 ImGui.OpenPopup("Delete your account?");
@@ -122,19 +122,19 @@ public class AccountManagerTab
         using (var group2 = ImRaii.Group())
         {
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.Globe);
+            CkGui.IconText(FAI.Globe);
             ImUtf8.SameLineInner();
             CkGui.ColorText(OnFrameworkService.WorldData.Value[(ushort)account.WorldId], isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
             CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaWorldLabel);
 
-            var isOnUserSize = CkGui.IconSize(FontAwesomeIcon.Fingerprint);
-            var successfulConnection = CkGui.IconSize(FontAwesomeIcon.PlugCircleCheck);
+            var isOnUserSize = CkGui.IconSize(FAI.Fingerprint);
+            var successfulConnection = CkGui.IconSize(FAI.PlugCircleCheck);
             var rightEnd = ImGui.GetContentRegionAvail().X - successfulConnection.X - isOnUserSize.X - 2 * ImGui.GetStyle().ItemInnerSpacing.X;
             ImGui.SameLine(rightEnd);
 
-            CkGui.BooleanToColoredIcon(isOnlineUser, false, FontAwesomeIcon.Fingerprint, FontAwesomeIcon.Fingerprint, isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
+            CkGui.BooleanToColoredIcon(isOnlineUser, false, FAI.Fingerprint, FAI.Fingerprint, isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
             CkGui.AttachToolTip(account.IsPrimary ? GSLoc.Settings.Accounts.FingerprintPrimary : GSLoc.Settings.Accounts.FingerprintSecondary);
-            CkGui.BooleanToColoredIcon(account.SecretKey.HasHadSuccessfulConnection, true, FontAwesomeIcon.PlugCircleCheck, FontAwesomeIcon.PlugCircleXmark, ImGuiColors.ParsedGreen, ImGuiColors.DalamudGrey3);
+            CkGui.BooleanToColoredIcon(account.SecretKey.HasHadSuccessfulConnection, true, FAI.PlugCircleCheck, FAI.PlugCircleXmark, ImGuiColors.ParsedGreen, ImGuiColors.DalamudGrey3);
             CkGui.AttachToolTip(account.SecretKey.HasHadSuccessfulConnection ? GSLoc.Settings.Accounts.SuccessfulConnection : GSLoc.Settings.Accounts.NoSuccessfulConnection);
         }
 
@@ -143,7 +143,7 @@ public class AccountManagerTab
         {
             string keyDisplayText = (ShowKeyIdx == idx) ? account.SecretKey.Key : account.SecretKey.Label;
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.Key);
+            CkGui.IconText(FAI.Key);
             if (ImGui.IsItemClicked())
             {
                 ShowKeyIdx = (ShowKeyIdx == idx) ? -1 : idx;
@@ -153,7 +153,7 @@ public class AccountManagerTab
             if (EditingIdx == idx)
             {
                 ImUtf8.SameLineInner();
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FontAwesomeIcon.PenSquare).X - ImGui.GetStyle().ItemSpacing.X);
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.PenSquare).X - ImGui.GetStyle().ItemSpacing.X);
                 string key = account.SecretKey.Key;
                 if (ImGui.InputTextWithHint("##SecondaryAuthKey" + account.CharacterPlayerContentId, "Paste Secret Key Here...", ref key, 64, ImGuiInputTextFlags.EnterReturnsTrue))
                 {
@@ -190,11 +190,11 @@ public class AccountManagerTab
 
             if (idx != int.MaxValue)
             {
-                var insertKey = CkGui.IconSize(FontAwesomeIcon.PenSquare);
+                var insertKey = CkGui.IconSize(FAI.PenSquare);
                 var rightEnd = ImGui.GetContentRegionAvail().X - insertKey.X;
                 ImGui.SameLine(rightEnd);
                 var col = account.SecretKey.HasHadSuccessfulConnection ? ImGuiColors.DalamudRed : ImGuiColors.DalamudGrey3;
-                CkGui.BooleanToColoredIcon(EditingIdx == idx, false, FontAwesomeIcon.PenSquare, FontAwesomeIcon.PenSquare, ImGuiColors.ParsedPink, col);
+                CkGui.BooleanToColoredIcon(EditingIdx == idx, false, FAI.PenSquare, FAI.PenSquare, ImGuiColors.ParsedPink, col);
                 if (ImGui.IsItemClicked() && !account.SecretKey.HasHadSuccessfulConnection)
                     EditingIdx = EditingIdx == idx ? -1 : idx;
                 CkGui.AttachToolTip(account.SecretKey.HasHadSuccessfulConnection ? GSLoc.Settings.Accounts.EditKeyNotAllowed : GSLoc.Settings.Accounts.EditKeyAllowed);
@@ -216,7 +216,7 @@ public class AccountManagerTab
 
             var buttonSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X - ImGui.GetStyle().ItemSpacing.X) / 2;
 
-            if (CkGui.IconTextButton(FontAwesomeIcon.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel, buttonSize, false, !(KeyMonitor.CtrlPressed() && KeyMonitor.ShiftPressed())))
+            if (CkGui.IconTextButton(FAI.Trash, GSLoc.Settings.Accounts.DeleteButtonLabel, buttonSize, false, !(KeyMonitor.CtrlPressed() && KeyMonitor.ShiftPressed())))
             {
                 _ = RemoveAccountAndRelog(account, isPrimary);
             }

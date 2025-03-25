@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -32,7 +32,7 @@ public partial class PairStickyUI
 
 
         // Expander for ApplyRestriction
-        if (CkGui.IconTextButton(FontAwesomeIcon.CommentDots, applyRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
+        if (CkGui.IconTextButton(FAI.CommentDots, applyRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestriction) ? InteractionType.None : InteractionType.ApplyRestriction;
         CkGui.AttachToolTip(applyRestrictionTT);
 
@@ -40,14 +40,14 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyRestriction)
         {
             using (ImRaii.Child("###RestrictionApply", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.RestrictionApplyCombo.DrawComboButton("##ApplyRestriction-" + _pairCombos.CurRestrictionLayer, "Select a Restriction to apply", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.RestrictionItemCombo.DrawComboButton("##PairApplyRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, "Apply", "Select a Restriction to apply");
             ImGui.Separator();
         }
 
         // Expander for LockRestriction
         using (ImRaii.PushColor(ImGuiCol.Text, (restrictionSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.Lock, lockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
+            if (CkGui.IconTextButton(FAI.Lock, lockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestriction) ? InteractionType.None : InteractionType.LockRestriction;
         }
         CkGui.AttachToolTip(lockRestrictionTT + 
@@ -58,12 +58,12 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.LockRestriction)
         {
             using (ImRaii.Child("###RestrictionLock", new Vector2(WindowMenuWidth, _pairCombos.RestrictionPadlockCombo.PadlockLockWindowHeight())))
-                _pairCombos.RestrictionPadlockCombo.DrawLockComboWithActive(WindowMenuWidth, lockRestrictionText, lockRestrictionTT);
+                _pairCombos.RestrictionPadlockCombo.DrawLockComboWithActive("PairLockRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, lockRestrictionText, lockRestrictionTT, false);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, unlockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
+        if (CkGui.IconTextButton(FAI.Unlock, unlockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestriction) ? InteractionType.None : InteractionType.UnlockRestriction;
         CkGui.AttachToolTip(unlockRestrictionTT);
 
@@ -71,12 +71,12 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.UnlockRestriction)
         {
             using (ImRaii.Child("###RestrictionUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.RestrictionPadlockCombo.PadlockUnlockWindowHeight())))
-                _pairCombos.RestrictionPadlockCombo.DrawUnlockCombo(WindowMenuWidth, unlockRestrictionTT, unlockRestrictionText);
+                _pairCombos.RestrictionPadlockCombo.DrawUnlockCombo("PairUnlockRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, unlockRestrictionTT, unlockRestrictionText);
             ImGui.Separator();
         }
 
         // Expander for removing.
-        if (CkGui.IconTextButton(FontAwesomeIcon.TimesCircle, removeRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestriction) ? InteractionType.None : InteractionType.RemoveRestriction;
         CkGui.AttachToolTip(removeRestrictionTT);
 

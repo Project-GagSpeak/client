@@ -1,181 +1,177 @@
-using Dalamud.Interface.ImGuiFileDialog;
-using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
-using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Classes;
+using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.PlayerState.Models;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui.Raii;
+using OtterGui.Text;
 
 namespace GagSpeak.UI.Wardrobe;
 public partial class GagRestrictionsPanel
 {
-    private void DrawEditor(Vector2 remainingRegion)
+    private CustomizeProfileCombo _profileCombo;
+    private static OptionalBoolCheckbox HelmetCheckbox = new();
+    private static OptionalBoolCheckbox VisorCheckbox = new();
+    private void DrawEditorHeaderLeft(Vector2 region)
     {
-        // All subsequent functions here can use 'ActiveEditorItem!' since it will be valid.
-        if (_manager.ActiveEditorItem is null)
+        // Dont draw anything if the editor is not active.
+        if (_manager.ActiveEditorItem is not { } gagItem)
             return;
 
-        // Dont care about drawint the data in a pretty format right away, just care that we are
-        // drawing the data at all.
+        using var group = ImRaii.Group();
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
+            .Push(ImGuiStyleVar.ChildRounding, 10f);
+        using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
+            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
 
-        // Sub-Function to call the general information (type selection, label and ID.)
-        DrawGeneralInfo();
-        ImGui.Separator();
+        // precalc sizes to make remaining drawing easier.
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var buttonSize = CkGui.IconButtonSize(FAI.ArrowLeft);
 
-        // Sub-Function using the EquipmentDrawer to manage the GlamourSlot item in then restriction.
-        ImGui.Text("GlamourSlot Placeholder");
-        ImGui.Separator();
+        if (CkGui.IconButton(FAI.ArrowLeft))
+            _manager.StopEditing();
 
-        // Draw out the metadata toggles & C+ preset drawer.
-        ImGui.Text("Headgear State:");
-        ImGui.Text("Visor State:");
-        ImGui.Text("Customize Plus Profile: ");
-        ImGui.Text("Profile Priority: ");
-        ImGui.Text("Redraw On Application?");
-        ImGui.Separator();
-
-        // Sub-Function to call the ModPresetDrawer to manage the ModAssociation item in the restriction.
-        ImGui.Text("ModAssociation Placeholder");
-        ImGui.Separator();
-
-
-        // Sub-Function to call the MoodleDrawer to manage the Moodle item in the restriction.
-        ImGui.Text("Moodle Placeholder");
-        ImGui.Separator();
-
-        // Sub-Function for drawing the Hardcore Traits applied by this restriction.
-        ImGui.Text("Hardcore Traits Placeholder");
-        ImGui.Separator();
-    }
-
-    private void DrawGeneralInfo()
-    {
-        // Draw the general information about the restriction.
-        ImGui.Text("GagType: " + _manager.ActiveEditorItem!.GagType);
-
-        var state = _manager.ActiveEditorItem!.IsEnabled;
-        if(ImGui.Checkbox("Visuals Enabled", ref state))
-            _manager.ActiveEditorItem!.IsEnabled = state;
-
-        var redraw = _manager.ActiveEditorItem!.DoRedraw;
-        if(ImGui.Checkbox("Redraw On Apply", ref redraw))
-            _manager.ActiveEditorItem!.DoRedraw = redraw;
-    }
-
-    private void DrawGagGlamour()
-    {
-/*        using (ImRaii.Group())
+        // Create a child that spans the remaining region.
+        ImGui.SameLine();
+        using (ImRaii.Child("EditorNameField", new Vector2(region.X - buttonSize.X - spacing, region.Y)))
         {
-            UnsavedDrawData.GameItem.DrawIcon(_itemStainHandler.IconData, IconSize, UnsavedDrawData.Slot);
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemSpacing.X);
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted("Editing: " + gagItem.GagType.GagName());
+        }
+    }
+
+    private void DrawEditorHeaderRight(Vector2 region)
+    {
+        // Dont draw anything if the editor is not active.
+        if (_manager.ActiveEditorItem is not { } gagItem)
+            return;
+
+        using var group = ImRaii.Group();
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
+            .Push(ImGuiStyleVar.ChildRounding, 10f);
+        using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
+            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        ImGui.SetWindowFontScale(1.25f);
+        var styler = ImGui.GetStyle();
+        var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
+        var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;
+
+        // Shift this grouped set down so it is centered on Y axis.
+        ImGui.Dummy(new Vector2(region.X, ((region.Y - ImGui.GetFrameHeight()) / 2) - styler.ItemSpacing.Y));
+        
+        // Cast a child group for the drawer.
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
+        using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+        {
+            ImGui.AlignTextToFramePadding();
+            if (HelmetCheckbox.Draw("##GagHelmetMeta", gagItem.HeadgearState, out var newHelmValue))
+                gagItem.HeadgearState = newHelmValue;
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.HardHat);
+            CkGui.AttachToolTip("The Forced Helmet State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
+        }
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("VisorMetaGroup", childGroupSize))
+        {
+            if (VisorCheckbox.Draw("##GagVisorMeta", gagItem.VisorState, out var newVisorValue))
+                gagItem.VisorState = newVisorValue;
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Glasses);
+            CkGui.AttachToolTip("The Forced Visor State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
+        }
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
+        {
+            var doRedraw = gagItem.DoRedraw;
+            if (ImGui.Checkbox("##GagRedrawMeta", ref doRedraw))
+                gagItem.DoRedraw = doRedraw;
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Repeat);
+            CkGui.AttachToolTip("If you redraw after application.");
+        }
+
+        // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
+        ImGui.SameLine(0, itemSpacing);
+        style.Push(ImGuiStyleVar.FrameRounding, 10f);
+        if (CkGui.IconButton(FAI.Save))
+            _manager.SaveChangesAndStopEditing();
+        CkGui.AttachToolTip("Save Changes to this Gag Restriction.");
+
+        ImGui.SetWindowFontScale(1f);
+    }
+
+    private void DrawEditorLeft(float width)
+    {
+        // Dont draw anything if the editor is not active.
+        if (_manager.ActiveEditorItem is not { } gagItem)
+            return;
+
+        var defaultChildBg = ImGui.GetColorU32(ImGuiCol.ChildBg);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
+
+        _equipDrawer.DrawAssociatedGlamour("GagGlamour", gagItem.Glamour, width);
+
+        _traitsDrawer.DrawHardcoreTraits(gagItem, width);
+
+        DrawCustomizeProfile(gagItem, width);
+        
+        _moodleDrawer.DrawAssociatedMoodle("AssociatedGagMoodle", gagItem, width);
+    }
+
+    public void DrawEditorRight(float width)
+    {
+        // encapsulate this component in a child window to prevent overheight from breaking the layout.
+        //using var _ = ImRaii.Child("EditorRight", ImGui.GetContentRegionAvail());
+
+        if (_manager.ActiveEditorItem is not { } gagItem)
+            return;
+
+        var rounding = ImGui.GetStyle().FrameRounding * 1.25f;
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
+        _modDrawer.DrawAssociatedModPreset("AssociatedGagModPreset", gagItem, width);
+    }
+
+    private void DrawCustomizeProfile(GarblerRestriction gagItem, float width)
+    {
+        // construct a child object here.
+        var pos = ImGui.GetCursorScreenPos();
+        var style = ImGui.GetStyle();
+        var iconH = ImGui.GetFrameHeight();
+        var winSize = new Vector2(width, iconH);
+        using (CkComponents.CenterHeaderChild("CustomizeProfile", "Customize+ Preset", winSize, WFlags.AlwaysUseWindowPadding))
+        {
+            // get the innder width after the padding is applied.
+            var widthInner = ImGui.GetContentRegionAvail().X;
+
+            using (ImRaii.Group())
             {
-                Logger.LogTrace($"Item changed to {ItemService.NothingItem(UnsavedDrawData.Slot)} [{ItemService.NothingItem(UnsavedDrawData.Slot).ItemId}] " +
-                    $"from {UnsavedDrawData.GameItem} [{UnsavedDrawData.GameItem.ItemId}]");
-                UnsavedDrawData.GameItem = ItemService.NothingItem(UnsavedDrawData.Slot);
-            }
-            // right beside it, draw a secondary group of 3
-            ImGui.SameLine(0, 6);
-            using (var group = ImRaii.Group())
-            {
-                // display the wardrobe slot for this gag
-                var refValue = Array.IndexOf(EquipSlotExtensions.EqdpSlots.ToArray(), UnsavedDrawData.Slot);
-                ImGui.SetNextItemWidth(ComboLength);
-                if (ImGui.Combo(" Equipment Slot##WardrobeEquipSlot", ref refValue,
-                    EquipSlotExtensions.EqdpSlots.Select(slot => slot.ToName()).ToArray(), EquipSlotExtensions.EqdpSlots.Count))
+                var change = _profileCombo.Draw("Customize Profile", gagItem.ProfileGuid, widthInner * .6f, widthInner * .8f);
+
+                if (change && !gagItem.ProfileGuid.Equals(_profileCombo.CurrentSelection.ProfileGuid))
                 {
-                    // Update the selected slot when the combo box selection changes
-                    UnsavedDrawData.Slot = EquipSlotExtensions.EqdpSlots[refValue];
-                    // reset display and/or selected item to none.
-                    UnsavedDrawData.GameItem = ItemService.NothingItem(UnsavedDrawData.Slot);
+                    _logger.LogTrace($"Profile Guid changed to {_profileCombo.CurrentSelection.ProfileGuid} " +
+                        $"[{_profileCombo.CurrentSelection.ProfileName}] from {gagItem.ProfileGuid}");
+                    gagItem.ProfileGuid = _profileCombo.CurrentSelection.ProfileGuid;
                 }
 
-                DrawEquip(GameItemCombo, StainCombo, ComboLength);
-            }
-        }*/
-    }
-
-    private void DrawGagMeta()
-    {
-
-    }
-
-    private void DrawGagCustomizePlus()
-    {
-
-    }
-
-    private void DrawGagModAssociation()
-    {
-
-    }
-
-    private void DrawGagMoodle()
-    {
-        /*try
-        {
-            using var table = ImRaii.Table("MoodlesSelections", 2, ImGuiTableFlags.BordersInnerV);
-            if (!table) return;
-
-            ImGui.TableSetupColumn("MoodleSelection", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("FinalizedPreviewList", ImGuiTableColumnFlags.WidthFixed, 200f);
-
-            ImGui.TableNextRow(); ImGui.TableNextColumn();
-
-            using (var child = ImRaii.Child("##RestraintMoodleStatusSelection", new(ImGui.GetContentRegionAvail().X - 1f, ImGui.GetContentRegionAvail().Y / 2), false))
-            {
-                if (!child) return;
-                _relatedMoodles.DrawMoodlesStatusesListForItem(UnsavedDrawData, LastCreatedCharacterData, cellPaddingY, false);
-            }
-            ImGui.Separator();
-            using (var child2 = ImRaii.Child("##RestraintMoodlePresetSelection", -Vector2.One, false))
-            {
-                if (!child2) return;
-                _relatedMoodles.DrawMoodlesStatusesListForItem(UnsavedDrawData, LastCreatedCharacterData, cellPaddingY, true);
-            }
-
-
-            ImGui.TableNextColumn();
-            // Filter the MoodlesStatuses list to get only the moodles that are in AssociatedMoodles
-            var associatedMoodles = LastCreatedCharacterData.MoodlesStatuses
-                .Where(moodle => UnsavedDrawData.AssociatedMoodles.Contains(moodle.GUID))
-                .ToList();
-            // draw out all the active associated moodles in the restraint set with thier icon beside them.
-            CkGui.ColorText("Moodles Applied with Set:", ImGuiColors.ParsedPink);
-            ImGui.Separator();
-            foreach (var moodle in associatedMoodles)
-            {
-                using (var group = ImRaii.Group())
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
-
-                    var currentPos = ImGui.GetCursorPos();
-                    if (moodle.IconID != 0 && currentPos != Vector2.Zero)
-                    {
-                        var statusIcon = CkGui.GetGameStatusIcon((uint)((uint)moodle.IconID + moodle.Stacks - 1));
-
-                        if (statusIcon is { } wrap)
-                        {
-                            ImGui.SetCursorPos(currentPos);
-                            ImGui.Image(statusIcon.ImGuiHandle, MoodlesService.StatusSize);
-                        }
-                    }
-                    ImGui.SameLine();
-                    var shiftAmmount = (MoodlesService.StatusSize.Y - ImGui.GetTextLineHeight()) / 2;
-                    ImGui.SetCursorPosY(currentPos.Y + shiftAmmount);
-                    ImGui.Text(moodle.Title);
+                    _logger.LogTrace("Profile Guid item was cleared. and is now Guid.Empty");
+                    gagItem.ProfileGuid = Guid.Empty;
                 }
+
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                // Get the length of a inputInt box.
+                var priority = (int)gagItem.ProfilePriority;
+                if (ImGui.InputInt("##PriorityAdjuster", ref priority))
+                    gagItem.ProfilePriority = (uint)priority;
             }
         }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Error Drawing Moodles Options for Selected Gag.");
-        }*/
     }
-
-    private void DrawGagTraits()
-    {
-
-    }
-
 }

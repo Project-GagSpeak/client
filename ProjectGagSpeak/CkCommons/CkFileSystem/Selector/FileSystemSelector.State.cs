@@ -72,11 +72,10 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
     public void DrawFilterRow(float width)
     {
         using var group = ImRaii.Group();
-
-        var       searchWidth = CustomFiltersWidth(width);
-        var       tmp    = FilterValue;
-        using var id     = ImRaii.PushId(0);
-        var       change = DrawerHelpers.FancySearchFilter("Filter", width, searchWidth, ref tmp, 128);
+        var       searchW   = CustomFiltersWidth(width);
+        var       tmp       = FilterValue;
+        var       tooltip   = FilterTooltip.Length > 0 ? FilterTooltip : string.Empty;
+        var       change    = DrawerHelpers.FancySearchFilter("Filter", width, tooltip, ref tmp, 128, width - searchW, DrawCustomFilters);
 
         // the filter box had its value updated.
         if (change)
@@ -84,12 +83,6 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
             if (ChangeFilterInternal(tmp))
                 SetFilterDirty();
         }
-
-        if (FilterTooltip.Length > 0)
-            CkGui.AttachToolTip(FilterTooltip);
-
-        ImGui.SameLine(searchWidth);
-        DrawCustomFilters();
     }
 
     /// <summary> Customization point on how a path should be filtered. Checks whether the FullName contains the current string by default. </summary>

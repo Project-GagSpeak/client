@@ -1,24 +1,16 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.FileSystems;
-using GagSpeak.RestraintSets;
-using GagSpeak.Restrictions;
+using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
 using ImGuiNET;
+using static GagSpeak.UI.Components.WardrobeTabs;
 
 namespace GagSpeak.UI.Wardrobe;
 
 public class WardrobeUI : WindowMediatorSubscriberBase
 {
-    private readonly WardrobeTabs _tabMenu = new WardrobeTabs();
-    private readonly RestraintSetFileSelector _restraintSelector;
-    private readonly RestrictionFileSelector _restrictionSelector;
-    private readonly GagRestrictionFileSelector _gagSelector;
-    private readonly CursedLootFileSelector _cursedLootSelector;
     private readonly RestraintsPanel _restraintPanel;
     private readonly RestrictionsPanel _restrictionsPanel;
     private readonly GagRestrictionsPanel _gagRestrictionsPanel;
@@ -28,10 +20,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     public WardrobeUI(
         ILogger<WardrobeUI> logger,
         GagspeakMediator mediator,
-        RestraintSetFileSelector restraintSetFileSelector,
-        RestrictionFileSelector restrictionFileSelector,
-        GagRestrictionFileSelector gagRestrictionFileSelector,
-        CursedLootFileSelector cursedLootFileSelector,
         RestraintsPanel restraintPanel,
         RestrictionsPanel restrictionsPanel,
         GagRestrictionsPanel gagRestrictionsPanel,
@@ -39,17 +27,22 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator, "Wardrobe UI")
     {
-        _restraintSelector = restraintSetFileSelector;
-        _restrictionSelector = restrictionFileSelector;
-        _gagSelector = gagRestrictionFileSelector;
-        _cursedLootSelector = cursedLootFileSelector;
         _restraintPanel = restraintPanel;
         _restrictionsPanel = restrictionsPanel;
         _gagRestrictionsPanel = gagRestrictionsPanel;
         _cursedLootPanel = cursedLootPanel;
         _cosmetics = cosmetics;
-
         _guides = guides;
+
+        _tabMenu = new WardrobeTabs();
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Restrained], SelectedTab.MyRestraints,
+            "Restraints--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
+            "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Gagged], SelectedTab.MyGags,
+            "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
+            "Cursed Loot--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -57,11 +50,8 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         {
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.CloudDownloadAlt,
-                Click = (msg) =>
-                {
-                    Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI)));
-                },
+                Icon = FAI.CloudDownloadAlt,
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))),
                 IconOffset = new(2,1),
                 ShowTooltip = () =>
                 {
@@ -72,7 +62,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             },
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.QuestionCircle,
+                Icon = FAI.QuestionCircle,
                 Click = (msg) => TutorialClickedAction(),
                 IconOffset = new (2, 1),
                 ShowTooltip = () =>
@@ -80,11 +70,10 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                     ImGui.BeginTooltip();
                     var text = _tabMenu.TabSelection switch
                     {
-                        WardrobeTabs.SelectedTab.MyRestraints => "Start/Stop Restraints Tutorial",
-                        WardrobeTabs.SelectedTab.MyRestrictions => "Start/Stop Restrictions Tutorial",
-                        WardrobeTabs.SelectedTab.MyGags => "Start/Stop Gags Tutorial",
-                        WardrobeTabs.SelectedTab.MyCursedLoot => "Start/Stop Cursed Loot Tutorial",
-                        WardrobeTabs.SelectedTab.MyModPresets => "Start/Stop Mod Presets Tutorial",
+                        SelectedTab.MyRestraints => "Start/Stop Restraints Tutorial",
+                        SelectedTab.MyRestrictions => "Start/Stop Restrictions Tutorial",
+                        SelectedTab.MyGags => "Start/Stop Gags Tutorial",
+                        SelectedTab.MyCursedLoot => "Start/Stop Cursed Loot Tutorial",
                         _ => "No Tutorial Available"
                     };
                     ImGui.Text(text);
@@ -96,23 +85,22 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(550, 470),
-            MaximumSize = new Vector2(550*1.5f, 1000f)
+            MinimumSize = new Vector2(600, 470),
+            MaximumSize = ImGui.GetIO().DisplaySize,
         };
         RespectCloseHotkey = false;
     }
-
+    private WardrobeTabs _tabMenu { get; init; }
     private bool ThemePushed = false;
-    public static Vector2 LastWinPos = Vector2.Zero;
-    public static Vector2 LastWinSize = Vector2.Zero;
+    private static float LeftLength = 275f * ImGuiHelpers.GlobalScale;
 
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
         {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
+            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
             ThemePushed = true;
         }
     }
@@ -121,6 +109,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     {
         if (ThemePushed)
         {
+            ImGui.PopStyleVar();
             ImGui.PopStyleColor(2);
             ThemePushed = false;
         }
@@ -129,74 +118,69 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
-        LastWinPos = ImGui.GetWindowPos();
-        LastWinSize = ImGui.GetWindowSize();
 
-/*        // Draw out the area for the filter section then draw that.
-        using (ImRaii.Group())
-        {
-
-
-        }
-
-        // The Splitter can happen later i guess idk.
-        ImGui.SameLine();
         var wdl = ImGui.GetWindowDrawList();
-        var pos = ImGui.GetCursorScreenPos();
-        wdl.AddLine(pos, pos with { Y = wdl.GetClipRectMax().Y }, CkGui.Color(ImGuiColors.ParsedPink), 5f);
-        ImGui.SameLine();
+        var winMinPos = wdl.GetClipRectMin();
+        var winMaxPos = wdl.GetClipRectMax();
 
-        _tabMenu.Draw(ImGui.GetContentRegionAvail().X);
+        var winPadding = ImGui.GetStyle().WindowPadding;
+        var headerLeftInner = new Vector2(LeftLength, ImGui.GetFrameHeight());
+        var splitterSize = headerLeftInner.Y;
+        var isEditing = IsEditing(_tabMenu.TabSelection);
 
-        ImGui.Separator();
 
-        using (ImRaii.Child("##WardrobePanelChild", ImGui.GetContentRegionAvail(), false))*/
-        _tabMenu.Draw(ImGui.GetContentRegionAvail().X);
-
-        var region = ImGui.GetContentRegionAvail();
-        // Now we should draw out the contents of the respective tab. Each tab having their own set of rules.
-        using (ImRaii.Group())
+        // Restraints Module is Special <3
+        if (_tabMenu.TabSelection is SelectedTab.MyRestraints)
         {
-            switch (_tabMenu.TabSelection)
+            // if we are editing draw the editor header, otherwise, draw the normal header.
+            if (isEditing)
             {
-                case WardrobeTabs.SelectedTab.MyRestraints:
-                    _restraintPanel.DrawPanel(region, LeftWidth());
-                    break;
-                case WardrobeTabs.SelectedTab.MyRestrictions:
-                    _restrictionsPanel.DrawPanel(region, LeftWidth());
-                    break;
-                case WardrobeTabs.SelectedTab.MyGags:
-                    _gagRestrictionsPanel.DrawPanel(region, LeftWidth());
-                    break;
-                case WardrobeTabs.SelectedTab.MyCursedLoot:
-                    _cursedLootPanel.DrawPanel(region, LeftWidth());
-                    break;
-                case WardrobeTabs.SelectedTab.MyModPresets:
-                    ImGui.Text("Mod Presets Content");
-                    break;
+                var rsEditorRegions = DrawerHelpers.FlatHeaderWithCurve(CkColor.FancyHeader.Uint(), headerLeftInner.Y, headerLeftInner.Y);
+                _restraintPanel.DrawEditorContents(rsEditorRegions.Top, rsEditorRegions.Bottom);
+                return;
             }
         }
 
-        // All content should be drawn by this point.
-        // if we want to move the tutorial down to the bottom right we can draw that here.
+        // Otherwise, perform the normal logic for these.
+        var drawRegions = DrawerHelpers.CurvedHeader(isEditing, CkColor.FancyHeader.Uint(), headerLeftInner, headerLeftInner.Y);
+
+        switch (_tabMenu.TabSelection)
+        {
+            case SelectedTab.MyRestraints:
+                _restraintPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                break;
+
+            case SelectedTab.MyRestrictions:
+                if (isEditing) _restrictionsPanel.DrawEditorContents(drawRegions, splitterSize);
+                else _restrictionsPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                break;
+
+            case SelectedTab.MyGags:
+                if (isEditing) _gagRestrictionsPanel.DrawEditorContents(drawRegions, splitterSize);
+                else _gagRestrictionsPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                break;
+
+            case SelectedTab.MyCursedLoot:
+                _cursedLootPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                break;
+        }
     }
 
-
-
-
-
-
-
-
-
-    private float LeftWidth() => 300f * ImGuiHelpers.GlobalScale;
-
+    private bool IsEditing(SelectedTab tab)
+    => tab switch
+    {
+        SelectedTab.MyRestraints => _restraintPanel.IsEditing,
+        SelectedTab.MyRestrictions => _restrictionsPanel.IsEditing,
+        SelectedTab.MyGags => _gagRestrictionsPanel.IsEditing,
+        SelectedTab.MyCursedLoot => true,
+        _ => false,
+    };
 
     private void TutorialClickedAction()
     {
         switch (_tabMenu.TabSelection)
         {
-            case WardrobeTabs.SelectedTab.MyRestraints:
+            case SelectedTab.MyRestraints:
                 if (_guides.IsTutorialActive(TutorialType.Restraints))
                 {
                     _guides.SkipTutorial(TutorialType.Restraints);
@@ -208,13 +192,13 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                     _logger.LogInformation("Starting Restrictions Tutorial");
                 }
                 return;
-            case WardrobeTabs.SelectedTab.MyRestrictions:
+            case SelectedTab.MyRestrictions:
                 return;
             // DO LATER
-            case WardrobeTabs.SelectedTab.MyGags:
+            case SelectedTab.MyGags:
                 return;
             // DO LATER
-            case WardrobeTabs.SelectedTab.MyCursedLoot:
+            case SelectedTab.MyCursedLoot:
                 if (_guides.IsTutorialActive(TutorialType.CursedLoot))
                 {
                     _guides.SkipTutorial(TutorialType.CursedLoot);
@@ -225,8 +209,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
                     _guides.StartTutorial(TutorialType.CursedLoot);
                     _logger.LogInformation("Starting CursedLoot Tutorial");
                 }
-                return;
-            case WardrobeTabs.SelectedTab.MyModPresets:
                 return;
         }
     }

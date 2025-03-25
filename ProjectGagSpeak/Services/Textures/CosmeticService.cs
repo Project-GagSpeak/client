@@ -1,9 +1,11 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services.Textures;
@@ -25,21 +27,43 @@ public class CosmeticService : IHostedService, IDisposable
         _pi = pi;
     }
 
-    private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
-    public Dictionary<CorePluginTexture, IDalamudTextureWrap> CorePluginTextures = [];
+    private Dictionary<string           , IDalamudTextureWrap> InternalCosmeticCache = [];
+    public  Dictionary<CoreTexture, IDalamudTextureWrap> CoreTextures    = [];
+    public  Dictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures     = [];
 
     // MUST ensure ALL images are disposed of or else we will leak a very large amount of memory.
     public void Dispose()
     {
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Disposing.");
-        foreach (var texture in CorePluginTextures.Values)
+        foreach (var texture in CoreTextures.Values)
+            texture?.Dispose();
+        foreach (var texture in CoreEmoteTextures.Values)
             texture?.Dispose();
         foreach (var texture in InternalCosmeticCache.Values)
             texture?.Dispose();
 
         // clear the dictionary, erasing all disposed textures.
-        CorePluginTextures.Clear();
+        CoreTextures.Clear();
         InternalCosmeticCache.Clear();
+    }
+
+    public void LoadAllCoreEmoteTextures()
+    {
+        foreach (var label in CosmeticLabels.ChatEmoteTextures)
+        {
+            var key = label.Key;
+            var path = label.Value;
+            if (string.IsNullOrEmpty(path))
+            {
+                _logger.LogError("Emote Key: " + key + " Texture Path is Empty.");
+                return;
+            }
+
+            _logger.LogDebug("Renting Emote image to store in Cache: " + key, LoggerType.Textures);
+            if (TryRentImageFromFile(path, out var texture))
+                CoreEmoteTextures[key] = texture;
+        }
+        _logger.LogInformation("GagSpeak Profile Emote Image Cache Fetched all NecessaryImages!", LoggerType.Cosmetics);
     }
 
     public void LoadAllCoreTextures()
@@ -56,7 +80,7 @@ public class CosmeticService : IHostedService, IDisposable
 
             _logger.LogDebug("Renting image to store in Cache: " + key, LoggerType.Textures);
             if(TryRentImageFromFile(path, out var texture))
-                CorePluginTextures[key] = texture;
+                CoreTextures[key] = texture;
         }
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all NecessaryImages!", LoggerType.Cosmetics);
     }
@@ -80,7 +104,18 @@ public class CosmeticService : IHostedService, IDisposable
                 InternalCosmeticCache[key] = texture;
         }
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LoggerType.Cosmetics);
+    }
 
+    public IDalamudTextureWrap? GagImageFromType(GagType gagType)
+    {
+        var stringToSearch = $"GagImages\\{gagType.GagName()}.png";
+        return _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
+    }
+
+    public IDalamudTextureWrap? PadlockImageFromType(Padlocks padlock)
+    {
+        var stringToSearch = $"PadlockImages\\{padlock}.png";
+        return _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
     }
 
     /// <summary>
@@ -138,27 +173,27 @@ public class CosmeticService : IHostedService, IDisposable
         switch (userData.Tier)
         {
             case CkSupporterTier.ServerBooster:
-                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterBooster];
+                supporterWrap = CoreTextures[CoreTexture.TierBoosterIcon];
                 tooltipString = userData.AliasOrUID + " is supporting the discord with a server Boost!";
                 break;
 
             case CkSupporterTier.IllustriousSupporter:
-                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier1];
+                supporterWrap = CoreTextures[CoreTexture.Tier1Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Illustrious Supporter";
                 break;
 
             case CkSupporterTier.EsteemedPatron:
-                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier2];
+                supporterWrap = CoreTextures[CoreTexture.Tier2Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Esteemed Patron";
                 break;
 
             case CkSupporterTier.DistinguishedConnoisseur:
-                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier3];
+                supporterWrap = CoreTextures[CoreTexture.Tier3Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as a Distinguished Connoisseur";
                 break;
 
             case CkSupporterTier.KinkporiumMistress:
-                supporterWrap = CorePluginTextures[CorePluginTexture.SupporterTier4];
+                supporterWrap = CoreTextures[CoreTexture.Tier4Icon];
                 tooltipString = userData.AliasOrUID + " is the Shop Mistress of CK, and the Dev of GagSpeak.";
                 break;
 
@@ -171,10 +206,25 @@ public class CosmeticService : IHostedService, IDisposable
     }
 
 
-    public IDalamudTextureWrap GetImageFromDirectoryFile(string path)
+    public IDalamudTextureWrap GetImageFromAssetsFolder(string path)
         => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
+    public IDalamudTextureWrap? GetImageFromThumbnailPath(string path)
+        => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets\\Thumbnails", path)).GetWrapOrDefault();
     public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
         => _textures.CreateFromImageAsync(imageData).Result;
+
+    public IDalamudTextureWrap? GetImageFromBytes(byte[] imageData)
+    {
+        try
+        {
+            return _textures.CreateFromImageAsync(imageData).Result;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Failed to load image from bytes: " + e);
+            return null;
+        }
+    }
 
     private bool TryRentImageFromFile(string path, out IDalamudTextureWrap fileTexture)
     {
@@ -197,6 +247,7 @@ public class CosmeticService : IHostedService, IDisposable
     {
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Started.");
         LoadAllCoreTextures();
+        LoadAllCoreEmoteTextures();
         LoadAllCosmetics();
         return Task.CompletedTask;
     }

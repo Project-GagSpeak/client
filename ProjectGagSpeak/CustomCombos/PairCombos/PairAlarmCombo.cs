@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -21,7 +21,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
     public PairAlarmCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT) 
         : base(() => [
             .. pairData.LastLightStorage.Alarms.OrderBy(x => x.Label),
-        ], log, FontAwesomeIcon.Bell, bText, bTT)
+        ], log, FAI.Bell, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -45,14 +45,14 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
         var localTime = alarm.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
         using (ImRaii.Group())
         {
-            CkGui.IconText(FontAwesomeIcon.Stopwatch, ImGuiColors.ParsedGold);
+            CkGui.IconText(FAI.Stopwatch, ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
             CkGui.ColorText(localTime + "(Your Time)", ImGuiColors.ParsedGold);
         }
 
         // shift over to draw an info button.
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        CkGui.IconText(FontAwesomeIcon.WaveSquare, ImGuiColors.ParsedPink);
+        CkGui.IconText(FAI.WaveSquare, ImGuiColors.ParsedPink);
         DrawItemTooltip(alarm);
 
         return ret;

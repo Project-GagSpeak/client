@@ -4,8 +4,9 @@ using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.CustomCombos.Glamourer;
-public sealed class GameStainCombo(float _comboWidth, DictStain _stains, ILogger stainLog)
-    : CkFilterComboColors(_comboWidth, CreateFunc(_stains), stainLog)
+
+/// <summary> In Theory, only one of these should need to be made, as when drawing you define the label. </summary>
+public sealed class GameStainCombo(DictStain _stains, ILogger log) : CkFilterComboColors(CreateFunc(_stains), log)
 {
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

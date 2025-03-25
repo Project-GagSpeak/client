@@ -125,7 +125,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedGagData.Count == 0))
+        if (CkGui.IconTextButton(FAI.FileImport, "Transfer All", disabled: LoadedGagData.Count == 0))
         {
             foreach (var (gag, gagData) in LoadedGagData)
                 _clientConfigs.GagStorageConfig.GagStorage.GagEquipData[gag] = gagData;
@@ -189,7 +189,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         CkGui.GagspeakBigText(" Transfer Restrictions:");
         var size = CkGui.CalcFontTextSize(" Transfer Restrictions:", CkGui.GagspeakLabelFont);
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.FileImport, "Transfer All");
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
@@ -203,7 +203,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedRestrictions.Count == 0))
+        if (CkGui.IconTextButton(FAI.FileImport, "Transfer All", disabled: LoadedRestrictions.Count == 0))
         {
             _clientConfigs.AddNewRestraintSets(LoadedRestrictions);
         }
@@ -269,7 +269,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         CkGui.GagspeakBigText(" Transfer Cursed Loot:");
         var size = CkGui.CalcFontTextSize(" Transfer Cursed Loot:", CkGui.GagspeakLabelFont);
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.FileImport, "Transfer All");
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
@@ -278,7 +278,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedCursedItems.Count == 0))
+        if (CkGui.IconTextButton(FAI.FileImport, "Transfer All", disabled: LoadedCursedItems.Count == 0))
         {
             foreach (var item in LoadedCursedItems)
                 _clientConfigs.AddCursedItem(item);
@@ -354,7 +354,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         CkGui.GagspeakBigText(" Transfer Triggers:");
         var size = CkGui.CalcFontTextSize(" Transfer Triggers:", CkGui.GagspeakLabelFont);
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.FileImport, "Transfer All");
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
@@ -363,7 +363,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedTriggers.Count == 0))
+        if (CkGui.IconTextButton(FAI.FileImport, "Transfer All", disabled: LoadedTriggers.Count == 0))
         {
             foreach (var item in LoadedTriggers)
                 _clientConfigs.AddNewTrigger(item);
@@ -413,7 +413,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         CkGui.GagspeakBigText(" Transfer Alarms:");
         var size = CkGui.CalcFontTextSize(" Transfer Alarms:", CkGui.GagspeakLabelFont);
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.FileImport, "Transfer All");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.FileImport, "Transfer All");
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - 175f - buttonSize - ImGui.GetStyle().ItemSpacing.X * 2);
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
@@ -422,7 +422,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - buttonSize - ImGui.GetStyle().ItemSpacing.X);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) / 2);
-        if (CkGui.IconTextButton(FontAwesomeIcon.FileImport, "Transfer All", disabled: LoadedAlarms.Count == 0))
+        if (CkGui.IconTextButton(FAI.FileImport, "Transfer All", disabled: LoadedAlarms.Count == 0))
         {
             foreach (var item in LoadedAlarms)
                 _clientConfigs.AddNewAlarm(item);

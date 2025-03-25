@@ -1,5 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Toybox;
 using ImGuiNET;
@@ -18,7 +20,7 @@ public class PlaybackDrawer
     public void DrawPlaybackDisplay()
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(0, 0)).Push(ImGuiStyleVar.CellPadding, new Vector2(0, 0));
-        using var child = ImRaii.Child("##PatternPlaybackChild", new Vector2(ImGui.GetContentRegionAvail().X, 80), true, ImGuiWindowFlags.NoScrollbar);
+        using var child = ImRaii.Child("##PatternPlaybackChild", new Vector2(ImGui.GetContentRegionAvail().X, 80), true, WFlags.NoScrollbar);
         if (!child) { return; }
         try
         {
@@ -57,11 +59,11 @@ public class PlaybackDrawer
             ImGui.SetCursorPos(new Vector2(xPos - ImGuiHelpers.GlobalScale * 10, yPos - ImGuiHelpers.GlobalScale * 10));
             var width = ImGui.GetContentRegionAvail().X + ImGuiHelpers.GlobalScale * 10;
             // set up the color map for our plots.
-            ImPlot.PushStyleColor(ImPlotCol.Line, CkColors.LushPinkLine);
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColors.LovenseScrollingBG);
+            ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemotePlaybackBg.Uint());
             // draw the waveform
             ImPlot.SetNextAxesLimits(-150, 0, -5, 110, ImPlotCond.Always);
-            if (ImPlot.BeginPlot("##Waveform", new System.Numerics.Vector2(width, 100), ImPlotFlags.NoBoxSelect | ImPlotFlags.NoMenus | ImPlotFlags.NoLegend | ImPlotFlags.NoFrame))
+            if (ImPlot.BeginPlot("##Waveform", new Vector2(width, 100), ImPlotFlags.NoBoxSelect | ImPlotFlags.NoMenus | ImPlotFlags.NoLegend | ImPlotFlags.NoFrame))
             {
                 ImPlot.SetupAxes("X Label", "Y Label",
                     ImPlotAxisFlags.NoGridLines | ImPlotAxisFlags.NoLabel | ImPlotAxisFlags.NoTickLabels | ImPlotAxisFlags.NoTickMarks | ImPlotAxisFlags.NoHighlight,

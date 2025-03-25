@@ -9,6 +9,8 @@ global using System.Text;
 global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
+global using WFlags = ImGuiNET.ImGuiWindowFlags;
+global using FAI = Dalamud.Interface.FontAwesomeIcon;
 
 /// Global Tuple
 global using MoodlesStatusInfo = (

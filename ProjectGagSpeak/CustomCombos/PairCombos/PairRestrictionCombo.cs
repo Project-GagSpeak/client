@@ -5,7 +5,7 @@ using Dalamud.Utility;
 using GagSpeak.CustomCombos;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -19,39 +19,13 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    private int CurrentLayer;
 
-    public PairRestrictionCombo(int layer, Pair pair, MainHub hub, ILogger log, string bText, string bTT)
-        : base(() => [
-            .. pair.LastLightStorage.Restrictions.OrderBy(x => x.Label),
-        ], log, bText, bTT)
+    public PairRestrictionCombo(ILogger log, Pair pair, MainHub hub, Func<IReadOnlyList<LightRestriction>> generator)
+        : base(generator, log)
     {
-        CurrentLayer = layer;
         _mainHub = hub;
         _pairRef = pair;
-
-        // update the current selection to the pairs active set if the last wardrobe & light data are not null.
-        CurrentSelection = _pairRef.LastLightStorage.Restrictions
-            .FirstOrDefault(r => r.Id == _pairRef.LastRestrictionsData.Restrictions[CurrentLayer].Identifier);
-    }
-
-    public void SetLayer(int newLayer)
-    {
-        var priorState = IsInitialized;
-        if (priorState)
-            Cleanup();
-        // update the layer.
-        CurrentLayer = newLayer;
-
-        // Update the item.
-        CurrentSelectionIdx = Items.IndexOf(item => item.Id == _pairRef.LastRestrictionsData.Restrictions[CurrentLayer].Identifier);
-        if (CurrentSelectionIdx >= 0)
-            CurrentSelection = Items[CurrentSelectionIdx];
-        else if (Items.Count > 0)
-            CurrentSelection = Items[0];
-
-        if (!priorState)
-            Cleanup();
+        CurrentSelection = default;
     }
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -61,7 +35,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(restriction.Label, selected);
         
-        var iconWidth = CkGui.IconSize(FontAwesomeIcon.InfoCircle).X;
+        var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
         var hasGlamour = restriction.AffectedSlot.CustomItemId != ulong.MaxValue;
         var hasDesc = !restriction.Desc.IsNullOrWhitespace();
         var hasTraits = restriction.TraitAllowances.Contains(MainHub.UID);
@@ -72,38 +46,38 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 
         if (hasTraits || hasDesc)
         {
-            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+            CkGui.IconText(FAI.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
             DrawItemTooltip(restriction);
             ImGui.SameLine();
         }
 
         // icon for the glamour preview.
-        CkGui.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        CkGui.IconText(FAI.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
         // if (hasGlamour) _ttPreview.DrawLightRestraintOnHover(restraintItem);
         return ret;
     }
 
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.ApplyRestraintSets is false
-        || _pairRef.LastRestraintData.Identifier == CurrentSelection?.Id
-        || CurrentSelection is null;
+        => CurrentSelection is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == CurrentSelection.Id;
 
-    protected override void OnButtonPress()
+    protected override void OnButtonPress(int layerIdx)
     {
         if (CurrentSelection is null)
             return;
 
-        var updateType = _pairRef.LastRestrictionsData.Restrictions[CurrentLayer].Identifier.IsEmptyGuid()
+        var updateType = _pairRef.LastRestrictionsData.Restrictions[layerIdx].Identifier.IsEmptyGuid()
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
+
         // construct the dto to send.
         var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, updateType)
         {
+            AffectedIndex = layerIdx,
             RestrictionId = CurrentSelection.Id,
             Enabler = MainHub.UID,
         };
 
-        _ = _mainHub.UserPushPairDataRestrictions(dto);
+        _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
         Log.LogDebug("Applying Restraint Set " + CurrentSelection.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }

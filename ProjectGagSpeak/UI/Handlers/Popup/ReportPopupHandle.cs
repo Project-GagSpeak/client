@@ -2,6 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -11,7 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components.Popup;
+namespace GagSpeak.UI.Components;
 
 internal class ReportPopupHandler : IPopupHandler
 {
@@ -56,18 +57,18 @@ internal class ReportPopupHandler : IPopupHandler
 
         // draw out the background for the window.
         if (_cosmetics.TryGetBackground(ProfileComponent.Plate, ProfileStyleBG.Default, out var plateBG))
-            KinkPlateUI.AddImageRounded(drawList, plateBG, rectMin, PlateSize, 30f);
+            drawList.AddDalamudImageRounded(plateBG, rectMin, PlateSize, 30f);
 
         // draw out the border on top of that.
         if (_cosmetics.TryGetBorder(ProfileComponent.Plate, ProfileStyleBorder.Default, out var plateBorder))
-            KinkPlateUI.AddImageRounded(drawList, plateBorder, rectMin, PlateSize, 20f);
+            drawList.AddDalamudImageRounded(plateBorder, rectMin, PlateSize, 20f);
 
         var pfpPos = rectMin + Vector2.One * 16f;
-        KinkPlateUI.AddImageRounded(drawList, pfpWrap, pfpPos, Vector2.One * 192, 96f, true, "The Image being Reported");
+        drawList.AddDalamudImageRounded(pfpWrap, pfpPos, Vector2.One * 192, 96f, "The Image being Reported");
 
         // draw out the border for the profile picture
         if (_cosmetics.TryGetBorder(ProfileComponent.ProfilePicture, ProfileStyleBorder.Default, out var pfpBorder))
-            KinkPlateUI.AddImageRounded(drawList, pfpBorder, rectMin + Vector2.One* 12f, Vector2.One * 200, 96f);
+            drawList.AddDalamudImageRounded(pfpBorder, rectMin + Vector2.One* 12f, Vector2.One * 200, 96f);
 
 
         var btnSize = Vector2.One * 20;
@@ -86,7 +87,7 @@ internal class ReportPopupHandler : IPopupHandler
 
         // Description Border
         if (_cosmetics.TryGetBorder(ProfileComponent.DescriptionLight, ProfileStyleBorder.Default, out var descBorder))
-            KinkPlateUI.AddImageRounded(drawList, descBorder, rectMin + new Vector2(220, 12), new Vector2(250, 200), 2f);
+            drawList.AddDalamudImageRounded(descBorder, rectMin + new Vector2(220, 12), new Vector2(250, 200), 2f);
 
         ImGui.SetCursorScreenPos(rectMin + new Vector2(235, 24));
         var desc = KinkPlate.KinkPlateInfo.Description;
@@ -112,8 +113,7 @@ internal class ReportPopupHandler : IPopupHandler
 
         // Draw the gold line split.
         var reportBoxSize = new Vector2(250 + 192 + ImGui.GetStyle().ItemSpacing.X);
-        KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.AchievementLineSplit],
-            rectMin + new Vector2(15, 220), new Vector2(770, 6));
+        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 220), new Vector2(770, 6));
 
         ImGui.SetCursorScreenPos(rectMin + new Vector2(15, 235));
         ImGui.InputTextMultiline("##reportReason", ref _reportReason, 500, new Vector2(reportBoxSize.X, 200));
@@ -132,7 +132,7 @@ internal class ReportPopupHandler : IPopupHandler
             ImGui.Spacing();
 
             CkGui.GagspeakTitleText("Report " + _reportedDisplayName + "?", ImGuiColors.ParsedGold);
-            if (CkGui.IconTextButton(FontAwesomeIcon.ExclamationTriangle, "Report Kinkster", 
+            if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report Kinkster", 
                 disabled: _reportReason.IsNullOrWhitespace() || string.Equals(_reportReason, DefaultReportReason, StringComparison.OrdinalIgnoreCase)))
             {
                 ImGui.CloseCurrentPopup();

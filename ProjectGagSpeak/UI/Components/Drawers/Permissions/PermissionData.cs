@@ -2,7 +2,6 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Collections.Immutable;
-using FAI = Dalamud.Interface.FontAwesomeIcon;
 
 namespace GagSpeak.UI.Components;
 

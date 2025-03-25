@@ -1,18 +1,14 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
-using System;
 using System.Globalization;
-using System.Numerics;
-using System.Windows.Forms;
 
 namespace GagSpeak.Utils.ChatLog;
 // an instance of a chatlog.
@@ -25,8 +21,6 @@ public class ChatLog
     public readonly ChatCircularBuffer<ChatMessage> Messages = new(1000);
     private int MessageCountSinceLastScroll = 0;
     private readonly Dictionary<string, Vector4> UserColors = new();
-    private static Vector4 CKMistressColor = new Vector4(0.886f, 0.407f, 0.658f, 1f);
-    private static Vector4 CkMistressText = new Vector4(1, 0.711f, 0.843f, 1f);
     public DateTime TimeCreated { get; set; }
     public bool AutoScroll = true;
     private string _lastAttachedMessage = string.Empty;
@@ -83,7 +77,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 {
                     if (x.Tier is CkSupporterTier.KinkporiumMistress)
                     {
-                        UserColors[x.UID] = CKMistressColor;
+                        UserColors[x.UID] = CkColor.CkMistressColor.Vec4();
                     }
                     else
                     {
@@ -92,9 +86,9 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         float brightness;
                         do
                         {
-                            float r = (float)new Random().NextDouble();
-                            float g = (float)new Random().NextDouble();
-                            float b = (float)new Random().NextDouble();
+                            var r = (float)new Random().NextDouble();
+                            var g = (float)new Random().NextDouble();
+                            var b = (float)new Random().NextDouble();
 
                             // Calculate brightness as the average of RGB values
                             brightness = (r + g + b) / 3.0f;
@@ -128,7 +122,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 // if the message is :cat_pats: then draw the texture instead of the message.
                 if (x.Message == ":cat_pats:")
                 {
-                    var secret = _cosmetics.CorePluginTextures[CorePluginTexture.CatpatSecret];
+                    var secret = _cosmetics.CoreEmoteTextures[CoreEmoteTexture.CatPat];
                     if (secret is { } wrap)
                     {
                         ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetTextLineHeight(), ImGui.GetTextLineHeight()));
@@ -138,26 +132,26 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 {
                     // Get the remaining width available in the current row
                     var remainingWidth = ImGui.GetContentRegionAvail().X;
-                    float msgWidth = ImGui.CalcTextSize(x.Message).X;
+                    var msgWidth = ImGui.CalcTextSize(x.Message).X;
                     // If the total width is less than available, print in one go
                     if (msgWidth <= remainingWidth)
                     {
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            CkGui.ColorText(x.Message, CkMistressText);
+                            CkGui.ColorText(x.Message, CkColor.CkMistressText.Vec4());
                         else
                             ImGui.TextUnformatted(x.Message);
                     }
                     else
                     {
                         // Calculate how much of the message fits in the available space
-                        string fittingMessage = string.Empty;
-                        string[] words = x.Message.Split(' ');
+                        var fittingMessage = string.Empty;
+                        var words = x.Message.Split(' ');
                         float currentWidth = 0;
 
                         // Build the fitting message
                         foreach (var word in words)
                         {
-                            float wordWidth = ImGui.CalcTextSize(word + " ").X;
+                            var wordWidth = ImGui.CalcTextSize(word + " ").X;
 
                             // Check if adding this word exceeds the available width
                             if (currentWidth + wordWidth > remainingWidth) break; // Stop if it doesn't fit
@@ -168,15 +162,15 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                         // Print the fitting part of the message
                         ImUtf8.SameLineInner();
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            CkGui.ColorText(fittingMessage.TrimEnd(), CkMistressText);
+                            CkGui.ColorText(fittingMessage.TrimEnd(), CkColor.CkMistressText.Vec4());
                         else
                             ImGui.TextUnformatted(fittingMessage.TrimEnd());
 
                         // Draw the remaining part of the message wrapped
-                        string wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
+                        var wrappedMessage = x.Message.Substring(fittingMessage.Length).TrimStart();
                         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ySpacing);
                         if (x.Tier is CkSupporterTier.KinkporiumMistress)
-                            CkGui.ColorTextWrapped(wrappedMessage, CkMistressText);
+                            CkGui.ColorTextWrapped(wrappedMessage, CkColor.CkMistressText.Vec4());
                         else
                             CkGui.TextWrapped(wrappedMessage);
                     }
@@ -271,8 +265,8 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
         var textSize = ImGui.CalcTextSize(message, wrapWidth: wrapWidth);
 
         // Calculate the height of a single line for the given wrap width
-        float singleLineHeight = ImGui.CalcTextSize("A").Y;
-        int lineCount = (int)Math.Ceiling(textSize.Y / singleLineHeight);
+        var singleLineHeight = ImGui.CalcTextSize("A").Y;
+        var lineCount = (int)Math.Ceiling(textSize.Y / singleLineHeight);
 
         // Calculate the total box size based on line count
         var boxSize = new Vector2(RectMax.X, lineCount * singleLineHeight + padding.Y * 2);

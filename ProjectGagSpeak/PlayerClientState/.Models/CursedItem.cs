@@ -68,7 +68,7 @@ public class CursedItem : ICursedItem
 
         if (RestrictionRef is GarblerRestriction gag)
         {
-            jsonObject["RestrictionRef"] = gag.GagType.GagName();
+            jsonObject["RestrictionRef"] = gag.GagType.ToString();
         }
         else if (RestrictionRef is IRestrictionItem restriction)
         {

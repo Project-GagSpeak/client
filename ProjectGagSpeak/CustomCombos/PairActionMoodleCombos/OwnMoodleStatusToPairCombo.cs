@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
@@ -13,12 +14,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
     private readonly CharaIPCData _ownMoodles;
-    public OwnMoodleStatusToPairCombo(float iconScale, MoodleStatusMonitor monitor, CharaIPCData data,
-        Pair pair, MainHub hub, ILogger log, string bText, string bTT)
-        : base(iconScale, monitor, pair, hub, log, bText, bTT, () =>
-        [
-            ..data.MoodlesStatuses.OrderBy(x => x.Title),
-        ])
+    public OwnMoodleStatusToPairCombo(float iconScale, MoodlesDisplayer monitor, CharaIPCData data,
+        Pair pair, MainHub hub, ILogger log)
+        : base(iconScale, monitor, pair, hub, log, () => [ ..data.MoodlesStatuses.OrderBy(x => x.Title)])
     {
         _ownMoodles = data;
     }

@@ -402,7 +402,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         else _moveController.DisableMouseAutoMoveHook();
 
         // Force Lock First Person if desired.
-        if (_mainConfig.Config.ForceLockFirstPerson && _traits.ActiveTraits.HasAny(Traits.Blindfolded))
+        if (_traits.ActiveBlindfoldForcesFirstPerson)
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;

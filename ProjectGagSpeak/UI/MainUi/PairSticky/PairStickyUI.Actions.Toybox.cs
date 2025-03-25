@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -41,7 +41,7 @@ public partial class PairStickyUI
 
 
         // Button to open vibe remote for a select pair.
-        if (CkGui.IconTextButton(FontAwesomeIcon.Mobile, createRemoteText, WindowMenuWidth, true, openVibeRemoteDisabled))
+        if (CkGui.IconTextButton(FAI.Mobile, createRemoteText, WindowMenuWidth, true, openVibeRemoteDisabled))
         {
             // open a new private hosted room between the two of you automatically.
             _logger.LogDebug("Vibe Remote instance button pressed for " + PermissionData.DispName);
@@ -51,7 +51,7 @@ public partial class PairStickyUI
 
         // Expander for executing a pattern on another pair.
         var disablePatternExpand = !SPair.PairPerms.ExecutePatterns || !SPair.PairGlobals.ToysAreConnected;
-        if (CkGui.IconTextButton(FontAwesomeIcon.PlayCircle, executePatternText, WindowMenuWidth, true, patternExecuteDisabled))
+        if (CkGui.IconTextButton(FAI.PlayCircle, executePatternText, WindowMenuWidth, true, patternExecuteDisabled))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.StartPattern) ? InteractionType.None : InteractionType.StartPattern;
         CkGui.AttachToolTip(executePatternTT);
 
@@ -64,7 +64,7 @@ public partial class PairStickyUI
         }
 
         // Stop a Pattern
-        if (CkGui.IconTextButton(FontAwesomeIcon.StopCircle, stopPatternText, WindowMenuWidth, true, patternStopDisabled))
+        if (CkGui.IconTextButton(FAI.StopCircle, stopPatternText, WindowMenuWidth, true, patternStopDisabled))
         {
             var idToStop = SPair.LastToyboxData.ActivePattern;
             // Construct the dto, and then send it off.
@@ -80,7 +80,7 @@ public partial class PairStickyUI
 
         // Expander for toggling an alarm.
         var disableAlarmExpand = !SPair.PairPerms.ToggleAlarms || !lastLightStorage.Alarms.Any();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Clock, toggleAlarmText, WindowMenuWidth, true, alarmToggleDisabled))
+        if (CkGui.IconTextButton(FAI.Clock, toggleAlarmText, WindowMenuWidth, true, alarmToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleAlarm ? InteractionType.None : InteractionType.ToggleAlarm;
         CkGui.AttachToolTip(toggleAlarmTT);
 
@@ -93,7 +93,7 @@ public partial class PairStickyUI
 
         // Expander for toggling a trigger.
         var disableTriggerExpand = !SPair.PairPerms.ToggleTriggers || !lastLightStorage.Triggers.Any();
-        if (CkGui.IconTextButton(FontAwesomeIcon.LandMineOn, toggleTriggerText, WindowMenuWidth, true, triggerToggleDisabled))
+        if (CkGui.IconTextButton(FAI.LandMineOn, toggleTriggerText, WindowMenuWidth, true, triggerToggleDisabled))
             PairCombos.Opened = PairCombos.Opened == InteractionType.ToggleTrigger ? InteractionType.None : InteractionType.ToggleTrigger;
         CkGui.AttachToolTip(toggleTriggerTT);
 

@@ -17,7 +17,7 @@ using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
 
 // I swear to god, if any contributors even attempt to tinker with this file, I will swat you over the head. DO NOT DO IT.
-namespace GagSpeak.UpdateMonitoring.Chat.ChatMonitors;
+namespace GagSpeak.UpdateMonitoring.Chat;
 
 /// <summary> 
 /// This class is used to handle the chat input detouring for the GagSpeak plugin

@@ -56,7 +56,7 @@ public static partial class CkGuiUtils
         {
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGuiHelpers.GlobalScale * 2 });
             ImGui.AlignTextToFramePadding();
-            CkGui.IconButton(folder.State ? FontAwesomeIcon.FolderOpen : FontAwesomeIcon.FolderClosed, inPopup: true);
+            CkGui.IconButton(folder.State ? FAI.FolderOpen : FAI.FolderClosed, inPopup: true);
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
             ImGui.Text(folder.Name);

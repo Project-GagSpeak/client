@@ -1,11 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
@@ -42,7 +41,6 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
     // Helper operations used for creating new items and cloning them.
     private RestraintSet? _clonedRestraintSet; // This will be done via the right click menu later so it will go away probably.
-    private string _newName = string.Empty;
 
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
@@ -57,8 +55,6 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         _manager = manager;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
-
-        // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
     }
 
     private void RenameLeafRestraintSet(RestraintSetFileSystem.Leaf leaf)
@@ -90,20 +86,22 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    protected override void DrawLeafName(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
+    protected override bool DrawLeafName(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
     {
         using var id = ImRaii.PushId((int)leaf.Identifier);
         using var leafInternalGroup = ImRaii.Group();
-        DrawLeafInternal(leaf, state, selected);
+        return DrawLeafInternal(leaf, state, selected);
     }
 
-    private void DrawLeafInternal(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
+    private bool DrawLeafInternal(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
     {
+        using var id = ImRaii.PushId((int)leaf.Identifier);
         // must be a valid drag-drop source, so use invisible button.
         ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2));
+        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
         using (ImRaii.Group())
@@ -127,10 +125,10 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 }
             }
             // Optimize later.
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FontAwesomeIcon.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FontAwesomeIcon.Trash).Y) / 2;
+            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+            var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
-            if (CkGui.IconButton(FontAwesomeIcon.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
@@ -143,6 +141,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
+
+        return hovered;
     }
 
     protected override void DrawFolderName(CkFileSystem<RestraintSet>.Folder folder, bool selected)
@@ -160,32 +160,26 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
-    protected override float CustomFilters(float width)
+    protected override float CustomFiltersWidth(float width)
     {
-        var pos = ImGui.GetCursorPos();
-        var remainingWidth = width
-            - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X
-            - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X
+        return width
+            - CkGui.IconButtonSize(FAI.Plus).X
+            - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
+    }
 
-        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
-
-        ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FontAwesomeIcon.Plus))
+    protected override void DrawCustomFilters()
+    {
+        if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestraintSet");
         CkGui.AttachToolTip("Create a new restraint set.");
 
-        ImUtf8.SameLineInner();
+        ImGui.SameLine(0, 1);
         DrawFolderButton();
-
-        ImGui.SetCursorPos(pos);
-        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
     }
 
     protected override void DrawPopups()
-    {
-        NewRestraintPopup();
-    }
+        => NewRestraintPopup();
 
     private void NewRestraintPopup()
     {

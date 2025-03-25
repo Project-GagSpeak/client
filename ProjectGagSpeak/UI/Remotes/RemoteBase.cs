@@ -1,6 +1,8 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -32,7 +34,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
 
         AllowPinning = false;
         AllowClickthrough = false;
-        Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoResize;
+        Flags = WFlags.NoScrollbar | WFlags.NoResize;
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -48,7 +50,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             {
                 new TitleBarButton()
                 {
-                    Icon = FontAwesomeIcon.QuestionCircle,
+                    Icon = FAI.QuestionCircle,
                     Click = (msg) =>
                     {
                         if (_guides.IsTutorialActive(TutorialType.Remote))
@@ -194,7 +196,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         var isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
         CurrentPos = ImGui.GetWindowPos();
         CurrentSize = ImGui.GetWindowSize();
-        using (var child = ImRaii.Child($"##RemoteUIChild{WindowBaseName}", new Vector2(ImGui.GetContentRegionAvail().X, -1), true, ImGuiWindowFlags.NoDecoration))
+        using (var child = ImRaii.Child($"##RemoteUIChild{WindowBaseName}", new Vector2(ImGui.GetContentRegionAvail().X, -1), true, WFlags.NoDecoration))
         {
 
             if (!child) { return; }
@@ -271,8 +273,8 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
                 xs[i] -= latestX;
 
             // set up the color map for our plots.
-            ImPlot.PushStyleColor(ImPlotCol.Line, CkColors.LushPinkLine);
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColors.LovenseScrollingBG);
+            ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemotePlaybackBg.Uint());
 
             // setup and draw the waveform graph axis
             ImPlot.SetNextAxesLimits(-150, 0, -5, 110, ImPlotCond.Always);
@@ -333,7 +335,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
 
             // create styles for the next plot
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColors.LovenseDragButtonBG);
+            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemoteInterfaceBg.Uint());
             DrawCircleButtonGraph(ref width, ref yPos);
 
             // end of using disabled & first column
@@ -352,7 +354,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
 
     private void DrawCircleButtonGraph(ref float width, ref float yPos)
     {
-        using var color = ImRaii.PushColor(ImPlotCol.PlotBg, CkColors.LovenseDragButtonBG);
+        using var color = ImRaii.PushColor(ImPlotCol.PlotBg, CkColor.RemoteInterfaceBg.Uint());
         // Draw a thin line with a timer to show the current position of the circle
         width = ImGui.GetContentRegionAvail().X;
         var height = ImGui.GetContentRegionAvail().Y + ImGui.GetTextLineHeight();
@@ -375,7 +377,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             // setup the drag point circle
             using (ImRaii.Disabled(!RemoteOnline))
             {
-                ImPlot.DragPoint(0, ref CirclePosition[0], ref CirclePosition[1], CkColors.LushPinkButton, 20, ImPlotDragToolFlags.NoCursors);
+                ImPlot.DragPoint(0, ref CirclePosition[0], ref CirclePosition[1], CkColor.LushPinkButton.Vec4(), 20, ImPlotDragToolFlags.NoCursors);
             }
             _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, CurrentPos, CurrentSize);
             _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, CurrentPos, CurrentSize);

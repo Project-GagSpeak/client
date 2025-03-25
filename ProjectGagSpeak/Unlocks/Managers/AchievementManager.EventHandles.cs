@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.ChatMessages;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.UpdateMonitoring;
@@ -79,7 +80,7 @@ public partial class AchievementManager
                 if (LatestCache.SaveData.VisitedWorldTour.ContainsKey(prevZone) && LatestCache.SaveData.VisitedWorldTour[prevZone] is false)
                 {
                     // Mark the conditonal as finished in the achievement, and mark as completed.
-                    if (_restraints.EnabledSet is not null)
+                    if (_restraints.ActiveRestraint is not null)
                     {
                         (LatestCache.SaveData.Achievements[Achievements.TourDeBound.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                         LatestCache.SaveData.VisitedWorldTour[prevZone] = true;

@@ -29,7 +29,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         KinkPlateService KinkPlateManager, CosmeticService cosmetics,
         CkGui uiShared) : base(logger, mediator, "KinkPlate Editor###GagSpeakKinkPlateEditorUI")
     {
-        Flags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoResize;
+        Flags = WFlags.NoScrollbar | WFlags.NoResize;
         IsOpen = false;
         SizeConstraints = new WindowSizeConstraints()
         {
@@ -102,14 +102,14 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         {
             using (ImRaii.Group())
             {
-                if (CkGui.IconTextButton(FontAwesomeIcon.FileUpload, "Edit Image", disabled: profile.KinkPlateInfo.Disabled))
+                if (CkGui.IconTextButton(FAI.FileUpload, "Edit Image", disabled: profile.KinkPlateInfo.Disabled))
                     Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor)));
                 CkGui.AttachToolTip(profile.KinkPlateInfo.Disabled
                     ? "You're Profile Customization Access has been Revoked!"
                     : "Import and adjust a new profile picture to your liking!");
 
                 ImUtf8.SameLineInner();
-                if (CkGui.IconTextButton(FontAwesomeIcon.Save, "Save Changes"))
+                if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
                     _ = _hub.UserSetKinkPlateContent(new UserKinkPlateContentDto(new UserData(MainHub.UID), profile.KinkPlateInfo));
                 CkGui.AttachToolTip("Updates your stored profile with latest information");
                 
@@ -135,7 +135,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             items.Insert(0, (0, "None"));
 
             CkGui.ColorText("Select Title", ImGuiColors.ParsedGold);
-            CkGui.DrawHelpText("Select a title to display on your KinkPlate!--SEP--Can only select Achievement Titles you've completed!");
+            CkGui.HelpText("Select a title to display on your KinkPlate!--SEP--Can only select Achievement Titles you've completed!");
             CkGui.DrawComboSearchable("##ProfileSelectTitle", 200f, items, (achievement) => achievement.Item2, true,
                 (i) => profile.KinkPlateInfo.ChosenTitleId = i.Item1,
                 initialSelectedItem: (profile.KinkPlateInfo.ChosenTitleId, AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId)));
@@ -145,13 +145,13 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         {
             // Create a dropdown for all the different components of the KinkPlate
             CkGui.ColorText("Select Component", ImGuiColors.ParsedGold);
-            CkGui.DrawHelpText("Select the component of the KinkPlate you'd like to customize!");
+            CkGui.HelpText("Select the component of the KinkPlate you'd like to customize!");
             if(CkGuiUtils.EnumCombo("##ProfileComponent", 200f, SelectedComponent, out ProfileComponent newComponent))
                 SelectedComponent = newComponent;
 
             // Create a dropdown for all the different styles of the KinkPlate
             CkGui.ColorText("Select Style", ImGuiColors.ParsedGold);
-            CkGui.DrawHelpText("Select the Style Kind from the selected component you wish to change the customization of.");
+            CkGui.HelpText("Select the Style Kind from the selected component you wish to change the customization of.");
             if(CkGuiUtils.EnumCombo("##ProfileStyleKind", 200f, SelectedStyle, out StyleKind newStyle))
                 SelectedStyle = newStyle;
 
@@ -159,19 +159,19 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             CkGui.ColorText("Customization for Section", ImGuiColors.ParsedGold);
             if (SelectedStyle is StyleKind.Background)
             {
-                CkGui.DrawHelpText("Select the background style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
+                CkGui.HelpText("Select the background style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
                 if(CkGuiUtils.EnumCombo("##ProfileBackgroundStyle", 200f, profile.GetBackground(SelectedComponent), out ProfileStyleBG newBG, UnlockedBackgrounds()))
                     profile.SetBackground(SelectedComponent, newBG);
             }
             else if (SelectedStyle is StyleKind.Border)
             {
-                CkGui.DrawHelpText("Select the border style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
+                CkGui.HelpText("Select the border style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
                 if(CkGuiUtils.EnumCombo("##ProfileBorderStyle", 200f, profile.GetBorder(SelectedComponent), out ProfileStyleBorder newBorder, UnlockedBorders()))
                     profile.SetBorder(SelectedComponent, newBorder);
             }
             else if (SelectedStyle is StyleKind.Overlay)
             {
-                CkGui.DrawHelpText("Select the overlay style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
+                CkGui.HelpText("Select the overlay style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
                 if(CkGuiUtils.EnumCombo("##ProfileOverlayStyle", 200f, profile.GetOverlay(SelectedComponent), out ProfileStyleOverlay newOverlay, UnlockedOverlays()))
                     profile.SetOverlay(SelectedComponent, newOverlay);
             }
@@ -194,12 +194,12 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         // draw the plate preview buttons.
         var width = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
 
-        if (CkGui.IconTextButton(FontAwesomeIcon.Expand, "Preview KinkPlate™ Light", width, id: MainHub.UID + "KinkPlatePreviewLight"))
+        if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Light", width, id: MainHub.UID + "KinkPlatePreviewLight"))
             Mediator.Publish(new KinkPlateOpenStandaloneLightMessage(MainHub.PlayerUserData));
         CkGui.AttachToolTip("Preview your Light KinkPlate™ in a standalone window!");
 
         ImGui.SameLine();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Expand, "Preview KinkPlate™ Full", width, id: MainHub.UID + "KinkPlatePreviewFull"))
+        if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Full", width, id: MainHub.UID + "KinkPlatePreviewFull"))
             Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI)));
     }
 }

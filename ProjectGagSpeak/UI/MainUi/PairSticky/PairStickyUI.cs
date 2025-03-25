@@ -6,7 +6,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -41,7 +41,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _pairs = pairs;
         _monitor = monitor;
 
-        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
+        Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
         IsOpen = true;
 
         // Define the pair and window type.
@@ -65,7 +65,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         position.Y += ImGui.GetFrameHeightWithSpacing();
         ImGui.SetNextWindowPos(position);
 
-        Flags |= ImGuiWindowFlags.NoMove;
+        Flags |= WFlags.NoMove;
 
         var width = (DrawType == StickyWindowType.PairPerms) ? 160 * ImGuiHelpers.GlobalScale : 110 * ImGuiHelpers.GlobalScale;
         var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, CkGui.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
@@ -81,7 +81,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
             case StickyWindowType.PairPerms:
                 ImGuiUtil.Center(PermissionData.DispName + "'s Permissions for You");
                 ImGui.Separator();
-                using (ImRaii.Child("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                using (ImRaii.Child("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, WFlags.NoScrollbar))
                     DrawPairPermsForClient();
                 break;
             case StickyWindowType.ClientPermsForPair:
@@ -90,11 +90,11 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
                 _presets.DrawPresetList(SPair, 225f);
 
                 ImGui.Separator();
-                using (ImRaii.Child("ClientPermsForPairContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                using (ImRaii.Child("ClientPermsForPairContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, WFlags.NoScrollbar))
                     DrawClientPermsForPair();
                 break;
             case StickyWindowType.PairActionFunctions:
-                using (ImRaii.Child("##StickyWinActs", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, ImGuiWindowFlags.NoScrollbar))
+                using (ImRaii.Child("##StickyWinActs", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, WFlags.NoScrollbar))
                     DrawPairActionFunctions();
                 break;
         }

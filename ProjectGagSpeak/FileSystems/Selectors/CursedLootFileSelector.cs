@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
@@ -17,6 +17,10 @@ using OtterGui;
 using static GagSpeak.FileSystems.PatternFileSelector;
 using Dalamud.Interface.Utility.Raii;
 using OtterGui.Text;
+using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Drawers;
+using OtterGuiInternal.Structs;
+using GagSpeak.CkCommons;
 
 namespace GagSpeak.FileSystems;
 
@@ -80,22 +84,36 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    protected override void DrawLeafName(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
+    protected override bool DrawLeafName(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
     {
         using var id = ImRaii.PushId((int)leaf.Identifier);
         using var leafInternalGroup = ImRaii.Group();
-        DrawLeafInternal(leaf, state, selected);
+        var ret = DrawLeafInternal(leaf, state, selected);
+        return ret;
     }
 
-    private void DrawLeafInternal(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
+    private bool DrawLeafInternal(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
     {
-        // must be a valid drag-drop source, so use invisible button.
-        ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var region = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+
+        // Dummy Frame Draw
+        ImGui.Dummy(region);
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
+        var iconSize = CkGui.IconSize(FAI.Trash).X;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var iconSpacing = iconSize + spacing;
+
+        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, region.Y));
+        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + region - new Vector2(iconSpacing * 2, 0));
+
+        var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
+        // Draw the base frame, colored.
+        var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
+
+        // Contents.
         using (ImRaii.Group())
         {
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
@@ -103,20 +121,24 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
             ImGui.SameLine();
             ImGui.Text(leaf.Value.Label);
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FontAwesomeIcon.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            if (CkGui.IconButton(FontAwesomeIcon.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            var currentX = region.X - iconSpacing;
+            ImGui.SameLine(currentX);
+            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+
+            currentX -= iconSpacing;
+            ImGui.SameLine(currentX);
+            var isInPool = leaf.Value.InPool;
+            if (CkGui.IconButton(FAI.ArrowRight, disabled: isInPool, inPopup: true))
+                _manager.TogglePoolState(leaf.Value);
+            CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
         }
 
-        // the border if selected.
         if (selected)
-        {
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
-        }
+            ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMin + new Vector2(ImGuiHelpers.GlobalScale * 3, region.Y), CkGui.Color(ImGuiColors.ParsedPink), 5);
+
+        return wasHovered;
     }
 
     protected override void DrawFolderName(CkFileSystem<CursedItem>.Folder folder, bool selected)
@@ -134,18 +156,18 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
-    protected override float CustomFilters(float width)
+    protected override float CustomFiltersWidth(float width)
     {
         var pos = ImGui.GetCursorPos();
         var remainingWidth = width
-            - CkGui.IconButtonSize(FontAwesomeIcon.Plus).X
-            - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X
+            - CkGui.IconButtonSize(FAI.Plus).X
+            - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
 
         var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
 
         ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FontAwesomeIcon.Plus))
+        if (CkGui.IconButton(FAI.Plus))
             ImGui.OpenPopup("##NewCursedItem");
         CkGui.AttachToolTip("Create a new Cursed Item.");
 

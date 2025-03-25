@@ -130,7 +130,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 
     private void DrawImage(string gagTypePath)
     {
-        var gagTexture = CkGui.GetImageFromDirectoryFile(gagTypePath);
+        var gagTexture = CkGui.GetImageFromAssetsFolder(gagTypePath);
         if (gagTexture is { } wrapGag)
             ImGui.Image(wrapGag.ImGuiHandle, new Vector2(80, 80));
         else

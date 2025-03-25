@@ -33,8 +33,8 @@ public class RestraintSlotBasic : IRestraintSlot
     public EquipItem EquipItem => Glamour.GameItem;
     public StainIds Stains => Glamour.GameStain;
 
-    internal RestraintSlotBasic() => Glamour = new GlamourSlot();
-    internal RestraintSlotBasic(RestraintSlotBasic other)
+    public RestraintSlotBasic() => Glamour = new GlamourSlot();
+    public RestraintSlotBasic(RestraintSlotBasic other)
     {
         Glamour = new GlamourSlot(other.Glamour);
     }
@@ -56,15 +56,17 @@ public class RestraintSlotBasic : IRestraintSlot
 public class RestraintSlotAdvanced : IRestraintSlot
 {
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public RestrictionItem Ref { get; internal set; }
+    public RestrictionItem Ref { get; set; } 
+    public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
     public EquipItem EquipItem => Ref.Glamour.GameItem;
-    public StainIds Stains => Ref.Glamour.GameStain;
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
     internal RestraintSlotAdvanced() { }
     internal RestraintSlotAdvanced(RestraintSlotAdvanced other)
     {
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref;
+        CustomStains = other.CustomStains;
     }
 
     public IRestraintSlot Clone() => new RestraintSlotAdvanced(this);
@@ -75,6 +77,7 @@ public class RestraintSlotAdvanced : IRestraintSlot
             ["Type"] = RestraintSlotType.Advanced.ToString(),
             ["ApplyFlags"] = (int)ApplyFlags,
             ["RestrictionRef"] = Ref.Identifier.ToString(),
+            ["CustomStains"] = CustomStains.ToString(),
         };
     }
 }
@@ -99,10 +102,11 @@ public class RestrictionLayer : IRestraintLayer
     public bool IsActive { get; protected set; } = false;
     public int Priority { get; protected set; } = 0;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public IRestrictionItem Ref { get; set; }
+    public RestrictionItem Ref { get; set; }
+    public StainIds CustomStains { get; internal set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
     public EquipItem EquipItem => Ref.Glamour.GameItem;
-    public StainIds Stains => Ref.Glamour.GameStain;
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
 
     internal RestrictionLayer() { }
     internal RestrictionLayer(RestrictionLayer other)
@@ -111,6 +115,7 @@ public class RestrictionLayer : IRestraintLayer
         Priority = other.Priority;
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref; // Point to the same reference
+        CustomStains = other.CustomStains;
     }
 
     public IRestraintLayer Clone() => new RestrictionLayer(this);
@@ -124,6 +129,7 @@ public class RestrictionLayer : IRestraintLayer
             ["Priority"] = Priority,
             ["ApplyFlags"] = (int)ApplyFlags,
             ["RestrictionRef"] = Ref.Identifier.ToString(),
+            ["CustomStains"] = CustomStains.ToString(),
         };
     }
 }
@@ -160,22 +166,25 @@ public class ModPresetLayer : IRestraintLayer
 public class RestraintSet
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
-    public string Label { get; internal set; } = string.Empty;
-    public string Description { get; internal set; } = string.Empty;
-    public bool DoRedraw { get; internal set; } = false;
+    public string Label { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string ThumbnailPath { get; set; } = string.Empty;
+    public bool DoRedraw { get; set; } = false;
 
-    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; internal set; } = new Dictionary<EquipSlot, IRestraintSlot>();
-    public GlamourBonusSlot Glasses { get; internal set; } = new GlamourBonusSlot();
-    public List<IRestraintLayer> Layers { get; internal set; } = new List<IRestraintLayer>();
+    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; set; } = new Dictionary<EquipSlot, IRestraintSlot>();
+    public GlamourBonusSlot Glasses { get; set; } = new GlamourBonusSlot();
+    public List<IRestraintLayer> Layers { get; set; } = new List<IRestraintLayer>();
 
     // Satisfy IMetaToggles
-    public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool WeaponState { get; internal set; } = OptionalBool.Null;
+    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
+    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public OptionalBool WeaponState { get; set; } = OptionalBool.Null;
 
     // Additional Appends
-    public List<ModAssociation> RestraintMods { get; internal set; } = new List<ModAssociation>();
-    public List<Moodle> RestraintMoodles { get; internal set; } = new List<Moodle>();
+    public List<ModAssociation> RestraintMods { get; set; } = new List<ModAssociation>();
+    public List<Moodle> RestraintMoodles { get; set; } = new List<Moodle>();
+    public Traits Traits { get; set; } = Traits.None;
+    public Stimulation Stimulation { get; set; } = Stimulation.None;
 
     internal RestraintSet() { }
 
@@ -183,9 +192,8 @@ public class RestraintSet
     {
         // we need to make a perfect clone.
         if (keepIdentifier)
-        {
             Identifier = other.Identifier;
-        }
+
         Label = other.Label;
         Description = other.Description;
         DoRedraw = other.DoRedraw;

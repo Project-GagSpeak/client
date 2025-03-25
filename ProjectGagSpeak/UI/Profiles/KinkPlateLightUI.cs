@@ -28,7 +28,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         _pairManager = pairManager;
 
 
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar;
+        Flags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoTitleBar;
         Size = new(288, 576);
         IsOpen = true;
         ForceMainWindow = true;
@@ -87,7 +87,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         // Draw the close button.
         CloseButton(drawList, DisplayName);
-        KinkPlateUI.AddRelativeTooltip(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
+        CkGui.AddRelativeTooltip(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
     }
 
     private void CloseButton(ImDrawListPtr drawList, string displayName)

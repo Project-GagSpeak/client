@@ -7,29 +7,48 @@ using OtterGui.Classes;
 
 namespace GagSpeak.PlayerState.Models;
 
-public interface ICustomizePlus // Requirements for C+ Integration
+/// <summary> An Interface Indicating Hardcore Traits can be attached. </summary>
+public interface ITraitHolder
+{
+    Traits Traits { get; set; }
+    Stimulation Stimulation { get; set; }
+}
+
+/// <summary> An Interface contract for Customize+ Integration. </summary>
+public interface ICustomizePlus
 {
     /// <summary> Identifies which Customize+ profile should be used. </summary>
     Guid ProfileGuid { get; set; }
+
     /// <summary> Determines the priority that the application of this profile will have. </summary>
     uint ProfilePriority { get; set; }
 }
 
+/// <summary> Basic Restriction Item Contract requirements. </summary>
 public interface IRestriction
 {
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
-    GlamourSlot Glamour { get; }
+    GlamourSlot Glamour { get; set; }
+
     /// <summary> Determines the Mod applied from this restriction item. </summary>
-    ModAssociation Mod { get; }
+    ModAssociation Mod { get; set; }
+
     /// <summary> Determines the Moodle applied from this restriction item. </summary>
     /// <remarks> Can be either singular status or preset. </remarks>
-    Moodle Moodle { get; }
-    /// <summary> Determines the Traits applied from this restriction item. </summary>
-    Traits Traits { get; }
+    Moodle Moodle { get; set; }
+
+    /// <summary> Various Hardcore Traits for a restriction item. </summary>
+    Traits Traits { get; set; }
+
+    /// <summary> If a redraw should be performed after application or removal. </summary>
+    bool DoRedraw { get; set; }
+
     /// <summary> Serializes the restriction item to a JObject. </summary>
     JObject Serialize();
 }
 
+/// <summary> Requirements for a restriction Item. </summary>
+/// <remarks> Used to keep GagRestrictions and other restrictions with seperate identifier sources but shared material. </remarks>
 public interface IRestrictionItem : IRestriction
 {
     Guid Identifier { get; }
@@ -37,16 +56,17 @@ public interface IRestrictionItem : IRestriction
 }
 
 // Used for Gags. | Ensure C+ Allowance & Meta Allowance. Uses shared functionality but is independent.
-public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
+public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IComparable
 {
     public GagType GagType { get; init; }
-    public bool IsEnabled { get; internal set; } = false;
-    public GlamourSlot Glamour { get; internal set; } = new GlamourSlot();
-    public ModAssociation Mod { get; internal set; } = new ModAssociation();
-    public Moodle Moodle { get; internal set; } = new Moodle();
-    public Traits Traits { get; internal set; } = Traits.None;
-    public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
+    public bool IsEnabled { get; set; } = false;
+    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    public ModAssociation Mod { get; set; } = new ModAssociation();
+    public Moodle Moodle { get; set; } = new Moodle();
+    public Traits Traits { get; set; } = Traits.None;
+    public Stimulation Stimulation { get; set; } = Stimulation.None;
+    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
+    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
     public Guid ProfileGuid { get; set; } = Guid.Empty;
     public uint ProfilePriority { get; set; } = 0;
     public bool DoRedraw { get; set; } = false;
@@ -59,6 +79,7 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
         Mod = new ModAssociation(other.Mod);
         Moodle = new Moodle(other.Moodle);
         Traits = other.Traits;
+        Stimulation = other.Stimulation;
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
         ProfileGuid = other.ProfileGuid;
@@ -81,6 +102,7 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
             ["Mod"] = Mod.Serialize(),
             ["Moodle"] = Moodle.Serialize(),
             ["Traits"] = Traits.ToString(),
+            ["Stimulation"] = Stimulation.ToString(),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
             ["ProfileGuid"] = ProfileGuid.ToString(),
@@ -94,7 +116,8 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
         Glamour = items.ParseGlamourSlot(json["Glamour"]);
         Mod.LoadMod(json["Mod"]);
         Moodle.LoadMoodle(json["Moodle"]);
-        Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
+        Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None;
+        Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None;
         HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         VisorState = JParser.FromJObject(json["VisorState"]);
         ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
@@ -103,15 +126,18 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, IComparable
     }
 }
 
-public class RestrictionItem : IRestrictionItem
+public class RestrictionItem : IRestrictionItem, ITraitHolder
 {
     public virtual RestrictionType Type { get; } = RestrictionType.Normal;
-    public Guid Identifier { get; internal set; } = Guid.NewGuid();
-    public string Label { get; internal set; } = string.Empty;
-    public GlamourSlot Glamour { get; internal set; } = new GlamourSlot();
-    public ModAssociation Mod { get; internal set; } = new ModAssociation();
-    public Moodle Moodle { get; internal set; } = new Moodle();
-    public Traits Traits { get; internal set; } = Traits.None;
+    public Guid Identifier { get; set; } = Guid.NewGuid();
+    public string Label { get; set; } = string.Empty;
+    public string ThumbnailPath { get; set; } = string.Empty;
+    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    public ModAssociation Mod { get; set; } = new ModAssociation();
+    public Moodle Moodle { get; set; } = new Moodle();
+    public Traits Traits { get; set; } = Traits.None;
+    public Stimulation Stimulation { get; set; } = Stimulation.None;
+    public bool DoRedraw { get; set; } = false;
  
     public RestrictionItem() { }
     public RestrictionItem(RestrictionItem other, bool keepIdentifier)
@@ -121,10 +147,13 @@ public class RestrictionItem : IRestrictionItem
             Identifier = other.Identifier;
         }
         Label = other.Label;
+        ThumbnailPath = other.ThumbnailPath;
         Glamour = new GlamourSlot(other.Glamour);
         Mod = new ModAssociation(other.Mod);
         Moodle = new Moodle(other.Moodle);
         Traits = other.Traits;
+        Stimulation = other.Stimulation;
+        DoRedraw = other.DoRedraw;
     }
     public virtual JObject Serialize()
         => new JObject
@@ -132,30 +161,37 @@ public class RestrictionItem : IRestrictionItem
             ["Type"] = Type.ToString(),
             ["Identifier"] = Identifier.ToString(),
             ["Label"] = Label,
+            ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.Serialize(),
             ["Moodle"] = Moodle.Serialize(),
             ["Traits"] = Traits.ToString(),
+            ["Stimulation"] = Stimulation.ToString(),
+            ["Redraw"] = DoRedraw,
         };
 
     public virtual void LoadRestriction(JObject json, ItemService items)
     {
         Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         Label = json["Label"]?.ToObject<string>() ?? string.Empty;
+        ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty;
         Glamour = items.ParseGlamourSlot(json["Glamour"]);
         Mod.LoadMod(json["Mod"]);
         Moodle.LoadMoodle(json["Moodle"]);
-        Traits = (Traits)Enum.Parse(typeof(Traits), json["Traits"]?.Value<string>() ?? string.Empty);
+        Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None;
+        Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None;
+        DoRedraw = json["Redraw"]?.ToObject<bool>() ?? false;
     }
 }
 
 public class BlindfoldRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
-    public OptionalBool HeadgearState { get; internal set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; internal set; } = OptionalBool.Null;
+    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
+    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public BlindfoldType Kind { get; set; } = BlindfoldType.Light;
+    public bool ForceFirstPerson { get; set; } = false;
     public string CustomPath { get; set; } = string.Empty;
-    public bool IsCustom => !CustomPath.IsNullOrWhitespace();
 
     public BlindfoldRestriction() { }
     public BlindfoldRestriction(BlindfoldRestriction other, bool keepIdentifier)
@@ -172,6 +208,8 @@ public class BlindfoldRestriction : RestrictionItem
         var json = base.Serialize();
         json["HeadgearState"] = HeadgearState.ToString();
         json["VisorState"] = VisorState.ToString();
+        json["Kind"] = Kind.ToString();
+        json["ForceFirstPerson"] = ForceFirstPerson;
         json["CustomPath"] = CustomPath;
         return json;
     }
@@ -181,6 +219,8 @@ public class BlindfoldRestriction : RestrictionItem
         base.LoadRestriction(json, items);
         HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         VisorState = JParser.FromJObject(json["VisorState"]);
+        Kind = Enum.TryParse<BlindfoldType>(json["Kind"]?.ToObject<string>(), out var kind) ? kind : BlindfoldType.Light;
+        ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
         CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
     }
 }

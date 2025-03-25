@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components.Popup;
+namespace GagSpeak.UI.Components;
 
 /// <summary> The handler class for the popups in the UI. </summary>
 public class PopupHandler : WindowMediatorSubscriberBase
@@ -18,13 +18,13 @@ public class PopupHandler : WindowMediatorSubscriberBase
         CkGui uiShared) : base(logger, mediator, "GagspeakPopupHandler")
     {
         // Adjust to restore some functionality?
-        Flags = ImGuiWindowFlags.NoBringToFrontOnFocus
-          | ImGuiWindowFlags.NoDecoration
-          | ImGuiWindowFlags.NoInputs
-          | ImGuiWindowFlags.NoSavedSettings
-          | ImGuiWindowFlags.NoBackground
-          | ImGuiWindowFlags.NoMove
-          | ImGuiWindowFlags.NoTitleBar;
+        Flags = WFlags.NoBringToFrontOnFocus
+          | WFlags.NoDecoration
+          | WFlags.NoInputs
+          | WFlags.NoSavedSettings
+          | WFlags.NoBackground
+          | WFlags.NoMove
+          | WFlags.NoTitleBar;
         IsOpen = true;
 
         _handlers = popupHandlers.ToHashSet();
@@ -129,7 +129,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
         ImGui.SetNextWindowPos(viewportSize / 2, ImGuiCond.Always, new Vector2(0.5f));
         
         // Open the popup
-        using var popup = ImRaii.Popup(WindowName, ImGuiWindowFlags.Modal);
+        using var popup = ImRaii.Popup(WindowName, WFlags.Modal);
         if (!popup) return;
         // draw the popups content
         _currentHandler.DrawContent();
@@ -137,7 +137,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
         if (_currentHandler.ShowClosed)
         {
             ImGui.Separator();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Times, "Close", ImGui.GetContentRegionAvail().X))
+            if (CkGui.IconTextButton(FAI.Times, "Close", ImGui.GetContentRegionAvail().X))
             {
                 ImGui.CloseCurrentPopup();
             }

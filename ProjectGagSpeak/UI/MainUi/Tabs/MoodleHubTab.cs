@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -14,6 +14,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
+using GagSpeak.CkCommons.Helpers;
 
 namespace GagSpeak.UI.MainWindow;
 
@@ -21,13 +22,13 @@ namespace GagSpeak.UI.MainWindow;
 public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly CkGui _ckGui;
+    private readonly MoodlesDisplayer _moodleDisplay;
     private readonly ShareHubService _shareHub;
     public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, MainHub hub,
-        CkGui ckGui, ShareHubService moodleHubService) : base(logger, mediator)
+        MoodlesDisplayer moodleDisplay, ShareHubService moodleHubService) : base(logger, mediator)
     {
         _hub = hub;
-        _ckGui = ckGui;
+        _moodleDisplay = moodleDisplay;
         _shareHub = moodleHubService;
     }
 
@@ -49,7 +50,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         }
 
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        using var moodleResultChild = ImRaii.Child("##MoodleResultChild", ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+        using var moodleResultChild = ImRaii.Child("##MoodleResultChild", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysVerticalScrollbar);
         // inner child styles
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
         using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
@@ -63,11 +64,11 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
     private void DrawMoodleResultBox(ServerMoodleInfo moodleInfo)
     {
 
-        var tryOnButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.PersonCircleQuestion, "Try");
-        var LikeButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Heart, moodleInfo.Likes.ToString());
-        var copyButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Copy).X;
+        var tryOnButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleQuestion, "Try");
+        var LikeButtonSize = CkGui.IconTextButtonSize(FAI.Heart, moodleInfo.Likes.ToString());
+        var copyButtonSize = CkGui.IconButtonSize(FAI.Copy).X;
         var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##MoodleResult_{moodleInfo.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child($"##MoodleResult_{moodleInfo.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
             var imagePos = Vector2.Zero;
             using (ImRaii.Group())
@@ -87,36 +88,36 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
                 // Handle the Try On button.
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - tryOnButtonSize - LikeButtonSize - copyButtonSize - ImGui.GetStyle().ItemInnerSpacing.X * 2);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
-                    if (CkGui.IconTextButton(FontAwesomeIcon.PersonCircleQuestion, "Try", isInPopup: true))
+                    if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
                         _shareHub.TryOnMoodle(moodleInfo.MoodleStatus.GUID);
                 CkGui.AttachToolTip("Try this Moodle on your character to see a preview of it.");
 
                 // Handle the like button
                 ImUtf8.SameLineInner();
                 using (ImRaii.PushColor(ImGuiCol.Text, moodleInfo.HasLikedMoodle ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
-                    if (CkGui.IconTextButton(FontAwesomeIcon.Heart, moodleInfo.Likes.ToString(), null, true))
+                    if (CkGui.IconTextButton(FAI.Heart, moodleInfo.Likes.ToString(), null, true))
                         _shareHub.PerformMoodleLikeAction(moodleInfo.MoodleStatus.GUID);
                 CkGui.AttachToolTip(moodleInfo.HasLikedMoodle ? "Remove Like from this pattern." : "Like this pattern!");
 
                 // Handle the copy button.
                 ImUtf8.SameLineInner();
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
-                    if (CkGui.IconButton(FontAwesomeIcon.Copy, inPopup: true))
+                    if (CkGui.IconButton(FAI.Copy, inPopup: true))
                         _shareHub.CopyMoodleToClipboard(moodleInfo.MoodleStatus.GUID);
                 CkGui.AttachToolTip("Copy this Status for simple Moodles Import!");
             }
             // next line:
             using (ImRaii.Group())
             {
-                var stacksSize = CkGui.IconSize(FontAwesomeIcon.LayerGroup).X;
-                var dispellableSize = CkGui.IconSize(FontAwesomeIcon.Eraser).X;
-                var permanentSize = CkGui.IconSize(FontAwesomeIcon.Infinity).X;
-                var stickySize = CkGui.IconSize(FontAwesomeIcon.MapPin).X;
-                var customVfxPath = CkGui.IconSize(FontAwesomeIcon.Magic).X;
-                var stackOnReapply = CkGui.IconSize(FontAwesomeIcon.SortNumericUpAlt).X;
+                var stacksSize = CkGui.IconSize(FAI.LayerGroup).X;
+                var dispellableSize = CkGui.IconSize(FAI.Eraser).X;
+                var permanentSize = CkGui.IconSize(FAI.Infinity).X;
+                var stickySize = CkGui.IconSize(FAI.MapPin).X;
+                var customVfxPath = CkGui.IconSize(FAI.Magic).X;
+                var stackOnReapply = CkGui.IconSize(FAI.SortNumericUpAlt).X;
 
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.UserCircle);
+                CkGui.IconText(FAI.UserCircle);
                 ImUtf8.SameLineInner();
                 CkGui.ColorText(moodleInfo.Author, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("Publisher of the Moodle");
@@ -126,34 +127,34 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
                     - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
                 ImGui.AlignTextToFramePadding();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Stacks > 1, false, FontAwesomeIcon.LayerGroup, FontAwesomeIcon.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodleInfo.MoodleStatus.Stacks > 1 ? "Has " + moodleInfo.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Dispelable, false, FontAwesomeIcon.Eraser, FontAwesomeIcon.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Dispelable, false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodleInfo.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FontAwesomeIcon.Infinity, FontAwesomeIcon.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodleInfo.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Persistent, false, FontAwesomeIcon.MapPin, FontAwesomeIcon.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
+                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodleInfo.MoodleStatus.AsPermanent ? "Marked as a Sticky Moodle." : "Not Sticky.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath), false, FontAwesomeIcon.Magic, FontAwesomeIcon.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, false, FontAwesomeIcon.SortNumericUpAlt, FontAwesomeIcon.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, false, FAI.SortNumericUpAlt, FAI.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
                 CkGui.AttachToolTip(moodleInfo.MoodleStatus.StackOnReapply ? "Stacks " + moodleInfo.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.Tags);
+                CkGui.IconText(FAI.Tags);
                 ImUtf8.SameLineInner();
                 var maxWidth = ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X;
                 var tagsString = string.Join(", ", moodleInfo.Tags);
@@ -165,22 +166,10 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             }
             CkGui.AttachToolTip("Tags for the Pattern");
 
-            try
+            if (moodleInfo.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
             {
-                if (moodleInfo.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                {
-                    var statusIcon = _ckGui.GetGameStatusIcon((uint)((uint)moodleInfo.MoodleStatus.IconID + moodleInfo.MoodleStatus.Stacks - 1));
-
-                    if (statusIcon is { } wrap)
-                    {
-                        ImGui.SetCursorPos(imagePos);
-                        ImGui.Image(statusIcon.ImGuiHandle, MoodleStatusMonitor.DefaultSize);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to draw the status icon for the moodle.");
+                ImGui.SetCursorPos(imagePos);
+                _moodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodlesDisplayer.DefaultSize);
             }
         }
     }
@@ -190,10 +179,10 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(2, ImGui.GetStyle().ItemInnerSpacing.Y));
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
-        var updateSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Search, "Search");
-        var sortIconSize = CkGui.IconButtonSize(FontAwesomeIcon.SortAmountUp).X;
+        var updateSize = CkGui.IconTextButtonSize(FAI.Search, "Search");
+        var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
         var filterTypeSize = 80f;
-        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FontAwesomeIcon.SortAmountUp : FontAwesomeIcon.SortAmountDown;
+        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
 
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         using (ImRaii.Group())
@@ -203,7 +192,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             if (ImGui.InputTextWithHint("##moodleSearchFilter", "Search for Moodles...", ref searchString, 125))
                 _shareHub.SearchString = searchString;
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Search, "Search", disabled: !_shareHub.CanShareHubTask))
+            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: !_shareHub.CanShareHubTask))
                 _shareHub.PerformMoodleSearch();
             CkGui.AttachToolTip("Update Search Results");
 

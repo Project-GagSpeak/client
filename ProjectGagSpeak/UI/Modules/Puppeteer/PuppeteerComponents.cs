@@ -73,36 +73,36 @@ public class PuppeteerComponents
         ImGui.AlignTextToFramePadding();
         CkGui.ColorText("Listening To", ImGuiColors.ParsedPink);
 
-        var remainingWidth = CkGui.IconButtonSize(FontAwesomeIcon.Save).X * 5 + ImGui.GetStyle().ItemInnerSpacing.X * 4;
+        var remainingWidth = CkGui.IconButtonSize(FAI.Save).X * 5 + ImGui.GetStyle().ItemInnerSpacing.X * 4;
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
 
         // so they let sits?
         using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FontAwesomeIcon.Chair, inPopup: true))
+            if (CkGui.IconButton(FAI.Chair, inPopup: true))
                 onSitsChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit));
         CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FontAwesomeIcon.Walking, inPopup: true))
+            if (CkGui.IconButton(FAI.Walking, inPopup: true))
                 onMotionChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
         CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FontAwesomeIcon.Scroll, inPopup: true))
+            if (CkGui.IconButton(FAI.Scroll, inPopup: true))
                 onAliasChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias));
         CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true))
+            if (CkGui.IconButton(FAI.CheckDouble, inPopup: true))
                 onAllChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All));
         CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform any command.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(isEditing ? FontAwesomeIcon.Save : FontAwesomeIcon.Edit, inPopup: true))
+            if (CkGui.IconButton(isEditing ? FAI.Save : FAI.Edit, inPopup: true))
                 onEditToggle?.Invoke(!isEditing);
         CkGui.AttachToolTip(isEditing ? "Stop Editing your TriggerPhrase Info." : "Modify Your TriggerPhrase Info");
     }
@@ -116,11 +116,11 @@ public class PuppeteerComponents
         using var group = ImRaii.Group();
 
         // display name, then display the downloads and likes on the other side.
-        var ButtonWidth = CkGui.IconButtonSize(FontAwesomeIcon.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
+        var ButtonWidth = CkGui.IconButtonSize(FAI.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
         using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
         {
             var isDisabled = !pair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
-            if (CkGui.IconTextButton(FontAwesomeIcon.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, isDisabled))
+            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, isDisabled))
                 onSendName?.Invoke();
         }
         CkGui.AttachToolTip("Send this Pair your In-Game Character Name.\nThis allows them to listen to you for triggers!" +
@@ -129,25 +129,25 @@ public class PuppeteerComponents
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
         using (ImRaii.Disabled())
         using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FontAwesomeIcon.Chair, inPopup: true);
+            CkGui.IconButton(FAI.Chair, inPopup: true);
         CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
         using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FontAwesomeIcon.Walking, inPopup: true);
+            CkGui.IconButton(FAI.Walking, inPopup: true);
         CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
         using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FontAwesomeIcon.Scroll, inPopup: true);
+            CkGui.IconButton(FAI.Scroll, inPopup: true);
         CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled())
         using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FontAwesomeIcon.CheckDouble, inPopup: true);
+            CkGui.IconButton(FAI.CheckDouble, inPopup: true);
         CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform any command.");
     }
 
@@ -178,7 +178,7 @@ public class PuppeteerComponents
                 Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
 
             ImUtf8.SameLineInner();
-            CkGui.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
+            CkGui.IconText(FAI.GripLinesVertical, ImGuiColors.ParsedPink);
             ImUtf8.SameLineInner();
 
             ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
@@ -215,13 +215,13 @@ public class PuppeteerComponents
                 if (trigger.IsNullOrEmpty())
                     continue;
 
-                CkGui.IconText(FontAwesomeIcon.QuoteLeft, ImGuiColors.ParsedPink);
+                CkGui.IconText(FAI.QuoteLeft, ImGuiColors.ParsedPink);
 
                 ImUtf8.SameLineInner();
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(trigger);
 
                 ImUtf8.SameLineInner();
-                CkGui.IconText(FontAwesomeIcon.QuoteRight, ImGuiColors.ParsedPink);
+                CkGui.IconText(FAI.QuoteRight, ImGuiColors.ParsedPink);
             }
         }
 
@@ -236,7 +236,7 @@ public class PuppeteerComponents
                 Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
 
             ImUtf8.SameLineInner();
-            CkGui.IconText(FontAwesomeIcon.GripLinesVertical, ImGuiColors.ParsedPink);
+            CkGui.IconText(FAI.GripLinesVertical, ImGuiColors.ParsedPink);
             ImUtf8.SameLineInner();
 
             using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(endChar);
@@ -268,7 +268,7 @@ public class PuppeteerComponents
         var winFramePadHeight = ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().FramePadding.Y * 2;
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
 
-        using var child = ImRaii.Child("##PatternResult_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow | ImGuiWindowFlags.NoScrollbar);
+        using var child = ImRaii.Child("##PatternResult_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow | WFlags.NoScrollbar);
         if (!child) return;
 
         using (ImRaii.Group())
@@ -286,7 +286,7 @@ public class PuppeteerComponents
             CkGui.AttachToolTip("The Alias Label given to help with searching and organization.");
 
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight());
-            if (CkGui.IconButton(ExpandedAliasItems[id] ? FontAwesomeIcon.ChevronUp : FontAwesomeIcon.ChevronDown, inPopup: true))
+            if (CkGui.IconButton(ExpandedAliasItems[id] ? FAI.ChevronUp : FAI.ChevronDown, inPopup: true))
                 ExpandedAliasItems[id] = !ExpandedAliasItems[id];
             CkGui.AttachToolTip(ExpandedAliasItems[id] ? "Collapse the Alias Item." : "Expand the Alias Item.");
 
@@ -295,7 +295,7 @@ public class PuppeteerComponents
 
 
             ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FontAwesomeIcon.Eye);
+            CkGui.IconText(FAI.Eye);
             CkGui.AttachToolTip("The text to scan for (Input String)");
 
             ImGui.SameLine();
@@ -317,7 +317,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.Font);
+                    CkGui.IconText(FAI.Font);
 
                     ImGui.SameLine();
                     var txt = textAction.OutputCommand.IsNullOrEmpty() ? "<Undefined Output!>" : textAction.OutputCommand;
@@ -339,7 +339,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.Comment);
+                    CkGui.IconText(FAI.Comment);
                     CkGui.AttachToolTip("The Following Gag State that will be applied to the Kinkster.");
 
                     // the following gag
@@ -368,7 +368,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.ToiletPortable);
+                    CkGui.IconText(FAI.ToiletPortable);
                     CkGui.AttachToolTip("The new state of the restraint set, and which is being applied.");
 
                     // if applying, list both, otherwise, list only newState.
@@ -406,7 +406,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.WandMagicSparkles);
+                    CkGui.IconText(FAI.WandMagicSparkles);
                     CkGui.AttachToolTip("Displays the Identity of the moodle status/preset applied.");
 
                     // the following gag
@@ -432,7 +432,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.Bolt);
+                    CkGui.IconText(FAI.Bolt);
                     CkGui.AttachToolTip("The shock collar instruction executed when the input command is detected.");
 
                     ImGui.SameLine();
@@ -469,7 +469,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.WaveSquare);
+                    CkGui.IconText(FAI.WaveSquare);
                     CkGui.AttachToolTip("The action to be executed on the listed toys.");
 
                     // in theory this listing could get pretty expansive so for now just list a summary.
@@ -495,7 +495,7 @@ public class PuppeteerComponents
                 using (ImRaii.Group())
                 {
                     ImGui.AlignTextToFramePadding();
-                    CkGui.IconText(FontAwesomeIcon.ExclamationTriangle, ImGuiColors.DalamudYellow);
+                    CkGui.IconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
                     ImGui.SameLine();
                     CkGui.ColorText("No Output Types Added! Output won't execute correctly!", ImGuiColors.DalamudYellow);
                 }
@@ -517,8 +517,8 @@ public class PuppeteerComponents
         // pre-calculations.
         var storedOutputTypes = aliasItem.Executions.Keys;
         var storedOutputSize = storedOutputTypes.Any() ? storedOutputTypes.Count() : 1;
-        var deleteButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.TrashAlt);
-        var addTypeButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Plus);
+        var deleteButtonSize = CkGui.IconButtonSize(FAI.TrashAlt);
+        var addTypeButtonSize = CkGui.IconButtonSize(FAI.Plus);
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var comboSize = 125f;
         // merged pre-calcs
@@ -526,7 +526,7 @@ public class PuppeteerComponents
         var topRowButtonLength = deleteButtonSize.X + addTypeButtonSize.X + comboSize + itemSpacing.X;
         float height = winFramePadHeight + (ImGui.GetFrameHeight() * (storedOutputSize + 2)) + (itemSpacing.Y * (storedOutputSize + 1));
 
-        using var child = ImRaii.Child("##AliasEditor_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, ImGuiWindowFlags.ChildWindow);
+        using var child = ImRaii.Child("##AliasEditor_" + aliasItem.Identifier, new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow);
         if (!child) return wasModified;
 
         using var group = ImRaii.Group();
@@ -563,7 +563,7 @@ public class PuppeteerComponents
         CkGui.AttachToolTip("Selects a new output action kind to add to this Alias Item.");
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconButton(FontAwesomeIcon.Plus, disabled: aliasItem.UnregisteredTypes().IsNullOrEmpty()))
+        if (CkGui.IconButton(FAI.Plus, disabled: aliasItem.UnregisteredTypes().IsNullOrEmpty()))
         {
             aliasItem.AddActionForType(selectedType);
             wasModified = true;
@@ -571,7 +571,7 @@ public class PuppeteerComponents
         CkGui.AttachToolTip("Adds the item from the dropdown to the list of active output types.--SEP--Only 1 of each type can be added maximum");
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconButton(FontAwesomeIcon.TrashAlt, disabled: !KeyMonitor.ShiftPressed()))
+        if (CkGui.IconButton(FAI.TrashAlt, disabled: !KeyMonitor.ShiftPressed()))
         {
             shouldRemove = true;
             return false;
@@ -581,7 +581,7 @@ public class PuppeteerComponents
         // ------------- SEPERATOR FOR INPUT COMMAND ------------ //
         ImGui.Separator();
         ImGui.AlignTextToFramePadding();
-        CkGui.IconText(FontAwesomeIcon.Eye);
+        CkGui.IconText(FAI.Eye);
         CkGui.AttachToolTip("The text to scan for (Input String)");
 
         ImGui.SameLine();
@@ -600,7 +600,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.Font);
+                CkGui.IconText(FAI.Font);
                 CkGui.AttachToolTip("What text command you will output when the input text is read from this Kinkster.");
                 using (ImRaii.PushFont(UiBuilder.MonoFont))
                 {
@@ -624,7 +624,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.Comment);
+                CkGui.IconText(FAI.Comment);
                 CkGui.AttachToolTip("The Following Gag State that will be applied to the Kinkster.");
 
                 // Set the NewState to:
@@ -663,7 +663,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.ToiletPortable);
+                CkGui.IconText(FAI.ToiletPortable);
                 CkGui.AttachToolTip("The new state of the restraint set, and which is being applied." +
                     "--SEP--Be Aware this may or may not be valid if view another Kinkster.");
 
@@ -702,7 +702,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.WandMagicSparkles);
+                CkGui.IconText(FAI.WandMagicSparkles);
                 CkGui.AttachToolTip("The moodle status/preset applied.");
 
                 // the following gag
@@ -737,7 +737,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.Bolt);
+                CkGui.IconText(FAI.Bolt);
                 CkGui.AttachToolTip("The shock collar instruction executed when the input command is detected.");
 
                 ImGui.SameLine();
@@ -796,7 +796,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.WaveSquare);
+                CkGui.IconText(FAI.WaveSquare);
                 CkGui.AttachToolTip("The action to be executed on the listed toys.");
 
                 // in theory this listing could get pretty expansive so for now just list a summary.
@@ -825,7 +825,7 @@ public class PuppeteerComponents
             using (ImRaii.Group())
             {
                 ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FontAwesomeIcon.ExclamationTriangle, ImGuiColors.DalamudYellow);
+                CkGui.IconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
                 ImGui.SameLine();
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Output types set for this Alias!");
             }
@@ -837,7 +837,7 @@ public class PuppeteerComponents
     private void DrawRemoveIcon(string id, Action onClick)
     {
         using var col = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-        if (CkGui.IconButton(FontAwesomeIcon.Minus, id: id, inPopup: true))
+        if (CkGui.IconButton(FAI.Minus, id: id, inPopup: true))
             onClick();
     }
 }

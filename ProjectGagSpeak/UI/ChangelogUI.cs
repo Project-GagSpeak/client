@@ -23,7 +23,7 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
             MaximumSize = new(600, 600)
         };
 
-        Flags |= ImGuiWindowFlags.NoTitleBar;
+        Flags |= WFlags.NoTitleBar;
 
         // Init changelog Data
         changelog = new Changelog();
@@ -54,7 +54,7 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
             var regionSize = ImGui.GetContentRegionAvail();
             ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-            using (var leftChild = ImRaii.Child($"###GagSetupLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoScrollbar))
+            using (var leftChild = ImRaii.Child($"###GagSetupLeft", regionSize with { Y = topLeftSideHeight }, false, WFlags.NoDecoration | WFlags.NoScrollbar))
             {
                 if(ImGui.Button("Close Changelog", new Vector2(ImGui.GetContentRegionAvail().X, 25f)))
                 {

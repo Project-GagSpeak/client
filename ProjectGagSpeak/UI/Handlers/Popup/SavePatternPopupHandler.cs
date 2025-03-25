@@ -8,7 +8,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components.Popup;
+namespace GagSpeak.UI.Components;
 
 /// <summary> A interface for handling the popups in the UI. </summary>
 public class SavePatternPopupHandler : IPopupHandler
@@ -41,8 +41,8 @@ public class SavePatternPopupHandler : IPopupHandler
 
     public void DrawContent()
     {
-        SaveWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Save, "Save Pattern Data");
-        RevertWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Undo, "Discard Pattern");
+        SaveWidth = CkGui.IconTextButtonSize(FAI.Save, "Save Pattern Data");
+        RevertWidth = CkGui.IconTextButtonSize(FAI.Undo, "Discard Pattern");
         var start = 0f;
         using (UiFontService.UidFont.Push())
         {
@@ -85,12 +85,12 @@ public class SavePatternPopupHandler : IPopupHandler
 
         // display save options
         ImGui.Separator();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Save, "Save Pattern Data", SaveWidth))
+        if (CkGui.IconTextButton(FAI.Save, "Save Pattern Data", SaveWidth))
             Close();
         _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FinalizingSave, ImGui.GetWindowPos(), _size, () => _mediator.Publish(new ClosePatternSavePromptMessage()));
 
         ImGui.SameLine();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
+        if (CkGui.IconTextButton(FAI.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
         {
             CompiledPatternData = new Pattern();
             ImGui.CloseCurrentPopup();

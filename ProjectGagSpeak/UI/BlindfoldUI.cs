@@ -1,7 +1,10 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin;
+using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.Toybox.Debouncer;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
@@ -10,16 +13,17 @@ using System.Timers;
 namespace GagSpeak.UI;
 
 public enum AnimType { ActivateWindow, DeactivateWindow, None }
-
-public enum BlindfoldType { Light, Sensual }
-
 public class BlindfoldUI : WindowMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _clientConfigs;
-    private readonly OnFrameworkService _frameworkUtils;
-    private readonly CkGui _ckGui;
-    private readonly IDalamudPluginInterface _pi;
+    private bool ThemePushed = false;
+    public static bool IsWindowOpen;
 
+    private readonly GagspeakConfigService _config;
+    private readonly GagRestrictionManager _gags;
+    private readonly RestrictionManager _restrictions;
+    private readonly OnFrameworkService _frameworkUtils;
+    private readonly CosmeticService _cosmetics;
+    private readonly IDalamudPluginInterface _pi;
 
     // private variables and objects
     private UpdateTimer _TimerRecorder;
@@ -34,16 +38,24 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
     float startY = -ImGui.GetIO().DisplaySize.Y;
     float midY = 0.2f * ImGui.GetIO().DisplaySize.Y;
 
-    public BlindfoldUI(ILogger<BlindfoldUI> logger, GagspeakMediator mediator,
-        GagspeakConfigService clientConfigs, OnFrameworkService frameworkUtils,
-        CkGui uiShared, IDalamudPluginInterface pi) : base(logger, mediator, "BlindfoldWindowUI###BlindfoldWindowUI")
+    public BlindfoldUI(
+        ILogger<BlindfoldUI> logger,
+        GagspeakMediator mediator,
+        GagRestrictionManager gags,
+        RestrictionManager restrictions,
+        GagspeakConfigService config,
+        OnFrameworkService frameworkUtils,
+        CosmeticService cosmetics,
+        IDalamudPluginInterface pi) : base(logger, mediator, "##BlindfoldWindowUI")
     {
-        _clientConfigs = clientConfigs;
+        _config = config;
+        _gags = gags;
+        _restrictions = restrictions;
         _frameworkUtils = frameworkUtils;
-        _ckGui = uiShared;
+        _cosmetics = cosmetics;
         _pi = pi;
 
-        Flags = ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoNavFocus;
+        Flags = WFlags.NoBackground | WFlags.NoInputs | WFlags.NoTitleBar | WFlags.NoMove | WFlags.NoNavFocus;
 
         // set isopen to false
         IsOpen = false;
@@ -56,7 +68,6 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         _TimerRecorder = new UpdateTimer(2000, ToggleWindow);
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
-
         Mediator.Subscribe<HardcoreRemoveBlindfoldMessage>(this, (_) => RemoveBlindfoldAndClose());
     }
 
@@ -66,17 +77,25 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         base.Dispose(disposing);
     }
 
-    private bool ThemePushed = false;
-
-    public static bool IsWindowOpen;
+    // Optimize later i guess idk. I dislike this UI a lot right now.
+    private BlindfoldRestriction? _currentSettings = null;
+    public void UpdateBlindfoldSettings()
+    {
+        // Locate the active garblerRestrictions that are active, if any are found, we want to find the last blindfold restriction in it.
+        _currentSettings = _restrictions.OccupiedRestrictions
+            .Where(x => x.Item is BlindfoldRestriction)
+            .Select(x => x.Item as BlindfoldRestriction)
+            .LastOrDefault();
+    }
 
     public void ToggleWindow(object? sender, ElapsedEventArgs e)
     {
         if (IsOpen && !isShowing)
         {
             _logger.LogDebug("BlindfoldWindow: Timer elapsed, closing window");
-            this.Toggle();
+            Toggle();
             _TimerRecorder.Stop();
+            _currentSettings = null;
         }
         else
         {
@@ -93,6 +112,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         _pi.UiBuilder.DisableUserUiHide = true;
         _pi.UiBuilder.DisableCutsceneUiHide = true;
         _logger.LogDebug($"BlindfoldWindow: OnOpen");
+        UpdateBlindfoldSettings();
         // if an active timer is running
         if (_TimerRecorder.IsRunning)
         {
@@ -119,7 +139,6 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
 
         base.OnOpen();
         IsWindowOpen = true;
-
     }
 
     public void RemoveBlindfoldAndClose()
@@ -133,8 +152,8 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         // start the timer to deactivate the window
         _TimerRecorder.Start();
         AnimationProgress = AnimType.DeactivateWindow;
-        alpha = _clientConfigs.Config.BlindfoldOpacity;
-        imageAlpha = _clientConfigs.Config.BlindfoldOpacity;
+        alpha = _config.Config.BlindfoldMaxOpacity;
+        imageAlpha = _config.Config.BlindfoldMaxOpacity;
         isShowing = false;
         IsWindowOpen = false;
     }
@@ -181,7 +200,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         }
 
         // ensure we know our max allowed opacity
-        var maxAlpha = _clientConfigs.Config.BlindfoldOpacity;
+        var maxAlpha = _config.Config.BlindfoldMaxOpacity;
 
         if (AnimationProgress != AnimType.None)
         {
@@ -253,23 +272,19 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         ImGui.SetWindowPos(position);
         // get the window size
         var windowSize = ImGui.GetWindowSize();
-        // Draw the image with the updated alpha value
-        if (_clientConfigs.Config.BlindfoldStyle is BlindfoldType.Light)
+
+        if (_currentSettings is not { } blindfoldSettings)
+            return;
+
+        var img = blindfoldSettings.Kind switch
         {
-            var imageLight = _ckGui.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Light.png");
-            if (imageLight is { } wrapLight)
-            {
-                ImGui.Image(wrapLight!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
-            }
-        }
-        else
-        {
-            var imageSensual = _ckGui.GetImageFromDirectoryFile("RequiredImages\\Blindfold_Sensual.png");
-            if (imageSensual is { } wrapSensual)
-            {
-                ImGui.Image(wrapSensual!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
-            }
-        }
+            BlindfoldType.Light => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", "Blindfold_Light.png")),
+            BlindfoldType.Sensual => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", "Blindfold_Sensual.png")),
+            BlindfoldType.CustomPath => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", blindfoldSettings.CustomPath)),
+            _ => null
+        };
+        if (img is { } wrap)
+            ImGui.Image(wrap!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
     }
 
     public override void OnClose()

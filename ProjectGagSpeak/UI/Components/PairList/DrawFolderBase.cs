@@ -6,7 +6,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Components.UserPairList;
+namespace GagSpeak.UI.Components;
 
 /// <summary> The base for the draw folder, a dropdown section in the list of paired users </summary>
 public abstract class DrawFolderBase : IDrawFolder
@@ -46,7 +46,7 @@ public abstract class DrawFolderBase : IDrawFolder
             CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
         {
             // draw opener
-            var icon = _serverConfigs.NickStorage.OpenPairListFolders.Contains(_id) ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight;
+            var icon = _serverConfigs.NickStorage.OpenPairListFolders.Contains(_id) ? FAI.CaretDown : FAI.CaretRight;
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();
@@ -76,7 +76,7 @@ public abstract class DrawFolderBase : IDrawFolder
         // if opened draw content
         if (_serverConfigs.NickStorage.OpenPairListFolders.Contains(_id))
         {
-            using var indent = ImRaii.PushIndent(CkGui.IconSize(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+            using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             if (DrawPairs.Any())
             {
                 foreach (var item in DrawPairs)

@@ -56,7 +56,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     {
         var newItem = new CursedItem()
         {
-            Label = lootName
+            Label = lootName,
+            RestrictionRef = _gags.Storage.Values.First() // Default to BallGag.
         };
         // Append the item to the storage.
         Storage.Add(newItem);
@@ -132,6 +133,13 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, item, null));
             _saver.Save(this);
         }
+    }
+
+    public void TogglePoolState(CursedItem item)
+    {
+        item.InPool = !item.InPool;
+        _saver.Save(this);
+        Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, item, null));
     }
 
     public void AddFavorite(CursedItem cursedLoot)

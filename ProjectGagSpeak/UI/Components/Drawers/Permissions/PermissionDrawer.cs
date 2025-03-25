@@ -81,7 +81,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         }
         CkGui.AttachToolTip("The Max Duration " + PermissionData.DispName + "Can Lock for.");
 
-        CkGui.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
+        CkGui.BooleanToColoredIcon(editAccess, true, FAI.Unlock, FAI.Lock);
         CkGui.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
     }
 
@@ -107,7 +107,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         }
         CkGui.AttachToolTip(data.tt);
 
-        CkGui.BooleanToColoredIcon(editAccess, true, FontAwesomeIcon.Unlock, FontAwesomeIcon.Lock);
+        CkGui.BooleanToColoredIcon(editAccess, true, FAI.Unlock, FAI.Lock);
         CkGui.AttachToolTip(editAccess ? PermissionData.PairAccessYesTT : PermissionData.PairAccessNoTT);
 
         if (button)

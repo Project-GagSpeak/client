@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
@@ -13,34 +13,40 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
 {
-    protected readonly MoodleStatusMonitor _statuses;
+    protected readonly MoodlesDisplayer _statuses;
     protected readonly MainHub _mainHub;
     protected readonly Pair _pairRef;
     protected float _iconScale;
 
-    protected CkMoodleComboButtonBase(float iconScale, MoodleStatusMonitor monitor, Pair pair, MainHub hub,
-        ILogger log, string bText, string bTT, Func<IReadOnlyList<T>> itemSource)
-        : base(itemSource, log, bText, bTT)
+    protected CkMoodleComboButtonBase(float iconScale, MoodlesDisplayer monitor, Pair pair, MainHub hub,
+        ILogger log, Func<IReadOnlyList<T>> itemSource)
+        : base(itemSource, log)
     {
         _statuses = monitor;
         _mainHub = hub;
         _iconScale = iconScale;
-        CurrentSelection = itemSource().FirstOrDefault();
+        CurrentSelection = default;
     }
 
-    protected virtual Vector2 IconSize => MoodleStatusMonitor.DefaultSize * _iconScale;
+    protected virtual Vector2 IconSize => MoodlesDisplayer.DefaultSize * _iconScale;
 
     protected override void DrawList(float width, float itemHeight)
     {
-        ImGui.SetWindowFontScale(_iconScale);
-        base.DrawList(width, itemHeight);
-        ImGui.SetWindowFontScale(1f);
+        try
+        {
+            ImGui.SetWindowFontScale(_iconScale);
+            base.DrawList(width, itemHeight);
+        }
+        finally
+        {
+            ImGui.SetWindowFontScale(1.0f);
+        }
     }
 
     protected abstract bool CanDoAction(T item);
     protected abstract void DoAction(T item);
 
-    protected override void OnButtonPress()
+    protected override void OnButtonPress(int _)
     {
         if(CurrentSelection is null)
             return;

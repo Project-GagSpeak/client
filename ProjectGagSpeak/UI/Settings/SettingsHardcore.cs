@@ -82,7 +82,7 @@ public class SettingsHardcore
         using (ImRaii.Group())
         { 
             var forceLockFirstPerson = _clientConfigs.Config.ForceLockFirstPerson;
-            var blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldOpacity * 100);
+            var blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldMaxOpacity * 100);
 
             // Draw the first person selection.
             if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
@@ -90,7 +90,7 @@ public class SettingsHardcore
                 _clientConfigs.Config.ForceLockFirstPerson = forceLockFirstPerson;
                 _clientConfigs.Save();
             }
-            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
+            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
 
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
@@ -104,19 +104,19 @@ public class SettingsHardcore
                     _logger.LogTrace($"Blindfold Style changed to {i}");
                 }, selectedBlindfoldType);
             }
-            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
+            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
 
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
                 // draw the transparency slider, this displays on the slider a % symbol and translates to a float between 0 and 1 for the opacity.
                 ImGui.SetNextItemWidth(150f);
-                if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
+                if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldMaxOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
                 {
-                    _clientConfigs.Config.BlindfoldOpacity = blindfoldOpacityPercentage / 100.0f;
+                    _clientConfigs.Config.BlindfoldMaxOpacity = blindfoldOpacityPercentage / 100.0f;
                     _clientConfigs.Save();
                 }
             }
-            CkGui.DrawHelpText(GSLoc.Settings.Hardcore.BlindfoldOpacityTT);
+            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldMaxOpacityTT);
         }
         ImGui.Separator();
         var filePath = _clientConfigs.Config.BlindfoldStyle switch
@@ -126,7 +126,7 @@ public class SettingsHardcore
             _ => "INVALID_FILE",
         };
 
-        var previewImage = CkGui.GetImageFromDirectoryFile(filePath);
+        var previewImage = CkGui.GetImageFromAssetsFolder(filePath);
         if (previewImage is { } wrap)
         {
             // calculate the height of the available region and compare it to the ImGuiHandles Y height, to get how long we should display the X.
@@ -134,7 +134,7 @@ public class SettingsHardcore
             var scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
             var finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
             // display the image.
-            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldOpacity));
+            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldMaxOpacity));
             CkGui.AttachToolTip("Preview of the Blindfold Style");
         }
     }
@@ -145,21 +145,21 @@ public class SettingsHardcore
             return;
 
         // replace disabled with ForcedStay == true
-        if (CkGui.IconTextButton(FontAwesomeIcon.SearchPlus, "Last Seen TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FAI.SearchPlus, "Last Seen TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.AddLastSeenNode();
         }
         CkGui.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeLastSeenTT);
 
         ImGui.SameLine();
-        if (CkGui.IconTextButton(FontAwesomeIcon.PlusCircle, "New TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FAI.PlusCircle, "New TextNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateTextNode();
         }
         CkGui.AttachToolTip(GSLoc.Settings.Hardcore.AddNodeNewTT);
 
         ImGui.SameLine();
-        if (CkGui.IconTextButton(FontAwesomeIcon.PlusCircle, "New ChamberNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
+        if (CkGui.IconTextButton(FAI.PlusCircle, "New ChamberNode", disabled: globals.ForcedStay.IsNullOrEmpty()))
         {
             _clientConfigs.CreateChamberNode();
         }
@@ -218,7 +218,7 @@ public class SettingsHardcore
 
         if (ImGui.BeginPopup($"{node.GetHashCode()}-popup"))
         {
-            if (CkGui.IconButton(FontAwesomeIcon.TrashAlt, disabled: disableElements || !KeyMonitor.ShiftPressed()))
+            if (CkGui.IconButton(FAI.TrashAlt, disabled: disableElements || !KeyMonitor.ShiftPressed()))
             {
                 if (_clientConfigs.TryFindParent(node, out var parentNode))
                 {
@@ -353,7 +353,7 @@ public class SettingsHardcore
     private LowerString PairSearchString = LowerString.Empty;
     public void DrawUidSearchFilter(float availableWidth)
     {
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
         ImGui.SetNextItemWidth(availableWidth - buttonSize - ImGui.GetStyle().ItemInnerSpacing.X);
         string filter = PairSearchString;
         if (ImGui.InputTextWithHint("##filter", "Filter for UID/notes", ref filter, 255))
@@ -362,7 +362,7 @@ public class SettingsHardcore
         }
         ImUtf8.SameLineInner();
         using var disabled = ImRaii.Disabled(string.IsNullOrEmpty(PairSearchString));
-        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear"))
+        if (CkGui.IconTextButton(FAI.Ban, "Clear"))
         {
             PairSearchString = string.Empty;
         }

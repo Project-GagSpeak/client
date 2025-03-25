@@ -47,21 +47,25 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<JobChangeMessage>(this, (msg) => JobChanged(msg.jobId));
 
         traits.OnTraitStateChanged += ProcessTraitChange;
+        traits.OnStimulationStateChanged += ProcessStimulationChange;
     }
 
-    private void ProcessTraitChange(Traits prevTraits, Traits newTraits)
+    private void ProcessStimulationChange(Stimulation prevStim, Stimulation newStim)
     {
-        // If prevTraits.AnyStim != newTraits.AnyStim, we must update the job list on the next framework tick because the multiplier changed.
-        if ((prevTraits ^ newTraits).HasAny(Traits.AnyStim))
+        // We must update the job list on the next framework tick because the multiplier changed.
+        if (prevStim != newStim)
         {
             // Ensure this is run on the framework tick.
             _monitor.RunOnFrameworkThread(() => UpdateJobList(_monitor.ClientPlayer.ClassJobId())).ConfigureAwait(false);
         }
+    }
 
+    private void ProcessTraitChange(Traits prevTraits, Traits newTraits)
+    {
         // If prevTraits.AnyHotbarModifier was different from newTraits.AnyHotbarModifier, we must update the slots and lock the hotbar.
-        if ((prevTraits ^ newTraits).HasAny(Traits.AnyHotbarModifier))
+        if ((prevTraits ^ newTraits) != 0)
         {
-            if (newTraits.HasAny(Traits.AnyHotbarModifier))
+            if (newTraits is not 0)
             {
                 Logger.LogInformation("Disabling Manipulated Action Data", LoggerType.HardcoreActions);
                 HotbarLocker.SetHotbarLockState(NewState.Locked);
@@ -234,7 +238,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
 
         // If we are still monitoring our hotbar state, restore the previous saved slots.
         // This allows us to recalculate new ones.
-        if (_traits.ActiveTraits.HasAny(Traits.AnyHotbarModifier))
+        if (_traits.ActiveTraits != 0)
             RestoreSavedSlots();
     }
 
@@ -279,7 +283,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
             }
 
             //Logger.LogTrace($" UseActionDetour called {acId} {type}");
-            if (_traits.ActiveTraits.HasAny(Traits.AnyHotbarModifier))
+            if (_traits.ActiveTraits != 0)
             {
                 // Shortcut to avoid fetching active set for stimulation level every action.
                 if (_traits.GetVibeMultiplier() != 1.0f)

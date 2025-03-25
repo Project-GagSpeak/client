@@ -1,4 +1,6 @@
 using Dalamud.Interface.Colors;
+using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
@@ -11,16 +13,11 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 {
     private readonly FavoritesManager _favorites;
-    public RestraintCombo(RestraintManager restraints, FavoritesManager favorites, ILogger log)
-        : base(() => GetRestraintSets(favorites, restraints), log)
+    public RestraintCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<RestraintSet>> restraintsGenerator)
+        : base(restraintsGenerator, log)
     {
         _favorites = favorites;
         SearchByParts = true;
-    }
-
-    private static List<RestraintSet> GetRestraintSets(FavoritesManager favorites, RestraintManager restraints)
-    {
-        return restraints.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label).ToList();
     }
 
     protected override string ToString(RestraintSet obj)
@@ -43,7 +40,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 
     public void Draw(float width)
     {
-        var name = CurrentSelection?.Label ?? "Select a Restraint Set...";
+        var name = CurrentSelection?.Label ?? string.Empty;
         Draw("##RestraintSets", name, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 

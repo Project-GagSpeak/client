@@ -1,14 +1,14 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Loaders;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 using OtterGui;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Managers;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 
-namespace GagSpeak.UpdateMonitoring.SpatialAudio.Spawner;
+namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 
 // Grabbed from VFXEditor
 public enum SpawnType { None, Self, Target }

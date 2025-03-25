@@ -29,13 +29,13 @@ public class PresetLogicDrawer
         // It's OK if things are active for the player, since it doesn't actually trigger everything at once.
         var disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
 
-        var comboWidth = width - CkGui.IconTextButtonSize(FontAwesomeIcon.Sync, "Apply Preset");
+        var comboWidth = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
         using (var disabled = ImRaii.Disabled(disabledCondition))
         {
             _ckGui.DrawCombo("Permission Preset Selector", comboWidth, Enum.GetValues<PresetName>(),
             (preset) => preset.ToName(), (i) => SelectedPreset = (PresetName)i, SelectedPreset, false);
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
+            if (CkGui.IconTextButton(FAI.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
             {
                 ApplySelectedPreset(pairToDrawListFor);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PresetApplied);

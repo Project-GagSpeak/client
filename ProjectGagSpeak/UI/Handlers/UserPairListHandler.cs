@@ -5,7 +5,7 @@ using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components.UserPairList;
+using GagSpeak.UI.Components;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
@@ -83,7 +83,7 @@ public class UserPairListHandler
     /// </summary>
     public void DrawPairs()
     {
-        using var child = ImRaii.Child("list", ImGui.GetContentRegionAvail(), border: false, ImGuiWindowFlags.NoScrollbar);
+        using var child = ImRaii.Child("list", ImGui.GetContentRegionAvail(), border: false, WFlags.NoScrollbar);
 
         // Draw out the requests first.
         _drawRequests.Draw();
@@ -120,7 +120,7 @@ public class UserPairListHandler
 
         var folderDrawPairs = showOffline ? ((DrawFolderBase)allTagFolder).DrawPairs.ToList() : ((DrawFolderBase)allTagFolder).DrawPairs.Where(x => x.Pair.IsOnline).ToList();
 
-        using var indent = ImRaii.PushIndent(CkGui.IconSize(FontAwesomeIcon.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
+        using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
 
         if (!folderDrawPairs.Any())
         {
@@ -150,8 +150,8 @@ public class UserPairListHandler
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
 
         var buttonOneSize = showClearText
-            ? CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear") + spacing
-            : CkGui.IconButtonSize(FontAwesomeIcon.Ban).X + spacing;
+            ? CkGui.IconTextButtonSize(FAI.Ban, "Clear") + spacing
+            : CkGui.IconButtonSize(FAI.Ban).X + spacing;
 
         var searchWidth = width - buttonOneSize;
 
@@ -164,12 +164,12 @@ public class UserPairListHandler
         ImUtf8.SameLineInner();
         if (showClearText)
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
+            if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(Filter)))
                 Filter = string.Empty;
         }
         else
         {
-            if (CkGui.IconButton(FontAwesomeIcon.Ban, disabled: string.IsNullOrEmpty(Filter)))
+            if (CkGui.IconButton(FAI.Ban, disabled: string.IsNullOrEmpty(Filter)))
                 Filter = string.Empty;
         }
         CkGui.AttachToolTip("Clears the filter");

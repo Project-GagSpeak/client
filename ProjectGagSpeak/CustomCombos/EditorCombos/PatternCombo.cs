@@ -4,6 +4,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
@@ -56,12 +58,12 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
 
             // draw the shouldLoop icon.
-            CkGui.IconText(FontAwesomeIcon.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+            CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
             if (pattern.ShouldLoop) CkGui.AttachToolTip("This is a Looping Pattern.");
 
             // draw the info icon.
             ImGui.SameLine();
-            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+            CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
             DrawItemTooltip(pattern);
         }
 

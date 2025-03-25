@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
@@ -84,7 +85,7 @@ public class KinkPlateLight
             ImGui.TextColored(ImGuiColors.ParsedGold, titleName);
         }
         // move over to the top area to draw out the achievement title line wrap.
-        KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
+        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
         var ret = DrawStats(drawList, profile.KinkPlateInfo, displayName, userData, hoveringReport);
         return ret;
@@ -94,11 +95,11 @@ public class KinkPlateLight
     {
         // draw out the background for the window.
         if (_cosmetics.TryGetBackground(ProfileComponent.PlateLight, info.PlateBackground, out var plateBG))
-            KinkPlateUI.AddImageRounded(drawList, plateBG, RectMin, PlateSize, 30f);
+            drawList.AddDalamudImageRounded(plateBG, RectMin, PlateSize, 30f);
 
         // draw out the border on top of that.
         if (_cosmetics.TryGetBorder(ProfileComponent.PlateLight, info.PlateBorder, out var plateBorder))
-            KinkPlateUI.AddImageRounded(drawList, plateBorder, RectMin, PlateSize, 20f);
+            drawList.AddDalamudImageRounded(plateBorder, RectMin, PlateSize, 20f);
     }
 
     private void DrawProfilePic(ImDrawListPtr drawList, KinkPlate profile, string displayName, UserData userData, bool isPair)
@@ -107,30 +108,30 @@ public class KinkPlateLight
         {
             // The user is us, and we are under review, show our picture.
             var pfpWrap = profile.GetCurrentProfileOrDefault();
-            KinkPlateUI.AddImageRounded(drawList, pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            drawList.AddDalamudImageRounded(pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
         else if(profile.TempDisabled)
         {
             // profile is pending report review.
-            KinkPlateUI.AddImageRounded(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Logo256], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
-            KinkPlateUI.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
+            drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            CkGui.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
         }
         else if ((!profile.KinkPlateInfo.PublicPlate && !isPair))
         {
             // profile is not public.
-            KinkPlateUI.AddImageRounded(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Logo256], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
-            KinkPlateUI.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
+            drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            CkGui.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
         }
         else
         {
             // Viewing a direct pair, draw the profile picture.
             var pfpWrap = profile.GetCurrentProfileOrDefault();
-            KinkPlateUI.AddImageRounded(drawList, pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            drawList.AddDalamudImageRounded(pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
 
         // draw out the border for the profile picture
         if (_cosmetics.TryGetBorder(ProfileComponent.ProfilePicture, profile.KinkPlateInfo.ProfilePictureBorder, out var pfpBorder))
-            KinkPlateUI.AddImageRounded(drawList, pfpBorder, ProfilePictureBorderPos, ProfilePictureBorderSize, ProfilePictureSize.Y / 2);
+            drawList.AddDalamudImageRounded(pfpBorder, ProfilePictureBorderPos, ProfilePictureBorderSize, ProfilePictureSize.Y / 2);
 
         // Draw out Supporter Icon Black BG base.
         drawList.AddCircleFilled(SupporterIconBorderPos + SupporterIconBorderSize / 2,
@@ -140,7 +141,7 @@ public class KinkPlateLight
         var supporterInfo = _cosmetics.GetSupporterInfo(userData);
         if (supporterInfo.SupporterWrap is { } wrap)
         {
-            KinkPlateUI.AddImageRounded(drawList, wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, true, displayName + " Is Supporting CK!");
+            drawList.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, displayName + " Is Supporting CK!");
         }
         // Draw out the border for the icon.
         drawList.AddCircle(SupporterIconBorderPos + SupporterIconBorderSize / 2, SupporterIconBorderSize.X / 2,
@@ -165,15 +166,15 @@ public class KinkPlateLight
     {
         // draw out the description background.
         if (_cosmetics.TryGetBackground(ProfileComponent.DescriptionLight, profile.KinkPlateInfo.DescriptionBackground, out var descBG))
-            KinkPlateUI.AddImageRounded(drawList, descBG, DescriptionBorderPos, DescriptionBorderSize, 2f);
+            drawList.AddDalamudImageRounded(descBG, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description border
         if (_cosmetics.TryGetBorder(ProfileComponent.DescriptionLight, profile.KinkPlateInfo.DescriptionBorder, out var descBorder))
-            KinkPlateUI.AddImageRounded(drawList, descBorder, DescriptionBorderPos, DescriptionBorderSize, 2f);
+            drawList.AddDalamudImageRounded(descBorder, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description overlay.
         if (_cosmetics.TryGetOverlay(ProfileComponent.DescriptionLight, profile.KinkPlateInfo.DescriptionOverlay, out var descOverlay))
-            KinkPlateUI.AddImageRounded(drawList, descOverlay, DescriptionBorderPos, DescriptionBorderSize, 2f);
+            drawList.AddDalamudImageRounded(descOverlay, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // draw out the description text here.
         ImGui.SetCursorScreenPos(DescriptionBorderPos + ImGuiHelpers.ScaledVector2(12f, 8f));
@@ -261,7 +262,7 @@ public class KinkPlateLight
         var totalWidth = dateWidth + achievementWidth + StatIconSize.X * 3 + spacing * 3;
 
         statsPos.X += (PlateSize.X - totalWidth) / 2;
-        KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Clock], statsPos, StatIconSize, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Clock], statsPos, StatIconSize, ImGuiColors.ParsedGold);
 
         // set the cursor screen pos to the right of the clock, and draw out the joined date.
         statsPos.X += StatIconSize.X + 2f;
@@ -270,7 +271,7 @@ public class KinkPlateLight
         CkGui.AttachToolTip("The date " + displayName + " first joined GagSpeak.");
 
         statsPos.X += dateWidth + spacing;
-        KinkPlateUI.AddImage(drawList, _cosmetics.CorePluginTextures[CorePluginTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
 
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
@@ -286,9 +287,8 @@ public class KinkPlateLight
                              : ImGui.GetColorU32(ImGuiColors.DalamudGrey3);
         using (UiFontService.IconFont.Push())
         {
-            drawList.AddText(statsPos, color, FontAwesomeIcon.Flag.ToIconString());
+            drawList.AddText(statsPos, color, FAI.Flag.ToIconString());
         }
-        ImGui.SetWindowFontScale(1.0f);
         ImGui.SetCursorScreenPos(statsPos);
         using (ImRaii.Disabled(!KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
         {

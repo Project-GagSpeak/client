@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -18,23 +18,17 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairRestraintCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
-        : base(() => [
-            .. pairData.LastLightStorage.Restraints.OrderBy(x => x.Label),
-        ], log, bText, bTT)
+    public PairRestraintCombo(ILogger log, Pair pairData, MainHub mainHub, Func<IReadOnlyList<LightRestraintSet>> generator)
+        : base(generator, log)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
-
-        // update the current selection to the pairs active set if the last wardrobe & light data are not null.
         CurrentSelection = _pairRef.LastLightStorage.Restraints
             .FirstOrDefault(r => r.Id == _pairRef.LastRestraintData.Identifier);
     }
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.ApplyRestraintSets is false
-        || _pairRef.LastRestraintData.Identifier == CurrentSelection?.Id
-        || CurrentSelection is null;
+        => CurrentSelection is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == CurrentSelection.Id;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -43,7 +37,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(restraintSet.Label, selected);
         
-        var iconWidth = CkGui.IconSize(FontAwesomeIcon.InfoCircle).X;
+        var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
         var hasGlamour = restraintSet.AffectedSlots.Any();
         var hasInfo = !restraintSet.Desc.IsNullOrWhitespace() || restraintSet.TraitAllowances.Contains(MainHub.UID);
         var shiftOffset = hasInfo ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
@@ -53,18 +47,18 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
 
         if (hasInfo)
         {
-            CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+            CkGui.IconText(FAI.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
             DrawItemTooltip(restraintSet);
             ImGui.SameLine();
         }
 
         // icon for the glamour preview.
-        CkGui.IconText(FontAwesomeIcon.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        CkGui.IconText(FAI.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
         // if (hasGlamour) _ttPreview.DrawLightRestraintOnHover(restraintItem);
         return ret;
     }
 
-    protected override void OnButtonPress()
+    protected override void OnButtonPress(int _)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (CurrentSelection is null)
@@ -79,7 +73,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
             Enabler = MainHub.UID,
         };
 
-        _ = _mainHub.UserPushPairDataRestraint(dto);
+        _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
         Log.LogDebug("Applying Restraint Set " + CurrentSelection.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }

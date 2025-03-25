@@ -15,7 +15,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
     {
         _dtrBarService = dtrService;
 
-        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
+        Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
     }
 
     private List<IPlayerCharacter> NonGagspeakUsers => _dtrBarService._visiblePlayers;
@@ -29,7 +29,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
         var posY = LastRecordedPos.Y + ImGui.GetFrameHeight();
         ImGui.SetNextWindowPos(new Vector2(posX, posY));
 
-        Flags |= ImGuiWindowFlags.NoMove;
+        Flags |= WFlags.NoMove;
 
         var cnt = NonGagspeakUsers.Count > 10 ? 10+2 : NonGagspeakUsers.Count+2;
         var size = new Vector2(200f, (ImGui.GetTextLineHeightWithSpacing() * cnt) - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y + ImGuiHelpers.GlobalScale);

@@ -112,7 +112,7 @@ public class Tutorial
         ImGui.SetNextWindowPos(pos);
         ImGui.SetNextWindowSize(size);
         ImGui.SetNextWindowFocus();
-        using var popup = Popup(PopupLabel, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.Popup);
+        using var popup = Popup(PopupLabel, WFlags.AlwaysAutoResize | WFlags.Popup);
         if (!popup)
             return;
 
@@ -153,20 +153,20 @@ public class Tutorial
         ImGui.Spacing();
         using (ImRaii.Group())
         {
-/*            if(CkGui.IconButton(FontAwesomeIcon.ArrowAltCircleLeft, disabled: CurrentStep == 0))
+/*            if(CkGui.IconButton(FAI.ArrowAltCircleLeft, disabled: CurrentStep == 0))
                 nextValue = nextStepVal-2;
             ImGuiUtil.HoverTooltip("Go back one Step.");
 
             ImUtf8.SameLineInner();*/
             using (ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(_showDetails ? ImGuiColors.DalamudViolet : ImGuiColors.DalamudWhite)))
             {
-                if(CkGui.IconButton(FontAwesomeIcon.InfoCircle))
+                if(CkGui.IconButton(FAI.InfoCircle))
                     _showDetails = !_showDetails;
                 ImGuiUtil.HoverTooltip("Shows additional details about each step for anyone curious.");
             }
 
             ImUtf8.SameLineInner();
-            if(CkGui.IconButton(FontAwesomeIcon.ArrowAltCircleRight))
+            if(CkGui.IconButton(FAI.ArrowAltCircleRight))
                 nextValue = nextStepVal;
             ImGuiUtil.HoverTooltip("Go to the next Step.");
 

@@ -18,7 +18,7 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     {
         const string newFolderName = "folderName";
 
-        if (CkGui.IconButton(FontAwesomeIcon.FolderPlus))
+        if (CkGui.IconButton(FAI.FolderPlus))
             ImGui.OpenPopup(newFolderName);
         ImUtf8.HoverTooltip("Create a new, empty folder. Can contain '/' to create a directory structure."u8);
 
@@ -49,7 +49,7 @@ public partial class CkFileSystemSelector<T, TStateStorage>
         if (!keys)
             tt += $"\nHold {modifier} while clicking to delete the {name}.";
 
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Trash.ToIconString(), size, tt, !anySelected || !keys, true))
+        if (ImGuiUtil.DrawDisabledButton(FAI.Trash.ToIconString(), size, tt, !anySelected || !keys, true))
         {
             if (Selected != null)
                 delete(Selected);

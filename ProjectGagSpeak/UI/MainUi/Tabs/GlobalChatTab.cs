@@ -102,7 +102,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         }
 
         // Set width for input box and create it with a hint
-        FontAwesomeIcon Icon = DiscoverService.GlobalChat.AutoScroll ? FontAwesomeIcon.ArrowDownUpLock : FontAwesomeIcon.ArrowDownUpAcrossLine;
+        FontAwesomeIcon Icon = DiscoverService.GlobalChat.AutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
         ImGui.SetNextItemWidth(CurrentRegion.X - CkGui.IconButtonSize(Icon).X*2 - ImGui.GetStyle().ItemInnerSpacing.X*2);
         if (ImGui.InputTextWithHint("##ChatInputBox" + windowId, "chat message here...", ref nextMessageRef, 300))
         {
@@ -143,7 +143,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
         // draw the popout button
         ImUtf8.SameLineInner();
-        if (CkGui.IconButton(FontAwesomeIcon.Expand, disabled: !KeyMonitor.ShiftPressed()))
+        if (CkGui.IconButton(FAI.Expand, disabled: !KeyMonitor.ShiftPressed()))
             Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
         CkGui.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }

@@ -30,8 +30,8 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <returns> The minimum and maximum points of the drawn item. </returns>
     private (Vector2, Vector2) DrawLeaf(CkFileSystem<T>.Leaf leaf, in TStateStorage state)
     {
-        DrawLeafName(leaf, state, leaf == SelectedLeaf || SelectedPaths.Contains(leaf));
-        if(ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        var hovered = DrawLeafName(leaf, state, leaf == SelectedLeaf || SelectedPaths.Contains(leaf));
+        if(hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             Select(leaf, state, ImGui.GetIO().KeyCtrl, ImGui.GetIO().KeyShift);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -203,12 +203,11 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     public bool DrawList(float width)
     {
         DrawPopups();
-
         // Idk maybe this will fix the annoying assertion that occurs on the first drawframe or whatever.
         using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
             .Push(ImGuiCol.ButtonActive, uint.MinValue);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, ImGuiWindowFlags.NoScrollbar);
+        using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, WFlags.NoScrollbar);
         try
         {
             style.Pop();

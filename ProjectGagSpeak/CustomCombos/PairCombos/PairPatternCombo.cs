@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.User;
@@ -21,7 +21,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
     public PairPatternCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
         : base(() => [
             .. pairData.LastLightStorage.Patterns.OrderBy(x => x.Label),
-        ], log, FontAwesomeIcon.PlayCircle, bText, bTT)
+        ], log, FAI.PlayCircle, bText, bTT)
     {
         _mainHub = mainHub;
         _pairRef = pairData;
@@ -47,12 +47,12 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
 
         // draw the shouldLoop icon.
-        CkGui.IconText(FontAwesomeIcon.Sync, ImGui.GetColorU32(pattern.Loops ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.Loops ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
         if (pattern.Loops) CkGui.AttachToolTip("This is a Looping Pattern.");
 
         // draw the info icon.
         ImGui.SameLine();
-        CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
         DrawItemTooltip(pattern);
         return ret;
     }

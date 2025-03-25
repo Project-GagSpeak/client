@@ -1,23 +1,19 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI;
-using GagSpeak.Utils;
-using ImGuiNET;
-using static GagSpeak.Restrictions.RestrictionFileSelector;
-using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Extensions;
-using OtterGui.Text;
-using OtterGui;
+using ImGuiNET;
 
 namespace GagSpeak.FileSystems;
 
@@ -61,20 +57,26 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
 
-    protected override void DrawLeafName(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
+    protected override bool DrawLeafName(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
         using var id = ImRaii.PushId((int)leaf.Identifier);
         using var leafInternalGroup = ImRaii.Group();
-        DrawLeafInternal(leaf, state, selected);
+        return DrawLeafInternal(leaf, state, selected);
     }
 
-    private void DrawLeafInternal(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
+    private bool DrawLeafInternal(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         ImGui.InvisibleButton(leaf.Value.GagType.GagName(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+        // If it was double clicked, open it in the editor.
+        if (hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            _manager.StartEditing(leaf.Value);
+
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
         using (ImRaii.Group())
@@ -94,6 +96,8 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
                 new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
+
+        return hovered;
     }
 
     protected override void DrawFolderName(CkFileSystem<GarblerRestriction>.Folder folder, bool selected)
@@ -111,18 +115,12 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
-    protected override float CustomFilters(float width)
+    protected override float CustomFiltersWidth(float width)
+        => width - CkGui.IconButtonSize(FAI.FolderPlus).X;
+
+    protected override void DrawCustomFilters()
     {
-        var pos = ImGui.GetCursorPos();
-        var remainingWidth = width - CkGui.IconButtonSize(FontAwesomeIcon.FolderPlus).X;
-
-        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
-
-        ImGui.SetCursorPos(buttonsPos);
         DrawFolderButton();
-
-        ImGui.SetCursorPos(pos);
-        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
     }
 }
 

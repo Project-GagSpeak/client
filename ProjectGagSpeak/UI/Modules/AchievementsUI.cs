@@ -38,7 +38,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
         WindowName = $"Achievements###GagSpeakAchievementsUI";
 
-        Flags |= ImGuiWindowFlags.NoDocking;
+        Flags |= WFlags.NoDocking;
 
         SizeConstraints = new WindowSizeConstraints()
         {
@@ -80,7 +80,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         using (ImRaii.PushId("MainMenuTabBar")) _tabMenu.Draw(contentRegion);
 
         // Draw out the achievements in a child window we can scroll, but do not display the scroll bar.
-        using (ImRaii.Child("AchievementsSection", new Vector2(contentRegion, 0), false, ImGuiWindowFlags.NoScrollbar))
+        using (ImRaii.Child("AchievementsSection", new Vector2(contentRegion, 0), false, WFlags.NoScrollbar))
         {
 
             // display content based on the tab selected
@@ -149,7 +149,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         ImGui.Separator();
 
         // create a window for scrolling through the available achievements.
-        using var achievementListChild = ImRaii.Child("##AchievementListings" + type.ToString(), ImGui.GetContentRegionAvail(), false, ImGuiWindowFlags.NoScrollbar);
+        using var achievementListChild = ImRaii.Child("##AchievementListings" + type.ToString(), ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
 
         // draw the achievements in the first column.
         foreach (var achievement in filteredUnlocks)
@@ -158,11 +158,11 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     public void DrawSearchFilter(float availableWidth, float spacingX)
     {
-        var clearButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
-        var resetButtonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.SyncAlt, "Reset");
+        var clearButtonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
+        var resetButtonSize = CkGui.IconTextButtonSize(FAI.SyncAlt, "Reset");
 
 #if DEBUG 
-        if (CkGui.IconTextButton(FontAwesomeIcon.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
+        if (CkGui.IconTextButton(FAI.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
         {
             // fire and forget.
             _ = _achievementManager.ResetAchievementData();
@@ -179,7 +179,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             AchievementSearchString = filter;
         }
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
+        if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
         {
             AchievementSearchString = string.Empty;
         }
@@ -201,7 +201,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var imageTabWidth = AchievementIconSize.X + ImGui.GetStyle().ItemSpacing.X * 2;
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X, AchievementIconSize.Y + ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().CellPadding.Y * 2);
-        using (ImRaii.Child("##Achievement-" + achievementItem.Title, size, true, ImGuiWindowFlags.ChildWindow))
+        using (ImRaii.Child("##Achievement-" + achievementItem.Title, size, true, WFlags.ChildWindow))
         {
             try
             {
@@ -219,7 +219,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     using (ImRaii.Group())
                     {
                         var progress = achievementItem.CurrentProgress();
-                        var icon = achievementItem.IsCompleted ? FontAwesomeIcon.Trophy : (progress != 0 ? FontAwesomeIcon.Stopwatch : FontAwesomeIcon.Trophy);
+                        var icon = achievementItem.IsCompleted ? FAI.Trophy : (progress != 0 ? FAI.Stopwatch : FAI.Trophy);
                         var color = achievementItem.IsCompleted ? ImGuiColors.ParsedGold : (progress != 0 ? ImGuiColors.DalamudGrey : ImGuiColors.DalamudGrey3);
                         var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
                         ImGui.AlignTextToFramePadding();
@@ -234,7 +234,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                         ImGui.Separator();
 
                         ImGui.AlignTextToFramePadding();
-                        CkGui.IconText(FontAwesomeIcon.InfoCircle, ImGuiColors.TankBlue);
+                        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
 
                         ImUtf8.SameLineInner();
                         ImGui.AlignTextToFramePadding();
@@ -255,7 +255,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     // draw the text in the second column.
                     ImGui.TableNextColumn();
                     // we should fetch the cached image from our texture cache service
-                    var achievementCosmetic = _cosmeticTextures.CorePluginTextures[CorePluginTexture.Logo256bg];
+                    var achievementCosmetic = _cosmeticTextures.CoreTextures[CoreTexture.Icon256Bg];
                     // Ensure its a valid texture wrap
                     if (!(achievementCosmetic is { } wrap))
                     {
@@ -356,7 +356,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                 ImDrawFlags.RoundCornersAll);
         }
 
-        CkGui.DrawOutlinedFont(
+        CkGui.OutlinedFont(
             drawList,
             progressBarString,
             pos with { X = pos.X + ((progressWidth - progressBarStringTextSize.X) / 2f) - 1, Y = pos.Y + ((progressHeight - progressBarStringTextSize.Y) / 2f) - 1 },

@@ -34,7 +34,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
     {
         IsOpen = false;
         Size = new(768, 600);
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar;
+        Flags = WFlags.NoResize | WFlags.NoCollapse | WFlags.NoScrollbar;
         AllowClickthrough = false;
         AllowPinning = false;
         _hub = hub;
@@ -121,14 +121,14 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             CkGui.TextWrapped("This is what's seen in the account page, and inside of KinkPlates™");
             ImGui.Spacing();
 
-            var width = CkGui.IconTextButtonSize(FontAwesomeIcon.Trash, "Clear uploaded profile picture");
+            var width = CkGui.IconTextButtonSize(FAI.Trash, "Clear uploaded profile picture");
             // move down to the newline and draw the buttons for adding and removing images
-            if (CkGui.IconTextButton(FontAwesomeIcon.FileUpload, "Upload new profile picture", width))
+            if (CkGui.IconTextButton(FAI.FileUpload, "Upload new profile picture", width))
                 HandleFileDialog();
             CkGui.AttachToolTip("Select and upload a new profile picture");
 
             // let them clean their image too if they desire.
-            if (CkGui.IconTextButton(FontAwesomeIcon.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))
+            if (CkGui.IconTextButton(FAI.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))
             {
                 _uploadedImageData = null!;
                 _croppedImageData = null!;
@@ -292,13 +292,13 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             ImGui.TextUnformatted("Cropped Image Size: " + CroppedFileSize);
 
             // draw the compress & upload.
-            if (CkGui.IconTextButton(FontAwesomeIcon.Compress, "Compress"))
+            if (CkGui.IconTextButton(FAI.Compress, "Compress"))
                 CompressImage();
             CkGui.AttachToolTip("Shrinks the image to a 512x512 ratio for better performance");
 
             ImGui.SameLine();
 
-            if (CkGui.IconTextButton(FontAwesomeIcon.Upload, "Upload to Server", disabled: _croppedImageData is null))
+            if (CkGui.IconTextButton(FAI.Upload, "Upload to Server", disabled: _croppedImageData is null))
                 _ = UploadToServer(profile);
         }
     }

@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
@@ -36,7 +36,7 @@ public partial class PairStickyUI
 
         // Expander for ApplyGag
         var disableApplyExpand = !SPair.PairPerms.ApplyGags || gagSlot.Padlock is not Padlocks.None;
-        if (CkGui.IconTextButton(FontAwesomeIcon.CommentDots, applyGagText, WindowMenuWidth, true, disableApplyExpand))
+        if (CkGui.IconTextButton(FAI.CommentDots, applyGagText, WindowMenuWidth, true, disableApplyExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyGag) ? InteractionType.None : InteractionType.ApplyGag;
         CkGui.AttachToolTip(applyGagTT);
 
@@ -44,7 +44,7 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.ApplyGag)
         {
             using (ImRaii.Child("###GagApply", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.GagApplyCombo.DrawComboButton("##ApplyGag-" + _pairCombos.CurGagLayer, "Select a Gag to apply", WindowMenuWidth, ImGui.GetTextLineHeightWithSpacing());
+                _pairCombos.GagItemCombo.DrawComboButton("##PairApplyGag", WindowMenuWidth, _pairCombos.CurGagLayer, "Apply", "Select a Gag to Apply");
             ImGui.Separator();
         }
 
@@ -52,7 +52,7 @@ public partial class PairStickyUI
         var disableLockExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !SPair.PairPerms.LockGags;
         using (ImRaii.PushColor(ImGuiCol.Text, (gagSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.Lock, lockGagText, WindowMenuWidth, true, disableLockExpand))
+            if (CkGui.IconTextButton(FAI.Lock, lockGagText, WindowMenuWidth, true, disableLockExpand))
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockGag) ? InteractionType.None : InteractionType.LockGag;
         }
         CkGui.AttachToolTip(lockGagTT + 
@@ -63,13 +63,13 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.LockGag)
         {
             using (ImRaii.Child("###GagLock", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombo.PadlockLockWindowHeight())))
-                _pairCombos.GagPadlockCombo.DrawLockComboWithActive(WindowMenuWidth, lockGagText, lockGagTT);
+                _pairCombos.GagPadlockCombo.DrawLockComboWithActive("PairGagLock", WindowMenuWidth, _pairCombos.CurGagLayer, lockGagText, lockGagTT, false);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
         var disableUnlockExpand = gagSlot.Padlock is Padlocks.None or Padlocks.MimicPadlock || !SPair.PairPerms.UnlockGags;
-        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, unlockGagText, WindowMenuWidth, true, disableUnlockExpand))
+        if (CkGui.IconTextButton(FAI.Unlock, unlockGagText, WindowMenuWidth, true, disableUnlockExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockGag) ? InteractionType.None : InteractionType.UnlockGag;
         CkGui.AttachToolTip(unlockGagTT);
 
@@ -77,13 +77,13 @@ public partial class PairStickyUI
         if (PairCombos.Opened is InteractionType.UnlockGag)
         {
             using (ImRaii.Child("###GagUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.GagPadlockCombo.PadlockUnlockWindowHeight())))
-                _pairCombos.GagPadlockCombo.DrawUnlockCombo(WindowMenuWidth, unlockGagTT, unlockGagText);
+                _pairCombos.GagPadlockCombo.DrawUnlockCombo("PairGagUnlock", WindowMenuWidth, _pairCombos.CurGagLayer, unlockGagTT, unlockGagText);
             ImGui.Separator();
         }
 
         // Expander for removing.
         var disableRemoveExpand = gagSlot.GagItem is GagType.None || gagSlot.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveGags;
-        if (CkGui.IconTextButton(FontAwesomeIcon.TimesCircle, removeGagText, WindowMenuWidth, true, disableRemoveExpand))
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeGagText, WindowMenuWidth, true, disableRemoveExpand))
             PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveGag) ? InteractionType.None : InteractionType.RemoveGag;
         CkGui.AttachToolTip(removeGagTT);
 

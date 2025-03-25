@@ -1,4 +1,5 @@
 using Dalamud.Interface;
+using Dalamud.Utility;
 using GagSpeak.UI;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
@@ -10,38 +11,45 @@ using OtterGui.Text;
 namespace GagSpeak.CustomCombos;
 
 // The true core of the abstract combos for padlocks. Handles all shared logic operations.
+// 
+// Maintainers Note:
+// - The PadlockBase Draw() call handles the passing in of the layer it works with. This layer can be defaulted to -1 if unused.
+// - The layer is used so that when Lock() and Unlock() operations are used, their respective parent object knows what layer called it.
+// This prevents us from needing to store multiple caches of the same padlock, and redundant code blocks.
+// - (?) Is is the parent classes responsibility to ensure whenever padlock combo changes layers, its selections are reset and cleared.
 public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 {
+    protected readonly ILogger Log;
     private readonly HashSet<uint> _popupState = [];
+    private readonly Func<int, T> _generator;
+    protected T MonitoredItem { get; private set; }
+    private int _currentLayer = -1;
 
     /// <summary> Contains the list of padlocks. </summary>
-    public readonly TemporaryList<Padlocks> ComboPadlocks;
-    protected readonly T MonitoredItem;
-
-    protected readonly ILogger Log;
+    public readonly ICachingList<Padlocks> ComboPadlocks;
     protected float? InnerWidth;
     protected int? NewSelection;
-    private int _lastSelection = -1;
+    private int _lastSelection = 0;
     private bool _setScroll;
     private bool _closePopup;
-    private readonly string _label = string.Empty;
     protected string Password = string.Empty;
     protected string Timer = string.Empty;
 
     public Padlocks SelectedLock { get; protected set; } = Padlocks.None;
 
-    protected CkPadlockComboBase(Func<T> monitorGenerator, ILogger log, string label)
+    protected CkPadlockComboBase(Func<int, T> generator, ILogger log)
     {
         Log = log;
-        _label = label;
-
-        MonitoredItem = monitorGenerator();
+        _currentLayer = -1;
+        _generator = generator;
+        MonitoredItem = generator(-1);
         ComboPadlocks = new TemporaryList<Padlocks>(ExtractPadlocks());
     }
 
-    public void ResetSelection() 
+
+    public void ResetSelection()
     {
-        SelectedLock = Padlocks.None;
+        ComboPadlocks.ClearList();
         ResetInputs();
     }
 
@@ -55,38 +63,50 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
         : ImGui.GetFrameHeight();
 
+    protected void UpdateLayer(int newLayer)
+    {
+        _currentLayer = newLayer;
+        MonitoredItem = _generator(newLayer);
+        ResetSelection();
+    }
+
     protected abstract bool DisableCondition();
 
     // we run this here so that we can get the specific padlocks we have access to.
     // This is ok because it is only a small list being made.
     protected abstract IEnumerable<Padlocks> ExtractPadlocks();
     protected virtual string ItemName(T item) => item.ToString() ?? string.Empty;
-    protected abstract void OnLockButtonPress();
-    protected abstract void OnUnlockButtonPress();
+    protected abstract void OnLockButtonPress(int layerIdx);
+    protected abstract void OnUnlockButtonPress(int layerIdx);
 
-    public virtual void DrawLockComboWithActive(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
+    public virtual void DrawLockComboWithActive(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
     {
         DisplayActiveItem(width);
-        DrawLockCombo(width, tt, btt, flags);
+        DrawLockCombo(label, width, layerIdx, buttonTxt, tooltip, isTwoRow);
     }
 
-    public virtual void DrawLockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
+    public virtual void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
     {
         // we need to calculate the size of the button for locking, so do so.
-        var buttonWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Lock, "Lock");
+        using var group = ImRaii.Group();
+        var buttonWidth = buttonTxt.IsNullOrEmpty()
+            ? CkGui.IconButtonSize(FAI.Lock).X
+            : CkGui.IconTextButtonSize(FAI.Lock, "Lock");
         var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+
+        // If for whatever reason the current layer is different from the previous, reset & regenerate inputs & combo list.
+        if (_currentLayer != layerIdx)
+            UpdateLayer(layerIdx);
 
         // draw the combo box.
         ImGui.SetNextItemWidth(comboWidth);
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         using var disabled = ImRaii.Disabled(DisableCondition());
-        using (var combo = ImRaii.Combo("##" + _label + "-LockCombo", SelectedLock.ToName()))
+        using (var combo = ImRaii.Combo(label, SelectedLock.ToName()))
         {
             // display the tooltip for the combo with visible.
             using (ImRaii.Enabled())
             {
-                CkGui.AttachToolTip(tt);
-                // Handle right click clearing.
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     ResetSelection();
             }
@@ -102,94 +122,149 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         // draw button thing for locking / unlocking.
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
-            OnLockButtonPress();
-        CkGui.AttachToolTip(btt);
+        if(buttonTxt.IsNullOrEmpty())
+        {
+            if (CkGui.IconButton(FAI.Lock, disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
+                OnLockButtonPress(layerIdx);
+        }
+        else
+        {
+            if (CkGui.IconTextButton(FAI.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
+                OnLockButtonPress(layerIdx);
+        }
+        CkGui.AttachToolTip(tooltip);
 
         // on next line show lock fields.
-        ShowLockFields(width);
+        if (isTwoRow)
+            TwoRowLockFields(label, width);
+        else
+            ThreeRowLockFields(label, width);
     }
 
-    public virtual void DrawUnlockCombo(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
+    public void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
+        => DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip, ImGuiComboFlags.None);
+
+    public virtual void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, 
+        ImGuiComboFlags flags = ImGuiComboFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
-        var buttonWidth = CkGui.IconTextButtonSize(FontAwesomeIcon.Unlock, "Unlock");
-        var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        var lastPadlock = MonitoredItem.Padlock;
+        using var group = ImRaii.Group();
+        var buttonWidth = buttonTxt.IsNullOrEmpty()
+            ? CkGui.IconButtonSize(FAI.Unlock).X
+            : CkGui.IconTextButtonSize(FAI.Unlock, "Unlock");
+        var unlockFieldWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
+        // If for whatever reason the current layer is different from the previous, reset & regenerate inputs & combo list.
+        if (_currentLayer != layerIdx)
+            UpdateLayer(layerIdx);
+
+        var lastPadlock = MonitoredItem.Padlock;
         // display the active padlock for the set in a disabled view.
-        using (ImRaii.Disabled(true))
+        using (ImRaii.Disabled(!MonitoredItem.Padlock.IsPasswordLock()))
         {
-            ImGui.SetNextItemWidth(comboWidth);
-            if (ImGui.BeginCombo("##" + _label + "-UnlockCombo", MonitoredItem.Padlock.ToName())) { ImGui.EndCombo(); }
+            var hint = MonitoredItem.Padlock switch
+            {
+                Padlocks.CombinationPadlock => "Guess Combination...",
+                Padlocks.PasswordPadlock => "Guess Password...",
+                Padlocks.TimerPasswordPadlock => "Guess Password...",
+                _ => string.Empty,
+            };
+            uint maxLength = MonitoredItem.Padlock switch
+            {
+                Padlocks.CombinationPadlock => 4,
+                _ => 20,
+            };
+            CkGui.InputTextRightIcon("##UnlockerField_" + label, unlockFieldWidth, hint, ref Password, maxLength, FAI.Key);
         }
 
         // draw button thing.
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FontAwesomeIcon.Unlock, "Unlock", disabled: MonitoredItem.Padlock is Padlocks.None, id: "##" + _label + "-UnlockButton"))
-            OnUnlockButtonPress();
-        CkGui.AttachToolTip(btt);
-
-        // on next line show lock fields.
-        ShowUnlockFields(lastPadlock, width);
+        if (buttonTxt.IsNullOrEmpty())
+        {
+            if (CkGui.IconButton(FAI.Unlock, disabled: MonitoredItem.Padlock is Padlocks.None, id: "##" + label + "-UnlockButton"))
+                OnUnlockButtonPress(layerIdx);
+        }
+        else
+        {
+            if (CkGui.IconTextButton(FAI.Unlock, "Unlock", disabled: MonitoredItem.Padlock is Padlocks.None, id: "##" + label + "-UnlockButton"))
+                OnUnlockButtonPress(layerIdx);
+        }
+        CkGui.AttachToolTip(tooltip);
     }
 
     private void DisplayActiveItem(float width)
     {
         ImGui.SetNextItemWidth(width);
         using var disabled = ImRaii.Disabled(true);
-        using var combo = ImRaii.Combo(_label + "ActiveDisplay", ItemName(MonitoredItem));
+        using var combo = ImRaii.Combo("ActiveDisplay", ItemName(MonitoredItem));
     }
 
-    protected void ShowLockFields(float width)
+    /// <summary> Draws out the padlock fields below. </summary>
+    /// <remarks> IsTwoRow defines if it is made for restrictions/restraints or gags. </remarks>
+    protected void TwoRowLockFields(string id, float width)
     {
-        if (SelectedLock is Padlocks.None)
-            return;
-
         var leftWidth = width * (2 / 3f);
         var rightWidth = width - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        switch (SelectedLock)
+
+        string passFieldLabel = "##Input_" + id;
+        string passFieldHint = SelectedLock switch
         {
-            case Padlocks.CombinationPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Combination_Input" + _label, "Enter 4 digit combination...", ref Password, 4);
-                break;
-            case Padlocks.PasswordPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref Password, 20);
-                break;
-            case Padlocks.TimerPasswordPadlock:
-                ImGui.SetNextItemWidth(leftWidth);
-                ImGui.InputTextWithHint("##Password_Input" + _label, "Enter password...", ref Password, 20);
-                ImUtf8.SameLineInner();
-                ImGui.SetNextItemWidth(rightWidth);
-                ImGui.InputTextWithHint("##Timer_Input" + _label, "Ex: 0h2m7s", ref Timer, 12);
-                break;
-            case Padlocks.TimerPadlock:
-            case Padlocks.OwnerTimerPadlock:
-            case Padlocks.DevotionalTimerPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Timer_Input" + _label, "Ex: 0h2m7s", ref Timer, 12);
-                break;
-        }
+            Padlocks.CombinationPadlock => "Enter 4 digit combination...",
+            _ => "Enter password...",
+        };
+        string timerFieldHint = "Ex: 0h2m7s";
+        uint maxLength = SelectedLock switch
+        {
+            Padlocks.CombinationPadlock => 4,
+            _ => 20,
+        };
+
+        CkGui.InputTextRightIcon(passFieldLabel, leftWidth, passFieldHint, ref Password, maxLength, FAI.Key);
+        ImUtf8.SameLineInner();
+        CkGui.InputTextRightIcon("##Timer_" + id, rightWidth, timerFieldHint, ref Timer, 12, FAI.Clock);
     }
 
-    protected void ShowUnlockFields(Padlocks padlock, float width)
+    protected void ThreeRowLockFields(string id, float width)
     {
-        if (!GsPadlockEx.IsPasswordLock(padlock))
-            return;
+        var iconButtonSize = CkGui.IconButtonSize(FAI.Clock);
+        var inputTextWidth = width - iconButtonSize.X - ImGui.GetStyle().ItemInnerSpacing.X;
 
-        switch (padlock)
+        string passFieldLabel = "##Input_" + id;
+        string passFieldHint = SelectedLock switch
         {
-            case Padlocks.CombinationPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Combination_Input_Unlock" + _label, "Enter 4 digit combination...", ref Password, 4);
-                break;
-            case Padlocks.PasswordPadlock:
-            case Padlocks.TimerPasswordPadlock:
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##Password_Input_Unlock" + _label, "Enter password...", ref Password, 20);
-                break;
+            Padlocks.CombinationPadlock => "Enter 4 digit combination...",
+            _ => "Enter password...",
+        };
+        string timerFieldHint = "Ex: 0h2m7s";
+        uint maxLength = SelectedLock switch
+        {
+            Padlocks.CombinationPadlock => 4,
+            _ => 20,
+        };
+
+        // Password Row
+        using (ImRaii.Group())
+        {
+            using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
+            {
+                ImGui.SetNextItemWidth(inputTextWidth);
+                ImGui.InputTextWithHint(passFieldLabel, passFieldHint, ref Password, maxLength);
+            }
+            ImUtf8.SameLineInner();
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(FAI.Key);
+        }
+        // Timer Row
+        using (ImRaii.Group())
+        {
+            using (ImRaii.Disabled(!SelectedLock.IsTimerLock()))
+            {
+                ImGui.SetNextItemWidth(inputTextWidth);
+                ImGui.InputTextWithHint("##Timer_" + id, timerFieldHint, ref Timer, 12);
+            }
+            ImUtf8.SameLineInner();
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(FAI.Clock);
         }
     }
 }

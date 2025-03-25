@@ -1,45 +1,38 @@
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Padlockable;
 
 public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
     private readonly GagspeakMediator _mediator;
-    private readonly RestraintManager _restraints;
-    public PadlockRestraintsClient(GagspeakMediator mediator, RestraintManager restraints, ILogger log, string label)
-        : base(() => restraints.ActiveRestraintData ?? new CharaActiveRestraint(), log, label)
+    private readonly RestraintManager _manager;
+    public PadlockRestraintsClient(ILogger log, GagspeakMediator mediator, RestraintManager manager, 
+        Func<int, CharaActiveRestraint> activeSlotGenerator) : base(activeSlotGenerator, log)
     {
         _mediator = mediator;
-        _restraints = restraints;
+        _manager = manager;
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
         => GsPadlockEx.ClientLocks;
 
     protected override string ItemName(CharaActiveRestraint item)
-        => _restraints.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";
-
-    public void DrawPadlockComboSection(float width, string tt, string btt, ImGuiComboFlags flags = ImGuiComboFlags.None)
-    {
-        // grab the latest padlock. If it is not none, we should draw the unlock base, otherwise, draw the lock base.
-        if (MonitoredItem.IsLocked())
-            DrawUnlockCombo(width, tt, btt, flags);
-        else
-            DrawLockCombo(width, tt, btt, flags);
-    }
+        => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";
 
     protected override bool DisableCondition()
-        => _restraints.ActiveRestraintData is null
-        || MonitoredItem.CanLock() is false
-        || MonitoredItem.Padlock == SelectedLock;
+        => !MonitoredItem.CanLock() || MonitoredItem.Padlock == SelectedLock;
 
-    protected override void OnLockButtonPress()
+    public void DrawLockCombo(float width, string tooltip)
+    => DrawLockCombo("ClientRestraintLock", width, 0, string.Empty, tooltip, false);
+
+    public void DrawUnlockCombo(float width, string tooltip)
+        => DrawUnlockCombo("ClientRestraintUnlock", width, 0, string.Empty, tooltip);
+
+    protected override void OnLockButtonPress(int _)
     {
         if (MonitoredItem.CanLock())
         {
@@ -57,7 +50,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 
         ResetInputs();
     }
-    protected override void OnUnlockButtonPress()
+    protected override void OnUnlockButtonPress(int _)
     {
         if (MonitoredItem.CanUnlock())
         {
@@ -72,7 +65,6 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             ResetSelection();
             return;
         }
-
         ResetInputs();
     }
 }

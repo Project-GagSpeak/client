@@ -10,7 +10,7 @@ using GagspeakAPI.Dto.UserPair;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components.UserPairList;
+namespace GagSpeak.UI.Components;
 
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)
@@ -48,7 +48,7 @@ public class DrawUserPair
         }
 
         var selected = false;
-        // get the current screen cursor pos
+        // get the current cursor pos
         var cursorPos = ImGui.GetCursorPosX();
         using var id = ImRaii.PushId(GetType() + _id);
         using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), showHovered && IsHovered[ident]))
@@ -63,7 +63,7 @@ public class DrawUserPair
                 ImGui.SameLine();
                 var posX = ImGui.GetCursorPosX();
 
-                var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FontAwesomeIcon.EllipsisV).X;
+                var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FAI.EllipsisV).X;
 
                 if (showRightButtons)
                 {
@@ -89,7 +89,7 @@ public class DrawUserPair
         if (Image.SupporterWrap is { } wrap)
         {
             ImGui.SameLine(cursorPos);
-            ImGui.SetCursorPosX(cursorPos - CkGui.IconSize(FontAwesomeIcon.EllipsisV).X - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SetCursorPosX(cursorPos - CkGui.IconSize(FAI.EllipsisV).X - ImGui.GetStyle().ItemSpacing.X);
             ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
             CkGui.AttachToolTip(Image.Tooltip);
         }
@@ -105,12 +105,12 @@ public class DrawUserPair
         if (!_pair.IsOnline)
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-            CkGui.IconText(FontAwesomeIcon.User);
+            CkGui.IconText(FAI.User);
             userPairText = _pair.UserData.AliasOrUID + " is offline";
         }
         else if (_pair.IsVisible)
         {
-            CkGui.IconText(FontAwesomeIcon.Eye, ImGuiColors.ParsedGreen);
+            CkGui.IconText(FAI.Eye, ImGuiColors.ParsedGreen);
             userPairText = _pair.UserData.AliasOrUID + " is visible: " + _pair.PlayerName + Environment.NewLine + "Click to target this player";
             if (ImGui.IsItemClicked())
             {
@@ -120,7 +120,7 @@ public class DrawUserPair
         else
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen);
-            CkGui.IconText(FontAwesomeIcon.User);
+            CkGui.IconText(FAI.User);
             userPairText = _pair.UserData.AliasOrUID + " is online";
         }
         if (showToolTip)
@@ -136,15 +136,15 @@ public class DrawUserPair
 
     private float DrawRightSide()
     {
-        var permissionsButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Cog);
-        var barButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.EllipsisV);
+        var permissionsButtonSize = CkGui.IconButtonSize(FAI.Cog);
+        var barButtonSize = CkGui.IconButtonSize(FAI.EllipsisV);
         var spacingX = ImGui.GetStyle().ItemSpacing.X / 2;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var currentRightSide = windowEndX - barButtonSize.X;
 
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
-        if (CkGui.IconButton(FontAwesomeIcon.EllipsisV))
+        if (CkGui.IconButton(FAI.EllipsisV))
         {
             // open the permission setting window
             _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairActionFunctions, false));
@@ -152,7 +152,7 @@ public class DrawUserPair
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
-        if (CkGui.IconButton(FontAwesomeIcon.Cog))
+        if (CkGui.IconButton(FAI.Cog))
         {
             if (Pair != null) _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.ClientPermsForPair, false));
         }
@@ -160,7 +160,7 @@ public class DrawUserPair
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
-        if (CkGui.IconButton(FontAwesomeIcon.Search))
+        if (CkGui.IconButton(FAI.Search))
         {
             // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
             _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairPerms, false));

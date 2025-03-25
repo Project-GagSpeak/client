@@ -34,11 +34,11 @@
         <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
         <OutputType>Library</OutputType>
     </PropertyGroup>
-    
+
     <ItemGroup>
-      <None Remove="Localization\jp.json" />
+        <None Remove="Localization\jp.json" />
     </ItemGroup>
-    
+
     <ItemGroup>
       <Compile Include="CustomCombos\.Core\CkFilterComboBase.cs" />
       <Compile Include="CustomCombos\.Core\CkFilterComboButton.cs" />
@@ -111,11 +111,13 @@
             <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        
         <!--For localization and language handling.-->
         <Reference Include="CheapLoc">
             <HintPath>$(DalamudLibPath)CheapLoc.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        
         <!--For direct interaction with a users system. Useful for the hardcore 
             functionality or for key & mouse detection dalamud does not provide.-->
         <Reference Include="PInvoke.User32">
@@ -156,24 +158,23 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
         
         <!--For SignalR server connectivity, helpful for server connectivity processing-->
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.5" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.11" />
         
         <!--Handles our own plugin hosting methods for dependency injection and service management-->
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
         
         <!--Adds support for our simulated vibrator (potentially replace with better audio option for more sound quality.-->
         <PackageReference Include="NAudio" Version="2.2.1" />
         
-        <!--For handling debouncing inputs to send vibrations to connected devices, for stablizing overload -->
+        <!--For handling debouncing inputs to send vibrations to connected devices, for stablizing overload (might not need this anymore we will see) -->
         <PackageReference Include="DebounceThrottle" Version="3.0.1" />
         
         <!-- Toybox Lovense Compatibility. (According to docs possibly estim too) -->
         <PackageReference Include="Buttplug" Version="4.0.0" />
         
         <!--For image processing and manipulation beyond dalamuds textureprovider capabilities..-->
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
     </ItemGroup>
     
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
@@ -186,7 +187,6 @@
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="CkCommons\CkGui\Utils\" />
       <Folder Include="PlayerClientState\Toybox State\Caches\" />
     </ItemGroup>
 </Project>

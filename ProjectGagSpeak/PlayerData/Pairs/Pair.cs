@@ -20,7 +20,7 @@ namespace GagSpeak.PlayerData.Pairs;
 
 /// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
 /// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
-public class Pair
+public class Pair : IComparable<Pair>
 {
     private readonly ILogger<Pair> _logger;
     private readonly GagspeakMediator _mediator;
@@ -78,6 +78,14 @@ public class Pair
     public string PlayerNameWithWorld => CachedPlayer?.PlayerNameWithWorld ?? string.Empty;
     public string CachedPlayerString() => CachedPlayer?.ToString() ?? "No Cached Player"; // string representation of the cached player.
     public Dictionary<EquipSlot, (EquipItem, string)> LockedSlots { get; private set; } = new(); // the locked slots of the pair. Used for quick reference in profile viewer.
+
+    // IComparable satisfier
+    public int CompareTo(Pair? other)
+    {
+        if (other is null)
+            return 1;
+        return string.Compare(UserData.UID, other.UserData.UID, StringComparison.Ordinal);
+    }
 
     public void AddContextMenu(IMenuOpenedArgs args)
     {

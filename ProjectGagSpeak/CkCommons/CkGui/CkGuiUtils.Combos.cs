@@ -21,7 +21,7 @@ public static partial class CkGuiUtils
     {
         ImGui.SetNextItemWidth(width);
         var previewText = options.Contains(current) ? (toString?.Invoke(current) ?? current.ToString()) : defaultText;
-        using var combo = ImRaii.Combo(label, previewText);
+        using var combo = ImRaii.Combo(label, previewText, ImGuiComboFlags.NoArrowButton);
         if (combo)
             foreach (var data in options)
             {

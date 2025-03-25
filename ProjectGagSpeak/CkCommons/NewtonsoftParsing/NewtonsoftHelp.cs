@@ -28,7 +28,7 @@ public static class JParser
         if (token is not JObject jsonObject)
             return;
 
-        var type = (MoodleType)Enum.Parse(typeof(MoodleType), jsonObject["Type"]?.Value<string>() ?? string.Empty);
+        var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
         moodle.Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
 
         if (moodle is MoodlePreset moodlePreset)
@@ -40,7 +40,7 @@ public static class JParser
         if (token is not JObject jsonObject)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var type = (MoodleType)Enum.Parse(typeof(MoodleType), jsonObject["Type"]?.Value<string>() ?? string.Empty);
+        var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
         var id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
 
         if (type == MoodleType.Preset)

@@ -183,9 +183,9 @@ public partial class PermissionsDrawer
         // First row must be drawn.
         using (ImRaii.Group())
         {
-            var length = width - CkGui.IconTextButtonSize(FontAwesomeIcon.Sync, "Refresh") + ImGui.GetFrameHeight();
+            var length = width - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") + ImGui.GetFrameHeight();
             var refCode = pairPerms.PiShockShareCode;
-            if (CkGui.IconInputText("Code" + PermissionData.DispName, FontAwesomeIcon.ShareAlt, string.Empty, "Unique Share Code",
+            if (CkGui.IconInputText("Code" + PermissionData.DispName, FAI.ShareAlt, string.Empty, "Unique Share Code",
                 ref refCode, 40, width, true, false))
             {
                 UiBlockingTask = AssignBlockingTask(SPPID.PiShockShareCode.ToPermValue().name, refCode, PermissionType.UniquePairPerm, UpdateDir.Own);
@@ -195,7 +195,7 @@ public partial class PermissionsDrawer
                 "--SEP--A Unique Share Code can have permissions elevated higher than the Global Share Code that only " + PermissionData.DispName + " can use.");
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FontAwesomeIcon.Sync, "Refresh", disabled: DateTime.Now - _lastRefresh < TimeSpan.FromSeconds(15) || refCode.IsNullOrWhitespace()))
+            if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: DateTime.Now - _lastRefresh < TimeSpan.FromSeconds(15) || refCode.IsNullOrWhitespace()))
             {
                 _lastRefresh = DateTime.Now;
                 UiBlockingTask = Task.Run(async () =>
@@ -215,7 +215,7 @@ public partial class PermissionsDrawer
         float seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
         using (var group = ImRaii.Group())
         {
-            if (CkGui.IconSliderFloat("##maxVibeTime" + PermissionData.DispName, FontAwesomeIcon.Stopwatch, "Max Vibe Duration",
+            if (CkGui.IconSliderFloat("##maxVibeTime" + PermissionData.DispName, FAI.Stopwatch, "Max Vibe Duration",
                 ref seconds, 0.1f, 15f, width * .65f, true, pairPerms.HasValidShareCode()))
             {
                 pairPerms.MaxVibrateDuration = TimeSpan.FromSeconds(seconds);

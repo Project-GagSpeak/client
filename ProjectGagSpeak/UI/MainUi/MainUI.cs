@@ -65,7 +65,7 @@ public class MainUI : WindowMediatorSubscriberBase
         {
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.Cog,
+                Icon = FAI.Cog,
                 Click = (msg) =>
                 {
                     Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
@@ -81,7 +81,7 @@ public class MainUI : WindowMediatorSubscriberBase
             },
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.Book,
+                Icon = FAI.Book,
                 Click = (msg) =>
                 {
                     Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
@@ -96,7 +96,7 @@ public class MainUI : WindowMediatorSubscriberBase
             },
             new TitleBarButton()
             {
-                Icon = FontAwesomeIcon.QuestionCircle,
+                Icon = FAI.QuestionCircle,
                 Click = (msg) =>
                 {
                     if(_guides.IsTutorialActive(TutorialType.MainUi))
@@ -130,7 +130,7 @@ public class MainUI : WindowMediatorSubscriberBase
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
 
-        Flags |= ImGuiWindowFlags.NoDocking;
+        Flags |= WFlags.NoDocking;
 
         SizeConstraints = new WindowSizeConstraints()
         {
@@ -261,14 +261,14 @@ public class MainUI : WindowMediatorSubscriberBase
 
     public void DrawAddPair(float availableXWidth, float spacingX)
     {
-        var buttonSize = CkGui.IconTextButtonSize(FontAwesomeIcon.Ban, "Clear");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
         ImGui.SetNextItemWidth(availableXWidth - buttonSize - spacingX);
         ImGui.InputTextWithHint("##otheruid", "Other players UID/Alias", ref _pairToAdd, 20);
         ImUtf8.SameLineInner();
         var existingUser = _pairManager.DirectPairs.Exists(p => string.Equals(p.UserData.UID, _pairToAdd, StringComparison.Ordinal) || string.Equals(p.UserData.Alias, _pairToAdd, StringComparison.Ordinal));
         using (ImRaii.Disabled(existingUser || string.IsNullOrEmpty(_pairToAdd)))
         {
-            if (CkGui.IconTextButton(FontAwesomeIcon.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
+            if (CkGui.IconTextButton(FAI.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
             {
                 // call the UserAddPair function on the server with the user data transfer object
                 _ = _hub.UserSendPairRequest(new(new(_pairToAdd), _pairToAddMessage));
@@ -324,8 +324,8 @@ public class MainUI : WindowMediatorSubscriberBase
     private void DrawServerStatus()
     {
         var windowPadding = ImGui.GetStyle().WindowPadding;
-        var addUserIcon = FontAwesomeIcon.UserPlus;
-        var connectionButtonSize = CkGui.IconButtonSize(FontAwesomeIcon.Link);
+        var addUserIcon = FAI.UserPlus;
+        var connectionButtonSize = CkGui.IconButtonSize(FAI.Link);
         var addUserButtonSize = CkGui.IconButtonSize(addUserIcon);
 
         var userCount = MainHub.MainOnlineUsers.ToString(CultureInfo.InvariantCulture);

@@ -7,6 +7,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.UI;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -84,7 +85,7 @@ public static class Icons
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
@@ -105,7 +106,7 @@ public static class Icons
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
@@ -126,7 +127,7 @@ public static class Icons
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FontAwesomeIcon.Star, col);
+        CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {

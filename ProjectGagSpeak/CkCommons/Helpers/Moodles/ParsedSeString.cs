@@ -1,10 +1,12 @@
+using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.UI;
 using ImGuiNET;
 using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Helpers;
 
-public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] parsedTextChunks)
+public class ParsedSeString(string rawString, ParsedSeStringText[] parsedTextChunks)
 {
     public string               RawString           => rawString;
     public ParsedSeStringText[] ParsedTextChunks    => parsedTextChunks;
@@ -19,11 +21,17 @@ public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] par
     /// <remarks> the width is defined by the display width, and begins at the ScreenCursorPos the function is called at. </remarks>
     public void RenderText(float displayWidth, int maxLines = 1)
     {
+        // Use monofont for performance optimizations.
+        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
+        // Get the width of a single character in the current font.
+        float charWidth = ImGui.CalcTextSize("W").X;
+
         // Track the current line, line text, and remaining width left for the current line.
         var currentLine = 0;
         var cursorPos = ImGui.GetCursorScreenPos();
         var maxPosX = cursorPos.X + displayWidth;
         var minPosX = cursorPos.X;
+
 
         foreach (var text in parsedTextChunks)
         {
@@ -47,34 +55,27 @@ public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] par
                     continue; // Skip the rest of the loop and process the next portion of text
                 }
 
-                var measuredWidth = ImGui.CalcTextSize(remainingText).X;
+                // Calculate how many characters fit in the line based on the available width
+                int charsPerLine = (int)((maxPosX - cursorPos.X) / charWidth);
 
-                // Compare based on cursor position + width instead of just width
-                if (cursorPos.X + measuredWidth > maxPosX)
+                if (remainingText.Length > charsPerLine)
                 {
-                    // pass the remaining text into an array of words.
-                    var words = remainingText.Split(' ');
-                    var lineText = string.Empty;
-                    int splitIndex = 0;
+                    // Substring the text to fit within the width, taking care of the word boundary
+                    var lineText = remainingText.Substring(0, charsPerLine);
+                    var lastSpaceIndex = lineText.LastIndexOf(' ');
 
-                    foreach (var word in words)
+                    // If we have a space, split at the space, otherwise, just truncate at charsPerLine
+                    if (lastSpaceIndex >= 0)
                     {
-                        var newLineText = string.IsNullOrEmpty(lineText) ? word : lineText + " " + word;
-                        var lineWidth = ImGui.CalcTextSize(newLineText).X;
-
-                        // If adding this word exceeds the maximum width, stop adding more words
-                        if (cursorPos.X + lineWidth > maxPosX)
-                            break;
-
-                        // Otherwise, add the word to the line text and increment the splitIndex
-                        lineText = newLineText;
-                        splitIndex++;
+                        lineText = remainingText.Substring(0, lastSpaceIndex);
+                        remainingText = remainingText.Substring(lastSpaceIndex + 1);
+                    }
+                    else
+                    {
+                        remainingText = remainingText.Substring(charsPerLine);
                     }
 
                     RenderLine(lineText, text, true, ref cursorPos);
-                    remainingText = string.Join(" ", words.Skip(splitIndex)).TrimStart();
-
-                    // Move to next line
                     currentLine++;
 
                     // Handle condition where we exceed max count.
@@ -86,6 +87,7 @@ public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] par
                 }
                 else
                 {
+                    // If the line fits, just render it
                     RenderLine(remainingText, text, false, ref cursorPos);
                     remainingText = string.Empty;
                 }
@@ -103,11 +105,11 @@ public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] par
             {
                 case ParsedSeStringFlags.All: // we don't support Italics yet so treat these the same.
                 case ParsedSeStringFlags.ColoredGlow:
-                    CkGui.DrawOutlinedFont(lineText, text.Foreground, text.Glow, 1);
+                    CkGui.OutlinedFont(lineText, text.Foreground, text.Glow, 1);
                     break;
 
                 case ParsedSeStringFlags.ItalicGlow:
-                    CkGui.DrawOutlinedFont(lineText, 0xFFFFFFFF, text.Glow, 1);
+                    CkGui.OutlinedFont(lineText, 0xFFFFFFFF, text.Glow, 1);
                     break;
 
                 case ParsedSeStringFlags.ColoredItalic:
@@ -116,7 +118,7 @@ public readonly struct ParsedSeString(string rawString, ParsedSeStringText[] par
                     break;
 
                 case ParsedSeStringFlags.HasGlow:
-                    CkGui.DrawOutlinedFont(lineText, 0xFFFFFFFF, text.Glow, 1);
+                    CkGui.OutlinedFont(lineText, 0xFFFFFFFF, text.Glow, 1);
                     break;
 
                 case ParsedSeStringFlags.HasItalic:

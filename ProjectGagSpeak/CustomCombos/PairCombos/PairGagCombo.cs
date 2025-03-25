@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UI;
-using GagSpeak.UI.Components.Combos;
+using GagSpeak.UI.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
@@ -17,40 +17,17 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    private int CurrentLayer;
-    
-    public PairGagCombo(int layer, Pair pair, MainHub hub, ILogger log, string bText, string bTT)
-        : base(() => [
-            .. Enum.GetValues<GagType>().Except(new[] { GagType.None }),
-        ], log, bText, bTT)
+    private GagType _currentGag;
+    private int _currentSlotIdx;
+    public PairGagCombo(ILogger log, Pair pair, MainHub hub, Func<IReadOnlyList<GagType>> generator)
+        : base(generator, log)
     {
-        CurrentLayer = layer;
         _mainHub = hub;
         _pairRef = pair;
 
         // update current selection to the last registered gagType from that pair on construction.
-        CurrentSelection = _pairRef.LastGagData.GagSlots[layer].GagItem;
+        CurrentSelection = GagType.None;
     }
-
-    public void SetLayer(int newLayer)
-    {
-        var priorState = IsInitialized;
-        if (priorState)
-            Cleanup();
-        // update the layer.
-        CurrentLayer = newLayer;
-
-        // Update the item.
-        CurrentSelectionIdx = Items.IndexOf(gag => gag == _pairRef.LastGagData.GagSlots[CurrentLayer].GagItem);
-        if(CurrentSelectionIdx >= 0)
-            CurrentSelection = Items[CurrentSelectionIdx];
-        else if (Items.Count > 0)
-            CurrentSelection = Items[0];
-
-        if (!priorState)
-            Cleanup();
-    }
-
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalGagIdx, bool selected)
@@ -63,28 +40,27 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         if (_pairRef.LastLightStorage.GagItems.ContainsKey(gagItem))
         {
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-            CkGui.IconText(FontAwesomeIcon.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
+            CkGui.IconText(FAI.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
             DrawItemTooltip(gagItem, _pairRef.GetNickAliasOrUid() + " set a Glamour for this Gag.");
         }
         return ret;
     }
 
     protected override bool DisableCondition()
-        => _pairRef.LastGagData.GagSlots[CurrentLayer].GagItem == GagType.None
-        || _pairRef.PairPerms.ApplyGags is false;
+        => CurrentSelection == GagType.None || !_pairRef.PairPerms.ApplyGags;
 
-    protected override void OnButtonPress()
+    protected override void OnButtonPress(int layerIdx)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (_pairRef.LastGagData.GagSlots[CurrentLayer].GagItem == CurrentSelection)
+        if (_pairRef.LastGagData.GagSlots[layerIdx].GagItem == CurrentSelection)
             return;
 
-        var updateType = _pairRef.LastGagData.GagSlots[CurrentLayer].GagItem is GagType.None
+        var updateType = _pairRef.LastGagData.GagSlots[layerIdx].GagItem is GagType.None
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         // construct the dto to send.
         var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
         {
-            Layer = (GagLayer)CurrentLayer,
+            Layer = (GagLayer)layerIdx,
             Gag = CurrentSelection,
             Enabler = MainHub.UID,
         };

@@ -34,7 +34,7 @@ public class Moodle
 
 public class MoodlePreset : Moodle
 {
-    public IEnumerable<Guid> StatusIds { get; internal set; }
+    public IEnumerable<Guid> StatusIds { get; internal set; } = Enumerable.Empty<Guid>();
 
     public MoodlePreset()
         => (Id, StatusIds) = (Guid.Empty, Enumerable.Empty<Guid>());
@@ -64,8 +64,8 @@ public class MoodlePreset : Moodle
 
 public class ModAssociation
 {
-    public Mod ModInfo { get; internal set; }
-    public string CustomSettings { get; internal set; }
+    public Mod ModInfo { get; internal set; } = new Mod();
+    public string CustomSettings { get; internal set; } = string.Empty;
 
     internal ModAssociation()
         => (ModInfo, CustomSettings) = (new Mod(), string.Empty);
@@ -127,11 +127,11 @@ public class GlamourBonusSlot
 
 public class GlamourSlot
 {
-    public EquipSlot Slot { get; internal set; }
-    public EquipItem GameItem { get; internal set; }
-    public StainIds GameStain { get; internal set; } = StainIds.None;
+    public EquipSlot Slot { get; set; } = EquipSlot.Head;
+    public EquipItem GameItem { get; set; } = ItemService.NothingItem(EquipSlot.Head);
+    public StainIds GameStain { get; set; } = StainIds.None;
 
-    internal GlamourSlot()
+    public GlamourSlot()
         => (Slot, GameItem, GameStain) = (EquipSlot.Head, ItemService.NothingItem(EquipSlot.Head), StainIds.None);
 
     public GlamourSlot(GlamourSlot other)

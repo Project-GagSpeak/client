@@ -26,7 +26,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         _serverConfigs = serverManager;
         _KinkPlateManager = KinkPlateManager;
         _pairManager = pairManager;
-        Flags = ImGuiWindowFlags.NoDecoration;
+        Flags = WFlags.NoDecoration;
 
         Mediator.Subscribe<ProfilePopoutToggle>(this, (msg) =>
         {
@@ -52,7 +52,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         position.X -= 288;
         ImGui.SetNextWindowPos(position);
 
-        Flags |= ImGuiWindowFlags.NoMove;
+        Flags |= WFlags.NoMove;
 
         var size = new Vector2(288, 576);
 

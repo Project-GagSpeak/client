@@ -236,9 +236,7 @@ public class GagspeakConfig
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
-    public BlindfoldType BlindfoldStyle { get; set; } = BlindfoldType.Sensual; // Blindfold Format
-    public bool ForceLockFirstPerson { get; set; } = false; // Force First-Person state while blindfolded.
-    public float BlindfoldOpacity { get; set; } = 1.0f; // Blindfold Opacity
+    public float BlindfoldMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     [JsonConverter(typeof(ConcreteNodeConverter))]
     public TextFolderNode ForcedStayPromptList { get; set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
