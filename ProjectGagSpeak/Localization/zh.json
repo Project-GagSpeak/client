@@ -1,0 +1,1794 @@
+{
+"HelpMainUi_Step1Title": {
+    "message": "连接状态",
+    "description": ""
+},
+"HelpMainUi_Step1Desc": {
+    "message": "显示当前与GagSpeak服务器的连接状态。",
+    "description": ""
+},
+"HelpMainUi_Step2Title": {
+    "message": "主页",
+    "description": ""
+},
+"HelpMainUi_Step2Desc": {
+    "message": "GagSpeak的所有模块都可以从这个菜单访问。",
+    "description": ""
+},
+"HelpMainUi_Step3Title": {
+    "message": "前往白名单面板",
+    "description": ""
+},
+"HelpMainUi_Step3Desc": {
+    "message": "要查看你的白名单，请从标签栏中按下这个图标（本指南会为你操作）",
+    "description": ""
+},
+"HelpMainUi_Step3DescExtended": {
+    "message": "在这里你可以查看并与你添加的“玩伴”进行互动。",
+    "description": ""
+},
+"HelpMainUi_Step4Title": {
+    "message": "白名单",
+    "description": ""
+},
+"HelpMainUi_Step5Title": {
+    "message": "添加“玩伴”",
+    "description": ""
+},
+"HelpMainUi_Step5Desc": {
+    "message": "点击这个按钮可以将另一个“玩伴”添加到你的白名单中。",
+    "description": ""
+},
+"HelpMainUi_Step5DescExtended": {
+    "message": "要添加另一个“玩伴”，你需要获取他们的UID，我们很快会向你展示如何操作。",
+    "description": ""
+},
+"HelpMainUi_Step6Title": {
+    "message": "前往账户页面",
+    "description": ""
+},
+"HelpMainUi_Step6Desc": {
+    "message": "选择账户页面以继续教程。",
+    "description": ""
+},
+"HelpMainUi_Step6DescExtended": {
+    "message": "这个页面将包含与设置、个人资料设置、配置和支持链接相关的所有信息！",
+    "description": ""
+},
+"HelpMainUi_Step7Title": {
+    "message": "你的个人资料图片",
+    "description": ""
+},
+"HelpMainUi_Step7Desc": {
+    "message": "这是你账户的个人资料图片，它会显示在调教面板中，其他人可以看到。",
+    "description": ""
+},
+"HelpMainUi_Step8Title": {
+    "message": "你的身份证明",
+    "description": ""
+},
+"HelpMainUi_Step8Desc": {
+    "message": "这是你唯一的UID。要与其他“玩伴”配对，他们将需要这个。",
+    "description": ""
+},
+"HelpMainUi_Step8DescExtended": {
+    "message": "这个UID定义了你的账户，我不建议在全球聊天或“属性面板”描述中公开它。",
+    "description": ""
+},
+"HelpMainUi_Step9Title": {
+    "message": "设置你的安全词",
+    "description": ""
+},
+"HelpMainUi_Step9Desc": {
+    "message": "通过[/safeword YOURSAFEWORD]触发。你可以通过点击铅笔编辑图标来设置它。",
+    "description": ""
+},
+"HelpMainUi_Step9DescExtended": {
+    "message": "安全词使用后有5分钟的冷却时间，并且会解除对你的所有活动限制。",
+    "description": ""
+},
+"HelpMainUi_Step10Title": {
+    "message": "安全词的重要性",
+    "description": ""
+},
+"HelpMainUi_Step10Desc": {
+    "message": "安全词是任何“玩伴”体验以及整个BDSM的重要组成部分。如果有人使用安全词，你应该极其重视并尊重。",
+    "description": ""
+},
+"HelpMainUi_Step11Title": {
+    "message": "编辑你的个人资料",
+    "description": ""
+},
+"HelpMainUi_Step11Desc": {
+    "message": "你可以在这里自定义你的“属性面板”显示、描述和头像。",
+    "description": ""
+},
+"HelpMainUi_Step12Title": {
+    "message": "访问设置",
+    "description": ""
+},
+"HelpMainUi_Step12Desc": {
+    "message": "在这里你可以访问GagSpeak全局设置、硬核参数、插件偏好设置和账户管理。（教程结束后可以查看一下！）",
+    "description": ""
+},
+"HelpMainUi_Step13Title": {
+    "message": "支持GagSpeak",
+    "description": ""
+},
+"HelpMainUi_Step14Title": {
+    "message": "前往全局聊天面板",
+    "description": ""
+},
+"HelpMainUi_Step14Desc": {
+    "message": "选择全局聊天面板以继续教程，这是一个可以与GagSpeak上任何地方的其他人聊天的地方！",
+    "description": ""
+},
+"HelpMainUi_Step15Title": {
+    "message": "全局聊天",
+    "description": ""
+},
+"HelpMainUi_Step16Title": {
+    "message": "前往创意工坊",
+    "description": ""
+},
+"HelpMainUi_Step16Desc": {
+    "message": "前往创意工坊，GagSpeak自己的“创意交流平台”！",
+    "description": ""
+},
+"HelpMainUi_Step17Title": {
+    "message": "创意工坊",
+    "description": ""
+},
+"HelpMainUi_Step17Desc": {
+    "message": "一个创意工坊，用于浏览其他“玩伴”上传的各种模板。查看模板的下载量、点赞数和标签！",
+    "description": ""
+},
+"HelpMainUi_Step18Title": {
+    "message": "搜索创意工坊",
+    "description": ""
+},
+"HelpMainUi_Step18Desc": {
+    "message": "如果你想寻找特定类型的模板，可以在这里搜索关键词。",
+    "description": ""
+},
+"HelpMainUi_Step19Title": {
+    "message": "更新创意工坊",
+    "description": ""
+},
+"HelpMainUi_Step19Desc": {
+    "message": "在更改搜索内容、排序或筛选条件后，必须点击这个按钮来更新结果。",
+    "description": ""
+},
+"HelpMainUi_Step20Title": {
+    "message": "筛选类型",
+    "description": ""
+},
+"HelpMainUi_Step20Desc": {
+    "message": "如果你希望搜索结果按下载量最多、发布日期、作者、标签或时长排序，可以在这里更改。",
+    "description": ""
+},
+"HelpMainUi_Step21Title": {
+    "message": "结果排序",
+    "description": ""
+},
+"HelpMainUi_Step21Desc": {
+    "message": "更改结果显示顺序为升序或降序。",
+    "description": ""
+},
+"HelpMainUi_Step21DescExtended": {
+    "message": "这个效果与筛选类型直接相关。",
+    "description": ""
+},
+"HelpRemote_Step1Title": {
+    "message": "电源按钮",
+    "description": ""
+},
+"HelpRemote_Step1Desc": {
+    "message": "启用时，来自这个遥控器的交互操作会发送到已连接的设备。",
+    "description": ""
+},
+"HelpRemote_Step2Title": {
+    "message": "悬浮按钮",
+    "description": ""
+},
+"HelpRemote_Step2Desc": {
+    "message": "启用时，松开粉色点后它不会落到底部，而是停留在你放置的位置。",
+    "description": ""
+},
+"HelpRemote_Step2DescExtended": {
+    "message": "在遥控器窗口中，可以通过点击它或使用鼠标中键来切换该功能。",
+    "description": ""
+},
+"HelpRemote_Step3Title": {
+    "message": "悬浮按钮",
+    "description": ""
+},
+"HelpRemote_Step3Desc": {
+    "message": "启用时，松开粉色点后它不会落到底部，而是停留在你放置的位置。",
+    "description": ""
+},
+"HelpRemote_Step3DescExtended": {
+    "message": "在遥控器窗口中，可以通过点击它或使用鼠标中键来切换该功能。",
+    "description": ""
+},
+"HelpRemote_Step4Title": {
+    "message": "录制按钮",
+    "description": ""
+},
+"HelpRemote_Step4Desc": {
+    "message": "从你点击并拖动粉色点开始记录，直到你松开它，然后重复这段记录的数据。",
+    "description": ""
+},
+"HelpRemote_Stp4DescExtended": {
+    "message": "在遥控器窗口中，可以通过按钮交互或使用鼠标右键来切换该功能。",
+    "description": ""
+},
+"HelpRemote_Step5Title": {
+    "message": "可控制圆圈",
+    "description": ""
+},
+"HelpRemote_Step5Desc": {
+    "message": "点击并拖动粉色点来移动它。粉色点位置越高，振动器电机的强度就越大。",
+    "description": ""
+},
+"HelpRemote_Step6Title": {
+    "message": "开始录制！",
+    "description": ""
+},
+"HelpRemote_Step6Desc": {
+    "message": "开始存储通过拖动圆圈记录的任何振动器数据。",
+    "description": ""
+},
+"HelpRemote_Step7Title": {
+    "message": "停止录制",
+    "description": ""
+},
+"HelpRemote_Step7Desc": {
+    "message": "当你完成录制后，再次按下这个按钮，会出现一个保存模板的提示。",
+    "description": ""
+},
+"HelpRemote_Step7DescExtended": {
+    "message": "在公开测试版开发期间，这个功能将有更多功能，但目前它还不能使用。",
+    "description": ""
+},
+"HelpRemote_Step8Title": {
+    "message": "保存模板名称",
+    "description": ""
+},
+"HelpRemote_Step8Desc": {
+    "message": "定义你创建的模板的名称。",
+    "description": ""
+},
+"HelpRemote_Step9Title": {
+    "message": "保存模板描述",
+    "description": ""
+},
+"HelpRemote_Step9Desc": {
+    "message": "在这里设置你的模板描述。",
+    "description": ""
+},
+"HelpRemote_Step10Title": {
+    "message": "保存模板循环状态",
+    "description": ""
+},
+"HelpRemote_Step10Desc": {
+    "message": "定义你创建的模板到达末尾时是否应该循环。",
+    "description": ""
+},
+"HelpRemote_Step11Title": {
+    "message": "可选：放弃模板",
+    "description": ""
+},
+"HelpRemote_Step11Desc": {
+    "message": "如果你不喜欢你制作的模板，可以在这里放弃它。",
+    "description": ""
+},
+"HelpRemote_Step12Title": {
+    "message": "添加新模板",
+    "description": ""
+},
+"HelpRemote_Step12Desc": {
+    "message": "要完成模板创建，请在此处保存并添加模板。",
+    "description": ""
+},
+"HelpRemote_Step13Title": {
+    "message": "修改模板",
+    "description": ""
+},
+"HelpRemote_Step13Desc": {
+    "message": "从模板列表中选择一个模板，你就可以对其进行编辑。",
+    "description": ""
+},
+"HelpRemote_Step14Title": {
+    "message": "编辑显示信息",
+    "description": ""
+},
+"HelpRemote_Step14Desc": {
+    "message": "在编辑器中有基本的显示信息和调整选项。显示信息展示了模板的基本标签。",
+    "description": ""
+},
+"HelpRemote_Step15Title": {
+    "message": "更改模板循环状态",
+    "description": ""
+},
+"HelpRemote_Step15Desc": {
+    "message": "如果你想更改模板是否循环，可以在此处进行操作。",
+    "description": ""
+},
+"HelpRemote_Step16Title": {
+    "message": "更改起始点",
+    "description": ""
+},
+"HelpRemote_Step16Desc": {
+    "message": "这允许你更改模板播放的起始点。",
+    "description": ""
+},
+"HelpRemote_Step17Title": {
+    "message": "更改时长",
+    "description": ""
+},
+"HelpRemote_Step17Desc": {
+    "message": "这允许你更改模板从起始点开始的播放时长。",
+    "description": ""
+},
+"HelpRemote_Step18Title": {
+    "message": "保存更改",
+    "description": ""
+},
+"HelpRemote_Step18Desc": {
+    "message": "更新你所做的任何编辑更改。",
+    "description": ""
+},
+"HelpGags_Step1Title": {
+    "message": "图层有什么作用？",
+    "description": ""
+},
+"HelpGags_Step1Desc": {
+    "message": "图层定义了应用口塞的优先级。如果出现冲突，较高图层的口塞具有优先权。",
+    "description": ""
+},
+"HelpGags_Step1DescExtended": {
+    "message": "例如：同一插槽上的魅力效果将优先显示较高图层上口塞的效果。",
+    "description": ""
+},
+"HelpGags_Step2Title": {
+    "message": "装备口塞",
+    "description": ""
+},
+"HelpGags_Step2Desc": {
+    "message": "这里显示的口塞反映了相应图层当前装备的口塞。装备一个口塞以继续教程。",
+    "description": ""
+},
+"HelpGags_Step3Title": {
+    "message": "选择锁定方式",
+    "description": ""
+},
+"HelpGags_Step3Desc": {
+    "message": "你可以在这里选择要应用于口塞的锁。选择任何锁定方式以继续。",
+    "description": ""
+},
+"HelpGags_Step4Title": {
+    "message": "锁定方式的简要信息",
+    "description": ""
+},
+"HelpGags_Step5Title": {
+    "message": "上锁",
+    "description": ""
+},
+"HelpGags_Step5Desc": {
+    "message": "一旦你选择了锁定方式并填写了必要的字段，这将完成锁定过程。",
+    "description": ""
+},
+"HelpGags_Step5DescExtended": {
+    "message": "当口塞被锁定时，在解锁之前，你不能更改口塞类型或锁的类型。",
+    "description": ""
+},
+"HelpGags_Step6Title": {
+    "message": "解锁",
+    "description": ""
+},
+"HelpGags_Step6Desc": {
+    "message": "要解锁一个锁定的挂锁，如果设置了密码，你必须正确猜出密码。",
+    "description": ""
+},
+"HelpGags_Step7Title": {
+    "message": "移除口塞",
+    "description": ""
+},
+"HelpGags_Step7Desc": {
+    "message": "要移除口塞，只需右键点击口塞选择列表。",
+    "description": ""
+},
+"HelpGagStorage_Step1Title": {
+    "message": "选择口塞",
+    "description": ""
+},
+"HelpGagStorage_Step1Desc": {
+    "message": "在这里你可以选择一个口塞进行自定义。",
+    "description": ""
+},
+"HelpGagStorage_Step2Title": {
+    "message": "Gag Glamours",
+    "description": ""
+},
+"HelpGagStorage_Step2Desc": {
+    "message": "在这里你可以更改口塞的外观。",
+    "description": ""
+},
+"HelpGagStorage_Step3Title": {
+    "message": "调整",
+    "description": ""
+},
+"HelpGagStorage_Step3Desc": {
+    "message": "在这里你可以设置元数据切换选项、启用状态，以及C+配置文件。",
+    "description": ""
+},
+"HelpGagStorage_Step4Title": {
+    "message": "Moodles",
+    "description": ""
+},
+"HelpGagStorage_Step4Desc": {
+    "message": "如果你有可用的Buff效果，可以在此处将它们应用到口塞上。",
+    "description": ""
+},
+"HelpGagStorage_Step5Title": {
+    "message": "音频",
+    "description": ""
+},
+"HelpGagStorage_Step5Desc": {
+    "message": "在这里你可以将音频选择中的某些类型的声音链接到你的口塞上。",
+    "description": ""
+},
+"HelpGagStorage_Step6Title": {
+    "message": "保存自定义设置",
+    "description": ""
+},
+"HelpGagStorage_Step6Desc": {
+    "message": "要应用你对口塞自定义",
+    "description": ""
+},
+"HelpRestraints_Step1Title": {
+    "message": "添加新的束缚套装",
+    "description": ""
+},
+"HelpRestraints_Step1Desc": {
+    "message": "选择此按钮开始创建新的束缚套装！（本教程会为你操作）",
+    "description": ""
+},
+"HelpRestraints_Step2Title": {
+    "message": "信息选项卡",
+    "description": ""
+},
+"HelpRestraints_Step2Desc": {
+    "message": "用于输入束缚套装的名称和简短描述的地方！",
+    "description": ""
+},
+"HelpRestraints_Step3Title": {
+    "message": "前往外观选项卡",
+    "description": ""
+},
+"HelpRestraints_Step3Desc": {
+    "message": "导航到外观选项卡以设置Glamourer和CusntomSize+",
+    "description": ""
+},
+"HelpRestraints_Step4Title": {
+    "message": "设置装备物品",
+    "description": ""
+},
+"HelpRestraints_Step4Desc": {
+    "message": "在此处你可以设置想要应用的Glamourer效果",
+    "description": ""
+},
+"HelpRestraints_Step5Title": {
+    "message": "束缚元数据",
+    "description": ""
+},
+"HelpRestraints_Step5Desc": {
+    "message": "决定你的帽子或面罩是否启用",
+    "description": ""
+},
+"HelpRestraints_Step6Title": {
+    "message": "导入当前装备",
+    "description": ""
+},
+"HelpRestraints_Step6Desc": {
+    "message": "从Glamourer获取你当前的外观，并在此处应用",
+    "description": ""
+},
+"HelpRestraints_Step7Title": {
+    "message": "导入CustomSize+设置",
+    "description": ""
+},
+"HelpRestraints_Step7Desc": {
+    "message": "获取角色当前的自定义外观，并将其存储为套装的一部分",
+    "description": ""
+},
+"HelpRestraints_Step8Title": {
+    "message": "CustomSize+设置：应用",
+    "description": ""
+},
+"HelpRestraints_Step8Desc": {
+    "message": "如果选中，你导入的CustomSize+状态将与套装一起应用",
+    "description": ""
+},
+"HelpRestraints_Step9Title": {
+    "message": "CustomSize+设置：清除",
+    "description": ""
+},
+"HelpRestraints_Step9Desc": {
+    "message": "如果选中，套装存储的CustomSize+数据将被清除",
+    "description": ""
+},
+"HelpRestraints_Step10Title": {
+    "message": "前往 Mods 选项卡",
+    "description": ""
+},
+"HelpRestraints_Step10Desc": {
+    "message": "在此选项卡中，你可以添加在束缚激活时可临时设置的 Mods",
+    "description": ""
+},
+"HelpRestraints_Step11Title": {
+    "message": "选择 Mod",
+    "description": ""
+},
+"HelpRestraints_Step11Desc": {
+    "message": "你可以在此处从你的Penumbra Mods 中选择一个 Mod",
+    "description": ""
+},
+"HelpRestraints_Step12Title": {
+    "message": "添加 Mod",
+    "description": ""
+},
+"HelpRestraints_Step12Desc": {
+    "message": "一旦找到你想要添加的 Mod，你可以按下此按钮将其添加",
+    "description": ""
+},
+"HelpRestraints_Step13Title": {
+    "message": "设置 Mod 选项",
+    "description": ""
+},
+"HelpRestraints_Step13Desc": {
+    "message": "你可以决定 Mod 是否切换关闭，或者是否应该重新绘制",
+    "description": ""
+},
+"HelpRestraints_Step14Title": {
+    "message": "Moodles 选项卡",
+    "description": ""
+},
+"HelpRestraints_Step14Desc": {
+    "message": "在此部分你可以定义哪些 Moodles 将应用于此套装",
+    "description": ""
+},
+"HelpRestraints_Step15Title": {
+    "message": "Moodles：状态",
+    "description": ""
+},
+"HelpRestraints_Step15Desc": {
+    "message": "你可以在此处添加单个 Moodle 状态",
+    "description": ""
+},
+"HelpRestraints_Step16Title": {
+    "message": "Moodles：预设",
+    "description": ""
+},
+"HelpRestraints_Step16Desc": {
+    "message": "你也可以在此处添加 Moodle 预设，它存储了一组状态",
+    "description": ""
+},
+"HelpRestraints_Step17Title": {
+    "message": "当前存储的 Moodles",
+    "description": ""
+},
+"HelpRestraints_Step17Desc": {
+    "message": "显示当前最终选定的添加预设和状态",
+    "description": ""
+},
+"HelpRestraints_Step18Title": {
+    "message": "声音选项卡",
+    "description": ""
+},
+"HelpRestraints_Step18Desc": {
+    "message": "你可以将音频选择中的某些类型的声音链接到你的套装",
+    "description": ""
+},
+"HelpRestraints_Step19Title": {
+    "message": "束缚音频",
+    "description": ""
+},
+"HelpRestraints_Step19Desc": {
+    "message": "开发中",
+    "description": ""
+},
+"HelpRestraints_Step20Title": {
+    "message": "硬核模式选项卡",
+    "description": ""
+},
+"HelpRestraints_Step20Desc": {
+    "message": "你可以在此设置当被特定 “玩伴” 束缚时应用哪些硬核玩法",
+    "description": ""
+},
+"HelpRestraints_Step21Title": {
+    "message": "选择 “玩伴”",
+    "description": ""
+},
+"HelpRestraints_Step21Desc": {
+    "message": "首先，你应该选择一个你希望为其设置硬核玩法的 “玩伴”",
+    "description": ""
+},
+"HelpRestraints_Step22Title": {
+    "message": "设置硬核玩法",
+    "description": ""
+},
+"HelpRestraints_Step22Desc": {
+    "message": "现在你可以选择与你的套装相关的你想要勾选的玩法",
+    "description": ""
+},
+"HelpRestraints_Step22DescExtended": {
+    "message": "这些玩法仅在你为其设置的 “玩伴” 应用时才会生效",
+    "description": ""
+},
+"HelpRestraints_Step23Title": {
+    "message": "保存新套装",
+    "description": ""
+},
+"HelpRestraints_Step23Desc": {
+    "message": "按下此按钮将保存你对已编辑套装所做的任何更改，或完成新套装的创建",
+    "description": ""
+},
+"HelpRestraints_Step24Title": {
+    "message": "束缚套装列表",
+    "description": ""
+},
+"HelpRestraints_Step24Desc": {
+    "message": "任何已创建的套装都列在此处",
+    "description": ""
+},
+"HelpRestraints_Step25Title": {
+    "message": "切换束缚套装",
+    "description": ""
+},
+"HelpRestraints_Step25Desc": {
+    "message": "按下此按钮将切换一个束缚套装",
+    "description": ""
+},
+"HelpRestraints_Step26Title": {
+    "message": "锁定束缚套装",
+    "description": ""
+},
+"HelpRestraints_Step26Desc": {
+    "message": "一旦套装激活，此挂锁下拉菜单将出现。你可以在此处自行锁定你的套装",
+    "description": ""
+},
+"HelpCursedLoot_Step1Title": {
+    "message": "创建诅咒物品",
+    "description": ""
+},
+"HelpCursedLoot_Step1Desc": {
+    "message": "展开诅咒物品创建窗口",
+    "description": ""
+},
+"HelpCursedLoot_Step2Title": {
+    "message": "诅咒物品名称",
+    "description": ""
+},
+"HelpCursedLoot_Step2Desc": {
+    "message": "为诅咒物品定义一个名称。这纯粹是为了组织和显示目的",
+    "description": ""
+},
+"HelpCursedLoot_Step3Title": {
+    "message": "定义类型",
+    "description": ""
+},
+"HelpCursedLoot_Step3Desc": {
+    "message": "允许你将诅咒物品定义为口塞或装备物品",
+    "description": ""
+},
+"HelpCursedLoot_Step3DescExtended": {
+    "message": "口塞没有优先级，并且当所有 3 个口塞层都已满时无法应用",
+    "description": ""
+},
+"HelpCursedLoot_Step4Title": {
+    "message": "添加新的诅咒物品",
+    "description": ""
+},
+"HelpCursedLoot_Step4Desc": {
+    "message": "一旦你完成诅咒物品的创建，按下此按钮将其添加到你的列表中",
+    "description": ""
+},
+"HelpCursedLoot_Step4DescExtended": {
+    "message": "注意：一旦你将物品添加到列表中，你不能在口塞和装备类型之间更改它！",
+    "description": ""
+},
+"HelpCursedLoot_Step5Title": {
+    "message": "诅咒物品列表",
+    "description": ""
+},
+"HelpCursedLoot_Step5Desc": {
+    "message": "你创建的诅咒物品的排列",
+    "description": ""
+},
+"HelpCursedLoot_Step6Title": {
+    "message": "启用物品池",
+    "description": ""
+},
+"HelpCursedLoot_Step6Desc": {
+    "message": "每当你找到一个陷阱宝箱时，将从中随机选择物品的列表",
+    "description": ""
+},
+"HelpCursedLoot_Step7Title": {
+    "message": "添加物品到物品池",
+    "description": ""
+},
+"HelpCursedLoot_Step7Desc": {
+    "message": "这将把一个诅咒物品移动到启用物品池中。试试看！",
+    "description": ""
+},
+"HelpCursedLoot_Step8Title": {
+    "message": "从物品池中移除物品",
+    "description": ""
+},
+"HelpCursedLoot_Step8Desc": {
+    "message": "这将从启用物品池中移除该物品",
+    "description": ""
+},
+"HelpCursedLoot_Step9Title": {
+    "message": "最低锁定时长",
+    "description": ""
+},
+"HelpCursedLoot_Step9Desc": {
+    "message": "你在此处设置的将是诅咒物品最终锁定时间的下限",
+    "description": ""
+},
+"HelpCursedLoot_Step9DescExtended": {
+    "message": "注意：模仿挂锁无法解锁。你必须等待它们过期。请谨慎设置。",
+    "description": ""
+},
+"HelpCursedLoot_Step10Title": {
+    "message": "最高锁定限制",
+    "description": ""
+},
+"HelpCursedLoot_Step10Desc": {
+    "message": "你在此处设置的将是诅咒物品最终锁定时间的上限",
+    "description": ""
+},
+"HelpCursedLoot_Step10DescExtended": {
+    "message": "注意：陷阱挂锁无法解锁。你必须等待它们过期。请谨慎设置。",
+    "description": ""
+},
+"HelpCursedLoot_Step11Title": {
+    "message": "诅咒物品发现概率",
+    "description": ""
+},
+"HelpCursedLoot_Step11Desc": {
+    "message": "你在此处设置的将是你掠夺的宝箱为诅咒物品的概率百分比",
+    "description": ""
+},
+"HelpToybox_Step1Title": {
+    "message": "Intiface 连接状态",
+    "description": ""
+},
+"HelpToybox_Step1Desc": {
+    "message": "当前与 Intiface Central WebSocket 服务器的连接状态",
+    "description": ""
+},
+"HelpToybox_Step2Title": {
+    "message": "打开 Intiface",
+    "description": ""
+},
+"HelpToybox_Step3Title": {
+    "message": "选择振动器类型",
+    "description": ""
+},
+"HelpToybox_Step3Desc": {
+    "message": "在模拟（无需真实玩具）和真实（你的真实玩具）之间选择",
+    "description": ""
+},
+"HelpToybox_Step4Title": {
+    "message": "模拟音频选择",
+    "description": ""
+},
+"HelpToybox_Step4Desc": {
+    "message": "使用模拟振动器时，你可以选择想要播放给你的音频。有静音或正常版本",
+    "description": ""
+},
+"HelpToybox_Step5Title": {
+    "message": "音频播放设备",
+    "description": ""
+},
+"HelpToybox_Step5Desc": {
+    "message": "您可以选择监听音频的设备",
+    "description": ""
+},
+"HelpToybox_Step6Title": {
+    "message": "设备扫描器",
+    "description": ""
+},
+"HelpToybox_Step6Desc": {
+    "message": "对于真实设备，你可以使用设备扫描器开始 / 停止扫描任何新的真实设备以进行连接",
+    "description": ""
+},
+"HelpToybox_Step6DescExtended": {
+    "message": "找到的任何设备在定位后应列在此扫描器下方",
+    "description": ""
+},
+"HelpPatterns_Step1Title": {
+    "message": "创建新模板",
+    "description": ""
+},
+"HelpPatterns_Step1Desc": {
+    "message": "点击此按钮以录制新模板",
+    "description": ""
+},
+"HelpPatterns_Step2Title": {
+    "message": "录制时长",
+    "description": ""
+},
+"HelpPatterns_Step2Desc": {
+    "message": "显示你的模板已经录制了多长时间",
+    "description": ""
+},
+"HelpTriggers_Step1Title": {
+    "message": "创建新触发器",
+    "description": ""
+},
+"HelpTriggers_Step1Desc": {
+    "message": "这是用于创建新触发器的按钮",
+    "description": ""
+},
+"HelpTriggers_Step2Title": {
+    "message": "触发器简介",
+    "description": ""
+},
+"HelpTriggers_Step2Desc": {
+    "message": "每种触发器类型都有名称、优先级和描述字段需要设置",
+    "description": ""
+},
+"HelpTriggers_Step3Title": {
+    "message": "触发器动作",
+    "description": ""
+},
+"HelpTriggers_Step3Desc": {
+    "message": "你选择的触发器动作类型，是在触发器条件满足时执行的结果动作",
+    "description": ""
+},
+"HelpTriggers_Step4Title": {
+    "message": "触发器动作类型",
+    "description": ""
+},
+"HelpTriggers_Step4Desc": {
+    "message": "从这里选择一个选项将设置触发器动作类型。请注意，根据你选择的类型，有不同的子选项可供选择",
+    "description": ""
+},
+"HelpTriggers_Step5Title": {
+    "message": "选择触发器类型",
+    "description": ""
+},
+"HelpTriggers_Step5Desc": {
+    "message": "你可以使用此下拉菜单创建许多不同类型的触发器，让我们概述其中一些",
+    "description": ""
+},
+"HelpTriggers_Step6Title": {
+    "message": "聊天触发",
+    "description": ""
+},
+"HelpTriggers_Step7Title": {
+    "message": "动作触发",
+    "description": ""
+},
+"HelpTriggers_Step7Desc": {
+    "message": "当使用特定法术或动作时将执行触发。可以配置各种设置。（查看更多）",
+    "description": ""
+},
+"HelpTriggers_Step7DescExtended": {
+    "message": "可以进一步配置设置，如伤害阈值、除伤害 / 治疗外的动作类型，以及源 / 目标方向",
+    "description": ""
+},
+"HelpTriggers_Step8Title": {
+    "message": "生命值百分比触发",
+    "description": ""
+},
+"HelpTriggers_Step8Desc": {
+    "message": "当你或另一个玩家的生命值超过或低于某个特定值时触发。可以是原始值或百分比",
+    "description": ""
+},
+"HelpTriggers_Step9Title": {
+    "message": "束缚触发",
+    "description": ""
+},
+"HelpTriggers_Step9Desc": {
+    "message": "每当特定的束缚套装启用或锁定时触发",
+    "description": ""
+},
+"HelpTriggers_Step10Title": {
+    "message": "口塞触发",
+    "description": ""
+},
+"HelpTriggers_Step10Desc": {
+    "message": "每当特定口塞被应用或锁定时触发。",
+    "description": ""
+},
+"HelpTriggers_Step11Title": {
+    "message": "社交触发",
+    "description": ""
+},
+"HelpTriggers_Step11Desc": {
+    "message": "每当你在社交游戏中失败时触发。",
+    "description": ""
+},
+"HelpTriggers_Step11DescExtended": {
+    "message": "目前仅支持轮盘赌（DeathRolls）。",
+    "description": ""
+},
+"HelpTriggers_Step12Title": {
+    "message": "表情触发",
+    "description": ""
+},
+"HelpTriggers_Step12Desc": {
+    "message": "每当执行一个表情时触发。",
+    "description": ""
+},
+"HelpTriggers_Step13Title": {
+    "message": "保存你的触发器",
+    "description": ""
+},
+"HelpTriggers_Step13Desc": {
+    "message": "当你对触发器设置感到满意时，点击创建触发器。",
+    "description": ""
+},
+"HelpTriggers_Step14Title": {
+    "message": "触发器列表",
+    "description": ""
+},
+"HelpTriggers_Step14Desc": {
+    "message": "你创建的触发器将列在此处。",
+    "description": ""
+},
+"HelpTriggers_Step15Title": {
+    "message": "切换触发器",
+    "description": ""
+},
+"HelpTriggers_Step15Desc": {
+    "message": "点击此按钮可在关闭和打开触发器之间切换。",
+    "description": ""
+},
+"HelpAlarms_Step1Title": {
+    "message": "创建新闹钟",
+    "description": ""
+},
+"HelpAlarms_Step1Desc": {
+    "message": "要创建新闹钟，你必须首先按下此按钮。",
+    "description": ""
+},
+"HelpAlarms_Step2Title": {
+    "message": "设置闹钟名称",
+    "description": ""
+},
+"HelpAlarms_Step2Desc": {
+    "message": "首先为你的闹钟定义一个名称。",
+    "description": ""
+},
+"HelpAlarms_Step3Title": {
+    "message": "本地时区",
+    "description": ""
+},
+"HelpAlarms_Step4Title": {
+    "message": "设置闹钟时间",
+    "description": ""
+},
+"HelpAlarms_Step4Desc": {
+    "message": "你可以通过在小时和分钟数字上使用鼠标滚轮来设置时间。",
+    "description": ""
+},
+"HelpAlarms_Step5Title": {
+    "message": "要播放的模板",
+    "description": ""
+},
+"HelpAlarms_Step5Desc": {
+    "message": "选择你希望闹钟响起时播放的模板。",
+    "description": ""
+},
+"HelpAlarms_Step6Title": {
+    "message": "闹钟模板起始点",
+    "description": ""
+},
+"HelpAlarms_Step6Desc": {
+    "message": "确定闹钟应从模板中的哪个点开始播放。",
+    "description": ""
+},
+"HelpAlarms_Step7Title": {
+    "message": "闹钟持续时间",
+    "description": ""
+},
+"HelpAlarms_Step7Desc": {
+    "message": "确定模板应播放多长时间后停止。",
+    "description": ""
+},
+"HelpAlarms_Step8Title": {
+    "message": "闹钟频率",
+    "description": ""
+},
+"HelpAlarms_Step8Desc": {
+    "message": "设置此闹钟星期几响起",
+    "description": ""
+},
+"HelpAlarms_Step9Title": {
+    "message": "保存闹钟",
+    "description": ""
+},
+"HelpAlarms_Step9Desc": {
+    "message": "保存 / 应用更改并添加新闹钟。",
+    "description": ""
+},
+"HelpAlarms_Step10Title": {
+    "message": "闹钟列表",
+    "description": ""
+},
+"HelpAlarms_Step10Desc": {
+    "message": "所有创建的闹钟都存储在此处。",
+    "description": ""
+},
+"HelpAlarms_Step11Title": {
+    "message": "切换闹钟",
+    "description": ""
+},
+"HelpAlarms_Step11Desc": {
+    "message": "你需要按下此按钮来切换闹钟状态。",
+    "description": ""
+},
+"HelpAchievements_Step1Title": {
+    "message": "你的总体进度",
+    "description": ""
+},
+"HelpAchievements_Step1Desc": {
+    "message": "显示你已完成的成就总数。",
+    "description": ""
+},
+"HelpAchievements_Step2Title": {
+    "message": "重置成就",
+    "description": ""
+},
+"HelpAchievements_Step2Desc": {
+    "message": "重置所有成就进度。",
+    "description": ""
+},
+"HelpAchievements_Step3Title": {
+    "message": "成就模块部分",
+    "description": ""
+},
+"HelpAchievements_Step3Desc": {
+    "message": "为了方便和组织，成就被划分为多个组件。所有组件都列在此处。",
+    "description": ""
+},
+"HelpAchievements_Step4Title": {
+    "message": "成就标题",
+    "description": ""
+},
+"HelpAchievements_Step5Title": {
+    "message": "成就进度条",
+    "description": ""
+},
+"HelpAchievements_Step5Desc": {
+    "message": "你在完成一项成就方面目前取得的进展。",
+    "description": ""
+},
+"HelpAchievements_Step6Title": {
+    "message": "成就奖励",
+    "description": ""
+},
+"HelpAchievements_Step6Desc": {
+    "message": "成就奖励以个人资料外观定制的形式呈现，除了你的头衔，并且可以在此处预览。",
+    "description": ""
+},
+"HelpAchievements_Step6DescExtended": {
+    "message": "外观奖励可用于在个人资料编辑器中装饰你的个人资料。",
+    "description": ""
+},
+"Tabs_MenuTabHomepage": {
+    "message": "主页",
+    "description": ""
+},
+"Tabs_MenuTabWhitelist": {
+    "message": "配对列表",
+    "description": ""
+},
+"Tabs_MenuTabDiscover": {
+    "message": "创意工坊",
+    "description": ""
+},
+"Tabs_MenuTabGlobalChat": {
+    "message": "全球聊天",
+    "description": ""
+},
+"Tabs_MenuTabAccount": {
+    "message": "账户设置",
+    "description": ""
+},
+"Tabs_OrdersActive": {
+    "message": "启用指令",
+    "description": ""
+},
+"Tabs_OrdersCreate": {
+    "message": "创建指令",
+    "description": ""
+},
+"Tabs_OrdersAssign": {
+    "message": "分配指令",
+    "description": ""
+},
+"Tabs_GagsActive": {
+    "message": "启用口塞",
+    "description": ""
+},
+"Tabs_GagsLockPick": {
+    "message": "开锁器",
+    "description": ""
+},
+"Tabs_GagsStroage": {
+    "message": "口塞设置",
+    "description": ""
+},
+"Tabs_WardrobeRestraints": {
+    "message": "束缚套装",
+    "description": ""
+},
+"Tabs_WardrobeStruggle": {
+    "message": "挣扎模拟",
+    "description": ""
+},
+"Tabs_WardrobeCursedLoot": {
+    "message": "诅咒战利品",
+    "description": ""
+},
+"Tabs_WardrobeMoodles": {
+    "message": "Moodles",
+    "description": ""
+},
+"Tabs_ToyboxOverview": {
+    "message": "概述",
+    "description": ""
+},
+"Tabs_ToyboxVibeServer": {
+    "message": "振动服务器",
+    "description": ""
+},
+"Tabs_ToyboxPatterns": {
+    "message": "模板",
+    "description": ""
+},
+"Tabs_ToyboxTriggers": {
+    "message": "触发器",
+    "description": ""
+},
+"Tabs_ToyboxAlarms": {
+    "message": "闹钟",
+    "description": ""
+},
+"Tabs_AchievementsComponentGeneral": {
+    "message": "常规",
+    "description": ""
+},
+"Tabs_AchievementsComponentOrders": {
+    "message": "订单",
+    "description": ""
+},
+"Tabs_AchievementsComponentGags": {
+    "message": "口塞",
+    "description": ""
+},
+"Tabs_AchievementsComponentWardrobe": {
+    "message": "衣橱",
+    "description": ""
+},
+"Tabs_AchievementsComponentPuppeteer": {
+    "message": "puppeteer",
+    "description": ""
+},
+"Tabs_AchievementsComponentToybox": {
+    "message": "玩具箱",
+    "description": ""
+},
+"Tabs_AchievementsComponentsHardcore": {
+    "message": "硬核",
+    "description": ""
+},
+"Tabs_AchievementsComponentRemotes": {
+    "message": "情趣玩具遥控器",
+    "description": ""
+},
+"Tabs_AchievementsComponentSecrets": {
+    "message": "隐藏",
+    "description": ""
+},
+"Settings_OptionalPlugins": {
+    "message": "可选插件:",
+    "description": ""
+},
+"Settings_PluginValid": {
+    "message": "插件已启用且为最新版本。",
+    "description": ""
+},
+"Settings_PluginInvalid": {
+    "message": "插件不是最新版本或 GagSpeak 的 API 已过时。",
+    "description": ""
+},
+"Settings_AccountClaimText": {
+    "message": "使用 GagSpeak 机器人注册你的账户:",
+    "description": ""
+},
+"Settings_TabsGlobal": {
+    "message": "常规",
+    "description": ""
+},
+"Settings_TabsHardcore": {
+    "message": "硬核",
+    "description": ""
+},
+"Settings_TabsPreferences": {
+    "message": "聊天与用户界面",
+    "description": ""
+},
+"Settings_TabsAccounts": {
+    "message": "账户管理",
+    "description": ""
+},
+"MainOptions_HeaderGags": {
+    "message": "口塞",
+    "description": ""
+},
+"MainOptions_HeaderWardrobe": {
+    "message": "衣橱",
+    "description": ""
+},
+"MainOptions_HeaderPuppet": {
+    "message": "Pupp",
+    "description": ""
+},
+"MainOptions_HeaderToybox": {
+    "message": "玩具箱",
+    "description": ""
+},
+"MainOptions_LiveChatGarbler": {
+    "message": "实时聊天",
+    "description": ""
+},
+"MainOptions_GagGlamours": {
+    "message": "使Glamourer应用口塞",
+    "description": ""
+},
+"MainOptions_GagGlamoursTT": {
+    "message": "允许Glamourer从你的口塞设置中应用设置的物品。",
+    "description": ""
+},
+"MainOptions_GagPadlockTimer": {
+    "message": "过期定时器口塞移除",
+    "description": ""
+},
+"MainOptions_GagPadlockTimerTT": {
+    "message": "当定时器过期时自动移除锁定的口塞。",
+    "description": ""
+},
+"MainOptions_WardrobeActive": {
+    "message": "衣橱功能",
+    "description": ""
+},
+"MainOptions_WardrobeActiveTT": {
+    "message": "启用衣橱功能。",
+    "description": ""
+},
+"MainOptions_RestraintSetGlamour": {
+    "message": "使Glamourer应用套装",
+    "description": ""
+},
+"MainOptions_RestraintPadlockTimer": {
+    "message": "过期定时器束缚移除",
+    "description": ""
+},
+"MainOptions_RestraintPadlockTimerTT": {
+    "message": "当定时器过期时自动移除锁定的套装。",
+    "description": ""
+},
+"MainOptions_CursedLootActive": {
+    "message": "诅咒战利品",
+    "description": ""
+},
+"MainOptions_MimicsApplyTraits": {
+    "message": "启用诅咒战利品",
+    "description": ""
+},
+"MainOptions_MoodlesActive": {
+    "message": "启用Moodles集成",
+    "description": ""
+},
+"MainOptions_MoodlesActiveTT": {
+    "message": "启用Moodles buff。",
+    "description": ""
+},
+"MainOptions_PuppeteerActive": {
+    "message": "puppeteer",
+    "description": ""
+},
+"MainOptions_PuppeteerActiveTT": {
+    "message": "启用puppeteer。",
+    "description": ""
+},
+"MainOptions_GlobalTriggerPhrase": {
+    "message": "所有人触发短语",
+    "description": ""
+},
+"MainOptions_GlobalSit": {
+    "message": "允许所有人让你坐下",
+    "description": ""
+},
+"MainOptions_GlobalMotion": {
+    "message": "允许所有人让你做感情动作",
+    "description": ""
+},
+"MainOptions_GlobalAlias": {
+    "message": "允许所有人触发你的转义",
+    "description": ""
+},
+"MainOptions_GlobalAll": {
+    "message": "允许所有人的所有请求",
+    "description": ""
+},
+"MainOptions_ToyboxActive": {
+    "message": "玩具箱功能",
+    "description": ""
+},
+"MainOptions_ToyboxActiveTT": {
+    "message": "启用玩具箱功能。",
+    "description": ""
+},
+"MainOptions_IntifaceAutoConnect": {
+    "message": "自动连接到 Intiface",
+    "description": ""
+},
+"MainOptions_IntifaceAutoConnectTT": {
+    "message": "在 GagSpeak 启动时自动连接到 Intiface 桌面应用程序。",
+    "description": ""
+},
+"MainOptions_VibeServerAutoConnect": {
+    "message": "自动连接到振动服务器",
+    "description": ""
+},
+"MainOptions_VibeServerAutoConnectTT": {
+    "message": "在 GagSpeak 启动时自动连接到振动服务器。",
+    "description": ""
+},
+"MainOptions_SpatialAudioActive": {
+    "message": "空间音频功能",
+    "description": ""
+},
+"MainOptions_PiShockKeyTT": {
+    "message": "任何与 PiShock 相关的物品要正常工作所需的 PiShock API 密钥。",
+    "description": ""
+},
+"MainOptions_PiShockUsernameTT": {
+    "message": "与 PiShock API 密钥关联的用户名。",
+    "description": ""
+},
+"MainOptions_PiShockShareCodeRefreshTT": {
+    "message": "强制全局 PiShock 共享代码从 API 获取更新数据并将其推送给其他在线配对用户。",
+    "description": ""
+},
+"MainOptions_PiShockShareCode": {
+    "message": "全局 PiShock 共享代码",
+    "description": ""
+},
+"MainOptions_PiShockVibeTime": {
+    "message": "全局震动时间上限",
+    "description": ""
+},
+"MainOptions_PiShockVibeTimeTT": {
+    "message": "最大电击器电机时长（以秒为单位）。",
+    "description": ""
+},
+"MainOptions_PiShockPermsLabel": {
+    "message": "全局电击器权限（从共享代码解析）",
+    "description": ""
+},
+"MainOptions_PiShockAllowShocks": {
+    "message": "允许电击",
+    "description": ""
+},
+"MainOptions_PiShockAllowVibes": {
+    "message": "允许振动",
+    "description": ""
+},
+"MainOptions_PiShockAllowBeeps": {
+    "message": "允许蜂鸣声",
+    "description": ""
+},
+"MainOptions_PiShockMaxShockIntensity": {
+    "message": "全局最大电击强度:",
+    "description": ""
+},
+"MainOptions_PiShockMaxShockDuration": {
+    "message": "全局最大电击持续时间:",
+    "description": ""
+},
+"Hardcore_TabBlindfold": {
+    "message": "眼罩物品",
+    "description": ""
+},
+"Hardcore_TabForcedStayFilters": {
+    "message": "强制停留过滤器",
+    "description": ""
+},
+"Hardcore_BlindfoldSlot": {
+    "message": "插槽",
+    "description": ""
+},
+"Hardcore_BlindfoldItem": {
+    "message": "物品",
+    "description": ""
+},
+"Hardcore_BlindfoldDye": {
+    "message": "染料",
+    "description": ""
+},
+"Hardcore_BlindfoldFirstPerson": {
+    "message": "强制第一人称视角",
+    "description": ""
+},
+"Hardcore_BlindfoldFirstPersonTT": {
+    "message": "被蒙上眼罩时强制你进入第一人称视角。",
+    "description": ""
+},
+"Hardcore_BlindfoldType": {
+    "message": "蕾丝款式",
+    "description": ""
+},
+"Hardcore_BlindfoldTypeTT": {
+    "message": "选择你想要使用的眼罩类型。",
+    "description": ""
+},
+"Hardcore_BlindfoldOpacity": {
+    "message": "不透明度",
+    "description": ""
+},
+"Hardcore_BlindfoldOpacityTT": {
+    "message": "设置眼罩的不透明度，以适应不同显示器的显示差异。",
+    "description": ""
+},
+"Hardcore_AddNodeNew": {
+    "message": "向强制停留提示列表添加一个新的文本节点。",
+    "description": ""
+},
+"Hardcore_AddNodeNewChamber": {
+    "message": "向强制停留提示列表添加一个新的房间节点。",
+    "description": ""
+},
+"Hardcore_ChamberAutoMoveTT": {
+    "message": "进入庄园时自动移动到房间。",
+    "description": ""
+},
+"ForcedStay_LeaveAPTFriendly": {
+    "message": "[强制停留] 禁止离开公寓",
+    "description": ""
+},
+"ForcedStay_LeaveAPTName": {
+    "message": "退出",
+    "description": ""
+},
+"ForcedStay_LeaveAPTOption": {
+    "message": "取消",
+    "description": ""
+},
+"ForcedStay_LeaveChamberFriendly": {
+    "message": "[强制停留] 禁止离开房间",
+    "description": ""
+},
+"ForcedStay_LeaveChamberName": {
+    "message": "退出",
+    "description": ""
+},
+"ForcedStay_LeaveChamberLabel": {
+    "message": "你想做什么？",
+    "description": ""
+},
+"ForcedStay_LeaveChamberOption": {
+    "message": "什么都不做。",
+    "description": ""
+},
+"ForcedStay_LeaveEstateFriendly": {
+    "message": "[强制停留] 禁止离开庄园",
+    "description": ""
+},
+"ForcedStay_LeaveEstateName": {
+    "message": "退出",
+    "description": ""
+},
+"ForcedStay_LeaveEstateLabel": {
+    "message": "离开庄园大厅？",
+    "description": ""
+},
+"ForcedStay_LeaveEstateOption": {
+    "message": "不",
+    "description": ""
+},
+"ForcedStay_EnterEstateFriendly": {
+    "message": "[强制停留] 自动进入庄园（防止通过登出逃脱）",
+    "description": ""
+},
+"ForcedStay_EnterEstateName": {
+    "message": "入口",
+    "description": ""
+},
+"ForcedStay_EnterEstateLabel": {
+    "message": "进入庄园大厅？",
+    "description": ""
+},
+"ForcedStay_EnterEstateOption": {
+    "message": "是",
+    "description": ""
+},
+"ForcedStay_EnterAPTOneFriendly": {
+    "message": "[强制停留] 打开公寓菜单 (1/3)",
+    "description": ""
+},
+"ForcedStay_EnterAPTOneName": {
+    "message": "公寓楼入口",
+    "description": ""
+},
+"ForcedStay_EnterAPTOneOption": {
+    "message": "前往指定公寓",
+    "description": ""
+},
+"ForcedStay_EnterAPTTwoFriendly": {
+    "message": "[强制停留] 选择公寓房间 (2/3)",
+    "description": ""
+},
+"ForcedStay_EnterAPTTwoName": {
+    "message": "公寓楼入口",
+    "description": ""
+},
+"ForcedStay_EnterAPTThreeFriendly": {
+    "message": "[强制停留] 进入选定的公寓 (3/3)",
+    "description": ""
+},
+"ForcedStay_EnterAPTThreeName": {
+    "message": "公寓楼入口",
+    "description": ""
+},
+"ForcedStay_EnterAPTThreeOption": {
+    "message": "是",
+    "description": ""
+},
+"ForcedStay_EnterFCOneFriendly": {
+    "message": "[强制停留] 打开 FC 房间菜单 (1/3)",
+    "description": ""
+},
+"ForcedStay_EnterFCOneName": {
+    "message": "额外房间入口",
+    "description": ""
+},
+"ForcedStay_EnterFCOneOption": {
+    "message": "移动到指定的私人房间",
+    "description": ""
+},
+"ForcedStay_EnterFCTwoFriendly": {
+    "message": "[强制停留] 选择 FC 房间 (2/3)",
+    "description": ""
+},
+"ForcedStay_EnterFCTwoName": {
+    "message": "额外房间入口",
+    "description": ""
+},
+"ForcedStay_EnterFCThreeFriendly": {
+    "message": "[强制停留] 进入选定的房间 (3/3)",
+    "description": ""
+},
+"ForcedStay_EnterFCThreeName": {
+    "message": "公寓楼入口",
+    "description": ""
+},
+"ForcedStay_EnterFCThreeOption": {
+    "message": "是",
+    "description": ""
+},
+"Preferences_LangLabel": {
+    "message": "语言与地区:",
+    "description": ""
+},
+"Preferences_LangTT": {
+    "message": "为 GagSpeak 实时聊天干扰器选择语言。",
+    "description": ""
+},
+"Preferences_DialectTT": {
+    "message": "为 GagSpeak 实时聊天干扰器选择地区。",
+    "description": ""
+},
+"Preferences_HeaderPuppet": {
+    "message": "puppeteer",
+    "description": ""
+},
+"Preferences_HeaderUiPrefs": {
+    "message": "用户界面",
+    "description": ""
+},
+"Preferences_ShowMainUiOnStartLabel": {
+    "message": "插件启动时打开主窗口用户界面。",
+    "description": ""
+},
+"Preferences_ShowMainUiOnStartTT": {
+    "message": "决定插件启动时主用户界面是否打开。",
+    "description": ""
+},
+"Preferences_EnableDtrEntryLabel": {
+    "message": "在服务器信息栏中显示状态和可见配对数量",
+    "description": ""
+},
+"Preferences_EnableDtrEntryTT": {
+    "message": "将 GagSpeak 连接状态和可见配对数量添加到服务器信息栏。",
+    "description": ""
+},
+"Preferences_PrivacyRadarLabel": {
+    "message": "隐私雷达",
+    "description": ""
+},
+"Preferences_PrivacyRadarTT": {
+    "message": "显示渲染范围内任何未与 GagSpeak 配对的玩家，以保护隐私。",
+    "description": ""
+},
+"Preferences_ActionsNotifLabel": {
+    "message": "动作通知",
+    "description": ""
+},
+"Preferences_ActionsNotifTT": {
+    "message": "当配对玩家对你使用动作时，显示一个铃铛图标。",
+    "description": ""
+},
+"Preferences_VibeStatusLabel": {
+    "message": "振动状态",
+    "description": ""
+},
+"Preferences_VibeStatusTT": {
+    "message": "当你有一个正在振动的情趣玩具时，显示一个振动图标。",
+    "description": ""
+},
+"Preferences_ShowVisibleSeparateLabel": {
+    "message": "单独显示可见的组",
+    "description": ""
+},
+"Preferences_ShowVisibleSeparateTT": {
+    "message": "将渲染范围内的配对玩家列在一个单独的组中。",
+    "description": ""
+},
+"Preferences_ShowOfflineSeparateLabel": {
+    "message": "显示单独显示离线的组",
+    "description": ""
+},
+"Preferences_ShowOfflineSeparateTT": {
+    "message": "将离线的配对玩家列在一个单独的组中。",
+    "description": ""
+},
+"Preferences_ThreeCharaAnonName": {
+    "message": "在全球聊天中显示 [“玩伴” - ###] 而不是 [“玩伴” - ####]",
+    "description": ""
+},
+"Preferences_PreferNicknamesLabel": {
+    "message": "优先显示可见配对的昵称",
+    "description": ""
+},
+"Preferences_PreferNicknamesTT": {
+    "message": "在渲染范围内，为配对玩家显示昵称而不是角色名。",
+    "description": ""
+},
+"Preferences_ShowProfilesLabel": {
+    "message": "悬停时显示 GagSpeak 个人资料",
+    "description": ""
+},
+"Preferences_ShowProfilesTT": {
+    "message": "鼠标悬停在玩家身上后显示已配置的用户个人资料。",
+    "description": ""
+},
+"Preferences_ProfileDelayLabel": {
+    "message": "鼠标悬停延迟",
+    "description": ""
+},
+"Preferences_ProfileDelayTT": {
+    "message": "设置鼠标悬停后显示个人资料的延迟时间。",
+    "description": ""
+},
+"Preferences_ShowContextMenusLabel": {
+    "message": "为可见配对启用右键上下文菜单",
+    "description": ""
+},
+"Preferences_HeaderNotifications": {
+    "message": "通知",
+    "description": ""
+},
+"Preferences_ZoneChangeWarnLabel": {
+    "message": "实时聊天干扰器警告（区域更改时）",
+    "description": ""
+},
+"Preferences_ConnectedNotifLabel": {
+    "message": "启用连接通知",
+    "description": ""
+},
+"Preferences_OnlineNotifLabel": {
+    "message": "启用在线配对通知",
+    "description": ""
+},
+"Preferences_OnlineNotifTT": {
+    "message": "当一个配对对象上线时显示通知。",
+    "description": ""
+},
+"Preferences_LimitForNicksLabel": {
+    "message": "将在线配对通知限制为有昵称的配对",
+    "description": ""
+},
+"Preferences_LimitForNicksTT": {
+    "message": "将通知限制为有指定昵称的配对。",
+    "description": ""
+},
+"Accounts_PrimaryLabel": {
+    "message": "主账户",
+    "description": ""
+},
+"Accounts_SecondaryLabel": {
+    "message": "辅助账户",
+    "description": ""
+},
+"Accounts_CharaNameLabel": {
+    "message": "账户角色名称",
+    "description": ""
+},
+"Accounts_CharaWorldLabel": {
+    "message": "账户角色所在世界",
+    "description": ""
+},
+"Accounts_CharaKeyLabel": {
+    "message": "账户密钥",
+    "description": ""
+},
+"Accounts_DeleteButtonLabel": {
+    "message": "删除账户",
+    "description": ""
+},
+"Accounts_DeleteButtonDisabledTT": {
+    "message": "无法删除此账户，因为它尚未注册。",
+    "description": ""
+},
+"Accounts_DeleteButtonPrimaryTT": {
+    "message": "--警----告-- 删除此主账户也将删除所有辅助账户",
+    "description": ""
+},
+"Accounts_FingerprintPrimary": {
+    "message": "主 GagSpeak 账户",
+    "description": ""
+},
+"Accounts_FingerprintSecondary": {
+    "message": "辅助 GagSpeak 账户",
+    "description": ""
+},
+"Accounts_NoSuccessfulConnection": {
+    "message": "使用已注册的密钥无法连接到 GagSpeak 服务器。",
+    "description": ""
+},
+"Accounts_EditKeyAllowed": {
+    "message": "切换密钥字段的显示",
+    "description": ""
+},
+"Accounts_EditKeyNotAllowed": {
+    "message": "无法更改已验证的密钥。此角色现在已绑定到此账户。",
+    "description": ""
+},
+"Accounts_CopyKeyToClipboard": {
+    "message": "点击将密钥复制到剪贴板",
+    "description": ""
+},
+"Accounts_RemoveAccountPrimaryWarning": {
+    "message": "删除主账户将同时删除所有辅助账户。",
+    "description": ""
+},
+"Accounts_RemoveAccountWarning": {
+    "message": "你的 UID 将从所有配对列表中移除。\n 你将无法使用此密钥。",
+    "description": ""
+},
+"Accounts_RemoveAccountConfirm": {
+    "message": "你确定要删除此账户吗？",
+    "description": ""
+}
+}
