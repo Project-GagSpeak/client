@@ -26,7 +26,7 @@ public static class AchievementHelpers
         && obj->SubKind is 0 
         && obj->EventId.Id is 983600 
         && obj->EventId.EntryId is 560
-        && obj->EventId.ContentId is EventHandlerType.GimmickAccessor
+        && obj->EventId.ContentId is EventHandlerContent.GimmickAccessor
         && obj->Name.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
 
     public static unsafe bool InDeepDungeon() => GetDirector() != null;

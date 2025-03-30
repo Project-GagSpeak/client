@@ -42,7 +42,7 @@ public readonly record struct ModSettings(Dictionary<string, List<string>> Setti
         }
         catch (Exception ex)
         {
-            GagSpeak.StaticLog.Warning("Mod Settings During Fail:" + ToString());
+            GagSpeak.StaticLog.Warning("Mod Settings During Fail:" + ex);
             return string.Empty;
         }
     }

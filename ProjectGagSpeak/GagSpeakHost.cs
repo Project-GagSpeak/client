@@ -9,7 +9,6 @@ using GagSpeak.StateManagers;
 using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.Triggers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

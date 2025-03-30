@@ -188,11 +188,11 @@ public partial class AchievementManager
             unsafe
             {
                 var gameControl = FFXIVClientStructs.FFXIV.Client.Game.Control.Control.Instance();
-                var movementByte = Marshal.ReadByte((nint)gameControl, 30211);
+                var movementByte = gameControl->IsWalking; // Marshal.ReadByte((nint)gameControl, 30243); If using this, its walking when 1?
                 var movementDetection = AgentMap.Instance();
                 var result = movementDetection->IsPlayerMoving;
                 GagSpeak.StaticLog.Information("IsPlayerMoving Result: " + result +" || IsWalking Byte: "+movementByte);
-                return (_gags.ActiveGagsData?.IsGagged() ?? false) && _restraints.ActiveRestraint is not null && result == 1 && movementByte == 0;
+                return (_gags.ActiveGagsData?.IsGagged() ?? false) && _restraints.ActiveRestraint is not null && result && movementByte;
             }
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Funny Conditions Met");
 

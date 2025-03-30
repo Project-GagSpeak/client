@@ -1,5 +1,5 @@
-using Dalamud.Utility;
 using PInvoke;
+using Dalamud.Utility;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 

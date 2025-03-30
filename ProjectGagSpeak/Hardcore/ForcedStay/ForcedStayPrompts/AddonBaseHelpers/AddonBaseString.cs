@@ -32,7 +32,7 @@ public unsafe static class AddonBaseString
             Index = index;
         }
 
-        public SeString SeString => MemoryHelper.ReadSeStringNullTerminated((nint)Addon->PopupMenu.PopupMenu.EntryNames[Index]);
+        public SeString SeString => MemoryHelper.ReadSeStringNullTerminated((nint)Addon->PopupMenu.PopupMenu.EntryNames[Index].Value);
         public string Text => SeString.ExtractText();
     }
 }

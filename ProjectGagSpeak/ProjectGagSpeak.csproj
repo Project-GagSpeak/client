@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/12.0.0">
+<Project Sdk="Dalamud.NET.Sdk/12.0.2">
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
         <Version>1.2.1.6</Version>
+        <WarningLevel>4</WarningLevel>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <NoWarn>$(NoWarn);IDE1006,CS8618</NoWarn>
+    </PropertyGroup>
     
     <ItemGroup>
         <!-- Include all files and subfolders within the Assets folder -->
@@ -22,21 +27,23 @@
 
     <!--As Now that we use Dalamud.SDK, most Dalamud Sources are not needed, but some must stay.-->
     <ItemGroup>
-        <!--Unsure isf nthis is needed, can test without it later-->
-        <!--Can test if this is needed later  or not, but removing it may cause conflicts with buttplug newtonsoft.-->
+        <!--Can test if this is needed later or not, but removing it may cause conflicts with buttplug newtonsoft.-->
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <!--For localization and language handling.-->
+        <Reference Include="CheapLoc">
+            <HintPath>$(DalamudLibPath)CheapLoc.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <!--For direct interaction with a users system. Useful for the hardcore 
+            functionality or for key & mouse detection dalamud does not provide.-->
+        <Reference Include="PInvoke.User32">
+            <HintPath>$(DalamudLibPath)PInvoke.User32.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
     </ItemGroup>
-
-    <!--To Track the time each build occurs, grabbing UTC values. Purpose still not entirely clear. may remove-->
-    <PropertyGroup>
-        <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <NoWarn>$(NoWarn);IDE1006,CS8618</NoWarn>
-    </PropertyGroup>
-
     
     <ItemGroup>
         <!--Submodules-->        

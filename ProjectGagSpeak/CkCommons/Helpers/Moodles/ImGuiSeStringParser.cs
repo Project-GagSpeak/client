@@ -98,7 +98,7 @@ public static class ImGuiSeStringParser
                     if (data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is { } validUICol && r != 0)
                     {
                         // convert the forground to imgui u32 format.
-                        var col = BinaryPrimitives.ReverseEndianness(validUICol.UIForeground);
+                        var col = BinaryPrimitives.ReverseEndianness(validUICol.Dark);
                         // Add the color modifier
                         currentChunkFlags |= ParsedSeStringFlags.HasForeground;
                         currentChunkText.AddColor(col);
@@ -139,7 +139,7 @@ public static class ImGuiSeStringParser
                     // Add the glow modifier
 
                     // convert the forground to imgui u32 format.
-                    var glow = BinaryPrimitives.ReverseEndianness(validUIGlow.UIGlow);
+                    var glow = BinaryPrimitives.ReverseEndianness(validUIGlow.Light);
                     currentChunkFlags |= ParsedSeStringFlags.HasGlow;
                     currentChunkText.AddGlow(glow);
                 }

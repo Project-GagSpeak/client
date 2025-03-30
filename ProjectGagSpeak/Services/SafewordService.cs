@@ -16,7 +16,7 @@ public sealed class SafewordService : MediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly GlobalData _playerManager;
     private readonly PairManager _pairManager;
-    private readonly VisualStateListener _visuaListener; // can directly call upon all reversion operations.
+    private readonly VisualStateListener _visualListener; // can directly call upon all reversion operations.
     private readonly ToyboxStateListener _toyboxListener;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,

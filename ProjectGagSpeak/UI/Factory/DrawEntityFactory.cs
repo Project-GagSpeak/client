@@ -4,7 +4,6 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
-using GagSpeak.UI.Components;
 using GagSpeak.UI.Handlers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.UserPair;

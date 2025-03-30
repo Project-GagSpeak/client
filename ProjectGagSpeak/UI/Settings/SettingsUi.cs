@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -9,11 +8,9 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -161,27 +158,27 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         var liveChatGarblerActive = globals!.ChatGarblerActive;
         var liveChatGarblerLocked = globals.ChatGarblerLocked;
-        bool removeGagOnLockExpiration = _mainConfig.Config.RemoveRestrictionOnTimerExpire;
+        var removeGagOnLockExpiration = _mainConfig.Config.RemoveRestrictionOnTimerExpire;
 
         var wardrobeEnabled = globals.WardrobeEnabled;
         var gagVisuals = globals.GagVisuals;
         var restrictionVisuals = globals.RestrictionVisuals;
         var restraintSetVisuals = globals.RestraintSetVisuals;
-        bool cursedDungeonLoot = _mainConfig.Config.CursedLootPanel;
-        bool mimicsApplyTraits = _mainConfig.Config.CursedItemsApplyTraits;
+        var cursedDungeonLoot = _mainConfig.Config.CursedLootPanel;
+        var mimicsApplyTraits = _mainConfig.Config.CursedItemsApplyTraits;
 
         var puppeteerEnabled = globals.PuppeteerEnabled;
         var globalTriggerPhrase = globals.TriggerPhrase;
         var globalPuppetPerms = globals.PuppetPerms;
 
         var toyboxEnabled = globals.ToyboxEnabled;
-        bool intifaceAutoConnect = _mainConfig.Config.IntifaceAutoConnect;
-        string intifaceConnectionAddr = _mainConfig.Config.IntifaceConnectionSocket;
+        var intifaceAutoConnect = _mainConfig.Config.IntifaceAutoConnect;
+        var intifaceConnectionAddr = _mainConfig.Config.IntifaceConnectionSocket;
         var spatialVibratorAudio = globals.SpatialAudio;
 
         // pishock stuff.
-        string piShockApiKey = _mainConfig.Config.PiShockApiKey;
-        string piShockUsername = _mainConfig.Config.PiShockUsername;
+        var piShockApiKey = _mainConfig.Config.PiShockApiKey;
+        var piShockUsername = _mainConfig.Config.PiShockUsername;
 
         var globalPiShockShareCode = globals.GlobalShockShareCode;
         var allowGlobalShockShockCollar = globals.AllowShocks;
@@ -278,7 +275,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             var refSits = (globalPuppetPerms & PuppetPerms.Sit) == PuppetPerms.Sit;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref refSits))
             {
-                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Sit;
+                var newPerms = globalPuppetPerms ^ PuppetPerms.Sit;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
@@ -287,7 +284,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             var refEmotes = (globalPuppetPerms & PuppetPerms.Emotes) == PuppetPerms.Emotes;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref refEmotes))
             {
-                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Emotes;
+                var newPerms = globalPuppetPerms ^ PuppetPerms.Emotes;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
@@ -296,7 +293,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             var refAlias = (globalPuppetPerms & PuppetPerms.Alias) == PuppetPerms.Alias;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref refAlias))
             {
-                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.Alias;
+                var newPerms = globalPuppetPerms ^ PuppetPerms.Alias;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
@@ -305,7 +302,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             var refAllPerms = (globalPuppetPerms & PuppetPerms.All) == PuppetPerms.All;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref refAllPerms))
             {
-                PuppetPerms newPerms = globalPuppetPerms ^ PuppetPerms.All;
+                var newPerms = globalPuppetPerms ^ PuppetPerms.All;
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
                     new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
             }
@@ -477,7 +474,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.SameLine();
 
             // voodoo magic from old code i cant be asked to polish.
-            if(ImGuiUtil.GenericEnumCombo("##Language", 65, _mainConfig.Config.Language, out GarbleCoreLang newLang, i => i.ToName()))
+            if(ImGuiUtil.GenericEnumCombo("##Language", 65, _mainConfig.Config.Language, out var newLang, i => i.ToName()))
             {
                 if(newLang != _mainConfig.Config.Language)
                     _mainConfig.Config.LanguageDialect = newLang.GetDialects().First();
@@ -488,7 +485,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.AttachToolTip(GSLoc.Settings.Preferences.LangTT);
 
             ImGui.SameLine();
-            if(ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Config.LanguageDialect, out GarbleCoreDialect newDialect,
+            if(ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Config.LanguageDialect, out var newDialect,
                 _mainConfig.Config.Language.GetDialects(), i => i.ToName()))
             {
                 _mainConfig.Config.LanguageDialect = newDialect;
@@ -690,7 +687,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.HelpText(GSLoc.Settings.Preferences.LimitForNicksTT);
         }
 
-        if(ImGuiUtil.GenericEnumCombo("Info Location##notifInfo", 125f, _mainConfig.Config.InfoNotification, out NotificationLocation newInfo, i => i.ToString()))
+        if(ImGuiUtil.GenericEnumCombo("Info Location##notifInfo", 125f, _mainConfig.Config.InfoNotification, out var newInfo, i => i.ToString()))
         {
             _mainConfig.Config.InfoNotification = newInfo;
             _mainConfig.Save();
@@ -701,7 +698,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                       + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
                       + Environment.NewLine + "'Both' will show chat as well as the toast notification");
 
-        if (ImGuiUtil.GenericEnumCombo("Warning Location##notifWarn", 125f, _mainConfig.Config.WarningNotification, out NotificationLocation newWarn, i => i.ToString()))
+        if (ImGuiUtil.GenericEnumCombo("Warning Location##notifWarn", 125f, _mainConfig.Config.WarningNotification, out var newWarn, i => i.ToString()))
         {
             _mainConfig.Config.WarningNotification = newWarn;
             _mainConfig.Save();
@@ -712,7 +709,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                               + Environment.NewLine + "'Toast' will show Warning toast notifications in the bottom right corner"
                               + Environment.NewLine + "'Both' will show chat as well as the toast notification");
 
-        if (ImGuiUtil.GenericEnumCombo("Error Location##notifError", 125f, _mainConfig.Config.ErrorNotification, out NotificationLocation newError, i => i.ToString()))
+        if (ImGuiUtil.GenericEnumCombo("Error Location##notifError", 125f, _mainConfig.Config.ErrorNotification, out var newError, i => i.ToString()))
         {
             _mainConfig.Config.ErrorNotification = newError;
             _mainConfig.Save();

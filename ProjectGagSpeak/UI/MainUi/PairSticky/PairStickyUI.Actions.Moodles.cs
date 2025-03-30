@@ -1,11 +1,4 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Components;
-using GagSpeak.Utils;
-using ImGuiNET;
-using OtterGui;
 
 namespace GagSpeak.UI.Permissions;
 

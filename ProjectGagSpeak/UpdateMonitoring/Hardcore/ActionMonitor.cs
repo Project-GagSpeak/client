@@ -137,7 +137,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
         {
             // Get all slots for the row. (their pointers)
             var hotbarRow = hotbarSpan.GetPointer(i);
-            if (hotbarSpan == null)
+            if (hotbarSpan == Span<RaptureHotbarModule.Hotbar>.Empty)
                 continue;
 
             // get the slots data...
@@ -183,7 +183,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
             CurrentJobBannedActions = bannedJobActions; // updated our job list
             unsafe
             {
-                if (raptureHotbarModule->StandardHotbars != null)
+                if (raptureHotbarModule->StandardHotbars != Span<RaptureHotbarModule.Hotbar>.Empty)
                     GenerateCooldowns();
             }
         }

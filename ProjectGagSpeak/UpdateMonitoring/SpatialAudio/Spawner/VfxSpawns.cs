@@ -1,12 +1,10 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 using ImGuiNET;
 using OtterGui;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
-using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 

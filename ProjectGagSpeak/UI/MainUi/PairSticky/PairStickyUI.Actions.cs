@@ -41,7 +41,7 @@ public partial class PairStickyUI
             else if (SPair.LastRestrictionsData != null)
             {
                 ImGui.TextUnformatted("Restrictions Actions");
-                // DrawRestrictionsActions();
+                DrawRestrictionActions();
             }
             else if (SPair.LastRestraintData != null)
             {

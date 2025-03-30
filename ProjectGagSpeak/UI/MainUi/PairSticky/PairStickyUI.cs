@@ -1,11 +1,9 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
 using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;

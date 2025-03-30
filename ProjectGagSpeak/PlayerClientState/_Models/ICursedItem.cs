@@ -40,6 +40,4 @@ public interface ICursedItem
     /// <summary> This is used for serialization purposes. </summary>
     /// <returns> the object representing the LightCursedItem </returns>
     public JObject Serialize();
-
-    // A Deserialization method would require a handler from the list of IRestriction item storage.
 }

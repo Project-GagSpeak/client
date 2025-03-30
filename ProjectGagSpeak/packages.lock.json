@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0-windows7.0": {
+    "net9.0-windows7.0": {
       "Buttplug": {
         "type": "Direct",
         "requested": "[4.0.0, )",
@@ -595,24 +595,19 @@
       "ottergui": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[12.0.0, )",
           "JetBrains.Annotations": "[2024.3.0, )",
           "Microsoft.Extensions.DependencyInjection": "[9.0.2, )"
         }
       },
       "penumbra.api": {
-        "type": "Project",
-        "dependencies": {
-          "DalamudPackager": "[12.0.0, )"
-        }
+        "type": "Project"
       },
       "penumbra.gamedata": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[12.0.0, )",
           "OtterGui": "[1.0.0, )",
           "Penumbra.Api": "[5.6.1, )",
-          "Penumbra.String": "[1.0.4, )"
+          "Penumbra.String": "[1.0.6, )"
         }
       },
       "penumbra.string": {
