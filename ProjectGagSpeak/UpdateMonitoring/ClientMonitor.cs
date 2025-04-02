@@ -109,7 +109,7 @@ public class ClientMonitor : IHostedService
 
     public static readonly int MaxLevel = 100;
     public static IntPtr ClientPlayerAddress { get; private set; } = IntPtr.Zero; // Only use this if we run into problems with the normal one.
-    public static unsafe short Commondations => StructsPlayerState.Instance()->PlayerCommendations;
+    public static unsafe short Commendations => StructsPlayerState.Instance()->PlayerCommendations;
     public static unsafe bool IsInDuty => GameMain.Instance()->CurrentContentFinderConditionId is not 0; // alternative method from IDutyState
     public static unsafe bool IsOnIsland => MJIManager.Instance()->IsPlayerInSanctuary is 1;
     public ClientLanguage ClientLanguage => _clientState.ClientLanguage;

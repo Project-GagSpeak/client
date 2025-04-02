@@ -112,7 +112,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new MoodlesStatusInfo();
         try { return GetMoodleInfo.InvokeFunc(guid); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e, LoggerType.IpcMoodles); return new MoodlesStatusInfo(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e); return new MoodlesStatusInfo(); }
     }
 
     /// <summary> This method gets the list of all our clients Moodles Info </summary>
@@ -120,7 +120,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new List<MoodlesStatusInfo>();
         try { return GetMoodlesInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e, LoggerType.IpcMoodles); return new List<MoodlesStatusInfo>(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e); return new List<MoodlesStatusInfo>(); }
     }
 
     /// <summary> This method gets the preset info for a provided GUID from the client. </summary>
@@ -128,7 +128,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new MoodlePresetInfo();
         try { return GetPresetInfo.InvokeFunc(guid); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e, LoggerType.IpcMoodles); return new MoodlePresetInfo(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e); return new MoodlePresetInfo(); }
     }
 
     /// <summary> This method gets the list of all our clients Presets Info </summary>
@@ -136,7 +136,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new List<MoodlePresetInfo>();
         try { return GetPresetsInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e, LoggerType.IpcMoodles); return new List<MoodlePresetInfo>(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e); return new List<MoodlePresetInfo>(); }
     }
 
     /// <summary> This method gets the status information of our client player </summary>
@@ -144,7 +144,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new List<MoodlesStatusInfo>();
         try { return GetStatusManagerInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e, LoggerType.IpcMoodles); return new List<MoodlesStatusInfo>(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return new List<MoodlesStatusInfo>(); }
     }
 
     /// <summary> Obtain the status information of a visible player </summary>
@@ -152,7 +152,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return new List<MoodlesStatusInfo>();
         try { return GetStatusManagerInfoByName.InvokeFunc(playerNameWithWorld); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e, LoggerType.IpcMoodles); return new List<MoodlesStatusInfo>(); }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return new List<MoodlesStatusInfo>(); }
     }
 
     /// <summary> To use when we want to obtain the status manager for our client player, without needing to calculate our address. </summary>
@@ -160,7 +160,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if(!APIAvailable) return string.Empty;
         try { return GetStatusManager.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e, LoggerType.IpcMoodles); return string.Empty; }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return string.Empty; }
     }
 
 
@@ -169,7 +169,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         if (!APIAvailable) return string.Empty;
         try { return GetStatusManagerByName.InvokeFunc(playerNameWithWorld); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e, LoggerType.IpcMoodles); return string.Empty; }
+        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return string.Empty; }
     }
 
     public bool ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
