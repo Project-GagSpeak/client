@@ -29,9 +29,9 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     public readonly ICachingList<Padlocks> ComboPadlocks;
     protected float? InnerWidth;
     protected int? NewSelection;
-    private int _lastSelection = 0;
+/*    private int _lastSelection = 0;
     private bool _setScroll;
-    private bool _closePopup;
+    private bool _closePopup;*/
     protected string Password = string.Empty;
     protected string Timer = string.Empty;
 

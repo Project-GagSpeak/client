@@ -163,7 +163,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if(_gags.ActiveGagsData is not { } gagData)
             return false;
 
-        // if the state is to enable the gag.
+        GsApiErrorCodes retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -171,16 +171,15 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 if (availableIdx is -1)
                     return false;
 
-                Logger.LogInformation("Applying a " + act.GagType + " to layer " + (GagLayer)availableIdx, LoggerType.GagHandling);
+                Logger.LogInformation("Applying a " + act.GagType + " to layer " + (int)availableIdx, LoggerType.GagHandling);
                 var newInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Applied)
                 {
-                    Layer = (GagLayer)availableIdx,
+                    Layer = (int)availableIdx,
                     Gag = act.GagType,
                     Enabler = MainHub.UID
                 };
-                if (await _hub.UserPushDataGags(newInfo))
-                    return true;
 
+                retCode = await _hub.UserPushDataGags(newInfo);
                 break;
             case NewState.Locked:
                 // Idk why you would do this lol but account for it.
@@ -214,19 +213,18 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 };
                 // define a random time between 2 timespan bounds.
                 var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
-                Logger.LogInformation("Locking a " + act.GagType + " with " + act.Padlock + " to layer " + (GagLayer)idx, LoggerType.ToyboxTriggers);
+                Logger.LogInformation("Locking a " + act.GagType + " with " + act.Padlock + " to layer " + (int)idx, LoggerType.ToyboxTriggers);
                 var newLockInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Locked)
                 {
-                    Layer = (GagLayer)idx,
+                    Layer = (int)idx,
                     Padlock = act.Padlock,
                     Password = password,
                     Timer = new DateTimeOffset(DateTime.UtcNow + timer),
                     Assigner = MainHub.UID
                 };
-                if (await _hub.UserPushDataGags(newLockInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataGags(newLockInfo);
                 break;
+
             case NewState.Disabled:
                 var match = act.GagType is GagType.None
                     ? gagData.FindOutermostActive()
@@ -236,16 +234,22 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                     return false;
 
                 // We can remove it.
-                Logger.LogDebug("Removing a " + act.GagType + " from layer " + (GagLayer)match, LoggerType.ToyboxTriggers);
-                var removeInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { Layer = (GagLayer)match };
-                if (await _hub.UserPushDataGags(removeInfo))
-                    return true;
-
+                Logger.LogDebug("Removing a " + act.GagType + " from layer " + (int)match, LoggerType.ToyboxTriggers);
+                var removeInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { Layer = (int)match };
+                retCode = await _hub.UserPushDataGags(removeInfo);
                 break;
+
             default:
                 return false;
         }
-        return false;
+
+        if (retCode is not GsApiErrorCodes.Success)
+        {
+            Logger.LogError("Gag action failed with error code: " + retCode);
+            return false;
+        }
+
+        return true;
     }
 
     private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)
@@ -253,6 +257,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if (_restrictions.ActiveRestrictionsData is not { } restrictions)
             return false;
 
+        GsApiErrorCodes retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -264,18 +269,16 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 if (availableIdx is -1 || restrictions.Restrictions[availableIdx].IsLocked() || !restrictions.Restrictions[availableIdx].CanApply())
                     return false;
 
-                var item = restrictions.Restrictions[act.LayerIdx];
                 Logger.LogInformation("Applying a restriction item to layer " + availableIdx, LoggerType.ToyboxTriggers);
                 var newInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Applied)
                 {
-                    AffectedIndex = availableIdx,
-                    ActiveSetId = act.RestrictionId,
+                    Layer = availableIdx,
+                    Identifier = act.RestrictionId,
                     Enabler = MainHub.UID
                 };
-                if (await _hub.UserPushDataRestrictions(newInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataRestrictions(newInfo);
                 break;
+
             case NewState.Locked:
                 // Locate the first available unlocked restriction.
                 var idx = act.LayerIdx is -1
@@ -297,16 +300,15 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 Logger.LogDebug("Locking a restriction item with " + act.Padlock + " to layer " + idx, LoggerType.ToyboxTriggers);
                 var newLockInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Locked)
                 {
-                    AffectedIndex = idx,
+                    Layer = idx,
                     Padlock = act.Padlock,
                     Password = password,
                     Timer = new DateTimeOffset(DateTime.UtcNow + timer),
                     Assigner = MainHub.UID
                 };
-                if (await _hub.UserPushDataRestrictions(newLockInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataRestrictions(newLockInfo);
                 break;
+
             case NewState.Disabled:
                 var match = !act.RestrictionId.IsEmptyGuid()
                     ? restrictions.FindOutermostActiveUnlocked()
@@ -316,15 +318,21 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                     return false;
 
                 Logger.LogDebug("Removing a restriction item from layer " + match, LoggerType.ToyboxTriggers);
-                var removeInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { AffectedIndex = match };
-                if (await _hub.UserPushDataRestrictions(removeInfo))
-                    return true;
-
+                var removeInfo = new PushRestrictionDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed) { Layer = match };
+                retCode = await _hub.UserPushDataRestrictions(removeInfo);
                 break;
+
             default:
                 return false;
         }
-        return false;
+
+        if (retCode is not GsApiErrorCodes.Success)
+        {
+            Logger.LogError("Restriction action failed with error code: " + retCode);
+            return false;
+        }
+
+        return true;
     }
 
     private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
@@ -332,6 +340,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if(_restraints.ActiveRestraintData is not { } restraint)
             return false;
 
+        GsApiErrorCodes retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -344,10 +353,9 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                     ActiveSetId = act.RestrictionId,
                     Enabler = MainHub.UID
                 };
-                if (await _hub.UserPushDataRestraint(newInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataRestraint(newInfo);
                 break;
+
             case NewState.Locked:
                 if (!restraint.CanLock() || act.Padlock is Padlocks.None)
                     return false;
@@ -369,24 +377,28 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                     Timer = new DateTimeOffset(DateTime.UtcNow + timer),
                     Assigner = MainHub.UID
                 };
-                if (await _hub.UserPushDataRestraint(newLockInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataRestraint(newLockInfo);
                 break;
+
             case NewState.Disabled:
                 if (!restraint.CanRemove() || !_restraints.Storage.Contains(act.RestrictionId))
                     return false;
 
                 Logger.LogDebug("Removing a restraint item from layer " + act.RestrictionId, LoggerType.ToyboxTriggers);
-                var removeInfo = new PushRestraintDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed);
-                if (await _hub.UserPushDataRestraint(removeInfo))
-                    return true;
-
+                retCode = await _hub.UserPushDataRestraint(new PushRestraintDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.Removed));
                 break;
+
             default:
                 return false;
         }
-        return false;
+
+        if (retCode is not GsApiErrorCodes.Success)
+        {
+            Logger.LogError("Restraint action failed with error code: " + retCode);
+            return false;
+        }
+
+        return true;
     }
 
     private bool DoMoodleAction(MoodleAction act, string enactor)

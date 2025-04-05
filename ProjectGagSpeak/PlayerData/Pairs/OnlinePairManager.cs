@@ -52,7 +52,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             if (_lastGagData is null || !Equals(newData, _lastGagData))
             {
                 _lastGagData = newData;
-                PushGagData(_pairManager.GetOnlineUserDatas(), msg.UpdateType, (GagLayer)msg.AffectedIdx);
+                PushGagData(_pairManager.GetOnlineUserDatas(), msg.UpdateType, msg.Layer);
             }
             else
             {
@@ -66,7 +66,7 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             if (_lastRestrictionData is null || !Equals(newData, _lastRestrictionData))
             {
                 _lastRestrictionData = newData;
-                PushRestriction(_pairManager.GetOnlineUserDatas(), msg.UpdateType, msg.AffectedIdx);
+                PushRestriction(_pairManager.GetOnlineUserDatas(), msg.UpdateType, msg.Layer);
             }
             else
             {
@@ -165,27 +165,28 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             _ = Task.Run(async () =>
             {
                 var compiledComposite = new CharaCompositeData(); // For now during debugging until the rest works out, send fresh updates.
-/*                {
-                    Gags = _gagManager.ActiveGagsData,
-                    Restrictions = _restrictionManager.ActiveRestrictionsData,
-                    Restraint = _restraintManager.ActiveRestraintData,
-                    CursedItems = _cursedLootConfig.Config.Storage.CursedItems.Select(x => x.Identifier).ToList(),
-                    AliasData = _aliasConfig.Config.FromAliasStorage(),
-                    ToyboxData = new CharaToyboxData()
-                    {
-                        ActivePattern = _patternsConfig.Config.Storage.Patterns.Where(p => p.IsActive).Select(p => p.UniqueIdentifier).FirstOrDefault(),
-                        ActiveAlarms = _alarmConfig.Config.Storage.Alarms.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
-                        ActiveTriggers = _triggersConfig.Config.Storage.Triggers.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
-                    },
-                    LightStorageData = new CharaStorageData(), // Handle this later.
-                };*/
+                /*                {
+                                    Gags = _gagManager.ActiveGagsData,
+                                    Restrictions = _restrictionManager.ActiveRestrictionsData,
+                                    Restraint = _restraintManager.ActiveRestraintData,
+                                    CursedItems = _cursedLootConfig.Config.Storage.CursedItems.Select(x => x.Identifier).ToList(),
+                                    AliasData = _aliasConfig.Config.FromAliasStorage(),
+                                    ToyboxData = new CharaToyboxData()
+                                    {
+                                        ActivePattern = _patternsConfig.Config.Storage.Patterns.Where(p => p.IsActive).Select(p => p.UniqueIdentifier).FirstOrDefault(),
+                                        ActiveAlarms = _alarmConfig.Config.Storage.Alarms.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
+                                        ActiveTriggers = _triggersConfig.Config.Storage.Triggers.Where(x => x.Enabled).Select(x => x.Identifier).ToList(),
+                                    },
+                                    LightStorageData = new CharaStorageData(), // Handle this later.
+                                };*/
+                await Task.Delay(1);
                 Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
                 // await _hub.UserPushData(new(newOnlinePairs, compiledComposite, false)).ConfigureAwait(false);
             });
         }
     }
 
-    private void PushGagData(List<UserData> onlinePlayers, DataUpdateType type, GagLayer layer)
+    private void PushGagData(List<UserData> onlinePlayers, DataUpdateType type, int layer)
     {
         if (_lastGagData is null)
             return;
@@ -217,8 +218,8 @@ public class OnlinePairManager : DisposableMediatorSubscriberBase
             SendUpdateLog(onlinePlayers, type);
             var sentDto = new PushRestrictionDataUpdateDto(onlinePlayers, type)
             {
-                AffectedIndex = layer,
-                ActiveSetId = _lastRestrictionData.Identifier,
+                Layer = layer,
+                Identifier = _lastRestrictionData.Identifier,
                 Enabler = _lastRestrictionData.Enabler,
                 Padlock = _lastRestrictionData.Padlock,
                 Password = _lastRestrictionData.Password,

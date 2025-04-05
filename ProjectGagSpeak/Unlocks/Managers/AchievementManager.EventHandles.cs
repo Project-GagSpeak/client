@@ -294,7 +294,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagStateChanged(GagLayer gagLayer, GagType gagAppliedOrRemoved, bool applying, string enactorUid)
+    private void OnGagStateChanged(int gagLayer, GagType gagAppliedOrRemoved, bool applying, string enactorUid)
     {
         if (_gags.ActiveGagsData is not { } gagData || gagAppliedOrRemoved is GagType.None)
             return;
@@ -360,7 +360,7 @@ public partial class AchievementManager
         (LatestCache.SaveData.Achievements[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(gagData.TotalGagsEquipped());
     }
 
-    private void OnPairGagStateChanged(GagLayer layer, GagType gag, bool applying, string assignerUid, string affectedUid)
+    private void OnPairGagStateChanged(int layer, GagType gag, bool applying, string assignerUid, string affectedUid)
     {
         if(applying)
         {
@@ -381,7 +381,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid)
+    private void OnGagLockStateChange(int layer, Padlocks padlock, bool isLocking, string assignerUid)
     {
         if (isLocking)
         {
@@ -393,7 +393,7 @@ public partial class AchievementManager
         }
     }
 
-    private void OnPairGagLockStateChange(GagLayer layer, Padlocks padlock, bool isLocking, string assignerUid, string affectedUid)
+    private void OnPairGagLockStateChange(int layer, Padlocks padlock, bool isLocking, string assignerUid, string affectedUid)
     {
         if (isLocking)
         {

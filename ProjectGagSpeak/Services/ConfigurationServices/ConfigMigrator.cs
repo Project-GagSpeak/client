@@ -136,7 +136,9 @@ public static class ConfigMigrator
                 continue;
 
             string gagName = gagItem.Key;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             JObject oldGagData = (JObject)gagItem.Value;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             // Create the new structure for the current gag
             JObject newGagData = new JObject();

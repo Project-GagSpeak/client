@@ -50,16 +50,16 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
         DrawPermRowPairCommon(width, perm, curState, editAccess, () => !curState);
     }
 
-    public void DrawPermRowPair(float width, SPPID perm, PuppetPerms curState, bool editAccess, PuppetPerms editFlag)
+    public void DrawPermRowPair(float width, SPPID perm, PuppetPerms curState, PuppetPerms editAccess, PuppetPerms editFlag)
     {
         var isFlagSet = (curState & editFlag) == editFlag;
-        DrawPermRowPairCommon(width, perm, isFlagSet, editAccess, () => curState ^ editFlag);
+        DrawPermRowPairCommon(width, perm, isFlagSet, editAccess.HasAny(editFlag), () => curState ^ editFlag);
     }
 
-    public void DrawPermRowPair(float width, SPPID perm, MoodlePerms curState, bool editAccess, MoodlePerms editFlag)
+    public void DrawPermRowPair(float width, SPPID perm, MoodlePerms curState, MoodlePerms editAccess, MoodlePerms editFlag)
     {
         var isFlagSet = (curState & editFlag) == editFlag;
-        DrawPermRowPairCommon(width, perm, isFlagSet, editAccess, () => curState ^ editFlag);
+        DrawPermRowPairCommon(width, perm, isFlagSet, editAccess.HasAny(editFlag), () => curState ^ editFlag);
     }
 
     public void DrawPermRowPair(float width, SPPID perm, TimeSpan curState, bool editAccess)
@@ -70,7 +70,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
 
         if (CkGui.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
         {
-            if (str != curState.ToGsRemainingTime() && GsPadlockEx.TryParseTimeSpan(str, out var newTime))
+            if (str != curState.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(str, out var newTime))
             {
                 var res = perm.ToPermValue();
 

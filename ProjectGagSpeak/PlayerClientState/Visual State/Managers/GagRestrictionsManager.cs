@@ -103,33 +103,33 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         => _favorites.RemoveGag(restriction.GagType);
 
     #region Validators
-    public bool CanApply(GagLayer layer, GagType newGag)
+    public bool CanApply(int layer, GagType newGag)
     {
-        if (ActiveGagsData is { } data && data.GagSlots[layer.ToIndex()].CanApply())
+        if (ActiveGagsData is { } data && data.GagSlots[layer].CanApply())
             return true;
         Logger.LogTrace("Not able to Apply at this time due to errors!");
         return false;
     }
 
-    public bool CanLock(GagLayer layer)
+    public bool CanLock(int layer)
     {
-        if (ActiveGagsData is { } data && data.GagSlots[layer.ToIndex()].CanLock())
+        if (ActiveGagsData is { } data && data.GagSlots[layer].CanLock())
             return true;
         Logger.LogTrace("Not able to Lock at this time due to errors!");
         return false;
     }
 
-    public bool CanUnlock(GagLayer layer)
+    public bool CanUnlock(int layer)
     {
-        if (ActiveGagsData is { } data && data.GagSlots[layer.ToIndex()].CanUnlock())
+        if (ActiveGagsData is { } data && data.GagSlots[layer].CanUnlock())
             return true;
         Logger.LogTrace("Not able to Unlock at this time due to errors!");
         return false;
     }
 
-    public bool CanRemove(GagLayer layer)
+    public bool CanRemove(int layer)
     {
-        if (ActiveGagsData is { } data && data.GagSlots[layer.ToIndex()].CanRemove())
+        if (ActiveGagsData is { } data && data.GagSlots[layer].CanRemove())
             return true;
         Logger.LogTrace("Not able to Remove at this time due to errors!");
         return false;
@@ -137,7 +137,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     #endregion Validators
 
     #region Performers
-    public VisualUpdateFlags ApplyGag(GagLayer layer, GagType newGag, string enactor, out GarblerRestriction? item)
+    public VisualUpdateFlags ApplyGag(int layer, GagType newGag, string enactor, out GarblerRestriction? item)
     {
         item = null; var flags = VisualUpdateFlags.None;
 
@@ -145,8 +145,8 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             return flags;
 
         // update values & Garbler, then fire achievement ping.
-        data.GagSlots[layer.ToIndex()].GagItem = newGag;
-        data.GagSlots[layer.ToIndex()].Enabler = enactor;
+        data.GagSlots[layer].GagItem = newGag;
+        data.GagSlots[layer].Enabler = enactor;
         _garbler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
 
@@ -160,7 +160,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             foreach (var restriction in ActiveRestrictions)
             {
                 // these properties should not be updated if an item with higher priority contains it.
-                if (restriction.Key > (int)layer)
+                if (restriction.Key > layer)
                 {
                     if (item.Glamour is not null && restriction.Value.Glamour.Slot == item.Glamour.Slot)
                         flags &= ~VisualUpdateFlags.Glamour;
@@ -183,43 +183,43 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     flags &= ~VisualUpdateFlags.CustomizeProfile;
             }
             // Update the activeVisualState, and the cache.
-            ActiveRestrictions[(int)layer] = item;
+            ActiveRestrictions[layer] = item;
             LatestVisualCache.UpdateCache(ActiveRestrictions);
         }
         return flags;
     }
 
-    public void LockGag(GagLayer layer, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
+    public void LockGag(int layer, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
         if (ActiveGagsData is not { } data)
             return;
 
-        data.GagSlots[layer.ToIndex()].Padlock = padlock;
-        data.GagSlots[layer.ToIndex()].Password = pass;
-        data.GagSlots[layer.ToIndex()].Timer = timer;
-        data.GagSlots[layer.ToIndex()].PadlockAssigner = enactor;
+        data.GagSlots[layer].Padlock = padlock;
+        data.GagSlots[layer].Password = pass;
+        data.GagSlots[layer].Timer = timer;
+        data.GagSlots[layer].PadlockAssigner = enactor;
         // Fire that the gag was locked for this layer.
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, padlock, enactor);
     }
 
-    public void UnlockGag(GagLayer layer, string enactor)
+    public void UnlockGag(int layer, string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
         if (ActiveGagsData is not { } data)
             return;
 
-        var prevLock = data.GagSlots[layer.ToIndex()].Padlock;
+        var prevLock = data.GagSlots[layer].Padlock;
 
-        data.GagSlots[layer.ToIndex()].Padlock = Padlocks.None;
-        data.GagSlots[layer.ToIndex()].Password = string.Empty;
-        data.GagSlots[layer.ToIndex()].Timer = DateTimeOffset.MinValue;
-        data.GagSlots[layer.ToIndex()].PadlockAssigner = string.Empty;
+        data.GagSlots[layer].Padlock = Padlocks.None;
+        data.GagSlots[layer].Password = string.Empty;
+        data.GagSlots[layer].Timer = DateTimeOffset.MinValue;
+        data.GagSlots[layer].PadlockAssigner = string.Empty;
         // Fire that the gag was unlocked for this layer.
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, prevLock, enactor);
     }
 
-    public VisualUpdateFlags RemoveGag(GagLayer layer, string enactor, out GarblerRestriction? item)
+    public VisualUpdateFlags RemoveGag(int layer, string enactor, out GarblerRestriction? item)
     {
         item = null; var flags = VisualUpdateFlags.None;
 
@@ -227,9 +227,9 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             return flags;
 
         // store what gag we are removing, then update data and fire achievement ping.
-        var removedGag = data.GagSlots[layer.ToIndex()].GagItem;
-        data.GagSlots[layer.ToIndex()].GagItem = GagType.None;
-        data.GagSlots[layer.ToIndex()].Enabler = string.Empty;
+        var removedGag = data.GagSlots[layer].GagItem;
+        data.GagSlots[layer].GagItem = GagType.None;
+        data.GagSlots[layer].Enabler = string.Empty;
         _garbler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGag, enactor);
 

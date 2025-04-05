@@ -20,7 +20,7 @@ public class PatternApplier : IDisposable
     public int ReadBufferIdx { get; private set; }
     public IReadOnlyList<byte> PlaybackData { get; private set; }
     public Pattern? ActivePatternInfo { get; private set; }
-    private List<float> SimulatedVolumes;
+    private List<float> SimulatedVolumes = new();
 
     public PatternApplier(ILogger<PatternApplier> logger, GagspeakConfigService config,
         SexToyManager vibeService)

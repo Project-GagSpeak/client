@@ -108,6 +108,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _patterns = patterns;
         _alarms = alarms;
         _triggers = triggers;
+        _sexToys = sexToys;
         _traits = traits;
         _items = items;
         _frameworkUtils = frameworkUtils;
@@ -489,10 +490,10 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     {
         Logger.LogInformation("Player Logged In, Subscribing to Events!");
         _events.Subscribe<OrderInteractionKind>(UnlocksEvent.OrderAction, OnOrderAction);
-        _events.Subscribe<GagLayer, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _events.Subscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
-        _events.Subscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
-        _events.Subscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _events.Subscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Subscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _events.Subscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _events.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (LatestCache.SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
 
         _events.Subscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
@@ -569,10 +570,10 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private void UnsubscribeFromEvents()
     {
         _events.Unsubscribe<OrderInteractionKind>(UnlocksEvent.OrderAction, OnOrderAction);
-        _events.Unsubscribe<GagLayer, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _events.Unsubscribe<GagLayer, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
-        _events.Unsubscribe<GagLayer, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
-        _events.Unsubscribe<GagLayer, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _events.Unsubscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _events.Unsubscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Unsubscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _events.Unsubscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _events.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (LatestCache.SaveData.Achievements[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
 
         _events.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US

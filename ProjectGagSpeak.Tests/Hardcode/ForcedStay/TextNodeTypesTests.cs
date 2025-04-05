@@ -1,9 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using GagSpeak.Hardcore.ForcedStay;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace ProjectGagSpeak.Tests.Hardcode.ForcedStay;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 
 public class TextNodeTypesTests { }
 
@@ -351,3 +352,5 @@ public class ConcreteNodeConverterTests
         }
     }
 }
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+

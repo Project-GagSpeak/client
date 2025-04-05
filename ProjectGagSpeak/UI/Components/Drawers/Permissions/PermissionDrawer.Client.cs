@@ -3,6 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
@@ -16,16 +17,16 @@ public partial class PermissionsDrawer
         DrawPermRowClientCommon(width, perm, inHardcore, curState, editAccess, () => !curState);
     }
 
-    public void DrawPermRowClient(float width, SPPID perm, bool inHardcore, PuppetPerms curState, bool editAccess, PuppetPerms editFlag)
+    public void DrawPermRowClient(float width, SPPID perm, bool inHardcore, PuppetPerms curState, PuppetPerms editAccess, PuppetPerms editFlag)
     {
         var isFlagSet = (curState & editFlag) == editFlag;
-        DrawPermRowClientCommon(width, perm, inHardcore, isFlagSet, editAccess, () => curState ^ editFlag);
+        DrawPermRowClientCommon(width, perm, inHardcore, isFlagSet, editAccess.HasAny(editFlag), () => curState ^ editFlag);
     }
 
-    public void DrawPermRowClient(float width, SPPID perm, bool inHardcore, MoodlePerms curState, bool editAccess, MoodlePerms editFlag)
+    public void DrawPermRowClient(float width, SPPID perm, bool inHardcore, MoodlePerms curState, MoodlePerms editAccess, MoodlePerms editFlag)
     {
         var isFlagSet = (curState & editFlag) == editFlag;
-        DrawPermRowClientCommon(width, perm, inHardcore, isFlagSet, editAccess, () => curState ^ editFlag);
+        DrawPermRowClientCommon(width, perm, inHardcore, isFlagSet, editAccess.HasAny(editFlag), () => curState ^ editFlag);
     }
 
     public void DrawPermRowClient(float width, SPPID perm, bool inHardcore, TimeSpan curState, bool editAccess)
@@ -38,7 +39,7 @@ public partial class PermissionsDrawer
 
         if (CkGui.IconInputText("##" + perm, data.IconOn, data.Text, "0d0h0m0s", ref str, 32, buttonW, true, !editAccess))
         {
-            if (str != curState.ToGsRemainingTime() && GsPadlockEx.TryParseTimeSpan(str, out var newTime))
+            if (str != curState.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(str, out var newTime))
             {
                 var ticks = (ulong)newTime.Ticks;
                 var res = perm.ToPermValue();

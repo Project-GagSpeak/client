@@ -89,6 +89,8 @@ public class GagspeakConfigService
         var res = JsonConvert.DeserializeObject<GagspeakConfig>(input.ToString());
 
         // Assert
-        Assert.Equal(1, res.ForcedStayPromptList.Children.Count);
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+        Assert.Equal(1, res?.ForcedStayPromptList.Children.Count);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
     }
 }

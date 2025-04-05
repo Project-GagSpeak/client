@@ -49,7 +49,7 @@ public partial class PairStickyUI
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestriction) ? InteractionType.None : InteractionType.LockRestriction;
         }
         CkGui.AttachToolTip(lockRestrictionTT + 
-            ((GsPadlockEx.IsTimerLock(restrictionSlot.Padlock)) ? "--SEP----COL--" + restrictionSlot.Timer.ToGsRemainingTimeFancy() : "")
+            ((PadlockEx.IsTimerLock(restrictionSlot.Padlock)) ? "--SEP----COL--" + restrictionSlot.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestriction
@@ -88,7 +88,7 @@ public partial class PairStickyUI
                     // construct the dto to send.
                     var dto = new PushPairRestrictionDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
                     {
-                        AffectedIndex = _pairCombos.CurRestrictionLayer,
+                        Layer = _pairCombos.CurRestrictionLayer,
                         RestrictionId = Guid.Empty,
                         Enabler = string.Empty,
                     };

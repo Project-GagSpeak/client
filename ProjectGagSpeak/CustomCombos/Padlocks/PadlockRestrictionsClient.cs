@@ -18,7 +18,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.ClientLocks;
+        => PadlockEx.ClientLocks;
 
     protected override string ItemName(ActiveRestriction item)
         => _manager.Storage.TryGetRestriction(item.Identifier, out var restriction) ? restriction.Label : "None";

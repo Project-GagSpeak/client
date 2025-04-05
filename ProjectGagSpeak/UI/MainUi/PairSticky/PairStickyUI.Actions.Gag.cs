@@ -55,7 +55,7 @@ public partial class PairStickyUI
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockGag) ? InteractionType.None : InteractionType.LockGag;
         }
         CkGui.AttachToolTip(lockGagTT + 
-            ((GsPadlockEx.IsTimerLock(gagSlot.Padlock)) ? "--SEP----COL--" + gagSlot.Timer.ToGsRemainingTimeFancy() : "")
+            ((PadlockEx.IsTimerLock(gagSlot.Padlock)) ? "--SEP----COL--" + gagSlot.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockGag
@@ -96,7 +96,7 @@ public partial class PairStickyUI
                     // construct the dto to send.
                     var dto = new PushPairGagDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
                     {
-                        Layer = (GagLayer)_pairCombos.CurGagLayer,
+                        Layer = (int)_pairCombos.CurGagLayer,
                         Gag = GagType.None,
                         Enabler = MainHub.UID,
                     };
@@ -104,7 +104,7 @@ public partial class PairStickyUI
                     // push to server.
                     _hub.UserPushPairDataGags(dto).ConfigureAwait(false);
                     PairCombos.Opened = InteractionType.None;
-                    _logger.LogDebug("Removing Gag From layer " + (GagLayer)_pairCombos.CurGagLayer, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Gag From layer " + (int)_pairCombos.CurGagLayer, LoggerType.Permissions);
                 }
             }
         }

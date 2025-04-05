@@ -28,7 +28,7 @@ public class DebugTab
         { "Update Monitors", new[] { LoggerType.ToyboxAlarms, LoggerType.ActionsNotifier, LoggerType.KinkPlateMonitor, LoggerType.EmoteMonitor, LoggerType.ChatDetours, LoggerType.ActionEffects, LoggerType.SpatialAudioLogger } },
         { "Hardcore", new[] { LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt } },
         { "Data & Modules", new[] { LoggerType.ClientPlayerData, LoggerType.GagHandling, LoggerType.PadlockHandling, LoggerType.Restraints, LoggerType.Puppeteer, LoggerType.CursedLoot, LoggerType.ToyboxDevices, LoggerType.ToyboxPatterns, LoggerType.ToyboxTriggers, LoggerType.VibeControl } },
-        { "Pair Data", new[] { LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers, LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.PrivateRooms, LoggerType.GameObjects } },
+        { "Pair Data", new[] { LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers, LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.VibeRooms, LoggerType.GameObjects } },
         { "Services", new[] { LoggerType.Cosmetics, LoggerType.Textures, LoggerType.GlobalChat, LoggerType.ContextDtr, LoggerType.PatternHub, LoggerType.Safeword } },
         { "UI", new[] { LoggerType.UiCore, LoggerType.UserPairDrawer, LoggerType.Permissions, LoggerType.Simulation } },
         { "WebAPI", new[] { LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens } }
@@ -420,34 +420,34 @@ public class DebugTab
 
         // Puppeteer Permissions
         DrawPermissionRowBool("Puppeteer Enabled", perms.PuppeteerEnabledAllowed);
-        DrawPermissionRowBool("Allow Sit Requests", perms.SitRequestsAllowed);
-        DrawPermissionRowBool("Allow Motion Requests", perms.MotionRequestsAllowed);
-        DrawPermissionRowBool("Allow Alias Requests", perms.AliasRequestsAllowed);
-        DrawPermissionRowBool("Allow All Requests", perms.AllRequestsAllowed);
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
 
         // Moodle Permissions
         DrawPermissionRowBool("Moodles Enabled", perms.MoodlesEnabledAllowed);
-        DrawPermissionRowBool("Allow Positive Moodles", perms.PositiveStatusTypesAllowed);
-        DrawPermissionRowBool("Allow Negative Moodles", perms.NegativeStatusTypesAllowed);
-        DrawPermissionRowBool("Allow Special Moodles", perms.SpecialStatusTypesAllowed);
-        DrawPermissionRowBool("Apply Own Moodles", perms.PairCanApplyOwnMoodlesToYouAllowed);
-        DrawPermissionRowBool("Apply Your Moodles", perms.PairCanApplyYourMoodlesToYouAllowed);
+        DrawPermissionRowBool("Allow Positive Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes));
+        DrawPermissionRowBool("Allow Negative Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes));
+        DrawPermissionRowBool("Allow Special Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes));
+        DrawPermissionRowBool("Apply Own Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
+        DrawPermissionRowBool("Apply Your Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
         DrawPermissionRowBool("Max Moodle Time", perms.MaxMoodleTimeAllowed);
-        DrawPermissionRowBool("Allow Permanent Moodles", perms.PermanentMoodlesAllowed);
-        DrawPermissionRowBool("Allow Removing Moodles", perms.RemovingMoodlesAllowed);
+        DrawPermissionRowBool("Allow Permanent Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles));
+        DrawPermissionRowBool("Allow Removing Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles));
         ImGui.TableNextRow();
 
         // Toybox Permissions
         DrawPermissionRowBool("Toybox Enabled", perms.ToyboxEnabledAllowed);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUIAllowed);
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
-        DrawPermissionRowBool("Can Toggle Toy State", perms.CanToggleToyStateAllowed);
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.CanUseRemoteOnToysAllowed);
-        DrawPermissionRowBool("Can Execute Patterns", perms.CanExecutePatternsAllowed);
-        DrawPermissionRowBool("Can Stop Patterns", perms.CanStopPatternsAllowed);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.CanToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.CanToggleTriggersAllowed);
+        DrawPermissionRowBool("Can Toggle Toy State", perms.ToggleToyStateAllowed);
+        DrawPermissionRowBool("Can Use Vibe Remote", perms.RemoteControlAccessAllowed);
+        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatternsAllowed);
+        DrawPermissionRowBool("Can Stop Patterns", perms.StopPatternsAllowed);
+        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
+        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
     }
 
     private void DrawAppearance(string uid, CharaActiveGags appearance)

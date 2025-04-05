@@ -43,11 +43,7 @@ public class Pair : IComparable<Pair>
         UserPair = userPair;
     }
 
-    /// <summary> The object that is responsible for handling the state of the pairs game object handler. </summary>
-    private PairHandler? CachedPlayer { get; set; }
-
-    /// <summary> This UserPairDto object, contains ALL of the pairs global, pair, and edit access permissions. </summary>
-    /// <remarks> Thus, any permission modified will be accessing this object directly, and is defined upon a pair being added or marked online. </remarks>
+    // Permissions
     public UserPairDto UserPair { get; set; }
     public UserData UserData => UserPair.User;
     public UserPairPermissions OwnPerms => UserPair.OwnPairPerms;
@@ -57,11 +53,13 @@ public class Pair : IComparable<Pair>
     public UserGlobalPermissions PairGlobals => UserPair.OtherGlobalPerms;
 
     // Latest cached data for this pair.
+    private PairHandler? CachedPlayer { get; set; }
+
     public CharaIPCData LastIpcData { get; set; } = new();
     public CharaActiveGags LastGagData { get; set; } = new();
     public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
     public CharaActiveRestraint LastRestraintData { get; set; } = new();
-    public List<Guid> ActiveCursedItems { get; set; } = new();
+    public IEnumerable<Guid> ActiveCursedItems { get; set; } = new List<Guid>();
     public CharaOrdersData LastOrdersData { get; set; } = new();
     public CharaAliasData LastAliasData { get; set; } = new();
     public CharaToyboxData LastToyboxData { get; set; } = new();
@@ -214,27 +212,27 @@ public class Pair : IComparable<Pair>
     public void UpdateGagData(CallbackGagDataDto data)
     {
         _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastGagData.GagSlots[(int)data.AffectedSlot] = data.NewData;
+        LastGagData.GagSlots[data.AffectedLayer] = data.NewData;
 
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedSlot, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
                 return;
             case DataUpdateType.Unlocked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedSlot, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
                 return;
             case DataUpdateType.Removed:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedSlot, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -243,7 +241,7 @@ public class Pair : IComparable<Pair>
     public void UpdateRestrictionData(CallbackRestrictionDataDto data)
     {
         _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastRestrictionsData.Restrictions[data.AffectedIndex] = data.NewData;
+        LastRestrictionsData.Restrictions[data.AffectedLayer] = data.NewData;
 
         switch (data.Type)
         {
@@ -424,7 +422,7 @@ public class Pair : IComparable<Pair>
         {
             _creationSemaphore.Wait();
             _onlineUserIdentDto = null;
-            LastIpcData = null;
+            LastIpcData = new();
             // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;
             CachedPlayer = null;

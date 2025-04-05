@@ -1,3 +1,4 @@
+using GagspeakAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto;
@@ -174,12 +175,12 @@ public partial class MainHub
     }
 
 
-    public async Task UserUpdateAchievementData(UserAchievementsDto dto)
+    public async Task<bool> UserUpdateAchievementData(UserAchievementsDto dto)
     {
-        if (!IsConnected) return;
+        if (!IsConnected) return false;
         try
         {
-            await GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateAchievementData), dto);
+            return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserUpdateAchievementData), dto);
         }
         catch (OperationCanceledException ex)
         {
@@ -196,6 +197,7 @@ public partial class MainHub
             // Handle any other exceptions
             Logger.LogError(ex, "An unexpected error occurred while updating achievement data.");
         }
+        return false;
     }
 
     public async Task<UserKinkPlateDto> UserGetKinkPlate(UserDto dto)
@@ -250,117 +252,125 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserClearMoodles), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> VibeRoomCreate(string roomName, string password)
+
+
+    public async Task<GsApiVibeErrorCodes> RoomCreate(string roomName, string password)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomCreate), roomName, password).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomCreate), roomName, password).ConfigureAwait(false);
     }
 
-    public async Task<bool> SendRoomInvite(VibeRoomInviteDto dto)
+    public async Task<GsApiVibeErrorCodes> SendRoomInvite(VibeRoomInviteDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(SendRoomInvite), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(SendRoomInvite), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> ChangeRoomPassword(string roomName, string newPassword)
+    public async Task<GsApiVibeErrorCodes> ChangeRoomPassword(string roomName, string newPassword)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(ChangeRoomPassword), roomName, newPassword).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(ChangeRoomPassword), roomName, newPassword).ConfigureAwait(false);
     }
 
-    public async Task<List<VibeRoomKinksterFullDto>> VibeRoomJoin(string roomName, string password, VibeRoomKinkster dto)
+    public async Task<List<VibeRoomKinksterFullDto>> RoomJoin(string roomName, string password, VibeRoomKinkster dto)
     {
         if (!IsConnected) return new List<VibeRoomKinksterFullDto>();
-        return await GagSpeakHubMain!.InvokeAsync<List<VibeRoomKinksterFullDto>>(nameof(VibeRoomJoin), roomName, password, dto).ConfigureAwait(false);
+        return await GagSpeakHubMain!.InvokeAsync<List<VibeRoomKinksterFullDto>>(nameof(RoomJoin), roomName, password, dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> VibeRoomLeave()
+    public async Task<GsApiVibeErrorCodes> RoomLeave()
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomLeave)).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomLeave)).ConfigureAwait(false);
     }
 
-    public async Task<bool> VibeRoomGrantAccess(UserDto allowedUser)
+    public async Task<GsApiVibeErrorCodes> RoomGrantAccess(UserDto allowedUser)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomGrantAccess), allowedUser).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomGrantAccess), allowedUser).ConfigureAwait(false);
     }
 
-    public async Task<bool> VibeRoomRevokeAccess(UserDto allowedUser)
+    public async Task<GsApiVibeErrorCodes> RoomRevokeAccess(UserDto allowedUser)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(VibeRoomRevokeAccess), allowedUser).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomRevokeAccess), allowedUser).ConfigureAwait(false);
     }
 
-    public async Task VibeRoomPushDeviceUpdate(DeviceInfo info)
+    public async Task<GsApiVibeErrorCodes> RoomPushDeviceUpdate(DeviceInfo info)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomPushDeviceUpdate), info).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomPushDeviceUpdate), info).ConfigureAwait(false);
     }
 
-    public async Task VibeRoomSendDataStream(SexToyDataStreamDto dataStream)
+    public async Task<GsApiVibeErrorCodes> RoomSendDataStream(SexToyDataStreamDto dataStream)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomSendDataStream), dataStream).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomSendDataStream), dataStream).ConfigureAwait(false);
     }
 
-    public async Task VibeRoomSendChat(string roomName, string message)
+    public async Task<GsApiVibeErrorCodes> RoomSendChat(string roomName, string message)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(VibeRoomSendChat), message).ConfigureAwait(false);
+        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomSendChat), message).ConfigureAwait(false);
     }
 
     /* --------------------- Push Updates of Client Character Data --------------------- */
-    public async Task UserPushData(PushCompositeDataMessageDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushData), dto).ConfigureAwait(false); });
+    public async Task<GsApiErrorCodes> UserPushData(PushCompositeDataMessageDto dto)
+    {
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushData), dto).ConfigureAwait(false);
+    }
 
     public async Task UserPushDataIpc(PushIpcDataUpdateDto dto)
         => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataIpc), dto).ConfigureAwait(false); });
 
-    public async Task<bool> UserPushDataGags(PushGagDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataGags(PushGagDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataRestraint(PushRestraintDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataRestraint(PushRestraintDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataCursedLoot(PushCursedLootDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataCursedLoot(PushCursedLootDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataOrders(PushOrdersDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataOrders(PushOrdersDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataAlias(PushAliasDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataAlias(PushAliasDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataAlias), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataAlias), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserPushDataToybox(PushToyboxDataUpdateDto dto)
+    public async Task<GsApiErrorCodes> UserPushDataToybox(PushToyboxDataUpdateDto dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
     }
 
-    public async Task UserPushDataLightStorage(PushLightStorageMessageDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false); });
+    public async Task<GsApiErrorCodes> UserPushDataLightStorage(PushLightStorageMessageDto dto)
+    {
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false);
+    }
 
 
     /* --------------------- Permission Updates --------------------- */
@@ -393,20 +403,35 @@ public partial class MainHub
     }
 
     // ----------------- Update Pair Data ---------------
-    public async Task UserPushPairDataGags(PushPairGagDataUpdateDto dto)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataGags), dto));
+    public async Task<GsApiPairErrorCodes> UserPushPairDataGags(PushPairGagDataUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataGags), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushPairDataRestrictions(PushPairRestrictionDataUpdateDto dto)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataRestrictions), dto));
+    public async Task<GsApiPairErrorCodes> UserPushPairDataRestrictions(PushPairRestrictionDataUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataRestrictions), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushPairDataRestraint(PushPairRestraintDataUpdateDto dto)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataRestraint), dto));
+    public async Task<GsApiPairErrorCodes> UserPushPairDataRestraint(PushPairRestraintDataUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataRestraint), dto);
+    }
 
-    public async Task UserPushPairDataAliasStorage(PushPairAliasDataUpdateDto dto)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataAliasStorage), dto));
+    public async Task<GsApiPairErrorCodes> UserPushPairDataAliasStorage(PushPairAliasDataUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataAliasStorage), dto).ConfigureAwait(false);
+    }
 
-    public async Task UserPushPairDataToybox(PushPairToyboxDataUpdateDto dto)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushPairDataToybox), dto));
+    public async Task<GsApiPairErrorCodes> UserPushPairDataToybox(PushPairToyboxDataUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataToybox), dto).ConfigureAwait(false);
+    }
 
     private async Task ExecuteSafelyAsync(Func<Task> pushAction)
     {

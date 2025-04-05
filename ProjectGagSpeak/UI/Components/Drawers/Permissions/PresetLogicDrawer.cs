@@ -54,7 +54,7 @@ public class PresetLogicDrawer
         try
         {
             Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple;
-            /*switch (SelectedPreset)
+            switch (SelectedPreset)
             {
                 case PresetName.Dominant:
                     permissionTuple = PresetDominantSetup();
@@ -109,7 +109,7 @@ public class PresetLogicDrawer
                 default:
                     _logger.LogWarning("No preset selected for pair {pair}", pairToDrawListFor.UserData.UID);
                     break;
-            }*/
+            }
         }
         catch (Exception e)
         {
@@ -123,7 +123,7 @@ public class PresetLogicDrawer
         _logger.LogInformation("Applied {preset} preset to pair {pair}", presetName, pairToDrawListFor.UserData.UID);
         LastApplyTime = DateTime.UtcNow;
     }
-/*
+
     private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetDominantSetup()
     {
         var pairPerms = new UserPairPermissions();
@@ -155,20 +155,20 @@ public class PresetLogicDrawer
             UnlockGags = true,
             RemoveGags = true,
 
+            ApplyRestrictions = true,
+            LockRestrictions = false,
+            MaxRestrictionTime = new TimeSpan(1, 0, 0),
+            UnlockRestrictions = false,
+            RemoveRestrictions = true,
+
             ApplyRestraintSets = true,
             LockRestraintSets = false,
-            MaxAllowedRestraintTime = new TimeSpan(1, 0, 0),
+            MaxRestraintTime = new TimeSpan(1, 0, 0),
             UnlockRestraintSets = false,
             RemoveRestraintSets = true,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = false,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = false,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes,
             MaxMoodleTime = new TimeSpan(1, 0, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = false,
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -185,25 +185,29 @@ public class PresetLogicDrawer
 
             ApplyGags = true,
             LockGags = true,
-            MaxAllowedRestraintTime = new TimeSpan(1, 30, 0),
+            MaxGagTime = new TimeSpan(1, 30, 0),
             UnlockGags = true,
             RemoveGags = true,
+
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(1, 30, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
+            ApplyRestraintSets = true,
+            LockRestraintSets = true,
+            MaxRestraintTime = new TimeSpan(1, 30, 0),
+            UnlockRestraintSets = true,
+            RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = false,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = false,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = false,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes,
             MaxMoodleTime = new TimeSpan(1, 30, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = false,
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -222,32 +226,22 @@ public class PresetLogicDrawer
 
             ApplyGags = true,
             LockGags = true,
-            MaxAllowedRestraintTime = new TimeSpan(2, 30, 0),
+            MaxGagTime = new TimeSpan(2, 30, 0),
             UnlockGags = true,
             RemoveGags = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = false,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(1, 30, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = false,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = false,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = false,
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -264,33 +258,36 @@ public class PresetLogicDrawer
 
             ApplyGags = true,
             LockGags = true,
-            MaxAllowedRestraintTime = new TimeSpan(3, 0, 0),
+            MaxGagTime = new TimeSpan(3, 0, 0),
             UnlockGags = true,
             RemoveGags = true,
+
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(3, 0, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
+            ApplyRestraintSets = true,
+            LockRestraintSets = true,
+            MaxRestraintTime = new TimeSpan(3, 0, 0),
+            UnlockRestraintSets = true,
+            RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = true,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(3, 0, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = true,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = true,
-            CanSendAlarms = true,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = false,
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
+            ToggleAlarms = true,
+            ToggleTriggers = false,
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -307,43 +304,42 @@ public class PresetLogicDrawer
 
             ApplyGags = true,
             LockGags = true,
-            MaxAllowedRestraintTime = new TimeSpan(12, 0, 0),
+            MaxGagTime = new TimeSpan(12, 0, 0),
             UnlockGags = true,
             RemoveGags = true,
+
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(12, 0, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
+            ApplyRestraintSets = true,
+            LockRestraintSets = true,
+            MaxRestraintTime = new TimeSpan(12, 0, 0),
+            UnlockRestraintSets = true,
+            RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = true,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes 
+            | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles | MoodlePerms.RemovingMoodles,
             MaxMoodleTime = new TimeSpan(12, 0, 0),
-            AllowPermanentMoodles = true,
-            AllowRemovingMoodles = true,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = true,
-            CanSendAlarms = true,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = true,
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
+            ToggleAlarms = true,
+            ToggleTriggers = true,
 
             InHardcore = false,
-            PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
             AllowForcedStay = true,
-            AllowBlindfold = true,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
         };
         // all is false by default.
         var pairAccess = new UserEditAccessPermissions();
@@ -364,50 +360,36 @@ public class PresetLogicDrawer
             UnlockGags = true,
             RemoveGags = true,
 
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(3, 0, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
             ApplyRestraintSets = true,
             LockRestraintSets = true,
-            MaxAllowedRestraintTime = new TimeSpan(3, 0, 0),
+            MaxRestraintTime = new TimeSpan(3, 0, 0),
             UnlockRestraintSets = false,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = false,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(1, 30, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = false,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = false,
-            CanSendAlarms = true,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = false,
-
-            InHardcore = false,
-            PairLockedStates = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = false,
-            AllowForcedStay = false,
-            AllowBlindfold = true,
-            AllowHidingChatBoxes = false,
-            AllowHidingChatInput = false,
-            AllowChatInputBlocking = false
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
+            ToggleAlarms = true,
+            ToggleTriggers = false,
         };
         var pairAccess = new UserEditAccessPermissions()
         {
-            LiveChatGarblerActiveAllowed = true,
-            LiveChatGarblerLockedAllowed = false,
+            ChatGarblerActiveAllowed = true,
 
             PermanentLocksAllowed = false,
             OwnerLocksAllowed = true,
@@ -419,41 +401,32 @@ public class PresetLogicDrawer
             UnlockGagsAllowed = true,
             RemoveGagsAllowed = true,
 
-            WardrobeEnabledAllowed = false,
-            ItemAutoEquipAllowed = false,
-            RestraintSetAutoEquipAllowed = false,
+            ApplyRestrictionsAllowed = true,
+            ApplyRestraintLayersAllowed = false,
+            LockRestrictionsAllowed = true,
+            MaxRestrictionTimeAllowed = false,
+            UnlockRestrictionsAllowed = true,
+            RemoveRestrictionsAllowed = true,
+
             ApplyRestraintSetsAllowed = true,
             LockRestraintSetsAllowed = true,
-            MaxAllowedRestraintTimeAllowed = false,
+            MaxRestraintTimeAllowed = false,
             UnlockRestraintSetsAllowed = true,
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            SitRequestsAllowed = true,
-            MotionRequestsAllowed = false,
-            AliasRequestsAllowed = false,
-            AllRequestsAllowed = false,
+            PuppetPermsAllowed = PuppetPerms.Sit,
 
             MoodlesEnabledAllowed = false,
-            AllowPositiveStatusTypesAllowed = true,
-            AllowNegativeStatusTypesAllowed = true,
-            AllowSpecialStatusTypesAllowed = true,
-            PairCanApplyOwnMoodlesToYouAllowed = true,
-            PairCanApplyYourMoodlesToYouAllowed = true,
-            MaxMoodleTimeAllowed = false,
-            AllowPermanentMoodlesAllowed = true,
-            AllowRemovingMoodlesAllowed = false,
+            MoodlePermsAllowed = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
+            | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
 
-            ToyboxEnabledAllowed = false,
             LockToyboxUIAllowed = true,
-            SpatialVibratorAudioAllowed = true,
-            CanToggleToyStateAllowed = true,
-            CanUseVibeRemoteAllowed = true,
-            CanToggleAlarmsAllowed = false,
-            CanSendAlarmsAllowed = false,
-            CanExecutePatternsAllowed = true,
-            CanStopPatternsAllowed = false,
-            CanToggleTriggersAllowed = false,
+            SpatialAudioAllowed = true,
+            ToggleToyStateAllowed = true,
+            RemoteControlAccessAllowed = true,
+            ExecutePatternsAllowed = true,
+            StopPatternsAllowed = true,
         };
         return new(pairPerms, pairAccess);
     }
@@ -474,50 +447,47 @@ public class PresetLogicDrawer
             UnlockGags = true,
             RemoveGags = true,
 
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(3, 0, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
             ApplyRestraintSets = true,
+            ApplyRestraintLayers = true,
             LockRestraintSets = true,
-            MaxAllowedRestraintTime = new TimeSpan(3, 0, 0),
+            MaxRestraintTime = new TimeSpan(3, 0, 0),
             UnlockRestraintSets = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = true,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
+            | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(3, 0, 0),
-            AllowPermanentMoodles = false,
-            AllowRemovingMoodles = true,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = true,
-            CanSendAlarms = true,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = false,
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
+            ToggleAlarms = true,
 
             InHardcore = false,
             PairLockedStates = false,
             AllowForcedFollow = false,
             AllowForcedSit = true,
             AllowForcedStay = false,
-            AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false
         };
         var pairAccess = new UserEditAccessPermissions()
         {
-            LiveChatGarblerActiveAllowed = true,
-            LiveChatGarblerLockedAllowed = true,
+            ChatGarblerActiveAllowed = true,
+            ChatGarblerLockedAllowed = true,
 
             PermanentLocksAllowed = true,
             OwnerLocksAllowed = true,
@@ -529,41 +499,36 @@ public class PresetLogicDrawer
             UnlockGagsAllowed = true,
             RemoveGagsAllowed = true,
 
-            WardrobeEnabledAllowed = false,
-            ItemAutoEquipAllowed = false,
-            RestraintSetAutoEquipAllowed = false,
+            ApplyRestrictionsAllowed = true,
+            LockRestrictionsAllowed = true,
+            MaxRestrictionTimeAllowed = false,
+            UnlockRestrictionsAllowed = true,
+            RemoveRestrictionsAllowed = true,
+
             ApplyRestraintSetsAllowed = true,
+            ApplyRestraintLayersAllowed = true,
             LockRestraintSetsAllowed = true,
-            MaxAllowedRestraintTimeAllowed = false,
+            MaxRestraintTimeAllowed = false,
             UnlockRestraintSetsAllowed = true,
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            SitRequestsAllowed = true,
-            MotionRequestsAllowed = true,
-            AliasRequestsAllowed = false,
-            AllRequestsAllowed = false,
+            PuppetPermsAllowed = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
             MoodlesEnabledAllowed = false,
-            AllowPositiveStatusTypesAllowed = true,
-            AllowNegativeStatusTypesAllowed = true,
-            AllowSpecialStatusTypesAllowed = true,
-            PairCanApplyOwnMoodlesToYouAllowed = true,
-            PairCanApplyYourMoodlesToYouAllowed = true,
+            MoodlePermsAllowed = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
+            | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
             MaxMoodleTimeAllowed = false,
-            AllowPermanentMoodlesAllowed = true,
-            AllowRemovingMoodlesAllowed = false,
 
             ToyboxEnabledAllowed = true,
             LockToyboxUIAllowed = true,
-            SpatialVibratorAudioAllowed = true,
-            CanToggleToyStateAllowed = true,
-            CanUseVibeRemoteAllowed = true,
-            CanToggleAlarmsAllowed = true,
-            CanSendAlarmsAllowed = true,
-            CanExecutePatternsAllowed = true,
-            CanStopPatternsAllowed = true,
-            CanToggleTriggersAllowed = true,
+            SpatialAudioAllowed = true,
+            ToggleToyStateAllowed = true,
+            RemoteControlAccessAllowed = true,
+            ExecutePatternsAllowed = true,
+            StopPatternsAllowed = true,
+            ToggleAlarmsAllowed = true,
+            ToggleTriggersAllowed = true,
         };
         return new(pairPerms, pairAccess);
     }
@@ -584,54 +549,54 @@ public class PresetLogicDrawer
             UnlockGags = true,
             RemoveGags = true,
 
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(12, 0, 0),
+            UnlockRestrictions = true,
+            RemoveRestrictions = true,
+
             ApplyRestraintSets = true,
+            ApplyRestraintLayers = true,
             LockRestraintSets = true,
-            MaxAllowedRestraintTime = new TimeSpan(12, 0, 0),
+            MaxRestraintTime = new TimeSpan(12, 0, 0),
             UnlockRestraintSets = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
             StartChar = '(',
             EndChar = ')',
-            SitRequests = true,
-            MotionRequests = true,
-            AllRequests = false,
+            PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            AllowPositiveStatusTypes = true,
-            AllowNegativeStatusTypes = true,
-            AllowSpecialStatusTypes = true,
-            PairCanApplyOwnMoodlesToYou = false,
-            PairCanApplyYourMoodlesToYou = true,
+            MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
+            | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles | MoodlePerms.RemovingMoodles,
             MaxMoodleTime = new TimeSpan(12, 0, 0),
-            AllowPermanentMoodles = true,
-            AllowRemovingMoodles = true,
 
-            CanToggleToyState = true,
-            CanUseVibeRemote = true,
-            CanToggleAlarms = true,
-            CanSendAlarms = true,
-            CanExecutePatterns = true,
-            CanStopPatterns = true,
-            CanToggleTriggers = true,
+            ToggleToyState = true,
+            RemoteControlAccess = true,
+            ExecutePatterns = true,
+            StopPatterns = true,
+            ToggleAlarms = true,
+            ToggleTriggers = true,
 
             InHardcore = false,
             PairLockedStates = false,
             AllowForcedFollow = true,
             AllowForcedSit = true,
             AllowForcedStay = true,
-            AllowBlindfold = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false
         };
         var pairAccess = new UserEditAccessPermissions()
         {
-            LiveChatGarblerActiveAllowed = true,
-            LiveChatGarblerLockedAllowed = true,
+            ChatGarblerActiveAllowed = true,
+            ChatGarblerLockedAllowed = true,
 
             PermanentLocksAllowed = true,
             OwnerLocksAllowed = true,
             DevotionalLocksAllowed = true,
+
+
 
             ApplyGagsAllowed = true,
             LockGagsAllowed = true,
@@ -639,41 +604,37 @@ public class PresetLogicDrawer
             UnlockGagsAllowed = true,
             RemoveGagsAllowed = true,
 
-            WardrobeEnabledAllowed = false,
-            ItemAutoEquipAllowed = true,
-            RestraintSetAutoEquipAllowed = true,
+            ApplyRestrictionsAllowed = true,
+            LockRestrictionsAllowed = true,
+            MaxRestrictionTimeAllowed = true,
+            UnlockRestrictionsAllowed = true,
+            RemoveRestrictionsAllowed = true,
+            
             ApplyRestraintSetsAllowed = true,
+            ApplyRestraintLayersAllowed = true,
             LockRestraintSetsAllowed = true,
-            MaxAllowedRestraintTimeAllowed = true,
+            MaxRestraintTimeAllowed = true,
             UnlockRestraintSetsAllowed = true,
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
-            SitRequestsAllowed = true,
-            MotionRequestsAllowed = true,
-            AllRequestsAllowed = true,
+            PuppetPermsAllowed = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
             MoodlesEnabledAllowed = false,
-            AllowPositiveStatusTypesAllowed = true,
-            AllowNegativeStatusTypesAllowed = true,
-            AllowSpecialStatusTypesAllowed = true,
-            PairCanApplyOwnMoodlesToYouAllowed = true,
-            PairCanApplyYourMoodlesToYouAllowed = true,
+            MoodlePermsAllowed = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
+            | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
             MaxMoodleTimeAllowed = true,
-            AllowPermanentMoodlesAllowed = true,
-            AllowRemovingMoodlesAllowed = true,
 
             ToyboxEnabledAllowed = true,
             LockToyboxUIAllowed = true,
-            SpatialVibratorAudioAllowed = true,
-            CanToggleToyStateAllowed = true,
-            CanUseVibeRemoteAllowed = true,
-            CanToggleAlarmsAllowed = true,
-            CanSendAlarmsAllowed = true,
-            CanExecutePatternsAllowed = true,
-            CanStopPatternsAllowed = true,
-            CanToggleTriggersAllowed = true,
+            SpatialAudioAllowed = true,
+            ToggleToyStateAllowed = true,
+            RemoteControlAccessAllowed = true,
+            ExecutePatternsAllowed = true,
+            StopPatternsAllowed = true,
+            ToggleAlarmsAllowed = true,
+            ToggleTriggersAllowed = true,
         };
         return new(pairPerms, pairAccess);
-    }*/
+    }
 }

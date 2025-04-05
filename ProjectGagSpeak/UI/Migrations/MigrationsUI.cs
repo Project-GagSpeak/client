@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
 using ImGuiNET;
-using OtterGui;
 
 namespace GagSpeak.UI;
 

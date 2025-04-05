@@ -1,7 +1,6 @@
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
@@ -14,18 +13,15 @@ namespace GagSpeak.PlayerState.Visual;
 
 public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly GlobalData _globals;
-    private readonly GlobalData _clientData;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
     public RestrictionManager(ILogger<RestrictionManager> logger, GagspeakMediator mediator,
-    GagGarbler garbler, GlobalData clientData, FavoritesManager favorites,
-    ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
+        GagGarbler garbler, FavoritesManager favorites, ConfigFileProvider fileNames, 
+        ItemService items, HybridSaveService saver) : base(logger, mediator)
     {
-        _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
         _items = items;

@@ -21,7 +21,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.GetLocksForPair(_pairRef.PairPerms);
+        => PadlockEx.GetLocksForPair(_pairRef.PairPerms);
     protected override string ItemName(CharaActiveRestraint item)
         => _pairRef.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
             ? restraint.Label : "None";
@@ -37,7 +37,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
 
             _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
@@ -58,7 +58,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             {
                 Padlock = MonitoredItem.Padlock,
                 Password = Password,
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
             _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
             Log.LogDebug("Unlocking Restraint with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);

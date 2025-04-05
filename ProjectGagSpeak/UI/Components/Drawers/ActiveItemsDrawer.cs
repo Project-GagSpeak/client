@@ -53,33 +53,37 @@ public class ActiveItemsDrawer
         _cosmetics = cosmetics;
 
         // Initialize the GagCombos.
-        _gagItems = Enum.GetValues<GagLayer>()
-            .Select(l => new RestrictionGagCombo(logger, favorites, () => [
+        _gagItems = new RestrictionGagCombo[Globals.MaxGagSlots];
+        for (var i = 0; i < _gagItems.Length; i++)
+            _gagItems[i] = new RestrictionGagCombo(logger, favorites, () => [
                 ..gags.Storage.Values.OrderByDescending(p => favorites._favoriteGags.Contains(p.GagType)).ThenBy(p => p.GagType)
-            ]))
-            .ToArray();
+            ]);
 
-        _gagPadlocks = Enum.GetValues<GagLayer>()
-            .Select(i => new PadlockGagsClient(logger, mediator, (layerIdx) =>
-                gags.ActiveGagsData?.GagSlots[layerIdx] ?? new ActiveGagSlot()))
-            .ToArray();
+        // Init Gag Padlocks.
+        _gagPadlocks = new PadlockGagsClient[Globals.MaxGagSlots];
+        for (var i = 0; i < _gagPadlocks.Length; i++)
+            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, (layerIdx) => gags.ActiveGagsData?.GagSlots[layerIdx] ?? new ActiveGagSlot());
 
         // Init Restriction Combos.
-        _restrictionItems = Enumerable.Range(0, 5)
-            .Select(_ => new RestrictionCombo(logger, favorites, () => [
+        _restrictionItems = new RestrictionCombo[Globals.MaxRestrictionSlots];
+        for (var i = 0; i < _restrictionItems.Length; i++)
+            _restrictionItems[i] = new RestrictionCombo(logger, favorites, () => [
                 ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
-                ]))
-            .ToArray();
-        _restrictionPadlocks = Enumerable.Range(0, 5)
-            .Select(i => new PadlockRestrictionsClient(logger, mediator, restrictions, (slotIdx) =>
-                restrictions.ActiveRestrictionsData?.Restrictions[slotIdx] ?? new ActiveRestriction()))
-            .ToArray();
+            ]);
+
+        // Init Restriction Padlocks.
+        _restrictionPadlocks = new PadlockRestrictionsClient[Globals.MaxRestrictionSlots];
+        for (var i = 0; i < _restrictionPadlocks.Length; i++)
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions, (slotIdx) =>
+                restrictions.ActiveRestrictionsData?.Restrictions[slotIdx] ?? new ActiveRestriction());
 
         // Init Restraint Combos.
         _restraintItem = new RestraintCombo(logger, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label) 
-            ]);
-        _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints, (_) => 
+            ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+        ]);
+
+        // Init Restraint Padlocks.
+        _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints, (_) =>
             restraints.ActiveRestraintData ?? new CharaActiveRestraint());
     }
 
@@ -216,7 +220,7 @@ public class ActiveItemsDrawer
             wdl.AddDalamudImageRounded(slotBG, imgPos, imgSize, 10f);
 
         // Perform actions based on the itemRect. (In this case, clear the gag.)
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove((GagLayer)slotIdx))
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove((int)slotIdx))
         {
             _logger.LogTrace($"Gag Layer {slotIdx} was cleared. and is now Empty");
             _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
@@ -232,7 +236,7 @@ public class ActiveItemsDrawer
             if (change && gagCombo.CurrentSelection is not null && gagData.GagItem != gagCombo.CurrentSelection.GagType)
             {
                 // return if we are not allow to do the application.
-                if (_gags.CanApply((GagLayer)slotIdx, gagCombo.CurrentSelection.GagType))
+                if (_gags.CanApply((int)slotIdx, gagCombo.CurrentSelection.GagType))
                 {
                     var updateType = (gagCombo.CurrentSelection.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveGagSlot()
@@ -241,7 +245,7 @@ public class ActiveItemsDrawer
                         Enabler = MainHub.UID,
                     };
                     _mediator.Publish(new GagDataChangedMessage(updateType, slotIdx, newSlotData));
-                    _logger.LogTrace($"Requesting Server to change gag layer {(GagLayer)slotIdx} to {gagCombo.CurrentSelection.GagType} from {gagData.GagItem}");
+                    _logger.LogTrace($"Requesting Server to change gag layer {(int)slotIdx} to {gagCombo.CurrentSelection.GagType} from {gagData.GagItem}");
                 }
             }
         }

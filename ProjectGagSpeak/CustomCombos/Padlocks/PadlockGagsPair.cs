@@ -20,7 +20,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.GetLocksForPair(_pairRef.PairPerms);
+        => PadlockEx.GetLocksForPair(_pairRef.PairPerms);
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
     protected override bool DisableCondition()
@@ -32,11 +32,11 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
-                Layer = (GagLayer)layerIdx,
+                Layer = (int)layerIdx,
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
 
             _ = _mainHub.UserPushPairDataGags(dto);
@@ -55,10 +55,10 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
-                Layer = (GagLayer)layerIdx,
+                Layer = layerIdx,
                 Padlock = MonitoredItem.Padlock,
                 Password = Password, // Our guessed password.
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
             _ = _mainHub.UserPushPairDataGags(dto);
             Log.LogDebug("Unlocking Gag with GagPadlock " + MonitoredItem.Padlock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);

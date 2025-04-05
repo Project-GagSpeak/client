@@ -36,7 +36,7 @@ public class OptionalBoolIconCheckbox(FontAwesomeIcon icon, uint crossColor = 0x
     /// <param name="value"> The input/output value. </param>
     /// <returns> True when <paramref name="value"/> changed in this frame. </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Draw(ReadOnlySpan<char> label, OptionalBool current, out OptionalBool newValue, bool disabled = false)
+    public bool DrawIconCheckbox(ReadOnlySpan<char> label, OptionalBool current, out OptionalBool newValue, bool disabled = false)
     {
         // Initialize newValue to the current state initially
         newValue = current;

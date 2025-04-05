@@ -3,6 +3,7 @@ using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Enums;
 
 namespace GagSpeak.VibeLobby;
 public class VibeRoomManager : DisposableMediatorSubscriberBase
@@ -28,8 +29,9 @@ public class VibeRoomManager : DisposableMediatorSubscriberBase
     public async Task CreateVibeRoom(string roomName, string roomPassword = "")
     {
         // Attempt to create a Vibe Room.
-        if(await _hub.VibeRoomCreate(roomName, roomPassword))
+        if(await _hub.RoomCreate(roomName, roomPassword) is GsApiVibeErrorCodes.Success)
         {
+            Logger.LogInformation("Vibe Room created successfully.", LoggerType.VibeRooms);
 
         }
 

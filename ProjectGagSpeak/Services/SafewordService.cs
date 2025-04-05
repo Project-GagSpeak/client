@@ -1,10 +1,8 @@
-using Dalamud.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Listener;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
 // TODO LATER:::::::

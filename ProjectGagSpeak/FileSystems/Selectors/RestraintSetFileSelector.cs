@@ -40,7 +40,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
 
     // Helper operations used for creating new items and cloning them.
-    private RestraintSet? _clonedRestraintSet; // This will be done via the right click menu later so it will go away probably.
+    // private RestraintSet? _clonedRestraintSet; // This will be done via the right click menu later so it will go away probably.
 
 
     /// <summary> This is the currently selected leaf in the file system. </summary>

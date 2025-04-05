@@ -1,6 +1,5 @@
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui.Classes;
 
 namespace GagSpeak.CkCommons.Drawers;
 
@@ -34,7 +33,7 @@ public class TimeSpanTextEditor
         ImGui.SetNextItemWidth(width);
         ImGui.InputTextWithHint(label, hint, ref _timeSpanString, 16);
         // Apply updates only when editing finishes
-        if (ImGui.IsItemDeactivatedAfterEdit() && GsPadlockEx.TryParseTimeSpan(_timeSpanString, out var newSpan))
+        if (ImGui.IsItemDeactivatedAfterEdit() && PadlockEx.TryParseTimeSpan(_timeSpanString, out var newSpan))
         {
             if (newSpan != _timeSpan) // Prevent unnecessary updates
             {

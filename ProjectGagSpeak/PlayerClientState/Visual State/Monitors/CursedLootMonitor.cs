@@ -16,6 +16,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using ImPlotNET;
 using GameObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -232,7 +233,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
 
         // gag failed to apply, now we need to apply a valid restriction. Restriction must be unoccupied.
         var itemsToRoll = _manager.Storage.InactiveItemsInPool
-            .Where(item => item.RestrictionRef is not GarblerRestriction
+            .Where(item => item.RestrictionRef is not GarblerRestriction 
                 && _restrictions.OccupiedRestrictions.Any(x => x.Item.Identifier == item.Identifier));
         // If no items, abort.
         if (!itemsToRoll.Any())
@@ -258,52 +259,42 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         if (_gags.ActiveGagsData is not { } gagData)
             return false;
 
-        var layerIdx = gagData.FindFirstUnused();
-        if (layerIdx is -1)
-            return false;
-
-        if (cursedItem.RestrictionRef is not GarblerRestriction gagRestriction)
+        var Idx = gagData.FindFirstUnused();
+        if (Idx is - 1 || cursedItem.RestrictionRef is not GarblerRestriction gagRestriction)
             return false;
 
         // Apply the gag restriction to that player.
-        Logger.LogInformation("Applying a cursed Gag Item (" + gagRestriction.GagType + ") to layer " + (GagLayer)layerIdx, LoggerType.CursedLoot);
+        Logger.LogInformation("Applying a cursed Gag Item (" + gagRestriction.GagType + ") to layer " + Idx, LoggerType.CursedLoot);
         var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveItems.Select(i => i.Identifier))
         {
-            LootIdInteracted = new CursedItemInfo()
+            InteractedLoot = new CursedItemInfo()
             {
                 LootId = cursedItem.Identifier,
                 RestrictionRefId = Guid.Empty,
                 ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime)
             }
         };
-
-        // attempt to apply the item. If successful, we can process the actual gag application and update our storage.
-        if (await _hub.UserPushDataCursedLoot(newInfo))
+        
+        var retCode = await _hub.UserPushDataCursedLoot(newInfo);
+        if (retCode is GsApiErrorCodes.Success)
         {
-            var newGagInfo = new PushGagDataUpdateDto(_pairs.GetOnlineUserDatas(), DataUpdateType.AppliedCursed)
-            {
-                Layer = (GagLayer)layerIdx,
-                Gag = gagRestriction.GagType,
-                Enabler = MainHub.UID,
-                Padlock = Padlocks.MimicPadlock,
-                Timer = DateTimeOffset.UtcNow.Add(lockTime),
-                Assigner = MainHub.UID
-            };
+            Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
+            var item = new SeStringBuilder()
+                .AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
 
-            if (await _hub.UserPushDataGags(newGagInfo))
-            {
-                Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
-                var item = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
-                    "forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
-                Mediator.Publish(new NotifyChatMessage(item, NotificationType.Error));
+            Mediator.Publish(new NotifyChatMessage(item, NotificationType.Error));
 
-                if (_globals.GlobalPerms is not null && _globals.GlobalPerms.ChatGarblerActive)
-                    Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! " +
-                        "Be cautious of chatting around strangers!", NotificationType.Warning));
-                return true;
-            }
+            if (_globals.GlobalPerms is not null && _globals.GlobalPerms.ChatGarblerActive)
+                Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! " +
+                    "Be cautious of chatting around strangers!", NotificationType.Warning));
+
+            return true;
         }
-        return false;
+        else
+        {
+            Logger.LogError("Failed to apply gag restriction to player. Error Code: " + retCode);
+            return false;
+        }
     }
 
     private async Task<bool> HandleRestrictionApplication(CursedItem cursedItem, TimeSpan lockTime)
@@ -319,7 +310,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         Logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedLoot);
         var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveItems.Select(i => i.Identifier))
         {
-            LootIdInteracted = new CursedItemInfo()
+            InteractedLoot = new CursedItemInfo()
             {
                 LootId = cursedItem.Identifier,
                 RestrictionRefId = Guid.Empty,
@@ -327,14 +318,19 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
             }
         };
 
-        // attempt to apply the item. If successful, we can process the actual gag application and update our storage.
-        if (await _hub.UserPushDataCursedLoot(newInfo))
+        // attempt to apply the item. If successful, display message.
+        var retCode = await _hub.UserPushDataCursedLoot(newInfo);
+        if(retCode is GsApiErrorCodes.Success)
         {
             Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
                 "forth, binding you in an inescapable restraint!").BuiltString, NotificationType.Error));
             return true;
         }
-        return false;
+        else
+        {
+            Logger.LogError("Failed to apply restriction to player. Error Code: " + retCode);
+            return false;
+        }
     }
 
 

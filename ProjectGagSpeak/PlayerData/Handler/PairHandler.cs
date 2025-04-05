@@ -1,28 +1,22 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI.Utils;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Dto.Connection;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.PlayerData.Handlers;
 
-/// <summary>
-/// The handler for a client pair.
-/// </summary>
+/// <summary> The handler for a client pair. </summary>
 public sealed class PairHandler : DisposableMediatorSubscriberBase
 {
     private readonly OnFrameworkService _frameworkUtil;
     private readonly GameObjectHandlerFactory _gameObjectHandlerFactory;
     private readonly IpcManager _ipcManager;
     private readonly IHostApplicationLifetime _lifetime;
-    private Task? _applicationTask;
     private CancellationTokenSource? _applicationCTS = new();
 
     // the cached data for the paired player.
@@ -96,7 +90,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         Logger.LogDebug("Disposing " + name + " (" + OnlineUser + ")", LoggerType.PairHandlers);
         try
         {
-            Guid applicationId = Guid.NewGuid();
+            var applicationId = Guid.NewGuid();
             _applicationCTS?.CancelDispose();
             _applicationCTS = null;
             _charaHandler?.Dispose();
@@ -177,7 +171,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         if (_charaHandler?.Address != nint.Zero && !IsVisible) // in other words, we apply this the first time they render into our view
         {
             // then we need to create appData for it.
-            Guid appData = Guid.NewGuid();
+            var appData = Guid.NewGuid();
             // and update their visibility to true
             IsVisible = true;
             if (_charaHandler != null) _charaHandler.UpdatePlayerCharacterRef();

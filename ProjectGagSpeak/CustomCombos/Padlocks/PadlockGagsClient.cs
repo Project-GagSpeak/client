@@ -16,7 +16,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.ClientLocks;
+        => PadlockEx.ClientLocks;
 
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();

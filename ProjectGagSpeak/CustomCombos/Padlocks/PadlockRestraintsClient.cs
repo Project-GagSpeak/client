@@ -18,7 +18,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.ClientLocks;
+        => PadlockEx.ClientLocks;
 
     protected override string ItemName(CharaActiveRestraint item)
         => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";

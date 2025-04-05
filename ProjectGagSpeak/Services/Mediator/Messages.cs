@@ -110,8 +110,8 @@ public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensit
 
 /* ----------------- Character Cache Creation Records ----------------- */
 public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewIpcData) : SameThreadMessage;
-public record GagDataChangedMessage(DataUpdateType UpdateType, int AffectedIdx, ActiveGagSlot NewData) : SameThreadMessage;
-public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int AffectedIdx, ActiveRestriction NewData) : SameThreadMessage;
+public record GagDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
+public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
 public record RestraintDataChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
 public record OrdersDataChangedMessage(DataUpdateType UpdateType) : SameThreadMessage;
 public record AliasDataChangedMessage(DataUpdateType UpdateType, UserData IntendedUser, CharaAliasData NewData) : SameThreadMessage;

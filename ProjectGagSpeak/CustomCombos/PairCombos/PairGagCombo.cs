@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
@@ -8,7 +7,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CustomCombos.PairActions;
@@ -17,8 +15,6 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    private GagType _currentGag;
-    private int _currentSlotIdx;
     public PairGagCombo(ILogger log, Pair pair, MainHub hub, Func<IReadOnlyList<GagType>> generator)
         : base(generator, log)
     {
@@ -60,7 +56,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         // construct the dto to send.
         var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
         {
-            Layer = (GagLayer)layerIdx,
+            Layer = layerIdx,
             Gag = CurrentSelection,
             Enabler = MainHub.UID,
         };

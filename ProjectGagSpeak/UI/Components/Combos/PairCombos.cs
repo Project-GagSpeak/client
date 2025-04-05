@@ -55,7 +55,7 @@ public class PairCombos : DisposableMediatorSubscriberBase
     public void DrawGagLayerSelection(float comboWidth)
     {
         ImGui.SetNextItemWidth(comboWidth);
-        ImGui.Combo("##GagLayer", ref _gagLayer, GagLayerNames, 3);
+        ImGui.Combo("##int", ref _gagLayer, GagLayerNames, 3);
         CkGui.AttachToolTip("Select the layer to apply a Gag to.");
     }
 

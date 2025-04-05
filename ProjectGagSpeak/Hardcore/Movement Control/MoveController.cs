@@ -2,7 +2,6 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace GagSpeak.Hardcore.Movement;
@@ -47,7 +46,7 @@ public class MoveController : IDisposable
     [return: MarshalAs(UnmanagedType.U1)]
     public unsafe void TestUpdate(UnkTargetFollowStruct* unk1)
     {
-        UnkTargetFollowStruct* temp = unk1;
+        var temp = unk1;
 
         var targetFollowVar = unk1;
         //_logger.LogDebug($"PRE:       UnkTargetFollowStruct: {((IntPtr)unk1).ToString("X")}", LoggerType.HardcoreMovement);
@@ -65,7 +64,7 @@ public class MoveController : IDisposable
         //_logger.LogDebug($"PRE:             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
         //_logger.LogDebug($"PRE:                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
 
-        foreach (Dalamud.Game.ClientState.Objects.Types.IGameObject obj in _objectTable)
+        foreach (var obj in _objectTable)
         {
             if (obj.GameObjectId == unk1->GameObjectIDToFollow)
             {
@@ -100,7 +99,7 @@ public class MoveController : IDisposable
             _logger.LogError($"Error {ex}", LoggerType.HardcoreMovement);
         }
 
-        foreach (Dalamud.Game.ClientState.Objects.Types.IGameObject obj in _objectTable)
+        foreach (var obj in _objectTable)
         {
             if (obj.GameObjectId == unk1->GameObjectIDToFollow)
             {

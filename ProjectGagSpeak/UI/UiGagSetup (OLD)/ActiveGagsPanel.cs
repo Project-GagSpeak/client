@@ -74,7 +74,7 @@ public class ActiveGagsPanel : DisposableMediatorSubscriberBase
                 var GroupCursorY = ImGui.GetCursorPosY();
                 using (ImRaii.Group())
                 {
-                    if (!GsPadlockEx.IsTwoRowLock(_gagPadlockCombos[idx].SelectedLock))
+                    if (!PadlockEx.IsTwoRowLock(_gagPadlockCombos[idx].SelectedLock))
                         ImGui.SetCursorPosY(GroupCursorY + ImGui.GetFrameHeight() / 2);
 
                     // Draw out the gag lock information, then the padlock information under it.

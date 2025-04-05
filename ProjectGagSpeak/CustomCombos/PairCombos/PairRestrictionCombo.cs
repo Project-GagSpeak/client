@@ -72,7 +72,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         // construct the dto to send.
         var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, updateType)
         {
-            AffectedIndex = layerIdx,
+            Layer = layerIdx,
             RestrictionId = CurrentSelection.Id,
             Enabler = MainHub.UID,
         };

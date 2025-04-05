@@ -208,11 +208,13 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         await RemoveGag(gagData, false);
         await ApplyGag(gagData);
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.SwappedGag, gagData.PreviousGag.GagName() + " swapped to " + gagData.NewData.GagItem + " on layer " + gagData.AffectedSlot);
+        PostActionMsg(gagData.Enactor.UID, InteractionType.SwappedGag, gagData.PreviousGag.GagName() + " swapped to " + gagData.NewData.GagItem + " on layer " + gagData.AffectedLayer);
     }
 
     /// <summary> Applies a Cursed Gag Item </summary>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task ApplyCursedGag(/* Should be called directly from the Cursed Loot Handler but idk.*/) { }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
     /// <summary> Applies a Gag to a spesified layer. </summary>
     public async Task ApplyGag(CallbackGagDataDto gagData)
@@ -220,9 +222,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received ApplyGag instruction from server!", LoggerType.Callbacks);
-        var changes = _gags.ApplyGag(gagData.AffectedSlot, gagData.NewData.GagItem, gagData.Enactor.UID, out var visualGagItem);
+        var changes = _gags.ApplyGag(gagData.AffectedLayer, gagData.NewData.GagItem, gagData.Enactor.UID, out var visualGagItem);
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.ApplyGag, gagData.NewData.GagItem + " was applied on layer " + gagData.AffectedSlot);
+        PostActionMsg(gagData.Enactor.UID, InteractionType.ApplyGag, gagData.NewData.GagItem + " was applied on layer " + gagData.AffectedLayer);
 
         if (visualGagItem is null || changes == VisualUpdateFlags.None)
             return;
@@ -244,9 +246,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received LockGag instruction from server!", LoggerType.Callbacks);
-        _gags.LockGag(gagData.AffectedSlot, gagData.NewData.Padlock, gagData.NewData.Password, gagData.NewData.Timer, gagData.Enactor.UID);
+        _gags.LockGag(gagData.AffectedLayer, gagData.NewData.Padlock, gagData.NewData.Password, gagData.NewData.Timer, gagData.Enactor.UID);
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.LockGag, gagData.NewData.Padlock + " was applied on layer " + gagData.AffectedSlot + "'s Gag");
+        PostActionMsg(gagData.Enactor.UID, InteractionType.LockGag, gagData.NewData.Padlock + " was applied on layer " + gagData.AffectedLayer + "'s Gag");
     }
 
     /// <summary> Unlocks the gag's padlock on a spesified layer. </summary>
@@ -255,9 +257,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received UnlockGag instruction from server!", LoggerType.Callbacks);
-        _gags.UnlockGag(gagData.AffectedSlot, gagData.Enactor.UID);
+        _gags.UnlockGag(gagData.AffectedLayer, gagData.Enactor.UID);
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.UnlockGag, gagData.PreviousPadlock + " was removed from layer " + gagData.AffectedSlot + "'s Gag");
+        PostActionMsg(gagData.Enactor.UID, InteractionType.UnlockGag, gagData.PreviousPadlock + " was removed from layer " + gagData.AffectedLayer + "'s Gag");
     }
 
     /// <summary> Removes the gag from a defined layer. </summary>
@@ -266,10 +268,10 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received RemoveGag instruction from server!", LoggerType.Callbacks);
-        var changes = _gags.RemoveGag(gagData.AffectedSlot, gagData.Enactor.UID, out var removedItemData);
+        var changes = _gags.RemoveGag(gagData.AffectedLayer, gagData.Enactor.UID, out var removedItemData);
 
         if (doActionNotif)
-            PostActionMsg(gagData.Enactor.UID, InteractionType.RemoveGag, gagData.PreviousGag.GagName() + " was removed on layer " + gagData.AffectedSlot);
+            PostActionMsg(gagData.Enactor.UID, InteractionType.RemoveGag, gagData.PreviousGag.GagName() + " was removed on layer " + gagData.AffectedLayer);
 
         if (removedItemData is null)
             return;
@@ -305,7 +307,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         await RemoveRestriction(itemData, false);
         await ApplyRestriction(itemData);
         PostActionMsg(itemData.Enactor.UID, InteractionType.SwappedRestriction, itemData.PreviousRestriction + " swapped to " + 
-            itemData.NewData.Identifier + " on layer " + itemData.AffectedIndex);
+            itemData.NewData.Identifier + " on layer " + itemData.AffectedLayer);
     }
 
     /// <summary> Applies a Restriction to the client at a defined index. </summary>
@@ -313,12 +315,13 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnected)
             return;
+
         Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Callbacks);
-        var changes = _restrictions.ApplyRestriction(itemData.AffectedIndex, itemData.NewData.Identifier, itemData.Enactor.UID, out var visualItem);
+        var changes = _restrictions.ApplyRestriction(itemData.AffectedLayer, itemData.NewData.Identifier, itemData.Enactor.UID, out var visualItem);
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
 
-        if (visualItem is null || changes == VisualUpdateFlags.None)
+        if (visualItem is null || changes is VisualUpdateFlags.None)
             return;
 
         if (changes.HasFlag(VisualUpdateFlags.Glamour)) await TryAddGlamour(visualItem.Glamour, ManagerPriority.Restrictions);
@@ -334,8 +337,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received LockRestriction instruction from server!", LoggerType.Callbacks);
-        _restrictions.LockRestriction(itemData.AffectedIndex, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.LockRestriction, itemData.NewData.Padlock + " was applied to the restriction in layer " + itemData.AffectedIndex);
+        _restrictions.LockRestriction(itemData.AffectedLayer, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
+        PostActionMsg(itemData.Enactor.UID, InteractionType.LockRestriction, itemData.NewData.Padlock + " was applied to the restriction in layer " + itemData.AffectedLayer);
     }
 
     /// <summary> Unlocks a padlock from a restriction at a defined index. </summary>
@@ -344,8 +347,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received UnlockRestriction instruction from server!", LoggerType.Callbacks);
-        _restrictions.UnlockRestriction(itemData.AffectedIndex, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.UnlockRestriction, itemData.PreviousPadlock + " was removed from layer " + itemData.AffectedIndex + "'s Restriction");
+        _restrictions.UnlockRestriction(itemData.AffectedLayer, itemData.Enactor.UID);
+        PostActionMsg(itemData.Enactor.UID, InteractionType.UnlockRestriction, itemData.PreviousPadlock + " was removed from layer " + itemData.AffectedLayer + "'s Restriction");
     }
 
     /// <summary> Removes a restraint item from a defined index. </summary>
@@ -354,7 +357,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected)
             return;
         Logger.LogTrace("Received RemoveRestriction instruction from server!", LoggerType.Callbacks);
-        var changes = _restrictions.RemoveRestriction(itemData.AffectedIndex, itemData.Enactor.UID, out var removedItemData);
+        var changes = _restrictions.RemoveRestriction(itemData.AffectedLayer, itemData.Enactor.UID, out var removedItemData);
         PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
 
         if (removedItemData is null || changes == VisualUpdateFlags.None || !updateVisuals)
@@ -477,7 +480,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion Direct Moodle Calls
 
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task ApplyFullUpdate()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         // Apply a full update of application for all current caches as they are in their current state.
 

@@ -45,7 +45,7 @@ public partial class PairStickyUI
                 PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestraint) ? InteractionType.None : InteractionType.LockRestraint;
         }
         CkGui.AttachToolTip(lockRestraintTT +
-            ((GsPadlockEx.IsTimerLock(SPair.LastRestraintData.Padlock)) ? "--SEP----COL--" + SPair.LastRestraintData.Timer.ToGsRemainingTimeFancy() : "")
+            ((PadlockEx.IsTimerLock(SPair.LastRestraintData.Padlock)) ? "--SEP----COL--" + SPair.LastRestraintData.Timer.ToGsRemainingTimeFancy() : "")
             , color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint

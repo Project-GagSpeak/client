@@ -20,7 +20,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => GsPadlockEx.GetLocksForPair(_pairRef.PairPerms);
+        => PadlockEx.GetLocksForPair(_pairRef.PairPerms);
     protected override string ItemName(ActiveRestriction item)
         => _pairRef.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
             ? restriction.Label : "None";
@@ -33,11 +33,11 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
-                AffectedIndex = layerIdx,
+                Layer = layerIdx,
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
 
             _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
@@ -56,10 +56,10 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
-                AffectedIndex = layerIdx,
+                Layer = layerIdx,
                 Padlock = MonitoredItem.Padlock,
                 Password = Password,
-                Assigner = MainHub.UID,
+                PadlockAssigner = MainHub.UID,
             };
             _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
             Log.LogDebug("Unlocking Restriction with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);

@@ -527,7 +527,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (ActiveRestraintData is null || !ActiveRestraintData.IsLocked())
             return;
 
-        if (GsPadlockEx.IsTimerLock(ActiveRestraintData.Padlock) && ActiveRestraintData.HasTimerExpired())
+        if (PadlockEx.IsTimerLock(ActiveRestraintData.Padlock) && ActiveRestraintData.HasTimerExpired())
         {
             Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
             // only set data relevant to the new change.

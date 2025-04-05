@@ -38,9 +38,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     public record struct RestrictionState(uint Color) { }
 
     // Helper operations used for creating new items and cloning them.
-    private string? _clipboardText;
     private RestrictionType _newType;
-    private RestrictionItem? _clonedRestrictionItem;
+    // private RestrictionItem? _clonedRestrictionItem;
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
     public new RestrictionFileSystem.Leaf? SelectedLeaf
