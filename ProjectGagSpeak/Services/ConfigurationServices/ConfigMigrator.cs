@@ -1,4 +1,5 @@
 using GagSpeak.CkCommons.GarblerCore;
+using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Resource.Delegates;
 
 namespace GagSpeak.Services.Configs;
 
@@ -229,7 +230,13 @@ public static class ConfigMigrator
         foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "cursedloot.json*"))
         {
             var fileName = Path.GetFileName(file);
-            File.Move(file, Path.Combine(oldFormatBackupDir, fileName));
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath); 
+            
+            File.Move(file, destPath);
         }
 
         return newFormat;
@@ -242,7 +249,19 @@ public static class ConfigMigrator
         var oldPatternArray = oldConfig["PatternStorage"]!["Patterns"];
         // for each of the pattern objects in the old array, construct a new one to add.
         var newPatternArray = new JArray();
-        foreach(var oldPattern in oldPatternArray)
+
+        // if the old pattern array is null, return an empty array.
+        if (oldPatternArray is null)
+        {
+            GagSpeak.StaticLog.Error("Old pattern array is null, returning empty array.");
+            return new JObject()
+            {
+                ["Version"] = 0,
+                ["Patterns"] = new JArray()
+            };
+        }
+
+        foreach (var oldPattern in oldPatternArray)
         {
             var newPattern = new JObject()
             {
@@ -283,6 +302,18 @@ public static class ConfigMigrator
         var oldAlarmArray = oldConfig["AlarmStorage"]!["Alarms"];
         // for each of the pattern objects in the old array, construct a new one to add.
         var newAlarmArray = new JArray();
+
+        // if the old pattern array is null, return an empty array.
+        if (oldAlarmArray is null)
+        {
+            GagSpeak.StaticLog.Error("Old alarm array is null, returning empty array.");
+            return new JObject()
+            {
+                ["Version"] = 0,
+                ["Alarms"] = new JArray()
+            };
+        }
+
         foreach (var oldAlarm in oldAlarmArray)
         {
             var newAlarm = new JObject()
@@ -313,10 +344,16 @@ public static class ConfigMigrator
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alarms.json.bak*"))
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alarms.json*"))
         {
             var fileName = Path.GetFileName(file);
-            File.Move(file, Path.Combine(oldFormatBackupDir, fileName));
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
         }
 
         return newFormat;
@@ -367,10 +404,16 @@ public static class ConfigMigrator
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "triggers.json.bak*"))
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "triggers.json*"))
         {
             var fileName = Path.GetFileName(file);
-            File.Move(file, Path.Combine(oldFormatBackupDir, fileName));
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
         }
 
         return newFormat;
