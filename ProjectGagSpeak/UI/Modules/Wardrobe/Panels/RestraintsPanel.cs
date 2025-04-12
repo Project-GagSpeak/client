@@ -2,6 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
@@ -88,6 +89,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         });
     }
 
+    private static OptionalBoolCheckbox HelmetCheckbox = new();
+    private static OptionalBoolCheckbox VisorCheckbox = new();
+    private static OptionalBoolCheckbox WeaponCheckbox = new();
     public ICkTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>
@@ -201,7 +205,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var helmCol = _selector.Selected.HeadgearState == OptionalBool.Null ? falseCol : trueCol;
         var visorCol = _selector.Selected.VisorState == OptionalBool.Null ? falseCol : trueCol;
         var weaponCol = _selector.Selected.WeaponState == OptionalBool.Null ? falseCol : trueCol;
-        var redrawCol = _selector.Selected.DoRedraw == OptionalBool.Null ? falseCol : trueCol;
+        var redrawCol = _selector.Selected.DoRedraw ? falseCol : trueCol;
         var layersCol = _selector.Selected.Layers.Count > 0 ? trueCol : falseCol;
         var moodleCol = _selector.Selected.RestraintMoodles.Count > 0 ? trueCol : falseCol;
         var modsCol = _selector.Selected.RestraintMods.Count > 0 ? trueCol : falseCol;
@@ -211,7 +215,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, ImGui.GetStyle().WindowPadding.Y));
         using (ImRaii.Group())
         {
-            CkGui.FramedIconText(FAI.HardHat, helmCol);
+            CkGui.FramedIconText(FAI.HatCowboy, helmCol);
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Glasses, visorCol);
             ImUtf8.SameLineInner();
@@ -245,7 +249,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
         else
         {
-            using (CkComponents.ButtonHeaderChild("ActiveRestraintSet", "Active Restraint Set", activeSetSize, FAI.Minus, TryRemoveRestraint))
+            using (CkComponents.ButtonHeaderChild("ActiveRestraintSet", "Active Restraint Set", activeSetSize, CkComponents.DefaultHeaderRounding, FAI.Minus, TryRemoveRestraint))
             {
                 // Draw the restraint set equipment, grouped.
                 _activeDrawer.DrawRestraintSlots(_manager.ActiveRestraint, new Vector2(ImGui.GetFrameHeightWithSpacing()));
@@ -281,6 +285,85 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
     private void DrawEditorHeader()
     {
-        ImGui.Text("Im the header item! YIPPEE!!!");
+        // Dont draw anything if the editor is not active.
+        if (_manager.ActiveEditorItem is not { } setInEdit)
+            return;
+
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)
+            .Push(ImGuiStyleVar.ChildRounding, 10f);
+        using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
+            .Push(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint())
+            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+
+        if (CkGui.IconButton(FAI.ArrowLeft))
+            _manager.StopEditing();
+
+        // Create a child that spans the remaining region.
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2 - CkGui.IconButtonSize(FAI.ArrowLeft).X - ImGui.GetStyle().ItemInnerSpacing.X);
+        var curLabel = setInEdit.Label;
+        if (ImGui.InputTextWithHint("##EditorNameField", "Enter Name...", ref curLabel, 48))
+            setInEdit.Label = curLabel;
+
+        ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
+        var remainingWidth = ImGui.GetContentRegionAvail().X;
+
+        // now we must draw out the right side.
+        var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
+        var itemSpacing = (remainingWidth - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 4)) / 6;
+
+        // Cast a child group for the drawer.
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
+        using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+        {
+            ImGui.AlignTextToFramePadding();
+            if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.HeadgearState, out var newHelmValue))
+                setInEdit.HeadgearState = newHelmValue;
+
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.HatCowboySide);
+            CkGui.AttachToolTip("The locked helmet state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+        }
+
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("VisorMetaGroup", childGroupSize))
+        {
+            if (VisorCheckbox.Draw("##MetaVisor", setInEdit.VisorState, out var newVisorValue))
+                setInEdit.VisorState = newVisorValue;
+
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Glasses);
+            CkGui.AttachToolTip("The locked visor state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+        }
+
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
+        {
+            if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.WeaponState, out var newWeaponValue))
+                setInEdit.WeaponState = newWeaponValue;
+
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Explosion);
+            CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+        }
+
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
+        {
+            var doRedraw = setInEdit.DoRedraw;
+            if (ImGui.Checkbox("##MetaRedraw", ref doRedraw))
+                setInEdit.DoRedraw = doRedraw;
+
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Repeat);
+            CkGui.AttachToolTip("If you redraw after application.");
+        }
+
+        // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
+        ImGui.SameLine(0, itemSpacing);
+        if (CkGui.IconButton(FAI.Save))
+            _manager.SaveChangesAndStopEditing();
+        CkGui.AttachToolTip("Save Changes to this Restraint Set.");
+
     }
 }

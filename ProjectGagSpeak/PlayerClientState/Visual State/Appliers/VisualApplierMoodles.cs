@@ -49,12 +49,12 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
 
     /// <summary> Fetches all information from moodles we can cache and store. (Presets, Statuses, StatusManager). </summary>
     /// <remarks> This will fire every time that Moodles Plugin initializes. </remarks>
-    public void OnMoodlesReady()
+    public async void OnMoodlesReady()
     {
-        LatestIpcData.MoodlesData = _moodles.GetStatusManagerString();
-        LatestIpcData.MoodlesDataStatuses = _moodles.GetStatusManagerDetails();
-        LatestIpcData.MoodlesStatuses = _moodles.GetStatusListDetails();
-        LatestIpcData.MoodlesPresets = _moodles.GetPresetListDetails();
+        LatestIpcData.MoodlesData = await _moodles.GetStatusManagerString().ConfigureAwait(false);
+        LatestIpcData.MoodlesDataStatuses = await _moodles.GetStatusManagerDetails().ConfigureAwait(false);
+        LatestIpcData.MoodlesStatuses = await _moodles.GetStatusListDetails().ConfigureAwait(false);
+        LatestIpcData.MoodlesPresets = await _moodles.GetPresetListDetails().ConfigureAwait(false);
         Logger.LogDebug("Moodles is now ready, pushing to all visible pairs", LoggerType.IpcMoodles);
         Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.UpdateVisible, LatestIpcData));
     }
@@ -70,17 +70,16 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
             return;
 
         // Check and Update the clients Moodles. Reapply if the moodle removed was restricted.
-        if(CheckAndUpdateClientMoodles())
-            Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusManagerChanged, LatestIpcData));
+        CheckAndUpdateClientMoodles().ConfigureAwait(false);
     }
 
     /// <summary> Checks if any of our restricted Moodles are no longer present in the new status manager update. </summary>
     /// <remarks> If any are found, it will continue to reapply, and only send an update once all are reapplied. </remarks>
-    public bool CheckAndUpdateClientMoodles()
+    public async Task CheckAndUpdateClientMoodles()
     {
         // Grab the latest data after the status manager update.
-        LatestIpcData.MoodlesData = _moodles.GetStatusManagerString();
-        LatestIpcData.MoodlesDataStatuses = _moodles.GetStatusManagerDetails();
+        LatestIpcData.MoodlesData = await _moodles.GetStatusManagerString();
+        LatestIpcData.MoodlesDataStatuses = await _moodles.GetStatusManagerDetails();
 
         var PrevManagerData = LatestIpcData.MoodlesDataStatuses.ToHashSet(); // <-- This would technically have the latest appropriate stack, if we dont handle stacks.
 
@@ -99,18 +98,18 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
             Logger.LogTrace("Detected Bratty restrained user trying to click off locked Moodles. Reapplying!", LoggerType.IpcMoodles);
             // obtain the moodles that we need to reapply to the player from the expected moodles.            
             _moodles.ApplyOwnStatusByGUID(missingRestrictedMoodles);
-            return false;
+            return;
             // MAINTAINERS NOTE:
             // You can effectively make use of the TryOnMoodleStatus event from GagSpeaks providers if you want to keep stacks.
             // For now im not doing this for the sake of keeping it made for its intended purpose. If that desire ever builds I can append it.
         }
 
         Logger.LogDebug("Pushing IPC update to CacheCreation for processing", LoggerType.IpcMoodles);
-        return true;
+        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusManagerChanged, LatestIpcData));
     }
 
     /// <summary> Fired whenever we change any setting in any of our Moodles Statuses via the Moodles UI </summary>
-    public void ClientStatusModified(Guid id)
+    public async void ClientStatusModified(Guid id)
     {
         if(_isZoning || !_clientMonitor.IsPresent)
             return;
@@ -118,15 +117,15 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         // locate the index in our status list. We have a list of tuple objects, so need to know which has the matching guid.
         var idx = LatestIpcData.MoodlesStatuses.FindIndex(x => x.GUID == id);
         // now that we have the index, if it is -1, then grab all statuses. If it is present, replace that index.
-        if(idx != -1) LatestIpcData.MoodlesStatuses[idx] = _moodles.GetStatusDetails(id);
-        else LatestIpcData.MoodlesStatuses = _moodles.GetStatusListDetails();
+        if(idx != -1) LatestIpcData.MoodlesStatuses[idx] = await _moodles.GetStatusDetails(id);
+        else LatestIpcData.MoodlesStatuses = await _moodles.GetStatusListDetails();
 
         // Push the update to the visible pairs.
         Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusesUpdated, LatestIpcData));
     }
 
     /// <summary> Fired whenever we change any setting in any of our Moodles Presets via the Moodles UI </summary>
-    public void ClientPresetModified(Guid id)
+    public async void ClientPresetModified(Guid id)
     {
         if(_isZoning || !_clientMonitor.IsPresent)
             return;
@@ -134,8 +133,8 @@ public class VisualApplierMoodles : DisposableMediatorSubscriberBase
         // locate the index in our status list. We have a list of tuple objects, so need to know which has the matching guid.
         var idx = LatestIpcData.MoodlesPresets.FindIndex(x => x.GUID == id);
         // now that we have the index, if it is -1, then grab all statuses. If it is present, replace that index.
-        if(idx != -1) LatestIpcData.MoodlesPresets[idx] = _moodles.GetPresetDetails(id);
-        else LatestIpcData.MoodlesPresets = _moodles.GetPresetListDetails();
+        if(idx != -1) LatestIpcData.MoodlesPresets[idx] = await _moodles.GetPresetDetails(id);
+        else LatestIpcData.MoodlesPresets = await _moodles.GetPresetListDetails();
 
         // Push the update to the visible pairs.
         Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.PresetsUpdated, LatestIpcData));

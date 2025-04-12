@@ -160,5 +160,5 @@ public static class CkColors
         return new Vector4(x, y, z, w);
     }
 
-    // Down the line if we want we can add custom color themes from a palatte here.
+    // Down the line if we want we can add custom color themes from a palette here.
 }

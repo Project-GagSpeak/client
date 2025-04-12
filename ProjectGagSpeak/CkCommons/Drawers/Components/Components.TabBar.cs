@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.CkCommons.Helpers;
 
+// Tab bars currently have no window background, but rather are bordered.
 public static partial class CkComponents
 {
     public static ImRaii.IEndObject TabBarChild(string id, out ICkTab? selected, params ICkTab[] tabs)
@@ -31,6 +32,7 @@ public static partial class CkComponents
 
         public UnconditionalTabBar(string id, Vector2 region, WFlags childFlags, out ICkTab? selected, params ICkTab[] tabs)
         {
+            ImGui.BeginGroup();
             FancyTabBar.DrawBar(id, region.X, out selected, tabs);
             var innerSize = new Vector2(region.X, Math.Min(region.Y, ImGui.GetContentRegionAvail().Y));
             this.Success = ImGui.BeginChild(id, innerSize, false, childFlags);
@@ -39,8 +41,10 @@ public static partial class CkComponents
             EndAction = () =>
             {
                 ImGui.EndChild();
-                ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 
-                    CkColor.ElementBG.Uint(), ImGui.GetStyle().FrameRounding * 2f, ImDrawFlags.RoundCornersBottom); 
+                ImGui.EndGroup();
+                // border frame it.
+                ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(),
+                    CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
             };
         }
 

@@ -537,7 +537,7 @@ public partial class AchievementManager
                 // track overkill if it is not yet completed
                 if((LatestCache.SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
                 {
-                    if (_restraints.Storage.ByIdentifier(restraintId) is { } match)
+                    if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
                         (LatestCache.SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(match.GetGlamour().Count());
                 }
 
@@ -548,7 +548,7 @@ public partial class AchievementManager
                 if ((LatestCache.SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IsCompleted is false)
                 {
                     // attempt to retrieve the set from our sets.
-                    if (_restraints.Storage.ByIdentifier(restraintId) is { } match)
+                    if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
                         if (match.GetGlamour().Any(glam => glam.Slot is EquipSlot.Hands))
                             (LatestCache.SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
                 }

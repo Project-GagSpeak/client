@@ -145,11 +145,11 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         if (ActiveEditorItem is null)
             return;
         // Update the active restriction with the new data, update the cache, and clear the edited restriction.
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
         {
-            item = ActiveEditorItem;
+            Storage[idxMatch] = ActiveEditorItem;
             ActiveEditorItem = null;
-            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Modified, item, null));
+            Mediator.Publish(new ConfigTriggerChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
             _saver.Save(this);
         }
     }

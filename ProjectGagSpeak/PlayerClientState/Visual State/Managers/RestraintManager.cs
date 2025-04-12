@@ -3,6 +3,7 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
+using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
@@ -13,6 +14,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
+using Lumina.Excel.Sheets;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
@@ -21,19 +23,19 @@ namespace GagSpeak.PlayerState.Visual;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GlobalData _clientData;
-    private readonly RestrictionManager _restraints;
+    private readonly RestrictionManager _restrictions;
     private readonly FavoritesManager _favorites;
     private readonly ItemService _items;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, RestrictionManager restraints, FavoritesManager favorites, 
+        GlobalData clientData, RestrictionManager restrictions, FavoritesManager favorites, 
         ItemService items, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _clientData = clientData;
-        _restraints = restraints;
+        _restrictions = restrictions;
         _favorites = favorites;
         _items = items;
         _fileNames = fileNames;
@@ -125,9 +127,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     {
         // create an exact clone of the passed in cursed item for editing, so long as it exists in storage.
         if (Storage.Contains(item))
-        {
-            ActiveEditorItem = item;
-        }
+            ActiveEditorItem = new RestraintSet(item, true);
     }
 
     /// <summary> Cancel the editing process without saving anything. </summary>
@@ -141,11 +141,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (ActiveEditorItem is null)
             return;
         // Update the active restraint with the new data, update the cache, and clear the edited restraint.
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
         {
-            item = ActiveEditorItem;
+            Storage[idxMatch] = ActiveEditorItem;
             ActiveEditorItem = null;
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, item, null));
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
             _saver.Save(this);
         }
     }
@@ -495,13 +495,15 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             throw new Exception("Invalid JSON Token for Slot.");
 
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (_restraints.Storage.ByIdentifier(refId) is not { } refItem)
+        if (!_restrictions.Storage.TryFindIndexById(refId, out int matchIdx))
             throw new Exception("Invalid Reference ID for Advanced Slot.");
 
         return new RestraintSlotAdvanced()
         {
-            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value ? (RestraintFlags)value : RestraintFlags.Advanced,
-            Ref = refItem
+            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value 
+                ? (RestraintFlags)value 
+                : RestraintFlags.Glamour | RestraintFlags.Mod | RestraintFlags.Moodle| RestraintFlags.Trait | RestraintFlags.IsOverlay,
+            Ref = _restrictions.Storage[matchIdx],
         };
     }
 

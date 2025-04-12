@@ -9,19 +9,32 @@ namespace GagSpeak.CkCommons.Helpers;
 
 public static partial class CkComponents
 {
+    public static float DefaultHeaderRounding => ImGui.GetStyle().FrameRounding * 2f;
     public static float HeaderHeight => ImGui.GetFrameHeight();
 
     public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size)
-        => new UnconditionalCenterHeader(id, text, size, WFlags.None);
+        => new UnconditionalCenterHeader(id, text, size, DefaultHeaderRounding, WFlags.None);
 
     public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size, WFlags flags)
-        => new UnconditionalCenterHeader(id, text, size, flags);
+        => new UnconditionalCenterHeader(id, text, size, DefaultHeaderRounding, flags);
 
-    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, FAI icon, Action onClick)
-        => new UnconditionalCenterHeader(id, text, size, icon, onClick, WFlags.None);
+    public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size, float bend)
+    => new UnconditionalCenterHeader(id, text, size, bend, WFlags.None);
 
-    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, WFlags flags, FAI icon, Action onClick)
-        => new UnconditionalCenterHeader(id, text, size, icon, onClick, flags);
+    public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size, float bend, WFlags flags)
+        => new UnconditionalCenterHeader(id, text, size, bend, flags);
+
+    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, float bend, FAI icon, Action onClick)
+        => new UnconditionalCenterHeader(id, text, size, bend, icon, onClick, string.Empty, WFlags.None);
+
+    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, float bend, WFlags flags, FAI icon, Action onClick)
+        => new UnconditionalCenterHeader(id, text, size, bend, icon, onClick, string.Empty, flags);
+
+    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, float bend, FAI icon, string tt, Action onClick)
+    => new UnconditionalCenterHeader(id, text, size, bend, icon, onClick, tt, WFlags.None);
+
+    public static ImRaii.IEndObject ButtonHeaderChild(string id, string text, Vector2 size, float bend, WFlags flags, FAI icon, string tt, Action onClick)
+        => new UnconditionalCenterHeader(id, text, size, bend, icon, onClick, tt, flags);
 
     private struct UnconditionalCenterHeader : ImRaii.IEndObject
     {
@@ -29,13 +42,14 @@ public static partial class CkComponents
         public bool Success { get; }
         public bool Disposed { get; private set; }
 
-        public UnconditionalCenterHeader(string id, string txt, Vector2 size, WFlags flags)
+        public UnconditionalCenterHeader(string id, string txt, Vector2 size, float bend, WFlags flags)
         {
+            ImGui.BeginGroup();
+
             var pos = ImGui.GetCursorScreenPos();
-            var rounding = ImGui.GetStyle().FrameRounding * 2f;
-            CenteredHeader(pos, txt, size.X, rounding);
+            CenteredHeader(pos, txt, size.X, bend);
             ImGui.SetCursorScreenPos(pos + new Vector2(0, HeaderHeight));
-            // get the height of the innersize based on the flags attributes.
+            // get the height of the inner-size based on the flags attributes.
             var height = (flags & WFlags.AlwaysUseWindowPadding) != 0
                 ? size.Y + ImGui.GetStyle().WindowPadding.Y * 2 : size.Y;
 
@@ -46,17 +60,20 @@ public static partial class CkComponents
             EndAction = () =>
             {
                 ImGui.EndChild();
-                FillChildBg(rounding); // Draw background AFTER the child ends
+                FillChildBg(bend); // Draw background AFTER the child ends
+                ImGui.EndGroup();
             };
         }
 
-        public UnconditionalCenterHeader(string id, string txt, Vector2 size, FAI icon, Action onClick, WFlags flags)
+        public UnconditionalCenterHeader(string id, string txt, Vector2 size, float bend, FAI icon, Action onClick, string tooltip, WFlags flags)
         {
+            ImGui.BeginGroup();
+
             var pos = ImGui.GetCursorScreenPos();
-            var rounding = ImGui.GetStyle().FrameRounding * 2f;
-            CenteredHeaderButton(pos, txt, size.X, rounding, icon, onClick);
+            CenteredHeaderButton(pos, txt, size.X, bend, icon, tooltip, onClick);
+            
             ImGui.SetCursorScreenPos(pos + new Vector2(0, HeaderHeight));
-            // get the height of the innersize based on the flags attributes.
+            // get the height of the inner-size based on the flags attributes.
             var height = (flags & WFlags.AlwaysUseWindowPadding) != 0
                 ? size.Y + ImGui.GetStyle().WindowPadding.Y * 2 : size.Y;
 
@@ -67,7 +84,8 @@ public static partial class CkComponents
             EndAction = () =>
             {
                 ImGui.EndChild();
-                FillChildBg(rounding); // Draw background AFTER the child ends
+                FillChildBg(bend); // Draw background AFTER the child ends
+                ImGui.EndGroup();
             };
         }
 
@@ -100,6 +118,9 @@ public static partial class CkComponents
     }
 
     public static void CenteredHeaderButton(Vector2 startPos, string text, float widthSpan, float rounding, FAI icon, Action onClick)
+        => CenteredHeaderButton(startPos, text, widthSpan, rounding, icon, string.Empty, onClick);
+
+    public static void CenteredHeaderButton(Vector2 startPos, string text, float widthSpan, float rounding, FAI icon, string tt, Action onClick)
     {
         var wdl = ImGui.GetWindowDrawList();
         var min = startPos;
@@ -129,5 +150,9 @@ public static partial class CkComponents
         // Action Handling.
         if (isHovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
             onClick();
+
+        // tooltip handling.
+        if (isHovered && !string.IsNullOrEmpty(tt))
+            CkGui.AttachToolTip(tt);
     }
 }

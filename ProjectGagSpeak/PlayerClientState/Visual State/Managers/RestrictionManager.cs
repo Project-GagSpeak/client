@@ -135,8 +135,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             ActiveEditorItem = item switch
             {
                 BlindfoldRestriction b => new BlindfoldRestriction(b, true),
-                CollarRestriction c => new CollarRestriction(c, true),
-                RestrictionItem r => new RestrictionItem(r, true),
+                CollarRestriction    c => new CollarRestriction(c, true),
+                RestrictionItem      r => new RestrictionItem(r, true),
                 _ => throw new NotImplementedException("Unknown restriction type."),
             };
         }
@@ -152,13 +152,15 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     {
         if (ActiveEditorItem is null)
             return;
+
         // Update the active restriction with the new data, update the cache, and clear the edited restriction.
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (Storage.TryGetRestriction(ActiveEditorItem.Identifier, out var item))
         {
-            item = ActiveEditorItem;
+            item.ApplyChanges(ActiveEditorItem);
             ActiveEditorItem = null;
             Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, item, null));
             _saver.Save(this);
+            Logger.LogDebug($"Saved changes to restriction {item.Identifier}.");
         }
     }
 
@@ -215,9 +217,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         return false;
     }
     #endregion Validators
-
-
-
 
     #region Active Restriction Updates
     public VisualUpdateFlags ApplyRestriction(int layerIdx, Guid id, string enactor, out RestrictionItem? item)
@@ -332,7 +331,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // Construct the array of CursedLootItems.
         var restrictionItems = new JArray();
         foreach (var item in Storage)
+        {
+            Logger.LogInformation("Serializing item: " + item.ToString());
             restrictionItems.Add(item.Serialize());
+        }
 
         // construct the config object to serialize.
         return new JObject()

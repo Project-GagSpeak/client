@@ -8,6 +8,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
 using OtterGui.Text;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.UI.Components;
 
@@ -24,13 +25,13 @@ public class TraitsDrawer
 
     private static IconCheckboxStimulation StimulationIconCheckbox = new(FAI.VolumeUp, FAI.VolumeDown, FAI.VolumeOff, FAI.VolumeMute, CkGui.Color(ImGuiColors.DalamudGrey), CkColor.FancyHeaderContrast.Uint());
     private const string HandsToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
-        "--SEP--Blocks all Actions dependant on the use of hands.";
+        "--SEP--Blocks all Actions dependent on the use of hands.";
     private const string LegsToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
-        "--SEP--Blocks all Actions dependant on the use of legs.";
+        "--SEP--Blocks all Actions dependent on the use of legs.";
     private const string GaggedToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
-        "--SEP--Blocks all Actions dependant on sound.";
+        "--SEP--Blocks all Actions dependent on sound.";
     private const string BlindfoldedToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
-        "--SEP--Blocks all Actions dependant on seeing the target you attack.";
+        "--SEP--Blocks all Actions dependent on seeing the target you attack.";
     private const string ImmobileToolTip = "--COL--EXTREME WARNING: FULLY PREVENTS MOVEMENT. Be careful using in public instances!!--COL--" +
         "--SEP--Blocks all movement (outside of turning)";
     private const string WeightyToolTip = "--COL--WARNING: Completely forces RP walk! Be careful using in public instances!--COL--" +
@@ -111,6 +112,68 @@ public class TraitsDrawer
                 ImGui.SameLine(0, offsetSpacing);
                 StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref itemSource, StimulationTooltip, (isGag || isBlindfold));
             }
+        }
+    }
+
+    // Rare sighting of cancerous if else spam.
+    public void DrawTraitPreview(Traits itemTraits, Stimulation stimulation)
+    {
+        if (itemTraits is Traits.None && stimulation is Stimulation.None)
+            return;
+
+        var iconSize = new Vector2(ImGui.GetFrameHeight());
+        var spacing = ImGui.GetStyle().ItemSpacing.X / 2;
+        var endX = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
+        var currentX = endX;
+
+        if (itemTraits.HasAny(Traits.LegsRestrained))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Restrained].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.ArmsRestrained))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.Gagged))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Gagged].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.Blindfolded))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.ArmsRestrained))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.Immobile))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Immobilize].ImGuiHandle, iconSize);
+        }
+        else if (itemTraits.HasAny(Traits.Weighty))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Weighty].ImGuiHandle, iconSize);
+        }
+
+        // Stimulation stuff.
+        if (stimulation.HasAny(Stimulation.Any))
+        {
+            currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
+            ImGui.Image(_textures.CoreTextures[CoreTexture.Vibrator].ImGuiHandle, iconSize);
         }
     }
 

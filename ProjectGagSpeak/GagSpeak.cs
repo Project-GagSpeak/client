@@ -409,16 +409,16 @@ public static class GagSpeakServiceExtensions
     => services
         // Scoped Components
         .AddScoped<DrawRequests>()
-        .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<RestrictionManager>(),
-            s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ItemService>(), s.GetRequiredService<TextureService>(),
-            s.GetRequiredService<CosmeticService>(), dm))
+        .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<IpcCallerGlamourer>(),
+            s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ItemService>(),
+            s.GetRequiredService<TextureService>(), s.GetRequiredService<CosmeticService>(), dm))
         .AddScoped<TraitsDrawer>()
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<PlaybackDrawer>()
         .AddScoped<ActiveItemsDrawer>()
 
-        // Scoped Factorys
+        // Scoped Factories
         .AddScoped<DrawEntityFactory>()
         .AddScoped<UiFactory>()
 
@@ -519,7 +519,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(),
             s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>()))
         .AddScoped<DebugTab>()
-
+        .AddScoped<DebuggerBinds>()
 
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
@@ -529,7 +529,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CosmeticService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
-
+        .AddScoped<WindowMediatorSubscriberBase, DebuggerStandaloneUI>()
 
         // Scoped Services
         .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagspeakConfigService>(),

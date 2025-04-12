@@ -202,7 +202,6 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <returns> If the list was drawn. </returns>
     public bool DrawList(float width)
     {
-        DrawPopups();
         // Idk maybe this will fix the annoying assertion that occurs on the first drawframe or whatever.
         using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
             .Push(ImGuiCol.ButtonActive, uint.MinValue);

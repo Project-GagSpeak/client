@@ -35,70 +35,74 @@ public sealed class GlobalData : DisposableMediatorSubscriberBase
         Mediator.Publish(new RefreshUiMessage());
     }
 
-    /// <summary> The function that applies a global permission change from an enactor. </summary>
-    /// <param name="changeDto">the dto of the change.</param>
-    /// <param name="enactorPair">Defines which pair made the change. If null, it came from the client themselves.</param>
-    public void ApplyGlobalPermChange(UserGlobalPermChangeDto changeDto, Pair enactorPair)
+    /// <summary> For permission updates done by ourselves. </summary>
+    public void ChangeGlobalPermission(UserGlobalPermChangeDto dto)
     {
-        if (GlobalPerms is null) 
+        var changeType = UpdateGlobalPermission(dto);
+        if (changeType is InteractionType.None)
             return;
 
-        // establish the key-value pair from the Dto so we know what is changing.
+        // if one did occur, we can log it.
+        Mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, changeType, $"{dto.ChangedPermission.Key.ToString()} changed to [{dto.ChangedPermission.Value.ToString()}]")));
+
+        // If the change was a hardcore action, log a warning.
+        if(changeType is not InteractionType.None && changeType is not InteractionType.ForcedPermChange)
+            Logger.LogWarning($"Hardcore action [{changeType.ToString()}] has changed, but should never happen!");
+    }
+
+    /// <summary> For permission updates done by another user. </summary>
+    public void ChangeGlobalPermission(UserGlobalPermChangeDto dto, Pair enactor)
+    {
+        var changeType = UpdateGlobalPermission(dto);
+        if (changeType is InteractionType.None)
+            return;
+
+        if (changeType is InteractionType.ForcedPermChange)
+            Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), dto.Enactor.UID, InteractionType.ForcedPermChange, $"{dto.ChangedPermission.Key.ToString()} changed to [{dto.ChangedPermission.Value.ToString()}]")));
+        else
+        {
+            // would be a hardcore permission change in this case.
+            Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), dto.Enactor.UID, changeType, $"{changeType.ToString()} changed to [{dto.ChangedPermission.Value.ToString()}]")));
+            var newState = string.IsNullOrEmpty((string)dto.ChangedPermission.Value) ? NewState.Disabled : NewState.Enabled;
+            Mediator.Publish(new HardcoreActionMessage(changeType, newState));
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, MainHub.UID);
+        }
+    }
+
+    /// <summary> Updates our global permissions. </summary>
+    /// <returns> The type of interaction performed by the update. </returns>
+    private InteractionType UpdateGlobalPermission(UserGlobalPermChangeDto changeDto)
+    {
+        if (GlobalPerms is null)
+            return InteractionType.None;
+
         var propertyName = changeDto.ChangedPermission.Key;
         var newValue = changeDto.ChangedPermission.Value;
         var propertyInfo = typeof(UserGlobalPermissions).GetProperty(propertyName);
 
-        if (propertyInfo is null) 
-            return;
-
-        // Get the Hardcore Change Type before updating the property.
-        var hardcoreChangeType = GlobalPerms!.GetHardcoreChange(propertyName, newValue);
-
-        // If the property exists and is found, update its value
-        if (newValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
-        {
-            var ticks = (long)(ulong)newValue;
-            propertyInfo.SetValue(GlobalPerms, TimeSpan.FromTicks(ticks));
-        }
-        // char recognition. (these are converted to byte for Dto's instead of char)
-        else if (changeDto.ChangedPermission.Value.GetType() == typeof(byte) && propertyInfo.PropertyType == typeof(char))
-        {
-            propertyInfo.SetValue(GlobalPerms, Convert.ToChar(newValue));
-        }
-        else if (propertyInfo != null && propertyInfo.CanWrite)
-        {
-            // Convert the value to the appropriate type before setting
-            var value = Convert.ChangeType(newValue, propertyInfo.PropertyType);
-            propertyInfo.SetValue(GlobalPerms, value);
-            Logger.LogDebug($"Updated global permission '{propertyName}' to '{newValue}'", LoggerType.ClientPlayerData);
-        }
-        else
+        if (propertyInfo is null || !propertyInfo.CanWrite)
         {
             Logger.LogError($"Property '{propertyName}' not found or cannot be updated.");
-            return;
+            return InteractionType.None;
         }
 
-        // Handle how we log and output the events / achievement sends.
-        var newState = string.IsNullOrEmpty((string)newValue) ? NewState.Disabled : NewState.Enabled;
-        var permName = hardcoreChangeType is InteractionType.None ? propertyName : hardcoreChangeType.ToString();
-        HandleHardcorePermUpdate(hardcoreChangeType, enactorPair, changeDto.Enactor.UID, permName, newState);
-    }
+        // Get the changed type.
+        var interactedType = GlobalPerms.PermChangeType(propertyName, newValue?.ToString() ?? string.Empty);
 
-    private void HandleHardcorePermUpdate(InteractionType hardcoreChangeType, Pair enactor, string enactorUid, string permissionName, NewState newState)
-    {
-        Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + newState, LoggerType.PairManagement);
-        // if the changeType is none, that means it was not a hardcore change, so we can log the generic event message and return.
-        if (hardcoreChangeType is InteractionType.None)
+        // Special conversions
+        var convertedValue = propertyInfo.PropertyType switch
         {
-            Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactorUid, InteractionType.ForcedPermChange, "Permission (" + permissionName + ") Changed")));
-            return;
-        }
+            Type t when t.IsEnum =>
+                newValue?.GetType() == Enum.GetUnderlyingType(t) 
+                    ? Enum.ToObject(t, newValue)
+                    : Convert.ChangeType(newValue, t), // If newValue type matches enum underlying type, convert it directly.
+            Type t when t == typeof(TimeSpan) && newValue is ulong u => TimeSpan.FromTicks((long)u),
+            Type t when t == typeof(char) && newValue is byte b => Convert.ToChar(b),
+            _ => Convert.ChangeType(newValue, propertyInfo.PropertyType)
+        };
 
-        // If the enactor is anything else, it is a hardcore permission change, and we should execute its operation.
-        Logger.LogDebug("Change was a hardcore action. Publishing HardcoreActionMessage.", LoggerType.PairManagement);
-        Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactorUid, hardcoreChangeType, "Hardcore Action (" + hardcoreChangeType + ") is now " + newState)));
-        Mediator.Publish(new HardcoreActionMessage(hardcoreChangeType, newState));
-
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, enactorUid, MainHub.UID);
+        // Update value.
+        propertyInfo.SetValue(GlobalPerms, convertedValue);
+        return interactedType;
     }
 }

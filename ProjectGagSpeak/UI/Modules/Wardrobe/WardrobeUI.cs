@@ -172,7 +172,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         SelectedTab.MyRestraints => _restraintPanel.IsEditing,
         SelectedTab.MyRestrictions => _restrictionsPanel.IsEditing,
         SelectedTab.MyGags => _gagRestrictionsPanel.IsEditing,
-        SelectedTab.MyCursedLoot => true,
         _ => false,
     };
 

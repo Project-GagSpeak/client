@@ -94,6 +94,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         CkGui.DrawOptionalPlugins();
+#if DEBUG
+        ImGuiUtil.RightAlign("Full Data Debugger");
+        if(ImGui.IsItemClicked())
+            Mediator.Publish(new UiToggleMessage(typeof(DebuggerStandaloneUI)));
+#endif
         ImGui.AlignTextToFramePadding();
         ImGui.TextUnformatted(GSLoc.Settings.AccountClaimText);
         ImGui.SameLine();

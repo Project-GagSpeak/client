@@ -138,13 +138,17 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     }
 
     // Map between the slot strings and their EquipSlot enum values.
-    private static readonly Dictionary<string, EquipSlot> SlotMap = new()
+    private static readonly Dictionary<string, EquipSlot> GearSlotMap = new()
     {
         { "Head", EquipSlot.Head },
         { "Body", EquipSlot.Body },
         { "Hands", EquipSlot.Hands },
         { "Legs", EquipSlot.Legs },
         { "Feet", EquipSlot.Feet },
+    };
+
+    private static readonly Dictionary<string, EquipSlot> AccessorySlotMap = new()
+    {
         { "Ears", EquipSlot.Ears },
         { "Neck", EquipSlot.Neck },
         { "Wrists", EquipSlot.Wrists },
@@ -152,78 +156,72 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         { "LFinger", EquipSlot.LFinger }
     };
 
-    public bool TryTransferActorEquipment(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> currentAppearance)
-    {
-        currentAppearance = new Dictionary<EquipSlot, RestraintSlotBasic>();
-        // Get the player state and equipment JObject
-        var playerState = GetClientGlamourerState();
-        if (GetClientGlamourerState() is not JObject state)
-            return false;
+    public bool TryObtainActorGear(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curGear)
+        => TryObtainFromSlots(items, asOverlay, GearSlotMap, out curGear);
 
-        // Store all the equipment items.
-        if (state["Equipment"] is not JObject equipment)
-            return false;
+    public bool TryObtainActorAccessories(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curAccessories)
+        => TryObtainFromSlots(items, asOverlay, AccessorySlotMap, out curAccessories);
 
-        foreach (var (name, equipSlot) in SlotMap)
-        {
-            // Create the default template.
-            currentAppearance[equipSlot] = new RestraintSlotBasic()
-            {
-                ApplyFlags = asOverlay ? RestraintFlags.Basic : 0,
-                Glamour = new GlamourSlot(equipSlot, ItemService.NothingItem(equipSlot))
-            };
-
-            // if the item does not contain any valid data, continue.
-            if (equipment[name] is not JObject itemData)
-                continue;
-
-            // get the glamourSlot.
-            var customItemId = itemData["ItemId"]?.Value<ulong>() ?? 4294967164;
-            var stain = itemData["Stain"]?.Value<int>() ?? 0;
-            var stain2 = itemData["Stain2"]?.Value<int>() ?? 0;
-
-            var newSlotData = new GlamourSlot()
-            {
-                Slot = equipSlot,
-                GameItem = items.Resolve(equipSlot, customItemId),
-                GameStain = new StainIds((StainId)stain, (StainId)stain2),
-            };
-
-            // set the item.
-            currentAppearance[equipSlot].Glamour = newSlotData;
-        }
-        return true;
-    }
-
-    public bool TryTransferActorCustomization(out JObject customize, out JObject parameters)
+    public bool TryObtainActorCustomization(out JObject customize, out JObject parameters)
     {
         customize = new JObject();
         parameters = new JObject();
 
-        if (GetClientGlamourerState() is not JObject playerState)
+        // Get the customization JObject for customize & parameters. If either is not found, return.
+        if (GetClientGlamourerState() is not JObject ps || ps["Customize"] is not JObject customizeData || ps["Parameters"] is not JObject parametersData)
             return false;
 
-        if(playerState["Customize"] is not JObject customizeData)
-            return false;
-
-        if(playerState["Parameters"] is not JObject parametersData)
-            return false;
-
+        // Set the thingies.
         customize = customizeData;
         parameters = parametersData;
         return true;
     }
 
-    public bool TryTransferMaterials(out JObject materials)
+    public bool TryObtainMaterials(out JObject materials)
     {
         materials = new JObject();
-        if (GetClientGlamourerState() is not JObject playerState)
+
+        // Get the materials JObject, and if not found, return.
+        if (GetClientGlamourerState() is not JObject playerState || playerState["Materials"] is not JObject materialsData)
             return false;
 
-        if(playerState["Materials"] is not JObject materialsData)
-            return false;
-
+        // Set the thingies.
         materials = materialsData;
+        return true;
+    }
+
+    private bool TryObtainFromSlots(ItemService items, bool asOverlay, Dictionary<string, EquipSlot> slotMap, out Dictionary<EquipSlot, RestraintSlotBasic> result)
+    {
+        result = new Dictionary<EquipSlot, RestraintSlotBasic>();
+
+        // Get the equipment JObject, and if not found, return.
+        if (GetClientGlamourerState() is not JObject state || state["Equipment"] is not JObject equipment)
+            return false;
+
+        // Go through our slot map and fetch all the data, appending it as new BasicSlots for the restraint set.
+        foreach (var (name, equipSlot) in slotMap)
+        {
+            result[equipSlot] = new RestraintSlotBasic
+            {
+                ApplyFlags = asOverlay ? RestraintFlags.Basic : 0,
+                Glamour = new GlamourSlot(equipSlot, ItemService.NothingItem(equipSlot))
+            };
+
+            if (equipment[name] is not JObject itemData)
+                continue;
+
+            var customItemId = itemData["ItemId"]?.Value<ulong>() ?? 4294967164;
+            var stain = itemData["Stain"]?.Value<int>() ?? 0;
+            var stain2 = itemData["Stain2"]?.Value<int>() ?? 0;
+
+            result[equipSlot].Glamour = new GlamourSlot
+            {
+                Slot = equipSlot,
+                GameItem = items.Resolve(equipSlot, customItemId),
+                GameStain = new StainIds((StainId)stain, (StainId)stain2),
+            };
+        }
+
         return true;
     }
 }

@@ -184,7 +184,7 @@ public class DebugTab
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
-        DrawAppearance("Player", _gags.ActiveGagsData ?? new CharaActiveGags());
+        DrawGagData("Player", _gags.ActiveGagsData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ActiveRestrictionsData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ActiveRestraintData ?? new CharaActiveRestraint());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
@@ -199,7 +199,6 @@ public class DebugTab
                 }
             }
         }
-/*        DrawToybox("Player", _mainConfig.CompileToyboxToAPI());*/
     }
 
     private void DrawPairsDebug()
@@ -222,7 +221,7 @@ public class DebugTab
             DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
             DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
             DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
-            DrawAppearance(pair.UserData.UID, pair.LastGagData ?? new CharaActiveGags());
+            DrawGagData(pair.UserData.UID, pair.LastGagData ?? new CharaActiveGags());
             DrawRestrictions(pair.UserData.UID, pair.LastRestrictionsData ?? new CharaActiveRestrictions());
             DrawRestraint(pair.UserData.UID, pair.LastRestraintData ?? new CharaActiveRestraint());
             DrawAlias(pair.UserData.UID, pair.LastAliasData ?? new CharaAliasData());
@@ -450,7 +449,7 @@ public class DebugTab
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
     }
 
-    private void DrawAppearance(string uid, CharaActiveGags appearance)
+    private void DrawGagData(string uid, CharaActiveGags appearance)
     {
         using var nodeMain = ImRaii.TreeNode("Appearance Data");
         if (!nodeMain) return;

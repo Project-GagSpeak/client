@@ -20,32 +20,48 @@ public class PatternStorage : List<Pattern>
 
 public class AlarmStorage : List<Alarm>
 {
+    /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
+    /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
+    /// </summary>
     public bool TryGetAlarm(Guid id, [NotNullWhen(true)] out Alarm? item)
     {
         item = this.FirstOrDefault(x => x.Identifier == id);
         return item != null;
     }
 
-    public Alarm? ByIdentifier(Guid id)
-        => this.FirstOrDefault(x => x.Identifier == id);
+    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
+    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
+    /// <param name="index"> the index of the item in the list (if found). </param>
+    /// <returns> True if the index was found, false if it was not. </returns>
+    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
+    public bool TryFindIndexById(Guid id, out int index)
+        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
+    /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
-        => ByIdentifier(id) != null;
+        => this.Any(x => x.Identifier == id);
 }
 
 public class TriggerStorage : List<Trigger>
 {
+    /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
+    /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
+    /// </summary>
     public bool TryGetTrigger(Guid id, [NotNullWhen(true)] out Trigger? item)
-    {
-        item = this.FirstOrDefault(x => x.Identifier == id);
-        return item != null;
-    }
+        => (item = this.FirstOrDefault(x => x.Identifier == id)) != null;
 
-    public Trigger? ByIdentifier(Guid id)
-        => this.FirstOrDefault(x => x.Identifier == id);
+    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
+    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
+    /// <param name="index"> the index of the item in the list (if found). </param>
+    /// <returns> True if the index was found, false if it was not. </returns>
+    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
+    public bool TryFindIndexById(Guid id, out int index)
+        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
+    /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
-        => ByIdentifier(id) != null;
+        => this.Any(x => x.Identifier == id);
+
 
     public IEnumerable<SpellActionTrigger> SpellAction => this.OfType<SpellActionTrigger>().Where(x => x.Enabled);
     public IEnumerable<HealthPercentTrigger> HealthPercent => this.OfType<HealthPercentTrigger>().Where(x => x.Enabled);

@@ -5,6 +5,30 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Storage;
 
+public class RestraintStorage : List<RestraintSet>
+{
+    /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
+    /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
+    /// </summary>
+    public bool TryGetRestraint(Guid id, [NotNullWhen(true)] out RestraintSet? set)
+    {
+        set = this.FirstOrDefault(x => x.Identifier == id);
+        return set != null;
+    }
+
+    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
+    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
+    /// <param name="index"> the index of the item in the list (if found). </param>
+    /// <returns> True if the index was found, false if it was not. </returns>
+    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
+    public bool TryFindIndexById(Guid id, out int index)
+        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
+
+    /// <summary> Informs us if the item is in the storage. </summary>
+    public bool Contains(Guid id)
+        => this.Any(x => x.Identifier == id);
+}
+
 public class RestrictionStorage : List<RestrictionItem>
 {
     public bool TryGetRestriction(Guid id, [NotNullWhen(true)] out RestrictionItem? item)
@@ -13,11 +37,17 @@ public class RestrictionStorage : List<RestrictionItem>
         return item != null;
     }
 
-    public RestrictionItem? ByIdentifier(Guid id)
-        => this.FirstOrDefault(x => x.Identifier == id);
+    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
+    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
+    /// <param name="index"> the index of the item in the list (if found). </param>
+    /// <returns> True if the index was found, false if it was not. </returns>
+    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
+    public bool TryFindIndexById(Guid id, out int index)
+        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
+    /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
-        => ByIdentifier(id) != null;
+        => this.Any(x => x.Identifier == id);
 }
 
 public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
@@ -35,7 +65,8 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
         => this.FirstOrDefault(x => x.Key == gag).Value;
 
     /// <summary> Checks if the GagType is a key within the sorted list. </summary>
-    public bool Contains(GagType gag) => ContainsKey(gag);
+    public bool Contains(GagType gag)
+        => ContainsKey(gag);
 
     /// <summary> The constructor of the storage, which helps initialize the sorted list. </summary>
     public GagRestrictionStorage()
@@ -50,40 +81,32 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
     public bool IsEnabled(GagType gag) => ContainsKey(gag) && this[gag].IsEnabled;
 }
 
-public class RestraintStorage : List<RestraintSet>
-{
-    public bool TryGetRestraint(Guid id, [NotNullWhen(true)] out RestraintSet? set)
-    {
-        set = this.FirstOrDefault(x => x.Identifier == id);
-        return set != null;
-    }
-
-    public RestraintSet? ByIdentifier(Guid id)
-        => this.FirstOrDefault(x => x.Identifier == id);
-
-    public bool Contains(Guid id)
-        => ByIdentifier(id) != null;
-}
-
 public class CursedLootStorage : List<CursedItem>
 {
+    /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
+    /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
+    /// </summary>
     public bool TryGetLoot(Guid id, [NotNullWhen(true)] out CursedItem? item)
     {
         item = this.FirstOrDefault(x => x.Identifier == id);
         return item != null;
     }
 
-    public CursedItem? ByIdentifier(Guid id)
-        => this.FirstOrDefault(x => x.Identifier == id);
+    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
+    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
+    /// <param name="index"> the index of the item in the list (if found). </param>
+    /// <returns> True if the index was found, false if it was not. </returns>
+    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
+    public bool TryFindIndexById(Guid id, out int index)
+        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
+    /// <summary> Attempts to remove a loot item from the storage. </summary>
     public bool TryRemoveLoot(Guid id)
     {
-        var item = ByIdentifier(id);
-        if (item is null)
-            return false;
+        if(TryGetLoot(id, out var item))
+            return Remove(item);
 
-        Remove(item);
-        return true;
+        return false;
     }
 
     public IReadOnlyList<CursedItem> ActiveItems => this

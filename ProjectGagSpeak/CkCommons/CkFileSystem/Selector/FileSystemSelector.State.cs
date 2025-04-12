@@ -83,6 +83,9 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
             if (ChangeFilterInternal(tmp))
                 SetFilterDirty();
         }
+
+        // Draw any popups that we may have clicked on.
+        DrawPopups();
     }
 
     /// <summary> Customization point on how a path should be filtered. Checks whether the FullName contains the current string by default. </summary>

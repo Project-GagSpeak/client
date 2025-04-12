@@ -14,55 +14,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public sealed class ModPresetEditorCache
-{
-    /// <summary> The Mod being edited. </summary>
-    public readonly Mod CurrentMod;
-
-    /// <summary> The name of the preset. </summary>
-    public readonly string PresetName;
-
-    /// <summary> All of the Mod's available Options. </summary>
-    public readonly ModSettingOptions AllModOptions;
-
-    /// <summary> The Selected Settings for the preset. Edits are made through modified settings var. </summary>
-    public readonly ModSettings SelectedSettings;
-
-    /// <summary> The settings adjusted during editing. </summary>
-    public Dictionary<string, string[]> ModifiedSettings { get; private set; } = new();
-
-    // Make the only constructor require everything
-    public ModPresetEditorCache(Mod mod, string presetName, ModSettingOptions options, ModSettings settings)
-    {
-        CurrentMod = mod;
-        PresetName = presetName;
-        AllModOptions = options;
-        SelectedSettings = settings;
-        // set up the modified settings.
-        ModifiedSettings = settings.Settings.ToDictionary(k => k.Key, v => v.Value.ToArray());
-    }
-
-    public string GroupSelectedOption(string key)
-        => ModifiedSettings.GetValueOrDefault(key)?[0] ?? string.Empty;
-
-    public string[] GroupSelectedOptions(string key)
-        => ModifiedSettings.GetValueOrDefault(key) ?? new string[0];
-
-    public void UpdateSetting(string key, string value)
-        => ModifiedSettings[key] = new string[] { value };
-
-    public void UpdateSetting(string key, string[] value)
-        => ModifiedSettings[key] = value;
-}
-
-
-// MAINTAINERS NOTE: (And possibly future corby that will be pissed off to read this)
-// - There is a lot of checking going on because it is difficult to know if the containers are in sync.
-// - Idealy in the future, make it so that there is a container updater / syncer to prevent this.
-// But for now, it will look messy...
-//
-
-
 /// <summary> Responsible for tracking the custom settings we have configured for a mod. </summary>
 public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
@@ -91,12 +42,25 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         // This Mod Combo needs to ping preset combo on selection.
         ModCombo = new ModCombo(logger, () => [ .. _modOptionsAvailable.Keys.OrderBy(m => m.DirectoryName) ]);
         PresetCombo = new ModPresetCombo(logger, () => [
-            // Dependant on ModCombo. Can look into how glamourer updates current design selection to fix this, but otherwise idk.
             .. _settingPresetStorage
-                .TryGetValue(ModCombo.CurrentSelection.DirectoryName, out var presets)
+                .TryGetValue(ModCombo.CurrentSelection.DirectoryName ?? string.Empty, out var presets)
                 ? presets.Select(p => (p.Key, p.Value)).ToList()
                 : new List<(string, ModSettings)>()
             ]);
+
+        /*
+         *         PresetCombo = new ModPresetCombo(logger, () =>
+        {
+            // If no mod is selected, provide an empty preset list.
+            if (ModCombo.CurrentSelection == new Mod())
+                return new List<(string, ModSettings)>();
+
+            // Otherwise, return the current mod's presets.
+            return _settingPresetStorage.TryGetValue(ModCombo.CurrentSelection.DirectoryName, out var presets)
+                ? presets.Select(p => (p.Key, p.Value)).ToList()
+                : new List<(string, ModSettings)>();
+        });
+         */
     }
 
     // Should be moved over to the drawer. This is a mess currently.

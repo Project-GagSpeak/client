@@ -1,21 +1,14 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.Services;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.UI.Components;
 public class MoodleDrawer
@@ -128,11 +121,12 @@ public class MoodleDrawer
         using (ImRaii.Group())
         {
             // determine what moodle statuses we are drawing.
-            IEnumerable<MoodlesStatusInfo> moodleStatuses = moodleItem switch
+            var moodleStatuses = moodleItem switch
             {
-                MoodlePreset preset => VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Where(x => preset.StatusIds.Contains(x.GUID)),
-                Moodle status => new[] { VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == status.Id) },
-                _ => Enumerable.Empty<MoodlesStatusInfo>(),
+                MoodlePreset p => VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Where(x => p.StatusIds.Contains(x.GUID)),
+                _              => !moodleItem.Id.IsEmptyGuid() 
+                    ? new[] { VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == moodleItem.Id) } 
+                    : Enumerable.Empty<MoodlesStatusInfo>(),
             };
 
             // Calculate the remaining height in the region.

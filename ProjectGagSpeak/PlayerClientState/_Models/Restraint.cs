@@ -11,6 +11,20 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.PlayerState.Models;
 
+public interface IRestrictionRef
+{
+    /// <summary> Used to determine what parts of this RestraintSlot are applied. </summary>
+    public RestraintFlags ApplyFlags { get; set; }
+
+    /// <summary> a reference location to a restriction item (thanks c#) </summary>
+    /// <remarks> This can be null if no item is set yet. </remarks>
+    RestrictionItem? Ref { get; set; }
+
+    /// <summary> Custom stains that can be set on-top of the base restriction items stains without changing them. </summary>
+    StainIds CustomStains { get; set; }
+}
+
+
 public interface IRestraintSlot
 {
     /// <summary> Used to determine what parts of this RestraintSlot are applied. </summary>
@@ -34,6 +48,9 @@ public class RestraintSlotBasic : IRestraintSlot
     public StainIds Stains => Glamour.GameStain;
 
     public RestraintSlotBasic() => Glamour = new GlamourSlot();
+
+    public RestraintSlotBasic(EquipSlot slot) => Glamour = new GlamourSlot(slot, ItemService.NothingItem(slot));
+
     public RestraintSlotBasic(RestraintSlotBasic other)
     {
         Glamour = new GlamourSlot(other.Glamour);
@@ -53,16 +70,17 @@ public class RestraintSlotBasic : IRestraintSlot
     }
 }
 
-public class RestraintSlotAdvanced : IRestraintSlot
+public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 {
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public RestrictionItem Ref { get; set; } 
+    // It might cause less issues to allow this to be null down the line and not use a (?)
+    public RestrictionItem? Ref { get; set; }
     public StainIds CustomStains { get; set; } = StainIds.None;
-    public EquipSlot EquipSlot => Ref.Glamour.Slot;
-    public EquipItem EquipItem => Ref.Glamour.GameItem;
-    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
-    internal RestraintSlotAdvanced() { }
-    internal RestraintSlotAdvanced(RestraintSlotAdvanced other)
+    public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
+    public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref?.Glamour.GameStain ?? StainIds.None;
+    public RestraintSlotAdvanced() { }
+    public RestraintSlotAdvanced(RestraintSlotAdvanced other)
     {
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref;
@@ -76,43 +94,36 @@ public class RestraintSlotAdvanced : IRestraintSlot
         {
             ["Type"] = RestraintSlotType.Advanced.ToString(),
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = Ref.Identifier.ToString(),
+            ["RestrictionRef"] = Ref?.Identifier.ToString(),
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
 }
 
 // This will eventually be able to be a mod customization toggle as well for a layer.
-public interface IRestraintLayer : IComparable<IRestraintLayer>
+public interface IRestraintLayer
 {
+    public string ID { get; }
     public bool IsActive { get; }
-    public int Priority { get; }
     public IRestraintLayer Clone();
     public JObject Serialize();
-
-    int IComparable<IRestraintLayer>.CompareTo(IRestraintLayer? other)
-    {
-        if (other == null) return 1;
-        return Priority.CompareTo(other.Priority);
-    }
 }
 
-public class RestrictionLayer : IRestraintLayer
+public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 {
-    public bool IsActive { get; protected set; } = false;
-    public int Priority { get; protected set; } = 0;
+    public string ID { get; internal set; } = "IRestraintLayer-" + Guid.NewGuid().ToString();
+    public bool IsActive { get; set; } = false;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public RestrictionItem Ref { get; set; }
-    public StainIds CustomStains { get; internal set; } = StainIds.None;
-    public EquipSlot EquipSlot => Ref.Glamour.Slot;
-    public EquipItem EquipItem => Ref.Glamour.GameItem;
-    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
+    public RestrictionItem? Ref { get; set; }
+    public StainIds CustomStains { get; set; } = StainIds.None;
+    public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
+    public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref?.Glamour.GameStain ?? StainIds.None;
 
     internal RestrictionLayer() { }
     internal RestrictionLayer(RestrictionLayer other)
     {
         IsActive = other.IsActive;
-        Priority = other.Priority;
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref; // Point to the same reference
         CustomStains = other.CustomStains;
@@ -125,10 +136,10 @@ public class RestrictionLayer : IRestraintLayer
         return new JObject
         {
             ["Type"] = RestraintLayerType.Restriction.ToString(),
+            ["ID"] = ID,
             ["IsActive"] = IsActive,
-            ["Priority"] = Priority,
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = Ref.Identifier.ToString(),
+            ["RestrictionRef"] = Ref?.Identifier.ToString() ?? string.Empty,
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
@@ -136,15 +147,14 @@ public class RestrictionLayer : IRestraintLayer
 
 public class ModPresetLayer : IRestraintLayer
 {
-    public bool IsActive { get; protected set; } = false;
-    public int Priority { get; protected set; } = 0;
-    public ModAssociation Ref { get; internal set; }
+    public string ID { get; internal set; } = "IRestraintLayer-" + Guid.NewGuid().ToString();
+    public bool IsActive { get; set; } = false;
+    public ModAssociation? Ref { get; internal set; }
 
     internal ModPresetLayer() { }
     internal ModPresetLayer(ModPresetLayer other)
     {
         IsActive = other.IsActive;
-        Priority = other.Priority;
         Ref = other.Ref;
     }
     public IRestraintLayer Clone() => new ModPresetLayer(this);
@@ -154,9 +164,9 @@ public class ModPresetLayer : IRestraintLayer
         return new JObject
         {
             ["Type"] = RestraintLayerType.ModPreset.ToString(),
+            ["ID"] = ID,
             ["IsActive"] = IsActive,
-            ["Priority"] = Priority,
-            ["ModRef"] = Ref.Serialize(),
+            ["ModRef"] = Ref?.Serialize() ?? new JObject(),
         };
     }
 }
@@ -171,7 +181,7 @@ public class RestraintSet
     public string ThumbnailPath { get; set; } = string.Empty;
     public bool DoRedraw { get; set; } = false;
 
-    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; set; } = new Dictionary<EquipSlot, IRestraintSlot>();
+    public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; set; } = EquipSlotExtensions.EqdpSlots.ToDictionary(slot => slot, slot => (IRestraintSlot)new RestraintSlotBasic(slot));
     public GlamourBonusSlot Glasses { get; set; } = new GlamourBonusSlot();
     public List<IRestraintLayer> Layers { get; set; } = new List<IRestraintLayer>();
 
@@ -322,7 +332,7 @@ public class RestraintSet
             ["DoRedraw"] = DoRedraw,
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
             ["Glasses"] = Glasses.Serialize(),
-            ["Layers"] = new JArray(Layers.OrderBy(x => x.Priority).Select(x => x.Serialize())),
+            ["Layers"] = new JArray(Layers.Select(x => x.Serialize())),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
             ["WeaponState"] = WeaponState.ToString(),

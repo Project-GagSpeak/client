@@ -70,14 +70,21 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
     public Guid ProfileGuid { get; set; } = Guid.Empty;
     public uint ProfilePriority { get; set; } = 0;
     public bool DoRedraw { get; set; } = false;
+
     internal GarblerRestriction(GagType gagType) => GagType = gagType;
     public GarblerRestriction(GarblerRestriction other)
     {
         GagType = other.GagType;
+        ApplyChanges(other);
+    }
+
+    /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
+    public void ApplyChanges(GarblerRestriction other)
+    {
         IsEnabled = other.IsEnabled;
-        Glamour = new GlamourSlot(other.Glamour);
-        Mod = new ModAssociation(other.Mod);
-        Moodle = new Moodle(other.Moodle);
+        Glamour = other.Glamour;
+        Mod = other.Mod;
+        Moodle = other.Moodle;
         Traits = other.Traits;
         Stimulation = other.Stimulation;
         HeadgearState = other.HeadgearState;
@@ -142,19 +149,23 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
     public RestrictionItem() { }
     public RestrictionItem(RestrictionItem other, bool keepIdentifier)
     {
-        if (keepIdentifier)
-        {
-            Identifier = other.Identifier;
-        }
+        Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
+    }
+
+    /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
+    public void ApplyChanges(RestrictionItem other)
+    {
         Label = other.Label;
         ThumbnailPath = other.ThumbnailPath;
-        Glamour = new GlamourSlot(other.Glamour);
-        Mod = new ModAssociation(other.Mod);
-        Moodle = new Moodle(other.Moodle);
+        Glamour = other.Glamour;
+        Mod = other.Mod;
+        Moodle = other.Moodle;
         Traits = other.Traits;
         Stimulation = other.Stimulation;
         DoRedraw = other.DoRedraw;
     }
+
     public virtual JObject Serialize()
         => new JObject
         {
@@ -202,6 +213,16 @@ public class BlindfoldRestriction : RestrictionItem
         CustomPath = other.CustomPath;
     }
 
+    /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
+    public void ApplyChanges(BlindfoldRestriction other)
+    {
+        base.ApplyChanges(other);
+        HeadgearState = other.HeadgearState;
+        VisorState = other.VisorState;
+        CustomPath = other.CustomPath;
+    }
+
+
     public override JObject Serialize()
     {
         // serialize the base, and add to it the additional.
@@ -235,6 +256,14 @@ public class CollarRestriction : RestrictionItem
     public CollarRestriction(CollarRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
+        OwnerUID = other.OwnerUID;
+        CollarWriting = other.CollarWriting;
+    }
+
+    /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
+    public void ApplyChanges(CollarRestriction other)
+    {
+        base.ApplyChanges(other);
         OwnerUID = other.OwnerUID;
         CollarWriting = other.CollarWriting;
     }

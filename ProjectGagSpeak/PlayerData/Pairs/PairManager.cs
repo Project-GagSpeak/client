@@ -91,6 +91,35 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy();
     }
 
+    /// <summary> Method of addUserPair that allows multiple UserPairDto to be appended, with a single log output after. </summary>
+    public void AddUserPair(IEnumerable<UserPairDto> dtoList)
+    {
+        var created = new List<string>();
+        var refreshed = new List<string>();
+
+        foreach (var dto in dtoList)
+        {
+            if (!_allClientPairs.ContainsKey(dto.User))
+            {
+                _allClientPairs[dto.User] = _pairFactory.Create(dto);
+                created.Add(dto.User.UID);
+            }
+            else
+            {
+                _allClientPairs[dto.User].ApplyLastIpcData();
+                refreshed.Add(dto.User.UID);
+            }
+        }
+
+        RecreateLazy();
+
+        if (created.Count > 0)
+            Logger.LogDebug($"Created Pairs: {string.Join(", ", created)}", LoggerType.PairManagement);
+
+        if (refreshed.Count > 0)
+            Logger.LogDebug($"Refreshed Pairs: {string.Join(", ", refreshed)}", LoggerType.PairManagement);
+    }
+
     /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
     /// <remarks> Fired by a server callback upon someone accepting your pair request, or after you accept theirs. </remarks>
     public void AddNewUserPair(UserPairDto dto)

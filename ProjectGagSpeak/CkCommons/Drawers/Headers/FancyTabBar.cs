@@ -77,8 +77,6 @@ public static class FancyTabBar
         var barMin = ImGui.GetItemRectMin();
         var barMax = ImGui.GetItemRectMax();
         wdl.AddRectFilled(barMin, barMax, CkColor.FancyHeader.Uint(), Rounding, ImDrawFlags.RoundCornersTop);
-        // Draw the line seperator going along the bottom of the tab bar.
-        wdl.AddLine(barMin with { Y = barMax.Y - 2 }, barMax, CkColor.ElementSplit.Uint(), 2f);
 
         var stateChanged = selected != _selectedStorage[id];
         _selectedStorage[id] = selected;

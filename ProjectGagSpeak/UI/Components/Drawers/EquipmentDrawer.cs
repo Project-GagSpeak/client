@@ -1,5 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
@@ -11,6 +12,7 @@ using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Glamourer;
+using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
@@ -31,26 +33,29 @@ public class EquipmentDrawer
 {
     internal readonly record struct CachedSlotItemData(EquipItem Item);
     
-    private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOn.Uint());
-    private static IconCheckboxEx ModFlagCheckbox = new(FAI.Eye, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOn.Uint());
-    private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.Tint, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOn.Uint());
-    private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Gift, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOn.Uint());
+    private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
+    private static IconCheckboxEx ModFlagCheckbox = new(FAI.FileArchive, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
+    private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.TheaterMasks, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
+    private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Handcuffs, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
     
     private readonly GameItemCombo[] _itemCombos;
     private readonly BonusItemCombo[] _bonusCombos;
     private readonly GameStainCombo _stainCombo;
     private readonly RestrictionCombo _restrictionCombo;
 
-
     private readonly ILogger _logger;
+    private readonly IpcCallerGlamourer _ipcGlamourer;
+    private readonly RestrictionManager _restrictions;
     private readonly ItemService _items;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
-    public EquipmentDrawer(ILogger<EquipmentDrawer> logger, RestrictionManager restrictions,
-        FavoritesManager favorites, ItemService items, TextureService textures,
-        CosmeticService cosmetics, IDataManager data)
+    public EquipmentDrawer(ILogger<EquipmentDrawer> logger, IpcCallerGlamourer glamourer,
+        RestrictionManager restrictions, FavoritesManager favorites, ItemService items,
+        TextureService textures, CosmeticService cosmetics, IDataManager data)
     {
         _logger = logger;
+        _ipcGlamourer = glamourer;
+        _restrictions = restrictions;
         _items = items;
         _cosmetics = cosmetics;
         _textures = textures;
@@ -65,6 +70,9 @@ public class EquipmentDrawer
         GameIconSize = new Vector2(2 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y);
     }
 
+    public static float RestraintItemH => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
+    public static float AssociatedGlamourH => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
+
     // Temporary Cached Storage holding the currently resolved item from the latest hover.
     private CachedSlotItemData LastCachedItem;
     public readonly Vector2 GameIconSize;
@@ -74,7 +82,7 @@ public class EquipmentDrawer
     public bool TryGetStain(StainId stain, out Stain data)
         => _items.Stains.TryGetValue(stain, out data);
 
-    /// <summary> Draws a slot provided by a paired Kinkster's SlotCache </summary>
+    /// <summary> Draws a slot provided by a paired Kinkster SlotCache </summary>
     /// <remarks> Intended for lightweight usage. </remarks>
     public void DrawAppliedSlot(AppliedSlot appliedSlot)
     {
@@ -89,18 +97,17 @@ public class EquipmentDrawer
     {
         var pos = ImGui.GetCursorScreenPos();
         var style = ImGui.GetStyle();
-        var iconH = ImGui.GetFrameHeight() * 3 + style.ItemSpacing.Y * 2;
-        var winSize = new Vector2(width, iconH);
+        var winSize = new Vector2(width, AssociatedGlamourH);
         using (CkComponents.CenterHeaderChild("AssociatedGlamour" + id, "Associated Glamour", winSize, WFlags.AlwaysUseWindowPadding))
         {
-            // get the innder width after the padding is applied.
+            // get the inner width after the padding is applied.
             var widthInner = ImGui.GetContentRegionAvail().X;
-            item.GameItem.DrawIcon(_textures, new Vector2(iconH), item.Slot);
+            item.GameItem.DrawIcon(_textures, new Vector2(AssociatedGlamourH), item.Slot);
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
                 // Begin by drawing out the slot enum dropdown that spans the remaining content region.
-                var barWidth = widthInner - iconH - ImGui.GetStyle().ItemInnerSpacing.X;
+                var barWidth = widthInner - AssociatedGlamourH - ImGui.GetStyle().ItemInnerSpacing.X;
 
                 if (CkGuiUtils.EnumCombo("##" + id + "slot itemCombo", barWidth, item.Slot, out var newSlot,
                     EquipSlotExtensions.EqdpSlots, (slot) => slot.ToName(), "Select Slot..."))
@@ -124,127 +131,172 @@ public class EquipmentDrawer
             return;
         }
 
+        // Inner width to account for the swapper.
+        var innerWidth = fullWidth - CkGui.IconButtonSize(FAI.ArrowRightArrowLeft).X - ImGui.GetStyle().ItemInnerSpacing.X;
+
         // Determine what we are drawing based on the type of slot.
         if (restraintSlot is RestraintSlotBasic basicSlot)
         {
-            DrawRestraintSlotBasic(basicSlot, fullWidth, out bool swapped);
-            if (swapped)
+            DrawRestraintSlotBasic(basicSlot, innerWidth);
+            ImUtf8.SameLineInner();
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, RestraintItemH, basicSlot.EquipSlot + "Swapper"))
+            {
+                _logger.LogTrace($"Swapping {basicSlot.EquipSlot} from Basic to Advanced.");
                 slots[focus] = new RestraintSlotAdvanced() { CustomStains = basicSlot.Stains };
+            }
         }
         else if (restraintSlot is RestraintSlotAdvanced advSlot)
         {
-            DrawRestraintSlotAdvanced(advSlot, fullWidth, out bool swapped);
-            if (swapped)
+            DrawRestrictionRef(advSlot, focus, innerWidth);
+            ImUtf8.SameLineInner();
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, RestraintItemH, advSlot.EquipSlot + "Swapper"))
             {
+                _logger.LogTrace($"Swapping {advSlot.EquipSlot} from Advanced to Basic.");
                 var prevStains = advSlot.CustomStains;
-                var newBasic = new RestraintSlotBasic();
+                var newBasic = new RestraintSlotBasic(focus);
                 newBasic.Glamour.GameStain = prevStains;
                 slots[focus] = newBasic;
             }
         }
     }
 
-    public void DrawRestraintSlotBasic(RestraintSlotBasic basicSlot, float width, out bool swapped)
+    /// <summary> Draws out the information for a basic restraint slot. </summary>
+    /// <returns> True if the item was swapped between a basic to advanced, or vise versa. </returns>
+    /// <param name="basicSlot"></param>
+    /// <param name="width"></param>
+    /// <param name="swapped"></param>
+    public void DrawRestraintSlotBasic(RestraintSlotBasic basicSlot, float width)
     {
-        swapped = false;
+        using var group = ImRaii.Group();
+        // Draw out the icon firstly.
+        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(RestraintItemH), basicSlot.EquipSlot);
+        ImGui.SameLine(0, 3);
+        width -= 3f + RestraintItemH;
+
+        // Get the width for the combo stuff.
+        var comboWidth = width - CkGui.IconButtonSize(FAI.EyeSlash).X - ImGui.GetStyle().ItemInnerSpacing.X;
+        using (ImRaii.Group())
+        {
+            DrawItem(basicSlot.Glamour, comboWidth);
+            DrawStains(basicSlot.Glamour, comboWidth);
+        }
+
+        ImUtf8.SameLineInner();
+        var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
+        using (ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint()))
+            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, RestraintItemH, basicSlot.EquipSlot + "Overlay"))
+                basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
+
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
+    }
+
+    public void DrawRestrictionRef<T>(T restrictionRef, EquipSlot slot, float width) where T : IRestrictionRef
+    {
+        using var group = ImRaii.Group();
+
+        // If it has a thumbnail, we should use that.
+        if (restrictionRef.Ref is { } validRef && !validRef.ThumbnailPath.IsNullOrWhitespace())
+        {
+            if (_cosmetics.GetImageFromThumbnailPath(validRef.ThumbnailPath) is { } thumbnail)
+            {
+                var pos = ImGui.GetCursorScreenPos();
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(RestraintItemH), ImGui.GetStyle().FrameRounding);
+                ImGui.Dummy(new Vector2(RestraintItemH));
+            }
+        }
+        else
+        {
+            // Placeholder frame display.
+            ItemService.NothingItem(slot).DrawIcon(_textures, new Vector2(RestraintItemH), slot);
+        }
+
+        ImGui.SameLine(0, 3);
+        width -= 3f + RestraintItemH;
+
+        // restriction selection and custom combos.
+        var comboWidth = width - RestraintItemH - ImGui.GetStyle().ItemInnerSpacing.X;
+        using (ImRaii.Group())
+        {
+            var change = _restrictionCombo.Draw("##AdvSelector" + slot, restrictionRef.Ref?.Identifier ?? Guid.Empty, comboWidth, flags: ImGuiComboFlags.NoArrowButton);
+            if (change && !(restrictionRef.Ref?.Identifier ?? Guid.Empty).Equals(_restrictionCombo.CurrentSelection?.Identifier))
+            {
+                _logger.LogTrace($"Item changed to {_restrictionCombo.CurrentSelection?.Identifier} " +
+                    $"[{_restrictionCombo.CurrentSelection?.Label}] from {restrictionRef.Ref?.Identifier} [{restrictionRef.Ref?.Label}]");
+                // Get the actual reference to the restrictions item.
+                if(_restrictions.Storage.TryFindIndexById(_restrictionCombo.CurrentSelection?.Identifier ?? Guid.Empty, out var index))
+                    restrictionRef.Ref = _restrictions.Storage[index];
+            }
+
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _logger.LogTrace($"Item Cleared and set to the First Item. [{restrictionRef.Ref?.Label}]");
+                // Set the item to the first item in the list.
+                restrictionRef.Ref = null;
+            }
+            DrawCustomStains(restrictionRef, slot, comboWidth);
+        }
+        // Beside this, draw the restraint flag editor.
+        ImUtf8.SameLineInner();
+        DrawAdvancedSlotFlags(restrictionRef, slot);
+
+    }
+
+    public void DrawGlassesSlot(GlamourBonusSlot glasses, float width)
+    {
         var totalHeight = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         using var group = ImRaii.Group();
         // Draw out the icon firstly.
-        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(totalHeight), basicSlot.EquipSlot);
-        ImUtf8.SameLineInner();
+        glasses.GameItem.DrawIcon(_textures, new Vector2(totalHeight), glasses.Slot);
+        ImGui.SameLine(0, 3);
 
-        var rightEndWidth = totalHeight;
-        using (ImRaii.Group())
-        {
-            // First Row.
-            if (CkGui.IconButton(FAI.ArrowsLeftRight))
-            {
-                swapped = true;
-                return;
-            }
-            ImUtf8.SameLineInner();
-            DrawItem(basicSlot.Glamour, ImGui.GetContentRegionAvail().X - rightEndWidth);
-
-            // Second Row.
-            var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash))
-                basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
-            ImUtf8.SameLineInner();
-            DrawStains(basicSlot.Glamour, ImGui.GetContentRegionAvail().X - rightEndWidth);
-        }
+        DrawBonusCombo(glasses, BonusItemFlag.Glasses, ImGui.GetContentRegionAvail().X);
     }
 
-    public void DrawRestraintSlotAdvanced(RestraintSlotAdvanced advSlot, float width, out bool swapped)
+    public bool TryImportCurrentGear(out Dictionary<EquipSlot, RestraintSlotBasic> curGear)
+        => _ipcGlamourer.TryObtainActorGear(_items, true, out curGear);
+
+    public bool TryImportCurrentAccessories(out Dictionary<EquipSlot, RestraintSlotBasic> curAccessories)
+        => _ipcGlamourer.TryObtainActorAccessories(_items, true, out curAccessories);
+
+    public bool TryImportCurrentCustomizations(out JObject customizations, out JObject parameters)
+        => _ipcGlamourer.TryObtainActorCustomization(out customizations, out parameters);
+
+    public bool TryImportCurrentAdvancedMaterials(out JObject materials)
+        => _ipcGlamourer.TryObtainMaterials(out materials);
+
+
+    private void DrawAdvancedSlotFlags<T>(T restrictionRef, EquipSlot slot) where T : IRestrictionRef
     {
-        swapped = false;
-        var totalHeight = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-        using var group = ImRaii.Group();
-        // Determine what should be drawn as the image. If it has a thumbnail, we should use that.
-        if(!advSlot.Ref.ThumbnailPath.IsNullOrWhitespace())
-        {
-            var thumbnailImage = _cosmetics.GetImageFromThumbnailPath(advSlot.Ref.ThumbnailPath);
-            if (thumbnailImage is { } wrap)
-            {
-                var pos = ImGui.GetCursorScreenPos();
-                ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, pos, new Vector2(totalHeight), ImGui.GetStyle().FrameRounding);
-                ImGui.Dummy(new Vector2(totalHeight));
-            }
-            else
-            {
-                advSlot.EquipItem.DrawIcon(_textures, new Vector2(totalHeight), advSlot.EquipSlot);
-            }
-        }
-
-        ImUtf8.SameLineInner();
-        var rightEndWidth = totalHeight;
-        using (ImRaii.Group())
-        {
-            // First Row.
-            if (CkGui.IconButton(FAI.ArrowsLeftRight))
-            {
-                swapped = true;
-                return;
-            }
-            ImUtf8.SameLineInner();
-            var comboWidth = ImGui.GetContentRegionAvail().X - rightEndWidth;
-            _restrictionCombo.Draw("##AdvancedSlotSelector" + advSlot.EquipSlot, advSlot.Ref.Identifier, comboWidth);
-
-            // Second Row.
-            var overlayState = advSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash))
-                advSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
-            ImUtf8.SameLineInner();
-            DrawCustomStains(advSlot, comboWidth);
-        }
-        // Beside this, draw the restraint flag editor.
-        ImGui.SameLine();
-        DrawAdvancedSlotFlags(advSlot);
-    }
-
-    private void DrawAdvancedSlotFlags(RestraintSlotAdvanced advSlot)
-    {
-        var spacing = ImGui.GetStyle().ItemInnerSpacing;
+        var spacing = new Vector2(ImGuiHelpers.GlobalScale);
         var rounding = ImGui.GetStyle().FrameRounding;
         var region = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y);
-        using (ImRaii.Child("##AdvSlotFlags" + advSlot.EquipSlot, region, false))
+        using (ImRaii.Child("##AdvSlotFlags" + slot, region))
         {
-            var curGlam = advSlot.ApplyFlags.HasAny(RestraintFlags.Glamour);
-            var curMod = advSlot.ApplyFlags.HasAny(RestraintFlags.Mod);
-            var curMoodle = advSlot.ApplyFlags.HasAny(RestraintFlags.Moodle);
-            var curHcTrait = advSlot.ApplyFlags.HasAny(RestraintFlags.Trait);
+            var curGlam = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Glamour);
+            var curMod = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Mod);
+            var curMoodle = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Moodle);
+            var curHcTrait = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Trait);
 
-            if (GlamourFlagCheckbox.Draw("##GlamFlagToggle" + advSlot.EquipSlot, curGlam, out var newGlam) && curGlam != newGlam)
-                advSlot.ApplyFlags ^= RestraintFlags.Glamour;
+            if (GlamourFlagCheckbox.Draw("##GlamFlagToggle" + slot, curGlam, out var newGlam) && curGlam != newGlam)
+                restrictionRef.ApplyFlags ^= RestraintFlags.Glamour;
+            CkGui.AttachToolTip(curGlam ? "The Glamour from this Restriction Item will be applied." : "Glamour application is ignored.");
+
             ImUtf8.SameLineInner();
-            if (ModFlagCheckbox.Draw("##ModFlagToggle" + advSlot.EquipSlot, curMod, out var newMod) && curMod != newMod)
-                advSlot.ApplyFlags ^= RestraintFlags.Mod;
+            if (ModFlagCheckbox.Draw("##ModFlagToggle" + slot, curMod, out var newMod) && curMod != newMod)
+                restrictionRef.ApplyFlags ^= RestraintFlags.Mod;
+            CkGui.AttachToolTip(curMod ? "Mods from this Restriction Item will be applied." : "Mods are ignored.");
+
             // Next Line.
-            if (MoodleFlagCheckbox.Draw("##MoodleFlagToggle" + advSlot.EquipSlot, curMoodle, out var newMoodle) && curMoodle != newMoodle)
-                advSlot.ApplyFlags ^= RestraintFlags.Moodle;
+            if (MoodleFlagCheckbox.Draw("##MoodleFlagToggle" + slot, curMoodle, out var newMoodle) && curMoodle != newMoodle)
+                restrictionRef.ApplyFlags ^= RestraintFlags.Moodle;
+            CkGui.AttachToolTip(curMoodle ? "Moodles from this Restriction Item will be applied." : "Moodles are ignored.");
+
             ImUtf8.SameLineInner();
-            if (HardcoreTraitsCheckbox.Draw("##TraitFlagToggle" + advSlot.EquipSlot, curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)
-                advSlot.ApplyFlags ^= RestraintFlags.Trait;
+            if (HardcoreTraitsCheckbox.Draw("##TraitFlagToggle" + slot, curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)
+                restrictionRef.ApplyFlags ^= RestraintFlags.Trait;
+            CkGui.AttachToolTip(curHcTrait ? "Hardcore Traits from this Restriction Item will be applied." : "Hardcore Traits are ignored.");
         }
+
         // Draw a bordered rect around this.
         var min = ImGui.GetItemRectMin() - spacing;
         var max = ImGui.GetItemRectMax() + spacing;
@@ -253,11 +305,14 @@ public class EquipmentDrawer
     }
 
     private void DrawItem(GlamourSlot item, float width)
+        => DrawItem(item, width, 1.25f);
+
+    private void DrawItem(GlamourSlot item, float width, float innerWidthScaler)
     {
         // draw the item itemCombo.
         var itemCombo = _itemCombos[item.Slot.ToIndex()];
 
-        var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.ItemId, width, width * 1.25f);
+        var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.ItemId, width, width * innerWidthScaler);
 
         if (change && !item.GameItem.Equals(itemCombo.CurrentSelection))
         {
@@ -274,7 +329,34 @@ public class EquipmentDrawer
         }
     }
 
+    public void DrawBonusCombo(GlamourBonusSlot item, BonusItemFlag flag, float width)
+    {
+        // Assuming _bonusItemCombo is similar to ItemCombos but for bonus items
+        var itemCombo = _bonusCombos[item.Slot.ToIndex()];
+
+        var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.Id.BonusItem, width, width * 1.3f);
+
+        if (change && !item.GameItem.Equals(itemCombo.CurrentSelection))
+        {
+            // log full details.
+            _logger.LogTrace($"Item changed from {itemCombo.CurrentSelection} [{itemCombo.CurrentSelection.PrimaryId}] " +
+                $"to {item.GameItem} [{item.GameItem.PrimaryId}]");
+            // change
+            item.GameItem = itemCombo.CurrentSelection;
+        }
+
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            // Assuming a method to handle item reset or clear, similar to your DrawItem method
+            _logger.LogTrace($"Item reset to default for slot {flag}");
+            item.GameItem = EquipItem.BonusItemNothing(flag);
+        }
+    }
+
     private void DrawStains(GlamourSlot item, float width)
+        => DrawStains(item, width, 1.75f);
+
+    private void DrawStains(GlamourSlot item, float width, float innerWidthScaler)
     {
         // fetch the correct stain from the stain data
         var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (item.GameStain.Count - 1)) / item.GameStain.Count;
@@ -284,7 +366,7 @@ public class EquipmentDrawer
             using var id = ImUtf8.PushId(index);
             var found = TryGetStain(stainId, out var stain);
             // draw the stain itemCombo.
-            var change = _stainCombo.Draw($"##stain{item.Slot}", widthStains * 1.5f, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
+            var change = _stainCombo.Draw($"##stain{item.Slot}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
             if (index < item.GameStain.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one.
 
@@ -310,7 +392,7 @@ public class EquipmentDrawer
         }
     }
 
-    private void DrawCustomStains(RestraintSlotAdvanced item, float width)
+    private void DrawCustomStains<T>(T item, EquipSlot slot, float width) where T : IRestrictionRef
     {
         // fetch the correct stain from the stain data
         var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (item.CustomStains.Count - 1)) / item.CustomStains.Count;
@@ -320,7 +402,7 @@ public class EquipmentDrawer
             using var id = ImUtf8.PushId(index);
             var found = TryGetStain(stainId, out var stain);
             // draw the stain itemCombo.
-            var change = _stainCombo.Draw($"##customStain{item.EquipSlot}", widthStains * 1.5f, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
+            var change = _stainCombo.Draw($"##customStain{slot}", width, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
             if (index < item.CustomStains.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one.
 
@@ -345,40 +427,4 @@ public class EquipmentDrawer
             }
         }
     }
-
-    /*    private void DrawBonusItem(ref RestraintSet refRestraintSet, BonusItemFlag flag, float width)
-        {
-            using var id = ImRaii.PushId((int)refRestraintSet.BonusDrawData[flag].Slot);
-            var spacing = ImGui.GetStyle().ItemInnerSpacing with { Y = ImGui.GetStyle().ItemSpacing.Y };
-            using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing);
-
-            bool clear = ImGui.IsItemClicked(ImGuiMouseButton.Right);
-            bool open = ImGui.IsItemClicked(ImGuiMouseButton.Left);
-
-            // Assuming _bonusItemCombo is similar to ItemCombos but for bonus items
-            var itemCombo = BonusItemCombos[refRestraintSet.BonusDrawData[flag].Slot.ToIndex()];
-
-            if (open)
-                ImGui.OpenPopup($"##{itemCombo.Label}");
-
-            var change = itemCombo.Draw(refRestraintSet.BonusDrawData[flag].GameItem.Name,
-                refRestraintSet.BonusDrawData[flag].GameItem.Id.BonusItem,
-                width, ComboWidth * 1.3f);
-
-            if (change && !refRestraintSet.BonusDrawData[flag].GameItem.Equals(itemCombo.CurrentSelection))
-            {
-                // log full details.
-                _logger.LogTrace($"Item changed from {itemCombo.CurrentSelection} [{itemCombo.CurrentSelection.PrimaryId}] " +
-                    $"to {refRestraintSet.BonusDrawData[flag].GameItem} [{refRestraintSet.BonusDrawData[flag].GameItem.PrimaryId}]");
-                // change
-                refRestraintSet.BonusDrawData[flag].GameItem = itemCombo.CurrentSelection;
-            }
-
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            {
-                // Assuming a method to handle item reset or clear, similar to your DrawItem method
-                _logger.LogTrace($"Item reset to default for slot {flag}");
-                refRestraintSet.BonusDrawData[flag].GameItem = EquipItem.BonusItemNothing(flag);
-            }
-        }*/
 }

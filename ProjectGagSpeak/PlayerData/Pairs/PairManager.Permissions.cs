@@ -2,6 +2,7 @@ using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Permissions;
 using GagspeakAPI.Extensions;
+using static FFXIVClientStructs.FFXIV.Component.GUI.AtkComponentNumericInput.Delegates;
 
 namespace GagSpeak.PlayerData.Pairs;
 
@@ -91,46 +92,41 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var ChangedPermission = dto.ChangedPermission.Key;
         var ChangedValue = dto.ChangedPermission.Value;
-
         var propertyInfo = typeof(UserGlobalPermissions).GetProperty(ChangedPermission);
-        if (propertyInfo is null)
+        if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
 
         // Get the Hardcore Change Type before updating the property (if it is not valid it wont return anything but none anyways)
-        var hardcoreChangeType = pair.PairGlobals.GetHardcoreChange(ChangedPermission, ChangedValue);
+        var changeType = pair.PairGlobals.PermChangeType(ChangedPermission, ChangedValue?.ToString() ?? string.Empty);
 
-        // If the property exists and is found, update its value
-        if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
+        // Special conversions
+        object? convertedValue = propertyInfo.PropertyType switch
         {
-            var ticks = (long)(ulong)ChangedValue;
-            propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, TimeSpan.FromTicks(ticks));
-        }
-        // char recognition. (these are converted to byte for Dto's instead of char)
-        else if (ChangedValue.GetType() == typeof(byte) && propertyInfo.PropertyType == typeof(char))
-        {
-            propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, Convert.ToChar(ChangedValue));
-        }
-        else if (propertyInfo.CanWrite)
-        {
-            // convert the value to the appropriate type before setting.
-            var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
-            propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, value);
-            Logger.LogDebug($"Updated global permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-        }
-        else
-        {
-            Logger.LogError($"Property '{ChangedPermission}' not found or cannot be updated.");
-        }
+            Type t when t.IsEnum =>
+                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
+                    ? Enum.ToObject(t, ChangedValue)
+                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
+            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
+            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
+            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
+        };
+
+        if (convertedValue is null)
+            return;
+
+        propertyInfo.SetValue(pair.UserPair.OtherGlobalPerms, convertedValue);
+        Logger.LogDebug($"Updated other pair global permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
 
         RecreateLazy(false);
 
         // Handle hardcore changes here.
-        if (hardcoreChangeType is InteractionType.None) return;
+        if (changeType is InteractionType.None || changeType is InteractionType.ForcedPermChange)
+            return;
 
         // log the new state, the hardcore change, and the new value.
-        var newState = string.IsNullOrEmpty((string)ChangedValue) ? NewState.Disabled : NewState.Enabled;
-        Logger.LogInformation(hardcoreChangeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, hardcoreChangeType, newState, dto.Enactor.UID, pair.UserData.UID);
+        var newState = string.IsNullOrEmpty(ChangedValue?.ToString()) ? NewState.Disabled : NewState.Enabled;
+        Logger.LogDebug(changeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
     /// <summary>
@@ -142,38 +138,34 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var ChangedPermission = dto.ChangedPermission.Key;
         var ChangedValue = dto.ChangedPermission.Value;
+        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
 
         // has the person just paused us.
         if (ChangedPermission == "IsPaused")
             if (pair.UserPair.OtherPairPerms.IsPaused != (bool)ChangedValue)
                 Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
-        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
-        if (propertyInfo != null)
+        if (propertyInfo is null || !propertyInfo.CanWrite)
+            return;
+
+        // conversions
+        object? convertedValue = propertyInfo.PropertyType switch
         {
-            // If the property exists and is found, update its value
-            if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
-            {
-                var ticks = (long)(ulong)ChangedValue;
-                propertyInfo.SetValue(pair.UserPair.OtherPairPerms, TimeSpan.FromTicks(ticks));
-            }
-            // char recognition. (these are converted to byte for Dto's instead of char)
-            else if (ChangedValue.GetType() == typeof(byte) && propertyInfo.PropertyType == typeof(char))
-            {
-                propertyInfo.SetValue(pair.UserPair.OtherPairPerms, Convert.ToChar(ChangedValue));
-            }
-            else if (propertyInfo.CanWrite)
-            {
-                // convert the value to the appropriate type before setting.
-                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
-                propertyInfo.SetValue(pair.UserPair.OtherPairPerms, value);
-                Logger.LogDebug($"Updated other pair permission permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-            }
-            else
-            {
-                Logger.LogError($"Property '{ChangedPermission}' not found or cannot be updated.");
-            }
-        }
+            Type t when t.IsEnum =>
+                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
+                    ? Enum.ToObject(t, ChangedValue)
+                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
+            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
+            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
+            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
+        };
+
+        if (convertedValue is null)
+            return;
+        
+        propertyInfo.SetValue(pair.UserPair.OtherPairPerms, convertedValue);
+        Logger.LogDebug($"Updated other pair permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
+        
         RecreateLazy(false);
 
         // push notify after recreating lazy.
@@ -191,33 +183,28 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var ChangedPermission = dto.ChangedAccessPermission.Key;
         var ChangedValue = dto.ChangedAccessPermission.Value;
-
         var propertyInfo = typeof(UserEditAccessPermissions).GetProperty(ChangedPermission);
-        if (propertyInfo != null)
+
+        if (propertyInfo is null || !propertyInfo.CanWrite)
+            return;
+
+        object? convertedValue = propertyInfo.PropertyType switch
         {
-            // If the property exists and is found, update its value
-            if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
-            {
-                var ticks = (long)(ulong)ChangedValue;
-                propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, TimeSpan.FromTicks(ticks));
-            }
-            // char recognition. (these are converted to byte for Dto's instead of char)
-            else if (ChangedValue.GetType() == typeof(byte) && propertyInfo.PropertyType == typeof(char))
-            {
-                propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, Convert.ToChar(ChangedValue));
-            }
-            else if (propertyInfo.CanWrite)
-            {
-                // convert the value to the appropriate type before setting.
-                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
-                propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, value);
-                Logger.LogDebug($"Updated other pair access perm '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-            }
-            else
-            {
-                Logger.LogError($"Property '{ChangedPermission}' not found or cannot be updated.");
-            }
-        }
+            Type t when t.IsEnum =>
+                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
+                    ? Enum.ToObject(t, ChangedValue)
+                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
+            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
+            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
+            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
+        };
+
+        if (convertedValue is null)
+            return;
+
+        propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, convertedValue);
+        Logger.LogDebug($"Updated other pair access permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
+
         RecreateLazy(false);
     }
 
@@ -231,6 +218,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var ChangedPermission = dto.ChangedPermission.Key;
         var ChangedValue = dto.ChangedPermission.Value;
+        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
 
         if (ChangedPermission is "IsPaused" && (pair.UserPair.OwnPairPerms.IsPaused != (bool)ChangedValue))
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
@@ -238,33 +226,25 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         var prevPerms = pair.OwnPerms.PuppetPerms;
         var puppetChanged = ChangedPermission == nameof(UserPairPermissions.PuppetPerms);
 
-        var propertyInfo = typeof(UserPairPermissions).GetProperty(ChangedPermission);
-        if (propertyInfo is null)
+        if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
 
-        // If the property exists and is found, update its value
-        if (ChangedValue is UInt64 && propertyInfo.PropertyType == typeof(TimeSpan))
+        object? convertedValue = propertyInfo.PropertyType switch
         {
-            var ticks = (long)(ulong)ChangedValue;
-            propertyInfo.SetValue(pair.UserPair.OwnPairPerms, TimeSpan.FromTicks(ticks));
-        }
-        // char recognition. (these are converted to byte for Dto's instead of char)
-        else if (ChangedValue.GetType() == typeof(byte) && propertyInfo.PropertyType == typeof(char))
-        {
-            propertyInfo.SetValue(pair.UserPair.OwnPairPerms, Convert.ToChar(ChangedValue));
-        }
-        else if (propertyInfo.CanWrite)
-        {
-            // convert the value to the appropriate type before setting.
-            var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
-            propertyInfo.SetValue(pair.UserPair.OwnPairPerms, value);
-            Logger.LogDebug($"Updated self pair permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-        }
-        else
-        {
-            Logger.LogError($"Property '{ChangedPermission}' not found or cannot be updated.");
+            Type t when t.IsEnum =>
+                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
+                    ? Enum.ToObject(t, ChangedValue)
+                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
+            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
+            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
+            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
+        };
+
+        if (convertedValue is null)
             return;
-        }
+
+        propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, convertedValue);
+        Logger.LogDebug($"Updated self pair permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
 
         var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);
         if (newEnabledPuppetPerms is not PuppetPerms.None)
@@ -302,6 +282,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
                 Logger.LogError($"Property '{ChangedPermission}' not found or cannot be updated.");
             }
         }
+
         RecreateLazy(false);
     }
 }

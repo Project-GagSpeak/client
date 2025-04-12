@@ -101,11 +101,11 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         if (ActiveEditorItem is null)
             return;
 
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
         {
-            item = ActiveEditorItem;
+            Storage[idxMatch] = ActiveEditorItem;
             ActiveEditorItem = null;
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Modified, item, null));
+            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
             _saver.Save(this);
         }
     }

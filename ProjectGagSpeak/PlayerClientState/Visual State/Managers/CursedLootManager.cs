@@ -126,11 +126,11 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         if (ActiveEditorItem is null)
             return;
         // Update the active restriction with the new data, update the cache, and clear the edited restriction.
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
         {
-            item = ActiveEditorItem;
+            Storage[idxMatch] = ActiveEditorItem;
             ActiveEditorItem = null;
-            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, item, null));
+            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
             _saver.Save(this);
         }
     }
@@ -172,7 +172,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     // Scan by id so we dont spam deactivation.
     public void DeactivateCursedItem(Guid lootId)
     {
-        if(Storage.ByIdentifier(lootId) is not { } item)
+        if(Storage.TryGetLoot(lootId, out CursedItem item))
             return;
 
         item.AppliedTime = DateTimeOffset.MinValue;
@@ -333,12 +333,12 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             if (jsonObject["RestrictionRef"] is JValue restrictionValue)
             {
                 var restrictionString = restrictionValue.Value<string>();
-                if (Guid.TryParse(restrictionString, out var restrictionGuid))
+                if (Guid.TryParse(restrictionString, out var refGuid))
                 {
-                    if(_restrictions.Storage.ByIdentifier(restrictionGuid) is not { } restrictionItem)
+                    if(!_restrictions.Storage.TryFindIndexById(refGuid, out int matchIdx))
                         throw new Exception("Failed to retrieve restriction. Identifier not valid in storage!");
                     // If valid, assign the IRestriction as a ref to the restriction item.
-                    restrictionRef = restrictionItem;
+                    var restrictionItem = _restrictions.Storage[matchIdx];
                 }
                 else if (Enum.TryParse<GagType>(restrictionString, out var gagType))
                 {

@@ -59,7 +59,7 @@ public partial class GagRestrictionsPanel
         ImGui.SetWindowFontScale(1.25f);
         var styler = ImGui.GetStyle();
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
-        var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;
+        var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 4;
 
         // Shift this grouped set down so it is centered on Y axis.
         ImGui.Dummy(new Vector2(region.X, ((region.Y - ImGui.GetFrameHeight()) / 2) - styler.ItemSpacing.Y));

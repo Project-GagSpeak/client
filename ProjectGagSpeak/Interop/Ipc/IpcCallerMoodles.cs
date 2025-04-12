@@ -1,12 +1,9 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
-using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Enums;
-using GagSpeak.PlayerData.Services;
 using Dalamud.Utility;
+using GagSpeak.Services.Mediator;
+using GagSpeak.UpdateMonitoring;
 
 namespace GagSpeak.Interop.Ipc;
 
@@ -47,7 +44,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly ClientMonitor _clientMonitor;
-    private readonly OnFrameworkService _frameworkUtil;
+    private readonly OnFrameworkService _frameworkUtils;
 
     public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, IDalamudPluginInterface pi,
         GagspeakMediator mediator, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils)
@@ -55,7 +52,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         _logger = logger;
         _mediator = mediator;
         _clientMonitor = clientMonitor;
-        _frameworkUtil = frameworkUtils;
+        _frameworkUtils = frameworkUtils;
 
         _moodlesApiVersion = pi.GetIpcSubscriber<int>("Moodles.Version");
 
@@ -83,7 +80,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         OnStatusSettingsModified = pi.GetIpcSubscriber<Guid, object>("Moodles.StatusModified");
         OnPresetModified = pi.GetIpcSubscriber<Guid, object>("Moodles.PresetModified");
 
-        CheckAPI(); // check to see if we have a valid API
+        CheckAPI();
     }
 
     public static bool APIAvailable { get; private set; } = false;
@@ -104,140 +101,171 @@ public sealed class IpcCallerMoodles : IIpcCaller
         }
     }
 
-    /// <summary> This method disposes of the IPC caller moodles </summary>
-    public void Dispose() { }
+    public void Dispose()
+    {
+        // Disposing my pain, sweat, tears, and blood that this had to become async to work.
+        // If this is being read down the line, I hope support is added back.
+    }
 
     /// <summary> This method gets the moodles info for a provided GUID from the client. </summary>
-    public MoodlesStatusInfo GetStatusDetails(Guid guid)
+    public async Task<MoodlesStatusInfo> GetStatusDetails(Guid guid)
     {
-        if (!APIAvailable) return new MoodlesStatusInfo();
-        try { return GetMoodleInfo.InvokeFunc(guid); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e); return new MoodlesStatusInfo(); }
+        return await ExecuteIpcOnThread(() => GetMoodleInfo.InvokeFunc(guid));
     }
 
     /// <summary> This method gets the list of all our clients Moodles Info </summary>
-    public List<MoodlesStatusInfo> GetStatusListDetails()
+    public async Task<List<MoodlesStatusInfo>> GetStatusListDetails()
     {
-        if (!APIAvailable) return new List<MoodlesStatusInfo>();
-        try { return GetMoodlesInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Info: " + e); return new List<MoodlesStatusInfo>(); }
+        return await ExecuteIpcOnThread(() => GetMoodlesInfo.InvokeFunc()) ?? new List<MoodlesStatusInfo>();
     }
 
     /// <summary> This method gets the preset info for a provided GUID from the client. </summary>
-    public MoodlePresetInfo GetPresetDetails(Guid guid)
+    public async Task<MoodlePresetInfo> GetPresetDetails(Guid guid)
     {
-        if (!APIAvailable) return new MoodlePresetInfo();
-        try { return GetPresetInfo.InvokeFunc(guid); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e); return new MoodlePresetInfo(); }
+        return await ExecuteIpcOnThread(() => GetPresetInfo.InvokeFunc(guid));
     }
 
     /// <summary> This method gets the list of all our clients Presets Info </summary>
-    public List<MoodlePresetInfo> GetPresetListDetails()
+    public async Task<List<MoodlePresetInfo>> GetPresetListDetails()
     {
-        if (!APIAvailable) return new List<MoodlePresetInfo>();
-        try { return GetPresetsInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Preset Info: " + e); return new List<MoodlePresetInfo>(); }
+        return await ExecuteIpcOnThread(() => GetPresetsInfo.InvokeFunc()) ?? new List<MoodlePresetInfo>();
     }
 
     /// <summary> This method gets the status information of our client player </summary>
-    public List<MoodlesStatusInfo> GetStatusManagerDetails()
+    public async Task<List<MoodlesStatusInfo>> GetStatusManagerDetails()
     {
-        if (!APIAvailable) return new List<MoodlesStatusInfo>();
-        try { return GetStatusManagerInfo.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return new List<MoodlesStatusInfo>(); }
+        return await ExecuteIpcOnThread(() => GetStatusManagerInfo.InvokeFunc()) ?? new List<MoodlesStatusInfo>();
     }
 
     /// <summary> Obtain the status information of a visible player </summary>
-    public List<MoodlesStatusInfo> GetStatusManagerDetails(string playerNameWithWorld)
+    public async Task<List<MoodlesStatusInfo>> GetStatusManagerDetails(string playerNameWithWorld)
     {
-        if (!APIAvailable) return new List<MoodlesStatusInfo>();
-        try { return GetStatusManagerInfoByName.InvokeFunc(playerNameWithWorld); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return new List<MoodlesStatusInfo>(); }
+        return await ExecuteIpcOnThread(() => GetStatusManagerInfoByName.InvokeFunc(playerNameWithWorld)) ?? new List<MoodlesStatusInfo>();
     }
 
-    /// <summary> To use when we want to obtain the status manager for our client player, without needing to calculate our address. </summary>
-    public string GetStatusManagerString()
+    /// <summary> Gets the ClientPlayer's StatusManager string. </summary>
+    public async Task<string> GetStatusManagerString()
     {
-        if(!APIAvailable) return string.Empty;
-        try { return GetStatusManager.InvokeFunc(); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return string.Empty; }
+        return await ExecuteIpcOnThread(() => GetStatusManager.InvokeFunc()) ?? string.Empty;
     }
 
 
-    /// <summary> This method gets the status of the moodles for a particular address</summary>
-    public string GetStatusManagerString(string playerNameWithWorld)
+    /// <summary> Gets the status of the moodles for a particular PlayerCharacter </summary>
+    public async Task<string> GetStatusManagerString(string playerNameWithWorld)
     {
-        if (!APIAvailable) return string.Empty;
-        try { return GetStatusManagerByName.InvokeFunc(playerNameWithWorld); }
-        catch (Exception e) { _logger.LogWarning("Could not Get Moodles Status: " + e); return string.Empty; }
+        return await ExecuteIpcOnThread(() => GetStatusManagerByName.InvokeFunc(playerNameWithWorld)) ?? string.Empty;
     }
-
-    public bool ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
-    {
-        if (!APIAvailable) return false;
-        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
-        if (clientName.IsNullOrWhitespace()) return false;
-        // run the tasks in async with each other
-        Parallel.ForEach(guidsToAdd, guid => ApplyOwnStatusByGUID(guid, clientName));
-        _logger.LogTrace("Applied Moodles: " + string.Join(", ", guidsToAdd), LoggerType.IpcMoodles);
-        return true;
-    }
-
 
     public void ApplyOwnStatusByGUID(Guid guid, string clientName)
     {
-        if (!APIAvailable) return;
-        ExecuteSafely(() => _applyStatusByGuid.InvokeAction(guid, clientName));
+        ExecuteIpcOnThread(() => _applyPresetByGuid.InvokeAction(guid, clientName));
+    }
+
+    public void ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
+    {
+        ExecuteIpcOnThread(() =>
+        {
+            var name = _clientMonitor.ClientPlayer.NameWithWorld();
+            if (!name.IsNullOrEmpty())
+            {
+                Parallel.ForEach(guidsToAdd, guid => ApplyOwnStatusByGUID(guid, name));
+                _logger.LogTrace("Applied Moodles: " + string.Join(", ", guidsToAdd), LoggerType.IpcMoodles);
+            }
+        });
     }
 
     public void ApplyOwnPresetByGUID(Guid guid)
     {
-        if (!APIAvailable) return;
-        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
-        if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => _applyPresetByGuid.InvokeAction(guid, clientName));
+        ExecuteIpcOnThread(() =>
+        {
+            var name = _clientMonitor.ClientPlayer.NameWithWorld();
+            if (!name.IsNullOrEmpty())
+                _applyPresetByGuid.InvokeAction(guid, name);
+        });
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
     public void ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, List<MoodlesStatusInfo> statuses)
     {
-        if (!APIAvailable) return;
-        _logger.LogInformation("Applying Moodles Status: " + recipientNameWithWorld + " from " + applierNameWithWorld, LoggerType.IpcMoodles);
-        ExecuteSafely(() => _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, statuses));
+        ExecuteIpcOnThread(() =>
+        {
+            _logger.LogInformation("Applying Moodles Status: " + recipientNameWithWorld + " from " + applierNameWithWorld, LoggerType.IpcMoodles);
+            _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, statuses);
+        });
     }
 
     /// <summary> This method removes the moodles from the client </summary>
     public void RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
     {
-        if (!APIAvailable) return;
-        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
-        _logger.LogTrace("Removing Moodles: " + string.Join(", ", guidsToRemove), LoggerType.ClientPlayerData);
-        if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), clientName));
+        ExecuteIpcOnThread(() =>
+        {
+            _logger.LogTrace("Removing Moodles: " + string.Join(", ", guidsToRemove), LoggerType.IpcMoodles);
+            var name = _clientMonitor.ClientPlayer.NameWithWorld();
+            if (!name.IsNullOrEmpty())
+                _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), name);
+        });
     }
 
     /// <summary> This method sets the status of the moodles for a game object specified by the pointer </summary>
     public void SetStatus(string playerNameWithWorld, string statusBase64)
     {
-        if (!APIAvailable) return;
-        _logger.LogInformation("Setting Moodles Status: " + playerNameWithWorld + " to " + statusBase64, LoggerType.IpcMoodles);
-        ExecuteSafely(() => _setStatusManager.InvokeAction(playerNameWithWorld, statusBase64));
+        ExecuteIpcOnThread(() =>
+        {
+            _logger.LogDebug("Setting Moodles Status: " + playerNameWithWorld + " to " + statusBase64, LoggerType.IpcMoodles);
+            _setStatusManager.InvokeAction(playerNameWithWorld, statusBase64);
+        });
     }
 
     public void ClearStatus()
     {
-        if(!APIAvailable) return;
-        string clientName = _clientMonitor.ClientPlayer.NameWithWorld();
-        if (!clientName.IsNullOrEmpty()) ExecuteSafely(() => ClearStatus(clientName));
+        ExecuteIpcOnThread(() =>
+        {
+            var name = _clientMonitor.ClientPlayer.NameWithWorld();
+            if (!name.IsNullOrEmpty())
+                ClearStatus(name);
+        });
     }
 
     /// <summary> Reverts the status of the moodles for a GameObject specified by the pointer</summary>
     public void ClearStatus(string playerNameWithWorld)
     {
-        if (!APIAvailable) return;
-        ExecuteSafely(() => _clearStatusesFromManager.InvokeAction(playerNameWithWorld));
+        ExecuteIpcOnThread(() => _clearStatusesFromManager.InvokeAction(playerNameWithWorld));
     }
 
-    private void ExecuteSafely(Action act)
+    /// <summary> Executes a Moodles Ipc Action on the framework thread. </summary>
+    /// <remarks> This action will not execute if APIAvailable is false. </remarks>
+    private async void ExecuteIpcOnThread(Action act)
     {
-        try { act(); } catch (Exception ex) { _logger.LogCritical(ex, "Error on executing safely"); }
+        if (!APIAvailable)
+            return;
+
+        try
+        {
+            await _frameworkUtils.RunOnFrameworkThread(() => act()).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Moodles IPC Action Operation had an Error:\n");
+        }
     }
+
+    /// <summary> Executes a Moodles Ipc Func on the framework thread and returns a result. </summary>
+    /// <returns> Returns default(T) on failure. </returns>
+    /// <remarks> not all types may have valid default(T)'s. If you find this to be the case, do a result check. </remarks>
+    private async Task<T?> ExecuteIpcOnThread<T>(Func<T> func)
+    {
+        if (!APIAvailable)
+            return default;
+
+        try
+        {
+            return await _frameworkUtils.RunOnFrameworkThread(() => func()).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Moodles IPC Func Operation had an Error:\n");
+            return default;
+        }
+    }
+
 }

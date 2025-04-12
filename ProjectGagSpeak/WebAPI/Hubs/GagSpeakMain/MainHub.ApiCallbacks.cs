@@ -226,52 +226,61 @@ public partial class MainHub
         }
     }
 
-    public Task Client_UserUpdatePairPermsGlobal(UserGlobalPermChangeDto dto)
+    public Task Client_UserUpdateGlobalPerm(UserGlobalPermChangeDto dto)
     {
+        // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
         {
-            if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
+            // If we were the person who performed this, update the perm. If a pair did it, grab the pair.
+            if(dto.Enactor.UID == UID)
             {
-                Logger.LogDebug("OWN Client_UserUpdatePairPermsGlobal: " + dto, LoggerType.Callbacks);
-                ExecuteSafely(() => _globals.ApplyGlobalPermChange(dto, pair));
+                Logger.LogDebug("OWN Client_UserUpdateGlobalPerm (From Self): " + dto, LoggerType.Callbacks);
+                ExecuteSafely(() => _globals.ChangeGlobalPermission(dto));
+            }
+            else
+            {
+                Logger.LogDebug("OWN Client_UserUpdateGlobalPerm (From Other): " + dto, LoggerType.Callbacks);
+                if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
+                    ExecuteSafely(() => _globals.ChangeGlobalPermission(dto, pair));
             }
             return Task.CompletedTask;
         }
+        // One of our added Kinkster's Global Permissions should be updated.
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdatePairPermsGlobal: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdateGlobalPerm: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairGlobalPermission(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdatePairPerms(UserPairPermChangeDto dto)
+    public Task Client_UserUpdateUniquePerm(UserPairPermChangeDto dto)
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Client_UserUpdatePairPerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdateUniquePerm: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdatePairPerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdateUniquePerm: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairPermission(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdatePairPermAccess(UserPairAccessChangeDto dto)
+    public Task Client_UserUpdatePermAccess(UserPairAccessChangeDto dto)
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Client_UserUpdatePairPermAccess: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Client_UserUpdatePermAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdatePairPermAccess: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Client_UserUpdatePermAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairAccessPermission(dto));
             return Task.CompletedTask;
         }
@@ -710,22 +719,22 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Client_UserUpdateAllUniquePerms), act);
     }
 
-    public void OnUserUpdatePairPermsGlobal(Action<UserGlobalPermChangeDto> act)
+    public void OnUserUpdateGlobalPerm(Action<UserGlobalPermChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPermsGlobal), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdateGlobalPerm), act);
     }
 
-    public void OnUserUpdatePairPerms(Action<UserPairPermChangeDto> act)
+    public void OnUserUpdateUniquePerm(Action<UserPairPermChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPerms), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdateUniquePerm), act);
     }
 
-    public void OnUserUpdatePairPermAccess(Action<UserPairAccessChangeDto> act)
+    public void OnUserUpdatePermAccess(Action<UserPairAccessChangeDto> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdatePairPermAccess), act);
+        GagSpeakHubMain!.On(nameof(Client_UserUpdatePermAccess), act);
     }
 
     public void OnUserReceiveDataComposite(Action<OnlineUserCompositeDataDto> act)

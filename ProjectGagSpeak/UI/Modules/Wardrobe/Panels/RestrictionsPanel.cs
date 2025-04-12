@@ -16,8 +16,6 @@ using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Drawing;
-using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentHousingPlant;
 
 namespace GagSpeak.UI.Wardrobe;
 public partial class RestrictionsPanel
@@ -29,7 +27,7 @@ public partial class RestrictionsPanel
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly TraitsDrawer _sharedDrawer;
+    private readonly TraitsDrawer _traitsDrawer;
     private readonly RestrictionManager _manager;
     private readonly PairManager _pairs;
     private readonly CosmeticService _textures;
@@ -42,7 +40,7 @@ public partial class RestrictionsPanel
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        TraitsDrawer sharedDrawer,
+        TraitsDrawer traitsDrawer,
         RestrictionManager manager,
         PairManager pairs,
         CosmeticService textures,
@@ -50,7 +48,7 @@ public partial class RestrictionsPanel
     {
         _logger = logger;
         _selector = selector;
-        _sharedDrawer = sharedDrawer;
+        _traitsDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
@@ -64,15 +62,15 @@ public partial class RestrictionsPanel
     public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
     {
         ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestraintsTopLeft", drawRegions.Topleft.Size))
+        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.Topleft.Size))
             _selector.DrawFilterRow(drawRegions.Topleft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
-        using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+        using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
-        using (ImRaii.Child("RestraintsTopRightTR", drawRegions.TopRight.Size))
+        using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
         // For drawing the grey "selected Item" line.
@@ -85,7 +83,7 @@ public partial class RestrictionsPanel
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
 
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("RestraintsBR", drawRegions.BotRight.Size))
+        using (ImRaii.Child("RestrictionsBR", drawRegions.BotRight.Size))
         {
             DrawSelectedItemInfo(selectedSize, curveSize);
             DrawActiveItemInfo();
@@ -95,19 +93,19 @@ public partial class RestrictionsPanel
     public void DrawEditorContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize)
     {
         ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestraintsTopLeft", drawRegions.Topleft.Size))
+        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.Topleft.Size))
             DrawEditorHeaderLeft(drawRegions.Topleft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
-        using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+        using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             DrawEditorLeft(drawRegions.BotLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
-        using (ImRaii.Child("RestraintsTopRightTR", drawRegions.TopRight.Size))
+        using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
             DrawEditorHeaderRight(drawRegions.TopRight.Size);
 
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("RestraintsBR", drawRegions.BotRight.Size))
+        using (ImRaii.Child("RestrictionsBottomRight", drawRegions.BotRight.Size))
             DrawEditorRight(drawRegions.BotRight.SizeX);
     }
 
@@ -192,70 +190,10 @@ public partial class RestrictionsPanel
             : "This Restriction Item has no associated Mod Preset.");
 
         // go right aligned for the trait previews.
-        DrawTraitPreview();
+        _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits, _selector.Selected!.Stimulation);
         // next row, draw the moodle preview along the lower row, with the height of the frame.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);
         DrawMoodlePreview();
-    }
-
-    private void DrawTraitPreview()
-    {
-        if (_selector.Selected!.Traits == Traits.None)
-            return;
-
-        // Draw them out.
-        var iconSize = new Vector2(ImGui.GetFrameHeight());
-        var spacing = ImGui.GetStyle().ItemSpacing.X / 2;
-        var endX = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
-        var currentX = endX;
-
-        if(_selector.Selected!.Traits.HasAny(Traits.LegsRestrained))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Restrained].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.ArmsRestrained))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.Gagged))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Gagged].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.Blindfolded))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.ArmsRestrained))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.Immobile))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Immobilize].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Traits.HasAny(Traits.Weighty))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Weighty].ImGuiHandle, iconSize);
-        }
-        else if (_selector.Selected!.Stimulation.HasAny(Stimulation.Any))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Vibrator].ImGuiHandle, iconSize);
-        }
     }
 
     private void DrawMoodlePreview()

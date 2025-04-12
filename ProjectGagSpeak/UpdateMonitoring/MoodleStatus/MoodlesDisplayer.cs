@@ -39,6 +39,8 @@ public class MoodlesDisplayer
     }
 
     public static readonly Vector2 DefaultSize = new(24, 32);
+    public static Vector2 FrameFitSize => new(ImGui.GetFrameHeight() * .75f, ImGui.GetFrameHeight());
+
     public static IReadOnlyDictionary<uint, ParsedIconInfo> StatusDict { get; private set; }
 
     /// <summary> Draws the Moodle icon. This only draw a single image so you can use IsItemHovered() outside. </summary>

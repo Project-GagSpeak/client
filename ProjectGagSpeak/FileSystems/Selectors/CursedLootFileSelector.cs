@@ -1,11 +1,11 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
@@ -14,13 +14,8 @@ using GagSpeak.UI;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
-using static GagSpeak.FileSystems.PatternFileSelector;
-using Dalamud.Interface.Utility.Raii;
 using OtterGui.Text;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.Drawers;
 using OtterGuiInternal.Structs;
-using GagSpeak.CkCommons;
 
 namespace GagSpeak.FileSystems;
 

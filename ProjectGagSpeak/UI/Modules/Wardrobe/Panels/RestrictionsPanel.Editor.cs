@@ -23,7 +23,7 @@ public partial class RestrictionsPanel
         if (_manager.ActiveEditorItem is not { } item)
             return;
 
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
         using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
             .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
@@ -32,8 +32,8 @@ public partial class RestrictionsPanel
             _manager.StopEditing();
 
         // Create a child that spans the remaining region.
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(width - CkGui.IconButtonSize(FAI.ArrowLeft).X - ImGui.GetStyle().ItemSpacing.X);
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(width - CkGui.IconButtonSize(FAI.ArrowLeft).X - ImGui.GetStyle().ItemInnerSpacing.X);
         var curLabel = item.Label;
         if(ImGui.InputTextWithHint("##EditorNameField", "Enter Name...", ref curLabel, 48))
             item.Label = curLabel;
@@ -153,7 +153,7 @@ public partial class RestrictionsPanel
         if (item is CollarRestriction collarRestriction)
             DrawCollarInfo(collarRestriction, width);
 
-        _sharedDrawer.DrawHardcoreTraits(item, width);
+        _traitsDrawer.DrawHardcoreTraits(item, width);
 
         _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width);
     }

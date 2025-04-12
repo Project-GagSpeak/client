@@ -434,9 +434,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         OnUserUpdateAllPerms(dto => _ = Client_UserUpdateAllPerms(dto));
         OnUserUpdateAllGlobalPerms(dto => _ = Client_UserUpdateAllGlobalPerms(dto));
         OnUserUpdateAllUniquePerms(dto => _ = Client_UserUpdateAllUniquePerms(dto));
-        OnUserUpdatePairPermsGlobal(dto => _ = Client_UserUpdatePairPermsGlobal(dto));
-        OnUserUpdatePairPerms(dto => _ = Client_UserUpdatePairPerms(dto));
-        OnUserUpdatePairPermAccess(dto => _ = Client_UserUpdatePairPermAccess(dto));
+        OnUserUpdateGlobalPerm(dto => _ = Client_UserUpdateGlobalPerm(dto));
+        OnUserUpdateUniquePerm(dto => _ = Client_UserUpdateUniquePerm(dto));
+        OnUserUpdatePermAccess(dto => _ = Client_UserUpdatePermAccess(dto));
 
         OnUserReceiveDataComposite(dto => _ = Client_UserReceiveDataComposite(dto));
         OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
@@ -583,8 +583,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     {
         // Retrieve the pairs from the server that we have added, and add them to the pair manager.
         var pairs = await UserGetPairedClients().ConfigureAwait(false);
-        foreach (var userPair in pairs)
-            _pairs.AddUserPair(userPair);
+        _pairs.AddUserPair(pairs);
 
         Logger.LogDebug("Initial Pairs Loaded: [" + string.Join(", ", pairs.Select(x => x.User.AliasOrUID)) + "]", LoggerType.ApiCore);
     }
