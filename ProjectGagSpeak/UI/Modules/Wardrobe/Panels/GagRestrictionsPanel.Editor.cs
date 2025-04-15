@@ -152,11 +152,11 @@ public partial class GagRestrictionsPanel
             {
                 var change = _profileCombo.Draw("Customize Profile", gagItem.ProfileGuid, widthInner * .6f, widthInner * .8f);
 
-                if (change && !gagItem.ProfileGuid.Equals(_profileCombo.CurrentSelection.ProfileGuid))
+                if (change && !gagItem.ProfileGuid.Equals(_profileCombo.Current.ProfileGuid))
                 {
-                    _logger.LogTrace($"Profile Guid changed to {_profileCombo.CurrentSelection.ProfileGuid} " +
-                        $"[{_profileCombo.CurrentSelection.ProfileName}] from {gagItem.ProfileGuid}");
-                    gagItem.ProfileGuid = _profileCombo.CurrentSelection.ProfileGuid;
+                    _logger.LogTrace($"Profile Guid changed to {_profileCombo.Current.ProfileGuid} " +
+                        $"[{_profileCombo.Current.ProfileName}] from {gagItem.ProfileGuid}");
+                    gagItem.ProfileGuid = _profileCombo.Current.ProfileGuid;
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))

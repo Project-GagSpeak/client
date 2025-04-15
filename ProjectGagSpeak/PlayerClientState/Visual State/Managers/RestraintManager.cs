@@ -1,38 +1,36 @@
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI.Wardrobe;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
-using Lumina.Excel.Sheets;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.PlayerState.Visual;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GlobalData _clientData;
     private readonly RestrictionManager _restrictions;
+    private readonly ModSettingPresetManager _modPresets;
     private readonly FavoritesManager _favorites;
     private readonly ItemService _items;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, RestrictionManager restrictions, FavoritesManager favorites, 
-        ItemService items, ConfigFileProvider fileNames, HybridSaveService saver) 
-        : base(logger, mediator)
+        GlobalData clientData, RestrictionManager restrictions, ModSettingPresetManager modPresets,
+        FavoritesManager favorites, ItemService items, ConfigFileProvider fileNames,
+        HybridSaveService saver) : base(logger, mediator)
     {
         _clientData = clientData;
         _restrictions = restrictions;
@@ -141,11 +139,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (ActiveEditorItem is null)
             return;
         // Update the active restraint with the new data, update the cache, and clear the edited restraint.
-        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
+        if (Storage.TryGetRestraint(ActiveEditorItem.Identifier, out var item))
         {
-            Storage[idxMatch] = ActiveEditorItem;
+            item.ApplyChanges(ActiveEditorItem);
             ActiveEditorItem = null;
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, item, null));
             _saver.Save(this);
         }
     }
@@ -395,12 +393,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             if (setJson["RestraintSlots"] is not JObject slotJson)
                 throw new Exception("RestraintSlots Dictionary.");
 
-            // Construct the dictioncary item for it.
+            // Construct the dictionary item for it.
             var slotDict = new Dictionary<EquipSlot, IRestraintSlot>();
             foreach (var slot in slotJson)
             {
                 var slotKey = (EquipSlot)Enum.Parse(typeof(EquipSlot), slot.Key);
-                var slotValue = LoadSlot(slot.Value);
+                var slotValue = LoadSlot(slot.Value, slotKey);
                 slotDict.Add(slotKey, slotValue);
             }
 
@@ -424,7 +422,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 HeadgearState = JParser.FromJObject(setJson["HeadgearState"]),
                 VisorState = JParser.FromJObject(setJson["VisorState"]),
                 WeaponState = JParser.FromJObject(setJson["WeaponState"]),
-                RestraintMods = setJson["RestraintMods"]?.ToObject<List<ModAssociation>>() ?? throw new Exception("Invalid Mods"),
+                RestraintMods = setJson["RestraintMods"]?.ToObject<List<ModSettingsPreset>>() ?? throw new Exception("Invalid Mod Attachments"),
                 RestraintMoodles = setJson["RestraintMoodles"]?.ToObject<List<Moodle>>() ?? throw new Exception("Invalid Moodles"),
             };
             return true;
@@ -442,7 +440,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     /// <returns> The loaded slot. </returns>
     /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
     /// <exception cref="InvalidOperationException"> If the JSON Token is missing required information. </exception>
-    private IRestraintSlot LoadSlot(JToken? slotToken)
+    private IRestraintSlot LoadSlot(JToken? slotToken, EquipSlot equipSlot)
     {
         if (slotToken is not JObject json)
             throw new Exception("Invalid JSON Token for Slot.");
@@ -458,7 +456,16 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 slot = LoadBasicSlot(json);
                 break;
             case RestraintSlotType.Advanced:
-                slot = LoadAdvancedSlot(json);
+                try
+                {
+                    slot = LoadAdvancedSlot(json);
+                }
+                catch (Exception e)
+                {
+                    // Create fallback for outdated advanced slots.
+                    Logger.LogError(e, "Failed to load Advanced Slot. Reference was invalid, resetting to basic slot.");
+                    slot = new RestraintSlotBasic(equipSlot);
+                }
                 break;
             default:
                 throw new InvalidOperationException($"Unknown RestraintSlotType: {type}");
@@ -479,7 +486,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
         return new RestraintSlotBasic()
         {
-            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value ? (RestraintFlags)value : RestraintFlags.Basic,
+            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.IsOverlay,
             Glamour = _items.ParseGlamourSlot(slotJson["Glamour"])
         };
     }
@@ -495,15 +502,16 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             throw new Exception("Invalid JSON Token for Slot.");
 
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (!_restrictions.Storage.TryFindIndexById(refId, out int matchIdx))
+        if (!_restrictions.Storage.TryGetRestriction(refId, out var match))
             throw new Exception("Invalid Reference ID for Advanced Slot.");
+
+        var customStains = slotJson["CustomStains"] as JObject;
 
         return new RestraintSlotAdvanced()
         {
-            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int value 
-                ? (RestraintFlags)value 
-                : RestraintFlags.Glamour | RestraintFlags.Mod | RestraintFlags.Moodle| RestraintFlags.Trait | RestraintFlags.IsOverlay,
-            Ref = _restrictions.Storage[matchIdx],
+            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced,
+            Ref = match,
+            CustomStains = JParser.ParseCompactStainIds(slotJson["CustomStains"]),
         };
     }
 
@@ -513,10 +521,48 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             throw new Exception("Invalid JSON Token for Slot.");
 
         var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
-        if (!Enum.TryParse(typeStr, out RestraintSlotType type))
+        if (!Enum.TryParse(typeStr, out RestraintLayerType type))
             throw new InvalidOperationException($"Unknown RestraintLayerType: {typeStr}");
 
-        return LoadRestraintLayer(json);
+        return type switch
+        {
+            RestraintLayerType.Restriction => LoadBindLayer(json),
+            RestraintLayerType.ModPreset => LoadModPresetLayer(json),
+            _ => throw new InvalidOperationException($"Unknown RestraintLayerType: {type}"),
+        };
+    }
+
+    private RestrictionLayer LoadBindLayer(JToken? layerToken)
+    {
+        if (layerToken is not JObject layerJson)
+            throw new Exception("Invalid JSON Token for Slot.");
+
+        var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
+        if (!_restrictions.Storage.TryGetRestriction(refId, out var match))
+            throw new Exception("Invalid Reference ID for Advanced Slot.");
+
+        return new RestrictionLayer()
+        {
+            ID = Guid.TryParse(layerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID"),
+            IsActive = layerJson["IsActive"]?.Value<bool>() ?? false,
+            ApplyFlags = layerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced,
+            CustomStains = JParser.ParseCompactStainIds(layerJson["CustomStains"]),
+        };
+    }
+
+    private ModPresetLayer LoadModPresetLayer(JToken? layerToken)
+    {
+        if (layerToken is not JObject json)
+            throw new Exception("Invalid JSON Token for Slot.");
+
+        // Load the ModRef sub-object using ModSettingsPreset's loader
+        var modItem = ModSettingsPreset.FromJToken(json["Mod"], _modPresets);
+        return new ModPresetLayer()
+        {
+            ID = Guid.TryParse(json["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!"),
+            IsActive = json["IsActive"]?.Value<bool>() ?? false,
+            Mod = modItem,
+        };
     }
 
     #endregion HybridSaver

@@ -65,12 +65,12 @@ public class MoodleDrawer
                 if (item.Moodle is MoodlePreset preset)
                 {
                     var change = _presetCombo.Draw("GagMoodlePreset", preset.Id, ImGui.GetContentRegionAvail().X);
-                    if (change && !preset.Id.Equals(_presetCombo.CurrentSelection.GUID))
+                    if (change && !preset.Id.Equals(_presetCombo.Current.GUID))
                     {
-                        _logger.LogTrace($"Item changed to {_presetCombo.CurrentSelection.GUID} " +
-                            $"[{_presetCombo.CurrentSelection.Title}] from {preset.Id}");
-                        preset.Id = _presetCombo.CurrentSelection.GUID;
-                        preset.StatusIds = _presetCombo.CurrentSelection.Statuses;
+                        _logger.LogTrace($"Item changed to {_presetCombo.Current.GUID} " +
+                            $"[{_presetCombo.Current.Title}] from {preset.Id}");
+                        preset.Id = _presetCombo.Current.GUID;
+                        preset.StatusIds = _presetCombo.Current.Statuses;
                     }
 
                     if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -83,11 +83,11 @@ public class MoodleDrawer
                 else if (item.Moodle is Moodle status)
                 {
                     var change = _statusCombo.Draw("GagMoodleStatus", status.Id, ImGui.GetContentRegionAvail().X);
-                    if (change && !status.Id.Equals(_statusCombo.CurrentSelection.GUID))
+                    if (change && !status.Id.Equals(_statusCombo.Current.GUID))
                     {
-                        _logger.LogTrace($"Item changed to {_statusCombo.CurrentSelection.GUID} " +
-                            $"[{_statusCombo.CurrentSelection.Title}] from {status.Id}");
-                        status.Id = _statusCombo.CurrentSelection.GUID;
+                        _logger.LogTrace($"Item changed to {_statusCombo.Current.GUID} " +
+                            $"[{_statusCombo.Current.Title}] from {status.Id}");
+                        status.Id = _statusCombo.Current.GUID;
                     }
                     if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     {

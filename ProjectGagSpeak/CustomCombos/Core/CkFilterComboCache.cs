@@ -8,7 +8,7 @@ namespace GagSpeak.CustomCombos;
 public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
 {
     /// <summary> The selected item in non-index format. </summary>
-    public T? CurrentSelection { get; protected set; }
+    public T? Current { get; protected set; }
 
     /// <summary> A Cached List of the generated items. </summary>
     /// <remarks> Items are regenerated every time a cleanup is called. </remarks>
@@ -22,14 +22,14 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     protected CkFilterComboCache(IEnumerable<T> items, ILogger log)
         : base(new TemporaryList<T>(items), log)
     {
-        CurrentSelection = default;
+        Current = default;
         _items = (ICachingList<T>)Items;
     }
 
     protected CkFilterComboCache(Func<IReadOnlyList<T>> generator, ILogger log)
         : base(new LazyList<T>(generator), log)
     {
-        CurrentSelection = default;
+        Current = default;
         _items = (ICachingList<T>)Items;
     }
 
@@ -46,13 +46,13 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
             UpdateSelection(Items[NewSelection.Value]);
     }
 
-    /// <summary> Invokes SelectionChanged & updates CurrentSelection. </summary>
+    /// <summary> Invokes SelectionChanged & updates Current. </summary>
     /// <remarks> Called if a change occured in the DrawList override. </remarks>
     protected virtual void UpdateSelection(T? newSelection)
     {
-        if (!ReferenceEquals(CurrentSelection, newSelection))
-            SelectionChanged?.Invoke(CurrentSelection, newSelection);
-        CurrentSelection = newSelection;
+        if (!ReferenceEquals(Current, newSelection))
+            SelectionChanged?.Invoke(Current, newSelection);
+        Current = newSelection;
     }
 
     /// <summary> The main Draw function that should be used for any parenting client side FilterCombo's of all types. </summary>

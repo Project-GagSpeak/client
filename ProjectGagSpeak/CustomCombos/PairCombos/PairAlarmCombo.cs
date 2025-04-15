@@ -28,7 +28,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
         // update current selection to the last registered LightAlarm from that pair on construction.
         if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
-            CurrentSelection = _pairRef.LastLightStorage.Alarms.FirstOrDefault();
+            Current = _pairRef.LastLightStorage.Alarms.FirstOrDefault();
     }
 
     protected override bool DisableCondition() => _pairRef.PairPerms.ToggleAlarms is false;
@@ -60,18 +60,18 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
     protected override void OnButtonPress()
     {
-        if (_pairRef.LastToyboxData is null || CurrentSelection is null) 
+        if (_pairRef.LastToyboxData is null || Current is null) 
             return;
 
         // Construct the dto, and then send it off.
         var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, DataUpdateType.AlarmToggled)
         {
-            AffectedIdentifier = CurrentSelection.Id,
+            AffectedIdentifier = Current.Id,
         };
         // Send out the command.
         _ = _mainHub.UserPushPairDataToybox(dto);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Toggling Alarm " + CurrentSelection.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s AlarmList", LoggerType.Permissions);
+        Log.LogDebug("Toggling Alarm " + Current.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s AlarmList", LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(LightAlarm item)

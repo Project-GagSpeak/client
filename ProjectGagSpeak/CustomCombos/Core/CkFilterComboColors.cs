@@ -15,10 +15,10 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection.Value.Color != _currentColor)
+        if (Current.Value.Color != _currentColor)
         {
             CurrentSelectionIdx = Items.IndexOf(c => c.Value.Color == _currentColor);
-            CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+            Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
             return base.UpdateCurrentSelected(CurrentSelectionIdx);
         }
 

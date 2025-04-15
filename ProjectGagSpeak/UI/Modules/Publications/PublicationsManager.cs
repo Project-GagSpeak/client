@@ -87,12 +87,12 @@ public class PublicationsManager
         });
 
         if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
-            false, _authorName.IsNullOrEmpty() || _patternCombo.CurrentSelection is null))
+            false, _authorName.IsNullOrEmpty() || _patternCombo.Current is null))
         {
-            if (_patternCombo.CurrentSelection is null)
+            if (_patternCombo.Current is null)
                 return;
             // upload itttt
-            _shareHub.UploadPattern(_patternCombo.CurrentSelection, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
+            _shareHub.UploadPattern(_patternCombo.Current, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
         }
         CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
         ImGui.Spacing();
@@ -164,12 +164,12 @@ public class PublicationsManager
             CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Moodles!");
 
             if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
-                false, _authorName.IsNullOrEmpty() || _statusCombo.CurrentSelection.GUID.IsEmptyGuid()))
+                false, _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID.IsEmptyGuid()))
             {
-                if (_statusCombo.CurrentSelection.GUID.IsEmptyGuid())
+                if (_statusCombo.Current.GUID.IsEmptyGuid())
                     return;
 
-                _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.CurrentSelection);
+                _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.Current);
             }
             CkGui.AttachToolTip("Must have a selected Moodle and author name to upload.");
             ImGui.Spacing();

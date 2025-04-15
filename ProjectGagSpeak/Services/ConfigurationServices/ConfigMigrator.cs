@@ -154,12 +154,7 @@ public static class ConfigMigrator
                 ["Stains"] = oldGagData["GameStain"],
             };
             // Build the "Mod" object (with default values)
-            newGagData["Mod"] = new JObject()
-            {
-                ["Name"] = "",
-                ["Directory"] = "",
-                ["CustomSettingsName"] = "",
-            };
+            newGagData["Mod"] = new JObject();
             // Build the Moodle object with default values. Assume MoodleStatus.
             newGagData["Moodle"] = new JObject()
             {
@@ -194,7 +189,13 @@ public static class ConfigMigrator
         foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "gag-storage.json*"))
         {
             var fileName = Path.GetFileName(file);
-            File.Move(file, Path.Combine(oldFormatBackupDir, fileName));
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
         }
 
         return newConfig;

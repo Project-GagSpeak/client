@@ -43,7 +43,7 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
         {
             // Force a recalculation on the cached display.
             CurrentSelectionIdx = -1;
-            CurrentSelection = default;
+            Current = default;
         }
 
         var ret = ImGui.Selectable(pattern.Label, selected);
@@ -73,7 +73,7 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
     public void Draw(float width)
     {
         // Begin Draw.
-        var name = CurrentSelection?.Label ?? "Select a Pattern...";
+        var name = Current?.Label ?? "Select a Pattern...";
         Draw("##Patterns", name, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 

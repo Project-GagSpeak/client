@@ -80,11 +80,11 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             if (ActiveCursedItem.RestrictionRef is GarblerRestriction gagItem)
             {
                 var change = _gagItemCombo.Draw("##CursedItemGagSelector", gagItem.GagType, comboLength);
-                if (change && !gagItem.GagType.Equals(_gagItemCombo.CurrentSelection?.GagType))
+                if (change && !gagItem.GagType.Equals(_gagItemCombo.Current?.GagType))
                 {
-                    Logger.LogTrace($"Item changed to {_gagItemCombo.CurrentSelection?.GagType} " +
-                        $"[{_gagItemCombo.CurrentSelection?.GagType.GagName()}] from {gagItem.GagType} [{gagItem.GagType.GagName()}]");
-                    ActiveCursedItem.RestrictionRef = _gagItemCombo.CurrentSelection ?? _gags.Storage.Values.First();
+                    Logger.LogTrace($"Item changed to {_gagItemCombo.Current?.GagType} " +
+                        $"[{_gagItemCombo.Current?.GagType.GagName()}] from {gagItem.GagType} [{gagItem.GagType.GagName()}]");
+                    ActiveCursedItem.RestrictionRef = _gagItemCombo.Current ?? _gags.Storage.Values.First();
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -96,11 +96,11 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             else if (ActiveCursedItem.RestrictionRef is RestrictionItem restriction)
             {
                 var change = _restrictionItemCombo.Draw("##CursedItemSelector", restriction.Identifier, comboLength);
-                if (change && !restriction.Identifier.Equals(_restrictionItemCombo.CurrentSelection?.Identifier))
+                if (change && !restriction.Identifier.Equals(_restrictionItemCombo.Current?.Identifier))
                 {
-                    Logger.LogTrace($"Item changed to {_restrictionItemCombo.CurrentSelection?.Identifier} " +
-                        $"[{_restrictionItemCombo.CurrentSelection?.Label}] from {restriction.Identifier} [{restriction.Label}]");
-                    ActiveCursedItem.RestrictionRef = _restrictionItemCombo.CurrentSelection ?? _restrictions.Storage.First();
+                    Logger.LogTrace($"Item changed to {_restrictionItemCombo.Current?.Identifier} " +
+                        $"[{_restrictionItemCombo.Current?.Label}] from {restriction.Identifier} [{restriction.Label}]");
+                    ActiveCursedItem.RestrictionRef = _restrictionItemCombo.Current ?? _restrictions.Storage.First();
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))

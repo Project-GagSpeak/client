@@ -218,13 +218,13 @@ public class EquipmentDrawer
         using (ImRaii.Group())
         {
             var change = _restrictionCombo.Draw("##AdvSelector" + slot, restrictionRef.Ref?.Identifier ?? Guid.Empty, comboWidth, flags: ImGuiComboFlags.NoArrowButton);
-            if (change && !(restrictionRef.Ref?.Identifier ?? Guid.Empty).Equals(_restrictionCombo.CurrentSelection?.Identifier))
+            if (change && !(restrictionRef.Ref?.Identifier ?? Guid.Empty).Equals(_restrictionCombo.Current?.Identifier))
             {
-                _logger.LogTrace($"Item changed to {_restrictionCombo.CurrentSelection?.Identifier} " +
-                    $"[{_restrictionCombo.CurrentSelection?.Label}] from {restrictionRef.Ref?.Identifier} [{restrictionRef.Ref?.Label}]");
+                _logger.LogTrace($"Item changed to {_restrictionCombo.Current?.Identifier} " +
+                    $"[{_restrictionCombo.Current?.Label}] from {restrictionRef.Ref?.Identifier} [{restrictionRef.Ref?.Label}]");
                 // Get the actual reference to the restrictions item.
-                if(_restrictions.Storage.TryFindIndexById(_restrictionCombo.CurrentSelection?.Identifier ?? Guid.Empty, out var index))
-                    restrictionRef.Ref = _restrictions.Storage[index];
+                if(_restrictions.Storage.TryGetRestriction(_restrictionCombo.Current?.Identifier ?? Guid.Empty, out var match))
+                    restrictionRef.Ref = match;
             }
 
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -314,11 +314,11 @@ public class EquipmentDrawer
 
         var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.ItemId, width, width * innerWidthScaler);
 
-        if (change && !item.GameItem.Equals(itemCombo.CurrentSelection))
+        if (change && !item.GameItem.Equals(itemCombo.Current))
         {
-            _logger.LogTrace($"Item changed from {itemCombo.CurrentSelection} " +
-                $"[{itemCombo.CurrentSelection.ItemId}] to {item.GameItem} [{item.GameItem.ItemId}]");
-            item.GameItem = itemCombo.CurrentSelection;
+            _logger.LogTrace($"Item changed from {itemCombo.Current} " +
+                $"[{itemCombo.Current.ItemId}] to {item.GameItem} [{item.GameItem.ItemId}]");
+            item.GameItem = itemCombo.Current;
         }
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -336,13 +336,13 @@ public class EquipmentDrawer
 
         var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.Id.BonusItem, width, width * 1.3f);
 
-        if (change && !item.GameItem.Equals(itemCombo.CurrentSelection))
+        if (change && !item.GameItem.Equals(itemCombo.Current))
         {
             // log full details.
-            _logger.LogTrace($"Item changed from {itemCombo.CurrentSelection} [{itemCombo.CurrentSelection.PrimaryId}] " +
+            _logger.LogTrace($"Item changed from {itemCombo.Current} [{itemCombo.Current.PrimaryId}] " +
                 $"to {item.GameItem} [{item.GameItem.PrimaryId}]");
             // change
-            item.GameItem = itemCombo.CurrentSelection;
+            item.GameItem = itemCombo.Current;
         }
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -373,12 +373,12 @@ public class EquipmentDrawer
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (TryGetStain(_stainCombo.CurrentSelection.Key, out stain))
+                if (TryGetStain(_stainCombo.Current.Key, out stain))
                 {
                     // if changed, change it.
                     item.GameStain = item.GameStain.With(index, stain.RowIndex);
                 }
-                else if (_stainCombo.CurrentSelection.Key == Stain.None.RowIndex)
+                else if (_stainCombo.Current.Key == Stain.None.RowIndex)
                 {
                     // if set to none, reset it to default
                     item.GameStain = item.GameStain.With(index, Stain.None.RowIndex);
@@ -409,12 +409,12 @@ public class EquipmentDrawer
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (TryGetStain(_stainCombo.CurrentSelection.Key, out stain))
+                if (TryGetStain(_stainCombo.Current.Key, out stain))
                 {
                     // if changed, change it.
                     item.CustomStains = item.CustomStains.With(index, stain.RowIndex);
                 }
-                else if (_stainCombo.CurrentSelection.Key == Stain.None.RowIndex)
+                else if (_stainCombo.Current.Key == Stain.None.RowIndex)
                 {
                     // if set to none, reset it to default
                     item.CustomStains = item.CustomStains.With(index, Stain.None.RowIndex);

@@ -1,6 +1,7 @@
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.Services;
 using GagSpeak.Utils;
@@ -41,7 +42,7 @@ public interface IRestraintSlot
 
 public class RestraintSlotBasic : IRestraintSlot
 {
-    public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Basic;
+    public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.IsOverlay;
     public GlamourSlot Glamour { get; set; }
     public EquipSlot EquipSlot => Glamour.Slot;
     public EquipItem EquipItem => Glamour.GameItem;
@@ -74,7 +75,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 {
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
     // It might cause less issues to allow this to be null down the line and not use a (?)
-    public RestrictionItem? Ref { get; set; }
+    public RestrictionItem? Ref { get; set; } = null;
     public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
     public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
@@ -94,7 +95,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
         {
             ["Type"] = RestraintSlotType.Advanced.ToString(),
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = Ref?.Identifier.ToString(),
+            ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
@@ -103,7 +104,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 // This will eventually be able to be a mod customization toggle as well for a layer.
 public interface IRestraintLayer
 {
-    public string ID { get; }
+    public Guid ID { get; }
     public bool IsActive { get; }
     public IRestraintLayer Clone();
     public JObject Serialize();
@@ -111,10 +112,10 @@ public interface IRestraintLayer
 
 public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 {
-    public string ID { get; internal set; } = "IRestraintLayer-" + Guid.NewGuid().ToString();
+    public Guid ID { get; internal set; } = Guid.NewGuid();
     public bool IsActive { get; set; } = false;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public RestrictionItem? Ref { get; set; }
+    public RestrictionItem? Ref { get; set; } = null;
     public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
     public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
@@ -139,7 +140,7 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
             ["ID"] = ID,
             ["IsActive"] = IsActive,
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = Ref?.Identifier.ToString() ?? string.Empty,
+            ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
@@ -147,15 +148,15 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 
 public class ModPresetLayer : IRestraintLayer
 {
-    public string ID { get; internal set; } = "IRestraintLayer-" + Guid.NewGuid().ToString();
+    public Guid ID { get; internal set; } = Guid.NewGuid();
     public bool IsActive { get; set; } = false;
-    public ModAssociation? Ref { get; internal set; }
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
 
     internal ModPresetLayer() { }
     internal ModPresetLayer(ModPresetLayer other)
     {
         IsActive = other.IsActive;
-        Ref = other.Ref;
+        Mod = other.Mod;
     }
     public IRestraintLayer Clone() => new ModPresetLayer(this);
 
@@ -166,7 +167,7 @@ public class ModPresetLayer : IRestraintLayer
             ["Type"] = RestraintLayerType.ModPreset.ToString(),
             ["ID"] = ID,
             ["IsActive"] = IsActive,
-            ["ModRef"] = Ref?.Serialize() ?? new JObject(),
+            ["Mod"] = Mod.Serialize(),
         };
     }
 }
@@ -191,19 +192,22 @@ public class RestraintSet
     public OptionalBool WeaponState { get; set; } = OptionalBool.Null;
 
     // Additional Appends
-    public List<ModAssociation> RestraintMods { get; set; } = new List<ModAssociation>();
+    public List<ModSettingsPreset> RestraintMods { get; set; } = new List<ModSettingsPreset>();
     public List<Moodle> RestraintMoodles { get; set; } = new List<Moodle>();
     public Traits Traits { get; set; } = Traits.None;
     public Stimulation Stimulation { get; set; } = Stimulation.None;
 
-    internal RestraintSet() { }
-
-    internal RestraintSet(RestraintSet other, bool keepIdentifier)
+    public RestraintSet() { }
+    public RestraintSet(RestraintSet other, bool keepIdentifier)
     {
-        // we need to make a perfect clone.
-        if (keepIdentifier)
-            Identifier = other.Identifier;
+        Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
+    }
 
+    /// <summary> Updates all properties, without updating the object itself, to keep references intact. </summary>
+    public void ApplyChanges(RestraintSet other)
+    {
+        // Apply changes from the other RestraintSet to this one
         Label = other.Label;
         Description = other.Description;
         DoRedraw = other.DoRedraw;
@@ -212,8 +216,11 @@ public class RestraintSet
         Glasses = new GlamourBonusSlot(other.Glasses);
         Layers = other.Layers.Select(layer => layer.Clone()).ToList();
 
-        // Optionally clone other properties as needed
-        RestraintMods = other.RestraintMods.Select(mod => new ModAssociation(mod)).ToList();
+        HeadgearState = other.HeadgearState;
+        VisorState = other.VisorState;
+        WeaponState = other.WeaponState;
+
+        RestraintMods = other.RestraintMods.Select(mod => new ModSettingsPreset(mod)).ToList();
         RestraintMoodles = other.RestraintMoodles.Select(moodle =>
         {
             return moodle switch
@@ -222,6 +229,9 @@ public class RestraintSet
                 _ => new Moodle(moodle)
             };
         }).ToList();
+
+        Traits = other.Traits;
+        Stimulation = other.Stimulation;
     }
 
     #region Cache Helpers
@@ -241,13 +251,16 @@ public class RestraintSet
 
             if(glamourItem is RestraintSlotBasic basic) 
                 GlamourItems[basic.EquipSlot] = basic.Glamour;
-            if(glamourItem is RestraintSlotAdvanced advanced)
-                GlamourItems[advanced.EquipSlot] = advanced.Ref.Glamour;
+            else if (glamourItem is RestraintSlotAdvanced adv && adv.Ref is not null && adv.ApplyFlags.HasAny(RestraintFlags.Glamour))
+                GlamourItems[adv.EquipSlot] = adv.Ref.Glamour;
         }
         // then handle the layers.
         foreach (var layer in Layers.OfType<RestrictionLayer>())
         {
-            if(!layer.ApplyFlags.HasFlag(RestraintFlags.Glamour))
+            if(layer.Ref is null)
+                continue;
+
+            if (!layer.ApplyFlags.HasFlag(RestraintFlags.Glamour))
                 continue;
 
             if(layer.EquipItem.ItemId == ItemService.NothingItem(layer.EquipSlot).ItemId && layer.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
@@ -260,32 +273,33 @@ public class RestraintSet
     }
 
     /// <summary> Arranges the associated mods for this restraint set through a helper function. </summary>
-    /// <returns> A dictionary of mods associated with this restraint set. </returns>
     /// <remarks> Prioritizes the base slots, then the restraint layers, then additional mods. </remarks>
-    public HashSet<ModAssociation> GetMods()
+    public HashSet<ModSettingsPreset> GetMods()
     {
-        var associationPresets = new Dictionary<Mod, string>();
-        foreach (var slot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
-            if (slot.ApplyFlags.HasFlag(RestraintFlags.Mod))
-                associationPresets[slot.Ref.Mod.ModInfo] = slot.Ref.Mod.CustomSettings;
-        // append the additional mods from the layers.
-        foreach (var l in Layers)
-        {
-            if (l is RestrictionLayer layer)
-            {
-                if (layer.ApplyFlags.HasFlag(RestraintFlags.Mod))
-                    associationPresets[layer.Ref.Mod.ModInfo] = layer.Ref.Mod.CustomSettings;
-            }
+        // Maybe consider making this a hash-set to begin with and checking by directory path for replacement.
+        var associationPresets = new SortedList<string, ModSettingsPreset>();
 
-            if (l is ModPresetLayer modLayer)
+        // Append all base slot mod attachments.
+        foreach (var slot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>().Where(x => x.Ref is not null))
+            if (slot.ApplyFlags.HasFlag(RestraintFlags.Mod) && slot.Ref!.Mod.HasData)
+                associationPresets[slot.Ref!.Mod.Container.DirectoryPath] = slot.Ref!.Mod;
+
+        // append the additional mods from the layers.
+        foreach (var layer in Layers.Where(l => l.IsActive))
+        {
+            if (layer is RestrictionLayer bindLayer && bindLayer.Ref is not null)
             {
-                if (modLayer.Ref is not null)
-                    associationPresets[modLayer.Ref.ModInfo] = modLayer.Ref.CustomSettings;
+                if (bindLayer.ApplyFlags.HasFlag(RestraintFlags.Mod) && bindLayer.Ref.Mod.HasData)
+                    associationPresets[bindLayer.Ref.Mod.Container.DirectoryPath] = bindLayer.Ref.Mod;
+            }
+            else if (layer is ModPresetLayer modLayer && modLayer.Mod.HasData)
+            {
+                associationPresets[modLayer.Mod.Container.DirectoryPath] = modLayer.Mod;
             }
         }
 
-        // Convert the dictionary entries back to ModAssociation
-        return associationPresets.Select(kvp => new ModAssociation(kvp)).ToHashSet();
+        // Convert the dictionary entries back to ModSettingsPreset
+        return associationPresets.Values.ToHashSet();
     }
 
     /// <summary> Grabs all 3 MetaData states compiled into a MetaDataStruct to operate with. </summary>
@@ -332,12 +346,14 @@ public class RestraintSet
             ["DoRedraw"] = DoRedraw,
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
             ["Glasses"] = Glasses.Serialize(),
-            ["Layers"] = new JArray(Layers.Select(x => x.Serialize())),
+            ["RestraintLayers"] = new JArray(Layers.Select(x => x.Serialize())),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
             ["WeaponState"] = WeaponState.ToString(),
             ["RestraintMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
             ["RestraintMods"] = new JArray(RestraintMods.Select(x => x.Serialize())),
+            ["Traits"] = Traits.ToString(),
+            ["Stimulation"] = Stimulation.ToString(),
         };
     }
 }

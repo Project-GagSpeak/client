@@ -1,15 +1,17 @@
 using GagSpeak.Interop.Ipc;
+using GagSpeak.Localization;
 using GagSpeak.Services;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using static FFXIVClientStructs.FFXIV.Client.Game.Character.VfxContainer;
 
 namespace GagSpeak.PlayerState.Models;
 
 public class Moodle
 {
-    public Guid Id { get; internal set; }
+    public Guid Id { get; internal set; } = Guid.Empty;
 
-    internal Moodle() => Id = Guid.Empty;
+    public Moodle() { }
     public Moodle(Moodle other) => Id = other.Id;
     public Moodle(Guid id) => Id = id;
 
@@ -23,12 +25,15 @@ public class Moodle
             ["Id"] = Id.ToString(),
         };
 
-    public virtual void LoadMoodle(JToken? moodle)
+    public static Moodle StatusFromJToken(JToken? moodle)
     {
         if (moodle is not JObject jsonObject)
-            return;
+            throw new Exception("Invalid Moodle data!");
 
-        Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        return new Moodle
+        {
+            Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+        };
     }
 }
 
@@ -52,54 +57,16 @@ public class MoodlePreset : Moodle
         };
     }
 
-    public override void LoadMoodle(JToken? moodle)
+    public static MoodlePreset PresetFromJToken(JToken? moodle)
     {
         if (moodle is not JObject jsonObject)
-            return;
+            throw new Exception("Invalid MoodlePreset data!");
 
-        base.LoadMoodle(moodle);
-        StatusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
-    }
-}
-
-public class ModAssociation
-{
-    public Mod ModInfo { get; internal set; } = new Mod();
-    public string CustomSettings { get; internal set; } = string.Empty;
-
-    internal ModAssociation()
-        => (ModInfo, CustomSettings) = (new Mod(), string.Empty);
-
-    public ModAssociation(ModAssociation other)
-        => (ModInfo, CustomSettings) = (other.ModInfo, other.CustomSettings);
-
-    public ModAssociation(KeyValuePair<Mod, string> kvp)
-        => (ModInfo, CustomSettings) = (kvp.Key, kvp.Value);
-
-    public override bool Equals(object? obj)
-        => obj is ModAssociation other && ModInfo.DirectoryName.Equals(other.ModInfo.DirectoryName);
-
-    public override int GetHashCode()
-        => ModInfo.DirectoryName.GetHashCode();
-
-    // Not utilitizing the inherit and remove properties, but may not be nessisary
-    public JObject Serialize()
-    {
-        return new JObject
+        return new MoodlePreset
         {
-            ["Name"] = ModInfo.Name,
-            ["Directory"] = ModInfo.DirectoryName,
-            ["CustomSettingsName"] = CustomSettings
+            Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+            StatusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>(),
         };
-    }
-
-    public void LoadMod(JToken? mod)
-    {
-        if (mod is not JObject jsonObject)
-            return;
-
-        ModInfo = new Mod(jsonObject["Name"]?.Value<string>() ?? string.Empty, jsonObject["Directory"]?.Value<string>() ?? string.Empty);
-        CustomSettings = jsonObject["CustomSettingsName"]?.Value<string>() ?? string.Empty;
     }
 }
 

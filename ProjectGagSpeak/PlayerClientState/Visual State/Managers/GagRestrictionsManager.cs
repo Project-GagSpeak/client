@@ -1,8 +1,7 @@
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
@@ -11,8 +10,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
-using Penumbra.GameData.Enums;
-using System.Linq;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -23,17 +20,20 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
+    private readonly ModSettingPresetManager _modPresets;
     private readonly HybridSaveService _saver;
 
     public GagRestrictionManager(ILogger<GagRestrictionManager> logger, GagspeakMediator mediator,
         GagGarbler garbler, GlobalData clientData, FavoritesManager favorites, 
-        ConfigFileProvider fileNames, ItemService items, HybridSaveService saver) : base(logger, mediator)
+        ConfigFileProvider fileNames, ItemService items, ModSettingPresetManager modPresets,
+        HybridSaveService saver) : base(logger, mediator)
     {
         _garbler = garbler;
         _clientData = clientData;
         _favorites = favorites;
         _fileNames = fileNames;
         _items = items;
+        _modPresets = modPresets;
         _saver = saver;
     }
 
@@ -165,7 +165,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     if (item.Glamour is not null && restriction.Value.Glamour.Slot == item.Glamour.Slot)
                         flags &= ~VisualUpdateFlags.Glamour;
 
-                    if (item.Mod is not null && restriction.Value.Mod.ModInfo == item.Mod.ModInfo)
+                    if (item.Mod.HasData && restriction.Value.Mod.Label == item.Mod.Label)
                         flags &= ~VisualUpdateFlags.Mod;
 
                     if(restriction.Value.HeadgearState != OptionalBool.Null)
@@ -243,7 +243,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;
             // Glamour Item will always be valid so don't worry about it.
-            if(matchedItem.Mod is null) flags &= ~VisualUpdateFlags.Mod;
+            if(!matchedItem.Mod.HasData) flags &= ~VisualUpdateFlags.Mod;
             if(matchedItem.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
             if(matchedItem.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
             if(matchedItem.Moodle is null) flags &= ~VisualUpdateFlags.Moodle;
@@ -282,7 +282,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         // Migrate to the new filetype if necessary.
         Logger.LogInformation("Loading GagRestrictions Config from {0}", file);
 
-        string jsonText = "";
+        var jsonText = "";
         JObject jObject = new();
 
         // if the main file does not exist, attempt to load the text from the backup.
@@ -331,25 +331,32 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         if(data is not JObject sortedListData)
             return;
 
-        // otherwise, parse it out and stuff YIPPEE
-        foreach (var (gagName, gagData) in sortedListData)
+        try
         {
-            var gagType = gagName.ToGagType();
-            if (gagType == GagType.None)
+            // otherwise, parse it out and stuff YIPPEE
+            foreach (var (gagName, gagData) in sortedListData)
             {
-                Logger.LogWarning("Invalid GagType: {0}", gagName);
-                continue;
-            }
+                var gagType = gagName.ToGagType();
+                if (gagType == GagType.None)
+                {
+                    Logger.LogWarning("Invalid GagType: {0}", gagName);
+                    continue;
+                }
 
-            if (gagData is not JObject gagObject)
-            {
-                Logger.LogWarning("Invalid GagData: {0}", gagName);
-                continue;
-            }
+                if (gagData is not JObject gagObject)
+                {
+                    Logger.LogWarning("Invalid GagData: {0}", gagName);
+                    continue;
+                }
 
-            var garblerRestriction = new GarblerRestriction(gagType);
-            garblerRestriction.LoadRestriction(gagObject, _items);
-            Storage[gagType] = garblerRestriction;
+                var newGagItem = JParserBinds.FromGagToken(gagObject, gagType, _items, _modPresets);
+                Storage[gagType] = newGagItem;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("Failed to load Gag Restrictions: {0}", e);
+            return;
         }
     }
 

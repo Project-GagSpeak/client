@@ -122,7 +122,7 @@ public partial class RestrictionsPanel
             var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - region.Y, 0) + styler.WindowPadding;
             // Draw the left items.
             if (ItemSelected)
-                DrawSelectedInner();
+                DrawSelectedInner(imgSize.X);
 
             // move to the cursor position and attempt to draw it.
             ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
@@ -167,7 +167,7 @@ public partial class RestrictionsPanel
         }
     }
 
-    private void DrawSelectedInner()
+    private void DrawSelectedInner(float rightOffset)
     {
         using var group = ImRaii.Group();
         ImUtf8.SameLineInner();
@@ -183,13 +183,14 @@ public partial class RestrictionsPanel
             : $"There is no Glamour Item attached to the {_selector.Selected!.Label}.", color: ImGuiColors.ParsedGold);
 
         ImUtf8.SameLineInner();
-        var hasMod = !(_selector.Selected!.Mod.CustomSettings.IsNullOrEmpty());
+        var hasMod = !(_selector.Selected!.Mod.Label.IsNullOrEmpty());
         CkGui.FramedIconText(FAI.FileDownload);
         CkGui.AttachToolTip(hasMod
-            ? "Using Preset for Mod: " + _selector.Selected!.Mod.ModInfo.Name
+            ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
             : "This Restriction Item has no associated Mod Preset.");
 
         // go right aligned for the trait previews.
+        ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X - rightOffset - ImGui.GetStyle().ItemInnerSpacing.X);
         _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits, _selector.Selected!.Stimulation);
         // next row, draw the moodle preview along the lower row, with the height of the frame.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);

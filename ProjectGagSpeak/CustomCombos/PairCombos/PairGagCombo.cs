@@ -22,7 +22,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         _pairRef = pair;
 
         // update current selection to the last registered gagType from that pair on construction.
-        CurrentSelection = GagType.None;
+        Current = GagType.None;
     }
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -43,12 +43,12 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
     }
 
     protected override bool DisableCondition()
-        => CurrentSelection == GagType.None || !_pairRef.PairPerms.ApplyGags;
+        => Current == GagType.None || !_pairRef.PairPerms.ApplyGags;
 
     protected override void OnButtonPress(int layerIdx)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (_pairRef.LastGagData.GagSlots[layerIdx].GagItem == CurrentSelection)
+        if (_pairRef.LastGagData.GagSlots[layerIdx].GagItem == Current)
             return;
 
         var updateType = _pairRef.LastGagData.GagSlots[layerIdx].GagItem is GagType.None
@@ -57,14 +57,14 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
         {
             Layer = layerIdx,
-            Gag = CurrentSelection,
+            Gag = Current,
             Enabler = MainHub.UID,
         };
 
         // push to server.
         _mainHub.UserPushPairDataGags(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Selected Gag " + CurrentSelection.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        Log.LogDebug("Applying Selected Gag " + Current.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(GagType item, string headerText)

@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
@@ -32,7 +33,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     private readonly RestrictionManager      _restrictions;
     private readonly GagRestrictionManager   _gags;
     private readonly CursedLootManager       _cursedLoot;
-    private readonly ModSettingPresetManager _modSettingPresets;
+    private readonly ModSettingPresetManager _modPresets;
     private readonly TraitsManager           _traits;
     private readonly VisualApplierGlamour    _glamourApplier;
     private readonly VisualApplierPenumbra   _modApplier;
@@ -68,7 +69,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         _restrictions = restrictions;
         _gags = gags;
         _cursedLoot = cursedLoot;
-        _modSettingPresets = modSettingPresets;
+        _modPresets = modSettingPresets;
         _traits = traits;
         _glamourApplier = glamourApplier;
         _modApplier = modApplier;
@@ -276,7 +277,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (removedItemData is null)
             return;
 
-        if (changes.HasFlag(VisualUpdateFlags.Glamour))    await TryUpdateorRemoveGlamour(removedItemData.Glamour);
+        if (changes.HasFlag(VisualUpdateFlags.Glamour))    await TryUpdateOrRemoveGlamour(removedItemData.Glamour);
         if (changes.HasFlag(VisualUpdateFlags.Mod))              TryUpdateOrRemoveMod(removedItemData.Mod);
         if (changes.HasFlag(VisualUpdateFlags.Helmet))     await ClearMetaState(MetaIndex.HatState, ManagerPriority.Gags);
         if (changes.HasFlag(VisualUpdateFlags.Visor))      await ClearMetaState(MetaIndex.VisorState, ManagerPriority.Gags);
@@ -363,7 +364,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (removedItemData is null || changes == VisualUpdateFlags.None || !updateVisuals)
             return;
 
-        if (changes.HasFlag(VisualUpdateFlags.Glamour)) await TryUpdateorRemoveGlamour(removedItemData.Glamour);
+        if (changes.HasFlag(VisualUpdateFlags.Glamour)) await TryUpdateOrRemoveGlamour(removedItemData.Glamour);
         if (changes.HasFlag(VisualUpdateFlags.Mod))           TryUpdateOrRemoveMod(removedItemData.Mod);
         if (changes.HasFlag(VisualUpdateFlags.Moodle))        TryRemoveMoodle(removedItemData.Moodle);
     }
@@ -443,7 +444,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (removedItemData is null || changes == VisualUpdateFlags.None)
             return;
 
-        if (changes.HasFlag(VisualUpdateFlags.Glamour)) await TryUpdateorRemoveGlamour(removedItemData.GetGlamour());
+        if (changes.HasFlag(VisualUpdateFlags.Glamour)) await TryUpdateOrRemoveGlamour(removedItemData.GetGlamour());
         if (changes.HasFlag(VisualUpdateFlags.Mod))           TryUpdateOrRemoveMod(removedItemData.GetMods());
         if (changes.HasFlag(VisualUpdateFlags.Helmet))  await ClearMetaState(MetaIndex.HatState, ManagerPriority.Gags);
         if (changes.HasFlag(VisualUpdateFlags.Visor))   await ClearMetaState(MetaIndex.VisorState, ManagerPriority.Gags);
@@ -519,11 +520,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         await _glamourApplier.UpdateActiveSlot(newSlots);
     }
 
-    private async Task TryUpdateorRemoveGlamour(GlamourSlot item) => await TryUpdateorRemoveGlamour(new[] { item });
+    private async Task TryUpdateOrRemoveGlamour(GlamourSlot item) => await TryUpdateOrRemoveGlamour(new[] { item });
 
     /// <summary> A Glamour Slot was removed and we need to perform a recalculation to account for any minor changes. </summary>
     /// <remarks> For now, this will recalculate all slots and reapply all slots. </remarks>
-    private async Task TryUpdateorRemoveGlamour(IEnumerable<GlamourSlot> items)
+    private async Task TryUpdateOrRemoveGlamour(IEnumerable<GlamourSlot> items)
     {
         // Build a dictionary of the latest active GlamourSlot items from the caches. Take the last for values. (highest priority)
         var newRestrictionSlots = ManagerCacheRef
@@ -547,22 +548,19 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Will either add a new mod, or update it to the newly preferred settings. </summary>
-    /// <remarks> Update will be blocked if another ModAssociation with the same ModInfo on a higher manager is found. </remarks>
-    private void TryAddOrUpdateMod(ModAssociation mod, ManagerPriority priority) => TryAddOrUpdateMod(new[] { mod }, priority);
+    /// <remarks> Update will be blocked if another ModSettingsPreset with the same ModInfo on a higher manager is found. </remarks>
+    private void TryAddOrUpdateMod(ModSettingsPreset mod, ManagerPriority priority) => TryAddOrUpdateMod(new[] { mod }, priority);
 
     /// <summary> Will either add a new mod, or update it to the newly preferred settings. </summary>
-    /// <remarks> Update will be blocked if another ModAssociation with the same ModInfo on a higher manager is found. </remarks>
-    private void TryAddOrUpdateMod(IEnumerable<ModAssociation> mods, ManagerPriority priority)
+    /// <remarks> Update will be blocked if another ModSettingsPreset with the same ModInfo on a higher manager is found. </remarks>
+    private void TryAddOrUpdateMod(IEnumerable<ModSettingsPreset> mods, ManagerPriority priority)
     {
-        var higherPriorityMods = new HashSet<ModAssociation>(ManagerCacheRef.Where(entry => entry.Key > priority).SelectMany(entry => entry.Value.Mods));
+        var higherPriorityMods = new HashSet<ModSettingsPreset>(ManagerCacheRef.Where(entry => entry.Key > priority).SelectMany(entry => entry.Value.Mods));
         if(mods.Except(higherPriorityMods) is { } newMods)
         {
             foreach (var mod in newMods)
-            {
-                // grab their respective mod settings and apply them.
-                var settings = _modSettingPresets.GetSettingPreset(mod.ModInfo.DirectoryName, mod.CustomSettings);
-                _modApplier.SetOrUpdateTempMod(mod.ModInfo, settings);
-            }
+                _modApplier.SetOrUpdateTempMod(mod);
+
             return;
         }
         Logger.LogTrace("Mod was not applied due to higher priority mod already in use.", LoggerType.ClientPlayerData);
@@ -570,25 +568,23 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Will either remove a mod, or update it to the newly preferred settings. </summary>
     /// <remarks> A mod will be have its newly updated settings applied if the same mod with different settings is found. </remarks>
-    private void TryUpdateOrRemoveMod(ModAssociation mod) => TryUpdateOrRemoveMod(new[] { mod });
+    private void TryUpdateOrRemoveMod(ModSettingsPreset mod) => TryUpdateOrRemoveMod(new[] { mod });
 
     /// <summary> Will either remove a mod, or update it to the newly preferred settings. </summary>
     /// <remarks> A mod will be have its newly updated settings applied if the same mod with different settings is found. </remarks>
-    private void TryUpdateOrRemoveMod(IEnumerable<ModAssociation> mods)
+    private void TryUpdateOrRemoveMod(IEnumerable<ModSettingsPreset> mods)
     {
         // Build a dictionary of the last active mod for each ModInfo
         var activeModsByInfo = ManagerCacheRef.SelectMany(kv => kv.Value.Mods);
-        var activeLowerPrioMods = activeModsByInfo.Intersect(mods);
+        var activeLowerPriorityMods = activeModsByInfo.Intersect(mods);
 
         // Update still existing.
-        foreach (var lowerPrioMod in activeLowerPrioMods)
-        {
-            var settings = _modSettingPresets.GetSettingPreset(lowerPrioMod.ModInfo.DirectoryName, lowerPrioMod.CustomSettings);
-            _modApplier.SetOrUpdateTempMod(lowerPrioMod.ModInfo, settings);
-        }
+        foreach (var lowerPriorityMod in activeLowerPriorityMods)
+            _modApplier.SetOrUpdateTempMod(lowerPriorityMod);
 
         // Remove remaining.
-        _modApplier.RemoveTempMod(mods.Except(activeLowerPrioMods));
+        // TODO: Fix this later because our logic will likely change by the time we revisit this.
+        _modApplier.RemoveTempMod(mods.Except(activeLowerPriorityMods));
     }
 
 

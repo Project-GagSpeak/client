@@ -260,13 +260,13 @@ public class SetPreviewComponent
         var change = combo.Draw(refGlamourSlot.GameItem.Name, refGlamourSlot.GameItem.ItemId, width, width * 1.3f, allowMouseWheel: allowMouse);
 
         // if we changed something
-        if (change && !refGlamourSlot.GameItem.Equals(combo.CurrentSelection))
+        if (change && !refGlamourSlot.GameItem.Equals(combo.Current))
         {
             // log full details.
-            _logger.LogTrace($"Item changed from {combo.CurrentSelection} [{combo.CurrentSelection.ItemId}] " +
+            _logger.LogTrace($"Item changed from {combo.Current} [{combo.Current.ItemId}] " +
                 $"to {refGlamourSlot.GameItem} [{refGlamourSlot.GameItem.ItemId}]");
             // update the item to the new selection.
-            refGlamourSlot.GameItem = combo.CurrentSelection;
+            refGlamourSlot.GameItem = combo.Current;
         }
 
         // if we right clicked
@@ -299,12 +299,12 @@ public class SetPreviewComponent
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (_textureHandler.TryGetStain(StainColorCombos.CurrentSelection.Key, out stain))
+                if (_textureHandler.TryGetStain(StainColorCombos.Current.Key, out stain))
                 {
                     // if changed, change it.
                     refGlamourSlot.GameStain = refGlamourSlot.GameStain.With(index, stain.RowIndex);
                 }
-                else if (StainColorCombos.CurrentSelection.Key == Stain.None.RowIndex)
+                else if (StainColorCombos.Current.Key == Stain.None.RowIndex)
                 {
                     // if set to none, reset it to default
                     refGlamourSlot.GameStain = refGlamourSlot.GameStain.With(index, Stain.None.RowIndex);

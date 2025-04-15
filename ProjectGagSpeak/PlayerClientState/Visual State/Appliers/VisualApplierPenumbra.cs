@@ -1,4 +1,5 @@
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using Penumbra.Api.Enums;
 
@@ -15,25 +16,22 @@ public class VisualApplierPenumbra
         _penumbra = penumbra;
     }
 
-    public ModSettingOptions GetAllModOptions(ModAssociation mod)
-        => _penumbra.GetAllOptionsForMod(mod.ModInfo);
-
-    public bool SetOrUpdateTempMod(Mod mod, ModSettings presetSettings, bool redraw = false)
+    public bool SetOrUpdateTempMod(ModSettingsPreset modAttachment, bool redraw = false)
     {
-        return _penumbra.SetOrUpdateTemporaryMod(mod, presetSettings) == PenumbraApiEc.Success;
+        return _penumbra.SetOrUpdateTemporaryMod(modAttachment) == PenumbraApiEc.Success;
         // maybe something with redraw later but for now i have no idea.
     }
 
-    public bool RemoveTempMod(ModAssociation mod, bool redraw = false)
+    public bool RemoveTempMod(ModSettingsPreset modAttachment, bool redraw = false)
     {
-        return _penumbra.RemoveTemporaryMod(mod.ModInfo) == PenumbraApiEc.Success;
+        return _penumbra.RemoveTemporaryMod(modAttachment) == PenumbraApiEc.Success;
         // maybe something with redraw later but for now i have no idea.
     }
 
-    public bool RemoveTempMod(IEnumerable<ModAssociation> mods)
+    public bool RemoveTempMod(IEnumerable<ModSettingsPreset> modAttachments)
     {
-        foreach (var mod in mods)
-            if (_penumbra.RemoveTemporaryMod(mod.ModInfo) != PenumbraApiEc.Success)
+        foreach (var modAttachment in modAttachments)
+            if (_penumbra.RemoveTemporaryMod(modAttachment) != PenumbraApiEc.Success)
                 return false;
 
         return true;

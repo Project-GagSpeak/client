@@ -226,16 +226,16 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             }
         }
 
-        if (changed.HasAny(HardcoreTraits.ChatboxHidden))
+        if (changed.HasAny(HardcoreTraits.ChatBoxHidden))
         {
-            if (newTraits.HasAny(HardcoreTraits.ChatboxHidden))
+            if (newTraits.HasAny(HardcoreTraits.ChatBoxHidden))
             {
-                Logger.LogDebug("Hiding Chatbox", LoggerType.HardcoreActions);
+                Logger.LogDebug("Hiding ChatBox", LoggerType.HardcoreActions);
                 ChatLogAddonHelper.SetChatLogPanelsVisibility(false);
             }
             else
             {
-                Logger.LogDebug("Showing Chatbox", LoggerType.HardcoreActions);
+                Logger.LogDebug("Showing ChatBox", LoggerType.HardcoreActions);
                 ChatLogAddonHelper.SetChatLogPanelsVisibility(true);
             }
         }

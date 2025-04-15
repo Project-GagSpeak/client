@@ -27,14 +27,14 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         _pairRef = pairData;
 
         // update current selection to the last registered LightPattern from that pair on construction.
-        CurrentSelection = _pairRef.LastLightStorage.Patterns
+        Current = _pairRef.LastLightStorage.Patterns
             .FirstOrDefault(r => r.Id == _pairRef.LastToyboxData.ActivePattern);
     }
 
     protected override bool DisableCondition()
         => _pairRef.PairPerms.ExecutePatterns is false
-        || _pairRef.LastToyboxData.ActivePattern == CurrentSelection?.Id
-        || CurrentSelection is null;
+        || _pairRef.LastToyboxData.ActivePattern == Current?.Id
+        || Current is null;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -60,7 +60,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
     protected override void OnButtonPress()
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (CurrentSelection is null || _pairRef.LastToyboxData.ActivePattern == CurrentSelection.Id)
+        if (Current is null || _pairRef.LastToyboxData.ActivePattern == Current.Id)
             return;
 
         var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
@@ -69,12 +69,12 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         // construct the dto to send.
         var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, updateType)
         {
-            AffectedIdentifier = CurrentSelection.Id,
+            AffectedIdentifier = Current.Id,
         };
 
         _ = _mainHub.UserPushPairDataToybox(dto);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Executing Pattern " + CurrentSelection.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s Toy", LoggerType.Permissions);
+        Log.LogDebug("Executing Pattern " + Current.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s Toy", LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(LightPattern item)

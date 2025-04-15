@@ -123,7 +123,7 @@ public class TraitsDrawer
 
         var iconSize = new Vector2(ImGui.GetFrameHeight());
         var spacing = ImGui.GetStyle().ItemSpacing.X / 2;
-        var endX = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
+        var endX = ImGui.GetCursorPosX();
         var currentX = endX;
 
         if (itemTraits.HasAny(Traits.LegsRestrained))
@@ -132,36 +132,37 @@ public class TraitsDrawer
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Restrained].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.ArmsRestrained))
+        if (itemTraits.HasAny(Traits.ArmsRestrained))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.Gagged))
+        if (itemTraits.HasAny(Traits.Gagged))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Gagged].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.Blindfolded))
+        if (itemTraits.HasAny(Traits.Blindfolded))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.ArmsRestrained))
+        if (itemTraits.HasAny(Traits.ArmsRestrained))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.RestrainedArmsLegs].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.Immobile))
+        if (itemTraits.HasAny(Traits.Immobile))
         {
             currentX -= (iconSize.X + spacing);
+            ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Immobilize].ImGuiHandle, iconSize);
         }
-        else if (itemTraits.HasAny(Traits.Weighty))
+        if (itemTraits.HasAny(Traits.Weighty))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);

@@ -23,12 +23,12 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
     {
         _mainHub = mainHub;
         _pairRef = pairData;
-        CurrentSelection = _pairRef.LastLightStorage.Restraints
+        Current = _pairRef.LastLightStorage.Restraints
             .FirstOrDefault(r => r.Id == _pairRef.LastRestraintData.Identifier);
     }
 
     protected override bool DisableCondition()
-        => CurrentSelection is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == CurrentSelection.Id;
+        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == Current.Id;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -61,7 +61,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
     protected override void OnButtonPress(int _)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (CurrentSelection is null)
+        if (Current is null)
             return;
 
         var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
@@ -69,13 +69,13 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         // construct the dto to send.
         var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, updateType)
         {
-            ActiveSetId = CurrentSelection.Id,
+            ActiveSetId = Current.Id,
             Enabler = MainHub.UID,
         };
 
         _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Restraint Set " + CurrentSelection.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(LightRestraintSet setItem)

@@ -1,4 +1,5 @@
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
@@ -16,11 +17,13 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
+    private readonly ModSettingPresetManager _modPresets;
     private readonly HybridSaveService _saver;
 
     public RestrictionManager(ILogger<RestrictionManager> logger, GagspeakMediator mediator,
         GagGarbler garbler, FavoritesManager favorites, ConfigFileProvider fileNames, 
-        ItemService items, HybridSaveService saver) : base(logger, mediator)
+        ItemService items, ModSettingPresetManager modPresets, HybridSaveService saver)
+        : base(logger, mediator)
     {
         _favorites = favorites;
         _fileNames = fileNames;
@@ -245,7 +248,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                     if (item.Glamour is not null && restriction.Value.Glamour.Slot == item.Glamour.Slot)
                         flags &= ~VisualUpdateFlags.Glamour;
 
-                    if (item.Mod is not null && restriction.Value.Mod.ModInfo == item.Mod.ModInfo)
+                    if (item.Mod.HasData && restriction.Value.Mod.Label == item.Mod.Label)
                         flags &= ~VisualUpdateFlags.Mod;
                 }
 
@@ -312,7 +315,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;
             // Glamour Item will always be valid so don't worry about it.
-            if (matchedItem.Mod is null) flags &= ~VisualUpdateFlags.Mod;
+            if (!matchedItem.Mod.HasData) flags &= ~VisualUpdateFlags.Mod;
             if (matchedItem.Moodle is null) flags &= ~VisualUpdateFlags.Moodle;
         }
         return flags;
@@ -398,13 +401,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             // Create an instance of the correct type
             var restrictionItem = restrictionType switch
             {
-                RestrictionType.Blindfold => new BlindfoldRestriction(),
-                RestrictionType.Collar => new CollarRestriction(),
-                _ => new RestrictionItem() // Fallback to base class
+                RestrictionType.Blindfold => JParserBinds.FromBlindfoldToken(itemJson, _items, _modPresets),
+                RestrictionType.Collar => JParserBinds.FromCollarToken(itemJson, _items, _modPresets),
+                _ => JParserBinds.FromNormalToken(itemJson, _items, _modPresets),
             };
-
-            // Deserialize the item
-            restrictionItem.LoadRestriction(itemJson, _items);
             Storage.Add(restrictionItem);
         }
     }

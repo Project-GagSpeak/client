@@ -57,7 +57,7 @@ public class RestraintEditorLayers : ICkTab
     private float DragDropHeaderWidth => ImGui.CalcTextSize("Layer XX").X + ImGui.GetStyle().ItemSpacing.X * 2;
 
     private List<(Vector2 RowPos, Action AcceptDraw)> _moveCommands = [];
-    private string _dragLayerId { get; set; } = string.Empty;
+    private Guid _dragLayerId { get; set; } = Guid.Empty;
 
     public void DrawContents(float width)
     {
@@ -102,7 +102,7 @@ public class RestraintEditorLayers : ICkTab
 
     private void DrawExistingLayer(int curLayerIdx, float totalWidth, Vector2 rightButtons) 
     {
-        using var id = ImRaii.PushId(_manager.ActiveEditorItem!.Layers[curLayerIdx].ID);
+        using var id = ImRaii.PushId(_manager.ActiveEditorItem!.Layers[curLayerIdx].ID.ToString());
         ImGui.TableNextRow();
 
         // If we are currently holding down our mouse and 'moving' the item, have it fade between a gradient green glow.
@@ -136,7 +136,7 @@ public class RestraintEditorLayers : ICkTab
             if(layerItem.Ref is { } refItem)
             {
                 ImGui.TextUnformatted($"Glamour: {layerItem.Ref.Glamour.GameItem.Name}");
-                ImGui.TextUnformatted($"Mod: {layerItem.Ref.Mod.ModInfo.DirectoryName}");
+                ImGui.TextUnformatted($"Mod: {layerItem.Ref.Mod.Container.ModName}");
                 ImGui.TextUnformatted($"Moodle: {layerItem.Ref.Moodle.Id}");
             }
             ImGui.EndTooltip();
@@ -159,7 +159,7 @@ public class RestraintEditorLayers : ICkTab
         else if (_dragLayerId == _manager.ActiveEditorItem!.Layers[curLayerIdx].ID)
         {
             //_logger.LogTrace($"Current drag reset!");
-            _dragLayerId = string.Empty;
+            _dragLayerId = Guid.Empty;
         }
 
         // Define the move index that should be used if the drag-drop target is accepted.
@@ -169,7 +169,7 @@ public class RestraintEditorLayers : ICkTab
             if (ImGui.BeginDragDropTarget())
             {
                 // Swap the dragged source with this layers target if the payloads correspond.
-                if (CkGui.AcceptDragDropPayload("ReorderRestraintLayers", out string payloadID, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
+                if (CkGui.AcceptDragDropPayload("ReorderRestraintLayers", out Guid payloadID, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
                     MoveItemToPosition(_manager.ActiveEditorItem!.Layers, x => x.ID == payloadID, moveIndex);
 
                 ImGui.EndDragDropTarget();

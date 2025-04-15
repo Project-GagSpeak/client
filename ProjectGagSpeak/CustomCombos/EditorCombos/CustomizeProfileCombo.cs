@@ -22,16 +22,16 @@ public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
     {
         base.DrawList(width, itemHeight);
         if (NewSelection != null && Items.Count > NewSelection.Value)
-            CurrentSelection = Items[NewSelection.Value];
+            Current = Items[NewSelection.Value];
     }
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection.ProfileGuid == _currentItem)
+        if (Current.ProfileGuid == _currentItem)
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.ProfileGuid == _currentItem);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 

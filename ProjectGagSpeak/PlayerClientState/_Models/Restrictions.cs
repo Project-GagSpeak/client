@@ -1,7 +1,4 @@
-using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.Services;
+using GagSpeak.PlayerData.Storage;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 
@@ -30,8 +27,8 @@ public interface IRestriction
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
     GlamourSlot Glamour { get; set; }
 
-    /// <summary> Determines the Mod applied from this restriction item. </summary>
-    ModAssociation Mod { get; set; }
+    /// <summary> Holds a reference to a mod setting preset. This object stores a ref to the mod container it resides in. </summary>
+    ModSettingsPreset Mod { get; set; }
 
     /// <summary> Determines the Moodle applied from this restriction item. </summary>
     /// <remarks> Can be either singular status or preset. </remarks>
@@ -61,7 +58,7 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
     public GagType GagType { get; init; }
     public bool IsEnabled { get; set; } = false;
     public GlamourSlot Glamour { get; set; } = new GlamourSlot();
-    public ModAssociation Mod { get; set; } = new ModAssociation();
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
     public Stimulation Stimulation { get; set; } = Stimulation.None;
@@ -116,21 +113,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
             ["ProfilePriority"] = ProfilePriority,
             ["DoRedraw"] = DoRedraw,
         };
-
-    public void LoadRestriction(JObject json, ItemService items)
-    {
-        IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false;
-        Glamour = items.ParseGlamourSlot(json["Glamour"]);
-        Mod.LoadMod(json["Mod"]);
-        Moodle.LoadMoodle(json["Moodle"]);
-        Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None;
-        Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None;
-        HeadgearState = JParser.FromJObject(json["HeadgearState"]);
-        VisorState = JParser.FromJObject(json["VisorState"]);
-        ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
-        ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority");
-        DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false;
-    }
 }
 
 public class RestrictionItem : IRestrictionItem, ITraitHolder
@@ -140,7 +122,7 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
     public GlamourSlot Glamour { get; set; } = new GlamourSlot();
-    public ModAssociation Mod { get; set; } = new ModAssociation();
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
     public Stimulation Stimulation { get; set; } = Stimulation.None;
@@ -180,19 +162,6 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
             ["Stimulation"] = Stimulation.ToString(),
             ["Redraw"] = DoRedraw,
         };
-
-    public virtual void LoadRestriction(JObject json, ItemService items)
-    {
-        Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-        Label = json["Label"]?.ToObject<string>() ?? string.Empty;
-        ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty;
-        Glamour = items.ParseGlamourSlot(json["Glamour"]);
-        Mod.LoadMod(json["Mod"]);
-        Moodle.LoadMoodle(json["Moodle"]);
-        Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None;
-        Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None;
-        DoRedraw = json["Redraw"]?.ToObject<bool>() ?? false;
-    }
 }
 
 public class BlindfoldRestriction : RestrictionItem
@@ -234,16 +203,6 @@ public class BlindfoldRestriction : RestrictionItem
         json["CustomPath"] = CustomPath;
         return json;
     }
-
-    public override void LoadRestriction(JObject json, ItemService items)
-    {
-        base.LoadRestriction(json, items);
-        HeadgearState = JParser.FromJObject(json["HeadgearState"]);
-        VisorState = JParser.FromJObject(json["VisorState"]);
-        Kind = Enum.TryParse<BlindfoldType>(json["Kind"]?.ToObject<string>(), out var kind) ? kind : BlindfoldType.Light;
-        ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
-        CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
-    }
 }
 
 public class CollarRestriction : RestrictionItem
@@ -274,12 +233,5 @@ public class CollarRestriction : RestrictionItem
         json["OwnerUID"] = OwnerUID;
         json["CollarWriting"] = CollarWriting;
         return json;
-    }
-
-    public override void LoadRestriction(JObject json, ItemService items)
-    {
-        base.LoadRestriction(json, items);
-        OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty;
-        CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty;
     }
 }

@@ -31,7 +31,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
         {
             // Force a recalculation on the cached display.
             CurrentSelectionIdx = -1;
-            CurrentSelection = default;
+            Current = default;
         }
 
         var ret = ImGui.Selectable(pattern.Label, selected);
@@ -40,7 +40,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 
     public void Draw(float width)
     {
-        var name = CurrentSelection?.Label ?? string.Empty;
+        var name = Current?.Label ?? string.Empty;
         Draw("##RestraintSets", name, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 

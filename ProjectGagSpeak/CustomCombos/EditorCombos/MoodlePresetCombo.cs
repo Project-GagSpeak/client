@@ -32,7 +32,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
             ImGui.SetWindowFontScale(_iconScale);
             base.DrawList(width, itemHeight);
             if (NewSelection != null && Items.Count > NewSelection.Value)
-                CurrentSelection = Items[NewSelection.Value];
+                Current = Items[NewSelection.Value];
         }
         finally
         {
@@ -42,11 +42,11 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection.GUID == _currentItem)
+        if (Current.GUID == _currentItem)
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.GUID == _currentItem);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 

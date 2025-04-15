@@ -28,7 +28,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
 
         // update current selection to the last registered LightTrigger from that pair on construction.
         if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
-            CurrentSelection = _pairRef.LastLightStorage.Triggers.FirstOrDefault();
+            Current = _pairRef.LastLightStorage.Triggers.FirstOrDefault();
     }
 
     // override the method to extract items by extracting all LightTriggers.
@@ -50,17 +50,17 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
 
     protected override void OnButtonPress()
     {
-        if (CurrentSelection is null)
+        if (Current is null)
             return;
 
         // Construct the dto, and then send it off.
         var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, DataUpdateType.TriggerToggled)
         {
-            AffectedIdentifier = CurrentSelection.Id,
+            AffectedIdentifier = Current.Id,
         };
         _mainHub.UserPushPairDataToybox(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Toggling Trigger " + CurrentSelection.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s TriggerList", LoggerType.Permissions);
+        Log.LogDebug("Toggling Trigger " + Current.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s TriggerList", LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(LightTrigger item)

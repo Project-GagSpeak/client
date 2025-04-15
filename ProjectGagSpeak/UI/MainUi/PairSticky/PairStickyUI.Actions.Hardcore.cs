@@ -119,10 +119,10 @@ public partial class PairStickyUI
                     var listToShow = disableForceEmoteState ? EmoteMonitor.SitEmoteComboList : EmoteMonitor.ValidEmotes;
                     _pairCombos.EmoteCombo.Draw("##EmoteCombo" + PermissionData.DispName, WindowMenuWidth, 1.3f, ImGui.GetFrameHeightWithSpacing());
                     // Only allow setting the CPose State if the emote is a sitting one.
-                    using (ImRaii.Disabled(!EmoteMonitor.IsAnyPoseWithCyclePose((ushort)_pairCombos.EmoteCombo.CurrentSelection.RowId)))
+                    using (ImRaii.Disabled(!EmoteMonitor.IsAnyPoseWithCyclePose((ushort)_pairCombos.EmoteCombo.Current.RowId)))
                     {
                         // Get the Max CyclePoses for this emote.
-                        var maxCycles = EmoteMonitor.EmoteCyclePoses((ushort)_pairCombos.EmoteCombo.CurrentSelection.RowId);
+                        var maxCycles = EmoteMonitor.EmoteCyclePoses((ushort)_pairCombos.EmoteCombo.Current.RowId);
                         if (maxCycles is 0) SelectedCPose = 0;
                         // Draw out the slider for the enforced cycle pose.
                         ImGui.SetNextItemWidth(width);
@@ -134,8 +134,8 @@ public partial class PairStickyUI
                         if (ImGui.Button("Force State##ForceEmoteStateTo" + PermissionData.DispName))
                         {
                             // Compile the string for sending.
-                            var newStr = MainHub.UID + "|" + _pairCombos.EmoteCombo.CurrentSelection.RowId.ToString() + "|" + SelectedCPose.ToString() + (SPair.PairPerms.PairLockedStates ? Globals.DevotedString : string.Empty);
-                            _logger.LogDebug("Sending EmoteState update for emote: " + _pairCombos.EmoteCombo.CurrentSelection.Name);
+                            var newStr = MainHub.UID + "|" + _pairCombos.EmoteCombo.Current.RowId.ToString() + "|" + SelectedCPose.ToString() + (SPair.PairPerms.PairLockedStates ? Globals.DevotedString : string.Empty);
+                            _logger.LogDebug("Sending EmoteState update for emote: " + _pairCombos.EmoteCombo.Current.Name);
                             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr), UpdateDir.Other));
                             PairCombos.Opened = InteractionType.None;
                         }

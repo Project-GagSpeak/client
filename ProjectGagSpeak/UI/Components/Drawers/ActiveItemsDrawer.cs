@@ -233,19 +233,19 @@ public class ActiveItemsDrawer
         {
             ImGui.Dummy(new Vector2(rightWidth, ImGui.GetFrameHeight()));
             var change = gagCombo.Draw("##GagApplyRemove" + slotIdx, gagData.GagItem, rightWidth);
-            if (change && gagCombo.CurrentSelection is not null && gagData.GagItem != gagCombo.CurrentSelection.GagType)
+            if (change && gagCombo.Current is not null && gagData.GagItem != gagCombo.Current.GagType)
             {
                 // return if we are not allow to do the application.
-                if (_gags.CanApply((int)slotIdx, gagCombo.CurrentSelection.GagType))
+                if (_gags.CanApply((int)slotIdx, gagCombo.Current.GagType))
                 {
-                    var updateType = (gagCombo.CurrentSelection.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+                    var updateType = (gagCombo.Current.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveGagSlot()
                     {
-                        GagItem = gagCombo.CurrentSelection.GagType,
+                        GagItem = gagCombo.Current.GagType,
                         Enabler = MainHub.UID,
                     };
                     _mediator.Publish(new GagDataChangedMessage(updateType, slotIdx, newSlotData));
-                    _logger.LogTrace($"Requesting Server to change gag layer {(int)slotIdx} to {gagCombo.CurrentSelection.GagType} from {gagData.GagItem}");
+                    _logger.LogTrace($"Requesting Server to change gag layer {(int)slotIdx} to {gagCombo.Current.GagType} from {gagData.GagItem}");
                 }
             }
         }
@@ -323,20 +323,20 @@ public class ActiveItemsDrawer
             var combo = _restrictionItems[slotIdx];
             ImGui.Dummy(new Vector2(rightWidth, ImGui.GetFrameHeight()/2));
             var change = combo.Draw("##RestrictionApplyRemove" + slotIdx, itemData.Identifier, rightWidth);
-            if (change && combo.CurrentSelection is not null && itemData.Identifier != combo.CurrentSelection.Identifier)
+            if (change && combo.Current is not null && itemData.Identifier != combo.Current.Identifier)
             {
                 // return if we are not allow to do the application.
                 if (_restrictions.CanApply(slotIdx))
                 {
-                    var updateType = combo.CurrentSelection.Identifier.IsEmptyGuid() 
+                    var updateType = combo.Current.Identifier.IsEmptyGuid() 
                         ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveRestriction()
                     {
-                        Identifier = combo.CurrentSelection.Identifier,
+                        Identifier = combo.Current.Identifier,
                         Enabler = MainHub.UID,
                     };
                     _mediator.Publish(new RestrictionDataChangedMessage(updateType, slotIdx, newSlotData));
-                    _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.CurrentSelection.Identifier} from {itemData.Identifier}");
+                    _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.Current.Identifier} from {itemData.Identifier}");
                 }
             }
         }

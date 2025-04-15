@@ -25,7 +25,7 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
         _statuses = monitor;
         _mainHub = hub;
         _iconScale = iconScale;
-        CurrentSelection = default;
+        Current = default;
     }
 
     protected virtual Vector2 IconSize => MoodlesDisplayer.DefaultSize * _iconScale;
@@ -48,13 +48,13 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
 
     protected override void OnButtonPress(int _)
     {
-        if(CurrentSelection is null)
+        if(Current is null)
             return;
 
-        if (!CanDoAction(CurrentSelection))
+        if (!CanDoAction(Current))
             return;
 
-        DoAction(CurrentSelection);
+        DoAction(Current);
         PairCombos.Opened = InteractionType.None;
     }
 

@@ -11,10 +11,10 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 
-public sealed class ModCombo : CkFilterComboCache<Mod>
+public sealed class ModCombo : CkFilterComboCache<ModInfo>
 {
     private string _currentItem;
-    public ModCombo(ILogger log, Func<IReadOnlyList<Mod>> generator)
+    public ModCombo(ILogger log, Func<IReadOnlyList<ModInfo>> generator)
     : base(generator, log)
     {
         SearchByParts = false;
@@ -22,11 +22,11 @@ public sealed class ModCombo : CkFilterComboCache<Mod>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection.DirectoryName == _currentItem)
+        if (Current.DirPath == _currentItem)
             return currentSelected;
 
-        CurrentSelectionIdx = Items.IndexOf(i => i.DirectoryName == _currentItem);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        CurrentSelectionIdx = Items.IndexOf(i => i.DirPath == _currentItem);
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 
@@ -36,15 +36,15 @@ public sealed class ModCombo : CkFilterComboCache<Mod>
     {
         InnerWidth = width * innerWidthScaler;
         _currentItem = currentModItem;
-        var previewLabel = Items.FirstOrDefault(i => i.DirectoryName == _currentItem).Name ?? "Select a Mod...";
+        var previewLabel = Items.FirstOrDefault(i => i.DirPath == _currentItem).Name ?? "Select a Mod...";
         return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 
-    protected override string ToString(Mod Mod)
+    protected override string ToString(ModInfo Mod)
         => Mod.Name;
 
     protected override bool IsVisible(int globalIndex, LowerString filter)
-        => filter.IsContained(Items[globalIndex].Name) || filter.IsContained(Items[globalIndex].DirectoryName);
+        => filter.IsContained(Items[globalIndex].Name) || filter.IsContained(Items[globalIndex].DirPath);
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
@@ -56,11 +56,11 @@ public sealed class ModCombo : CkFilterComboCache<Mod>
         {
             using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale);
             using var tt = ImRaii.Tooltip();
-            var namesDifferent = mod.Name != mod.DirectoryName;
+            var namesDifferent = mod.Name != mod.DirPath;
             ImGui.Dummy(new Vector2(300 * ImGuiHelpers.GlobalScale, 0));
             ImUtf8.TextFrameAligned("Directory Name");
             ImGui.SameLine(Math.Max(ImGui.GetItemRectSize().X + 3 * ImGui.GetStyle().ItemSpacing.X, 150 * ImGuiHelpers.GlobalScale));
-            ImUtf8.TextFrameAligned(mod.DirectoryName);
+            ImUtf8.TextFrameAligned(mod.DirPath);
         }
         return ret;
     }

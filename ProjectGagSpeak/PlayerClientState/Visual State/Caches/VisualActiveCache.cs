@@ -1,34 +1,26 @@
-using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.Restrictions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
-using System.Linq;
 
 namespace GagSpeak.PlayerState.Visual;
 
 public interface IVisualCache
 {
     Dictionary<EquipSlot, GlamourSlot> Glamour { get; }
-    HashSet<ModAssociation> Mods { get; }
+    HashSet<ModSettingsPreset> Mods { get; }
     HashSet<Moodle> Moodles { get; }
     Traits Traits { get; }
 }
 
 public class VisualRestrictionsCache : IVisualCache
 {
-    public Dictionary<EquipSlot, GlamourSlot> Glamour { get; private set; }
-    public HashSet<ModAssociation> Mods { get; private set; }
-    public HashSet<Moodle> Moodles { get; private set; }
-    public Traits Traits { get; private set; }
+    public Dictionary<EquipSlot, GlamourSlot> Glamour { get; private set; } = new Dictionary<EquipSlot, GlamourSlot>();
+    public HashSet<ModSettingsPreset> Mods { get; private set; } = new HashSet<ModSettingsPreset>();
+    public HashSet<Moodle> Moodles { get; private set; } = new HashSet<Moodle>();
+    public Traits Traits { get; private set; } = 0;
 
-    public VisualRestrictionsCache()
-    {
-        Glamour = new Dictionary<EquipSlot, GlamourSlot>();
-        Mods = new HashSet<ModAssociation>();
-        Moodles = new HashSet<Moodle>();
-        Traits = 0;
-    }
+    public VisualRestrictionsCache() { }
 
     public void UpdateCache(SortedList<int, RestrictionItem> newRestrictions)
     {
@@ -47,7 +39,7 @@ public class VisualRestrictionsCache : IVisualCache
             .ToList();
 
         Glamour = new Dictionary<EquipSlot, GlamourSlot>();
-        Mods = new HashSet<ModAssociation>(); // HashSet ensures unique Mods based on DirectoryName
+        Mods = new HashSet<ModSettingsPreset>(); // HashSet ensures unique Mods based on DirectoryName
         Moodles = new HashSet<Moodle>(); // HashSet ensures unique Moodles based on Id
         Traits = allowTraits ? newCursedItems.Select(x => x.RestrictionRef.Traits).DefaultIfEmpty(Traits.None).Aggregate((x, y) => x | y) : 0;
 
@@ -65,24 +57,21 @@ public class VisualRestrictionsCache : IVisualCache
 
 public class VisualAdvancedRestrictionsCache : IVisualCache
 {
-    public Dictionary<EquipSlot, GlamourSlot> Glamour { get; private set; }
-    public HashSet<ModAssociation> Mods { get; private set; }
-    public HashSet<Moodle> Moodles { get; private set; }
-    public OptionalBool Headgear { get; private set; }
-    public OptionalBool Visor { get; private set; }
-    public OptionalBool Weapon { get; private set; }
-    public (Guid Profile, uint Priority) CustomizeProfile { get; private set; }
-    public Traits Traits { get; private set; }
+    public Dictionary<EquipSlot, GlamourSlot> Glamour { get; private set; } = new Dictionary<EquipSlot, GlamourSlot>();
+    public HashSet<ModSettingsPreset> Mods { get; private set; } = new HashSet<ModSettingsPreset>();
+    public HashSet<Moodle> Moodles { get; private set; } = new HashSet<Moodle>();
+    public OptionalBool Headgear { get; private set; } = OptionalBool.Null;
+    public OptionalBool Visor { get; private set; } = OptionalBool.Null;
+    public OptionalBool Weapon { get; private set; } = OptionalBool.Null;
+    public (Guid Profile, uint Priority) CustomizeProfile { get; private set; } = (Guid.Empty, 0);
+    public Traits Traits { get; private set; } = 0;
 
-    public VisualAdvancedRestrictionsCache()
-    {
-        ToDefaults();
-    }
+    public VisualAdvancedRestrictionsCache() { }
 
     private void ToDefaults()
     {
         Glamour = new Dictionary<EquipSlot, GlamourSlot>();
-        Mods = new HashSet<ModAssociation>();
+        Mods = new HashSet<ModSettingsPreset>();
         Moodles = new HashSet<Moodle>();
         Headgear = OptionalBool.Null;
         Visor = OptionalBool.Null;

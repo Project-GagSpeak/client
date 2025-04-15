@@ -174,10 +174,10 @@ public partial class GagRestrictionsPanel
             : $"There is no Glamour Item attached to this {_selector.Selected!.GagType.GagName()}.", color: ImGuiColors.ParsedGold);
 
         ImUtf8.SameLineInner();
-        var hasMod = !(_selector.Selected!.Mod.CustomSettings.IsNullOrEmpty());
+        var hasMod = !(_selector.Selected!.Mod.Label.IsNullOrEmpty());
         CkGui.FramedIconText(FAI.FileDownload);
         CkGui.AttachToolTip(hasMod
-            ? "Using Preset for Mod: " + _selector.Selected!.Mod.ModInfo.Name
+            ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
             : "This Gag has no associated Mod Preset.");
 
         // go right aligned for the trait previews.

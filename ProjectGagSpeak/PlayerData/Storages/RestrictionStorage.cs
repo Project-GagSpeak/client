@@ -7,22 +7,12 @@ namespace GagSpeak.PlayerData.Storage;
 
 public class RestraintStorage : List<RestraintSet>
 {
-    /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
-    /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
-    /// </summary>
     public bool TryGetRestraint(Guid id, [NotNullWhen(true)] out RestraintSet? set)
     {
         set = this.FirstOrDefault(x => x.Identifier == id);
         return set != null;
     }
 
-    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
-    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
-    /// <param name="index"> the index of the item in the list (if found). </param>
-    /// <returns> True if the index was found, false if it was not. </returns>
-    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
-    public bool TryFindIndexById(Guid id, out int index)
-        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
@@ -36,14 +26,6 @@ public class RestrictionStorage : List<RestrictionItem>
         item = this.FirstOrDefault(x => x.Identifier == id);
         return item != null;
     }
-
-    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
-    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
-    /// <param name="index"> the index of the item in the list (if found). </param>
-    /// <returns> True if the index was found, false if it was not. </returns>
-    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
-    public bool TryFindIndexById(Guid id, out int index)
-        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
 
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)

@@ -29,7 +29,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
     {
         InnerWidth = width * innerWidthScaler;
         // if we have a new item selected we need to update some conditionals.
-        var previewLabel = CurrentSelection.Name ?? "Select an Emote...";
+        var previewLabel = Current.Name ?? "Select an Emote...";
         return Draw(label, previewLabel, string.Empty, width, itemH, flags);
     }
 

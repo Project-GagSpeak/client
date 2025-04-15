@@ -3,6 +3,8 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Interop.Ipc;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -35,8 +37,6 @@ public class ModPresetsPanel
         _guides = guides;
     }
 
-    private IReadOnlyDictionary<string, ModSettings> _presets
-        => _manager.GetModPresets(_selector.SelectedMod.DirectoryName);
     private string _selectedPreset = string.Empty;
     private string _renamingPresetName = string.Empty;
     private string _newPresetName = string.Empty;
@@ -54,40 +54,43 @@ public class ModPresetsPanel
         using var group = ImRaii.Group();
         // Create two sub components here, a preset selector and a preset editor.
         var presetSelectorH = ImGui.GetFrameHeightWithSpacing() * 3;
-        var headerName = _selector.SelectedMod.Name.IsNullOrEmpty() ? "Select a Mod to view its Presets" : _selector.SelectedMod.Name;
+        var headerName = _selector.SelectedContainer.ModName.IsNullOrEmpty() ? "Select a Mod to view its Presets" : _selector.SelectedContainer.ModName;
         using (CkComponents.CenterHeaderChild("MP-Selector", headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH), WFlags.AlwaysUseWindowPadding))
             DrawPresetListForSelected();
 
-        if (!_presets.ContainsKey(_selectedPreset))
+        if (!_selector.SelectedContainer.ModPresets.Any(p => p.Label == _selectedPreset))
             _selectedPreset = string.Empty;
 
-        var editingPreset = _manager.CurrentEditCache is not null;
+        var editingPreset = _manager.ActiveEditorItem is not null;
         var icon = editingPreset ? FAI.Save : FAI.Edit;
 
-        if(_selectedPreset.IsNullOrEmpty())
+        if (_selectedPreset.IsNullOrEmpty())
         {
             using (CkComponents.CenterHeaderChild("MP-EditorFallback", "Customize Settings", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
-                _modDrawer.DrawPresetPreview(_selector.SelectedMod, _selectedPreset);
+                _modDrawer.DrawPresetEditor();
         }
         else
         {
             using (CkComponents.ButtonHeaderChild("MP-Editor", "Settings Preset Editor", ImGui.GetContentRegionAvail(), CkComponents.DefaultHeaderRounding,
                 WFlags.AlwaysUseWindowPadding, icon, ToggleEditState))
             {
-                if(editingPreset)
+                if (editingPreset)
                     _modDrawer.DrawPresetEditor();
                 else
-                    _modDrawer.DrawPresetPreview(_selector.SelectedMod, _selectedPreset);
+                {
+                    var modPreset = _selector.SelectedContainer.ModPresets.FirstOrDefault(p => p.Label == _selectedPreset) ?? new ModSettingsPreset(_selector.SelectedContainer);
+                    _modDrawer.DrawPresetPreview(modPreset);
+                }
             }
         }
     }
 
     private void ToggleEditState()
     {
-        if (_manager.CurrentEditCache is not null)
+        if (_manager.ActiveEditorItem is not null)
             _manager.ExitEditingAndSave();
         else
-            _manager.StartEditingCustomPreset(_selector.SelectedMod, _selectedPreset);
+            _manager.StartEditingCustomPreset(_selector.SelectedContainer.DirectoryPath, _selectedPreset);
     }
 
     private void DrawPresetListForSelected()
@@ -96,14 +99,14 @@ public class ModPresetsPanel
         using (CkComponents.FramedChild("PresetList", CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
         {
             // return if the size of the keys is 0.
-            if (_selector.SelectedMod.Name.IsNullOrEmpty())
+            if (_selector.SelectedContainer.ModName.IsNullOrEmpty())
                 return;
             // We have a mod, so we should grab the presets from it.
             var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-            foreach (var preset in _presets.Keys)
+            foreach (var preset in _selector.SelectedContainer.ModPresets)
             {
-                var selected = _selectedPreset == preset;
-                if (DrawItemListingChild(preset, selected, itemSize, () => _selectedPreset = selected ? string.Empty : preset))
+                var selected = _selectedPreset == preset.Label;
+                if (DrawItemListingChild(preset, selected, itemSize, () => _selectedPreset = selected ? string.Empty : preset.Label))
                     break;
                 CkGui.AttachToolTip("Hold CTRL and click to rename!");
             }
@@ -112,20 +115,20 @@ public class ModPresetsPanel
         }
     }
 
-    private bool DrawItemListingChild(string presetName, bool selected, Vector2 size, Action onClick)
+    private bool DrawItemListingChild(ModSettingsPreset modPreset, bool selected, Vector2 size, Action onClick)
     {
-        var renamingChild = _renamingPresetName == presetName;
-        using (ImRaii.Child("Preset-" + presetName, size))
+        var renamingChild = _renamingPresetName == modPreset.Label;
+        using (ImRaii.Child("Preset-" + modPreset.Label, size))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             if (renamingChild)
             {
-                var newName = presetName;
+                var newName = modPreset.Label;
                 if (ImGui.InputText("##RenamePreset", ref newName, 255, ImGuiInputTextFlags.EnterReturnsTrue))
                 {
-                    if (newName != presetName)
+                    if (newName != modPreset.Label)
                     {
-                        _manager.RenameModPreset(_selector.SelectedMod, presetName, newName);
+                        modPreset.Label = newName;
                         _renamingPresetName = string.Empty;
                         return true;
                     }
@@ -136,12 +139,12 @@ public class ModPresetsPanel
             else
             {
                 ImGui.AlignTextToFramePadding();
-                ImGui.TextUnformatted(presetName);
+                ImGui.TextUnformatted(modPreset.Label);
             }
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemInnerSpacing.X);
             if (CkGui.IconButton(FAI.Eraser, inPopup: true))
             {
-                _manager.RemoveSettingPreset(_selector.SelectedMod.DirectoryName, presetName);
+                _manager.RemovePreset(modPreset);
                 return true;
             }
         }
@@ -155,7 +158,7 @@ public class ModPresetsPanel
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hovering)
         {
             if (ImGui.GetIO().KeyCtrl)
-                _renamingPresetName = _renamingPresetName == presetName ? string.Empty : presetName;
+                _renamingPresetName = _renamingPresetName == modPreset.Label ? string.Empty : modPreset.Label;
             else
                 onClick();
         }
@@ -177,6 +180,6 @@ public class ModPresetsPanel
         ImGui.GetWindowDrawList().AddRectFilled(min, max, color, ImGui.GetStyle().FrameRounding * 2f);
         ImGui.GetWindowDrawList().AddRect(min, max, color, ImGui.GetStyle().FrameRounding * 2f);
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hovered)
-            _manager.AddModPreset(_selector.SelectedMod, "New Preset");
+            _manager.TryAddModPreset(_selector.SelectedContainer, _newPresetName);
     }
 }

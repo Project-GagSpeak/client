@@ -52,8 +52,11 @@ public static class JParser
         return new Moodle { Id = id };
     }
 
-    public static StainIds ParseCompactStainIds(JObject stainJson)
+    public static StainIds ParseCompactStainIds(JToken? jToken)
     {
+        if (jToken is not JObject stainJson)
+            return StainIds.None;
+
         var result = StainIds.None;
         var gameStainString = (stainJson["Stains"]?.Value<string>() ?? "0,0").Split(',');
         return gameStainString.Length == 2

@@ -203,7 +203,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         {
             result[equipSlot] = new RestraintSlotBasic
             {
-                ApplyFlags = asOverlay ? RestraintFlags.Basic : 0,
+                ApplyFlags = asOverlay ? RestraintFlags.IsOverlay : 0,
                 Glamour = new GlamourSlot(equipSlot, ItemService.NothingItem(equipSlot))
             };
 

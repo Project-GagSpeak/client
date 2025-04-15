@@ -335,10 +335,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
                 var restrictionString = restrictionValue.Value<string>();
                 if (Guid.TryParse(restrictionString, out var refGuid))
                 {
-                    if(!_restrictions.Storage.TryFindIndexById(refGuid, out int matchIdx))
-                        throw new Exception("Failed to retrieve restriction. Identifier not valid in storage!");
-                    // If valid, assign the IRestriction as a ref to the restriction item.
-                    var restrictionItem = _restrictions.Storage[matchIdx];
+                    if(_restrictions.Storage.TryGetRestriction(refGuid, out var match))
+                        restrictionRef = match;
                 }
                 else if (Enum.TryParse<GagType>(restrictionString, out var gagType))
                 {

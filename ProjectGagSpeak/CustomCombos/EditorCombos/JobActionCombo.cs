@@ -23,7 +23,7 @@ public sealed class JobActionCombo : CkFilterComboCache<ClientMonitor.ActionRowL
     {
         InnerWidth = width * innerWidthScaler;
         // if we have a new item selected we need to update some conditionals.
-        var previewLabel = CurrentSelection.Name ?? "Select an Action...";
+        var previewLabel = Current.Name ?? "Select an Action...";
         return Draw(label, previewLabel, string.Empty, width, itemH, flags);
     }
 

@@ -25,7 +25,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
     {
         _mainHub = hub;
         _pairRef = pair;
-        CurrentSelection = default;
+        Current = default;
     }
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -59,11 +59,11 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 
 
     protected override bool DisableCondition()
-        => CurrentSelection is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == CurrentSelection.Id;
+        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == Current.Id;
 
     protected override void OnButtonPress(int layerIdx)
     {
-        if (CurrentSelection is null)
+        if (Current is null)
             return;
 
         var updateType = _pairRef.LastRestrictionsData.Restrictions[layerIdx].Identifier.IsEmptyGuid()
@@ -73,13 +73,13 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, updateType)
         {
             Layer = layerIdx,
-            RestrictionId = CurrentSelection.Id,
+            RestrictionId = Current.Id,
             Enabler = MainHub.UID,
         };
 
         _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
         PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Restraint Set " + CurrentSelection.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
     }
 
     private void DrawItemTooltip(LightRestriction setItem)

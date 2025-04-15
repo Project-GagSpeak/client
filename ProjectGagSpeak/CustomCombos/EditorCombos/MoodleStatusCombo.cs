@@ -27,7 +27,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
             ImGui.SetWindowFontScale(_iconScale);
             base.DrawList(width, itemHeight);
             if (NewSelection != null && Items.Count > NewSelection.Value)
-                CurrentSelection = Items[NewSelection.Value];
+                Current = Items[NewSelection.Value];
         }
         finally
         {
@@ -37,11 +37,11 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection.GUID == _currentItem)
+        if (Current.GUID == _currentItem)
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.GUID == _currentItem);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 
@@ -50,7 +50,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
     public bool Draw(string label, float width)
     {
         InnerWidth = width * 1.5f;
-        _currentItem = CurrentSelection.GUID;
+        _currentItem = Current.GUID;
         return Draw(label, _currentItem, width);
     }
 

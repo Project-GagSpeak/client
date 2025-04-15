@@ -5,6 +5,7 @@ using GagSpeak.FileSystems;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
@@ -168,10 +169,10 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn(restriction.Identifier.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Restriction File System Path");
+            ImGuiUtil.DrawTableColumn("Restrictions FS Path");
             ImGuiUtil.DrawTableColumn(_restrictionsFS.FindLeaf(restriction, out var leaf) ? leaf.FullName() : "No Path Known");
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Assigned Thumbnail Path");
+            ImGuiUtil.DrawTableColumn("Thumbnail Path");
             ImGuiUtil.DrawTableColumn(restriction.ThumbnailPath);
             ImGui.TableNextRow();
 
@@ -187,12 +188,9 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn(restriction.Glamour.GameStain.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Mod Preset Association");
-            ImGuiUtil.DrawTableColumn(restriction.Mod.ModInfo.Name);
-            ImGuiUtil.DrawTableColumn(restriction.Mod.ModInfo.DirectoryName);
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Mod Preset Profile Name");
-            ImGuiUtil.DrawTableColumn(restriction.Mod.CustomSettings);
+            ImGuiUtil.DrawTableColumn("Mod Association");
+            ImGuiUtil.DrawTableColumn(restriction.Mod.Container.ModName);
+            ImGuiUtil.DrawTableColumn(restriction.Mod.Label);
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Moodle Type");
@@ -229,7 +227,7 @@ public class DebuggerBinds
                 if (item is RestraintSlotBasic basicSlot)
                 {
                     ImGuiUtil.DrawTableColumn(slot.ToName());
-                    ImGuiUtil.DrawTableColumn("Basic");
+                    ImGuiUtil.DrawTableColumn("Normal");
                     ImGuiUtil.DrawTableColumn($"{basicSlot.EquipItem.Name} ({basicSlot.EquipItem.ItemId}) ({basicSlot.Stains})");
                     ImGuiUtil.DrawTableColumn(item.ApplyFlags.ToString());
                     ImGui.TableNextRow();
@@ -276,7 +274,7 @@ public class DebuggerBinds
                 {
                     ImGuiUtil.DrawTableColumn("Layer" + layerIdx);
                     ImGuiUtil.DrawTableColumn(bindLayer.IsActive ? "Active" : "Inactive");
-                    ImGuiUtil.DrawTableColumn(bindLayer.ID);
+                    ImGuiUtil.DrawTableColumn(bindLayer.ID.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("Restriction");
                     ImGuiUtil.DrawTableColumn(bindLayer.Ref?.Identifier.ToString() ?? "NULL REFERENCE");
@@ -288,14 +286,14 @@ public class DebuggerBinds
                         DrawRestriction(bindLayer.Ref);
                         ImGui.EndTooltip();
                     }
-                    ImGuiUtil.DrawTableColumn(bindLayer.ApplyFlags.ToString());
+                    ImGuiUtil.DrawTableColumn(bindLayer.ApplyFlags.ToSplitFlagString());
                     ImGui.TableNextRow();
 
                     ImGuiUtil.DrawTableColumn("Custom Stains");
                     ImGuiUtil.DrawTableColumn(bindLayer.CustomStains.ToString());
                     ImGui.TableNextRow();
                 }
-                else if (layer is ModPresetLayer modLayer && modLayer.Ref is ModAssociation modRef)
+                else if (layer is ModPresetLayer modLayer && modLayer.Mod is ModSettingsPreset modRef)
                     DrawModAssociationRow(modRef);
                 else
                 {
@@ -308,18 +306,18 @@ public class DebuggerBinds
         }
     }
 
-    private void DrawModAssociationRow(ModAssociation mod)
+    private void DrawModAssociationRow(ModSettingsPreset mod)
     {
-        ImGuiUtil.DrawTableColumn(mod.ModInfo.Name ?? "NO MOD SET");
+        ImGuiUtil.DrawTableColumn(mod.Container.ModName);
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(mod.CustomSettings + "(Hover)");
+        ImGui.TextUnformatted(mod.Label + "(Hover)");
         if (ImGui.IsItemHovered())
         {
             ImGui.BeginTooltip();
-            _modPresetDrawer.DrawPresetPreview(mod.ModInfo, mod.CustomSettings);
+            _modPresetDrawer.DrawPresetPreview(mod);
             ImGui.EndTooltip();
         }
-        ImGuiUtil.DrawTableColumn($"[{mod.ModInfo.DirectoryName ?? "NO MOD DIRECTORY"}]");
+        ImGuiUtil.DrawTableColumn($"[{mod.Container.DirectoryPath}]");
         ImGui.TableNextRow();
     }
 }

@@ -25,11 +25,11 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection?.Identifier == _currentRestriction)
+        if (Current?.Identifier == _currentRestriction)
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.Identifier == _currentRestriction);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 
@@ -42,7 +42,7 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
     {
         InnerWidth = width * 1.25f;
         _currentRestriction = currentRestriction;
-        var previewLabel = CurrentSelection?.Label ?? string.Empty;
+        var previewLabel = Current?.Label ?? string.Empty;
         return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
     }
 
@@ -53,7 +53,7 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
         if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, restriction.Identifier) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
-            CurrentSelection = default;
+            Current = default;
         }
 
         var ret = ImGui.Selectable(restriction.Label, selected);

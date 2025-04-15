@@ -1,4 +1,5 @@
 using Dalamud.Interface.Colors;
+using Dalamud.Utility;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
@@ -25,11 +26,11 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (CurrentSelection?.GagType == _currentGag)
+        if (Current?.GagType == _currentGag)
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.GagType == _currentGag);
-        CurrentSelection = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
 
@@ -52,7 +53,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
         if (Icons.DrawFavoriteStar(_favorites, gagItem.GagType) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
-            CurrentSelection = default;
+            Current = default;
         }
 
         var ret = ImGui.Selectable(gagItem.GagType.GagName(), selected);
@@ -70,8 +71,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
     {
         return item.IsEnabled 
             && (item.Glamour.GameItem.ItemId != ItemService.NothingItem(item.Glamour.Slot).ItemId
-                || item.Moodle.Id != Guid.Empty
-                || item.Mod is not null);
+                || item.Moodle.Id != Guid.Empty || !string.IsNullOrEmpty(item.Mod.Label));
     }
 }
 
