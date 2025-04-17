@@ -17,6 +17,7 @@ using GagspeakAPI.Data.Character;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
@@ -28,6 +29,8 @@ public class DebuggerBinds
     private readonly GlobalData _playerData;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly CursedLootManager _cursedLoot;
+    private readonly TriggerManager _triggers;
     private readonly RestrictionFileSystem _restrictionsFS;
     private readonly RestraintSetFileSystem _restraintsFS;
     private readonly MoodleDrawer _moodleDrawer;
@@ -36,6 +39,8 @@ public class DebuggerBinds
         GlobalData playerData,
         RestrictionManager restrictions,
         RestraintManager restraints,
+        CursedLootManager cursedLoot,
+        TriggerManager triggers,
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
         MoodleDrawer moodleDrawer,
@@ -44,17 +49,168 @@ public class DebuggerBinds
         _playerData = playerData;
         _restrictions = restrictions;
         _restraints = restraints;
+        _cursedLoot = cursedLoot;
+        _triggers = triggers;
         _restrictionsFS = restrictionsFS;
         _restraintsFS = restraintsFS;
         _moodleDrawer = moodleDrawer;
         _modPresetDrawer = modPresetDrawer;
     }
 
+    public void DrawGlobalData()
+    {
+        if (!ImGui.CollapsingHeader("Player Global Data"))
+            return;
+        using (var node = ImRaii.TreeNode("Incoming Pair Requests##0"))
+            if (node)
+            {
+                ImGui.TextUnformatted("Incoming Requests:");
+                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGuiUtil.DrawTableColumn("User");
+                    ImGuiUtil.DrawTableColumn("RecipientUser");
+                    ImGuiUtil.DrawTableColumn("AttachedMessage");
+                    ImGuiUtil.DrawTableColumn("CreationTime");
+                    foreach (var req in _playerData.IncomingRequests)
+                    {
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.RecipientUser.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
+                        ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
+                    }
+                }
+                ImGui.Spacing();
+            }
+        using (var node = ImRaii.TreeNode("Outgoing Pair Requests##1"))
+            if (node)
+            {
+                ImGui.TextUnformatted("Outgoing Requests:");
+                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGuiUtil.DrawTableColumn("User");
+                    ImGuiUtil.DrawTableColumn("RecipientUser");
+                    ImGuiUtil.DrawTableColumn("AttachedMessage");
+                    ImGuiUtil.DrawTableColumn("CreationTime");
+                    foreach (var req in _playerData.OutgoingRequests)
+                    {
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.RecipientUser.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
+                        ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
+                    }
+                }
+            }
+        using (var node = ImRaii.TreeNode("Global Permissions##2"))
+            if (node)
+            {
+                ImGui.TextUnformatted("Global Permissions:");
+                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGuiUtil.DrawTableColumn("ChatGarblerChannelsBitfield:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerChannelsBitfield.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerActive.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ChatGarblerLocked:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerLocked.ToString());
+                    ImGui.TableNextRow();
+
+                    // wardrobe global modifiable permissions
+                    ImGuiUtil.DrawTableColumn("WardrobeEnabled:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.WardrobeEnabled.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("GagVisuals:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.GagVisuals.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("RestrictionVisuals:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.RestrictionVisuals.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("RestraintSetVisuals:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.RestraintSetVisuals.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("PuppeteerEnabled:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.PuppeteerEnabled.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("TriggerPhrase:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.TriggerPhrase.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("PuppetPerms:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.PuppetPerms.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ToyboxEnabled:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToyboxEnabled.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("LockToyboxUI:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.LockToyboxUI.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ToysAreConnected:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToysAreConnected.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ToysAreInUse:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToysAreInUse.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("SpatialAudio:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.SpatialAudio.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ForcedFollow:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedFollow.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ForcedEmoteState:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedEmoteState.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ForcedStay:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedStay.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ChatBoxesHidden:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatBoxesHidden.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ChatInputHidden:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatInputHidden.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ChatInputBlocked:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatInputBlocked.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("GlobalShockShareCode:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.GlobalShockShareCode.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("AllowShocks:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowShocks.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("AllowVibrations:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowVibrations.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("AllowBeeps:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowBeeps.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("MaxIntensity:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.MaxIntensity.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("MaxDuration:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.MaxDuration.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("ShockVibrateDuration:");
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ShockVibrateDuration.ToString());
+                    ImGui.TableNextRow();
+                    ImGuiUtil.DrawTableColumn("User");
+                    ImGuiUtil.DrawTableColumn("RecipientUser");
+                    ImGuiUtil.DrawTableColumn("AttachedMessage");
+                    ImGuiUtil.DrawTableColumn("CreationTime");
+                }
+            }
+    }
+
     public void DrawRestrictionStorage()
     {
         if (!ImGui.CollapsingHeader("Restriction Storage"))
             return;
-
+        if (_restrictions.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Restriction Storage is null or empty");
+            return;
+        }
         foreach (var (restriction, idx) in _restrictions.Storage.WithIndex())
         {
             using var node = ImRaii.TreeNode($"{restriction.Label}##{idx}");
@@ -69,7 +225,11 @@ public class DebuggerBinds
     {
         if (!ImGui.CollapsingHeader("RestraintSet Storage"))
             return;
-
+        if (_restraints.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("RestraintSet Storage is null or empty");
+            return;
+        }
         foreach (var (restraintSet, idx) in _restraints.Storage.WithIndex())
         {
             using var node = ImRaii.TreeNode($"{restraintSet.Label}##{idx}");
@@ -77,6 +237,42 @@ public class DebuggerBinds
                 continue;
 
             DrawRestraintSet(restraintSet);
+        }
+    }
+
+    public void DrawCursedLootStorage()
+    {
+        if (!ImGui.CollapsingHeader("CursedLoot Storage"))
+            return;
+        if (_cursedLoot.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Cursed Loot Storage is null or empty");
+            return;
+        }
+        foreach (var (cursedloot, idx) in _cursedLoot.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{cursedloot.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawCursedLoot(cursedloot);
+        }
+    }
+
+    public void DrawTriggerStorage()
+    {
+        if (!ImGui.CollapsingHeader("Trigger Storage"))
+            return;
+        if (_triggers.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Trigger Storage is null or empty");
+            return;
+        }
+        foreach (var (trigger, idx) in _triggers.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{trigger.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawTrigger(trigger);
         }
     }
 
@@ -327,5 +523,67 @@ public class DebuggerBinds
         }
         ImGuiUtil.DrawTableColumn($"[{mod.Container.DirectoryPath}]");
         ImGui.TableNextRow();
+    }
+    private void DrawCursedLoot(CursedItem cursedLoot)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(cursedLoot.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(cursedLoot.Label.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("InPool");
+            ImGuiUtil.DrawTableColumn(cursedLoot.InPool.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("AppliedTime");
+            ImGuiUtil.DrawTableColumn(cursedLoot.AppliedTime.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ReleaseTime");
+            ImGuiUtil.DrawTableColumn(cursedLoot.ReleaseTime.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("CanOverride");
+            ImGuiUtil.DrawTableColumn(cursedLoot.CanOverride.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Precedence");
+            ImGuiUtil.DrawTableColumn(cursedLoot.Precedence.ToString());
+            ImGui.TableNextRow();
+            var restrictionRef = cursedLoot.RestrictionRef as RestrictionItem;
+            if (restrictionRef == null)
+            {
+                ImGuiUtil.DrawTableColumn("Restriction");
+                ImGuiUtil.DrawTableColumn("null");
+                ImGui.TableNextRow();
+            } else {
+                DrawRestriction(restrictionRef!);
+            }
+        }
+    }
+    private void DrawTrigger(Trigger trigger)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Enabled");
+            ImGuiUtil.DrawTableColumn(trigger.Enabled.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Priority");
+            ImGuiUtil.DrawTableColumn(trigger.Priority.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(trigger.Label);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Description");
+            ImGuiUtil.DrawTableColumn(trigger.Description);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Action Type");
+            ImGuiUtil.DrawTableColumn(trigger.ActionType.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Invokable Action");
+            ImGuiUtil.DrawTableColumn(trigger.InvokableAction.ToString());
+        }
     }
 }
