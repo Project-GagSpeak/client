@@ -26,10 +26,18 @@ public class DebuggerStandaloneUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
+        _bindsDebugger.DrawGlobalData();
+
+        ImGui.Separator();
         _bindsDebugger.DrawRestrictionStorage();
 
         ImGui.Separator();
-
         _bindsDebugger.DrawRestraintStorage();
+        
+        ImGui.Separator();
+        _bindsDebugger.DrawCursedLootStorage();
+        
+        ImGui.Separator();
+        _bindsDebugger.DrawTriggerStorage();
     }
 }
