@@ -226,7 +226,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<AlarmManager>()
         .AddSingleton<TriggerManager>()
         .AddSingleton((s) => new ModSettingPresetManager(s.GetRequiredService<ILogger<ModSettingPresetManager>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<IpcCallerPenumbra>(), s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<HybridSaveService>(), pi))
+            s.GetRequiredService<IpcCallerPenumbra>(), s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ConfigFileProvider>(),
+            s.GetRequiredService<HybridSaveService>(), pi))
         .AddSingleton<PuppeteerManager>()
         .AddSingleton<TraitsManager>()
         // Player Client State (Applier)
@@ -417,6 +418,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<MoodleDrawer>()
         .AddScoped<PlaybackDrawer>()
         .AddScoped<ActiveItemsDrawer>()
+        .AddScoped<ImageImportTool>()
 
         // Scoped Factories
         .AddScoped<DrawEntityFactory>()

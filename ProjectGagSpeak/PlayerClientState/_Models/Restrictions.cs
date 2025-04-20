@@ -1,8 +1,16 @@
+using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 
 namespace GagSpeak.PlayerState.Models;
+
+/// <summary> Interface used by any item holding a modSettingPreset Reference </summary>
+public interface IModPreset
+{
+    /// <summary> Holds a reference to a mod setting preset. This object stores a ref to the mod container it resides in. </summary>
+    ModSettingsPreset Mod { get; set; }
+}
 
 /// <summary> An Interface Indicating Hardcore Traits can be attached. </summary>
 public interface ITraitHolder
@@ -22,13 +30,10 @@ public interface ICustomizePlus
 }
 
 /// <summary> Basic Restriction Item Contract requirements. </summary>
-public interface IRestriction
+public interface IRestriction : IModPreset
 {
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
     GlamourSlot Glamour { get; set; }
-
-    /// <summary> Holds a reference to a mod setting preset. This object stores a ref to the mod container it resides in. </summary>
-    ModSettingsPreset Mod { get; set; }
 
     /// <summary> Determines the Moodle applied from this restriction item. </summary>
     /// <remarks> Can be either singular status or preset. </remarks>
@@ -103,7 +108,7 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
         {
             ["IsEnabled"] = IsEnabled,
             ["Glamour"] = Glamour.Serialize(),
-            ["Mod"] = Mod.Serialize(),
+            ["Mod"] = Mod.SerializeReference(),
             ["Moodle"] = Moodle.Serialize(),
             ["Traits"] = Traits.ToString(),
             ["Stimulation"] = Stimulation.ToString(),
@@ -118,7 +123,7 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
 public class RestrictionItem : IRestrictionItem, ITraitHolder
 {
     public virtual RestrictionType Type { get; } = RestrictionType.Normal;
-    public Guid Identifier { get; set; } = Guid.NewGuid();
+    public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
     public GlamourSlot Glamour { get; set; } = new GlamourSlot();
@@ -156,7 +161,7 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
             ["Label"] = Label,
             ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
-            ["Mod"] = Mod.Serialize(),
+            ["Mod"] = Mod.SerializeReference(),
             ["Moodle"] = Moodle.Serialize(),
             ["Traits"] = Traits.ToString(),
             ["Stimulation"] = Stimulation.ToString(),

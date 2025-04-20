@@ -23,33 +23,19 @@ public static class JParser
         return json;
     }
 
-    public static void LoadMoodle(this Moodle moodle, JToken? token)
-    {
-        if (token is not JObject jsonObject)
-            return;
-
-        var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
-        moodle.Id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-
-        if (moodle is MoodlePreset moodlePreset)
-            moodlePreset.StatusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
-    }
-
     public static Moodle LoadMoodle(JToken? token)
     {
         if (token is not JObject jsonObject)
             throw new ArgumentException("Invalid JObjectToken!");
 
         var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
-        var id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-
-        if (type == MoodleType.Preset)
+        Guid id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        IEnumerable<Guid> statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
+        return type switch
         {
-            var statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
-            return new MoodlePreset { Id = id, StatusIds = statusIds };
-        }
-
-        return new Moodle { Id = id };
+            MoodleType.Preset => new MoodlePreset { Id = id, StatusIds = statusIds },
+            _ => new Moodle { Id = id }
+        };
     }
 
     public static StainIds ParseCompactStainIds(JToken? jToken)

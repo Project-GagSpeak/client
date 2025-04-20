@@ -29,7 +29,8 @@ public static class FancyTabBar
 {
     public static float Height = ImGui.GetFrameHeightWithSpacing();
     public static float Rounding = Height * .65f;
-    
+    public static float RoundingInner = Height * .5f;
+
     // Internal State Storage for the current item references from various drawcalls with different ids.
     // If this ever REALLY becomes an issue we can switch to an array with ID-type casting. But for now, this is fine.
     private static readonly Dictionary<string, ICkTab?> _selectedStorage = new();

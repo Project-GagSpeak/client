@@ -136,14 +136,14 @@ public record ClosedMainUiMessage : MessageBase; // indicates the main UI has be
 public record RemoveWindowMessage(WindowMediatorSubscriberBase Window) : MessageBase; // fired upon request to remove a window from the UI service.
 public record CompactUiChange(Vector2 Size, Vector2 Position) : MessageBase; // fired whenever we change the window size or position
 public record KinkPlateOpenStandaloneMessage(Pair Pair) : MessageBase; // for opening the profile standalone window.
-public record KinkPlateOpenStandaloneLightMessage(UserData UserData) : MessageBase; // for opening the profile standalone window.
-
+public record KinkPlateOpenStandaloneLightMessage(UserData UserData) : MessageBase; // for opening the profile standalone window
 public record ProfilePopoutToggle(UserData? PairUserData) : MessageBase; // toggles the profile popout window for a paired client.
 public record ClearProfileDataMessage(UserData? UserData = null) : MessageBase; // a message indicating the need to clear profile data.
 public record ReportKinkPlateMessage(UserData KinksterToReport) : MessageBase; // for reporting a GagSpeak profile.
 public record VerificationPopupMessage(VerificationDto VerificationCode) : MessageBase; // indicating that we have received a verification code popup.
 public record PatternSavePromptMessage(List<byte> StoredData, TimeSpan Duration) : MessageBase; // prompts the popup and passes in savedata
 public record ClosePatternSavePromptMessage : MessageBase; // closes the pattern save prompt.
+public record OpenThumbnailBrowser(ImageDataType Type) : MessageBase;
 
 /* -------------------- CHAT RELATED RECORDS -------------------- */
 public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;

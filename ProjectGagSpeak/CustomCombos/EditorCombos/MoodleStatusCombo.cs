@@ -1,6 +1,9 @@
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.PlayerState.Visual;
+using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data.Character;
 using ImGuiNET;
@@ -11,8 +14,8 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 {
     private Guid _currentItem;
-    public MoodleStatusCombo(float iconScale, CharaIPCData data, MoodlesDisplayer displayer, ILogger log)
-        : base(iconScale, data, displayer, log, () => [.. data.MoodlesStatuses.OrderBy(x => x.Title)])
+    public MoodleStatusCombo(float iconScale, MoodlesDisplayer displayer, ILogger log)
+        : base(iconScale, displayer, log, () => [.. VisualApplierMoodles.LatestIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
     }
@@ -22,6 +25,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 
     protected override void DrawList(float width, float itemHeight)
     {
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0.5f));
         try
         {
             ImGui.SetWindowFontScale(_iconScale);
@@ -57,19 +61,24 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, Guid currentStatus, float width)
+        => Draw(label, currentStatus, width, ImGuiComboFlags.None);
+
+    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
+    /// <returns> True if a new item was selected, false otherwise. </returns>
+    public bool Draw(string label, Guid currentStatus, float width, ImGuiComboFlags flags)
     {
         InnerWidth = width * 1.5f;
         _currentItem = currentStatus;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
         var previewName = currentTitle.IsNullOrWhitespace() ? "Select Moodle Status..." : currentTitle;
-        return Draw($"##status{label}", previewName, string.Empty, width, MoodlesDisplayer.DefaultSize.Y);
+        return Draw($"##status{label}", previewName, string.Empty, width, MoodleDrawer.IconSize.Y, flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, new Vector2(GetFilterWidth(), MoodlesDisplayer.DefaultSize.Y));
+        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, new Vector2(GetFilterWidth(), MoodleDrawer.IconSize.Y));
 
         if (moodleStatus.IconID > 200000)
         {

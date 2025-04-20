@@ -109,7 +109,7 @@ public static class ConfigMigrator
         };
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.GagSpeakDirectory, "config-testing.json.bak*"))
+        foreach (var file in Directory.GetFiles(ConfigFileProvider.GagSpeakDirectory, "config-testing.json.bak*"))
         {
             // Send it to the shadow realm.
             var fileName = Path.GetFileName(file);
@@ -286,7 +286,7 @@ public static class ConfigMigrator
         };
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.GagSpeakDirectory, "patterns.json.bak*"))
+        foreach (var file in Directory.GetFiles(ConfigFileProvider.GagSpeakDirectory, "patterns.json.bak*"))
         {
             // Send it to the shadow realm.
             var fileName = Path.GetFileName(file);

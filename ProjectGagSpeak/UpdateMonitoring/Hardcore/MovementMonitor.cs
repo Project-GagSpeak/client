@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using GagSpeak.CkCommons;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
 using GagSpeak.Localization;
@@ -88,7 +89,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         _targetManager = targetManager;
 
         // attempt to set the value safely
-        GenericHelpers.Safe(delegate
+        Generic.ExecuteSafely(delegate
         {
             getRefValue = (GetRefValue)Delegate.CreateDelegate(typeof(GetRefValue), _keyState,
                             _keyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(int) }, null)!);

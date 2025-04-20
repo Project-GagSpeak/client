@@ -221,7 +221,7 @@ public partial class GagRestrictionsPanel
             Moodle set => new[] { set.Id },
             _ => Array.Empty<Guid>()
         };
-        _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodlesDisplayer.DefaultSize);
+        _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
     }
 
     private void DrawActiveItemInfo()

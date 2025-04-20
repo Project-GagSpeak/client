@@ -220,6 +220,7 @@ public class GagspeakConfig
     public NotificationLocation ErrorNotification { get; set; } = NotificationLocation.Both;
 
     // GLOBAL SETTINGS for client user.
+    public float FileIconScale { get; set; } = 1.0f; // File Icon Scale
     public string Safeword { get; set; } = "";
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore

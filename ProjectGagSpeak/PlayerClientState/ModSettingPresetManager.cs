@@ -9,6 +9,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI.Components;
 using Penumbra.Api.IpcSubscribers;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -42,10 +43,12 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
 
         // This Mod Combo needs to ping preset combo on selection.
         ModCombo = new ModCombo(logger, () => [ ..ModData.OrderBy(m => m.Name).ThenBy(m => m.DirPath) ]);
-        PresetCombo = new ModPresetCombo(logger, () => [ 
+        PresetCombo = new ModPresetCombo(logger, this, () => [ 
             ..ModPresetStorage
                 .ByDirectory(ModCombo.Current?.DirPath ?? string.Empty)?.ModPresets ?? new List<ModSettingsPreset>()
             ]);
+
+        ModCombo.SelectionChanged += (s, a) => PresetCombo.SetDirty();
     }
 
     public ModCombo ModCombo { get; private set; }
@@ -311,7 +314,7 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
                 if (presetContainer["ModPresets"] is not JArray presetArray)
                     continue;
 
-                // Add the container to the storage, so our presets can reconize it.
+                // Add the container to the storage, so our presets can recognize it.
                 var container = new ModPresetContainer(dirPath, modName, priority);
                 ModPresetStorage.Add(container);
                 // Append the existing presets for this mod there.

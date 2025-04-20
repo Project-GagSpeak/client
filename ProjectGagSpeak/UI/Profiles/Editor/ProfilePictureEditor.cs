@@ -50,12 +50,9 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
 
     // Store the original image data of our imported file.
     private byte[] _uploadedImageData;
-    private IDalamudTextureWrap? _uploadedImageToShow;
-
     // Determine if we are using a compressed image.
     private bool _useCompressedImage = false; // Default to using compressed image
     private byte[] _compressedImageData;
-    private IDalamudTextureWrap? _compressedImageToShow;
 
     // hold a temporary image data of the cropped image area without affecting the original or compressed image.
     private byte[] _scopedData = null!;
@@ -132,7 +129,6 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             {
                 _uploadedImageData = null!;
                 _croppedImageData = null!;
-                _uploadedImageToShow = null;
                 _croppedImageToShow = null;
                 _useCompressedImage = false;
                 _ = _hub.UserSetKinkPlatePicture(new UserKinkPlatePictureDto(new UserData(MainHub.UID), string.Empty));
@@ -206,8 +202,6 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                             // Initialize cropping parameters
                             _cropX = 0.5f;
                             _cropY = 0.5f;
-
-                            _uploadedImageToShow = _cosmetics.GetProfilePicture(_uploadedImageData);
                             ScaledFileSize = $"{_scopedData.Length / 1024.0:F2} KB";
 
                             // Update the preview image
@@ -379,13 +373,9 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             {
                 resizedImage.SaveAsPng(ms);
                 _compressedImageData = ms.ToArray();
-
-                // Load the cropped image for preview
-                _compressedImageToShow = _cosmetics.GetProfilePicture(_compressedImageData);
                 _useCompressedImage = true;
                 // _logger.LogDebug($"New Image width and height is: {resizedImage.Width}x{resizedImage.Height} from {croppedImage.Width}x{croppedImage.Height}");
                 CroppedFileSize = $"{_croppedImageData.Length / 1024.0:F2} KB";
-
                 InitializeZoomFactors(resizedImage.Width, resizedImage.Height);
             }
         }

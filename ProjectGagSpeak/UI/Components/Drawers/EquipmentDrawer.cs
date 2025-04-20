@@ -147,7 +147,7 @@ public class EquipmentDrawer
         }
         else if (restraintSlot is RestraintSlotAdvanced advSlot)
         {
-            DrawRestrictionRef(advSlot, focus, innerWidth);
+            DrawRestrictionRef(advSlot, focus.ToName(), innerWidth);
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.ArrowsLeftRight, RestraintItemH, advSlot.EquipSlot + "Swapper"))
             {
@@ -190,14 +190,14 @@ public class EquipmentDrawer
         ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
     }
 
-    public void DrawRestrictionRef<T>(T restrictionRef, EquipSlot slot, float width) where T : IRestrictionRef
+    public void DrawRestrictionRef<T>(T restriction, string id, float width) where T : IRestrictionRef
     {
         using var group = ImRaii.Group();
 
         // If it has a thumbnail, we should use that.
-        if (restrictionRef.Ref is { } validRef && !validRef.ThumbnailPath.IsNullOrWhitespace())
+        if (!restriction.Ref.ThumbnailPath.IsNullOrWhitespace())
         {
-            if (_cosmetics.GetImageFromThumbnailPath(validRef.ThumbnailPath) is { } thumbnail)
+            if (_cosmetics.GetThumbnailImage(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
             {
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(RestraintItemH), ImGui.GetStyle().FrameRounding);
@@ -207,7 +207,7 @@ public class EquipmentDrawer
         else
         {
             // Placeholder frame display.
-            ItemService.NothingItem(slot).DrawIcon(_textures, new Vector2(RestraintItemH), slot);
+            ItemService.NothingItem(restriction.Ref.Glamour.Slot).DrawIcon(_textures, new Vector2(RestraintItemH), restriction.Ref.Glamour.Slot);
         }
 
         ImGui.SameLine(0, 3);
@@ -217,28 +217,28 @@ public class EquipmentDrawer
         var comboWidth = width - RestraintItemH - ImGui.GetStyle().ItemInnerSpacing.X;
         using (ImRaii.Group())
         {
-            var change = _restrictionCombo.Draw("##AdvSelector" + slot, restrictionRef.Ref?.Identifier ?? Guid.Empty, comboWidth, flags: ImGuiComboFlags.NoArrowButton);
-            if (change && !(restrictionRef.Ref?.Identifier ?? Guid.Empty).Equals(_restrictionCombo.Current?.Identifier))
+            var change = _restrictionCombo.Draw($"##AdvSelector{id}", restriction.Ref.Identifier, comboWidth, flags: ImGuiComboFlags.NoArrowButton);
+            if (change && !restriction.Ref.Identifier.Equals(_restrictionCombo.Current?.Identifier))
             {
                 _logger.LogTrace($"Item changed to {_restrictionCombo.Current?.Identifier} " +
-                    $"[{_restrictionCombo.Current?.Label}] from {restrictionRef.Ref?.Identifier} [{restrictionRef.Ref?.Label}]");
+                    $"[{_restrictionCombo.Current?.Label}] from {restriction.Ref.Identifier} [{restriction.Ref.Label}]");
                 // Get the actual reference to the restrictions item.
                 if(_restrictions.Storage.TryGetRestriction(_restrictionCombo.Current?.Identifier ?? Guid.Empty, out var match))
-                    restrictionRef.Ref = match;
+                    restriction.Ref = match;
             }
 
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                _logger.LogTrace($"Item Cleared and set to the First Item. [{restrictionRef.Ref?.Label}]");
-                // Set the item to the first item in the list.
-                restrictionRef.Ref = null;
+                _logger.LogTrace($"Item Cleared and set to the Default. [{restriction.Ref.Label}]");
+                restriction.Ref = new RestrictionItem() { Identifier = Guid.Empty };
             }
-            DrawCustomStains(restrictionRef, slot, comboWidth);
+            DrawCustomStains(restriction, id, comboWidth);
         }
+
         // Beside this, draw the restraint flag editor.
         ImUtf8.SameLineInner();
-        DrawAdvancedSlotFlags(restrictionRef, slot);
-
+        DrawAdvancedSlotFlags(restriction, id);
+        ImUtf8.SameLineInner();
     }
 
     public void DrawGlassesSlot(GlamourBonusSlot glasses, float width)
@@ -265,34 +265,34 @@ public class EquipmentDrawer
         => _ipcGlamourer.TryObtainMaterials(out materials);
 
 
-    private void DrawAdvancedSlotFlags<T>(T restrictionRef, EquipSlot slot) where T : IRestrictionRef
+    private void DrawAdvancedSlotFlags<T>(T restrictionRef, string id) where T : IRestrictionRef
     {
         var spacing = new Vector2(ImGuiHelpers.GlobalScale);
         var rounding = ImGui.GetStyle().FrameRounding;
         var region = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y);
-        using (ImRaii.Child("##AdvSlotFlags" + slot, region))
+        using (ImRaii.Child($"##AdvSlotFlags{id}", region))
         {
             var curGlam = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Glamour);
             var curMod = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Mod);
             var curMoodle = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Moodle);
             var curHcTrait = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Trait);
 
-            if (GlamourFlagCheckbox.Draw("##GlamFlagToggle" + slot, curGlam, out var newGlam) && curGlam != newGlam)
+            if (GlamourFlagCheckbox.Draw($"##GlamFlag{id}", curGlam, out var newGlam) && curGlam != newGlam)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Glamour;
             CkGui.AttachToolTip(curGlam ? "The Glamour from this Restriction Item will be applied." : "Glamour application is ignored.");
 
             ImUtf8.SameLineInner();
-            if (ModFlagCheckbox.Draw("##ModFlagToggle" + slot, curMod, out var newMod) && curMod != newMod)
+            if (ModFlagCheckbox.Draw($"##ModFlag{id}", curMod, out var newMod) && curMod != newMod)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Mod;
             CkGui.AttachToolTip(curMod ? "Mods from this Restriction Item will be applied." : "Mods are ignored.");
 
             // Next Line.
-            if (MoodleFlagCheckbox.Draw("##MoodleFlagToggle" + slot, curMoodle, out var newMoodle) && curMoodle != newMoodle)
+            if (MoodleFlagCheckbox.Draw($"##MoodleFlag{id}", curMoodle, out var newMoodle) && curMoodle != newMoodle)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Moodle;
             CkGui.AttachToolTip(curMoodle ? "Moodles from this Restriction Item will be applied." : "Moodles are ignored.");
 
             ImUtf8.SameLineInner();
-            if (HardcoreTraitsCheckbox.Draw("##TraitFlagToggle" + slot, curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)
+            if (HardcoreTraitsCheckbox.Draw($"##TraitFlag{id}", curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Trait;
             CkGui.AttachToolTip(curHcTrait ? "Hardcore Traits from this Restriction Item will be applied." : "Hardcore Traits are ignored.");
         }
@@ -392,17 +392,17 @@ public class EquipmentDrawer
         }
     }
 
-    private void DrawCustomStains<T>(T item, EquipSlot slot, float width) where T : IRestrictionRef
+    private void DrawCustomStains<T>(T item, string id, float width) where T : IRestrictionRef
     {
         // fetch the correct stain from the stain data
         var widthStains = (width - ImUtf8.ItemInnerSpacing.X * (item.CustomStains.Count - 1)) / item.CustomStains.Count;
 
         foreach (var (stainId, index) in item.CustomStains.WithIndex())
         {
-            using var id = ImUtf8.PushId(index);
+            using var _ = ImUtf8.PushId(index);
             var found = TryGetStain(stainId, out var stain);
             // draw the stain itemCombo.
-            var change = _stainCombo.Draw($"##customStain{slot}", width, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
+            var change = _stainCombo.Draw($"##customStain{id}", width, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
             if (index < item.CustomStains.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one.
 

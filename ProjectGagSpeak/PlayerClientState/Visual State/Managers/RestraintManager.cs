@@ -1,25 +1,24 @@
+using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Wardrobe;
+using GagSpeak.UI;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.PlayerState.Visual;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly GlobalData _clientData;
     private readonly RestrictionManager _restrictions;
     private readonly ModSettingPresetManager _modPresets;
     private readonly FavoritesManager _favorites;
@@ -28,12 +27,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly HybridSaveService _saver;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        GlobalData clientData, RestrictionManager restrictions, ModSettingPresetManager modPresets,
+        RestrictionManager restrictions, ModSettingPresetManager modPresets,
         FavoritesManager favorites, ItemService items, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
-        _clientData = clientData;
         _restrictions = restrictions;
+        _modPresets = modPresets;
         _favorites = favorites;
         _items = items;
         _fileNames = fileNames;
@@ -402,12 +401,25 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 slotDict.Add(slotKey, slotValue);
             }
 
-            // layers
             var layers = new List<IRestraintLayer>();
             if (setJson["RestraintLayers"] is JArray layerArray)
             {
                 foreach (var layerToken in layerArray)
-                    layers.Add(LoadRestraintLayer(layerToken));
+                    Generic.ExecuteSafely(() => layers.Add(LoadRestraintLayer(layerToken)));
+            }
+
+            var restraintMods = new List<ModSettingsPreset>();
+            if(setJson["RestraintMods"] is JArray modArray)
+            {
+                foreach (var modToken in modArray)
+                    Generic.ExecuteSafely(() => restraintMods.Add(ModSettingsPreset.FromReferenceJToken(modToken, _modPresets)));
+            }
+
+            var restraintMoodles = new HashSet<Moodle>();
+            if(setJson["RestraintMoodles"] is JArray moodleArray)
+            {
+                foreach (var moodleToken in moodleArray)
+                    Generic.ExecuteSafely(() => restraintMoodles.Add(JParser.LoadMoodle(moodleToken)));
             }
 
             set = new RestraintSet()
@@ -422,9 +434,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 HeadgearState = JParser.FromJObject(setJson["HeadgearState"]),
                 VisorState = JParser.FromJObject(setJson["VisorState"]),
                 WeaponState = JParser.FromJObject(setJson["WeaponState"]),
-                RestraintMods = setJson["RestraintMods"]?.ToObject<List<ModSettingsPreset>>() ?? throw new Exception("Invalid Mod Attachments"),
-                RestraintMoodles = setJson["RestraintMoodles"]?.ToObject<List<Moodle>>() ?? throw new Exception("Invalid Moodles"),
+                RestraintMods = restraintMods,
+                RestraintMoodles = restraintMoodles,
             };
+            Logger.LogInformation($"Loaded RestraintSet {set.Label} with {set.RestraintSlots.Count} slots and {set.Layers.Count} layers.");
             return true;
         }
         catch (Exception e)
@@ -495,24 +508,30 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     /// <param name="slotToken"> The JSON Token for the Slot. </param>
     /// <returns> The loaded Advanced. </returns>
     /// <exception cref="Exception"></exception>
-    /// <remarks> Throws if the JToken is either not valid or the Ref Restriction fails to parse.</remarks>
+    /// <remarks> If advanced slot fails to load, a default, invalid restriction item will be put in place. </remarks>
     private RestraintSlotAdvanced LoadAdvancedSlot(JToken? slotToken)
     {
         if(slotToken is not JObject slotJson)
             throw new Exception("Invalid JSON Token for Slot.");
 
+        var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (!_restrictions.Storage.TryGetRestriction(refId, out var match))
-            throw new Exception("Invalid Reference ID for Advanced Slot.");
+        var stains = JParser.ParseCompactStainIds(slotJson["CustomStains"]);
 
-        var customStains = slotJson["CustomStains"] as JObject;
-
-        return new RestraintSlotAdvanced()
+        if (refId.IsEmptyGuid())
         {
-            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced,
-            Ref = match,
-            CustomStains = JParser.ParseCompactStainIds(slotJson["CustomStains"]),
-        };
+            Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
+            return new RestraintSlotAdvanced()
+            {
+                ApplyFlags = applyFlags,
+                Ref = new RestrictionItem() { Identifier = Guid.Empty },
+                CustomStains = stains,
+            };
+        }
+        else if (_restrictions.Storage.TryGetRestriction(refId, out var match))
+            return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = match, CustomStains = stains };
+        else
+            throw new Exception("Invalid Reference ID for Advanced Slot.");
     }
 
     private IRestraintLayer LoadRestraintLayer(JToken? layerToken)
@@ -537,17 +556,37 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (layerToken is not JObject layerJson)
             throw new Exception("Invalid JSON Token for Slot.");
 
-        var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (!_restrictions.Storage.TryGetRestriction(refId, out var match))
-            throw new Exception("Invalid Reference ID for Advanced Slot.");
+        var id = Guid.TryParse(layerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
+        var isActive = layerJson["IsActive"]?.Value<bool>() ?? false;
+        var flags = layerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
+        var customStains = JParser.ParseCompactStainIds(layerJson["CustomStains"]);
 
-        return new RestrictionLayer()
+        var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
+        if (refId.IsEmptyGuid())
         {
-            ID = Guid.TryParse(layerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID"),
-            IsActive = layerJson["IsActive"]?.Value<bool>() ?? false,
-            ApplyFlags = layerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced,
-            CustomStains = JParser.ParseCompactStainIds(layerJson["CustomStains"]),
-        };
+            Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
+            return new RestrictionLayer()
+            {
+                ID = id,
+                IsActive = isActive,
+                ApplyFlags = flags,
+                Ref = new RestrictionItem() { Identifier = Guid.Empty },
+                CustomStains = customStains,
+            };
+        }
+        else if (_restrictions.Storage.TryGetRestriction(refId, out var match))
+        {
+            return new RestrictionLayer()
+            {
+                ID = id,
+                IsActive = isActive,
+                ApplyFlags = flags,
+                Ref = match,
+                CustomStains = customStains,
+            };
+        }
+        else
+            throw new Exception("Invalid Reference ID for Advanced Slot.");
     }
 
     private ModPresetLayer LoadModPresetLayer(JToken? layerToken)
@@ -556,7 +595,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             throw new Exception("Invalid JSON Token for Slot.");
 
         // Load the ModRef sub-object using ModSettingsPreset's loader
-        var modItem = ModSettingsPreset.FromJToken(json["Mod"], _modPresets);
+        var modItem = ModSettingsPreset.FromReferenceJToken(json["Mod"], _modPresets);
         return new ModPresetLayer()
         {
             ID = Guid.TryParse(json["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!"),

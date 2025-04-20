@@ -2,11 +2,15 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
+using Penumbra.String.Classes;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 namespace GagSpeak.Services.Textures;
 
@@ -205,13 +209,12 @@ public class CosmeticService : IHostedService, IDisposable
         return (supporterWrap, tooltipString);
     }
 
-
     public IDalamudTextureWrap GetImageFromAssetsFolder(string path)
         => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
-    public IDalamudTextureWrap? GetImageFromThumbnailPath(string path)
-        => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets\\Thumbnails", path)).GetWrapOrDefault();
     public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
         => _textures.CreateFromImageAsync(imageData).Result;
+    public IDalamudTextureWrap? GetThumbnailImage(ImageDataType folder, string path)
+        => _textures.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
 
     public IDalamudTextureWrap? GetImageFromBytes(byte[] imageData)
     {
@@ -226,19 +229,30 @@ public class CosmeticService : IHostedService, IDisposable
         }
     }
 
-    private bool TryRentImageFromFile(string path, out IDalamudTextureWrap fileTexture)
+    public async Task<IDalamudTextureWrap?> RentThumbnailFile(ImageDataType folder, string path)
     {
         try
         {
-            var image = _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).RentAsync().Result;
-            fileTexture = image;
+            return await _textures.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).RentAsync();
+        }
+        catch (Exception)
+        {
+            _logger.LogError("Failed to load thumbnail image from path: " + Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path));
+            return null;
+        }
+    }
+
+    private bool TryRentImageFromFile(string path, [NotNullWhen(true)] out IDalamudTextureWrap? fileTexture)
+    {
+        try
+        {
+            fileTexture = _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).RentAsync().Result;
             return true;
         }
         catch (Exception)
         {
-            // TODO: Remove surpression once we have defined proper images.
             //_logger.LogWarning($"Failed to load texture from path: {path}");
-            fileTexture = null!;
+            fileTexture = null;
             return false;
         }
     }

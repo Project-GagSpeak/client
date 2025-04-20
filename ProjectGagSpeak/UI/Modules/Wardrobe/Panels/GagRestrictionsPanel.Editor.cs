@@ -116,7 +116,8 @@ public partial class GagRestrictionsPanel
 
         _equipDrawer.DrawAssociatedGlamour("GagGlamour", gagItem.Glamour, width);
 
-        _traitsDrawer.DrawHardcoreTraits(gagItem, width);
+        var disabledTraits = Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Immobile | Traits.Weighty;
+        _traitsDrawer.DrawTwoRowTraits(gagItem, width, disabledTraits);
 
         DrawCustomizeProfile(gagItem, width);
         
@@ -133,7 +134,7 @@ public partial class GagRestrictionsPanel
 
         var rounding = ImGui.GetStyle().FrameRounding * 1.25f;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
-        _modDrawer.DrawAssociatedModPreset("AssociatedGagModPreset", gagItem, width);
+        _modDrawer.DrawModPresetBox("GagModPreset", gagItem, width);
     }
 
     private void DrawCustomizeProfile(GarblerRestriction gagItem, float width)

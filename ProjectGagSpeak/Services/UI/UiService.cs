@@ -11,6 +11,7 @@ using GagSpeak.UI.Components;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UI.Permissions;
 using GagSpeak.UI.Profile;
+using System;
 
 namespace GagSpeak.Services;
 
@@ -43,7 +44,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         _fileDialog = fileDialog;
         _mainTabMenu = menuTabs;
 
-        // disable the UI builder while in gpose 
+        // disable the UI builder while in g-pose 
         _uiBuilder.DisableGposeUiHide = true;
         // add the event handlers for the UI builder's draw event
         _uiBuilder.Draw += Draw;
@@ -52,7 +53,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         // subscribe to the UI builder's open main UI event
         _uiBuilder.OpenMainUi += ToggleMainUi;
 
-        // for eachn window in the collection of window mediator subscribers
+        // for each window in the collection of window mediator subscribers
         foreach (var window in windows)
         {
             // add the window to the window system.
@@ -79,13 +80,9 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         {
             // Check if the window is registered in the WindowSystem before removing it
             if (_windowSystem.Windows.Contains(msg.Window))
-            {
                 _windowSystem.RemoveWindow(msg.Window);
-            }
             else
-            {
                 _logger.LogWarning("Attempted to remove a window that is not registered in the WindowSystem: " + msg.Window.WindowName, LoggerType.UiCore);
-            }
 
             _createdWindows.Remove(msg.Window);
             msg.Window.Dispose();
@@ -105,22 +102,15 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<KinkPlateOpenStandaloneLightMessage>(this, (msg) =>
         {
-            if (!_createdWindows.Exists(p => p is KinkPlateLightUI ui
-                && string.Equals(ui.UserDataToDisplay.UID, msg.UserData.UID, StringComparison.Ordinal)))
+            if (_createdWindows.FirstOrDefault(p => p is KinkPlateLightUI ui && ui.UserDataToDisplay.UID == msg.UserData.UID) is { } match)
+            {
+                match.Toggle();
+            }
+            else
             {
                 var window = _uiFactory.CreateStandaloneKinkPlateLightUi(msg.UserData);
                 _createdWindows.Add(window);
                 _windowSystem.AddWindow(window);
-            }
-            else
-            {
-                // the window does exist, so toggle its open state.
-                var window = _createdWindows.FirstOrDefault(p => p is KinkPlateLightUI ui
-                    && string.Equals(ui.UserDataToDisplay.UID, msg.UserData.UID, StringComparison.Ordinal));
-                if (window != null)
-                {
-                    window.Toggle();
-                }
             }
         });
 
@@ -130,10 +120,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             // if we are forcing the main UI, do so.
             if (msg.ForceOpenMainUI)
             {
-                // fetch the mainUI window.
-                var mainUi = _createdWindows.FirstOrDefault(p => p is MainUI);
                 // if the mainUI window is not null, set the tab selection to whitelist.
-                if (mainUi != null)
+                if (_createdWindows.FirstOrDefault(p => p is MainUI) is not null)
                 {
 
                     _logger.LogTrace("Forcing main UI to whitelist tab", LoggerType.Permissions);
@@ -146,10 +134,10 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 }
             }
 
-            // Attempt to locate the existing pairstickyUI window.
+            // Attempt to locate the existing PairStickyUI window.
             if (_createdWindows.OfType<PairStickyUI>().FirstOrDefault(w => w.SPair.UserData.UID == msg.Pair?.UserData.UID) is PairStickyUI stickyUI)
             {
-                // Attempt to change the drawtype. But if it is the same drawtype as the current, toggle the window.
+                // Attempt to change the draw-type. But if it is the same draw-type as the current, toggle the window.
                 if (stickyUI.DrawType == msg.PermsWindowType)
                     stickyUI.Toggle();
                 else
@@ -178,6 +166,22 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             }
         });
 
+        Mediator.Subscribe<OpenThumbnailBrowser>(this, (msg) =>
+        {
+            if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.FolderName == msg.Type) is ThumbnailUI match)
+            {
+                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.Type, LoggerType.Permissions);
+                match.Toggle();
+            }
+            else
+            {
+                _logger.LogTrace("Creating new thumbnail browser for type " + msg.Type, LoggerType.Permissions);
+                var window = _uiFactory.CreateThumbnailUi(msg.Type);
+                _createdWindows.Add(window);
+                _windowSystem.AddWindow(window);
+            }
+        });
+
         Mediator.Subscribe<PairWasRemovedMessage>(this, (msg) => CloseExistingPairWindow());
         Mediator.Subscribe<ClosedMainUiMessage>(this, (msg) => CloseExistingPairWindow());
         Mediator.Subscribe<MainWindowTabChangeMessage>(this, (msg) => { if (msg.NewTab != MainMenuTabs.SelectedTab.Whitelist) CloseExistingPairWindow(); });
@@ -198,14 +202,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         }
     }
 
-    /// <summary>
-    /// Method to toggle the main UI for the plugin.
-    /// <para>
-    /// This will check to see if the user has a valid setup 
-    /// (meaning it sees if they are up to date), and will either 
-    /// open the introUI or the main window UI
-    /// </para>
-    /// </summary>
+    /// <summary> Method to toggle the main UI for the plugin. </summary>
+    /// <remarks> Checks if user has valid setup, and opens introUI or MainUI </remarks>
     public void ToggleMainUi()
     {
         if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
@@ -229,13 +227,9 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     public void ToggleUi()
     {
         if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
-        {
             Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
-        }
         else
-        {
             Mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
-        }
     }
 
     /// <summary> Disposes of the UI service. </summary>
@@ -245,15 +239,9 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
 
         _logger.LogTrace("Disposing "+GetType().Name, LoggerType.UiCore);
-
-        // then remove all windows from the windows system
         _windowSystem.RemoveAllWindows();
-
-        // for each of the created windows, dispose of them.
         foreach (var window in _createdWindows)
-        {
             window.Dispose();
-        }
 
         // unsubscribe from the draw, open config UI, and main UI
         _uiBuilder.Draw -= Draw;

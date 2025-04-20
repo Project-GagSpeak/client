@@ -28,7 +28,7 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
         Current = default;
     }
 
-    protected virtual Vector2 IconSize => MoodlesDisplayer.DefaultSize * _iconScale;
+    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * _iconScale;
 
     protected override void DrawList(float width, float itemHeight)
     {

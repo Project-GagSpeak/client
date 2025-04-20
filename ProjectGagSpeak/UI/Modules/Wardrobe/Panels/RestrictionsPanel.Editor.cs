@@ -153,7 +153,14 @@ public partial class RestrictionsPanel
         if (item is CollarRestriction collarRestriction)
             DrawCollarInfo(collarRestriction, width);
 
-        _traitsDrawer.DrawHardcoreTraits(item, width);
+        // Determine the disabled traits based on the restriction type.
+        Traits disabled = item switch
+        {
+            BlindfoldRestriction => Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Gagged | Traits.Immobile | Traits.Weighty,
+            CollarRestriction => Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Gagged | Traits.Blindfolded | Traits.Immobile | Traits.Weighty,
+            _ => Traits.Gagged
+        };
+        _traitsDrawer.DrawTwoRowTraits(item, width, disabled, false);
 
         _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width);
     }
@@ -165,7 +172,7 @@ public partial class RestrictionsPanel
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
 
-        _modDrawer.DrawAssociatedModPreset("RestrictionModPreset", item, width);
+        _modDrawer.DrawModPresetBox("RestrictionModPreset", item, width);
     }
 
     private void DrawBlindfoldInfo(BlindfoldRestriction blindfoldItem, float width)

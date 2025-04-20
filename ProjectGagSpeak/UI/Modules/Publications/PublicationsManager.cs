@@ -9,6 +9,7 @@ using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
@@ -31,7 +32,7 @@ public class PublicationsManager
         _monitor = monitor;
         _shareHub = shareHub;
         _patternCombo = new PatternCombo(patterns, favorites, logger);
-        _statusCombo = new MoodleStatusCombo(1.5f, VisualApplierMoodles.LatestIpcData, monitor, logger);
+        _statusCombo = new MoodleStatusCombo(1.5f, monitor, logger);
     }
 
     private string _authorName = string.Empty;
@@ -280,7 +281,7 @@ public class PublicationsManager
             {
                 // display name, then display the downloads and likes on the other side.
                 imagePos = ImGui.GetCursorPos();
-                ImGuiHelpers.ScaledDummy(MoodlesDisplayer.DefaultSize);
+                ImGuiHelpers.ScaledDummy(MoodleDrawer.IconSize);
                 // if the scaled dummy is hovered, display the description, if any.
                 if(ImGui.IsItemHovered())
                 {
@@ -345,7 +346,7 @@ public class PublicationsManager
             }
 
             if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodlesDisplayer.DefaultSize);
+                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
         }
     }
 

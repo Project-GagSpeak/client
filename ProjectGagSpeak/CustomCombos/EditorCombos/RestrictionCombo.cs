@@ -1,17 +1,19 @@
 using Dalamud.Interface.Colors;
+using Dalamud.Utility;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 
 public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
 {
     private readonly FavoritesManager _favorites;
-    private Guid _currentRestriction;
+    public Guid _currentRestriction;
     public RestrictionCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<RestrictionItem>> generator)
         : base(generator, log)
     {
@@ -29,21 +31,21 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
             return currentSelected;
 
         CurrentSelectionIdx = Items.IndexOf(i => i.Identifier == _currentRestriction);
-        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
-        return base.UpdateCurrentSelected(CurrentSelectionIdx);
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : null;
+        return CurrentSelectionIdx;
     }
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid currentRestriction, float width)
-        => Draw(label, currentRestriction, width, ImGuiComboFlags.None);
+    public bool Draw(string label, Guid current, float width)
+        => Draw(label, current, width, ImGuiComboFlags.None);
 
-    public bool Draw(string label, Guid currentRestriction, float width, ImGuiComboFlags flags)
+    public bool Draw(string label, Guid current, float width, ImGuiComboFlags flags)
     {
         InnerWidth = width * 1.25f;
-        _currentRestriction = currentRestriction;
-        var previewLabel = Current?.Label ?? string.Empty;
-        return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+        _currentRestriction = current;
+        var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Restriction...";
+        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -55,7 +57,7 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
             CurrentSelectionIdx = -1;
             Current = default;
         }
-
+        ImUtf8.SameLineInner();
         var ret = ImGui.Selectable(restriction.Label, selected);
         return ret;
     }

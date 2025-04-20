@@ -1,5 +1,6 @@
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -20,10 +21,12 @@ public class UiFactory
     // Generic Classes
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
+    private readonly GagspeakConfigService _config;
     private readonly PiShockProvider _shockies;
     private readonly PairCombos _pairCombos;
     private readonly PermissionsDrawer _permDrawer;
     private readonly PermissionData _permData;
+    private readonly ImageImportTool _imageImport;
 
     // Managers
     private readonly ClientMonitor _clientMonitor;
@@ -46,26 +49,45 @@ public class UiFactory
     // API Hubs
     private readonly MainHub _hub;
 
-    public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, 
-        PiShockProvider shockies, GlobalData clientData, ClientMonitor clientMonitor,
-        GagGarbler garbler, PairManager pairManager, CosmeticService cosmetics,
-        IdDisplayHandler displayHandler, KinkPlateLight kinkPlateLight, KinkPlateService kinkPlates,
-        OnFrameworkService frameworkUtils, PairCombos pairCombos, PermissionsDrawer permDrawer,
-        PermissionData permActData, PresetLogicDrawer presetService, TextureService textures,
-        CkGui uiShared, SexToyManager vibeService, TutorialService guides, MainHub hub)
+    public UiFactory(
+        ILoggerFactory loggerFactory,
+        GagspeakMediator mediator,
+        GagspeakConfigService config,
+        PiShockProvider shockies,
+        PairCombos pairCombos,
+        PermissionsDrawer permDrawer,
+        PermissionData permActData,
+        ImageImportTool imageImport,
+        // Managers
+        ClientMonitor clientMonitor,
+        GagGarbler garbler,
+        PairManager pairManager,
+        GlobalData globals,
+        // Services
+        CosmeticService cosmetics,
+        IdDisplayHandler displayHandler,
+        KinkPlateLight kinkPlateLight,
+        KinkPlateService kinkPlates,
+        OnFrameworkService frameworkUtils,
+        PresetLogicDrawer presetService,
+        TextureService textures,
+        // API Hubs
+        MainHub hub)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
+        _config = config;
         _shockies = shockies;
         _pairCombos = pairCombos;
         _permDrawer = permDrawer;
         _permData = permActData;
-
+        _imageImport = imageImport;
+        
         _clientMonitor = clientMonitor;
         _garbler = garbler;
         _pairManager = pairManager;
-        _globals = clientData;
-
+        _globals = globals;
+        
         _cosmetics = cosmetics;
         _displayHandler = displayHandler;
         _kinkPlateLight = kinkPlateLight;
@@ -73,10 +95,7 @@ public class UiFactory
         _frameworkUtils = frameworkUtils;
         _presetService = presetService;
         _textures = textures;
-
-        _vibeService = vibeService;
-        _guides = guides;
-
+        
         _hub = hub;
     }
 
@@ -98,5 +117,11 @@ public class UiFactory
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
             _permData, _permDrawer, _pairCombos, _presetService, _hub, _globals, _shockies,
             _pairManager, _clientMonitor);
+    }
+
+    public ThumbnailUI CreateThumbnailUi(ImageDataType type)
+    {
+        return new ThumbnailUI(_loggerFactory.CreateLogger<ThumbnailUI>(), _mediator, _imageImport,
+            _config, _cosmetics, type);
     }
 }

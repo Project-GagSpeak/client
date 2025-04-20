@@ -147,7 +147,7 @@ public class DebuggerBinds
         {
             foreach (var moodleItem in rs.RestraintMoodles)
             {
-                _moodleDrawer.DrawMoodles(moodleItem, MoodlesDisplayer.DefaultSize);
+                _moodleDrawer.DrawMoodles(moodleItem, MoodleDrawer.IconSize);
                 ImGui.TableNextRow();
             }
         }
@@ -293,8 +293,16 @@ public class DebuggerBinds
                     ImGuiUtil.DrawTableColumn(bindLayer.CustomStains.ToString());
                     ImGui.TableNextRow();
                 }
-                else if (layer is ModPresetLayer modLayer && modLayer.Mod is ModSettingsPreset modRef)
-                    DrawModAssociationRow(modRef);
+                else if (layer is ModPresetLayer modLayer)
+                {
+                    ImGuiUtil.DrawTableColumn("Layer" + layerIdx);
+                    ImGuiUtil.DrawTableColumn(modLayer.IsActive ? "Active" : "Inactive");
+                    ImGuiUtil.DrawTableColumn(modLayer.ID.ToString());
+                    ImGui.TableNextRow();
+
+                    ImGuiUtil.DrawTableColumn("ModLayer");
+                    DrawModAssociationRow(modLayer.Mod);
+                }
                 else
                 {
                     ImGuiUtil.DrawTableColumn("UNK LAYER DATA");

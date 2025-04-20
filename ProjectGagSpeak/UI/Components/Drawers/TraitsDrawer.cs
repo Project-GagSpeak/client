@@ -6,9 +6,9 @@ using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Textures;
+using GagspeakAPI.Enums;
 using ImGuiNET;
 using OtterGui.Text;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.UI.Components;
 
@@ -39,78 +39,57 @@ public class TraitsDrawer
     private const string StimulationTooltip = "--COL--WARNING: This affects your GCD/oGCD cooldown usages!--COL--" +
         "--SEP--The higher the Stimulation, the longer the GCD/oGCD increase." +
         "--SEP--Values: [Off: 1x] [Low: 1.125] [Medium: 1.375] [High: 1.875]";
-    
-    public void DrawHardcoreTraits(GarblerRestriction itemSource, float width)
-    {
-        // construct a child object here.
-        var style = ImGui.GetStyle();
-        var winSize = new Vector2(width, (ImGui.GetFrameHeight() * 2 + style.ItemSpacing.Y));
-        using (CkComponents.CenterHeaderChild("HardcoreTraits", "Hardcore Traits", winSize, WFlags.AlwaysUseWindowPadding))
-        {
-            var innerPos = ImGui.GetCursorScreenPos();
-            var innerRegion = ImGui.GetContentRegionAvail();
-            // calculate the size of the checkboxicons.
-            var iconCheckboxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
-            // get the remaining spacing after drawing 7 of these, and divide by 6 to get our offset spacing.
-            var offsetSpacing = (innerRegion.X - (iconCheckboxSize.X * 4)) / 3;
 
-            using (ImRaii.Group())
-            {
-                TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref itemSource, Traits.ArmsRestrained, HandsToolTip, true);
-                ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref itemSource, Traits.LegsRestrained, LegsToolTip, true);
-                ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref itemSource, Traits.Gagged, GaggedToolTip, false);
-                ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Blindfolded", _textures.CoreTextures[CoreTexture.Blindfolded], ref itemSource, Traits.Blindfolded, BlindfoldedToolTip, false);
-            }
-            using (ImRaii.Group())
-            {
-                TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref itemSource, Traits.Immobile, ImmobileToolTip, true);
-                ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref itemSource, Traits.Weighty, WeightyToolTip, true);
-                ImGui.SameLine(0, offsetSpacing);
-                StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref itemSource, StimulationTooltip, true);
-            }
+    private const int TraitCount = 7;
+    private static Vector2 TraitBoxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
+
+    public void DrawOneRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
+    {
+        var size = new Vector2(width, ImGui.GetFrameHeight());
+        using (CkComponents.CenterHeaderChild("HC_Traits", "Hardcore Traits", size, WFlags.AlwaysUseWindowPadding))
+        {
+            var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * TraitCount)) / (TraitCount - 1);
+
+            TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.ArmsRestrained, HandsToolTip, disabled.HasAny(Traits.ArmsRestrained));
+            ImGui.SameLine(0, offsetSpacing);
+            TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.LegsRestrained, LegsToolTip, disabled.HasAny(Traits.LegsRestrained));
+            ImGui.SameLine(0, offsetSpacing);
+            TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref traits, Traits.Gagged, GaggedToolTip, disabled.HasAny(Traits.Gagged));
+            ImGui.SameLine(0, offsetSpacing);
+            TraitCheckbox("Blindfolded", _textures.CoreTextures[CoreTexture.Blindfolded], ref traits, Traits.Blindfolded, BlindfoldedToolTip, disabled.HasAny(Traits.Blindfolded));
+            ImGui.SameLine(0, offsetSpacing);
+            TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref traits, Traits.Immobile, ImmobileToolTip, disabled.HasAny(Traits.Immobile));
+            ImGui.SameLine(0, offsetSpacing);
+            TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref traits, Traits.Weighty, WeightyToolTip, disabled.HasAny(Traits.Weighty));
+            ImGui.SameLine(0, offsetSpacing);
+            StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref traits, StimulationTooltip, disableStim);
         }
     }
 
-    public void DrawHardcoreTraits(RestrictionItem itemSource, float width)
+    public void DrawTwoRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
     {
-        var isGag = itemSource.Type is RestrictionType.Gag;
-        var isCollar = itemSource.Type is RestrictionType.Collar;
-        var isBlindfold = itemSource.Type is RestrictionType.Blindfold;
-        var isAnySpecial = itemSource.Type is not RestrictionType.Normal;
-
-        // construct a child object here.
-        var style = ImGui.GetStyle();
-        var winSize = new Vector2(width, (ImGui.GetFrameHeight() * 2 + style.ItemSpacing.Y));
-        using (CkComponents.CenterHeaderChild("HardcoreTraits", "Hardcore Traits", winSize, WFlags.AlwaysUseWindowPadding))
+        var size = new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y);
+        using (CkComponents.CenterHeaderChild("HC_Traits", "Hardcore Traits", size, WFlags.AlwaysUseWindowPadding))
         {
-            var innerPos = ImGui.GetCursorScreenPos();
-            var innerRegion = ImGui.GetContentRegionAvail();
-            // calculate the size of the checkboxicons.
-            var iconCheckboxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
-            // get the remaining spacing after drawing 7 of these, and divide by 6 to get our offset spacing.
-            var offsetSpacing = (innerRegion.X - (iconCheckboxSize.X * 4)) / 3;
+            var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * 4)) / 3;
 
             using (ImRaii.Group())
             {
-                TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref itemSource, Traits.ArmsRestrained, HandsToolTip, isAnySpecial);
+                TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.ArmsRestrained, HandsToolTip, disabled.HasAny(Traits.ArmsRestrained));
                 ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref itemSource, Traits.LegsRestrained, LegsToolTip, isAnySpecial);
+                TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.LegsRestrained, LegsToolTip, disabled.HasAny(Traits.LegsRestrained));
                 ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref itemSource, Traits.Gagged, GaggedToolTip, (isCollar || isBlindfold));
+                TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref traits, Traits.Gagged, GaggedToolTip, disabled.HasAny(Traits.Gagged));
                 ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Blindfolded", _textures.CoreTextures[CoreTexture.Blindfolded], ref itemSource, Traits.Blindfolded, BlindfoldedToolTip, isCollar);
+                TraitCheckbox("Blindfolded", _textures.CoreTextures[CoreTexture.Blindfolded], ref traits, Traits.Blindfolded, BlindfoldedToolTip, disabled.HasAny(Traits.Blindfolded));
             }
             using (ImRaii.Group())
             {
-                TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref itemSource, Traits.Immobile, ImmobileToolTip, isAnySpecial);
+                TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref traits, Traits.Immobile, ImmobileToolTip, disabled.HasAny(Traits.Immobile));
                 ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref itemSource, Traits.Weighty, WeightyToolTip, isAnySpecial);
+                TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref traits, Traits.Weighty, WeightyToolTip, disabled.HasAny(Traits.Weighty));
                 ImGui.SameLine(0, offsetSpacing);
-                StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref itemSource, StimulationTooltip, (isGag || isBlindfold));
+                StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref traits, StimulationTooltip, disableStim);
             }
         }
     }

@@ -15,6 +15,7 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.UI.Components;
 
 namespace GagSpeak.UI.MainWindow;
 
@@ -169,7 +170,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             if (moodleInfo.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
             {
                 ImGui.SetCursorPos(imagePos);
-                _moodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodlesDisplayer.DefaultSize);
+                _moodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodleDrawer.IconSize);
             }
         }
     }

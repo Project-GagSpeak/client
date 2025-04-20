@@ -71,7 +71,7 @@ public class ModPresetsPanel
         }
         else
         {
-            using (CkComponents.ButtonHeaderChild("MP-Editor", "Settings Preset Editor", ImGui.GetContentRegionAvail(), CkComponents.DefaultHeaderRounding,
+            using (CkComponents.ButtonHeaderChild("MP-Editor", "Settings Preset Editor", ImGui.GetContentRegionAvail(), CkComponents.HeaderRounding,
                 WFlags.AlwaysUseWindowPadding, icon, ToggleEditState))
             {
                 if (editingPreset)

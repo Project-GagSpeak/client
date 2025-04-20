@@ -1,14 +1,12 @@
-using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.Services;
-using GagSpeak.Utils;
-using JetBrains.Annotations;
+using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using System.ComponentModel;
 
 namespace GagSpeak.PlayerState.Models;
 
@@ -19,10 +17,12 @@ public interface IRestrictionRef
 
     /// <summary> a reference location to a restriction item (thanks c#) </summary>
     /// <remarks> This can be null if no item is set yet. </remarks>
-    RestrictionItem? Ref { get; set; }
+    RestrictionItem Ref { get; set; }
 
     /// <summary> Custom stains that can be set on-top of the base restriction items stains without changing them. </summary>
     StainIds CustomStains { get; set; }
+
+    public bool IsValid();
 }
 
 
@@ -74,12 +74,12 @@ public class RestraintSlotBasic : IRestraintSlot
 public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 {
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    // It might cause less issues to allow this to be null down the line and not use a (?)
-    public RestrictionItem? Ref { get; set; } = null;
+    // Creates an item with an empty identifier, indicating it is not a part of anything and holds default values.
+    public RestrictionItem Ref { get; set; } = new RestrictionItem() { Identifier = Guid.Empty };
     public StainIds CustomStains { get; set; } = StainIds.None;
-    public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
-    public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
-    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref?.Glamour.GameStain ?? StainIds.None;
+    public EquipSlot EquipSlot => Ref.Glamour.Slot;
+    public EquipItem EquipItem => Ref.Glamour.GameItem ;
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
     public RestraintSlotAdvanced() { }
     public RestraintSlotAdvanced(RestraintSlotAdvanced other)
     {
@@ -88,6 +88,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
         CustomStains = other.CustomStains;
     }
 
+    public bool IsValid() => Ref.Identifier != Guid.Empty;
     public IRestraintSlot Clone() => new RestraintSlotAdvanced(this);
     public JObject Serialize()
     {
@@ -95,7 +96,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
         {
             ["Type"] = RestraintSlotType.Advanced.ToString(),
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
+            ["RestrictionRef"] = Ref.Identifier.ToString(),
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
@@ -115,11 +116,11 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
     public Guid ID { get; internal set; } = Guid.NewGuid();
     public bool IsActive { get; set; } = false;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
-    public RestrictionItem? Ref { get; set; } = null;
+    public RestrictionItem Ref { get; set; } = new RestrictionItem() { Identifier = Guid.Empty };
     public StainIds CustomStains { get; set; } = StainIds.None;
-    public EquipSlot EquipSlot => Ref?.Glamour.Slot ?? EquipSlot.Nothing;
-    public EquipItem EquipItem => Ref?.Glamour.GameItem ?? ItemService.NothingItem(EquipSlot.Nothing);
-    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref?.Glamour.GameStain ?? StainIds.None;
+    public EquipSlot EquipSlot => Ref.Glamour.Slot;
+    public EquipItem EquipItem => Ref.Glamour.GameItem;
+    public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
 
     internal RestrictionLayer() { }
     internal RestrictionLayer(RestrictionLayer other)
@@ -130,6 +131,7 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
         CustomStains = other.CustomStains;
     }
 
+    public bool IsValid() => Ref.Identifier != Guid.Empty;
     public IRestraintLayer Clone() => new RestrictionLayer(this);
 
     public JObject Serialize()
@@ -146,7 +148,7 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
     }
 }
 
-public class ModPresetLayer : IRestraintLayer
+public class ModPresetLayer : IRestraintLayer, IModPreset
 {
     public Guid ID { get; internal set; } = Guid.NewGuid();
     public bool IsActive { get; set; } = false;
@@ -167,14 +169,14 @@ public class ModPresetLayer : IRestraintLayer
             ["Type"] = RestraintLayerType.ModPreset.ToString(),
             ["ID"] = ID,
             ["IsActive"] = IsActive,
-            ["Mod"] = Mod.Serialize(),
+            ["Mod"] = Mod.SerializeReference()
         };
     }
 }
 
 
 
-public class RestraintSet
+public class RestraintSet : ITraitHolder
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
@@ -193,7 +195,7 @@ public class RestraintSet
 
     // Additional Appends
     public List<ModSettingsPreset> RestraintMods { get; set; } = new List<ModSettingsPreset>();
-    public List<Moodle> RestraintMoodles { get; set; } = new List<Moodle>();
+    public HashSet<Moodle> RestraintMoodles { get; set; } = new HashSet<Moodle>();
     public Traits Traits { get; set; } = Traits.None;
     public Stimulation Stimulation { get; set; } = Stimulation.None;
 
@@ -228,7 +230,7 @@ public class RestraintSet
                 MoodlePreset preset => new MoodlePreset(preset),
                 _ => new Moodle(moodle)
             };
-        }).ToList();
+        }).ToHashSet();
 
         Traits = other.Traits;
         Stimulation = other.Stimulation;
@@ -350,8 +352,8 @@ public class RestraintSet
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
             ["WeaponState"] = WeaponState.ToString(),
+            ["RestraintMods"] = new JArray(RestraintMods.Select(x => x.SerializeReference())),
             ["RestraintMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
-            ["RestraintMods"] = new JArray(RestraintMods.Select(x => x.Serialize())),
             ["Traits"] = Traits.ToString(),
             ["Stimulation"] = Stimulation.ToString(),
         };

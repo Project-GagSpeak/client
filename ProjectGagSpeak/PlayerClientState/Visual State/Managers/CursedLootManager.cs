@@ -14,7 +14,6 @@ namespace GagSpeak.PlayerState.Visual;
 public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GagspeakConfigService _mainConfig;
-    private readonly GlobalData _globals;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly FavoritesManager _favorites;
@@ -22,12 +21,11 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     private readonly HybridSaveService _saver;
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, GlobalData clientData, GagRestrictionManager gags,
-        RestrictionManager restrictions, FavoritesManager favorites, ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        GagspeakConfigService config, GagRestrictionManager gags, RestrictionManager restrictions,
+        FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver)
+        : base(logger, mediator)
     {
         _mainConfig = config;
-        _globals = clientData;
         _gags = gags;
         _restrictions = restrictions;
         _favorites = favorites;

@@ -12,13 +12,9 @@ public static class JParserBinds
         if (token is not JObject json)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var modAttachment = ModSettingsPreset.FromJToken(json["Mod"], modPresets);
+        var modAttachment = ModSettingsPreset.FromReferenceJToken(json["Mod"], modPresets);
         var moodleType = Enum.TryParse<MoodleType>(json["Moodle"]?["Type"]?.ToObject<string>(), out var moodle) ? moodle : MoodleType.Status;
-        var moodles = moodleType switch
-        {
-            MoodleType.Preset => MoodlePreset.PresetFromJToken(json["Moodle"]),
-            _ => Moodle.StatusFromJToken(json["Moodle"]),
-        };
+        var moodles = JParser.LoadMoodle(json["Moodle"]);
 
         return new GarblerRestriction(gagType)
         {
@@ -79,13 +75,9 @@ public static class JParserBinds
     // Load in the base restriction information.
     private static void LoadBindTokenCommon(RestrictionItem item, JObject json, ItemService items, ModSettingPresetManager modPresets)
     {
-        var modAttachment = ModSettingsPreset.FromJToken(json["Mod"], modPresets);
+        var modAttachment = ModSettingsPreset.FromReferenceJToken(json["Mod"], modPresets);
         var moodleType = Enum.TryParse<MoodleType>(json["Moodle"]?["Type"]?.ToObject<string>(), out var moodle) ? moodle : MoodleType.Status;
-        var moodles = moodleType switch
-        {
-            MoodleType.Preset => MoodlePreset.PresetFromJToken(json["Moodle"]),
-            _ => Moodle.StatusFromJToken(json["Moodle"]),
-        };
+        var moodles = JParser.LoadMoodle(json["Moodle"]);
 
         item.Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         item.Label = json["Label"]?.ToObject<string>() ?? string.Empty;

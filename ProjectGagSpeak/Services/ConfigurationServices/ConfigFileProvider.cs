@@ -10,9 +10,10 @@ public interface IHybridSavable : IHybridConfig<ConfigFileProvider> { }
 public class ConfigFileProvider : IConfigFileProvider
 {
     // Shared Config Directories
-    public readonly string GagSpeakDirectory;
-    public readonly string EventDirectory;
-    public readonly string FileSystemDirectory;
+    public static string GagSpeakDirectory  { get; private set; } = string.Empty;
+    public static string EventDirectory     { get; private set; } = string.Empty;
+    public static string FileSysDirectory   { get; private set; } = string.Empty;
+    public static string ThumbnailDirectory { get; private set; } = string.Empty;
 
     // Shared Client Configs
     public readonly string MainConfig;
@@ -21,13 +22,13 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
     public readonly string Favorites;
-    public string CKFS_GagRestrictions => Path.Combine(FileSystemDirectory, "fs-gagrestrictions.json");
-    public string CKFS_Restrictions => Path.Combine(FileSystemDirectory, "fs-restrictions.json");
-    public string CKFS_RestraintSets => Path.Combine(FileSystemDirectory, "fs-restraintsets.json");
-    public string CKFS_CursedLoot => Path.Combine(FileSystemDirectory, "fs-cursedloot.json");
-    public string CKFS_Patterns => Path.Combine(FileSystemDirectory, "fs-patterns.json");
-    public string CKFS_Alarms => Path.Combine(FileSystemDirectory, "fs-alarms.json");
-    public string CKFS_Triggers => Path.Combine(FileSystemDirectory, "fs-triggers.json");
+    public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
+    public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
+    public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
+    public string CKFS_CursedLoot => Path.Combine(FileSysDirectory, "fs-cursedloot.json");
+    public string CKFS_Patterns => Path.Combine(FileSysDirectory, "fs-patterns.json");
+    public string CKFS_Alarms => Path.Combine(FileSysDirectory, "fs-alarms.json");
+    public string CKFS_Triggers => Path.Combine(FileSysDirectory, "fs-triggers.json");
 
     // Shared Server Configs
     public readonly string Nicknames;
@@ -49,7 +50,9 @@ public class ConfigFileProvider : IConfigFileProvider
     {
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
-        FileSystemDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
+        FileSysDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
+        ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
+
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
         RecentGlobalChat = Path.Combine(GagSpeakDirectory, "global-chat-recent.json");

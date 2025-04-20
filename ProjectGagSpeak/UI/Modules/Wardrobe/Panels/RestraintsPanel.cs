@@ -249,7 +249,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
         else
         {
-            using (CkComponents.ButtonHeaderChild("ActiveRestraintSet", "Active Restraint Set", activeSetSize, CkComponents.DefaultHeaderRounding, FAI.Minus, TryRemoveRestraint))
+            using (CkComponents.ButtonHeaderChild("ActiveRestraintSet", "Active Restraint Set", activeSetSize, CkComponents.HeaderRounding, FAI.Minus, TryRemoveRestraint))
             {
                 // Draw the restraint set equipment, grouped.
                 _activeDrawer.DrawRestraintSlots(_manager.ActiveRestraint, new Vector2(ImGui.GetFrameHeightWithSpacing()));

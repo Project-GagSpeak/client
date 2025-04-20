@@ -3,20 +3,19 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.UI;
 using ImGuiNET;
-using OtterGui;
 
 namespace GagSpeak.CkCommons.Helpers;
 
 public static partial class CkComponents
 {
-    public static float DefaultHeaderRounding => ImGui.GetStyle().FrameRounding * 2f;
+    public static float HeaderRounding => ImGui.GetStyle().FrameRounding * 2f;
     public static float HeaderHeight => ImGui.GetFrameHeight();
 
     public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size)
-        => new UnconditionalCenterHeader(id, text, size, DefaultHeaderRounding, WFlags.None);
+        => new UnconditionalCenterHeader(id, text, size, HeaderRounding, WFlags.None);
 
     public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size, WFlags flags)
-        => new UnconditionalCenterHeader(id, text, size, DefaultHeaderRounding, flags);
+        => new UnconditionalCenterHeader(id, text, size, HeaderRounding, flags);
 
     public static ImRaii.IEndObject CenterHeaderChild(string id, string text, Vector2 size, float bend)
     => new UnconditionalCenterHeader(id, text, size, bend, WFlags.None);

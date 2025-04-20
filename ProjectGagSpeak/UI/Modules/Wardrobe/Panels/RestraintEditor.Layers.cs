@@ -14,6 +14,8 @@ using GagSpeak.UI.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using ImGuiNET;
+using NAudio.SoundFont;
+using OtterGui;
 using OtterGui.Text;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -55,7 +57,6 @@ public class RestraintEditorLayers : ICkTab
     private float DragDropItemRounding => ImGui.GetStyle().FrameRounding * 2f;
     private float DragDropItemHeight => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
     private float DragDropHeaderWidth => ImGui.CalcTextSize("Layer XX").X + ImGui.GetStyle().ItemSpacing.X * 2;
-
     private List<(Vector2 RowPos, Action AcceptDraw)> _moveCommands = [];
     private Guid _dragLayerId { get; set; } = Guid.Empty;
 
@@ -73,17 +74,12 @@ public class RestraintEditorLayers : ICkTab
         var detailsWidth = region.X - rightButtons.X;
         var layerIdx = 0;
 
-
         using (ImRaii.Table("##RestraintLayers", 1, ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.RowBg, region))
         {
-            foreach (var layer in setInEdit.Layers)
+            // The .ToList() makes the for-each work on a copy, preventing an exception when removing a layer.
+            foreach (var layer in setInEdit.Layers.ToList())
             {
                 DrawExistingLayer(layerIdx, region.X, rightButtons);
-                
-                // Handle a check to see if the collection was modified, if it was, we need to break
-                // out of the loop to avoid exception crash.
-
-
                 layerIdx++;
             }
 
@@ -114,33 +110,10 @@ public class RestraintEditorLayers : ICkTab
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, color);
         }
 
-        // Move to the next column (?) ((Idk why its like this but it is, if i remove it, it goes :bongoBoom:
-        ImGui.TableNextColumn();
-
         // Draw out the side header, which is what we use for our movable drag-drop object.
+        ImGui.TableNextColumn();
         var rowPos = ImGui.GetCursorPos();
         DrawSideHeader($"##Move{_manager.ActiveEditorItem!.Layers[curLayerIdx].ID}", $"Layer {curLayerIdx + 1}", DragDropHeaderWidth);
-        if(ImGui.IsItemHovered() && _manager.ActiveEditorItem!.Layers[curLayerIdx] is RestrictionLayer layerItem)
-        {
-            ImGui.BeginTooltip();
-
-            ImGui.TextUnformatted($"Layer {curLayerIdx + 1}");
-            ImGui.TextUnformatted($"ID: {layerItem.ID}");
-            ImGui.TextUnformatted($"IsActive: {layerItem.IsActive}");
-            ImGui.TextUnformatted($"ApplyFlags: {layerItem.ApplyFlags}");
-            ImGui.TextUnformatted($"RestrictionRef: {layerItem.Ref}");
-            ImGui.TextUnformatted($"EquipSlot: {layerItem.EquipSlot}");
-            ImGui.TextUnformatted($"EquipItem: {layerItem.EquipItem.Name}");
-            ImGui.TextUnformatted($"Stains: {layerItem.Stains}");
-            ImGui.TextUnformatted($"CustomStains: {layerItem.CustomStains}");
-            if(layerItem.Ref is { } refItem)
-            {
-                ImGui.TextUnformatted($"Glamour: {layerItem.Ref.Glamour.GameItem.Name}");
-                ImGui.TextUnformatted($"Mod: {layerItem.Ref.Mod.Container.ModName}");
-                ImGui.TextUnformatted($"Moodle: {layerItem.Ref.Moodle.Id}");
-            }
-            ImGui.EndTooltip();
-        }
 
         // Show the cursor move icon while hovering.
         if (ImGui.IsItemHovered())
@@ -157,10 +130,7 @@ public class RestraintEditorLayers : ICkTab
         }
         // If we are NOT dragging, and we have just released, and our drag layer is the same as the current, clear the drag layer.
         else if (_dragLayerId == _manager.ActiveEditorItem!.Layers[curLayerIdx].ID)
-        {
-            //_logger.LogTrace($"Current drag reset!");
             _dragLayerId = Guid.Empty;
-        }
 
         // Define the move index that should be used if the drag-drop target is accepted.
         var moveIndex = curLayerIdx;
@@ -190,16 +160,14 @@ public class RestraintEditorLayers : ICkTab
             {
                 if (CkGui.IconButton(FAI.ArrowsLeftRight, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 {
-                    if (_manager.ActiveEditorItem.Layers[curLayerIdx] is { } currentLayer)
+                    // Swap the layer type to the other type.
+                    var currentLayer = _manager.ActiveEditorItem!.Layers[curLayerIdx];
+                    _manager.ActiveEditorItem.Layers[curLayerIdx] = currentLayer switch
                     {
-                        // Swap the layer type to the other type.
-                        _manager.ActiveEditorItem.Layers[curLayerIdx] = currentLayer switch
-                        {
-                            RestrictionLayer => new ModPresetLayer(),
-                            ModPresetLayer => new RestrictionLayer(),
-                            _ => throw new ArgumentOutOfRangeException(nameof(currentLayer), "Unknown Layer Type"),
-                        };
-                    }
+                        RestrictionLayer => new ModPresetLayer(),
+                        ModPresetLayer => new RestrictionLayer(),
+                        _ => throw new ArgumentOutOfRangeException(nameof(currentLayer), "Unknown Layer Type"),
+                    };
                 }
                 CkGui.AttachToolTip("Swap layer type to Mod Preset Layer. (Hold Shift)");
 
@@ -243,28 +211,9 @@ public class RestraintEditorLayers : ICkTab
         var detailsWidth = ImGui.GetContentRegionAvail().X - rightButtons;
 
         if (_manager.ActiveEditorItem!.Layers[layerIdx] is RestrictionLayer restrictionLayer)
-        {
             DrawRestrictionLayer(restrictionLayer, detailsWidth);
-        }
         else if (_manager.ActiveEditorItem.Layers[layerIdx] is ModPresetLayer modPresetLayer)
-        {
             DrawModPresetLayer(modPresetLayer, detailsWidth);
-
-            // Now jump to the right and draw out the buttons.
-            ImGui.SameLine(detailsWidth);
-            var adjustedYPos = ImGui.GetCursorPosY() + (DragDropItemHeight - ImGui.GetFrameHeight()) / 2;
-            using (ImRaii.Group())
-            {
-                if (CkGui.IconButton(FAI.ArrowsLeftRight, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
-                    _manager.ActiveEditorItem!.Layers[layerIdx] = new RestrictionLayer();
-                CkGui.AttachToolTip("Swap layer type to Restriction Layer. (Hold Shift)");
-
-                ImUtf8.SameLineInner();
-                if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || layerIdx == _manager.ActiveEditorItem.Layers.Count - 1))
-                    _manager.ActiveEditorItem!.Layers.Remove(modPresetLayer);
-                CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
-            }
-        }
     }
 
     private void DrawRestrictionLayer(RestrictionLayer layer, float width)
@@ -274,14 +223,14 @@ public class RestraintEditorLayers : ICkTab
         using (ImRaii.Group())
         {
             // Begin by printing out the restriction layer information.
-            _equipDrawer.DrawRestrictionRef(layer, layer.EquipSlot, width / 2);
+            _equipDrawer.DrawRestrictionRef(layer, layer.ID.ToString(), width / 2);
             ImGui.SameLine();
             // Draw a group for the moodles and hardcore traits.
             using (ImRaii.Group())
             {
                 // Draw moodles, if present.
                 if (layer.Ref?.Moodle is { } refMoodle)
-                    _moodleDrawer.DrawMoodles(refMoodle, MoodlesDisplayer.FrameFitSize);
+                    _moodleDrawer.DrawMoodles(refMoodle, MoodleDrawer.IconSizeFramed);
 
                 // Draw hardcore Traits, if present.
                 var refTraits = layer.Ref?.Traits ?? Traits.None;
@@ -292,9 +241,21 @@ public class RestraintEditorLayers : ICkTab
 
     private void DrawModPresetLayer(ModPresetLayer modPresetLayer, float width)
     {
-        // Draw the mod preset layer.
-        //_modDrawer.DrawPresetPreview(modPresetLayer, modPresetLayer.ModPreset, width);
+        ImGui.SameLine(ImGui.GetStyle().ItemSpacing.X);
+        using (ImRaii.Group())
+        {
+            _modDrawer.DrawModPresetCombos(modPresetLayer.ID.ToString(), modPresetLayer, width / 2);
+            ImGui.SameLine();
+            var hoverBoxRegion = ImGui.CalcTextSize("Hover To See Settings") + ImGui.GetStyle().FramePadding;
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (ImGui.GetContentRegionAvail().Y - hoverBoxRegion.Y) / 2);
+            using (CkComponents.FramedChild($"ModPresetPreview{modPresetLayer.ID}", CkColor.FancyHeaderContrast.Uint(), hoverBoxRegion))
+            {
+                ImGuiUtil.Center("Hover To See Settings");
 
+                if (ImGui.IsItemHovered() && modPresetLayer.Mod.HasData)
+                    _modDrawer.DrawPresetTooltip(modPresetLayer.Mod);
+            }
+        }
     }
 
     /// <summary> Places a header left-aligned beside a child window. </summary>

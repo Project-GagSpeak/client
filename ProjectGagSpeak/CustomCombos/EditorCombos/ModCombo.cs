@@ -13,7 +13,7 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 
 public sealed class ModCombo : CkFilterComboCache<ModInfo>
 {
-    private string _currentItem;
+    private string _currentPath;
     public ModCombo(ILogger log, Func<IReadOnlyList<ModInfo>> generator)
     : base(generator, log)
     {
@@ -22,10 +22,10 @@ public sealed class ModCombo : CkFilterComboCache<ModInfo>
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {
-        if (Current.DirPath == _currentItem)
+        if (Current?.DirPath == _currentPath)
             return currentSelected;
 
-        CurrentSelectionIdx = Items.IndexOf(i => i.DirPath == _currentItem);
+        CurrentSelectionIdx = Items.IndexOf(i => i.DirPath == _currentPath);
         Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : default;
         return base.UpdateCurrentSelected(CurrentSelectionIdx);
     }
@@ -33,11 +33,16 @@ public sealed class ModCombo : CkFilterComboCache<ModInfo>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, string currentModItem, float width, float innerWidthScaler)
+        => Draw(label, currentModItem, width, innerWidthScaler, ImGuiComboFlags.None);
+
+    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
+    /// <returns> True if a new item was selected, false otherwise. </returns>
+    public bool Draw(string label, string currentModItem, float width, float innerWidthScaler, ImGuiComboFlags flags)
     {
         InnerWidth = width * innerWidthScaler;
-        _currentItem = currentModItem;
-        var previewLabel = Items.FirstOrDefault(i => i.DirPath == _currentItem).Name ?? "Select a Mod...";
-        return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
+        _currentPath = currentModItem;
+        var previewLabel = Items.FirstOrDefault(i => i.DirPath == _currentPath)?.Name ?? "Select a Mod...";
+        return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
     }
 
     protected override string ToString(ModInfo Mod)

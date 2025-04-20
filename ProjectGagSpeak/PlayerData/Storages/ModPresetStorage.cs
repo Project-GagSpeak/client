@@ -81,6 +81,8 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
     public string[] SelectedOptions(string group)
         => ModSettings.TryGetValue(group, out var selected) ? selected.ToArray() : Array.Empty<string>();
 
+    /// <summary> To be used by the ModSettingPresetManager for serialization. </summary>
+
     public JObject Serialize()
     {
         return new JObject
@@ -90,6 +92,41 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
             ["ModSettings"] = new JObject(ModSettings.Select(kvp => new JProperty(kvp.Key, new JArray(kvp.Value)))),
         };
     }
+
+    public JObject SerializeReference()
+    {
+        return new JObject
+        {
+            ["DirectoryPath"] = Container.DirectoryPath,
+            ["Label"] = Label,
+        };
+    }
+
+    public static ModSettingsPreset FromReferenceJToken(JToken? modPresetLight, ModSettingPresetManager modPresets)
+    {
+        if (modPresetLight is not JObject jsonObject)
+            throw new Exception("Invalid ModSettingsPreset data!");
+
+        var dirPath = jsonObject["DirectoryPath"]?.Value<string>();
+        var presetName = jsonObject["Label"]?.Value<string>();
+        // if the directory path is an empty string, then we should return a default preset, otherwise, we should load it.
+        if (dirPath.IsNullOrEmpty() || presetName.IsNullOrEmpty())
+            return new ModSettingsPreset(new ModPresetContainer());
+        else
+        {
+            // if the directory path is not in the mod preset storage, then we should throw an exception.
+            var container = modPresets.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
+                ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
+                $"\nCurrent Containers are: {string.Join("\n", modPresets.ModPresetStorage.Select(x => x.DirectoryPath))}");
+
+            var preset = container.ModPresets.FirstOrDefault(x => x.Label == presetName)
+                ?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
+                $"\nCurrent Presets are: {string.Join("\n", container.ModPresets.Select(x => x.Label))}");
+
+            return preset;
+        }
+    }
+
 
     public static ModSettingsPreset FromJToken(JToken? modPreset, ModSettingPresetManager modPresets)
     {

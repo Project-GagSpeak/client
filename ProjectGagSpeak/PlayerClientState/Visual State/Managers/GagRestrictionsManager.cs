@@ -16,21 +16,20 @@ namespace GagSpeak.PlayerState.Visual;
 public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly GagGarbler _garbler;
-    private readonly GlobalData _clientData;
     private readonly FavoritesManager _favorites;
+    private readonly ModSettingPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
-    private readonly ModSettingPresetManager _modPresets;
     private readonly HybridSaveService _saver;
 
     public GagRestrictionManager(ILogger<GagRestrictionManager> logger, GagspeakMediator mediator,
-        GagGarbler garbler, GlobalData clientData, FavoritesManager favorites, 
-        ConfigFileProvider fileNames, ItemService items, ModSettingPresetManager modPresets,
-        HybridSaveService saver) : base(logger, mediator)
+        GagGarbler garbler, FavoritesManager favorites, ModSettingPresetManager modPresets,
+        ConfigFileProvider fileNames, ItemService items, HybridSaveService saver)
+        : base(logger, mediator)
     {
         _garbler = garbler;
-        _clientData = clientData;
         _favorites = favorites;
+        _modPresets = modPresets;
         _fileNames = fileNames;
         _items = items;
         _modPresets = modPresets;

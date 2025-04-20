@@ -256,7 +256,10 @@ public class AccountManagerTab
 
             if (isPrimary)
             {
-                var allFolders = Directory.GetDirectories(_configFiles.GagSpeakDirectory).Where(c => !c.Contains("eventlog") && !c.Contains("audiofiles")).ToList();
+                var allFolders = Directory.GetDirectories(ConfigFileProvider.GagSpeakDirectory)
+                    .Where(c => !c.Contains("eventlog") && !c.Contains("audiofiles"))
+                    .ToList();
+
                 foreach (var folder in allFolders)
                     Directory.Delete(folder, true);
 
