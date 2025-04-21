@@ -10,7 +10,6 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -26,29 +25,20 @@ public partial class CkGui
 
     public const string TooltipSeparator = "--SEP--";
     public const string ColorToggleSeparator = "--COL--";
-    private const string _nicknameEnd = "##GAGSPEAK_USER_NICKNAME_END##";
-    private const string _nicknameStart = "##GAGSPEAK_USER_NICKNAME_START##";
 
     private readonly ILogger<CkGui> _logger;
-    private readonly MainHub _hub;
     private readonly ServerConfigurationManager _serverConfigs;
-    private readonly OnFrameworkService _frameworkUtil;
-    private readonly IpcManager _ipcManager;
     private readonly IDalamudPluginInterface _pi;
     private readonly ITextureProvider _textureProvider;
 
     public static Dictionary<string, object> _selectedComboItems;    // the selected combo items
     public static Dictionary<string, string> SearchStrings;
 
-    public CkGui(ILogger<CkGui> logger, MainHub hub,
-        ServerConfigurationManager serverConfigs, OnFrameworkService frameworkUtil,
-        IpcManager ipcManager, IDalamudPluginInterface pi, ITextureProvider tp)
+    public CkGui(ILogger<CkGui> logger, ServerConfigurationManager serverConfigs,
+        IDalamudPluginInterface pi, ITextureProvider tp)
     {
         _logger = logger;
-        _hub = hub;
         _serverConfigs = serverConfigs;
-        _frameworkUtil = frameworkUtil;
-        _ipcManager = ipcManager;
         _pi = pi;
         _textureProvider = tp;
 
@@ -508,12 +498,10 @@ public partial class CkGui
         var splitNicknames = notes.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).ToList();
         var splitNicknamesStart = splitNicknames.FirstOrDefault();
         var splitNicknamesEnd = splitNicknames.LastOrDefault();
-        if (!string.Equals(splitNicknamesStart, _nicknameStart, StringComparison.Ordinal) || !string.Equals(splitNicknamesEnd, _nicknameEnd, StringComparison.Ordinal))
-        {
+        if (!string.Equals(splitNicknamesStart, "##GAGSPEAK_USER_NICKNAME_START##", StringComparison.Ordinal) || !string.Equals(splitNicknamesEnd, "##GAGSPEAK_USER_NICKNAME_END##", StringComparison.Ordinal))
             return false;
-        }
 
-        splitNicknames.RemoveAll(n => string.Equals(n, _nicknameStart, StringComparison.Ordinal) || string.Equals(n, _nicknameEnd, StringComparison.Ordinal));
+        splitNicknames.RemoveAll(n => string.Equals(n, "##GAGSPEAK_USER_NICKNAME_START##", StringComparison.Ordinal) || string.Equals(n, "##GAGSPEAK_USER_NICKNAME_END##", StringComparison.Ordinal));
 
         foreach (var note in splitNicknames)
         {

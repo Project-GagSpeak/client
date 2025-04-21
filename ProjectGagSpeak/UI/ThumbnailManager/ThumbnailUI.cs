@@ -1,3 +1,4 @@
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Drawers;
@@ -6,10 +7,14 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.UI.Components;
+using GagSpeak.Utils;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace GagSpeak.UI;
 
@@ -54,23 +59,21 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var headerH = ImGui.GetFrameHeight();
-        // Draw out the header on top.
-        var drawRegions = DrawerHelpers.FlatHeaderWithCurve(CkColor.FancyHeader.Uint(), headerH, headerH);
+        var drawSpaces = DrawerHelpers.FlatHeaderWithCurve(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
 
-        // Draw the header items.
-        ImGui.SetCursorScreenPos(drawRegions.Top.Pos);
-        using (ImRaii.Child("Thumbnail_UI_Header", drawRegions.Top.Size))
-            DrawHeaderItems(drawRegions.Bottom.Size);
+        ImGui.SetCursorScreenPos(drawSpaces.Top.Pos);
+        using (ImRaii.Child("Thumbnail_UI_Header", drawSpaces.Top.Size))
+            // Let the header buttons know for import, how large the draw region is.
+            DrawHeaderItems(drawSpaces.Bottom.Size);
 
-        // Draw the file browser on the bottom.
-        ImGui.SetCursorScreenPos(drawRegions.Bottom.Pos);
-        using (ImRaii.Child("Thumbnail_UI_Footer", drawRegions.Bottom.Size))
+
+        ImGui.SetCursorScreenPos(drawSpaces.Bottom.Pos);
+        using (ImRaii.Child("Thumbnail_UI_Footer", drawSpaces.Bottom.Size))
         {
-            if (_imageImport.ImportedImage is null)
-                DrawFileBrowser();
-            else
+            if (_imageImport.ShouldDrawImportContent(FolderName))
                 DrawFileImporter();
+            else
+                DrawFileBrowser();
         }
     }
 
@@ -79,37 +82,45 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var buttonW = CkGui.IconButtonSize(FAI.GroupArrowsRotate).X;
         var clipboardImportW = CkGui.IconTextButtonSize(FAI.Clipboard, "From Clipboard");
         var fileImportW = CkGui.IconTextButtonSize(FAI.FileImport, "From File");
-        var tooltip = "Browse for a thumbnail to use.";
 
-        var searchWidth = ImGui.GetContentRegionAvail().X/3;
-        DrawerHelpers.FancySearchFilter("Filter", searchWidth, tooltip, ref _searchString, 128, buttonW, RefreshButton);
-        ImGui.SameLine();
-
-        var remainingWidth = ImGui.GetContentRegionAvail().X;
-        var size = _config.Config.FileIconScale;
-
-        ImGui.SetNextItemWidth(remainingWidth - clipboardImportW - fileImportW - ImGui.GetStyle().ItemInnerSpacing.X * 3);
-        if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
-            _config.Config.FileIconScale = size;
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            _config.Save();
-        if (ImGui.IsItemHovered())
-            ImGui.SetTooltip($"Scalar: {size}x (Size: {ItemWidth}px)");
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.FileImport, "From File"))
-            _imageImport.ImportFromFile(FolderName, IconSizeBase, botRegionSize);
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Clipboard, "From Clipboard"))
-            _imageImport.ImportFromClipboard(FolderName, IconSizeBase, botRegionSize);
-
-        // For refreshing files.
-        void RefreshButton()
+        var searchWidth = ImGui.GetContentRegionAvail().X / 3;
+        DrawerHelpers.FancySearchFilter("Filter", searchWidth, "Browse for a thumbnail to use.", ref _searchString, 128, buttonW, () =>
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);
-        }
+        });
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - clipboardImportW - fileImportW - ImGui.GetStyle().ItemInnerSpacing.X * 3);
+
+        // Let the user control the size of the displayed icons.
+        var size = _config.Config.FileIconScale;
+        if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
+            _config.Config.FileIconScale = size;
+        CkGui.AttachToolTip($"Scalar: {size}x (Size: {ItemWidth}px)");
+        // Save changes only once we deactivate, to avoid spamming the hybrid saver.
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            _config.Save();
+
+        // Let them use File Dialog Manager to import images.
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.FileImport, "From File"))
+            _imageImport.ImportFromFile(FolderName, IconSizeBase, botRegionSize, KeyMonitor.ShiftPressed());
+        CkGui.AttachToolTip("Add a Thumbnail Image from the file browser."
+            + "--SEP-- Holding SHIFT will force the image to be re-imported.");
+
+        // Add a option to add new images by clipboard pasting.
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.Clipboard, "From Clipboard"))
+            _imageImport.ImportFromClipboard(FolderName, IconSizeBase, botRegionSize, KeyMonitor.ShiftPressed());
+        CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
+        + "--SEP-- Holding SHIFT will force the image to be re-imported.");
+    }
+
+    public void DrawFileImporter()
+    {
+        using (ImRaii.Child("File_Import", ImGui.GetContentRegionAvail()))
+            _imageImport.DrawImportContent();
     }
 
     private void DrawFileBrowser()
@@ -119,11 +130,6 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             DrawAllEntries();
     }
 
-    public void DrawFileImporter()
-    {
-        using (ImRaii.Child("File_Import", ImGui.GetContentRegionAvail()))
-            _imageImport.DrawImportContent();
-    }
 
     private void DrawAllEntries()
     {
@@ -176,6 +182,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             SelectAndClose();
     }
 
+    /// <summary> Displays an individual Thumbnail Icon, along with its name. </summary>
+    /// <remarks> Double clicking an icon will select it, and close the window. </remarks>
     private void DrawThumbnailEntry(ThumbnailFile entry, int id)
     {
         var size = new Vector2(ItemWidth, (ItemWidth * ItemHeightScaler) + ItemHeightFooter);
@@ -197,10 +205,10 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImGui.SetCursorScreenPos(pos);
         using var _ = ImRaii.Child($"library_entry_{id}", size, false, WFlags.NoInputs | WFlags.NoScrollbar);
         var imgSpace = new Vector2(ItemWidth, ItemWidth * ItemHeightScaler);
-        if (entry.Icon is not null)
-        {
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(entry.Icon, pos, imgSpace, 10);
-        }
+
+        if (entry.Icon is { } img)
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(img, pos, imgSpace, 10);
+
         ImGui.Dummy(imgSpace);
         ImGuiUtil.TextWrapped(entry.FileName);
 
@@ -209,6 +217,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
     private void SelectAndClose()
     {
         _logger.LogInformation($"Selecting Thumbnail file: {_toOpen?.FileName} and closing window.");
+        // Fire some mediator event here?
         this.IsOpen = false;
     }
 
