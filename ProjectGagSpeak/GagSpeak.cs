@@ -127,6 +127,7 @@ public sealed class GagSpeak : IDalamudPlugin
             // add the general services to the collection
             .AddSingleton(new WindowSystem("GagSpeak"))
             .AddSingleton<FileDialogManager>()
+            .AddSingleton<UiFileDialogService>()
             .AddSingleton(new Dalamud.Localization("GagSpeak.Localization.", "", useEmbedded: true))
             // add the generic services for GagSpeak
             .AddGagSpeakGeneric(pi, alc, cs, cg, con, cmu, dm, bar, ds, fw, ks, gg, gip, gps, nm, ot, plt, ss, tm, tp)
@@ -541,7 +542,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped((s) => new TextureService(pi.UiBuilder, dm, tp))
         .AddScoped((s) => new UiService(s.GetRequiredService<ILogger<UiService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<WindowSystem>(), s.GetServices<WindowMediatorSubscriberBase>(), s.GetRequiredService<UiFactory>(),
-            s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<FileDialogManager>(), pi.UiBuilder))
+            s.GetRequiredService<MainMenuTabs>(), s.GetRequiredService<UiFileDialogService>(), pi.UiBuilder))
         .AddScoped((s) => new CkGui(s.GetRequiredService<ILogger<CkGui>>(), s.GetRequiredService<ServerConfigurationManager>(), pi, tp));
     #endregion ScopedServices
 

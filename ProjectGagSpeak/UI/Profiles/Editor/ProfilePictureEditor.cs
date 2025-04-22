@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Textures.TextureWraps; // This is discouraged, try and look into better way to do it later.
@@ -12,25 +11,26 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using ImGuiNET;
-using Microsoft.VisualBasic;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using System.Numerics;
 
 namespace GagSpeak.UI.Profile;
 
 public class ProfilePictureEditor : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly FileDialogManager _fileDialogManager;
+    private readonly UiFileDialogService _dialogService;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly CosmeticService _cosmetics;
 
-    public ProfilePictureEditor(ILogger<ProfilePictureEditor> logger, GagspeakMediator mediator,
-        MainHub hub, FileDialogManager fileDialogManager, KinkPlateService KinkPlateManager,
-        CosmeticService cosmetics, CkGui uiShared)
-        : base(logger, mediator, "Edit KinkPlate Profile Picture###KinkPlateProfilePictureUI")
+    public ProfilePictureEditor(
+        ILogger<ProfilePictureEditor> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        UiFileDialogService dialogService,
+        KinkPlateService KinkPlateManager,
+        CosmeticService cosmetics) : base(logger, mediator, "Edit KinkPlate Pic###KP_PFP_UI")
     {
         IsOpen = false;
         Size = new(768, 600);
@@ -38,7 +38,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         AllowClickthrough = false;
         AllowPinning = false;
         _hub = hub;
-        _fileDialogManager = fileDialogManager;
+        _dialogService = dialogService;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
 
@@ -151,7 +151,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
 
     private void HandleFileDialog()
     {
-        _fileDialogManager.OpenFileDialog("Select new Profile picture", ".png", (success, file) =>
+        _dialogService.OpenSingleFilePicker("Select new Profile picture", ".png", (success, file) =>
         {
             if (!success)
             {

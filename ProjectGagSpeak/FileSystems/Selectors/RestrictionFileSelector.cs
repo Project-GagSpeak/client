@@ -19,6 +19,7 @@ using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using System.Drawing;
 
 namespace GagSpeak.Restrictions;
 
@@ -93,12 +94,27 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     private bool DrawLeafInternal(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
     {
-        ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
         var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+
+        // the border if selected.
+        if (selected)
+        {
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+                rectMin,
+                rectMin + leafSize,
+                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
+            ImGui.GetWindowDrawList().AddRectFilled(
+                rectMin,
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+                CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
 
         using (ImRaii.Group())
         {
@@ -109,17 +125,11 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             ImGui.Text(leaf.Value.Label);
             ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
             if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            {
+                Log.LogDebug($"Deleting {leaf.Value.Label}");
                 _manager.Delete(leaf.Value);
+            }
             CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
-        }
-
-        // the border if selected.
-        if (selected)
-        {
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
 
         return hovered;

@@ -2,6 +2,7 @@ using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.CkCommons.Newtonsoft;
 
@@ -53,9 +54,24 @@ public static class JParserBinds
 
         newItem.HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         newItem.VisorState = JParser.FromJObject(json["VisorState"]);
-        newItem.Kind = Enum.TryParse<BlindfoldType>(json["Kind"]?.ToObject<string>(), out var kind) ? kind : BlindfoldType.Light;
         newItem.ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
-        newItem.CustomPath = json["CustomPath"]?.ToObject<string>() ?? string.Empty;
+        newItem.BlindfoldPath = json["BlindfoldPath"]?.ToObject<string>() ?? string.Empty;
+        return newItem;
+    }
+
+    public static HypnoticRestriction LoadHypnoticToken(JToken token, ItemService items, ModSettingPresetManager modPresets)
+    {
+        if (token is not JObject json)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        var newItem = new HypnoticRestriction();
+        LoadBindTokenCommon(newItem, json, items, modPresets);
+
+        newItem.HeadgearState = JParser.FromJObject(json["HeadgearState"]);
+        newItem.VisorState = JParser.FromJObject(json["VisorState"]);
+        newItem.ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
+        newItem.HypnotizePath = json["HypnoticPath"]?.ToObject<string>() ?? string.Empty;
+        newItem.Effect = json["Effect"]?.ToObject<HypnoticEffect>() ?? new HypnoticEffect();
         return newItem;
     }
 

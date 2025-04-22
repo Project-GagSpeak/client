@@ -119,9 +119,9 @@ public class UiFactory
             _pairManager, _clientMonitor);
     }
 
-    public ThumbnailUI CreateThumbnailUi(ImageDataType type)
+    public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)
     {
         return new ThumbnailUI(_loggerFactory.CreateLogger<ThumbnailUI>(), _mediator, _imageImport,
-            _config, _cosmetics, type);
+            _config, _cosmetics, thumbnailInfo);
     }
 }

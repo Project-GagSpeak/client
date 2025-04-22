@@ -9,6 +9,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Character;
 using GagspeakAPI.Extensions;
+using System.Linq;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -71,8 +72,9 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     {
         var restriction = type switch
         {
-            RestrictionType.Blindfold => new BlindfoldRestriction(),
             RestrictionType.Collar => new CollarRestriction(),
+            RestrictionType.Hypnotic => new HypnoticRestriction(),
+            RestrictionType.Blindfold => new BlindfoldRestriction(),
             _ => new RestrictionItem()
         };
         restriction.Label = restrictionName;
@@ -89,6 +91,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         var clonedItem = clone switch
         {
             BlindfoldRestriction b => new BlindfoldRestriction(b, false) { Label = newName },
+            HypnoticRestriction  h => new HypnoticRestriction(h, false) { Label = newName },
             CollarRestriction    c => new CollarRestriction(c, false) { Label = newName },
             RestrictionItem      r => new RestrictionItem(r, false) { Label = newName },
             _ => throw new NotImplementedException("Unknown restriction type."),
@@ -104,9 +107,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     /// <summary> Delete a Restriction. </summary>
     public void Delete(RestrictionItem restriction)
     {
-        if (ActiveEditorItem is null)
-            return;
-
         // should never be able to remove active restrictions, but if that happens to occur, add checks here.
         if (Storage.Remove(restriction))
         {
@@ -130,6 +130,18 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Renamed, restriction, oldName));
     }
 
+    public void UpdateThumbnail(RestrictionItem restriction, string newPath)
+    {
+        // This could have changed by the time this is called, so get it again.
+        if (Storage.Contains(restriction))
+        {
+            Logger.LogDebug($"Thumbnail updated for {restriction.Label} to {restriction.ThumbnailPath}");
+            restriction.ThumbnailPath = newPath;
+            _saver.Save(this);
+            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, restriction, null));
+        }
+    }
+
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
     public void StartEditing(RestrictionItem item)
     {
@@ -138,8 +150,9 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         {
             ActiveEditorItem = item switch
             {
-                BlindfoldRestriction b => new BlindfoldRestriction(b, true),
                 CollarRestriction    c => new CollarRestriction(c, true),
+                HypnoticRestriction  h => new HypnoticRestriction(h, true),
+                BlindfoldRestriction b => new BlindfoldRestriction(b, true),
                 RestrictionItem      r => new RestrictionItem(r, true),
                 _ => throw new NotImplementedException("Unknown restriction type."),
             };

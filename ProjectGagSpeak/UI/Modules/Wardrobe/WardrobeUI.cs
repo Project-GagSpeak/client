@@ -85,7 +85,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(600, 470),
+            MinimumSize = new Vector2(600, 490),
             MaximumSize = ImGui.GetIO().DisplaySize,
         };
         RespectCloseHotkey = false;

@@ -7,6 +7,7 @@ using GagSpeak.UI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 
@@ -56,6 +57,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
             Current = default;
         }
 
+        ImUtf8.SameLineInner();
         var ret = ImGui.Selectable(gagItem.GagType.GagName(), selected);
 
         // IF the GagType is active in the gag storage, draw it's link icon.

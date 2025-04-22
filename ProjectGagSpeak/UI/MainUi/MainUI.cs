@@ -38,6 +38,9 @@ public class MainUI : WindowMediatorSubscriberBase
     public string _pairToAdd = string.Empty; // the pair to add
     public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
 
+    public static Vector2 LastPos   { get; private set; } = Vector2.Zero;
+    public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
+
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
         GagspeakConfigService config, PairManager pairManager, ServerConfigurationManager serverConfigs,
         HomepageTab homepage, WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
@@ -66,11 +69,7 @@ public class MainUI : WindowMediatorSubscriberBase
             new TitleBarButton()
             {
                 Icon = FAI.Cog,
-                Click = (msg) =>
-                {
-                    Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
-                },
-
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))),
                 IconOffset = new(2,1),
                 ShowTooltip = () =>
                 {
@@ -82,10 +81,7 @@ public class MainUI : WindowMediatorSubscriberBase
             new TitleBarButton()
             {
                 Icon = FAI.Book,
-                Click = (msg) =>
-                {
-                    Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-                },
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))),
                 IconOffset = new(2,1),
                 ShowTooltip = () =>
                 {
@@ -176,20 +172,8 @@ public class MainUI : WindowMediatorSubscriberBase
                 ServerState.Unauthorized => "UNAUTHORIZED",
                 _ => "UNK ERROR"
             };
-            var errorText = MainHub.ServerStatus switch
-            {
-                ServerState.NoSecretKey => "No secret key is set for this current character. " +
-                "\nTo create UID's for your alt characters, be sure to claim your account in the CK discord." +
-                "\n\nOnce you have inserted a secret key, reload the plugin to be registered with the servers.",
-                ServerState.VersionMisMatch => "Current Ver: " + MainHub.ClientVerString + Environment.NewLine
-                + "Expected Ver: " + MainHub.ExpectedVerString +
-                "\n\nThis Means that your client is outdated, and you need to update it." +
-                "\n\nIf there is no update Available, then this message Likely Means Cordy is running some last minute tests " +
-                "to ensure everyone doesn't crash with the latest update. Hang in there!",
-                ServerState.Unauthorized => "You are Unauthorized to access GagSpeak Servers with this account due to an " +
-                "Unauthorization. \n\nDetails:\n" + GagspeakHubBase.AuthFailureMessage,
-                _ => "Unknown Reasoning for this error."
-            };
+            var errorText = GetServerError();
+
             // push the notice that we are unsupported
             using (UiFontService.UidFont.Push())
             {
@@ -203,7 +187,7 @@ public class MainUI : WindowMediatorSubscriberBase
         }
         else
         {
-            using (ImRaii.PushId("serverstatus")) DrawServerStatus();
+            using (ImRaii.PushId("ServerStatus")) DrawServerStatus();
         }
         // separate our UI once more.
         ImGui.Separator();
@@ -249,21 +233,15 @@ public class MainUI : WindowMediatorSubscriberBase
             }
         }
 
-        var pos = ImGui.GetWindowPos();
-        var size = ImGui.GetWindowSize();
-        if (CkGui.LastMainUIWindowSize != size || CkGui.LastMainUIWindowPosition != pos)
-        {
-            CkGui.LastMainUIWindowSize = size;
-            CkGui.LastMainUIWindowPosition = pos;
-            Mediator.Publish(new CompactUiChange(size, pos));
-        }
+        LastPos = ImGui.GetWindowPos();
+        LastSize = ImGui.GetWindowSize();
     }
 
     public void DrawAddPair(float availableXWidth, float spacingX)
     {
         var buttonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
         ImGui.SetNextItemWidth(availableXWidth - buttonSize - spacingX);
-        ImGui.InputTextWithHint("##otheruid", "Other players UID/Alias", ref _pairToAdd, 20);
+        ImGui.InputTextWithHint("##otherUid", "Other players UID/Alias", ref _pairToAdd, 20);
         ImUtf8.SameLineInner();
         var existingUser = _pairManager.DirectPairs.Exists(p => string.Equals(p.UserData.UID, _pairToAdd, StringComparison.Ordinal) || string.Equals(p.UserData.Alias, _pairToAdd, StringComparison.Ordinal));
         using (ImRaii.Disabled(existingUser || string.IsNullOrEmpty(_pairToAdd)))
@@ -286,15 +264,11 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private void DrawUIDHeader()
     {
-        // fetch the Uid Text of yourself
         var uidText = CkGui.GetUidText();
-
-        // push the big boi font for the UID
         using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-            // display it, it should be green if connected and red when not.
             ImGui.TextColored(CkGui.UidColor(), uidText);
         }
 
@@ -302,25 +276,18 @@ public class MainUI : WindowMediatorSubscriberBase
         if (MainHub.ServerStatus is ServerState.Connected)
         {
             CkGui.CopyableDisplayText(MainHub.DisplayName);
-
-            // if the UID does not equal the display name
             if (!string.Equals(MainHub.DisplayName, MainHub.UID, StringComparison.Ordinal))
             {
-                // grab the original text size for the UID in the api controller
-                var origTextSize = ImGui.CalcTextSize(MainHub.UID);
-                // adjust the cursor and redraw the UID (really not sure why this is here but we can trial and error later.
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - origTextSize.X / 2);
+                var originalTextSize = ImGui.CalcTextSize(MainHub.UID);
+                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - originalTextSize.X / 2);
                 ImGui.TextColored(CkGui.UidColor(), MainHub.UID);
-                // give it the same functionality.
                 CkGui.CopyableDisplayText(MainHub.UID);
             }
         }
     }
 
 
-    /// <summary>
-    /// Helper function for drawing the current status of the server, including the number of people online.
-    /// </summary>
+    /// <summary> Draws the current status of the server, including the number of people online. </summary>
     private void DrawServerStatus()
     {
         var windowPadding = ImGui.GetStyle().WindowPadding;
@@ -431,13 +398,18 @@ public class MainUI : WindowMediatorSubscriberBase
             ServerState.Reconnecting => "Connection to server interrupted, attempting to reconnect to the server.",
             ServerState.Disconnected => "Currently disconnected from the GagSpeak server.",
             ServerState.Disconnecting => "Disconnecting from server",
-            ServerState.Unauthorized => "Server Response: " + MainHub.AuthFailureMessage,
             ServerState.Offline => "The GagSpeak server is currently offline.",
-            ServerState.VersionMisMatch => "Your plugin is out of date. Please update your plugin to fix.",
             ServerState.Connected => string.Empty,
             ServerState.NoSecretKey => "No secret key is set for this current character. " +
             "\nTo create UID's for your alt characters, be sure to claim your account in the CK discord." +
             "\n\nOnce you have inserted a secret key, reload the plugin to be registered with the servers.",
+            ServerState.VersionMisMatch => "Current Ver: " + MainHub.ClientVerString + Environment.NewLine
+            + "Expected Ver: " + MainHub.ExpectedVerString +
+            "\n\nThis Means that your client is outdated, and you need to update it." +
+            "\n\nIf there is no update Available, then this message Likely Means Cordy is running some last minute tests " +
+            "to ensure everyone doesn't crash with the latest update. Hang in there!",
+            ServerState.Unauthorized => "You are Unauthorized to access GagSpeak Servers with this account due to an " +
+            "Unauthorized Access. \n\nDetails:\n" + GagspeakHubBase.AuthFailureMessage,
             _ => string.Empty
         };
     }

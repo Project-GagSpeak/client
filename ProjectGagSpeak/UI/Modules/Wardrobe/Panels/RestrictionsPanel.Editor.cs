@@ -3,12 +3,15 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.Services.Mediator;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
+using SixLabors.ImageSharp.Metadata;
 
 namespace GagSpeak.UI.Wardrobe;
 public partial class RestrictionsPanel
@@ -188,34 +191,32 @@ public partial class RestrictionsPanel
             // We will want to group together the first few elements together for the blindfold type & 1st PoV option.
             using (ImRaii.Group())
             {
-                DrawTypeAndOptionPref();
-                DrawTexturePathLocation();
-                CkGui.AttachToolTip("You can set a custom path here for a blindfold texture." +
-                    "--SEP--Any custom textures must reside within the BlindfoldTextures folder of the ProjectGagSpeak Config Folder.");
-            }
-
-            void DrawTypeAndOptionPref()
-            {
-                if (CkGuiUtils.EnumCombo("##BlindfoldType", widthInner * .6f, blindfoldItem.Kind, out BlindfoldType newValue))
-                {
-                    blindfoldItem.Kind = newValue;
-                    if (newValue is not BlindfoldType.CustomPath)
-                        blindfoldItem.CustomPath = string.Empty;
-                }
-                ImGui.SameLine();
                 var isFirstPerson = blindfoldItem.ForceFirstPerson;
                 if (ImGui.Checkbox("Force 1st Person", ref isFirstPerson))
                     blindfoldItem.ForceFirstPerson = isFirstPerson;
-            }
 
-            void DrawTexturePathLocation()
-            {
-                // Draw an input textbox with hint that spans the entire width. Disable if kind is not custom.
-                using var disabled = ImRaii.Disabled(blindfoldItem.Kind != BlindfoldType.CustomPath);
-                var customPath = blindfoldItem.CustomPath;
-                ImGui.SetNextItemWidth(widthInner);
-                if (ImGui.InputTextWithHint("##BlindfoldTexturePath", "Enter Custom Path...", ref customPath, 128))
-                    blindfoldItem.CustomPath = blindfoldItem.CustomPath;
+                var rightSize = CkGui.IconTextButtonSize(FAI.PenSquare, "Edit Image");
+                ImGui.SameLine(widthInner - rightSize);
+                if (CkGui.IconTextButton(FAI.PenSquare, "Edit Image"))
+                {
+                    var metaData = new ImageMetadataGS(ImageDataType.Blindfolds, ImGui.GetIO().DisplaySize, Guid.Empty);
+                    Mediator.Publish(new OpenThumbnailBrowser(metaData));
+                }
+
+                var scaledPreview = ImGui.GetIO().DisplaySize * (widthInner / ImGui.GetIO().DisplaySize.X);
+                using (CkComponents.FramedChild("Blindfold_Preview", CkColor.FancyHeaderContrast.Uint()))
+                {
+                    if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.BlindfoldPath) is { } validImage)
+                    {
+                        // scale down the image to match the available widthInner.X.
+                        var scaler = widthInner / validImage.Width;
+                        var scaledImage = validImage.Size * scaler;
+
+                        pos = ImGui.GetCursorScreenPos();
+                        ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkComponents.FCRounding);
+                    }
+                }
+                CkGui.AttachToolTip("This is the image that the blindfold will overlay on your screen while active.");
             }
         }
     }

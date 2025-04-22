@@ -9,6 +9,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.RestraintSets;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -31,10 +32,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private readonly ILogger<RestraintsPanel> _logger;
     private readonly RestraintSetFileSelector _selector;
     private readonly ActiveItemsDrawer _activeDrawer;
-    private readonly EquipmentDrawer _equipDrawer;
-    private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
-    private readonly TraitsDrawer _traitsDrawer;
     private readonly RestraintManager _manager;
     private readonly PairManager _pairs;
     private readonly CosmeticService _cosmetics;
@@ -45,10 +42,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         GagspeakMediator mediator,
         RestraintSetFileSelector selector,
         ActiveItemsDrawer activeDrawer,
-        EquipmentDrawer equipDrawer,
-        ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
-        TraitsDrawer traitsDrawer,
         RestraintManager manager,
         RestraintEditorInfo editorInfo,
         RestraintEditorLayers editorLayers,
@@ -61,10 +54,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         _logger = logger;
         _selector = selector;
         _activeDrawer = activeDrawer;
-        _equipDrawer = equipDrawer;
-        _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
-        _traitsDrawer = traitsDrawer;
         _manager = manager;
         _pairs = pairs;
         _cosmetics = cosmetics;
@@ -85,6 +74,18 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             {
                 basicSlot.Glamour.GameItem = msg.Item;
                 Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set " + "[" + _manager.ActiveEditorItem.Label + "]", LoggerType.Restraints);
+            }
+        });
+
+        Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
+        {
+            if (msg.MetaData.Kind is not ImageDataType.Restraints)
+                return;
+
+            if (manager.Storage.TryGetRestraint(msg.MetaData.SourceId, out var match))
+            {
+                _selector.SelectByValue(match);
+                manager.UpdateThumbnail(match, msg.Name);
             }
         });
     }
@@ -124,11 +125,11 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestraintsTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
-        var styler = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 4 + styler.ItemSpacing.Y * 3 + styler.WindowPadding.Y * 2;
+        var style = ImGui.GetStyle();
+        var selectedH = ImGui.GetFrameHeight() * 2 + ImGui.GetTextLineHeight() * 4 + style.ItemSpacing.Y + style.WindowPadding.Y * 2;
         var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(styler.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(styler.WindowPadding.X, selectedSize.Y);
+        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
+        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
 
@@ -144,20 +145,33 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     {
         var ItemSelected = _selector.Selected is not null;
 
-        var styler = ImGui.GetStyle();
+        var style = ImGui.GetStyle();
         using (ImRaii.Child("SelectedItemOuter", region))
         {
-            var imgSize = new Vector2(region.Y * .9f, region.Y) - styler.WindowPadding * 2;
-            var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - region.Y * .9f, 0) + styler.WindowPadding;
+            var imgSize = new Vector2(region.Y / 1.2f, region.Y) - style.WindowPadding * 2;
+            var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - imgSize.X - style.WindowPadding.X, style.WindowPadding.Y);
             // Draw the left items.
             if (ItemSelected)
                 SelectedRestraintInternal();
 
             // move to the cursor position and attempt to draw it.
-            ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+            var hoveringImg = ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize);
+            var imgCol = hoveringImg ? CkColor.FancyHeader.Uint() : CkColor.FancyHeaderContrast.Uint();
+            ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, imgCol, rounding);
             ImGui.SetCursorScreenPos(imgDrawPos);
             if (ItemSelected)
+            {
                 _activeDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
+                if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
+                {
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    {
+                        var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
+                        Mediator.Publish(new OpenThumbnailBrowser(metaData));
+                    }
+                    CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
+                }
+            }
         }
         // draw the actual design element.
         var minPos = ImGui.GetItemRectMin();
@@ -166,8 +180,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         // base background right right rounded corners.
         wdl.AddRectFilled(minPos, minPos + size, CkColor.FancyHeader.Uint(), rounding, ImDrawFlags.RoundCornersRight);
         // Draw the 3 label rects.
-        var descPosMax = minPos + new Vector2(size.X * .6f + styler.ItemInnerSpacing.Y, ImGui.GetFrameHeight() * 3 + styler.ItemSpacing.Y * 2);
-        var labelWrapMax = minPos + new Vector2(size.X * .6f, ImGui.GetFrameHeight()) + styler.ItemInnerSpacing / 2;
+        var descPosMax = minPos + new Vector2(size.X * .6f + style.ItemInnerSpacing.Y, ImGui.GetFrameHeight() + ImGui.GetTextLineHeight() * 4 + style.ItemSpacing.Y);
+        var labelWrapMax = minPos + new Vector2(size.X * .6f, ImGui.GetFrameHeight()) + style.ItemInnerSpacing / 2;
         var labelMax = minPos + new Vector2(size.X * .6f, ImGui.GetFrameHeight());
         // Description Rect.
         wdl.AddRectFilled(minPos, descPosMax, CkColor.FancyHeaderContrast.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
@@ -194,8 +208,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         ImUtf8.TextFrameAligned(_selector.Selected!.Label);
 
-        // Description draw on textwrapped for the width * .6f.
-        var descSize = new Vector2(ImGui.GetContentRegionAvail().X * .6f, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y);
+        // Description draw on text wrapped for the width * .6f.
+        var descSize = new Vector2(ImGui.GetContentRegionAvail().X * .6f, ImGui.GetTextLineHeight() * 4);
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);
         using (ImRaii.Child("RestraintPreviewDescription", descSize))
             CkGui.TextWrapped(_selector.Selected.Description);
 
@@ -216,16 +231,22 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Group())
         {
             CkGui.FramedIconText(FAI.HatCowboy, helmCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Glasses, visorCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Shield, weaponCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Repeat, redrawCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.LayerGroup, layersCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.TheaterMasks, moodleCol);
+
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.PersonRays, modsCol);
         }

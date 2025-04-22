@@ -92,7 +92,7 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
     protected readonly CkFileSystem<T> CkFileSystem;
 
     public virtual ISortMode<T> SortMode
-        => ISortMode<T>.Lexicographical;
+        => ISortMode<T>.FoldersFirst;
 
     // Used by Add and AddFolder buttons.
     protected string _newName = string.Empty;

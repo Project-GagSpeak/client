@@ -67,7 +67,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             MaximumSize = new Vector2(800, 2000),
         };
 
-        Mediator.Subscribe<OpenSettingsUiMessage>(this, (_) => Toggle());
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
     }
 

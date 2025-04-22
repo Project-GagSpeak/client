@@ -95,14 +95,28 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
     private bool DrawLeafInternal(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
     {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
         // must be a valid drag-drop source, so use invisible button.
-        ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2));
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2);
+        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
+
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
         var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+
+        if (selected)
+        {
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+                rectMin,
+                rectMin + leafSize,
+                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
+            ImGui.GetWindowDrawList().AddRectFilled(
+                rectMin,
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+                CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
 
         using (ImRaii.Group())
         {
@@ -116,12 +130,12 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 // below, in a darker text, draw out the description, up to 100 characters.
                 if(leaf.Value.Description.IsNullOrWhitespace())
                 {
-                    CkGui.ColorText("No Description Provided...", ImGuiColors.ParsedGrey);
+                    CkGui.ColorText("No Description Provided...", ImGuiColors.DalamudGrey);
                 }
                 else
                 {
-                    var desc = leaf.Value.Description.Length > 100 ? leaf.Value.Description.Substring(0, 60) : leaf.Value.Description;
-                    CkGui.ColorText(desc, ImGuiColors.ParsedGrey);
+                    var desc = leaf.Value.Description.Length > 40 ? leaf.Value.Description.Substring(0, 40) : leaf.Value.Description;
+                    CkGui.ColorText(desc + "..", ImGuiColors.DalamudGrey);
                 }
             }
             // Optimize later.
@@ -131,15 +145,6 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
-        }
-
-        // the border if selected.
-        if (selected)
-        {
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
 
         return hovered;

@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
@@ -21,12 +20,8 @@ using OtterGui.Text;
 namespace GagSpeak.UI.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 {
-    private readonly FileDialogManager _fileDialog = new();
     private readonly CursedLootFileSelector _selector;
     private readonly ActiveItemsDrawer _activeItemDrawer;
-    private readonly EquipmentDrawer _equipDrawer;
-    private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly CursedLootManager _manager;
@@ -38,9 +33,6 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         GagspeakMediator mediator,
         CursedLootFileSelector selector,
         ActiveItemsDrawer activeItemDrawer,
-        EquipmentDrawer equipDrawer,
-        ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         CursedLootManager manager,
@@ -50,9 +42,6 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     {
         _selector = selector;
         _activeItemDrawer = activeItemDrawer;
-        _equipDrawer = equipDrawer;
-        _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
         _gags = gags;
         _restrictions = restrictions;
         _manager = manager;

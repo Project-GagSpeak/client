@@ -42,7 +42,6 @@ public class HomepageTab
             ("Trait Allowances", FAI.UserShield, typeof(TraitAllowanceUI)),
             ("Publications", FAI.CloudUploadAlt, typeof(PublicationsUI)),
             ("Achievements", FAI.Trophy, typeof(AchievementsUI)),
-            ("ThumbnailBrowser", FAI.FolderTree, typeof(ThumbnailUI))
             //("Orders (WIP)", FAI.ClipboardList, typeof(OrdersUI)),
         };
     }
@@ -66,16 +65,9 @@ public class HomepageTab
 
             if (HomepageSelectable(module.Label, module.Icon, selectableSize, isHovered))
             {
-                if(module.ToggleType == typeof(ThumbnailUI))
-                {
-                    _mediator.Publish(new OpenThumbnailBrowser(ImageDataType.Restrictions));
-                }
-                else
-                {
-                    _mediator.Publish(new UiToggleMessage(module.ToggleType));
-                    if (module.ToggleType == typeof(RemotePersonal))
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
-                }
+                _mediator.Publish(new UiToggleMessage(module.ToggleType));
+                if (module.ToggleType == typeof(RemotePersonal))
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
             }
 
             if (ImGui.IsItemHovered())
@@ -85,7 +77,8 @@ public class HomepageTab
             }
         }
         // if itemGotHovered is false, reset the index.
-        if(!itemGotHovered) HoveredItemIndex = -1;
+        if(!itemGotHovered)
+            HoveredItemIndex = -1;
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

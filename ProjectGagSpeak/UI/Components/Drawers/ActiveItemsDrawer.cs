@@ -409,14 +409,18 @@ public class ActiveItemsDrawer
         if (drawBg)
             ImGui.GetWindowDrawList().AddRectFilled(pos, pos + region, 0xFF000000, rounding);
 
-        if (_cosmetics.GetImageFromAssetsFolder(Path.Combine("Thumbnails", restrictionItem.ThumbnailPath)) is { } image)
+        if (_cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restrictionItem.ThumbnailPath) is { } image)
         {
             ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, rounding);
             ImGui.Dummy(region);
         }
+        else if (restrictionItem.Glamour.Slot is not EquipSlot.Nothing)
+        {
+            restrictionItem.Glamour.GameItem.DrawIcon(_textures, region, restrictionItem.Glamour.Slot, rounding);
+        }
         else
         {
-            restrictionItem.Glamour.GameItem.DrawIcon(_textures, region, restrictionItem.Glamour.Slot);
+            ImGui.Dummy(region);
         }
     }
 
@@ -426,7 +430,7 @@ public class ActiveItemsDrawer
         if (drawBg)
             ImGui.GetWindowDrawList().AddRectFilled(pos, pos + region, 0xFF000000, rounding);
 
-        if (_cosmetics.GetImageFromAssetsFolder(Path.Combine("Thumbnails", restraintItem.ThumbnailPath)) is { } image)
+        if (_cosmetics.GetImageMetadataPath(ImageDataType.Restraints, restraintItem.ThumbnailPath) is { } image)
             ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, rounding);
 
         ImGui.Dummy(region);

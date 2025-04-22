@@ -72,3 +72,4 @@ public class GlamourSlot
             ["Stains"] = GameStain.ToString(),
         };
 }
+

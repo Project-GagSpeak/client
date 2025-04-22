@@ -1,5 +1,4 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
@@ -9,19 +8,17 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Restrictions;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.UI.Components;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
 namespace GagSpeak.UI.Wardrobe;
-public partial class RestrictionsPanel
+public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<RestrictionsPanel> _logger;
-    private readonly FileDialogManager _fileDialog = new();
     private readonly RestrictionFileSelector _selector;
     private readonly ActiveItemsDrawer _activeItemDrawer;
     private readonly EquipmentDrawer _equipDrawer;
@@ -29,12 +26,12 @@ public partial class RestrictionsPanel
     private readonly MoodleDrawer _moodleDrawer;
     private readonly TraitsDrawer _traitsDrawer;
     private readonly RestrictionManager _manager;
-    private readonly PairManager _pairs;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
     public bool IsEditing => _manager.ActiveEditorItem != null;
     public RestrictionsPanel(
         ILogger<RestrictionsPanel> logger,
+        GagspeakMediator mediator,
         RestrictionFileSelector selector,
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
@@ -44,9 +41,8 @@ public partial class RestrictionsPanel
         RestrictionManager manager,
         PairManager pairs,
         CosmeticService textures,
-        TutorialService guides)
+        TutorialService guides) : base(logger, mediator)
     {
-        _logger = logger;
         _selector = selector;
         _traitsDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
@@ -54,9 +50,30 @@ public partial class RestrictionsPanel
         _moodleDrawer = moodleDrawer;
         _activeItemDrawer = activeItemDrawer;
         _manager = manager;
-        _pairs = pairs;
         _textures = textures;
         _guides = guides;
+
+        Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
+        {
+            if (msg.MetaData.Kind is ImageDataType.Restrictions)
+            {
+                if (manager.Storage.TryGetRestriction(msg.MetaData.SourceId, out var match))
+                {
+                    Logger.LogDebug($"Thumbnail updated for {match.Label} to {msg.Name}");
+                    manager.UpdateThumbnail(match, msg.Name);
+                }
+            }
+            else if (msg.MetaData.Kind is ImageDataType.Blindfolds && manager.ActiveEditorItem is BlindfoldRestriction blindfold)
+            {
+                Logger.LogDebug($"Thumbnail updated for {blindfold.Label} to {blindfold.BlindfoldPath}");
+                blindfold.BlindfoldPath = msg.Name;
+            }
+            else if (msg.MetaData.Kind is ImageDataType.Hypnosis && manager.ActiveEditorItem is HypnoticRestriction hypnoItem)
+            {
+                Logger.LogDebug($"Thumbnail updated for {hypnoItem.Label} to {hypnoItem.HypnotizePath}");
+                hypnoItem.HypnotizePath = msg.Name;
+            }
+        });
     }
 
     public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
@@ -74,11 +91,11 @@ public partial class RestrictionsPanel
             tabMenu.Draw(drawRegions.TopRight.Size);
 
         // For drawing the grey "selected Item" line.
-        var styler = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 3 + styler.ItemSpacing.Y * 2 + styler.WindowPadding.Y * 2;
+        var style = ImGui.GetStyle();
+        var selectedH = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + style.ItemSpacing.Y * 2 + style.WindowPadding.Y * 2;
         var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(styler.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(styler.WindowPadding.X, selectedSize.Y);
+        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
+        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
 
@@ -122,14 +139,28 @@ public partial class RestrictionsPanel
             var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - region.Y, 0) + styler.WindowPadding;
             // Draw the left items.
             if (ItemSelected)
+            {
                 DrawSelectedInner(imgSize.X);
+            }
 
             // move to the cursor position and attempt to draw it.
             ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
             ImGui.SetCursorScreenPos(imgDrawPos);
             if (ItemSelected)
+            {
                 _activeItemDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
+                if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
+                {
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    {
+                        var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
+                        Mediator.Publish(new OpenThumbnailBrowser(metaData));
+                    }
+                    CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
+                }
+            }
         }
+
         // draw the actual design element.
         var minPos = ImGui.GetItemRectMin();
         var size = ImGui.GetItemRectSize();
@@ -157,7 +188,6 @@ public partial class RestrictionsPanel
             };
             wdl.AddDalamudImage(image, minPos + new Vector2(size.X * .6f - ImGui.GetFrameHeight(), 0), new Vector2(ImGui.GetFrameHeight()), tooltip);
         }
-
 
         if (hoveringTitle)
         {
@@ -190,10 +220,8 @@ public partial class RestrictionsPanel
             : "This Restriction Item has no associated Mod Preset.");
 
         // go right aligned for the trait previews.
-        ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X - rightOffset - ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemSpacing.X);
         _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits, _selector.Selected!.Stimulation);
-        // next row, draw the moodle preview along the lower row, with the height of the frame.
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);
         DrawMoodlePreview();
     }
 

@@ -76,11 +76,11 @@ public partial class GagRestrictionsPanel
             tabMenu.Draw(drawRegions.TopRight.Size);
 
         // For drawing the grey "selected Item" line.
-        var styler = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 3 + styler.ItemSpacing.Y * 2 + styler.WindowPadding.Y * 2;
+        var style = ImGui.GetStyle();
+        var selectedH = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + style.ItemSpacing.Y * 2 + style.WindowPadding.Y * 2;
         var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(styler.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(styler.WindowPadding.X, selectedSize.Y);
+        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
+        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
         ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
 
@@ -180,10 +180,7 @@ public partial class GagRestrictionsPanel
             ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
             : "This Gag has no associated Mod Preset.");
 
-        // go right aligned for the trait previews.
         DrawTraitPreview();
-        // next row, draw the moodle preview along the lower row, with the height of the frame.
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);
         DrawMoodlePreview();
     }
     

@@ -107,7 +107,7 @@ public class MoodleDrawer
             }
 
             // Below this, we need to draw the display field of the moodles that the selected status has.
-            FramedMoodleIconDisplay(item.Moodle, CkComponents.FCRounding, ImGui.GetContentRegionAvail().X);
+            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkComponents.FCRounding);
         }
     }
 

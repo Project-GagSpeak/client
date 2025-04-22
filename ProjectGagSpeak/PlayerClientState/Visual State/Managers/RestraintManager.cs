@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
@@ -15,6 +16,8 @@ using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
+using static PInvoke.User32;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.PlayerState.Visual;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -117,6 +120,18 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         _saver.Save(this);
         Logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
         Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Renamed, restraint, oldName));
+    }
+
+    public void UpdateThumbnail(RestraintSet restraint, string newPath)
+    {
+        // This could have changed by the time this is called, so get it again.
+        if(Storage.Contains(restraint))
+        {
+            Logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
+            restraint.ThumbnailPath = newPath;
+            _saver.Save(this);
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, restraint, null));
+        }
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -427,6 +442,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 Identifier = Guid.TryParse(setJson["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID"),
                 Label = setJson["Label"]?.Value<string>() ?? string.Empty,
                 Description = setJson["Description"]?.Value<string>() ?? string.Empty,
+                ThumbnailPath = setJson["ThumbnailPath"]?.Value<string>() ?? string.Empty,
                 DoRedraw = setJson["DoRedraw"]?.Value<bool>() ?? false,
                 RestraintSlots = slotDict,
                 Glasses = _items.ParseBonusSlot(setJson["Glasses"]),

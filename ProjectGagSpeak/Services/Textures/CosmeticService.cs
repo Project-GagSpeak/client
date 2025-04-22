@@ -4,6 +4,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -31,9 +32,9 @@ public class CosmeticService : IHostedService, IDisposable
         _pi = pi;
     }
 
-    private Dictionary<string           , IDalamudTextureWrap> InternalCosmeticCache = [];
-    public  Dictionary<CoreTexture, IDalamudTextureWrap> CoreTextures    = [];
-    public  Dictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures     = [];
+    private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
+    public  Dictionary<CoreTexture, IDalamudTextureWrap> CoreTextures = [];
+    public  Dictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures = [];
 
     // MUST ensure ALL images are disposed of or else we will leak a very large amount of memory.
     public void Dispose()
@@ -213,7 +214,7 @@ public class CosmeticService : IHostedService, IDisposable
         => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
     public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
         => _textures.CreateFromImageAsync(imageData).Result;
-    public IDalamudTextureWrap? GetThumbnailImage(ImageDataType folder, string path)
+    public IDalamudTextureWrap? GetImageMetadataPath(ImageDataType folder, string path)
         => _textures.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
 
     public IDalamudTextureWrap? GetImageFromBytes(byte[] imageData)
@@ -263,6 +264,45 @@ public class CosmeticService : IHostedService, IDisposable
         LoadAllCoreTextures();
         LoadAllCoreEmoteTextures();
         LoadAllCosmetics();
+
+        try
+        {
+            // Create the directories if they do not yet exist.
+            var transferTargets = new (string SourceFile, string SubDir, string TargetFile)[]
+            {
+            ("BACKUP_BF_Light.png",    ImageDataType.Blindfolds.ToString(), "Blindfold Light.png"),
+            ("BACKUP_BF_Sensual.png",  ImageDataType.Blindfolds.ToString(), "Blindfold Sensual.png"),
+            ("BACKUP_Hypno_Spiral.png", ImageDataType.Hypnosis.ToString(),  "Hypno Spiral.png")
+            };
+
+            // Ensure our directories exist.
+            foreach (var (_, subDir, _) in transferTargets)
+            {
+                string targetDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDir);
+                Directory.CreateDirectory(targetDir);
+            }
+
+            // Properly move the asset images into the correct folders.
+            foreach (var (sourceFile, subDirectory, targetFile) in transferTargets)
+            {
+                string sourcePath = Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", "RequiredImages", sourceFile);
+                string destDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDirectory);
+                string destPath = Path.Combine(destDir, targetFile);
+
+                // Migrate the file if it does not exist in the target directory (renaming it in the process)
+                if (File.Exists(sourcePath) && !File.Exists(destPath))
+                {
+                    File.Copy(sourcePath, destPath, overwrite: true);
+                    _logger.LogInformation($"Copied {sourceFile} to {destPath}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to Migrate default files: {ex.Message}");
+        }
+
+
         return Task.CompletedTask;
     }
 

@@ -1,8 +1,7 @@
-using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -12,19 +11,22 @@ using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 
 namespace GagSpeak.UI;
+
+public readonly record struct ImageMetadataGS(ImageDataType Kind, Vector2 BaseSize, Guid SourceId);
 
 public class ThumbnailUI : WindowMediatorSubscriberBase
 {
     private readonly ImageImportTool _imageImport;
     private readonly GagspeakConfigService _config;
-    public ThumbnailUI(ILogger<ThumbnailUI> logger, GagspeakMediator mediator,
-        ImageImportTool imageImport, GagspeakConfigService config, 
-        CosmeticService cosmetics, ImageDataType type) : base(logger, mediator, $"Thumbnails##Thumbnail_Browser_{type}")
+    public ThumbnailUI(
+        ILogger<ThumbnailUI> logger,
+        GagspeakMediator mediator,
+        ImageImportTool imageImport,
+        GagspeakConfigService config, 
+        CosmeticService cosmetics,
+        ImageMetadataGS imageBase) : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
     {
         _imageImport = imageImport;
         _config = config;
@@ -36,22 +38,27 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             MaximumSize = new Vector2(1000, 2000),
         };
 
-        Folder = new ThumbnailFolder(cosmetics, type);
-        FolderName = type;
+        ImageBase = imageBase;
+        Folder = new ThumbnailFolder(logger, cosmetics, imageBase.Kind);
+
+        Mediator.Subscribe<ReScanThumbnailFolder>(this, _ => TryRefresh(true));
     }
 
-    public ThumbnailFolder Folder { get; init; }
-    public ImageDataType FolderName { get; init; }
+    public ImageMetadataGS  ImageBase { get; init; }
+    public ThumbnailFolder  Folder    { get; init; } 
+
     private string _searchString = string.Empty;
-    private ThumbnailFile? _toOpen = null;
     private ThumbnailFile? _selected = null;
 
-    private const float IconWidthBase = 120;
-    private Vector2 IconSizeBase => new Vector2((IconWidthBase * 2), (IconWidthBase * 2) * ItemHeightScaler);
+    private Vector2 SizeBase => ImageBase.Kind switch
+    {
+        ImageDataType.Blindfolds or ImageDataType.Hypnosis      => ImageBase.BaseSize,
+        ImageDataType.Restraints or ImageDataType.Restrictions  => ImageBase.BaseSize * 2,
+        _ => new Vector2(100),
+    };
 
-    private float ItemWidth => IconWidthBase * _config.Config.FileIconScale;
-    private float ItemHeightScaler => FolderName is ImageDataType.Restrictions ? 1f : 1.25f;
-    private float ItemHeightFooter => ImGui.GetTextLineHeightWithSpacing() * 2;
+    private Vector2 ItemSize => ImageBase.BaseSize * _config.Config.FileIconScale;
+    private float ItemHeightFooter => ImGui.GetTextLineHeight() * 3;
 
     protected override void PreDrawInternal() { }
 
@@ -70,7 +77,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawSpaces.Bottom.Pos);
         using (ImRaii.Child("Thumbnail_UI_Footer", drawSpaces.Bottom.Size))
         {
-            if (_imageImport.ShouldDrawImportContent(FolderName))
+            if (_imageImport.ShouldDrawImportContent(ImageBase.Kind))
                 DrawFileImporter();
             else
                 DrawFileBrowser();
@@ -97,7 +104,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var size = _config.Config.FileIconScale;
         if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
             _config.Config.FileIconScale = size;
-        CkGui.AttachToolTip($"Scalar: {size}x (Size: {ItemWidth}px)");
+        CkGui.AttachToolTip($"Scalar: {size}x (Size: {ItemSize.X}px)");
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
             _config.Save();
@@ -105,14 +112,14 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         // Let them use File Dialog Manager to import images.
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.FileImport, "From File"))
-            _imageImport.ImportFromFile(FolderName, IconSizeBase, botRegionSize, KeyMonitor.ShiftPressed());
+            _imageImport.ImportFromFile(ImageBase.Kind, SizeBase, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the file browser."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
 
         // Add a option to add new images by clipboard pasting.
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Clipboard, "From Clipboard"))
-            _imageImport.ImportFromClipboard(FolderName, IconSizeBase, botRegionSize, KeyMonitor.ShiftPressed());
+            _imageImport.ImportFromClipboard(ImageBase.Kind, SizeBase, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
         + "--SEP-- Holding SHIFT will force the image to be re-imported.");
     }
@@ -126,7 +133,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
     private void DrawFileBrowser()
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10);
-        using (ImRaii.Child("Folder_Entries", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
+        using (ImRaii.Child("Folder_Entries", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding))
             DrawAllEntries();
     }
 
@@ -134,14 +141,12 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
     private void DrawAllEntries()
     {
         var region = ImGui.GetContentRegionAvail();
+        var style = ImGui.GetStyle();
 
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var columnCount = (int)Math.Floor((region.X + spacing) / (ItemWidth + spacing));
-        var column = 0;
-        var index = 0;
+        var spacing = style.ItemSpacing.X;
 
         // Display spinner if fetching files.
-        if(Folder.IsScanning)
+        if (Folder.IsScanning)
         {
             var radius = 100 * ImUtf8.GlobalScale;
             var thickness = (int)(20 * ImUtf8.GlobalScale);
@@ -153,17 +158,32 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         }
 
         // Otherwise, scan for them if our current entries are null.
-        if(Folder.AllFiles.IsNullOrEmpty())
+        if (Folder.AllFiles.IsNullOrEmpty())
         {
-            TryRefresh(true);
+            using (UiFontService.GagspeakTitleFont.Push())
+                ImGuiUtil.Center("No Thumbnails In Folder");
             return;
         }
 
-        // Assuming both are passed, draw out the remaining entries.
+
+        // get item sizes to draw out. (account for case where images are bigger than UI, to make sure 2 per row are shown)
+        var imgRatioToUI = Math.Min(region.X / ItemSize.X, region.Y / ItemSize.Y);
+        var imgFits = imgRatioToUI >= 1;
+        var imgSpace = imgFits ? ItemSize : ((ItemSize * imgRatioToUI) - style.ItemSpacing) / 2;
+        var size = imgSpace + new Vector2(0, ItemHeightFooter);
+        var rounding = (imgSpace.X * .1f) < ImGui.GetFrameHeight() ? imgSpace.X * .1f : ImGui.GetFrameHeight();
+
+        var columnCount = (int)Math.Floor((region.X + spacing) / (imgSpace.X + spacing));
+        var column = 0;
+        var index = 0;
+
         foreach (var entry in Folder.AllFiles)
         {
             DrawThumbnailEntry(entry, index);
             index++;
+
+            if (Folder.IsScanning)
+                break;
 
             column++;
             if (column >= columnCount)
@@ -177,48 +197,94 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             }
         }
 
-        // If we have a selected entry, open it.
-        if (_toOpen is not null)
-            SelectAndClose();
+        void DrawThumbnailEntry(ThumbnailFile entry, int id)
+        {
+            using var _ = ImRaii.Group();
+
+            var selected = _selected == entry;
+            uint bgColor = 0;
+
+            using (ImRaii.Child($"##ThumbnailEntry_{id}", size, false, WFlags.NoScrollbar))
+            {
+                ImGui.InvisibleButton($"##library_entry_{id}", size);
+                var rectMin = ImGui.GetItemRectMin();
+                var rectMax = ImGui.GetItemRectMax();
+                var hovered = ImGui.IsItemHovered();
+                bgColor = hovered && ImGui.IsMouseDown(ImGuiMouseButton.Left)
+                    ? ImGui.GetColorU32(ImGuiCol.HeaderActive) : hovered
+                    ? ImGui.GetColorU32(ImGuiCol.HeaderHovered) : selected
+                    ? ImGui.GetColorU32(ImGuiCol.Header) : 0;
+                var wdl = ImGui.GetWindowDrawList();
+
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                {
+                    _selected = entry;
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                        SelectAndClose();
+                }
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    ImGui.OpenPopup($"##Rename_{entry.FileName}");
+
+                // Draw out the background for this space.
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(entry.Icon, rectMin, imgSpace, rounding);
+                ImGui.SetCursorScreenPos(rectMin + new Vector2(0, imgSpace.Y));
+
+                if(!imgFits)
+                    using (UiFontService.GagspeakLabelFont.Push())
+                        ImGuiUtil.TextWrapped(entry.FileNameNoExtension);
+                else
+                    ImGuiUtil.TextWrapped(entry.FileNameNoExtension);
+
+                // Summon popup context.
+                RenamePopupContext(entry);
+            }
+            var min = ImGui.GetItemRectMin();
+            var max = ImGui.GetItemRectMax();
+            // Add the rect around the BG.
+            var clipRectMin = min - style.FramePadding / 2;
+            var clipRectMax = max + style.FramePadding / 2;
+            ImGui.GetWindowDrawList().AddRectFilled(clipRectMin, clipRectMax, bgColor, rounding);
+        }
     }
 
-    /// <summary> Displays an individual Thumbnail Icon, along with its name. </summary>
-    /// <remarks> Double clicking an icon will select it, and close the window. </remarks>
-    private void DrawThumbnailEntry(ThumbnailFile entry, int id)
+    private void RenamePopupContext(ThumbnailFile file)
     {
-        var size = new Vector2(ItemWidth, (ItemWidth * ItemHeightScaler) + ItemHeightFooter);
-        var pos = ImGui.GetCursorScreenPos();
+        using var _ = ImRaii.Popup($"##Rename_{file.FileName}");
+        if (!_)
+            return;
 
-        var selected = _selected == entry;
-        if (ImGui.Selectable($"##library_entry_{id}", ref selected, ImGuiSelectableFlags.AllowDoubleClick, size))
+        if (ImGui.IsWindowAppearing())
+            ImGui.SetKeyboardFocusHere(0);
+
+        if(ImGui.Selectable("Delete Thumbnail"))
         {
-            _selected = entry;
-
-            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-            {
-                _toOpen = entry;
-                _logger.LogInformation($"Opening thumbnail {entry.FileName} in editor.");
-            }
+            Folder.Remove(file);
+            TryRefresh(true);
+            ImGui.CloseCurrentPopup();
         }
 
-        // go back to the start then draw the contents itself.
-        ImGui.SetCursorScreenPos(pos);
-        using var _ = ImRaii.Child($"library_entry_{id}", size, false, WFlags.NoInputs | WFlags.NoScrollbar);
-        var imgSpace = new Vector2(ItemWidth, ItemWidth * ItemHeightScaler);
+        ImGui.Separator();
 
-        if (entry.Icon is { } img)
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(img, pos, imgSpace, 10);
-
-        ImGui.Dummy(imgSpace);
-        ImGuiUtil.TextWrapped(entry.FileName);
-
+        var currentName = file.FileNameNoExtension;
+        ImGui.TextUnformatted("Rename File:");
+        if (ImGui.InputText("##Rename", ref currentName, 256, ImGuiInputTextFlags.EnterReturnsTrue))
+        {
+            // Rename the file at the directory location, then close the popup and refresh.
+            _logger.LogInformation($"Renaming file {file.FileName} to {currentName}.");
+            if(file.TryRename(currentName))
+                TryRefresh(true);
+            
+            ImGui.CloseCurrentPopup();
+        }
+        CkGui.AttachToolTip("Enter a new name for this file.--SEP--The .png is added for you.");
     }
 
     private void SelectAndClose()
     {
-        _logger.LogInformation($"Selecting Thumbnail file: {_toOpen?.FileName} and closing window.");
-        // Fire some mediator event here?
-        this.IsOpen = false;
+        _logger.LogInformation($"Selecting Thumbnail file: {_selected!.FileName} and closing window.");
+        var metaData = new ImageMetadataGS(ImageBase.Kind, SizeBase, ImageBase.SourceId);
+        Mediator.Publish(new ThumbnailImageSelected(metaData, _selected!.FileName));
+        IsOpen = false;
     }
 
     private void TryRefresh(bool force)

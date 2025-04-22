@@ -1,8 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using GagSpeak.Interop.IpcHelpers.Penumbra;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -11,7 +9,6 @@ using GagSpeak.UI.Components;
 using GagSpeak.UI.MainWindow;
 using GagSpeak.UI.Permissions;
 using GagSpeak.UI.Profile;
-using System;
 
 namespace GagSpeak.Services;
 
@@ -26,13 +23,13 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly ServerConfigService _serverConfig;
     private readonly UiFactory _uiFactory;
     private readonly WindowSystem _windowSystem;
-    private readonly FileDialogManager _fileDialog;
+    private readonly UiFileDialogService _fileService;
     private readonly IUiBuilder _uiBuilder;
 
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
         GagspeakConfigService mainConfig, ServerConfigService serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
-        UiFactory uiFactory, MainMenuTabs menuTabs, FileDialogManager fileDialog,
+        UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog,
         IUiBuilder uiBuilder) : base(logger, mediator)
     {
         _logger = logger;
@@ -41,7 +38,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         _windowSystem = windowSystem;
         _uiFactory = uiFactory;
         _serverConfig = serverConfig;
-        _fileDialog = fileDialog;
+        _fileService = fileDialog;
         _mainTabMenu = menuTabs;
 
         // disable the UI builder while in g-pose 
@@ -168,17 +165,27 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<OpenThumbnailBrowser>(this, (msg) =>
         {
-            if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.FolderName == msg.Type) is ThumbnailUI match)
+            if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.ImageBase.Kind == msg.MetaData.Kind) is ThumbnailUI match)
             {
-                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.Type, LoggerType.Permissions);
+                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.MetaData.Kind, LoggerType.Permissions);
                 match.Toggle();
             }
             else
             {
-                _logger.LogTrace("Creating new thumbnail browser for type " + msg.Type, LoggerType.Permissions);
-                var window = _uiFactory.CreateThumbnailUi(msg.Type);
-                _createdWindows.Add(window);
-                _windowSystem.AddWindow(window);
+                // If other windows do exist, but do not match our current purpose, then we should close them, as only one should be worked on at a time.
+                _logger.LogDebug("Destroying other thumbnail browsers and recreating UI.", LoggerType.UiCore);
+                foreach (var window in _createdWindows.OfType<ThumbnailUI>().ToList())
+                {
+                    _windowSystem.RemoveWindow(window);
+                    _createdWindows.Remove(window);
+                    window?.Dispose();
+                }
+
+                // Create a new thumbnail browser for the type
+                _logger.LogTrace("Creating new thumbnail browser for type " + msg.MetaData.Kind, LoggerType.UiCore);
+                var newWindow = _uiFactory.CreateThumbnailUi(msg.MetaData);
+                _createdWindows.Add(newWindow);
+                _windowSystem.AddWindow(newWindow);
             }
         });
 
@@ -253,6 +260,6 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private void Draw()
     {
         _windowSystem.Draw();
-        _fileDialog.Draw();
+        _fileService.Draw();
     }
 }

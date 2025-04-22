@@ -67,7 +67,8 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     private bool DrawLeafInternal(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
-        ImGui.InvisibleButton(leaf.Value.GagType.GagName(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -79,6 +80,19 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
 
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
+        if (selected)
+        {
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+                rectMin,
+                rectMin + leafSize,
+                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
+            ImGui.GetWindowDrawList().AddRectFilled(
+                rectMin,
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+                CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
+
         using (ImRaii.Group())
         {
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
@@ -86,15 +100,6 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
             Icons.DrawFavoriteStar(_favorites, leaf.Value.GagType);
             ImGui.SameLine();
             ImGui.Text(leaf.Value.GagType.GagName());
-        }
-
-        // the border if selected.
-        if (selected)
-        {
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
 
         return hovered;

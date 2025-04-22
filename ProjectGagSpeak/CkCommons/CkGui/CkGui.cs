@@ -45,9 +45,6 @@ public partial class CkGui
         _selectedComboItems = new(StringComparer.Ordinal);
         SearchStrings = new(StringComparer.Ordinal);
     }
-    // Necessary for the sticky window to attach properly.
-    public static Vector2 LastMainUIWindowPosition { get; set; } = Vector2.Zero;
-    public static Vector2 LastMainUIWindowSize { get; set; } = Vector2.Zero;
 
     /// <summary> A helper function for centering the next displayed window. </summary>
     /// <param name="width"> The width of the window. </param>

@@ -5,6 +5,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UI.Components;
+using GagSpeak.UI.MainWindow;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -58,15 +59,15 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     protected override void PreDrawInternal()
     {
         // Magic that makes the sticky pair window move with the main UI.
-        var position = CkGui.LastMainUIWindowPosition;
-        position.X += CkGui.LastMainUIWindowSize.X;
+        var position = MainUI.LastPos;
+        position.X += MainUI.LastSize.X;
         position.Y += ImGui.GetFrameHeightWithSpacing();
         ImGui.SetNextWindowPos(position);
 
         Flags |= WFlags.NoMove;
 
         var width = (DrawType == StickyWindowType.PairPerms) ? 160 * ImGuiHelpers.GlobalScale : 110 * ImGuiHelpers.GlobalScale;
-        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, CkGui.LastMainUIWindowSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
+        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, MainUI.LastSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
         ImGui.SetNextWindowSize(size);
     }
 

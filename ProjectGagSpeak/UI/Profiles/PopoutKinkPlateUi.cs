@@ -2,6 +2,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UI.MainWindow;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
@@ -12,26 +13,21 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
     private readonly KinkPlateLight _lightUI;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly PairManager _pairManager;
-    private readonly ServerConfigurationManager _serverConfigs;
     private UserData? _userDataToDisplay;
-    private bool _showFullUID;
-
     private bool ThemePushed = false;
 
     public PopoutKinkPlateUi(ILogger<PopoutKinkPlateUi> logger, GagspeakMediator mediator,
-        ServerConfigurationManager serverManager, KinkPlateLight plateLightUi,
-        KinkPlateService KinkPlateManager, PairManager pairManager) : base(logger, mediator, "###GagSpeakPopoutProfileUI")
+        KinkPlateLight plateLightUi, KinkPlateService manager, PairManager pairs) 
+        : base(logger, mediator, "###GagSpeakPopoutProfileUI")
     {
         _lightUI = plateLightUi;
-        _serverConfigs = serverManager;
-        _KinkPlateManager = KinkPlateManager;
-        _pairManager = pairManager;
+        _KinkPlateManager = manager;
+        _pairManager = pairs;
         Flags = WFlags.NoDecoration;
 
         Mediator.Subscribe<ProfilePopoutToggle>(this, (msg) =>
         {
             IsOpen = msg.PairUserData != null; // only open if the pair sent is not null
-            _showFullUID = _pairManager.DirectPairs.Any(x => x.UserData.UID == msg.PairUserData?.UID);
             _userDataToDisplay = msg.PairUserData; // set the pair to display the popout profile for.
         });
 
@@ -48,7 +44,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
             ThemePushed = true;
         }
 
-        var position = CkGui.LastMainUIWindowPosition;
+        var position = MainUI.LastPos;
         position.X -= 288;
         ImGui.SetNextWindowPos(position);
 

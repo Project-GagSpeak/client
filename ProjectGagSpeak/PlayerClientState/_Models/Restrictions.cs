@@ -1,7 +1,12 @@
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
+using GagspeakAPI.Dto;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
+using Penumbra.GameData.Enums;
 
 namespace GagSpeak.PlayerState.Models;
 
@@ -126,7 +131,7 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
-    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    public GlamourSlot Glamour { get; set; } = new GlamourSlot(EquipSlot.Head, ItemService.NothingItem(EquipSlot.Head));
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
@@ -169,31 +174,35 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
         };
 }
 
-public class BlindfoldRestriction : RestrictionItem
+public class HypnoticRestriction : RestrictionItem
 {
-    public override RestrictionType Type { get; } = RestrictionType.Blindfold;
+    public override RestrictionType Type { get; } = RestrictionType.Hypnotic;
     public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; set; } = OptionalBool.Null;
-    public BlindfoldType Kind { get; set; } = BlindfoldType.Light;
     public bool ForceFirstPerson { get; set; } = false;
-    public string CustomPath { get; set; } = string.Empty;
+    public string HypnotizePath { get; set; } = string.Empty;
+    public HypnoticEffect Effect { get; set; } = new HypnoticEffect();
 
-    public BlindfoldRestriction() { }
-    public BlindfoldRestriction(BlindfoldRestriction other, bool keepIdentifier)
+    public HypnoticRestriction() { }
+    public HypnoticRestriction(HypnoticRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
-        CustomPath = other.CustomPath;
+        ForceFirstPerson = other.ForceFirstPerson;
+        HypnotizePath = other.HypnotizePath;
+        Effect = other.Effect;
     }
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(BlindfoldRestriction other)
+    public void ApplyChanges(HypnoticRestriction other)
     {
         base.ApplyChanges(other);
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
-        CustomPath = other.CustomPath;
+        ForceFirstPerson = other.ForceFirstPerson;
+        HypnotizePath = other.HypnotizePath;
+        Effect = other.Effect;
     }
 
 
@@ -203,9 +212,51 @@ public class BlindfoldRestriction : RestrictionItem
         var json = base.Serialize();
         json["HeadgearState"] = HeadgearState.ToString();
         json["VisorState"] = VisorState.ToString();
-        json["Kind"] = Kind.ToString();
         json["ForceFirstPerson"] = ForceFirstPerson;
-        json["CustomPath"] = CustomPath;
+        json["HypnotizePath"] = HypnotizePath;
+        json["Effect"] = JObject.FromObject(Effect);
+        return json;
+    }
+}
+
+
+public class BlindfoldRestriction : RestrictionItem
+{
+    public override RestrictionType Type { get; } = RestrictionType.Blindfold;
+    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
+    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public bool ForceFirstPerson { get; set; } = false;
+    public string BlindfoldPath { get; set; } = "Blindfold_Light.png";
+
+    public BlindfoldRestriction() { }
+    public BlindfoldRestriction(BlindfoldRestriction other, bool keepIdentifier)
+        : base(other, keepIdentifier)
+    {
+        HeadgearState = other.HeadgearState;
+        VisorState = other.VisorState;
+        ForceFirstPerson = other.ForceFirstPerson;
+        BlindfoldPath = other.BlindfoldPath;
+    }
+
+    /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
+    public void ApplyChanges(BlindfoldRestriction other)
+    {
+        base.ApplyChanges(other);
+        HeadgearState = other.HeadgearState;
+        VisorState = other.VisorState;
+        ForceFirstPerson = other.ForceFirstPerson;
+        BlindfoldPath = other.BlindfoldPath;
+    }
+
+
+    public override JObject Serialize()
+    {
+        // serialize the base, and add to it the additional.
+        var json = base.Serialize();
+        json["HeadgearState"] = HeadgearState.ToString();
+        json["VisorState"] = VisorState.ToString();
+        json["ForceFirstPerson"] = ForceFirstPerson;
+        json["BlindfoldPath"] = BlindfoldPath;
         return json;
     }
 }

@@ -89,10 +89,8 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
     private bool DrawLeafInternal(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
     {
-        var region = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-
-        // Dummy Frame Draw
-        ImGui.Dummy(region);
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
 
@@ -100,13 +98,26 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         var iconSpacing = iconSize + spacing;
 
-        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, region.Y));
-        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + region - new Vector2(iconSpacing * 2, 0));
+        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
+        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 2, 0));
 
         var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
         // Draw the base frame, colored.
         var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
+
+        if (selected)
+        {
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+                rectMin,
+                rectMin + leafSize,
+                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
+            ImGui.GetWindowDrawList().AddRectFilled(
+                rectMin,
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+                CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
 
         // Contents.
         using (ImRaii.Group())
@@ -116,7 +127,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
             ImGui.SameLine();
             ImGui.Text(leaf.Value.Label);
-            var currentX = region.X - iconSpacing;
+            var currentX = leafSize.X - iconSpacing;
             ImGui.SameLine(currentX);
             if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 _manager.Delete(leaf.Value);
@@ -129,9 +140,6 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
                 _manager.TogglePoolState(leaf.Value);
             CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
         }
-
-        if (selected)
-            ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMin + new Vector2(ImGuiHelpers.GlobalScale * 3, region.Y), CkGui.Color(ImGuiColors.ParsedPink), 5);
 
         return wasHovered;
     }

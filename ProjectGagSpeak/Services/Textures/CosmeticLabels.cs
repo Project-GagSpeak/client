@@ -33,8 +33,6 @@ public static class CosmeticLabels
         { CoreTexture.Achievement, "RequiredImages\\achievement.png" },
         { CoreTexture.AchievementLineSplit, "RequiredImages\\achievementlinesplit.png" },
         { CoreTexture.ArrowSpin, "RequiredImages\\arrowspin.png" },
-        { CoreTexture.BlindfoldLight, "RequiredImages\\Blindfold_Light.png" },
-        { CoreTexture.BlindfoldSensual, "RequiredImages\\Blindfold_Sensual.png" },
         { CoreTexture.Blindfolded, "RequiredImages\\blindfolded.png" },
         { CoreTexture.ChatBlocked, "RequiredImages\\chatblocked.png" },
         { CoreTexture.CircleDot, "RequiredImages\\circledot.png" },

@@ -1,25 +1,26 @@
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
-using System.Globalization;
+using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.MeshPCB;
+using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Resource.Delegates;
 
 namespace GagSpeak.UI;
 
 public class ThumbnailFolder : IDisposable
 {
+    private readonly ILogger _logger;
     private readonly CosmeticService _cosmetics;
 
     private List<ThumbnailFile> _files = new List<ThumbnailFile>();
     private Task? _scanTask = null;
-
-    public ThumbnailFolder(CosmeticService cosmetics, ImageDataType folder)
+    public ThumbnailFolder(ILogger log, CosmeticService cosmetics, ImageDataType folder)
     {
+        _logger = log;
         _cosmetics = cosmetics;
         FolderName = folder;
-
-        // Run initial Scan.
         ScanFiles();
     }
 
+    public ILogger Log => _logger;
     public bool IsScanning => _scanTask is not null && !_scanTask.IsCompleted;
     public ImageDataType FolderName { get; init; }
     public IEnumerable<ThumbnailFile> AllFiles => _files;
@@ -27,6 +28,28 @@ public class ThumbnailFolder : IDisposable
     public void Add(ThumbnailFile file)
     {
         _files.Add(file);
+    }
+
+    public void Remove(ThumbnailFile file)
+    {
+        if (!_files.Contains(file))
+            return;
+
+        var dir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, FolderName.ToString());
+        if (File.Exists(Path.Combine(dir, file.FileName)))
+        {
+            try
+            {
+                File.Delete(Path.Combine(dir, file.FileName));
+                file.Dispose();
+                _files.Remove(file);
+                _logger.LogDebug($"Deleted thumbnail file: {file.FileName}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to delete thumbnail file: {file.FileName}, Error: {ex.Message}");
+            }
+        }
     }
 
     public void ClearFiles()
@@ -54,36 +77,30 @@ public class ThumbnailFolder : IDisposable
         var directoryPath = Path.Combine(ConfigFileProvider.ThumbnailDirectory, FolderName.ToString());
         if (!Directory.Exists(directoryPath))
         {
-            GagSpeak.StaticLog.Warning($"Thumbnail directory does not exist: {directoryPath}, Creating one!");
+            _logger.LogWarning($"Thumbnail directory does not exist: {directoryPath}, Creating one!");
             Directory.CreateDirectory(directoryPath);
         }
 
         // obtain all files from the directory folder.
         var filePaths = Directory.GetFiles(directoryPath, "*.png");
-        GagSpeak.StaticLog.Debug($"Scanning {filePaths.Length} files in {directoryPath}");
+        _logger.LogDebug($"Scanning {filePaths.Length} files in {directoryPath}");
 
-        var tasks = filePaths
-            .Select(x =>
+        await Parallel.ForEachAsync(filePaths, async (filePath, ct) =>
+        {
+            if (await _cosmetics.RentThumbnailFile(FolderName, filePath) is { } validImage)
             {
-                return Task.Run(async () =>
+                var fileName = Path.GetFileName(filePath);
+                if (fileName is null)
                 {
-                    // Check if the file is a valid thumbnail.
-                    if (await _cosmetics.RentThumbnailFile(FolderName, x) is { } validImage)
-                    {
-                        var fileName = Path.GetFileName(x);
-                        if (fileName is null)
-                        {
-                            GagSpeak.StaticLog.Warning($"Failed to get file name from path: {x}");
-                            return;
-                        }
+                    _logger.LogWarning($"Failed to get file name from path: {filePath}");
+                    return;
+                }
 
-                        Add(new ThumbnailFile(fileName, validImage));
-                        GagSpeak.StaticLog.Verbose($"Added thumbnail file: {fileName} to folder: {FolderName}");
-                    }
-                });
-            });
-        // Run all tasks in parallel.
-        await Task.WhenAll(tasks);
+                Add(new ThumbnailFile(this, fileName, validImage));
+                _logger.LogTrace($"Added thumbnail file: {fileName} to folder: {FolderName}");
+            }
+        });
+
         // Order them properly.
         _files = _files.OrderBy(x => x.FileName).ToList();
     }

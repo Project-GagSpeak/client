@@ -345,6 +345,7 @@ public class RestraintSet : ITraitHolder
             ["Identifier"] = Identifier.ToString(),
             ["Label"] = Label,
             ["Description"] = Description,
+            ["ThumbnailPath"] = ThumbnailPath,
             ["DoRedraw"] = DoRedraw,
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
             ["Glasses"] = Glasses.Serialize(),

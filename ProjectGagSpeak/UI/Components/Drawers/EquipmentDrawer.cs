@@ -197,7 +197,7 @@ public class EquipmentDrawer
         // If it has a thumbnail, we should use that.
         if (!restriction.Ref.ThumbnailPath.IsNullOrWhitespace())
         {
-            if (_cosmetics.GetThumbnailImage(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
+            if (_cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
             {
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(RestraintItemH), ImGui.GetStyle().FrameRounding);

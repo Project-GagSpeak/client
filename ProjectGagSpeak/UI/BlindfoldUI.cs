@@ -232,7 +232,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
                 }
                 imageAlpha = Math.Min(alpha, maxAlpha); // Ensure the image stays at full opacity once it reaches it
             }
-            // or if its the deactionation one
+            // or if its the deactivation animation
             else if (AnimationProgress == AnimType.DeactivateWindow)
             {
                 // Calculate the progress of the animation based on the elapsed time
@@ -276,14 +276,7 @@ public class BlindfoldUI : WindowMediatorSubscriberBase
         if (_currentSettings is not { } blindfoldSettings)
             return;
 
-        var img = blindfoldSettings.Kind switch
-        {
-            BlindfoldType.Light => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", "Blindfold_Light.png")),
-            BlindfoldType.Sensual => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", "Blindfold_Sensual.png")),
-            BlindfoldType.CustomPath => _cosmetics.GetImageFromAssetsFolder(Path.Combine("BlindfoldTexture", blindfoldSettings.CustomPath)),
-            _ => null
-        };
-        if (img is { } wrap)
+        if (_cosmetics.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldSettings.BlindfoldPath) is { } wrap)
             ImGui.Image(wrap!.ImGuiHandle, windowSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, imageAlpha));
     }
 

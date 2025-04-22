@@ -197,7 +197,8 @@ public partial class CkFileSystemSelector<T, TStateStorage>
             ImGui.CloseCurrentPopup();
         }
 
-        ImGuiUtil.HoverTooltip("Enter a full path here to move or rename the search path of the leaf. Creates all required parent directories, if possible.\n\nDoes NOT rename the actual data!");
+        ImGuiUtil.HoverTooltip("Enter a full path here to move or rename the search path of the leaf. " +
+            "Creates all required parent directories, if possible.\n\nDoes NOT rename the actual data!");
     }
 
     protected void ExpandAll()
