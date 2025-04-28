@@ -1,15 +1,12 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Services;
-using GagSpeak.UI;
-using GagSpeak.Utils;
+using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using System.Runtime.CompilerServices;
 
-namespace GagSpeak.CkCommons.Drawers;
+namespace GagSpeak.CkCommons.Widgets;
 
 public abstract class ImageTabBar<ITab> where ITab : Enum
 {
@@ -37,10 +34,10 @@ public abstract class ImageTabBar<ITab> where ITab : Enum
         _tabButtons.Add(new TabButton(image, targetTab, tooltip));
     }
 
-    protected void DrawTabButton(TabButton tab, Vector2 buttonSize, ImDrawListPtr drawList)
+    protected void DrawTabButton(TabButton tab, Vector2 buttonSize, ImDrawListPtr drawList, Vector2? customPadding = null)
     {
         var x = ImGui.GetCursorScreenPos();
-        var padding = buttonSize/6;
+        var padding = customPadding ?? buttonSize/6;
         var isDisabled = IsTabDisabled(tab.TargetTab);
         using (ImRaii.Disabled(isDisabled))
         {
@@ -52,9 +49,9 @@ public abstract class ImageTabBar<ITab> where ITab : Enum
 
             if (tab.Image is { } wrap)
             {
-                var topleft = x + padding;
-                var bottomright = x + buttonSize - padding;
-                drawList.AddImage(wrap.ImGuiHandle, topleft, bottomright, Vector2.Zero, Vector2.One, CkGui.Color(Vector4.One));
+                var topLeft = x + padding;
+                var bottomRight = x + buttonSize - padding;
+                drawList.AddImage(wrap.ImGuiHandle, topLeft, bottomRight, Vector2.Zero, Vector2.One, CkGui.Color(Vector4.One));
             }
 
             if (EqualityComparer<ITab>.Default.Equals(TabSelection, tab.TargetTab))
@@ -70,7 +67,28 @@ public abstract class ImageTabBar<ITab> where ITab : Enum
         CkGui.AttachToolTip(tab.Tooltip);
     }
 
-    public abstract void Draw(Vector2 region);
+    public virtual void Draw(Vector2 region, Vector2? customPadding = null)
+    {
+        if (_tabButtons.Count == 0)
+            return;
+
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        using var _ = ImRaii.Child("ImageTabBar", region, false, ImGuiWindowFlags.NoDecoration);
+
+        var buttonSize = new Vector2(region.Y);
+        var spacingBetweenButtons = (region.X - buttonSize.X * _tabButtons.Count) / (_tabButtons.Count + 1);
+
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.SetCursorScreenPos(new Vector2(pos.X + spacingBetweenButtons, pos.Y));
+
+        foreach (var tab in _tabButtons)
+        {
+            DrawTabButton(tab, buttonSize, ImGui.GetWindowDrawList(), customPadding);
+            ImGui.SameLine(0, spacingBetweenButtons);
+        }
+
+        ImGui.SetCursorScreenPos(pos);
+    }
 
     /// <summary> Invokes actions informing people of the previous and new tab selected. </summary>
     public event Action<ITab, ITab>? TabSelectionChanged;

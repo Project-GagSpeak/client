@@ -1,7 +1,8 @@
 using Dalamud.Interface;
 using Dalamud.Utility;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Widgets;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -75,7 +76,7 @@ public partial class CkFileSystemSelector<T, TStateStorage> : IDisposable
         var       searchW   = CustomFiltersWidth(width);
         var       tmp       = FilterValue;
         var       tooltip   = FilterTooltip.Length > 0 ? FilterTooltip : string.Empty;
-        var       change    = DrawerHelpers.FancySearchFilter("Filter", width, tooltip, ref tmp, 128, width - searchW, DrawCustomFilters);
+        var       change    = FancySearchBar.Draw("Filter", width, tooltip, ref tmp, 128, width - searchW, DrawCustomFilters);
 
         // the filter box had its value updated.
         if (change)

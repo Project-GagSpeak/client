@@ -1,7 +1,7 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Utility;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui.Raii;
 using OtterGuiInternal.Structs;

@@ -1,12 +1,13 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Drawers;
+namespace GagSpeak.CkCommons.Widgets;
 
 public abstract class IconTabBar<ITab> where ITab : Enum
 {

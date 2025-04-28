@@ -7,7 +7,7 @@ using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
 public partial class CkGui

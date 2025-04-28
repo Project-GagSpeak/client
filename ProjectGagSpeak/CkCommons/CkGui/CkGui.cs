@@ -16,7 +16,7 @@ using ImGuiNET;
 
 // please dont change this namespace or you will mess up so many references i dont want to deal with fixing.
 // unless you are willing to, then by all means please do.
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 // Primary Partial Class
 public partial class CkGui
@@ -77,8 +77,7 @@ public partial class CkGui
 
     public static Vector4 GetBoolColor(bool input) => input ? ImGuiColors.ParsedGreen : ImGuiColors.DalamudRed;
 
-    public float GetFontScalerFloat() => ImGuiHelpers.GlobalScale * (_pi.UiBuilder.DefaultFontSpec.SizePt / 12f);
-
+/*    public float GetFontScalerFloat() => ImGuiHelpers.GlobalScale * (_pi.UiBuilder.DefaultFontSpec.SizePt / 12f); */
     public static float GetButtonSize(string text)
     {
         var vector2 = ImGui.CalcTextSize(text);
@@ -666,6 +665,4 @@ public partial class CkGui
             GagSpeak.StaticLog.Error(ex, "Error in DrawComboSearchable");
         }
     }
-
-    public sealed record IconScaleData(Vector2 IconSize, Vector2 NormalizedIconScale, float OffsetX, float IconScaling);
 }

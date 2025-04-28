@@ -1,26 +1,20 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Drawers;
-using GagSpeak.Services;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Widgets;
 using ImGuiNET;
-using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.CkCommons.Helpers;
-
-// Tab bars currently have no window background, but rather are bordered.
-public static partial class CkComponents
+namespace GagSpeak.CkCommons.Raii;
+public static partial class CkRaii
 {
-    public static ImRaii.IEndObject TabBarChild(string id, out ICkTab? selected, params ICkTab[] tabs)
+    public static ImRaii.IEndObject TabBarChild(string id, out IFancyTab? selected, params IFancyTab[] tabs)
         => new UnconditionalTabBar(id, ImGui.GetContentRegionAvail(), WFlags.None, out selected, tabs);
 
-    public static ImRaii.IEndObject TabBarChild(string id, WFlags childFlags, out ICkTab? selected, params ICkTab[] tabs)
+    public static ImRaii.IEndObject TabBarChild(string id, WFlags childFlags, out IFancyTab? selected, params IFancyTab[] tabs)
         => new UnconditionalTabBar(id, ImGui.GetContentRegionAvail(), childFlags, out selected, tabs);
 
-    public static ImRaii.IEndObject TabBarChild(string id, Vector2 width, out ICkTab? selected, params ICkTab[] tabs)
+    public static ImRaii.IEndObject TabBarChild(string id, Vector2 width, out IFancyTab? selected, params IFancyTab[] tabs)
         => new UnconditionalTabBar(id, width, WFlags.None, out selected, tabs);
 
-    public static ImRaii.IEndObject TabBarChild(string id, Vector2 width, WFlags childFlags, out ICkTab? selected, params ICkTab[] tabs)
+    public static ImRaii.IEndObject TabBarChild(string id, Vector2 width, WFlags childFlags, out IFancyTab? selected, params IFancyTab[] tabs)
         => new UnconditionalTabBar(id, width, childFlags, out selected, tabs);
 
 
@@ -30,7 +24,7 @@ public static partial class CkComponents
         public bool Success { get; } = true;
         public bool Disposed { get; private set; }
 
-        public UnconditionalTabBar(string id, Vector2 region, WFlags childFlags, out ICkTab? selected, params ICkTab[] tabs)
+        public UnconditionalTabBar(string id, Vector2 region, WFlags childFlags, out IFancyTab? selected, params IFancyTab[] tabs)
         {
             ImGui.BeginGroup();
             FancyTabBar.DrawBar(id, region.X, out selected, tabs);

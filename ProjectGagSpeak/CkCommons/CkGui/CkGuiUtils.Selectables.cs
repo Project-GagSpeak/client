@@ -1,13 +1,9 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.CkCommons.FileSystem;
-using GagSpeak.UI;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.CkCommons.Gui.Utility;
 

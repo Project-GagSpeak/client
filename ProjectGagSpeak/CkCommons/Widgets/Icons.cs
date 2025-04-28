@@ -2,16 +2,17 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.CkCommons.Drawers;
+namespace GagSpeak.CkCommons.Widgets;
 
 public static class Icons
 {

@@ -1,8 +1,8 @@
-namespace GagSpeak.CkCommons.Drawers;
+namespace GagSpeak.CkCommons.Classes;
 
 // Yoinked from ECommons
 // https://github.com/NightmareXIV/ECommons/blob/master/ECommons/ImGuiMethods/GradientColor.cs
-public static class Gradients
+public static class Gradient
 {
     public static Vector4 Get(Vector4 start, Vector4 end, int Milliseconds = 1000)
     {

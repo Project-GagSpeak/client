@@ -3,10 +3,10 @@ using ImGuiNET;
 using OtterGuiInternal.Structs;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.CkCommons.Drawers;
+namespace GagSpeak.CkCommons.Widgets;
 
 // A Requirement contract for any tab items being passed into a fancy tab bar.
-public interface ICkTab
+public interface IFancyTab
 {
     /// <summary> The Label, doubling as the ID of the tab item </summary>
     public string Label { get; }
@@ -22,7 +22,7 @@ public interface ICkTab
     public void DrawContents(float width);
 }
 
-// Alternative Storage could be defining id's as ints and using ICkTab?[] Selections = new ICkTab?[MaxTabBarConst];
+// Alternative Storage could be defining id's as ints and using IFancyTab?[] Selections = new IFancyTab?[MaxTabBarConst];
 // But we are not needing to hyper optimize right now, and to be quite honest, im really dead with all this UI stuff right now.
 
 public static class FancyTabBar
@@ -33,14 +33,14 @@ public static class FancyTabBar
 
     // Internal State Storage for the current item references from various drawcalls with different ids.
     // If this ever REALLY becomes an issue we can switch to an array with ID-type casting. But for now, this is fine.
-    private static readonly Dictionary<string, ICkTab?> _selectedStorage = new();
+    private static readonly Dictionary<string, IFancyTab?> _selectedStorage = new();
 
-    public static bool DrawBar(string id, [NotNullWhen(true)] out ICkTab? selected, params ICkTab[] tabs)
+    public static bool DrawBar(string id, [NotNullWhen(true)] out IFancyTab? selected, params IFancyTab[] tabs)
         => DrawBar(id, ImGui.GetContentRegionAvail().X, out selected, tabs);
 
     /// <summary> This WILL end with the cursorpos at the point you can draw the content region at. </summary>
     /// <returns> If a new tab was selected that is different from the last frame selection. </returns>
-    public static bool DrawBar(string id, float width, [NotNullWhen(true)] out ICkTab? selected, params ICkTab[] tabs)
+    public static bool DrawBar(string id, float width, [NotNullWhen(true)] out IFancyTab? selected, params IFancyTab[] tabs)
     {
         if (!_selectedStorage.ContainsKey(id))
             _selectedStorage[id] = tabs.FirstOrDefault();
@@ -64,8 +64,8 @@ public static class FancyTabBar
             {
                 var isSelected = selected?.Label == tab.Label;
                 // We pass in the drawlist from inside if the selected, and outside if not.
-                // This means the layers are drawn such that all `wdl` items are drawn first, with `childWdl` drawn ontop of it.
-                // (This occurs due to being a nested child.) (Allowing us to manipulate blending from different drawlists)
+                // This means the layers are drawn such that all `wdl` items are drawn first, with `childWdl` drawn on top of it.
+                // (This occurs due to being a nested child.) (Allowing us to manipulate blending from different draw lists)
                 if (DrawTab(tab.Label, isSelected ? childWdl : wdl, isSelected, tab.Disabled, firstTab))
                     selected = tab;
                 // provide spacing for the curves to be drawn.
@@ -94,7 +94,7 @@ public static class FancyTabBar
     /// <param name="selected"> If the tab is currently selected. </param>
     /// <param name="disabled"> If the tab is currently disabled. </param>
     /// <param name="first"> If this is the first tab in the list. </param>
-    /// <remarks> Shape is dependant on if FIRST is true or not. </remarks>
+    /// <remarks> Shape is dependent on if FIRST is true or not. </remarks>
     private static bool DrawTab(string label, ImDrawListPtr wdl, bool selected, bool disabled, bool first)
     {
         using var group = ImRaii.Group();

@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak.CkCommons.Intiface;
 
-public static class Intiface
+public static class IntifaceCentral
 {
     // the path to intiface central.exe
     public static string AppPath = string.Empty;
