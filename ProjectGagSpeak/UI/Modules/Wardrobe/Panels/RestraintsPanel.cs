@@ -1,30 +1,21 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Drawers;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.RestraintSets;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
-using GagspeakAPI.Data.Character;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
-using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
-using SixLabors.ImageSharp;
-using System.Drawing;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 // it might be wise to move the selector draw into the panel so we have more control over the editor covering both halves.
 public partial class RestraintsPanel : DisposableMediatorSubscriberBase
@@ -36,7 +27,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private readonly PairManager _pairs;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
-    public bool IsEditing => _manager.ActiveEditorItem != null;
+    public bool IsEditing => _manager.ItemInEditor != null;
     public RestraintsPanel(
         ILogger<RestraintsPanel> logger, 
         GagspeakMediator mediator,
@@ -60,7 +51,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         _guides = guides;
 
         // create some dummy tabs to see if it even works.
-        EditorTabs = new ICkTab[]
+        EditorTabs = new IFancyTab[]
         {
             editorInfo,
             editorEquipment,
@@ -70,10 +61,10 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<TooltipSetItemToEditorMessage>(this, (msg) =>
         {
-            if (_manager.ActiveEditorItem != null && _manager.ActiveEditorItem.RestraintSlots[msg.Slot] is RestraintSlotBasic basicSlot)
+            if (_manager.ItemInEditor?.RestraintSlots[msg.Slot] is RestraintSlotBasic basicSlot)
             {
                 basicSlot.Glamour.GameItem = msg.Item;
-                Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set " + "[" + _manager.ActiveEditorItem.Label + "]", LoggerType.Restraints);
+                Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set " + "[" + _manager.ItemInEditor.Label + "]", LoggerType.Restraints);
             }
         });
 
@@ -93,10 +84,10 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private static OptionalBoolCheckbox HelmetCheckbox = new();
     private static OptionalBoolCheckbox VisorCheckbox = new();
     private static OptionalBoolCheckbox WeaponCheckbox = new();
-    public ICkTab[] EditorTabs;
+    public IFancyTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>
-    public void DrawEditorContents(DrawerHelpers.HeaderVec topRegion, DrawerHelpers.HeaderVec botRegion)
+    public void DrawEditorContents(CkHeader.DrawRegion topRegion, CkHeader.DrawRegion botRegion)
     {
         ImGui.SetCursorScreenPos(topRegion.Pos);
         using (ImRaii.Child("RestraintEditorTop", topRegion.Size))
@@ -106,16 +97,16 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestraintEditorBot", botRegion.Size, false, WFlags.AlwaysUseWindowPadding))
         {
             // Draw out the tab bar, and the items respective contents.
-            using (CkComponents.TabBarChild("AllowanceTabBars", WFlags.AlwaysUseWindowPadding, out var selected, EditorTabs))
+            using (CkRaii.TabBarChild("AllowanceTabBars", WFlags.AlwaysUseWindowPadding, out var selected, EditorTabs))
                 selected?.DrawContents(botRegion.SizeX);
         }
     }
 
-    public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestraintsTopLeft", drawRegions.Topleft.Size))
-            _selector.DrawFilterRow(drawRegions.Topleft.SizeX);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("RestraintsTopLeft", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
@@ -125,155 +116,139 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestraintsTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
-        var style = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 2 + ImGui.GetTextLineHeight() * 4 + style.ItemSpacing.Y + style.WindowPadding.Y * 2;
-        var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
-
+        // Draw the active item at the position. (This draws as a child)
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("RestraintsBottomRight", drawRegions.BotRight.Size))
-        {
-            DrawSelectedItemInfo(selectedSize, curveSize);
-            DrawActiveItemInfo();
-        }
+        DrawInfoUpper(drawRegions.BotRight, curveSize);
+
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y);
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
+        DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
     }
 
-    private void DrawSelectedItemInfo(Vector2 region, float rounding)
+    private void DrawInfoUpper(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var ItemSelected = _selector.Selected is not null;
+        using var _ = ImRaii.Group();
 
+        // Define the height of the selection child.
         var style = ImGui.GetStyle();
-        using (ImRaii.Child("SelectedItemOuter", region))
-        {
-            var imgSize = new Vector2(region.Y / 1.2f, region.Y) - style.WindowPadding * 2;
-            var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - imgSize.X - style.WindowPadding.X, style.WindowPadding.Y);
-            // Draw the left items.
-            if (ItemSelected)
-                SelectedRestraintInternal();
+        var size = new Vector2(drawRegion.Size.X, WardrobeUI.SelectedRestraintH());
+        var thumbnailRegion = new Vector2(size.Y / 1.2f, size.Y) - style.WindowPadding * 2;
+        var leftWidth = size.X - style.WindowPadding.X - style.ItemSpacing.X - thumbnailRegion.X;
 
-            // move to the cursor position and attempt to draw it.
-            var hoveringImg = ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize);
-            var imgCol = hoveringImg ? CkColor.FancyHeader.Uint() : CkColor.FancyHeaderContrast.Uint();
-            ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, imgCol, rounding);
-            ImGui.SetCursorScreenPos(imgDrawPos);
-            if (ItemSelected)
-            {
-                _activeDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
-                if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
-                {
-                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                    {
-                        var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
-                        Mediator.Publish(new OpenThumbnailBrowser(metaData));
-                    }
-                    CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
-                }
-            }
-        }
-        // draw the actual design element.
-        var minPos = ImGui.GetItemRectMin();
-        var size = ImGui.GetItemRectSize();
+        var buttonSize = new Vector2(leftWidth, ImGui.GetFrameHeight());
+        var buttonWrapSize = buttonSize + style.WindowPadding / 2;
+        var btnHovered = ImGui.IsMouseHoveringRect(drawRegion.Pos, drawRegion.Pos + buttonSize);
+        var descriptionSize = new Vector2(buttonWrapSize.X, ImGui.GetFrameHeight() + ImGui.GetTextLineHeightWithSpacing() * 4);
+
+        // Split the channels to draw our components.
+        var cursorPos = ImGui.GetCursorPos();
         var wdl = ImGui.GetWindowDrawList();
-        // base background right right rounded corners.
-        wdl.AddRectFilled(minPos, minPos + size, CkColor.FancyHeader.Uint(), rounding, ImDrawFlags.RoundCornersRight);
-        // Draw the 3 label rects.
-        var descPosMax = minPos + new Vector2(size.X * .6f + style.ItemInnerSpacing.Y, ImGui.GetFrameHeight() + ImGui.GetTextLineHeight() * 4 + style.ItemSpacing.Y);
-        var labelWrapMax = minPos + new Vector2(size.X * .6f, ImGui.GetFrameHeight()) + style.ItemInnerSpacing / 2;
-        var labelMax = minPos + new Vector2(size.X * .6f, ImGui.GetFrameHeight());
-        // Description Rect.
-        wdl.AddRectFilled(minPos, descPosMax, CkColor.FancyHeaderContrast.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
-        // Label Wrap Rect.
-        wdl.AddRectFilled(minPos, labelWrapMax, CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
-        // Label Rect.
-        var hoveringTitle = ImGui.IsMouseHoveringRect(minPos, labelMax);
-        var col = hoveringTitle ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
-        wdl.AddRectFilled(minPos, labelMax, col, rounding, ImDrawFlags.RoundCornersBottomRight);
 
-        if (hoveringTitle)
-        {
-            if (ItemSelected && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                _manager.StartEditing(_selector.Selected!);
-            CkGui.AttachToolTip("Double Click me to begin editing!", displayAnyways: true);
-        }
-    }
+        // Draw the background.
+        wdl.AddRectFilled(drawRegion.Pos - new Vector2(style.WindowPadding.X, 0), drawRegion.Pos + size, CkColor.FancyHeader.Uint(), rounding, ImDrawFlags.RoundCornersRight);
+        wdl.AddRectFilled(drawRegion.Pos - new Vector2(style.WindowPadding.X, 0), drawRegion.Pos + new Vector2(0, size.Y), CkGui.Color(ImGuiColors.DalamudGrey));
 
-    private void SelectedRestraintInternal()
-    {
-        using var group = ImRaii.Group();
+        // Draw out the description BG.
+        wdl.AddRectFilled(drawRegion.Pos, drawRegion.Pos + descriptionSize, CkColor.FancyHeaderContrast.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
 
-        // Label draw.
-        ImUtf8.SameLineInner();
+        // Draw out the Label Button.
+        var col = btnHovered ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
+        wdl.AddRectFilled(drawRegion.Pos, drawRegion.Pos + buttonWrapSize, CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
+        wdl.AddRectFilled(drawRegion.Pos, drawRegion.Pos + buttonSize, col, rounding, ImDrawFlags.RoundCornersBottomRight);
+        
+        ImGui.SetCursorPosX(cursorPos.X + style.WindowPadding.X);
         ImUtf8.TextFrameAligned(_selector.Selected!.Label);
 
-        // Description draw on text wrapped for the width * .6f.
-        var descSize = new Vector2(ImGui.GetContentRegionAvail().X * .6f, ImGui.GetTextLineHeight() * 4);
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemInnerSpacing.X);
-        using (ImRaii.Child("RestraintPreviewDescription", descSize))
-            CkGui.TextWrapped(_selector.Selected.Description);
+        if (btnHovered)
+        {
+            if(ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                _manager.StartEditing(_selector.Selected!);
+            CkGui.AttachToolTip("Double-Click me to open the editor!", displayAnyways: true);
+        }
 
-        // Draw the button icon row centered with proper spacing.
+        ImGui.SetCursorPosY(cursorPos.Y + ImGui.GetFrameHeight());
+        using (ImRaii.Child("DescriptionChild", new Vector2(leftWidth, ImGui.GetTextLineHeightWithSpacing() * 4), false, WFlags.AlwaysUseWindowPadding))
+            CkGui.TextWrapped(_selector.Selected!.Description);
+
+        // Draw the IconsRow.
         var trueCol = 0xFFFFFFFF;
         var falseCol = CkColor.FancyHeaderContrast.Uint();
-        var helmCol = _selector.Selected.HeadgearState == OptionalBool.Null ? falseCol : trueCol;
-        var visorCol = _selector.Selected.VisorState == OptionalBool.Null ? falseCol : trueCol;
-        var weaponCol = _selector.Selected.WeaponState == OptionalBool.Null ? falseCol : trueCol;
-        var redrawCol = _selector.Selected.DoRedraw ? falseCol : trueCol;
-        var layersCol = _selector.Selected.Layers.Count > 0 ? trueCol : falseCol;
-        var moodleCol = _selector.Selected.RestraintMoodles.Count > 0 ? trueCol : falseCol;
-        var modsCol = _selector.Selected.RestraintMods.Count > 0 ? trueCol : falseCol;
-        var traitsCol = _selector.Selected.Traits is not Traits.None || _selector.Selected.Stimulation is not Stimulation.None ? trueCol : falseCol;
+        var helmAttribute = _selector.Selected.HeadgearState != OptionalBool.Null;
+        var visorAttribute = _selector.Selected.VisorState != OptionalBool.Null;
+        var weaponAttribute = _selector.Selected.WeaponState != OptionalBool.Null;
+        var redrawAttribute = _selector.Selected.DoRedraw;
+        var layersAttribute = _selector.Selected.Layers.Count > 0;
+        var modsAttribute = _selector.Selected.RestraintMods.Count > 0;
+        var moodleAttribute = _selector.Selected.RestraintMoodles.Count > 0;
 
         // Get the remaining Y content region, and set our cursorPos to be center of it.
-        ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, ImGui.GetStyle().WindowPadding.Y));
         using (ImRaii.Group())
         {
-            CkGui.FramedIconText(FAI.HatCowboy, helmCol);
+            CkGui.FramedIconText(FAI.HatCowboy, helmAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(helmAttribute ? "Headgear is set" : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.Glasses, visorCol);
+            CkGui.FramedIconText(FAI.Glasses, visorAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(visorAttribute ? "Visor is set" : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.Shield, weaponCol);
+            CkGui.FramedIconText(FAI.Shield, weaponAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(weaponAttribute ? "Weapon is set" : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.Repeat, redrawCol);
+            CkGui.FramedIconText(FAI.Repeat, redrawAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(redrawAttribute ? "Redraws character on application and removal." : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.LayerGroup, layersCol);
+            CkGui.FramedIconText(FAI.LayerGroup, layersAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(layersAttribute ? "Restraint Set has Layers" : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.TheaterMasks, moodleCol);
+            CkGui.FramedIconText(FAI.PersonRays, modsAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(modsAttribute ? "Restraint Set has Attached Mods" : string.Empty);
 
             ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.PersonRays, modsCol);
+            CkGui.FramedIconText(FAI.TheaterMasks, moodleAttribute ? trueCol : falseCol);
+            CkGui.AttachToolTip(moodleAttribute ? "Restraint Set has Moodles" : string.Empty);
+        }
+
+        // Draw the Thumbnail Image.
+        var imgPos = drawRegion.Pos + size - style.WindowPadding - thumbnailRegion;
+        var hoveringImg = ImGui.IsMouseHoveringRect(imgPos, imgPos + thumbnailRegion);
+        var imgCol = hoveringImg ? CkColor.FancyHeader.Uint() : CkColor.FancyHeaderContrast.Uint();
+        ImGui.SetCursorScreenPos(imgPos);
+        ImGui.GetWindowDrawList().AddRectFilled(imgPos, imgPos + thumbnailRegion, imgCol, rounding);
+        _activeDrawer.DrawImage(_selector.Selected!, thumbnailRegion, rounding);
+        if (hoveringImg)
+        {
+            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
+                Mediator.Publish(new OpenThumbnailBrowser(metaData));
+            }
+            CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
         }
     }
 
-    private void DrawActiveItemInfo()
+    private void DrawActiveItemInfo(Vector2 region)
     {
-        if(_manager.ActiveRestraintData is not { } activeData)
+        using var _ = ImRaii.Child("ActiveRestraintItems", region, false, WFlags.AlwaysUseWindowPadding);
+        if (_manager.ServerRestraintData is not { } activeData)
             return;
 
-        using var _ = ImRaii.Child("ActiveRestraintItems", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);
-
-
         // get the size of the child for this centered header.
-        var styler = ImGui.GetStyle();
-        var activeSetHeight = ImGui.GetFrameHeightWithSpacing() * 5 + styler.WindowPadding.Y * 2;
+        var activeSetHeight = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetStyle().ItemSpacing.Y * 4;
         var activeSetSize = new Vector2(ImGui.GetContentRegionAvail().X, activeSetHeight);
-        if (_manager.ActiveRestraint is null)
+        if (_manager.AppliedRestraint is null)
         {
-            using var inactive = CkComponents.CenterHeaderChild("InactiveRestraint", "No Restraint Set Is Active", activeSetSize);
+            using var inactive = CkRaii.HeaderChild("No Restraint Set Is Active", activeSetSize, CkRaii.HeaderFlags.AddPaddingToHeight);
         }
         else
         {
-            using (CkComponents.ButtonHeaderChild("ActiveRestraintSet", "Active Restraint Set", activeSetSize, CkComponents.HeaderRounding, FAI.Minus, TryRemoveRestraint))
+            using (CkRaii.HeaderChild("Active Restraint Set", activeSetSize, CkRaii.GetHeaderRounding(), CkRaii.HeaderFlags.AddPaddingToHeight))
             {
                 // Draw the restraint set equipment, grouped.
-                _activeDrawer.DrawRestraintSlots(_manager.ActiveRestraint, new Vector2(ImGui.GetFrameHeightWithSpacing()));
+                _activeDrawer.DrawRestraintSlots(_manager.AppliedRestraint, new Vector2(ImGui.GetFrameHeightWithSpacing()));
 
                 // i wont really be able to debug this until we have proper server interaction lol.
 
@@ -287,27 +262,10 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
     }
 
-    private void TryRemoveRestraint()
-    {
-        if (_manager.ActiveRestraintData is not { } activeSet)
-            return;
-
-        // If the set is locked, log error and return.
-        if (activeSet.IsLocked() || !activeSet.CanRemove())
-        {
-            Logger.LogError("Set is Locked, or you cannot remove. Aborting!", LoggerType.Restraints);
-            return;
-        }
-
-        // Attempt to remove it.
-        _logger.LogDebug("Attempting to remove active restraint set", LoggerType.Restraints);
-        Mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
-    }
-
     private void DrawEditorHeader()
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } setInEdit)
+        if (_manager.ItemInEditor is not { } setInEdit)
             return;
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)

@@ -6,12 +6,12 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 
-namespace GagSpeak.UI.UiToybox;
+namespace GagSpeak.CkCommons.Gui.UiToybox;
 public partial class TriggersPanel
 {
     private void DrawEditor(Vector2 region)
     {
-        if(_manager.ActiveEditorItem is not { } activeTrigger)
+        if(_manager.ItemInEditor is not { } activeTrigger)
             return;
 
         // If we converted our trigger, return early so the rest of the draw is not errored.

@@ -6,7 +6,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> The base for the draw folder, a dropdown section in the list of paired users </summary>
 public abstract class DrawFolderBase : IDrawFolder

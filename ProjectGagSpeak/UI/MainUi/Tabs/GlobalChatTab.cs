@@ -16,35 +16,38 @@ using OtterGui;
 using OtterGui.Text;
 using System.Numerics;
 using GagSpeak.Services.Configs;
+using GagSpeak.CkCommons.Gui;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class GlobalChatTab : DisposableMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _mainConfig;
     private readonly MainHub _hub;
     private readonly GlobalData _playerData;
-    private readonly GagRestrictionManager _gagManager;
     private readonly GagGarbler _garbler;
-    private readonly KinkPlateService _kinkPlateManager;
-    private readonly DiscoverService _discoveryService;
+    private readonly GagRestrictionManager _gagManager;
+    private readonly GagspeakConfigService _mainConfig;
+    private readonly KinkPlateService _plateManager;
     private readonly TutorialService _guides;
 
-    public GlobalChatTab(ILogger<GlobalChatTab> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, MainHub hub, 
-        GlobalData playerManager, GagRestrictionManager gagManager, GagGarbler garbler,
-        KinkPlateService kinkPlateManager, CkGui uiShared, 
-        DiscoverService discoverService, TutorialService guides) : base(logger, mediator)
+    public GlobalChatTab(
+        ILogger<GlobalChatTab> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        GlobalData playerData,
+        GagGarbler garbler,
+        GagRestrictionManager gagManager,
+        GagspeakConfigService mainConfig,
+        KinkPlateService plateManager,
+        TutorialService guides) : base(logger, mediator)
     {
-        _mainConfig = mainConfig;
         _hub = hub;
-        _playerData = playerManager;
-        _gagManager = gagManager;
+        _playerData = playerData;
         _garbler = garbler;
-        _kinkPlateManager = kinkPlateManager;
-
-        _discoveryService = discoverService;
+        _gagManager = gagManager;
+        _mainConfig = mainConfig;
+        _plateManager = plateManager;
         _guides = guides;
     }
 
@@ -66,7 +69,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         var CurrentRegion = ImGui.GetContentRegionAvail();
 
         // grab the profile object from the profile service.
-        var profile = _kinkPlateManager.GetKinkPlate(MainHub.PlayerUserData);
+        var profile = _plateManager.GetKinkPlate(MainHub.PlayerUserData);
         if(profile.KinkPlateInfo.Disabled)
         {
             ImGui.Spacing();
@@ -120,7 +123,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
                 return;
 
             // Process message if gagged
-            if ((_gagManager.ActiveGagsData?.IsGagged() ?? true) && (_playerData.GlobalPerms?.ChatGarblerActive ?? false))
+            if ((_gagManager.ServerGagData?.IsGagged() ?? true) && (_playerData.GlobalPerms?.ChatGarblerActive ?? false))
                 NextChatMessage = _garbler.ProcessMessage(NextChatMessage);
 
             // Send message to the server

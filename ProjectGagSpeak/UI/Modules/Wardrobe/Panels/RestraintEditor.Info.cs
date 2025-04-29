@@ -1,16 +1,18 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
+using GagSpeak.CkCommons.Raii;
+using Dalamud.Interface.Utility;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
-public class RestraintEditorInfo : ICkTab
+public class RestraintEditorInfo : IFancyTab
 {
     private readonly RestraintManager _manager;
     private readonly TraitsDrawer _traitsDrawer;
@@ -29,7 +31,7 @@ public class RestraintEditorInfo : ICkTab
 
     public void DrawContents(float width)
     {
-        if (_manager.ActiveEditorItem is not { } item)
+        if (_manager.ItemInEditor is not { } item)
             return;
 
         DrawDescription();
@@ -39,15 +41,15 @@ public class RestraintEditorInfo : ICkTab
 
     private void DrawDescription()
     {
-        var childSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 4);
-        using var _ = CkComponents.CenterHeaderChild("Description_BG", "Description", childSize, WFlags.AlwaysUseWindowPadding);
+        using var _ = CkRaii.HeaderChild("Description", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 4));
 
-        using (CkComponents.FramedChild("DescriptionField", CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail()))
+        // Draw out the inner description field.
+        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRounding(), 2 * ImGuiHelpers.GlobalScale))
         {
             using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0x00000000);
-            var description = _manager.ActiveEditorItem!.Description;
+            var description = _manager.ItemInEditor!.Description;
             if (ImGui.InputTextMultiline("##DescriptionField", ref description, 200, ImGui.GetContentRegionAvail()))
-                _manager.ActiveEditorItem!.Description = description;
+                _manager.ItemInEditor!.Description = description;
 
             // Draw a hint if no text is present.
             if (description.IsNullOrWhitespace())

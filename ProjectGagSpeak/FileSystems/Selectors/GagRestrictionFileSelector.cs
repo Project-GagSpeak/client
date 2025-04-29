@@ -6,12 +6,14 @@ using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 

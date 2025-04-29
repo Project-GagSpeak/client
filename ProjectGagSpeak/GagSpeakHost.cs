@@ -6,7 +6,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.Triggers;
@@ -149,9 +149,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             }
 
             // get the required service for the online player manager (and notification service if we add it)
-            //_runtimeServiceScope.ServiceProvider.GetRequiredService<CacheCreationService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<OnlinePairManager>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<VisiblePairManager>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<DataDistributionService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ClientDataSync>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
@@ -165,9 +163,8 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ActionEffectMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<OnEmote>();
-            //_runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteMonitor>();
 
-            // stuff that should probably be a hosted service but isnt yet.
+            // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
         }

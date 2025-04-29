@@ -3,7 +3,10 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Models;
@@ -12,12 +15,12 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 {
     private readonly CursedLootFileSelector _selector;
@@ -27,7 +30,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     private readonly CursedLootManager _manager;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
-    public bool IsEditing => _manager.ActiveEditorItem != null;
+    public bool IsEditing => _manager.ItemInEditor != null;
     public CursedLootPanel(
         ILogger<CursedLootPanel> logger,
         GagspeakMediator mediator,
@@ -62,14 +65,14 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     private TimeSpanTextEditor? UpperBound;
     private int Chance = -1;
 
-    public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("CursedLootTopLeft", drawRegions.Topleft.Size))
-            _selector.DrawFilterRow(drawRegions.Topleft.SizeX);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("CursedLootTopLeft", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
-        using (ImRaii.Child("CursedLootBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+        using (ImRaii.Child("CursedLootBotLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
@@ -130,7 +133,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         {
             var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
             var innerSize = ImGui.GetContentRegionAvail();
-            using (CkComponents.FramedChild("CursedLootPoolItems", CkColor.FancyHeaderContrast.Uint(), innerSize, WFlags.AlwaysUseWindowPadding))
+            using (CkRaii.FramedChildPadded("CursedLootPoolItems", innerSize, CkColor.FancyHeaderContrast.Uint()))
             {
                 if (allItemsInPool.Count <= 0)
                     return;
@@ -139,14 +142,14 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
                     DrawLootPoolItem(item, wdl);
             }
         }
-        CkComponents.FillChildBg(rounding);
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), rounding, ImDrawFlags.RoundCornersAll);
     }
 
     private void DrawLootPoolItem(CursedItem item, ImDrawListPtr wdl)
     {
         var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
 
-        using (CkComponents.FramedChild(item.Identifier.ToString(), CkColor.FancyHeaderContrast.Uint(), itemSize))
+        using (CkRaii.FramedChild(item.Identifier.ToString(), itemSize, CkColor.FancyHeaderContrast.Uint()))
         {
             var active = item.AppliedTime != DateTimeOffset.MinValue;
             if(active)

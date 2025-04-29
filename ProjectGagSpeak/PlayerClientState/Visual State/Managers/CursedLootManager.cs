@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
@@ -6,7 +7,8 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
+using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -19,6 +21,9 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
+
+    private StorageItemEditor<CursedItem> _itemEditor = new();
+    private VisualRestrictionsCache _managerCache = new();
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
         GagspeakConfigService config, GagRestrictionManager gags, RestrictionManager restrictions,
@@ -35,18 +40,14 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
     }
 
-    // Cached Information.
-    public CursedItem? ActiveEditorItem { get; private set; }
-    public VisualRestrictionsCache LatestVisualCache { get; private set; } = new();
-
-    // Stored Information.
-    public IReadOnlyList<CursedItem> ActiveCursedItems => Storage.ActiveItems;
     public CursedLootStorage Storage { get; private set; } = new CursedLootStorage();
+    public CursedItem? ItemInEditor => _itemEditor.ItemInEditor;
+    public IEnumerable<CursedItem> AppliedCursedItems => Storage.ActiveItems;
 
     public void LoadServerData()
     {
         // we have no exact data to load in here, but will need to update the visual cache.
-        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+        _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
     }
 
     #region Generic Methods
@@ -67,16 +68,12 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
 
     public CursedItem CreateClone(CursedItem clone, string newName)
     {
-        // generate a new design based off the passed in clone. Be sure to give it a new identifier after.
-        var newItem = new CursedItem(clone, false)
-        {
-            Label = newName
-        };
-
-        // Append the item to the storage.
+        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
+        var newItem = new CursedItem(clone, false) { Label = newName };
         Storage.Add(newItem);
-        Logger.LogInformation("Created new cursed item: " + newName, LoggerType.CursedLoot);
         _saver.Save(this);
+
+        Logger.LogDebug("Created new cursed item: " + newName, LoggerType.CursedLoot);
         Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Created, newItem, null));
         return newItem;
     }
@@ -94,6 +91,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
 
     public void Rename(CursedItem lootItem, string newName)
     {
+        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
+
         var oldName = lootItem.Label;
         if (oldName == newName || string.IsNullOrWhiteSpace(newName))
             return;
@@ -104,32 +103,23 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Renamed, lootItem, oldName));
     }
 
-    public void StartEditing(CursedItem lootItem)
-    {
-        // create an exact clone of the passed in cursed item for editing, so long as it exists in storage.
-        if (Storage.Contains(lootItem))
-        {
-            ActiveEditorItem = new CursedItem(lootItem, true);
-        }
-    }
+    /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
+    public void StartEditing(CursedItem lootItem) => _itemEditor.StartEditing(lootItem);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-        => ActiveEditorItem = null;
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Cursed Loot and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-        // Update the active restriction with the new data, update the cache, and clear the edited restriction.
-        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
+        if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Storage[idxMatch] = ActiveEditorItem;
-            ActiveEditorItem = null;
-            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
+            _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
             _saver.Save(this);
+
+            Logger.LogTrace("Saved changes to Edited CursedItem.");
+            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, sourceItem, null));
         }
     }
 
@@ -140,22 +130,12 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, item, null));
     }
 
-    public void AddFavorite(CursedItem cursedLoot)
-        => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, cursedLoot.Identifier);
-
-    public void RemoveFavorite(CursedItem cursedLoot)
-        => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, cursedLoot.Identifier);
+    public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
+    public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
     #endregion Generic Methods
-
 
     public void ActivateCursedItem(CursedItem item, DateTimeOffset endTimeUtc)
     {
-        if (!Storage.Contains(item))
-        {
-            Logger.LogError("Attempted to activate a cursed item that does not exist in storage!");
-            return;
-        }
-
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTimeUtc;
         _saver.Save(this);
@@ -163,14 +143,15 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         // if it was a restriction manager, be sure to apply its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
             _restrictions.AddOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+
         // Update the cache regardless.
-        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+        _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
     }
 
     // Scan by id so we dont spam deactivation.
     public void DeactivateCursedItem(Guid lootId)
     {
-        if(Storage.TryGetLoot(lootId, out CursedItem item))
+        if(!Storage.TryGetLoot(lootId, out var item))
             return;
 
         item.AppliedTime = DateTimeOffset.MinValue;
@@ -180,8 +161,8 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         // if it was a restriction manager, be sure to remove its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
             _restrictions.RemoveOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
-        // Update the cache regardless.
-        LatestVisualCache.UpdateCache(ActiveCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+
+        _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -194,7 +175,6 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     {
         LockRangeUpper = time;
         _saver.Save(this);
-
     }
 
     public void SetLockChance(int chance)
@@ -383,7 +363,12 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             return;
 
         foreach (var item in Storage.ActiveItems)
-            if (item.ReleaseTime - DateTimeOffset.UtcNow <= TimeSpan.Zero) { }
-        //DeactivateCursedItem(item.Identifier).ConfigureAwait(false);
+        {
+            if (item.ReleaseTime - DateTimeOffset.UtcNow <= TimeSpan.Zero)
+            {
+                // This should be calling to the server, not from here.
+                DeactivateCursedItem(item.Identifier);
+            }
+        }
     }
 }

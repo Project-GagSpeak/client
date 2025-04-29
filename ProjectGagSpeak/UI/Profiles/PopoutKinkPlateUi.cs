@@ -2,11 +2,11 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.MainWindow;
+using GagSpeak.CkCommons.Gui.MainWindow;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 
 public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 {

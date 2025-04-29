@@ -2,11 +2,13 @@ using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
 using GagSpeak.Services;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using System.ComponentModel;
+using System.Data;
 
 namespace GagSpeak.PlayerState.Models;
 
@@ -176,7 +178,7 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
 
 
 
-public class RestraintSet : ITraitHolder
+public class RestraintSet : IEditableStorageItem<RestraintSet>, ITraitHolder
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
@@ -206,12 +208,15 @@ public class RestraintSet : ITraitHolder
         ApplyChanges(other);
     }
 
+    public RestraintSet Clone(bool keepId = false) => new RestraintSet(this, keepId);
+
     /// <summary> Updates all properties, without updating the object itself, to keep references intact. </summary>
     public void ApplyChanges(RestraintSet other)
     {
         // Apply changes from the other RestraintSet to this one
         Label = other.Label;
         Description = other.Description;
+        ThumbnailPath = other.ThumbnailPath;
         DoRedraw = other.DoRedraw;
 
         RestraintSlots = other.RestraintSlots.ToDictionary(x => x.Key, x => x.Value.Clone());
@@ -358,6 +363,21 @@ public class RestraintSet : ITraitHolder
             ["Traits"] = Traits.ToString(),
             ["Stimulation"] = Stimulation.ToString(),
         };
+    }
+
+    public LightRestraintSet ToLightRestraint()
+    {
+        var appliedSlots = new List<AppliedSlot>();
+        foreach (var kv in RestraintSlots)
+        {
+            if (kv.Value.ApplyFlags.HasAny(RestraintFlags.Glamour) && kv.Value is RestraintSlotBasic basic)
+                appliedSlots.Add(new AppliedSlot((byte)basic.EquipSlot, basic.Glamour.GameItem.Id.Id));
+            else if (kv.Value is RestraintSlotAdvanced adv && adv.Ref != null)
+                appliedSlots.Add(new AppliedSlot((byte)adv.EquipSlot, adv.EquipItem.ItemId.Id));
+        }
+
+        var attributes = new Attributes(RestraintFlags.Advanced, Traits, Stimulation);
+        return new LightRestraintSet(Identifier, Label, Description, appliedSlots, attributes);
     }
 }
 

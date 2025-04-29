@@ -160,7 +160,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
 
     private async Task<bool> DoGagAction(GagAction act, string enactor)
     {
-        if(_gags.ActiveGagsData is not { } gagData)
+        if(_gags.ServerGagData is not { } gagData)
             return false;
 
         GsApiErrorCodes retCode;
@@ -254,7 +254,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
 
     private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)
     {
-        if (_restrictions.ActiveRestrictionsData is not { } restrictions)
+        if (_restrictions.ServerRestrictionData is not { } restrictions)
             return false;
 
         GsApiErrorCodes retCode;
@@ -337,7 +337,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
 
     private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
     {
-        if(_restraints.ActiveRestraintData is not { } restraint)
+        if(_restraints.ServerRestraintData is not { } restraint)
             return false;
 
         GsApiErrorCodes retCode;

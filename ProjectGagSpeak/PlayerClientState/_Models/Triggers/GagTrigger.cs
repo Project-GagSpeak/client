@@ -1,7 +1,7 @@
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public record GagTrigger : Trigger
+public class GagTrigger : Trigger
 {
     public override TriggerKind Type => TriggerKind.GagState;
 
@@ -11,13 +11,26 @@ public record GagTrigger : Trigger
     // the state of the gag that invokes it.
     public NewState GagState { get; set; } = NewState.Enabled;
 
-    public GagTrigger() { }
+    public GagTrigger()
+    { }
 
-    public GagTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+    public GagTrigger(Trigger baseTrigger, bool keepId)
+        : base(baseTrigger, keepId)
+    { }
 
-    public GagTrigger(GagTrigger other, bool keepId) : base(other, keepId)
+    public GagTrigger(GagTrigger other, bool keepId)
+        : base(other, keepId)
     {
         Gag = other.Gag;
         GagState = other.GagState;
+    }
+
+    public override GagTrigger Clone(bool keepId) => new GagTrigger(this, keepId);
+
+    public void ApplyChanges(GagTrigger other)
+    {
+        Gag = other.Gag;
+        GagState = other.GagState;
+        base.ApplyChanges(other);
     }
 }

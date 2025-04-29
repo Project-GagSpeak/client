@@ -3,20 +3,18 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _configService;
-    private readonly CkGui _ckGui;
-    public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator,
-        GagspeakConfigService configService, CkGui uiShared) 
+    private readonly GagspeakConfigService _config;
+    public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator, GagspeakConfigService config) 
         : base(logger, mediator, "GagSpeak ChangeLog")
     {
-        _configService = configService;
-        _ckGui = uiShared;
+        _config = config;
+
         SizeConstraints = new()
         {
             MinimumSize = new(600, 300),
@@ -42,7 +40,6 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var topLeftSideHeight = region.Y;
         // create the draw-table for the selectable and viewport displays
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, new Vector2(5f * _ckGui.GetFontScalerFloat(), 0));
         using (var table = ImRaii.Table($"ChangelogUITable", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerV))
         {
             if (!table) return;

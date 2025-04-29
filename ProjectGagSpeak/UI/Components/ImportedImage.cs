@@ -3,7 +3,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public readonly record struct ImageSizeData(int Width, int Height, int FileLength)
 {

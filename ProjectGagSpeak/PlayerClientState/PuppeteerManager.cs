@@ -1,14 +1,11 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Extensions;
-using OtterGui.Text.Widget.Editors;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -19,6 +16,9 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly PairManager _pairs;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
+
+    private StorageItemEditor<AliasTrigger> _itemEditor = new();
+
     public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator,
         GlobalData clientData, PairManager pairs, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
@@ -28,104 +28,70 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         _fileNames = fileNames;
         _saver = saver;
     }
-
-    // Cached Information (We copy the entire AliasStorage during edit so we can edit multiple things at once and toggle.
-    public AliasStorage? ActiveEditorItem { get; private set; } = null;
-    public string? ActiveEditorPair { get; private set; } = null;
-
-    // Stored Information.
     public AliasStorage GlobalAliasStorage { get; private set; } = new AliasStorage();
     public PairAliasStorage PairAliasStorage { get; private set; } = new PairAliasStorage();
+    public AliasTrigger? ItemInEditor => _itemEditor.ItemInEditor;
 
-    /// <summary> We can only add new items while editing </summary>
-    /// <remarks> Append it to the active editors storage. </remarks>
-    public bool CreateNew()
+    public AliasTrigger? CreateNew(string? userUid = null)
     {
-        if (ActiveEditorItem is null)
-            return false;
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (storage is null)
+            return null;
 
+        // Create a new AliasTrigger with a unique name
         var newItem = new AliasTrigger();
-        ActiveEditorItem.Add(newItem);
-        Logger.LogInformation("Added new Alias Trigger to AliasStorage being currently edited.", LoggerType.Puppeteer);
-        return true;
+        storage.Add(newItem);
+        _saver.Save(this);
+
+        Logger.LogDebug("Added new Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
+        return newItem;
     }
 
-    public bool CreateClone(AliasTrigger clone)
-    {
-        if(ActiveEditorItem is null)
-            return false;
 
-        // generate a new design based off the passed in clone. Be sure to give it a new identifier after.
-        var newItem = new AliasTrigger(clone, false);
-        ActiveEditorItem.Add(newItem);
-        Logger.LogInformation("Cloned Alias Trigger to AliasStorage being currently edited.", LoggerType.Puppeteer);
-        return true;
+    public AliasTrigger? CreateClone(AliasTrigger clone, string? userUid = null)
+    {
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (storage is null) 
+            return null;
+
+        var cloneName = RegexEx.EnsureUniqueName(clone.Label, storage, at => at.Label);
+        var newItem = new AliasTrigger(clone, false) { Label = cloneName };
+        storage.Add(newItem);
+        _saver.Save(this);
+
+        Logger.LogDebug("Cloned Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
+        return newItem;
     }
 
-    public void Delete(AliasTrigger trigger)
+    public void Delete(AliasTrigger trigger, string? userUid = null)
     {
-        if (ActiveEditorItem is null)
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (storage is null)
             return;
-
-        if (ActiveEditorItem.Remove(trigger))
+        
+        if (storage.Remove(trigger))
         {
-            Logger.LogDebug($"Deleted Alias Trigger in active editor.", LoggerType.Puppeteer);
+            Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
+            _saver.Save(this);
         }
     }
 
-    public void StartEditingGlobal()
-    {
-        if (ActiveEditorItem is not null)
-            return;
-        // Open Globals for editing.
-        ActiveEditorItem = GlobalAliasStorage.CloneAliasStorage();
-    }
-
-    public void StartEditingPair(Pair? pair)
-    {
-        if(ActiveEditorItem is not null || pair is null)
-            return;
-
-        // if the pair does not exist in the dictionary, we should create a new entry at that index.
-        if (!PairAliasStorage.ContainsKey(pair.UserData.UID))
-            PairAliasStorage[pair.UserData.UID] = new NamedAliasStorage();
-
-        // Open the pair for editing.
-        ActiveEditorItem = PairAliasStorage[pair.UserData.UID].Storage.CloneAliasStorage();
-        ActiveEditorPair = pair.UserData.UID;
-    }
+    /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
+    public void StartEditing(AliasTrigger trigger) => _itemEditor.StartEditing(trigger);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-    {
-        // Clear the active editor.
-        ActiveEditorItem = null;
-        ActiveEditorPair = null;
-    }
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Cursed Loot and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-
-        // if the activeEditorPair is not null, then update that pairs storage.
-        if (ActiveEditorPair is not null)
+        if (_itemEditor.SaveAndQuitEditing(out var source))
         {
-            PairAliasStorage[ActiveEditorPair].Storage = ActiveEditorItem;
-            Mediator.Publish(new AliasDataChangedMessage(DataUpdateType.AliasListUpdated,
-                new(ActiveEditorPair), PairAliasStorage[ActiveEditorPair].Storage.ToAliasData()));
-            ActiveEditorPair = null;
+            // We need to figure out where the source was from, to know what update to send to the server.
+            Logger.LogDebug("Saved changes to " + source.Label, LoggerType.Puppeteer);
+            _saver.Save(this);
         }
-        else
-        {
-            GlobalAliasStorage = ActiveEditorItem;
-            ActiveEditorItem = null;
-            Mediator.Publish(new AliasDataChangedMessage(DataUpdateType.GlobalListUpdated,
-                MainHub.PlayerUserData, GlobalAliasStorage.ToAliasData()));
-        }
-        Save();
     }
 
     public bool TryGetListenerPairPerms(string name, string world, [NotNullWhen(true)] out Pair matchedPair)
@@ -150,12 +116,11 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             PairAliasStorage[pairUid] = new NamedAliasStorage();
         // set the name.
         PairAliasStorage[pairUid].StoredNameWorld = listenerName;
-        Save();
+        _saver.Save(this);
     }
 
 
     #region HybridSavable
-    public void Save() => _saver.Save(this);
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
@@ -286,17 +251,17 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,
-            Executions = ParseExecutions(obj["Executions"] as JObject ?? new JObject())
+            Actions = ParseExecutions(obj["Actions"] as JObject ?? new JObject())
         };
     }
 
-    private static Dictionary<InvokableActionType, InvokableGsAction> ParseExecutions(JObject obj)
+    private static HashSet<InvokableGsAction> ParseExecutions(JObject obj)
     {
-        var executions = new Dictionary<InvokableActionType, InvokableGsAction>();
+        var executions = new HashSet<InvokableGsAction>();
 
         if (obj is null) 
             return executions;
-
+/*
         foreach (var property in obj.Properties())
         {
             if (Enum.TryParse(property.Name, out InvokableActionType executionType))
@@ -320,7 +285,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                     executions[executionType] = action;
                 }
             }
-        }
+        }*/
         return executions;
     }
 

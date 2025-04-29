@@ -8,10 +8,11 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
+using GagSpeak.CkCommons.Raii;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 public class ModPresetsPanel
 {
@@ -55,24 +56,23 @@ public class ModPresetsPanel
         // Create two sub components here, a preset selector and a preset editor.
         var presetSelectorH = ImGui.GetFrameHeightWithSpacing() * 3;
         var headerName = _selector.SelectedContainer.ModName.IsNullOrEmpty() ? "Select a Mod to view its Presets" : _selector.SelectedContainer.ModName;
-        using (CkComponents.CenterHeaderChild("MP-Selector", headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH), WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild(headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH)))
             DrawPresetListForSelected();
 
         if (!_selector.SelectedContainer.ModPresets.Any(p => p.Label == _selectedPreset))
             _selectedPreset = string.Empty;
 
-        var editingPreset = _manager.ActiveEditorItem is not null;
+        var editingPreset = _manager.ItemInEditor is not null;
         var icon = editingPreset ? FAI.Save : FAI.Edit;
 
         if (_selectedPreset.IsNullOrEmpty())
         {
-            using (CkComponents.CenterHeaderChild("MP-EditorFallback", "Customize Settings", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
+            using (CkRaii.HeaderChild("Customize Settings", ImGui.GetContentRegionAvail(), CkRaii.HeaderFlags.SizeIncludesHeader))
                 _modDrawer.DrawPresetEditor();
         }
         else
         {
-            using (CkComponents.ButtonHeaderChild("MP-Editor", "Settings Preset Editor", ImGui.GetContentRegionAvail(), CkComponents.HeaderRounding,
-                WFlags.AlwaysUseWindowPadding, icon, ToggleEditState))
+            using (CkRaii.IconButtonHeaderChild("Settings Preset Editor", icon, ImGui.GetContentRegionAvail(), ToggleEditState, CkRaii.GetHeaderRounding(), CkRaii.HeaderFlags.SizeIncludesHeader))
             {
                 if (editingPreset)
                     _modDrawer.DrawPresetEditor();
@@ -87,7 +87,7 @@ public class ModPresetsPanel
 
     private void ToggleEditState()
     {
-        if (_manager.ActiveEditorItem is not null)
+        if (_manager.ItemInEditor is not null)
             _manager.ExitEditingAndSave();
         else
             _manager.StartEditingCustomPreset(_selector.SelectedContainer.DirectoryPath, _selectedPreset);
@@ -96,7 +96,7 @@ public class ModPresetsPanel
     private void DrawPresetListForSelected()
     {
         using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
-        using (CkComponents.FramedChild("PresetList", CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.FramedChildPadded("PresetList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
         {
             // return if the size of the keys is 0.
             if (_selector.SelectedContainer.ModName.IsNullOrEmpty())

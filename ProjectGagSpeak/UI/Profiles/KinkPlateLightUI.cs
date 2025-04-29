@@ -8,7 +8,7 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using System.Numerics;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 
 public class KinkPlateLightUI : WindowMediatorSubscriberBase
 {

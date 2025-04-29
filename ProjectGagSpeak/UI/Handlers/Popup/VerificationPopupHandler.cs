@@ -1,21 +1,20 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using ImGuiNET;
-using System.Numerics;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 internal class VerificationPopupHandler : IPopupHandler
 {
 
     private string _verificationCode = string.Empty;
 
-    public VerificationPopupHandler(CkGui uiShared)
+    public VerificationPopupHandler()
     {
 
     }

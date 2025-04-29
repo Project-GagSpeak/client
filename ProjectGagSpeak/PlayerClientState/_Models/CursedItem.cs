@@ -1,11 +1,10 @@
 using GagSpeak.PlayerState.Components;
-using GagspeakAPI.Data.Character;
-using GagspeakAPI.Extensions;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public class CursedItem : ICursedItem
+public class CursedItem : IEditableStorageItem<CursedItem>, ICursedItem
 {
     public Guid             Identifier     { get; init; }          = Guid.NewGuid();
     public string           Label          { get; internal set; }  = string.Empty;
@@ -14,42 +13,36 @@ public class CursedItem : ICursedItem
     public DateTimeOffset   ReleaseTime    { get; internal set; }  = DateTimeOffset.MinValue;
     public bool             CanOverride    { get; internal set; }  = false;
     public Precedence       Precedence     { get; internal set; }  = Precedence.Default;
-    public IRestriction     RestrictionRef { get; internal set; } // Can refernce a gag or a restriction type.
+    public IRestriction     RestrictionRef { get; internal set; } // Can reference a gag or a restriction type.
 
-    public CursedItem() { }
+    public CursedItem()
+    { }
 
-    internal CursedItem(CursedItem other, bool keepIdentifier)
+    public CursedItem(CursedItem other, bool keepIdentifier)
     {
-        if (keepIdentifier)
-        {
-            Identifier = other.Identifier;
-        }
-        Label = other.Label;
-        InPool = other.InPool;
-        AppliedTime = other.AppliedTime;
-        ReleaseTime = other.ReleaseTime;
-        CanOverride = other.CanOverride;
-        Precedence = other.Precedence;
-        RestrictionRef = other.RestrictionRef;
+        Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
+    }
+
+    public CursedItem Clone(bool keepId = false) => new CursedItem(this, keepId);
+
+    public void ApplyChanges(CursedItem changedItem)
+    {
+        Label = changedItem.Label;
+        InPool = changedItem.InPool;
+        AppliedTime = changedItem.AppliedTime;
+        ReleaseTime = changedItem.ReleaseTime;
+        CanOverride = changedItem.CanOverride;
+        Precedence = changedItem.Precedence;
+        RestrictionRef = changedItem.RestrictionRef;
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
-    public LightCursedItem ToLightData()
+    public LightCursedItem ToLightItem()
     {
-        // determine what RestrictionType the IRestriction is by checking the type of the object
-        var restrictionType = RestrictionRef switch
-        {
-            GarblerRestriction _ => RestrictionType.Gag,
-            CollarRestriction _ => RestrictionType.Collar,
-            BlindfoldRestriction _ => RestrictionType.Blindfold,
-            _ => RestrictionType.Normal,
-        };
-
-        return new LightCursedItem(Identifier, Label, restrictionType)
-        {
-            GagType = (RestrictionRef is GarblerRestriction gag) ? gag.GagType : GagType.None,
-            RestrictionId = (RestrictionRef is IRestrictionItem restriction) ? restriction.Identifier : Guid.Empty,
-        };
+        var gagItem = (RestrictionRef is GarblerRestriction gag) ? gag.GagType : GagType.None;
+        var refId = (RestrictionRef is IRestrictionItem restriction) ? restriction.Identifier : Guid.Empty;
+        return new LightCursedItem(Identifier, Label, gagItem, refId, ReleaseTime);
     }
 
     // parameterless constructor for serialization

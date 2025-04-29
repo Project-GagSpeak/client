@@ -43,7 +43,7 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         // notify about live chat garbler on zone switch.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
         {
-            if(_gags.ActiveGagsData is not { } gags || _playerData.GlobalPerms is not { } perms)
+            if(_gags.ServerGagData is not { } gags || _playerData.GlobalPerms is not { } perms)
                 return;
 
             if (_mainConfig.Config.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)

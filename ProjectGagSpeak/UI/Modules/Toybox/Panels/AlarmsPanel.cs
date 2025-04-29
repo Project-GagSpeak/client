@@ -4,27 +4,24 @@ using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public partial class AlarmsPanel
 {
     private readonly ILogger<AlarmsPanel> _logger;
     private readonly AlarmFileSelector _selector;
     private readonly AlarmManager _manager;
-    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public AlarmsPanel(
         ILogger<AlarmsPanel> logger,
         AlarmFileSelector selector,
         AlarmManager manager,
-        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _manager = manager;
-        _ui = ui;
         _guides = guides;
     }
 
@@ -33,7 +30,7 @@ public partial class AlarmsPanel
         using var group = ImRaii.Group();
 
         // within this group, if we are editing an item, draw the editor.
-        if (_manager.ActiveEditorItem is not null)
+        if (_manager.ItemInEditor is not null)
         {
             DrawEditor(remainingRegion);
             return;

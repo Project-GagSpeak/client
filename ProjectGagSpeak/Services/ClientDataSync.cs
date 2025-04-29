@@ -6,7 +6,7 @@ using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerData.Services;
 
@@ -63,10 +63,7 @@ public sealed class ClientDataSync : DisposableMediatorSubscriberBase
     {
         // if the connectionDto for whatever reason was null, dont process any of this.
         if (MainHub.ConnectionDto is not { } connectionInfo)
-        {
-            Logger.LogError("Connection DTO is null. Aborting SetClientDataForProfile().");
             return;
-        }
 
         // 1. Update the Config File Provider with the current UID.
         Logger.LogInformation("Updating Configs for UID: " + MainHub.UID);

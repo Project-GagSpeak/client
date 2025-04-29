@@ -11,7 +11,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 {
     private void DrawSelectedItemInfo(Vector2 region, float rounding)
@@ -61,7 +61,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             return;
         }
 
-        var isEditing = _manager.ActiveEditorItem is not null;
+        var isEditing = _manager.ItemInEditor is not null;
         if (CkGui.IconButton(isEditing ? FAI.Save : FAI.Edit, inPopup: true))
         {
             if (isEditing) _manager.SaveChangesAndStopEditing();
@@ -74,7 +74,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         // Shift down.
         ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetStyle().ItemInnerSpacing.Y/4));
         var comboLength = ImGui.GetItemRectSize().X - CkGui.IconButtonSize(FAI.ArrowsLeftRight).X - ImGui.GetStyle().ItemInnerSpacing.X*2;
-        if (_manager.ActiveEditorItem is { } ActiveCursedItem)
+        if (_manager.ItemInEditor is { } ActiveCursedItem)
         {
             // Draw the item selector.
             if (ActiveCursedItem.RestrictionRef is GarblerRestriction gagItem)

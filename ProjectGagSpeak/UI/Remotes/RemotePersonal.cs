@@ -11,7 +11,7 @@ using ImGuiNET;
 using OtterGui;
 using System.Timers;
 
-namespace GagSpeak.UI.UiRemote;
+namespace GagSpeak.CkCommons.Gui.UiRemote;
 
 public class RemotePersonal : RemoteBase
 {

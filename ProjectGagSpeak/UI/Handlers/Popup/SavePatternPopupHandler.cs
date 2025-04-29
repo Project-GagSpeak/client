@@ -1,6 +1,6 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
@@ -8,7 +8,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> A interface for handling the popups in the UI. </summary>
 public class SavePatternPopupHandler : IPopupHandler
@@ -23,8 +23,7 @@ public class SavePatternPopupHandler : IPopupHandler
     private float SaveWidth;
     private float RevertWidth;
     private const float PopupWidth = 270;
-    public SavePatternPopupHandler(GagspeakMediator mediator, PatternManager patterns, 
-        CkGui uiShared, TutorialService guides)
+    public SavePatternPopupHandler(GagspeakMediator mediator, PatternManager patterns, TutorialService guides)
     {
         _mediator = mediator;
         _patterns = patterns;
@@ -71,7 +70,7 @@ public class SavePatternPopupHandler : IPopupHandler
         // duration field.
         ImGui.Text("Pattern Duration: ");
         ImGui.SameLine();
-        string text = CompiledPatternData.Duration.Hours > 0
+        var text = CompiledPatternData.Duration.Hours > 0
                     ? CompiledPatternData.Duration.ToString("hh\\:mm\\:ss")
                     : CompiledPatternData.Duration.ToString("mm\\:ss");
         CkGui.ColorText(text, ImGuiColors.ParsedPink);

@@ -4,7 +4,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Struct;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -55,16 +55,16 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         }
     }
 
-    public Action<HardcoreTraits, HardcoreTraits>? OnHardcoreStateChanged;
+    public Action<HardcoreState, HardcoreState>? OnHcStateChanged;
     public Action<Traits, Traits>? OnTraitStateChanged;
     public Action<Stimulation, Stimulation>? OnStimulationStateChanged;
-    private HardcoreTraits _prevHcTraits = HardcoreTraits.None;
+    private HardcoreState _prevHcState = HardcoreState.None;
     private Traits _prevTraits = Traits.None;
     private Stimulation _prevStim = Stimulation.None;
-    public HardcoreTraits ActiveHcTraits
+    public HardcoreState ActiveHcState
     {
-        get => _prevHcTraits;
-        private set { if (_prevHcTraits != value) { OnHardcoreStateChanged?.Invoke(_prevHcTraits, value); _prevHcTraits = value; } }
+        get => _prevHcState;
+        private set { if (_prevHcState != value) { OnHcStateChanged?.Invoke(_prevHcState, value); _prevHcState = value; } }
     }
 
     public Traits ActiveTraits
@@ -84,14 +84,13 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public EmoteState CachedEmoteState = new EmoteState();
 
 
-    /// <summary> Lame overhead nessisary to avoid mare conflicts with first person fuckery. </summary>
+    /// <summary> Lame overhead necessary to avoid mare conflicts with first person fuckery. </summary>
     public bool InitialBlindfoldRedrawMade = false;
 
     /// <summary> Is the player currently immobile? </summary>
-    public bool IsImmobile => ActiveTraits.HasAny(Traits.Immobile) || ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote);
-    public bool ForceWalking => ActiveTraits.HasAny(Traits.Weighty) || ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow);
-    public bool ShouldBlockKeys => ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow) || IsImmobile;
-    public bool ActiveBlindfoldForcesFirstPerson => false;
+    public bool IsImmobile => ActiveTraits.HasAny(Traits.Immobile) || ActiveHcState.HasAny(HardcoreState.ForceEmote);
+    public bool ForceWalking => ActiveTraits.HasAny(Traits.Weighty) || ActiveHcState.HasAny(HardcoreState.ForceFollow);
+    public bool ShouldBlockKeys => ActiveHcState.HasAny(HardcoreState.ForceFollow) || IsImmobile;
 
     // Helper functions for our Action & Movement monitors & Controllers.
     public float GetVibeMultiplier()
@@ -105,23 +104,27 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
             _ => 1f,
         };
     }
+
+
+    // Get all of this out of here!
+    //
     public async Task HandleBlindfoldLogic(NewState newState)
     {
-        // toggle our window based on conditions
+/*        // toggle our window based on conditions
         if (newState is NewState.Enabled)
         {
             // if the window isnt open, open it.
-            if (!BlindfoldUI.IsWindowOpen) Mediator.Publish(new UiToggleMessage(typeof(BlindfoldUI), ToggleType.Show));
+            if (!BlindfoldService.IsWindowOpen) Mediator.Publish(new UiToggleMessage(typeof(BlindfoldService), ToggleType.Show));
             // go in for camera voodoo.
             DoCameraVoodoo(newState);
         }
         else
         {
-            if (BlindfoldUI.IsWindowOpen) Mediator.Publish(new HardcoreRemoveBlindfoldMessage());
+            if (BlindfoldService.IsWindowOpen) Mediator.Publish(new HardcoreRemoveBlindfoldMessage());
             // wait a bit before doing the camera voodoo
             await Task.Delay(2000);
             DoCameraVoodoo(newState);
-        }
+        }*/
     }
 
     private unsafe void DoCameraVoodoo(NewState newValue)
@@ -168,13 +171,23 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     private void ClearTraits()
         => ActiveTraits = Traits.None;
 
-    #region Allowance Sets.
     public readonly HashSet<string> TraitAllowancesRestraints = [];
     public readonly HashSet<string> TraitAllowancesRestrictions = [];
     public readonly HashSet<string> TraitAllowancesGags = [];
     public readonly HashSet<string> TraitAllowancesPatterns = []; // Unsure how yet.
     public readonly HashSet<string> TraitAllowancesTriggers = []; // Probably Not.
 
+    public Dictionary<ModuleSection, string[]> GetLightAllowances()
+        => new Dictionary<ModuleSection, string[]>
+        {
+            { ModuleSection.Restraint, TraitAllowancesRestraints.ToArray() },
+            { ModuleSection.Restriction, TraitAllowancesRestrictions.ToArray() },
+            { ModuleSection.Gag, TraitAllowancesGags.ToArray() },
+            { ModuleSection.Pattern, TraitAllowancesPatterns.ToArray() },
+            { ModuleSection.Trigger, TraitAllowancesTriggers.ToArray() },
+        };
+
+    #region Allowance Sets.
     public void AddAllowance(ModuleSection type, string kinksterUid)
     {
         var allowances = type switch

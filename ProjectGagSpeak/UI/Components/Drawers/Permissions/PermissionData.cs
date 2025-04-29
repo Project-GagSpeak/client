@@ -3,7 +3,7 @@ using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 // A helper for providing all the preset variables for various gagspeak permissions.
 public class PermissionData : IMediatorSubscriber, IDisposable

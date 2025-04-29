@@ -1,18 +1,18 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Orders;
-using GagSpeak.UI.Publications;
-using GagSpeak.UI.Puppeteer;
-using GagSpeak.UI.Toybox;
-using GagSpeak.UI.UiRemote;
-using GagSpeak.UI.Wardrobe;
+using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+using GagSpeak.CkCommons.Gui.Publications;
+using GagSpeak.CkCommons.Gui.Toybox;
+using GagSpeak.CkCommons.Gui.UiRemote;
+using GagSpeak.CkCommons.Gui.Wardrobe;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
 /// <summary> The homepage will provide the player with links to open up other windows in the plugin via components </summary>
 public class HomepageTab
@@ -25,7 +25,7 @@ public class HomepageTab
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
     public HomepageTab(GagspeakMediator mediator, ClientMonitor client, 
-        OnFrameworkService framework, CkGui uiShared)
+        OnFrameworkService framework)
     {
         _mediator = mediator;
         _client = client;
@@ -42,7 +42,6 @@ public class HomepageTab
             ("Trait Allowances", FAI.UserShield, typeof(TraitAllowanceUI)),
             ("Publications", FAI.CloudUploadAlt, typeof(PublicationsUI)),
             ("Achievements", FAI.Trophy, typeof(AchievementsUI)),
-            //("Orders (WIP)", FAI.ClipboardList, typeof(OrdersUI)),
         };
     }
 

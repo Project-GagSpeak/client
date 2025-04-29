@@ -1,10 +1,10 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Permissions;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 public partial class PairStickyUI
 {

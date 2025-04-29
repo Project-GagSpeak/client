@@ -1,8 +1,8 @@
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 

@@ -81,9 +81,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         // Initialize _activeVisuals after instance variables are assigned
         ManagerCacheRef = new SortedDictionary<ManagerPriority, IVisualCache>
         {
-            { ManagerPriority.Restraints, _restraints.LatestVisualCache },
-            { ManagerPriority.Restrictions, _restrictions.LatestVisualCache },
-            { ManagerPriority.Gags, _gags.LatestVisualCache }
+            { ManagerPriority.Restraints, _restraints.VisualCache },
+            { ManagerPriority.Restrictions, _restrictions.VisualCache },
+            { ManagerPriority.Gags, _gags.VisualCache }
         };
 
         // Subscribers for Glamourer

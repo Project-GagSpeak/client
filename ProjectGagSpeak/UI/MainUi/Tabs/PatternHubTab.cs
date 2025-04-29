@@ -12,7 +12,7 @@ using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class PatternHubTab : DisposableMediatorSubscriberBase
 {
     private readonly PatternManager _patterns;

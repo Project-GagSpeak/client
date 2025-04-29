@@ -1,7 +1,9 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
@@ -11,7 +13,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
@@ -86,7 +88,7 @@ public class MoodleDrawer
         var moodleDisplayHeight = FramedIconDisplayHeight();
         var statusRowHeight = ImGui.GetFrameHeight() + style.ItemSpacing.Y;
         var winSize = new Vector2(width, moodleDisplayHeight + statusRowHeight);
-        using (CkComponents.CenterHeaderChild(id, "Associated Moodle", winSize, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Associated Moodle", winSize))
         {
             using (ImRaii.Group())
             {
@@ -107,7 +109,7 @@ public class MoodleDrawer
             }
 
             // Below this, we need to draw the display field of the moodles that the selected status has.
-            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkComponents.FCRounding);
+            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkRaii.GetChildRounding());
         }
     }
 
@@ -120,7 +122,7 @@ public class MoodleDrawer
     public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2 iconSize, int rows = 1)
     {
         var size = new Vector2(width, FramedIconDisplayHeight(iconSize.Y, rows));
-        using (CkComponents.FramedChild("MoodleRowDrawn", rounding, CkColor.FancyHeaderContrast.Uint(), size, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.FramedChildPadded("MoodleRowDrawn", size, CkColor.FancyHeaderContrast.Uint(), rounding))
         {
             if (moodles == null || moodles.Count() <= 0)
                 return;
@@ -170,7 +172,7 @@ public class MoodleDrawer
     {
         var padding = ImGui.GetStyle().FramePadding;
         var pos = ImGui.GetCursorScreenPos();
-        using (CkComponents.FramedChild("MoodleRowDrawn", CkColor.FancyHeaderContrast.Uint(), region))
+        using (CkRaii.FramedChild("MoodleRowDrawn", region, CkColor.FancyHeaderContrast.Uint()))
         {
             // if no moodle is selected, draw nothing and early return.
             if (moodle.Id.IsEmptyGuid())

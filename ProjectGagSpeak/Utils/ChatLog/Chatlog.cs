@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;

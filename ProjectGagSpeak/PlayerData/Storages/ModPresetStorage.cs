@@ -1,6 +1,7 @@
 using Dalamud.Utility;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Storage;
@@ -72,7 +73,8 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
     {
         if (other == null)
             return 1;
-        return string.Compare(Label, other.Label, StringComparison.Ordinal);
+
+        return string.Compare(Container.ModName, other.Container.ModName, StringComparison.Ordinal);
     }
 
     public string SelectedOption(string group)

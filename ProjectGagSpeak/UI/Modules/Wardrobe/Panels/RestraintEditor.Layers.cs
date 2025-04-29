@@ -1,28 +1,23 @@
-using Dalamud.Interface.ImGuiFileDialog;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Drawers;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Classes;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.RestraintSets;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
-using NAudio.SoundFont;
 using OtterGui;
 using OtterGui.Text;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
-public class RestraintEditorLayers : ICkTab
+public class RestraintEditorLayers : IFancyTab
 {
     private readonly ILogger<RestraintEditorLayers> _logger;
     private readonly RestraintSetFileSelector _selector;
@@ -62,7 +57,7 @@ public class RestraintEditorLayers : ICkTab
 
     public void DrawContents(float width)
     {
-        if (_manager.ActiveEditorItem is not { } setInEdit)
+        if (_manager.ItemInEditor is not { } setInEdit)
             return;
 
         if (_moveCommands.Count > 0)
@@ -83,7 +78,7 @@ public class RestraintEditorLayers : ICkTab
                 layerIdx++;
             }
 
-            if(layerIdx <= Globals.MaxRestraintLayers - 1)
+            if(layerIdx <= Constants.MaxRestraintLayers - 1)
                 DrawNewLayerRow(layerIdx);
 
             // Draw regions for drag-drop targets.
@@ -98,14 +93,14 @@ public class RestraintEditorLayers : ICkTab
 
     private void DrawExistingLayer(int curLayerIdx, float totalWidth, Vector2 rightButtons) 
     {
-        using var id = ImRaii.PushId(_manager.ActiveEditorItem!.Layers[curLayerIdx].ID.ToString());
+        using var id = ImRaii.PushId(_manager.ItemInEditor!.Layers[curLayerIdx].ID.ToString());
         ImGui.TableNextRow();
 
         // If we are currently holding down our mouse and 'moving' the item, have it fade between a gradient green glow.
-        if (_dragLayerId == _manager.ActiveEditorItem!.Layers[curLayerIdx].ID)
+        if (_dragLayerId == _manager.ItemInEditor!.Layers[curLayerIdx].ID)
         {
             var greenCol = CkColor.TriStateCheck.Vec4();
-            var color = CkGui.Color(Gradients.Get(greenCol, greenCol with { W = greenCol.W / 4 }, 500));
+            var color = CkGui.Color(Gradient.Get(greenCol, greenCol with { W = greenCol.W / 4 }, 500));
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, color);
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, color);
         }
@@ -113,7 +108,7 @@ public class RestraintEditorLayers : ICkTab
         // Draw out the side header, which is what we use for our movable drag-drop object.
         ImGui.TableNextColumn();
         var rowPos = ImGui.GetCursorPos();
-        DrawSideHeader($"##Move{_manager.ActiveEditorItem!.Layers[curLayerIdx].ID}", $"Layer {curLayerIdx + 1}", DragDropHeaderWidth);
+        DrawSideHeader($"##Move{_manager.ItemInEditor!.Layers[curLayerIdx].ID}", $"Layer {curLayerIdx + 1}", DragDropHeaderWidth);
 
         // Show the cursor move icon while hovering.
         if (ImGui.IsItemHovered())
@@ -123,13 +118,13 @@ public class RestraintEditorLayers : ICkTab
         // By doing this, its respective accepted payload target can match with the same ID.
         if (ImGui.BeginDragDropSource(ImGuiDragDropFlags.SourceNoPreviewTooltip))
         {
-            CkGui.SetDragDropPayload("ReorderRestraintLayers", _manager.ActiveEditorItem!.Layers[curLayerIdx].ID);
-            _dragLayerId = _manager.ActiveEditorItem!.Layers[curLayerIdx].ID;
+            CkGui.SetDragDropPayload("ReorderRestraintLayers", _manager.ItemInEditor!.Layers[curLayerIdx].ID);
+            _dragLayerId = _manager.ItemInEditor!.Layers[curLayerIdx].ID;
             //_logger.LogTrace("DragDropSource = " + _dragLayerId);
             ImGui.EndDragDropSource();
         }
         // If we are NOT dragging, and we have just released, and our drag layer is the same as the current, clear the drag layer.
-        else if (_dragLayerId == _manager.ActiveEditorItem!.Layers[curLayerIdx].ID)
+        else if (_dragLayerId == _manager.ItemInEditor!.Layers[curLayerIdx].ID)
             _dragLayerId = Guid.Empty;
 
         // Define the move index that should be used if the drag-drop target is accepted.
@@ -140,7 +135,7 @@ public class RestraintEditorLayers : ICkTab
             {
                 // Swap the dragged source with this layers target if the payloads correspond.
                 if (CkGui.AcceptDragDropPayload("ReorderRestraintLayers", out Guid payloadID, ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect))
-                    MoveItemToPosition(_manager.ActiveEditorItem!.Layers, x => x.ID == payloadID, moveIndex);
+                    MoveItemToPosition(_manager.ItemInEditor!.Layers, x => x.ID == payloadID, moveIndex);
 
                 ImGui.EndDragDropTarget();
             }
@@ -161,8 +156,8 @@ public class RestraintEditorLayers : ICkTab
                 if (CkGui.IconButton(FAI.ArrowsLeftRight, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                 {
                     // Swap the layer type to the other type.
-                    var currentLayer = _manager.ActiveEditorItem!.Layers[curLayerIdx];
-                    _manager.ActiveEditorItem.Layers[curLayerIdx] = currentLayer switch
+                    var currentLayer = _manager.ItemInEditor!.Layers[curLayerIdx];
+                    _manager.ItemInEditor.Layers[curLayerIdx] = currentLayer switch
                     {
                         RestrictionLayer => new ModPresetLayer(),
                         ModPresetLayer => new RestrictionLayer(),
@@ -172,8 +167,8 @@ public class RestraintEditorLayers : ICkTab
                 CkGui.AttachToolTip("Swap layer type to Mod Preset Layer. (Hold Shift)");
 
                 ImUtf8.SameLineInner();
-                if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || curLayerIdx != _manager.ActiveEditorItem.Layers.Count - 1))
-                    _manager.ActiveEditorItem!.Layers.RemoveAt(curLayerIdx);
+                if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || curLayerIdx != _manager.ItemInEditor.Layers.Count - 1))
+                    _manager.ItemInEditor!.Layers.RemoveAt(curLayerIdx);
                 CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
             }
         }
@@ -198,7 +193,7 @@ public class RestraintEditorLayers : ICkTab
             ImGui.SetCursorPosY((DragDropItemHeight - ImGui.GetFrameHeight()) / 2);
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - buttonSize - ImGui.GetStyle().ItemSpacing.X);
             if (CkGui.IconTextButton(FAI.Plus, "New Layer", isInPopup: true))
-                _manager.ActiveEditorItem!.Layers.Add(new RestrictionLayer());
+                _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
         }
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }
@@ -210,9 +205,9 @@ public class RestraintEditorLayers : ICkTab
         var rightButtons = buttonSize.X * 2 + ImGui.GetStyle().ItemSpacing.X;
         var detailsWidth = ImGui.GetContentRegionAvail().X - rightButtons;
 
-        if (_manager.ActiveEditorItem!.Layers[layerIdx] is RestrictionLayer restrictionLayer)
+        if (_manager.ItemInEditor!.Layers[layerIdx] is RestrictionLayer restrictionLayer)
             DrawRestrictionLayer(restrictionLayer, detailsWidth);
-        else if (_manager.ActiveEditorItem.Layers[layerIdx] is ModPresetLayer modPresetLayer)
+        else if (_manager.ItemInEditor.Layers[layerIdx] is ModPresetLayer modPresetLayer)
             DrawModPresetLayer(modPresetLayer, detailsWidth);
     }
 
@@ -248,7 +243,7 @@ public class RestraintEditorLayers : ICkTab
             ImGui.SameLine();
             var hoverBoxRegion = ImGui.CalcTextSize("Hover To See Settings") + ImGui.GetStyle().FramePadding;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (ImGui.GetContentRegionAvail().Y - hoverBoxRegion.Y) / 2);
-            using (CkComponents.FramedChild($"ModPresetPreview{modPresetLayer.ID}", CkColor.FancyHeaderContrast.Uint(), hoverBoxRegion))
+            using (CkRaii.FramedChildPadded($"ModPresetPreview{modPresetLayer.ID}", hoverBoxRegion, CkColor.FancyHeaderContrast.Uint()))
             {
                 ImGuiUtil.Center("Hover To See Settings");
 

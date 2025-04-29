@@ -10,6 +10,8 @@ using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Interop.Ipc;
@@ -17,7 +19,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -25,7 +27,7 @@ using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> Helper for all displays and editors that work with Equip & Stains </summary>
 /// <remarks> Can be used for hover tooltips as well and other checks involving Equip & Stains. </remarks>
@@ -70,8 +72,8 @@ public class EquipmentDrawer
         GameIconSize = new Vector2(2 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y);
     }
 
-    public static float RestraintItemH => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-    public static float AssociatedGlamourH => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float GetRestraintItemH() => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
+    public static float AssociatedGlamourH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
 
     // Temporary Cached Storage holding the currently resolved item from the latest hover.
     private CachedSlotItemData LastCachedItem;
@@ -97,17 +99,16 @@ public class EquipmentDrawer
     {
         var pos = ImGui.GetCursorScreenPos();
         var style = ImGui.GetStyle();
-        var winSize = new Vector2(width, AssociatedGlamourH);
-        using (CkComponents.CenterHeaderChild("AssociatedGlamour" + id, "Associated Glamour", winSize, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Associated Glamour", new Vector2(width, AssociatedGlamourH()) ))
         {
             // get the inner width after the padding is applied.
             var widthInner = ImGui.GetContentRegionAvail().X;
-            item.GameItem.DrawIcon(_textures, new Vector2(AssociatedGlamourH), item.Slot);
+            item.GameItem.DrawIcon(_textures, new Vector2(AssociatedGlamourH()), item.Slot);
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
                 // Begin by drawing out the slot enum dropdown that spans the remaining content region.
-                var barWidth = widthInner - AssociatedGlamourH - ImGui.GetStyle().ItemInnerSpacing.X;
+                var barWidth = widthInner - AssociatedGlamourH() - ImGui.GetStyle().ItemInnerSpacing.X;
 
                 if (CkGuiUtils.EnumCombo("##" + id + "slot itemCombo", barWidth, item.Slot, out var newSlot,
                     EquipSlotExtensions.EqdpSlots, (slot) => slot.ToName(), "Select Slot..."))
@@ -139,7 +140,7 @@ public class EquipmentDrawer
         {
             DrawRestraintSlotBasic(basicSlot, innerWidth);
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.ArrowsLeftRight, RestraintItemH, basicSlot.EquipSlot + "Swapper"))
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, GetRestraintItemH(), basicSlot.EquipSlot + "Swapper"))
             {
                 _logger.LogTrace($"Swapping {basicSlot.EquipSlot} from Basic to Advanced.");
                 slots[focus] = new RestraintSlotAdvanced() { CustomStains = basicSlot.Stains };
@@ -149,7 +150,7 @@ public class EquipmentDrawer
         {
             DrawRestrictionRef(advSlot, focus.ToName(), innerWidth);
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.ArrowsLeftRight, RestraintItemH, advSlot.EquipSlot + "Swapper"))
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, GetRestraintItemH(), advSlot.EquipSlot + "Swapper"))
             {
                 _logger.LogTrace($"Swapping {advSlot.EquipSlot} from Advanced to Basic.");
                 var prevStains = advSlot.CustomStains;
@@ -169,9 +170,9 @@ public class EquipmentDrawer
     {
         using var group = ImRaii.Group();
         // Draw out the icon firstly.
-        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(RestraintItemH), basicSlot.EquipSlot);
+        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(GetRestraintItemH()), basicSlot.EquipSlot);
         ImGui.SameLine(0, 3);
-        width -= 3f + RestraintItemH;
+        width -= 3f + GetRestraintItemH();
 
         // Get the width for the combo stuff.
         var comboWidth = width - CkGui.IconButtonSize(FAI.EyeSlash).X - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -184,7 +185,7 @@ public class EquipmentDrawer
         ImUtf8.SameLineInner();
         var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
         using (ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint()))
-            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, RestraintItemH, basicSlot.EquipSlot + "Overlay"))
+            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, GetRestraintItemH(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
 
         ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
@@ -200,21 +201,21 @@ public class EquipmentDrawer
             if (_cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
             {
                 var pos = ImGui.GetCursorScreenPos();
-                ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(RestraintItemH), ImGui.GetStyle().FrameRounding);
-                ImGui.Dummy(new Vector2(RestraintItemH));
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(GetRestraintItemH()), ImGui.GetStyle().FrameRounding);
+                ImGui.Dummy(new Vector2(GetRestraintItemH()));
             }
         }
         else
         {
             // Placeholder frame display.
-            ItemService.NothingItem(restriction.Ref.Glamour.Slot).DrawIcon(_textures, new Vector2(RestraintItemH), restriction.Ref.Glamour.Slot);
+            ItemService.NothingItem(restriction.Ref.Glamour.Slot).DrawIcon(_textures, new Vector2(GetRestraintItemH()), restriction.Ref.Glamour.Slot);
         }
 
         ImGui.SameLine(0, 3);
-        width -= 3f + RestraintItemH;
+        width -= 3f + GetRestraintItemH();
 
         // restriction selection and custom combos.
-        var comboWidth = width - RestraintItemH - ImGui.GetStyle().ItemInnerSpacing.X;
+        var comboWidth = width - GetRestraintItemH() - ImGui.GetStyle().ItemInnerSpacing.X;
         using (ImRaii.Group())
         {
             var change = _restrictionCombo.Draw($"##AdvSelector{id}", restriction.Ref.Identifier, comboWidth, flags: ImGuiComboFlags.NoArrowButton);

@@ -1,9 +1,9 @@
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.MainWindow;
+using GagSpeak.CkCommons.Gui.MainWindow;
 using ImGuiNET;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 {

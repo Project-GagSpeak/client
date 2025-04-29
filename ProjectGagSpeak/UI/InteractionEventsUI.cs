@@ -11,8 +11,9 @@ using System.Globalization;
 using System.Numerics;
 using OtterGui.Text;
 using OtterGui;
+using GagSpeak.CkCommons.Gui;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 internal class InteractionEventsUI : WindowMediatorSubscriberBase
 {
@@ -24,14 +25,13 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
     private string FilterText = string.Empty;
     private InteractionFilter FilterCatagory = InteractionFilter.All;
 
-    public InteractionEventsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        EventAggregator eventAggregator, CkGui uiShared) : base(logger, mediator, "Interaction Events Viewer")
+    public InteractionEventsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator, EventAggregator events) : base(logger, mediator, "Interaction Events Viewer")
     {
+        _eventAggregator = events;
+
         Flags = WFlags.NoScrollbar | WFlags.NoCollapse;
         AllowClickthrough = false;
         AllowPinning = false;
-        
-        _eventAggregator = eventAggregator;
 
         SizeConstraints = new()
         {

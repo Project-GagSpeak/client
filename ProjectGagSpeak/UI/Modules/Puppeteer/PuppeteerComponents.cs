@@ -1,4 +1,4 @@
-using Dalamud.Interface;
+/*using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -6,10 +6,10 @@ using Dalamud.Utility;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI.Handlers;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -18,7 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Puppeteer;
+namespace GagSpeak.CkCommons.Gui.Puppeteer;
 
 public class PuppeteerComponents
 {
@@ -54,7 +54,7 @@ public class PuppeteerComponents
         public ExpandedAliasCache(AliasTrigger aliasItem, RestrictionCombo restrictionCombo,
             RestraintCombo restraintCombo,MoodleStatusCombo statusCombo, MoodlePresetCombo presetCombo)
         {
-            SelectedActionType = aliasItem.Executions.Any() ? aliasItem.Executions.First().Key : null;
+            SelectedActionType = aliasItem.Actions.Any() ? aliasItem.Actions.First().ActionType : null;
             RestrictionCombo = restrictionCombo;
             RestraintCombo = restraintCombo;
             StatusCombo = statusCombo;
@@ -112,7 +112,7 @@ public class PuppeteerComponents
         if (_pairList.SelectedPair is not { } pair)
             return;
 
-        bool pairHasName = pair.LastAliasData.HasNameStored;
+        bool pairHasName = !pair.LastPairAliasData.StoredNameWorld.IsNullOrEmpty();
         using var group = ImRaii.Group();
 
         // display name, then display the downloads and likes on the other side.
@@ -258,7 +258,7 @@ public class PuppeteerComponents
 
     public void DrawAliasItemBox(string id, AliasTrigger aliasItem)
     {
-        /*// if the id is not present in the dictionary, add it.
+        *//*// if the id is not present in the dictionary, add it.
         if (!ExpandedAliasItems.ContainsKey(aliasItem.Identifier.ToString()))
             ExpandedAliasItems.Add(id, false);
 
@@ -500,7 +500,7 @@ public class PuppeteerComponents
                     CkGui.ColorText("No Output Types Added! Output won't execute correctly!", ImGuiColors.DalamudYellow);
                 }
             }
-        }*/
+        }*//*
     }
 
     /// <summary>
@@ -510,7 +510,7 @@ public class PuppeteerComponents
     public bool DrawAliasItemEditBox(AliasTrigger aliasItem, out bool shouldRemove)
     {
         shouldRemove = false;
-        /*// Assume we are not removing, and have made no modifications.
+        *//*// Assume we are not removing, and have made no modifications.
         var wasModified = false;
         shouldRemove = false;
 
@@ -830,7 +830,7 @@ public class PuppeteerComponents
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Output types set for this Alias!");
             }
         }
-*/
+*//*
         return false;
     }
 
@@ -841,3 +841,4 @@ public class PuppeteerComponents
             onClick();
     }
 }
+*/

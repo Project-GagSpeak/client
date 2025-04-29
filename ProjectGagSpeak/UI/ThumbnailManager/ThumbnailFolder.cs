@@ -3,7 +3,7 @@ using GagSpeak.Services.Textures;
 using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.MeshPCB;
 using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Resource.Delegates;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class ThumbnailFolder : IDisposable
 {

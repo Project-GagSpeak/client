@@ -2,11 +2,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -39,7 +40,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         
         var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
         var hasGlamour = restraintSet.AffectedSlots.Any();
-        var hasInfo = !restraintSet.Desc.IsNullOrWhitespace() || restraintSet.TraitAllowances.Contains(MainHub.UID);
+        var hasInfo = !restraintSet.Description.IsNullOrWhitespace();
         var shiftOffset = hasInfo ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
 
         // shift over to the right to draw out the icons.
@@ -89,17 +90,17 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
 
             // begin the tooltip interface
             ImGui.BeginTooltip();
-            var hasDescription = !setItem.Desc.IsNullOrWhitespace() && !setItem.Desc.Contains("Enter Description Here...");
+            var hasDescription = !setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here...");
 
             if(hasDescription)
             {
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (setItem.Desc.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
+                if (setItem.Description.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = setItem.Desc.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = setItem.Description.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {
@@ -109,15 +110,9 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
                 }
                 else
                 {
-                    ImGui.TextUnformatted(setItem.Desc);
+                    ImGui.TextUnformatted(setItem.Description);
                 }
                 ImGui.PopTextWrapPos();
-            }
-
-            if (setItem.TraitAllowances.Contains(MainHub.UID))
-            {
-                ImGui.Separator();
-                ImGui.TextUnformatted("Applies Hardcore Traits when enabled by you");
             }
 
             ImGui.EndTooltip();

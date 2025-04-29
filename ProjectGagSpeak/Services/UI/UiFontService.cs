@@ -12,6 +12,7 @@ public sealed class UiFontService : IHostedService
     public static IFontHandle GameFont { get; private set; }
     public static IFontHandle IconFont { get; private set; }
     public static IFontHandle UidFont { get; private set; }
+    public static IFontHandle FullScreenFont { get; private set; }
     // the below 3 are the same font at different sizes because idk how to register seperate sizes.
     public static IFontHandle GagspeakFont { get; private set; }
     public static IFontHandle GagspeakLabelFont { get; private set; }
@@ -41,10 +42,12 @@ public sealed class UiFontService : IHostedService
         // the font atlas for our UID display (make it the font from gagspeak probably unless this fits more)
         UidFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
         {
-            e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new()
-            {
-                SizePx = 35
-            }));
+            e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
+        });
+
+        FullScreenFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
+        {
+            e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 175 }));
         });
 
         // the font atlas for our game font
@@ -66,6 +69,7 @@ public sealed class UiFontService : IHostedService
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
+        FullScreenFont?.Dispose();
         GameFont?.Dispose();
         IconFont?.Dispose();
         return Task.CompletedTask;

@@ -1,13 +1,12 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI.Components;
 using ImGuiNET;
 using OtterGui.Text;
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 public class ModPresetSelector(ModSettingPresetManager manager)
 {
@@ -18,7 +17,7 @@ public class ModPresetSelector(ModSettingPresetManager manager)
     private float               _listItemWidth      = 0;
     public void DrawSearch()
     {
-        DrawerHelpers.FancySearchFilter("ModSearch", ImGui.GetContentRegionAvail().X, "Search for a Mod", ref _searchValue, 128);
+        FancySearchBar.Draw("ModSearch", ImGui.GetContentRegionAvail().X, "Search for a Mod", ref _searchValue, 128);
     }
 
     public void DrawModSelector()

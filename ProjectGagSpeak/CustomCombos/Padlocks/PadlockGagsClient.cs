@@ -1,6 +1,6 @@
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 
 namespace GagSpeak.CustomCombos.Padlockable;

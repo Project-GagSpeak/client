@@ -34,11 +34,11 @@ public class SexToyManager : DisposableMediatorSubscriberBase
         {
             if (_clientConfigs.Config.IntifaceAutoConnect && !_deviceHandler.ConnectedToIntiface)
             {
-                if (Intiface.AppPath == string.Empty)
+                if (IntifaceCentral.AppPath == string.Empty)
                 {
-                    Intiface.GetApplicationPath();
+                    IntifaceCentral.GetApplicationPath();
                 }
-                Intiface.OpenIntiface(logger, false);
+                IntifaceCentral.OpenIntiface(logger, false);
                 _deviceHandler.ConnectToIntifaceAsync();
             }
         });

@@ -6,6 +6,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Data;
 using System.Linq;
 
 namespace GagSpeak.PlayerState.Toybox;
@@ -18,6 +19,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
+    private StorageItemEditor<Alarm> _itemEditor = new();
     private DateTime _lastAlarmCheck = DateTime.MinValue;
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
         PatternManager patterns, PatternApplier applier, FavoritesManager favorites,
@@ -32,27 +34,28 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => MinutelyAlarmCheck());
     }
 
-    // Cached Information
-    public Alarm? ActiveEditorItem = null;
-    public IEnumerable<Alarm> ActiveAlarms => Storage.Where(x => x.Enabled);
-
-    // Storage
     public AlarmStorage Storage { get; private set; } = new AlarmStorage();
+    public Alarm? ItemInEditor => _itemEditor.ItemInEditor;
+    public IEnumerable<Alarm> ActiveAlarms => Storage.Where(x => x.Enabled);
 
     public Alarm CreateNew(string alarmName)
     {
+        alarmName = RegexEx.EnsureUniqueName(alarmName, Storage, t => t.Label);
         var newAlarm = new Alarm() { Label = alarmName };
         Storage.Add(newAlarm);
         _saver.Save(this);
+
         Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Created, newAlarm, null));
         return newAlarm;
     }
 
     public Alarm CreateClone(Alarm other, string newName)
     {
+        newName = RegexEx.EnsureUniqueName(newName, Storage, t => t.Label);
         var clonedItem = new Alarm(other, false) { Label = newName };
         Storage.Add(clonedItem);
         _saver.Save(this);
+
         Logger.LogDebug($"Cloned alarm {other.Label} to {newName}.");
         Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
@@ -62,19 +65,18 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     {
         if (Storage.Contains(alarm))
         {
+            var prevName = alarm.Label;
             Logger.LogDebug($"Storage contained alarm, renaming {alarm.Label} to {newName}.");
-            var newNameReal = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
-            alarm.Label = newNameReal;
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Renamed, alarm, newNameReal));
+            newName = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
+            alarm.Label = newName;
             _saver.Save(this);
+
+            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Renamed, alarm, prevName));
         }
     }
 
     public void Delete(Alarm alarm)
     {
-        if (ActiveEditorItem is null)
-            return;
-
         if (Storage.Remove(alarm))
         {
             Logger.LogDebug($"Deleted alarm {alarm.Label}.");
@@ -84,43 +86,29 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
 
     }
 
-    public void StartEditing(Alarm alarm)
-    {
-        if (Storage.Contains(alarm))
-            ActiveEditorItem = alarm;
-    }
+    /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
+    public void StartEditing(Alarm item) => _itemEditor.StartEditing(item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-        => ActiveEditorItem = null;
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Restriction and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-
-        if (Storage.TryFindIndexById(ActiveEditorItem.Identifier, out int idxMatch))
+        if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Storage[idxMatch] = ActiveEditorItem;
-            ActiveEditorItem = null;
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Modified, Storage[idxMatch], null));
+            Logger.LogDebug($"Storage updated changes to alarm {sourceItem.Label}.");
+            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }
 
     /// <summary> Attempts to add the alarm as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool AddFavorite(Alarm alarm)
-        => _favorites.TryAddRestriction(FavoriteIdContainer.Alarm, alarm.Identifier);
+    public bool AddFavorite(Alarm a) => _favorites.TryAddRestriction(FavoriteIdContainer.Alarm, a.Identifier);
 
     /// <summary> Attempts to remove the alarm as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool RemoveFavorite(Alarm alarm)
-        => _favorites.RemoveRestriction(FavoriteIdContainer.Alarm, alarm.Identifier);
-
-
+    public bool RemoveFavorite(Alarm a) => _favorites.RemoveRestriction(FavoriteIdContainer.Alarm, a.Identifier);
 
     public void ToggleAlarm(Guid alarmId, string enactor)
     {
@@ -138,7 +126,6 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         // Locate the alarm in the storage to modify the properties of.
         if (Storage.TryGetAlarm(alarmId, out var alarm))
         {
-            // set the data and save.
             alarm.Enabled = true;
             _saver.Save(this);
             UnlocksEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, NewState.Enabled);

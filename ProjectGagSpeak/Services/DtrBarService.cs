@@ -8,8 +8,8 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
 

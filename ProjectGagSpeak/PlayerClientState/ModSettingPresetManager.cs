@@ -9,7 +9,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using Penumbra.Api.IpcSubscribers;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -53,7 +53,7 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
 
     public ModCombo ModCombo { get; private set; }
     public ModPresetCombo PresetCombo { get; private set; }
-    public ModSettingsPreset? ActiveEditorItem { get; private set; } = null;
+    public ModSettingsPreset? ItemInEditor { get; private set; } = null;
     protected override void Dispose(bool disposing)
     {
         // unsubscribe from the penumbra events.
@@ -182,7 +182,7 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
     public void StartEditingCustomPreset(string dirPath, string name)
     {
         // If we are already editing, we should not be able to start another edit.
-        if (ActiveEditorItem is not null)
+        if (ItemInEditor is not null)
             return;
 
         // Do not edit if mods are invalid.
@@ -201,12 +201,12 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         }
 
         // Clone the object for editing.
-        ActiveEditorItem = new ModSettingsPreset(preset);
+        ItemInEditor = new ModSettingsPreset(preset);
     }
 
     public void ExitEditingAndSave()
     {
-        if (ActiveEditorItem is not { } editedItem)
+        if (ItemInEditor is not { } editedItem)
             return;
 
         // update the preset data.
@@ -219,12 +219,12 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
         }
 
         // reset to null.
-        ActiveEditorItem = null;
+        ItemInEditor = null;
     }
 
     public bool ExitEditingAndDiscard()
     {
-        ActiveEditorItem = null;
+        ItemInEditor = null;
         return true;
     }
 
@@ -327,7 +327,7 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
                     container.ModPresets.Add(preset);
                 }
 
-                Logger.LogDebug($"Loaded {container.ModPresets.Count} ModSettingPresets for {container.ModName}");
+                Logger.LogTrace($"Loaded {container.ModPresets.Count} ModSettingPresets for {container.ModName}");
             }
         }
         catch (Exception ex)

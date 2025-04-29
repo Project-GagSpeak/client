@@ -11,9 +11,9 @@ using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.RestraintSets;
 using GagSpeak.Services.Configs;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -22,7 +22,7 @@ using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class DebuggerBinds
 {

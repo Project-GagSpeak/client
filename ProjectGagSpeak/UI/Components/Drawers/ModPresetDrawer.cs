@@ -3,8 +3,10 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
@@ -14,7 +16,7 @@ using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 // This class will automate the drawing of checkboxes, buttons, sliders and more used across the various UI elements through a modular approach.
 public sealed class ModPresetDrawer
 {
@@ -75,7 +77,7 @@ public sealed class ModPresetDrawer
         var winSize = new Vector2(width, previewH);
 
         // Can migrate to usings later but for now am lazy.
-        using (CkComponents.CenterHeaderChild(id, "Associated Mod", winSize, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Associated Mod", winSize))
         {
             var widthInner = ImGui.GetContentRegionAvail().X;
 
@@ -136,7 +138,7 @@ public sealed class ModPresetDrawer
     public void DrawPresetPreview(ModSettingsPreset preset)
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkComponents.FramedChild("MP-Preview" + preset.Container.DirectoryPath, CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.FramedChildPadded("MP-Preview" + preset.Container.DirectoryPath, ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
         {
             using (UiFontService.GagspeakLabelFont.Push())
             {
@@ -167,7 +169,7 @@ public sealed class ModPresetDrawer
             // draw the output based on what the type is.
             switch (optionType)
             {
-                case GroupType.Single when groupInfo.Options.Length <= Globals.MaxRadioOptionCount:
+                case GroupType.Single when groupInfo.Options.Length <= 2:
                     CkGuiUtils.DrawSingleGroupRadio(groupName, groupInfo.Options, preset.SelectedOption(groupName));
                     break;
                 case GroupType.Single:
@@ -188,12 +190,12 @@ public sealed class ModPresetDrawer
     public void DrawPresetEditor()
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkComponents.FramedChild("MP-EditorWindow", CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.FramedChildPadded("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
         {
-            if (_manager.ActiveEditorItem is not { } activeEditor)
+            if (_manager.ItemInEditor is not { } activeEditor)
                 return;
 
-            if (_manager.GetModInfo(_manager.ActiveEditorItem.Container.DirectoryPath)?.AllSettings is not { } allSettings)
+            if (_manager.GetModInfo(_manager.ItemInEditor.Container.DirectoryPath)?.AllSettings is not { } allSettings)
                 return;
 
             foreach (var (groupName, groupInfo) in allSettings)
@@ -205,7 +207,7 @@ public sealed class ModPresetDrawer
                 // draw the output based on what the type is.
                 switch (optionType)
                 {
-                    case GroupType.Single when groupInfo.Options.Length <= Globals.MaxRadioOptionCount:
+                    case GroupType.Single when groupInfo.Options.Length <= 2:
                         DrawSingleGroupRadio(activeEditor, groupName, groupInfo.Options);
                         break;
                     case GroupType.Single:

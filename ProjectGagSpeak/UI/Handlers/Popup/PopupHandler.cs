@@ -1,10 +1,11 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> The handler class for the popups in the UI. </summary>
 public class PopupHandler : WindowMediatorSubscriberBase
@@ -14,8 +15,8 @@ public class PopupHandler : WindowMediatorSubscriberBase
     private IPopupHandler? _currentHandler = null;
     private bool ThemePushed = false;
 
-    public PopupHandler(ILogger<PopupHandler> logger, GagspeakMediator mediator, IEnumerable<IPopupHandler> popupHandlers,
-        CkGui uiShared) : base(logger, mediator, "GagspeakPopupHandler")
+    public PopupHandler(ILogger<PopupHandler> logger, GagspeakMediator mediator, IEnumerable<IPopupHandler> popups)
+        : base(logger, mediator, "GagspeakPopupHandler")
     {
         // Adjust to restore some functionality?
         Flags = WFlags.NoBringToFrontOnFocus
@@ -27,7 +28,7 @@ public class PopupHandler : WindowMediatorSubscriberBase
           | WFlags.NoTitleBar;
         IsOpen = true;
 
-        _handlers = popupHandlers.ToHashSet();
+        _handlers = popups.ToHashSet();
 
         Mediator.Subscribe<VerificationPopupMessage>(this, (msg) =>
         {

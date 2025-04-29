@@ -12,7 +12,7 @@ using ImGuiNET;
 using ImPlotNET;
 using System.Timers;
 
-namespace GagSpeak.UI.UiRemote;
+namespace GagSpeak.CkCommons.Gui.UiRemote;
 
 /// <summary>
 /// RemoteBase is created with unique distinct variables for each instance that it is made with.

@@ -5,14 +5,14 @@ using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerState.Models;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public partial class PatternsPanel
 {
     // Placeholder data inside currently.
     private void DrawEditor(Vector2 region)
     {
-        if(_manager.ActiveEditorItem is not { } pattern)
+        if(_manager.ItemInEditor is not { } pattern)
             return;
 
         CkGui.ColorText("ID:", ImGuiColors.ParsedGold);

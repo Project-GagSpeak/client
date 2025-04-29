@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using System.Numerics;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 public class VersionEntry
 {
     public readonly int Major;

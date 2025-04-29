@@ -1,17 +1,12 @@
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
-using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui;
 
-namespace GagSpeak.UI.UiToybox;
+namespace GagSpeak.CkCommons.Gui.UiToybox;
 
 public partial class TriggersPanel
 {
@@ -22,7 +17,6 @@ public partial class TriggersPanel
     private readonly RestraintManager _restraints;
     private readonly TriggerManager _manager;
     private readonly VisualApplierMoodles _moodles;
-    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     // Custom Combo's:
@@ -38,13 +32,11 @@ public partial class TriggersPanel
         RestraintManager restraints,
         TriggerManager manager,
         VisualApplierMoodles moodles,
-        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _manager = manager;
-        _ui = ui;
         _guides = guides;
     }
 
@@ -53,7 +45,7 @@ public partial class TriggersPanel
         using var group = ImRaii.Group();
 
         // within this group, if we are editing an item, draw the editor.
-        if (_manager.ActiveEditorItem is not null)
+        if (_manager.ItemInEditor is not null)
         {
             DrawEditor(remainingRegion);
             return;
@@ -77,7 +69,7 @@ public partial class TriggersPanel
 
     private void DrawActiveItemInfo()
     {
-        if (_manager.EnabledTriggers is not { } activeItems)
+        if (_manager.ActiveTriggers is not { } activeItems)
             return;
         ImGui.Text("Active Triggers:");
     }

@@ -1,7 +1,7 @@
-using Dalamud.Interface;
 using Dalamud.Utility;
-using GagSpeak.UI;
-using GagspeakAPI.Data.Interfaces;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Classes;
@@ -206,13 +206,13 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var leftWidth = width * (2 / 3f);
         var rightWidth = width - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
-        string passFieldLabel = "##Input_" + id;
-        string passFieldHint = SelectedLock switch
+        var passFieldLabel = "##Input_" + id;
+        var passFieldHint = SelectedLock switch
         {
             Padlocks.CombinationPadlock => "Enter 4 digit combination...",
             _ => "Enter password...",
         };
-        string timerFieldHint = "Ex: 0h2m7s";
+        var timerFieldHint = "Ex: 0h2m7s";
         uint maxLength = SelectedLock switch
         {
             Padlocks.CombinationPadlock => 4,
@@ -229,13 +229,13 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var iconButtonSize = CkGui.IconButtonSize(FAI.Clock);
         var inputTextWidth = width - iconButtonSize.X - ImGui.GetStyle().ItemInnerSpacing.X;
 
-        string passFieldLabel = "##Input_" + id;
-        string passFieldHint = SelectedLock switch
+        var passFieldLabel = "##Input_" + id;
+        var passFieldHint = SelectedLock switch
         {
             Padlocks.CombinationPadlock => "Enter 4 digit combination...",
             _ => "Enter password...",
         };
-        string timerFieldHint = "Ex: 0h2m7s";
+        var timerFieldHint = "Ex: 0h2m7s";
         uint maxLength = SelectedLock switch
         {
             Padlocks.CombinationPadlock => 4,

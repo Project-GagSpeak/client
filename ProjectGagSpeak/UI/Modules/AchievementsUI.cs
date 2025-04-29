@@ -7,14 +7,14 @@ using GagSpeak.Achievements;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Numerics;
 using System.Reflection.Metadata;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class AchievementsUI : WindowMediatorSubscriberBase

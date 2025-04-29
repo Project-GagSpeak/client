@@ -10,7 +10,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using ProjectGagSpeak.CustomCombos;
 
-namespace GagSpeak.UI.UiGagSetup;
+namespace GagSpeak.CkCommons.Gui.UiGagSetup;
 
 public class ActiveGagsPanel : DisposableMediatorSubscriberBase
 {

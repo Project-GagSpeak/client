@@ -15,9 +15,9 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MoodleHubTab : DisposableMediatorSubscriberBase

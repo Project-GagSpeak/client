@@ -4,7 +4,7 @@ using GagSpeak.Restrictions;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerState.Visual;
 

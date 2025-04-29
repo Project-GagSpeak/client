@@ -2,7 +2,7 @@ using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary>
 /// Helps with copying over details stored on other GagSpeak accounts.

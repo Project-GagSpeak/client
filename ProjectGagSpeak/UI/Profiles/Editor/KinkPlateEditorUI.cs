@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Achievements;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -15,34 +16,34 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
 using System.Numerics;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 
 public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly FileDialogManager _fileDialogManager;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly CosmeticService _cosmetics;
 
-    public KinkPlateEditorUI(ILogger<KinkPlateEditorUI> logger, GagspeakMediator mediator,
-        MainHub hub, FileDialogManager fileDialogManager,
-        KinkPlateService KinkPlateManager, CosmeticService cosmetics,
-        CkGui uiShared) : base(logger, mediator, "KinkPlate Editor###GagSpeakKinkPlateEditorUI")
+    public KinkPlateEditorUI(
+        ILogger<KinkPlateEditorUI> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        KinkPlateService KinkPlateManager,
+        CosmeticService cosmetics) : base(logger, mediator, "KinkPlate Editor###KP_EditorUI")
     {
+        _hub = hub;
+        _KinkPlateManager = KinkPlateManager;
+        _cosmetics = cosmetics;
+
         Flags = WFlags.NoScrollbar | WFlags.NoResize;
-        IsOpen = false;
         SizeConstraints = new WindowSizeConstraints()
         {
             MinimumSize = new Vector2(500, 400),
             MaximumSize = new Vector2(500, 400),
         };
+
         Size = new(400, 600);
-
-        _hub = hub;
-        _fileDialogManager = fileDialogManager;
-        _KinkPlateManager = KinkPlateManager;
-        _cosmetics = cosmetics;
-
+        IsOpen = false;
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
     }

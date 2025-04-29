@@ -7,7 +7,7 @@ using GagSpeak.PlayerState.Toybox;
 using ImGuiNET;
 using ImPlotNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public class PlaybackDrawer
 {

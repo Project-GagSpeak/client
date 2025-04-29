@@ -1,6 +1,6 @@
 using GagspeakAPI.Data.Permissions;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> Sticky Pair Permission ID </summary>
 public enum SPPID : byte

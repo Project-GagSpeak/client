@@ -1,10 +1,10 @@
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Extensions;
 using ImGuiNET;

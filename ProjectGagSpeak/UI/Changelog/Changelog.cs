@@ -1,6 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 public class Changelog
 {
     public List<VersionEntry> Versions { get; private set; } = new List<VersionEntry>();

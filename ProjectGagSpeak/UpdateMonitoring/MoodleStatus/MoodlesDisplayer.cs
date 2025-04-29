@@ -6,7 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;

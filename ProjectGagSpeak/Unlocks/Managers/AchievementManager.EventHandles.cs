@@ -8,7 +8,7 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -79,8 +79,8 @@ public partial class AchievementManager
                 // Check to see if we qualify for starting any world tour conditions.
                 if (LatestCache.SaveData.VisitedWorldTour.ContainsKey(prevZone) && LatestCache.SaveData.VisitedWorldTour[prevZone] is false)
                 {
-                    // Mark the conditonal as finished in the achievement, and mark as completed.
-                    if (_restraints.ActiveRestraint is not null)
+                    // Mark the conditional as finished in the achievement, and mark as completed.
+                    if (_restraints.AppliedRestraint is not null)
                     {
                         (LatestCache.SaveData.Achievements[Achievements.TourDeBound.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                         LatestCache.SaveData.VisitedWorldTour[prevZone] = true;
@@ -296,7 +296,7 @@ public partial class AchievementManager
 
     private void OnGagStateChanged(int gagLayer, GagType gagAppliedOrRemoved, bool applying, string enactorUid)
     {
-        if (_gags.ActiveGagsData is not { } gagData || gagAppliedOrRemoved is GagType.None)
+        if (_gags.ServerGagData is not { } gagData || gagAppliedOrRemoved is GagType.None)
             return;
 
         var trackingKey = gagLayer.ToString() + '_' + gagAppliedOrRemoved.GagName();

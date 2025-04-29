@@ -1,7 +1,7 @@
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.CustomCombos;
 

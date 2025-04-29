@@ -2,7 +2,7 @@ using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
 

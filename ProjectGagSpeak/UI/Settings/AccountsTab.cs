@@ -12,7 +12,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class AccountManagerTab
 {

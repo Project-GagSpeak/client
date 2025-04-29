@@ -1,7 +1,7 @@
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Configs;
 using GagSpeak.Toybox.Services;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerState.Toybox;
 

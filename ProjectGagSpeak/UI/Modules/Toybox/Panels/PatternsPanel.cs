@@ -1,33 +1,31 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public partial class PatternsPanel
 {
     private readonly ILogger<PatternsPanel> _logger;
     private readonly PatternFileSelector _selector;
     private readonly PatternManager _manager;
-    private readonly CkGui _ui;
     private readonly TutorialService _guides;
 
     public PatternsPanel(
         ILogger<PatternsPanel> logger,
         PatternFileSelector selector,
         PatternManager manager,
-        CkGui ui,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _manager = manager;
-        _ui = ui;
         _guides = guides;
     }
 
@@ -36,7 +34,7 @@ public partial class PatternsPanel
         using var group = ImRaii.Group();
 
         // within this group, if we are editing an item, draw the editor.
-        if (_manager.ActiveEditorItem is not null)
+        if (_manager.ItemInEditor is not null)
         {
             DrawEditor(remainingRegion);
             return;

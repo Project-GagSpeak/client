@@ -8,14 +8,14 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Globalization;
 using System.Reflection;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUI : WindowMediatorSubscriberBase

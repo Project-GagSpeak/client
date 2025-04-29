@@ -1,9 +1,9 @@
 /*using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Handlers;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -11,7 +11,7 @@ using OtterGui.Widgets;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public class SetPreviewComponent
 {

@@ -1,5 +1,5 @@
 using GagSpeak.PlayerState.Models;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerState.Components;
 
@@ -35,7 +35,7 @@ public interface ICursedItem
 
     /// <summary> Method used for obtaining the light data value of the CursedItem! </summary>
     /// <returns> the object representing the LightCursedItem </returns>
-    public LightCursedItem ToLightData();
+    public LightCursedItem ToLightItem();
 
     /// <summary> This is used for serialization purposes. </summary>
     /// <returns> the object representing the LightCursedItem </returns>

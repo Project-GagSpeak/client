@@ -5,7 +5,7 @@ using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
@@ -17,19 +17,19 @@ public class DrawFolderTag : DrawFolderBase
 
     protected override bool RenderIfEmpty => _id switch
     {
-        Globals.CustomOnlineTag => false,
-        Globals.CustomOfflineTag => false,
-        Globals.CustomVisibleTag => false,
-        Globals.CustomAllTag => true,
+        Constants.CustomOnlineTag => false,
+        Constants.CustomOfflineTag => false,
+        Constants.CustomVisibleTag => false,
+        Constants.CustomAllTag => true,
         _ => true,
     };
 
     private bool RenderCount => _id switch
     {
-        Globals.CustomOnlineTag => false,
-        Globals.CustomOfflineTag => false,
-        Globals.CustomVisibleTag => false,
-        Globals.CustomAllTag => false,
+        Constants.CustomOnlineTag => false,
+        Constants.CustomOfflineTag => false,
+        Constants.CustomVisibleTag => false,
+        Constants.CustomAllTag => false,
         _ => true
     };
 
@@ -37,10 +37,10 @@ public class DrawFolderTag : DrawFolderBase
     {
         var icon = _id switch
         {
-            Globals.CustomOnlineTag => FAI.Link,
-            Globals.CustomOfflineTag => FAI.Unlink,
-            Globals.CustomVisibleTag => FAI.Eye,
-            Globals.CustomAllTag => FAI.User,
+            Constants.CustomOnlineTag => FAI.Link,
+            Constants.CustomOfflineTag => FAI.Unlink,
+            Constants.CustomVisibleTag => FAI.Eye,
+            Constants.CustomAllTag => FAI.User,
             _ => FAI.Folder
         };
 
@@ -68,10 +68,10 @@ public class DrawFolderTag : DrawFolderBase
         ImGui.AlignTextToFramePadding();
         var name = _id switch
         {
-            Globals.CustomOnlineTag => "GagSpeak Online Users",
-            Globals.CustomOfflineTag => "GagSpeak Offline Users",
-            Globals.CustomVisibleTag => "Visible",
-            Globals.CustomAllTag => "Users",
+            Constants.CustomOnlineTag => "GagSpeak Online Users",
+            Constants.CustomOfflineTag => "GagSpeak Offline Users",
+            Constants.CustomVisibleTag => "Visible",
+            Constants.CustomAllTag => "Users",
             _ => _id
         };
         ImGui.TextUnformatted(name);

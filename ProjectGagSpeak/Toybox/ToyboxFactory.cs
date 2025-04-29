@@ -1,7 +1,7 @@
 using Buttplug.Client;
 using GagSpeak.Toybox;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 // we need a factory to create new instances of Device objects whenever a device is added.
 public class ToyboxFactory

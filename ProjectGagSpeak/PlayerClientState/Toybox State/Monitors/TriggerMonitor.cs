@@ -13,7 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -95,7 +95,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
             }
         }
 
-        if (_gags.ActiveGagsData is not { } gagData)
+        if (_gags.ServerGagData is not { } gagData)
             return;
         if (_globals.GlobalPerms is not { } globalPerms)
             return;
@@ -196,7 +196,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
 
             Logger.LogTrace("Alias found: " + alias.InputCommand, LoggerType.Puppeteer);
             // fire and forget to not hang the chat listener on limbo.
-            if(await _triggerApplier.HandleMultiActionAsync(alias.Executions.Values, SenderUid, source))
+            if(await _triggerApplier.HandleMultiActionAsync(alias.Actions, SenderUid, source))
             {
                 wasAnAlias = true;
                 break;
@@ -483,7 +483,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
     public async void ExecuteTriggerAction(Trigger trigger)
     {
         Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
-            + trigger.InvokableAction.ExecutionType.ToName(), LoggerType.ToyboxTriggers);
+            + trigger.InvokableAction.ActionType.ToName(), LoggerType.ToyboxTriggers);
 
         if (await _triggerApplier.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
             UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);

@@ -310,20 +310,36 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateCursedLootData(dto);
     }
 
-    public void ReceiveCharaAliasData(CallbackAliasDataDto dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateAliasData(dto);
-    }
-
     public void ReceiveCharaToyboxData(CallbackToyboxDataDto dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
 
         _allClientPairs[dto.User].UpdateToyboxData(dto);
+    }
+
+    public void ReceiveCharaAliasGlobalUpdate(CallbackAliasGlobalUpdateDto dto)
+    {
+        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
+            throw new InvalidOperationException("No user found for " + dto.User);
+
+        _allClientPairs[dto.User].UpdateGlobalAlias(dto.NewData);
+    }
+
+    public void ReceiveCharaAliasPairUpdate(CallbackAliasPairUpdateDto dto)
+    {
+        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
+            throw new InvalidOperationException("No user found for " + dto.User);
+
+        _allClientPairs[dto.User].UpdateUniqueAlias(dto.NewData);
+    }
+
+    public void ReceiveListenerName(UserData kinkster, string trueName)
+    {
+        if (!_allClientPairs.TryGetValue(kinkster, out var pair))
+            throw new InvalidOperationException("No user found for " + kinkster);
+
+        _allClientPairs[kinkster].UpdateListenerName(trueName);
     }
 
     /// <summary> Method similar to compositeData, but this will only update the latest Light Storage Data of the user pair. </summary>

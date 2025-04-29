@@ -3,39 +3,35 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Profile;
+using GagSpeak.CkCommons.Gui.Profile;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
-public class AccountTab : DisposableMediatorSubscriberBase
+public class AccountTab
 {
-    private readonly MainHub _hub;
-    private readonly OnFrameworkService _frameworkUtils;
+    private readonly GagspeakMediator _mediator;
     private readonly GagspeakConfigService _config;
     private readonly KinkPlateService _profileManager;
     private readonly TutorialService _guides;
-    private readonly IDalamudPluginInterface _pi;
-
-    public AccountTab(ILogger<AccountTab> logger, GagspeakMediator mediator,
-        MainHub hub, CkGui uiShared, OnFrameworkService frameworkUtils,
-        GagspeakConfigService config, KinkPlateService profileManager, TutorialService guides,
-        IDalamudPluginInterface pi) : base(logger, mediator)
+    public AccountTab(
+        GagspeakMediator mediator,
+        GagspeakConfigService config,
+        KinkPlateService profiles,
+        TutorialService guides)
     {
-        _hub = hub;
-
-        _frameworkUtils = frameworkUtils;
+        _mediator = mediator;
+        _profileManager = profiles;
         _config = config;
-        _profileManager = profileManager;
         _guides = guides;
-        _pi = pi;
     }
 
     private static Vector2 LastWinPos = Vector2.Zero;
@@ -64,7 +60,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
                     var region = ImGui.GetContentRegionAvail();
                     ImGui.Spacing();
                     var imgSize = new Vector2(180f, 180f);
-                    // move the x position so that it centeres the image to the center of the window.
+                    // move the x position so that it centers the image to the center of the window.
                     CkGui.SetCursorXtoCenter(imgSize.X);
                     var currentPosition = ImGui.GetCursorPos();
 
@@ -79,7 +75,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error: {ex}");
+                GagSpeak.StaticLog.Error($"Error: {ex}");
             }
 
             // draw the UID header below this.
@@ -95,17 +91,17 @@ public class AccountTab : DisposableMediatorSubscriberBase
             ImGui.Spacing();
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => Mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
+            DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
 
 
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
+            DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => _mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Bell, "Actions Notifier", "See who did what actions on you!", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
+            DrawAccountSettingChild(FAI.Bell, "Actions Notifier", "See who did what actions on you!", () => _mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
 
             // now do one for ko-fi
             ImGui.AlignTextToFramePadding();
@@ -114,7 +110,7 @@ public class AccountTab : DisposableMediatorSubscriberBase
                 Environment.NewLine + "any support or tips are much appreciated ♥", () =>
                 {
                     try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-                    catch (Exception e) { Logger.LogError($"Failed to open the Ko-Fi link. {e.Message}"); }
+                    catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
                 });
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
 
@@ -125,21 +121,21 @@ public class AccountTab : DisposableMediatorSubscriberBase
                 Environment.NewLine + "any support / tips are much appreciated ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-                catch (Exception e) { Logger.LogError($"Failed to open the Patreon link. {e.Message}"); }
+                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the Patreon link. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
-                catch (Exception e) { Logger.LogError($"Failed to open the google form. {e.Message}"); }
+                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the google form. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://docs.google.com/document/d/1nluBM2tsLzTrRdZEZN8FnpvOSPzdPrcH9R-SL78mJdA/edit?tab=t.0", UseShellExecute = true }); }
-                catch (Exception e) { Logger.LogError($"Failed to open the google doc. {e.Message}"); }
+                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the google doc. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
@@ -147,12 +143,12 @@ public class AccountTab : DisposableMediatorSubscriberBase
             {
                 try
                 {
-                    var ConfigDirectory = _pi.ConfigDirectory.FullName;
+                    var ConfigDirectory = ConfigFileProvider.GagSpeakDirectory;
                     Process.Start(new ProcessStartInfo { FileName = ConfigDirectory, UseShellExecute = true });
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
+                    GagSpeak.StaticLog.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
                 }
             });
         }

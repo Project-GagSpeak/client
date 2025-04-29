@@ -1,9 +1,10 @@
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
+using static FFXIVClientStructs.FFXIV.Client.Game.Character.VfxContainer;
 
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public class Pattern
+public class Pattern : IEditableStorageItem<Pattern>
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
@@ -18,9 +19,14 @@ public class Pattern
 
     public Pattern(Pattern other, bool copyIdentifier = true)
     {
-        if (copyIdentifier)
-            Identifier = other.Identifier;
+        Identifier = copyIdentifier ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
+    }
 
+    public Pattern Clone(bool keepId) => new Pattern(this, keepId);
+
+    public void ApplyChanges(Pattern other)
+    {
         Label = other.Label;
         Description = other.Description;
         Duration = other.Duration;
@@ -30,7 +36,7 @@ public class Pattern
         PatternData = new List<byte>(other.PatternData);
     }
 
-    public LightPattern ToLightData() 
+    public LightPattern ToLightPattern() 
         => new LightPattern(Identifier, Label, Description, Duration, ShouldLoop);
 
     public JObject Serialize()

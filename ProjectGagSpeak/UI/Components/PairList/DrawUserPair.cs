@@ -4,13 +4,13 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Handlers;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.UserPair;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)

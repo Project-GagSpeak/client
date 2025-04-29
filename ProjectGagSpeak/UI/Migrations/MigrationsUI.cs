@@ -5,10 +5,10 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 internal class MigrationsUI : WindowMediatorSubscriberBase
 {

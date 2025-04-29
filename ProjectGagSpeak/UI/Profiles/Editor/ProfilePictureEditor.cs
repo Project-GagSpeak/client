@@ -15,7 +15,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 
 public class ProfilePictureEditor : WindowMediatorSubscriberBase
 {

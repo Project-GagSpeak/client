@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> A interface for handling the popups in the UI. </summary>
 public interface IPopupHandler

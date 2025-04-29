@@ -11,7 +11,7 @@ using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class SettingsHardcore
 {

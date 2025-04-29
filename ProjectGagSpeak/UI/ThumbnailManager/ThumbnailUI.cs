@@ -5,14 +5,15 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
+using GagSpeak.CkCommons.Widgets;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public readonly record struct ImageMetadataGS(ImageDataType Kind, Vector2 BaseSize, Guid SourceId);
 
@@ -66,7 +67,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var drawSpaces = DrawerHelpers.FlatHeaderWithCurve(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
+        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
 
         ImGui.SetCursorScreenPos(drawSpaces.Top.Pos);
         using (ImRaii.Child("Thumbnail_UI_Header", drawSpaces.Top.Size))
@@ -91,7 +92,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var fileImportW = CkGui.IconTextButtonSize(FAI.FileImport, "From File");
 
         var searchWidth = ImGui.GetContentRegionAvail().X / 3;
-        DrawerHelpers.FancySearchFilter("Filter", searchWidth, "Browse for a thumbnail to use.", ref _searchString, 128, buttonW, () =>
+        FancySearchBar.Draw("Filter", searchWidth, "Browse for a thumbnail to use.", ref _searchString, 128, buttonW, () =>
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);

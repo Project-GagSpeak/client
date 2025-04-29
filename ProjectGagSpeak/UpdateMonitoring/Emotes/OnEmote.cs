@@ -113,11 +113,11 @@ public class OnEmote : IDisposable
         {
             _logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteMonitor.GetEmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
             // Block all emotes if forced to follow
-            if(_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow))
+            if(_traits.ActiveHcState.HasAny(HardcoreState.ForceFollow))
                 return;
 
             // If we are forced to emote, then we should prevent execution unless NextEmoteAllowed is true.
-            if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote))
+            if (_traits.ActiveHcState.HasAny(HardcoreState.ForceEmote))
             {
                 // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
                 if (_traits.CachedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)

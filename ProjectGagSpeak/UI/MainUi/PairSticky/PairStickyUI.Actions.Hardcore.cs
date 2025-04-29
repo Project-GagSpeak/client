@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto;
@@ -10,7 +10,7 @@ using ImGuiNET;
 using Lumina.Excel.Sheets;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Permissions;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 /// <summary>
 /// Contains functions relative to the paired users permissions for the client user.
@@ -46,7 +46,7 @@ public partial class PairStickyUI
         var forceFollowText = SPair.PairGlobals.IsFollowing() ? $"Have {PermissionData.DispName} stop following you." : $"Make {PermissionData.DispName} follow you.";
         if (CkGui.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
-            var newStr = SPair.PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
+            var newStr = SPair.PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + (pairlockStates ? Constants.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedFollow", newStr), UpdateDir.Other));
         }
         
@@ -56,7 +56,7 @@ public partial class PairStickyUI
         var forceToStayText = SPair.PairGlobals.IsStaying() ? $"Release {PermissionData.DispName}." : $"Lock away {PermissionData.DispName}.";
         if (CkGui.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHardcoreAction"))
         {
-            var newStr = SPair.PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
+            var newStr = SPair.PairGlobals.IsStaying() ? string.Empty : MainHub.UID + (pairlockStates ? Constants.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedStay", newStr), UpdateDir.Other));
         }
 
@@ -64,7 +64,7 @@ public partial class PairStickyUI
         var toggleChatboxText = SPair.PairGlobals.IsChatHidden() ? "Make " + PermissionData.DispName + "'s Chat Visible." : "Hide "+PermissionData.DispName+"'s Chat Window.";
         if (CkGui.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatVisibilityToggle, "##ForcedChatboxVisibilityHardcoreAction"))
         {
-            var newStr = SPair.PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
+            var newStr = SPair.PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Constants.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatBoxesHidden", newStr), UpdateDir.Other));
         }
 
@@ -72,7 +72,7 @@ public partial class PairStickyUI
         var toggleChatInputText = SPair.PairGlobals.IsChatInputHidden() ? "Make " + PermissionData.DispName + "'s Chat Input Visible." : "Hide "+PermissionData.DispName+"'s Chat Input.";
         if (CkGui.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputVisibilityToggle, "##ForcedChatInputVisibilityHardcoreAction"))
         {
-            var newStr = SPair.PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
+            var newStr = SPair.PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + (pairlockStates ? Constants.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputHidden", newStr), UpdateDir.Other));
         }
 
@@ -80,7 +80,7 @@ public partial class PairStickyUI
         var toggleChatBlockingText = SPair.PairGlobals.IsChatInputBlocked() ? "Reallow "+PermissionData.DispName+"'s Chat Input." : "Block "+PermissionData.DispName+"'s Chat Input.";
         if (CkGui.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHardcoreAction"))
         {
-            var newStr = SPair.PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairlockStates ? Globals.DevotedString : string.Empty);
+            var newStr = SPair.PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + (pairlockStates ? Constants.DevotedString : string.Empty);
             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ChatInputBlocked", newStr), UpdateDir.Other));
         }
         ImGui.Separator();
@@ -134,7 +134,7 @@ public partial class PairStickyUI
                         if (ImGui.Button("Force State##ForceEmoteStateTo" + PermissionData.DispName))
                         {
                             // Compile the string for sending.
-                            var newStr = MainHub.UID + "|" + _pairCombos.EmoteCombo.Current.RowId.ToString() + "|" + SelectedCPose.ToString() + (SPair.PairPerms.PairLockedStates ? Globals.DevotedString : string.Empty);
+                            var newStr = MainHub.UID + "|" + _pairCombos.EmoteCombo.Current.RowId.ToString() + "|" + SelectedCPose.ToString() + (SPair.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty);
                             _logger.LogDebug("Sending EmoteState update for emote: " + _pairCombos.EmoteCombo.Current.Name);
                             _ = _hub.UserUpdateOtherGlobalPerm(new(SPair.UserData, MainHub.PlayerUserData, new KeyValuePair<string, object>("ForcedEmoteState", newStr), UpdateDir.Other));
                             PairCombos.Opened = InteractionType.None;

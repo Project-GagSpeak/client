@@ -5,7 +5,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Handlers;
+namespace GagSpeak.CkCommons.Gui.Handlers;
 
 public class IdDisplayHandler
 {

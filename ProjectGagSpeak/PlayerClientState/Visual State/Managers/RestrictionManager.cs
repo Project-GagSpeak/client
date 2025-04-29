@@ -1,3 +1,4 @@
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Data;
@@ -7,13 +8,15 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using System.Linq;
+using OtterGui;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
+public readonly record struct OccupiedRestriction(RestrictionItem Item, ManagerPriority Source);
+
+public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable, IDisposable
 {
     private readonly FavoritesManager _favorites;
     private readonly ModSettingPresetManager _modPresets;
@@ -21,10 +24,18 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
-    public RestrictionManager(ILogger<RestrictionManager> logger, GagspeakMediator mediator,
-        GagGarbler garbler, FavoritesManager favorites, ModSettingPresetManager modPresets, 
-        ConfigFileProvider fileNames, ItemService items, HybridSaveService saver)
-        : base(logger, mediator)
+    private StorageItemEditor<RestrictionItem> _itemEditor = new();
+    private VisualRestrictionsCache _managerCache = new();
+    private CharaActiveRestrictions? _serverRestrictionData = null;
+
+    public RestrictionManager(
+        ILogger<RestrictionManager> logger,
+        GagspeakMediator mediator,
+        FavoritesManager favorites,
+        ModSettingPresetManager modPresets, 
+        ConfigFileProvider fileNames,
+        ItemService items,
+        HybridSaveService saver) : base(logger, mediator)
     {
         _favorites = favorites;
         _modPresets = modPresets;
@@ -35,49 +46,41 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckForExpiredLocks());
     }
 
-    // Cached Information.
-    public RestrictionItem? ActiveEditorItem { get; private set; }
-    public VisualRestrictionsCache LatestVisualCache { get; private set; } = new();
-    public SortedList<int, RestrictionItem> ActiveRestrictions { get; private set; } = new();
-
-
-    // Stored Information.
-    /// <summary> Holds any restriction active from OTHER SOURCES. Is not used in Caching information. </summary>
-    /// <remarks> <b>Source will ALWAYS be VeryLow</b> unless from a CursedItem, in which it is used for comparison.</remarks>
-    public HashSet<(RestrictionItem Item, ManagerPriority Source)> OccupiedRestrictions { get; private set; }
-    public CharaActiveRestrictions? ActiveRestrictionsData { get; private set; }
+    public VisualRestrictionsCache VisualCache => _managerCache;
+    public CharaActiveRestrictions? ServerRestrictionData => _serverRestrictionData;
     public RestrictionStorage Storage { get; private set; } = new RestrictionStorage();
+    public RestrictionItem? ItemInEditor => _itemEditor.ItemInEditor;
+    public RestrictionItem[] AppliedRestrictions { get; private set; } = Enumerable.Repeat(new RestrictionItem(), Constants.MaxRestrictionSlots).ToArray();
+
+    /// <summary> Holds any restriction active from OTHER SOURCES. Is not used in Caching information. </summary>
+    public HashSet<OccupiedRestriction> OccupiedRestrictions { get; private set; }
+
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
-    /// <param name="serverData"> The data from the server to update with. </param>
-    /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restrictions. </remarks>
     public void LoadServerData(CharaActiveRestrictions serverData)
     {
-        ActiveRestrictionsData = serverData;
-
-        for (var slotIdx = 0; slotIdx < serverData.Restrictions.Length; slotIdx++)
+        _serverRestrictionData = serverData;
+        foreach (var (slot, idx) in AppliedRestrictions.WithIndex())
         {
-            var slot = serverData.Restrictions[slotIdx];
             if (!slot.Identifier.IsEmptyGuid() && Storage.TryGetRestriction(slot.Identifier, out var item))
             {
-                ActiveRestrictions[slotIdx] = item;
+                AppliedRestrictions[idx] = item;
                 AddOccupiedRestriction(item, ManagerPriority.Restrictions);
             }
         }
-        LatestVisualCache.UpdateCache(ActiveRestrictions);
+        _managerCache.UpdateCache(AppliedRestrictions);
     }
 
-    /// <summary> Create a new Restriction, where the item can be any restriction item. </summary>
-    public RestrictionItem CreateNew(string restrictionName, RestrictionType type)
+    public RestrictionItem CreateNew(string name, RestrictionType type)
     {
+        name = RegexEx.EnsureUniqueName(name, Storage, x => x.Label);
         var restriction = type switch
         {
-            RestrictionType.Collar => new CollarRestriction(),
-            RestrictionType.Hypnotic => new HypnoticRestriction(),
-            RestrictionType.Blindfold => new BlindfoldRestriction(),
-            _ => new RestrictionItem()
+            RestrictionType.Collar => new CollarRestriction() { Label = name },
+            RestrictionType.Hypnotic => new HypnoticRestriction() { Label = name },
+            RestrictionType.Blindfold => new BlindfoldRestriction() { Label = name },
+            _ => new RestrictionItem() { Label = name }
         };
-        restriction.Label = restrictionName;
         Storage.Add(restriction);
         _saver.Save(this);
         Logger.LogDebug($"Created new restriction {restriction.Identifier}.");
@@ -85,9 +88,9 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         return restriction;
     }
 
-    /// <summary> Create a clone of a Restriction. </summary>
     public RestrictionItem CreateClone(RestrictionItem clone, string newName)
     {
+        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
         var clonedItem = clone switch
         {
             BlindfoldRestriction b => new BlindfoldRestriction(b, false) { Label = newName },
@@ -98,13 +101,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         };
         Storage.Add(clonedItem);
         _saver.Save(this);
+
         Logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
         Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
-
-    /// <summary> Delete a Restriction. </summary>
     public void Delete(RestrictionItem restriction)
     {
         // should never be able to remove active restrictions, but if that happens to occur, add checks here.
@@ -116,12 +118,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         }
     }
 
-
-    /// <summary> Rename a Restriction. </summary>
     public void Rename(RestrictionItem restriction, string newName)
     {
         var oldName = restriction.Label;
-        if (oldName == newName)
+        if (oldName == newName || string.IsNullOrWhiteSpace(newName))
             return;
 
         restriction.Label = newName;
@@ -143,104 +143,54 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(RestrictionItem item)
-    {
-        // create an exact clone of the passed in cursed item for editing, so long as it exists in storage.
-        if (Storage.Contains(item))
-        {
-            ActiveEditorItem = item switch
-            {
-                CollarRestriction    c => new CollarRestriction(c, true),
-                HypnoticRestriction  h => new HypnoticRestriction(h, true),
-                BlindfoldRestriction b => new BlindfoldRestriction(b, true),
-                RestrictionItem      r => new RestrictionItem(r, true),
-                _ => throw new NotImplementedException("Unknown restriction type."),
-            };
-        }
-    }
+    public void StartEditing(RestrictionItem item) => _itemEditor.StartEditing(item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-        => ActiveEditorItem = null;
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Restriction and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-
-        // Update the active restriction with the new data, update the cache, and clear the edited restriction.
-        if (Storage.TryGetRestriction(ActiveEditorItem.Identifier, out var item))
+        if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            item.ApplyChanges(ActiveEditorItem);
-            ActiveEditorItem = null;
-            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, item, null));
+            _managerCache.UpdateCache(AppliedRestrictions);
             _saver.Save(this);
-            Logger.LogDebug($"Saved changes to restriction {item.Identifier}.");
+
+            Logger.LogTrace("Saved changes to Edited RestrictionItem.");
+            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, sourceItem, null));
         }
     }
 
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool AddFavorite(GarblerRestriction restriction)
-        => _favorites.TryAddGag(restriction.GagType);
+    public bool AddFavorite(GarblerRestriction restriction) => _favorites.TryAddGag(restriction.GagType);
 
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool RemoveFavorite(GarblerRestriction restriction)
-        => _favorites.RemoveGag(restriction.GagType);
+    public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
 
+    /// <summary> Appends a restriction item being used by other components to this list. </summary>
+    /// <remarks> The Occupied Restrictions list is scanned against to prevent duplicate application by other modules. </remarks>
     public void AddOccupiedRestriction(RestrictionItem item, ManagerPriority source)
     {
         // dont add the item if it is already existing in the hash set.
         if (!OccupiedRestrictions.Any(i => i.Item == item))
-            OccupiedRestrictions.Add((item, source));
+            OccupiedRestrictions.Add(new(item, source));
     }
 
     public void RemoveOccupiedRestriction(RestrictionItem item, ManagerPriority source)
-        => OccupiedRestrictions.Remove((item, source));
+        => OccupiedRestrictions.Remove(new(item, source));
 
-    #region Validators
-    public bool CanApply(int layer)
-    {
-        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanApply())
-            return true;
-        Logger.LogTrace("Not able to Apply at this time due to errors!");
-        return false;
-    }
-
-    public bool CanLock(int layer)
-    {
-        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanLock())
-            return true;
-        Logger.LogTrace("Not able to Lock at this time due to errors!");
-        return false;
-    }
-
-    public bool CanUnlock(int layer)
-    {
-        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanUnlock())
-            return true;
-        Logger.LogTrace("Not able to Unlock at this time due to errors!");
-        return false;
-    }
-
-    public bool CanRemove(int layer)
-    {
-        if (ActiveRestrictionsData is { } data && data.Restrictions[layer].CanRemove())
-            return true;
-        Logger.LogTrace("Not able to Remove at this time due to errors!");
-        return false;
-    }
-    #endregion Validators
+    public bool CanApply(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanApply();
+    public bool CanLock(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanLock();
+    public bool CanUnlock(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanUnlock();
+    public bool CanRemove(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanRemove();
 
     #region Active Restriction Updates
     public VisualUpdateFlags ApplyRestriction(int layerIdx, Guid id, string enactor, out RestrictionItem? item)
     {
         item = null; var flags = VisualUpdateFlags.None;
 
-        if (ActiveRestrictionsData is not { } data)
+        if (_serverRestrictionData is not { } data)
             return flags;
 
         // update the values and fire achievement ping. ( None yet )
@@ -254,33 +204,33 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             // Assume everything is set.
             flags = VisualUpdateFlags.AllRestriction;
             // set the restriction item at the defined index.
-            foreach (var restriction in ActiveRestrictions)
+            foreach (var (appliedItem, idx) in AppliedRestrictions.WithIndex())
             {
                 // these properties should not be updated if an item with higher priority contains it.
-                if (restriction.Key > layerIdx)
+                if (idx > layerIdx)
                 {
-                    if (item.Glamour is not null && restriction.Value.Glamour.Slot == item.Glamour.Slot)
+                    if (item.Glamour is not null && appliedItem.Glamour.Slot == item.Glamour.Slot)
                         flags &= ~VisualUpdateFlags.Glamour;
 
-                    if (item.Mod.HasData && restriction.Value.Mod.Label == item.Mod.Label)
+                    if (item.Mod.HasData && appliedItem.Mod.Label == item.Mod.Label)
                         flags &= ~VisualUpdateFlags.Mod;
                 }
 
                 // these properties should not be updated if any item contains it.
-                if (restriction.Value.Moodle == item.Moodle)
+                if (appliedItem.Moodle == item.Moodle)
                     flags &= ~VisualUpdateFlags.Moodle;
             }
-            // Update the activeVisualState, and the cache.
-            ActiveRestrictions[layerIdx] = item;
+
+            AppliedRestrictions[layerIdx] = item;
             AddOccupiedRestriction(item, ManagerPriority.Restrictions);
-            LatestVisualCache.UpdateCache(ActiveRestrictions);
+            _managerCache.UpdateCache(AppliedRestrictions);
         }
         return flags;
     }
 
     public void LockRestriction(int layerIdx, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
     {
-        if (ActiveRestrictionsData is not { } data)
+        if (_serverRestrictionData is not { } data)
             return;
 
         data.Restrictions[layerIdx].Padlock = padlock;
@@ -293,7 +243,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
 
     public void UnlockRestriction(int layerIdx, string enactor)
     {
-        if (ActiveRestrictionsData is not { } data)
+        if (_serverRestrictionData is not { } data)
             return;
 
         var prevLock = data.Restrictions[layerIdx].Padlock;
@@ -309,7 +259,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     {
         item = null; var flags = VisualUpdateFlags.None;
 
-        if (ActiveRestrictionsData is not { } data)
+        if (_serverRestrictionData is not { } data)
             return flags;
 
         // store the new data, then fire the achievement.
@@ -321,10 +271,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestriction(removedRestriction, out var matchedItem))
         {
-            // Do recalculations first since it doesnt madder here.
-            ActiveRestrictions.Remove(layerIdx);
+            // Do recalculations first since it doesn't madder here.
+            AppliedRestrictions[layerIdx] = new RestrictionItem();
             RemoveOccupiedRestriction(matchedItem, ManagerPriority.Restrictions);
-            LatestVisualCache.UpdateCache(ActiveRestrictions);
+            _managerCache.UpdateCache(AppliedRestrictions);
 
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;
@@ -436,10 +386,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         if (!MainHub.IsConnected)
             return;
 
-        if (ActiveRestrictionsData is null || !ActiveRestrictionsData.Restrictions.Any(i => i.IsLocked()))
+        if (_serverRestrictionData is null || !_serverRestrictionData.Restrictions.Any(i => i.IsLocked()))
             return;
 
-        foreach (var (restriction, index) in ActiveRestrictionsData.Restrictions.Select((slot, index) => (slot, index)))
+        foreach (var (restriction, index) in _serverRestrictionData.Restrictions.Select((slot, index) => (slot, index)))
             if (restriction.Padlock.IsTimerLock() && restriction.HasTimerExpired())
             {
                 Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);

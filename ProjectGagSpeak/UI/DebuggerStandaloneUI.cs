@@ -1,7 +1,7 @@
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class DebuggerStandaloneUI : WindowMediatorSubscriberBase
 {

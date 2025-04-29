@@ -1,12 +1,13 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using ImGuizmoNET;
 using NAudio.SoundFont;
@@ -98,7 +99,7 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
                 // draw the output based on what the type is.
                 switch (optionType)
                 {
-                    case GroupType.Single when groupInfo.Options.Length <= Globals.MaxRadioOptionCount:
+                    case GroupType.Single when groupInfo.Options.Length <= 2:
                         CkGuiUtils.DrawSingleGroupRadio(groupName, groupInfo.Options, preset.SelectedOption(groupName));
                         break;
                     case GroupType.Single:

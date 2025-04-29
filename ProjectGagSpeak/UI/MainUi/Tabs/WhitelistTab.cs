@@ -1,10 +1,10 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Handlers;
+using GagSpeak.CkCommons.Gui.Handlers;
 using ImGuiNET;
 
-namespace GagSpeak.UI.MainWindow;
+namespace GagSpeak.CkCommons.Gui.MainWindow;
 
 /// <summary> 
 /// Sub-class of the main UI window. Handles drawing the whitelist/contacts tab of the main UI.

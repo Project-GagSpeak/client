@@ -13,7 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 using System.Numerics;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 {
     private readonly PairManager _pairManager;

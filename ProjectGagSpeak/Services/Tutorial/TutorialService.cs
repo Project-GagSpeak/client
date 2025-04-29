@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using GagSpeak.Localization;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui.Services;
 using System.Numerics;

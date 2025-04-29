@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
 using GagSpeak.CkCommons.GarblerCore;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
@@ -17,45 +18,36 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
+    private readonly GlobalData _global;
+    private readonly SettingsHardcore _hardcoreSettingsUI;
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
-    private readonly GlobalData _global;
-    private readonly IpcManager _ipcManager;
-    private readonly OnFrameworkService _frameworkUtil;
-    private readonly PairManager _pairManager;
-    private readonly GagspeakConfigService _mainConfig;
-    private readonly ServerConfigurationManager _serverConfigs;
-    private readonly SettingsHardcore _hardcoreSettingsUI;
     private readonly PiShockProvider _shockProvider;
-    private readonly AvfxManager _avfxManager;
-    private readonly VfxSpawns _vfxSpawns;
-    private bool ThemePushed = false;
+    private readonly GagspeakConfigService _mainConfig;
 
-    public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator,
-        MainHub hub, AccountManagerTab accounts, DebugTab debug, GagspeakConfigService config,
-        PairManager pairManager, GlobalData global, PiShockProvider shockProvider,
-        AvfxManager avfxManager, VfxSpawns vfxSpawns, ServerConfigurationManager serverConfigs,
-        IpcManager ipcManager, SettingsHardcore hardcoreSettingsUI, CkGui uiShared,
-        OnFrameworkService frameworkUtil) : base(logger, mediator, "GagSpeak Settings")
+    public SettingsUi(
+        ILogger<SettingsUi> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        GlobalData global,
+        SettingsHardcore hardcoreTab,
+        AccountManagerTab accounts,
+        DebugTab debug,
+        PiShockProvider shockProvider,
+        GagspeakConfigService config) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
+        _global = global;
+        _hardcoreSettingsUI = hardcoreTab;
         _accountsTab = accounts;
         _debugTab = debug;
-        _global = global;
-        _pairManager = pairManager;
-        _mainConfig = config;
-        _serverConfigs = serverConfigs;
         _shockProvider = shockProvider;
-        _avfxManager = avfxManager;
-        _vfxSpawns = vfxSpawns;
-        _ipcManager = ipcManager;
-        _frameworkUtil = frameworkUtil;
-        _hardcoreSettingsUI = hardcoreSettingsUI;
+        _mainConfig = config;
 
         Flags = WFlags.NoScrollbar;
         AllowClickthrough = false;
@@ -69,6 +61,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
     }
+
+    private bool ThemePushed = false;
 
     protected override void PreDrawInternal()
     {

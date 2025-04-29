@@ -6,6 +6,7 @@ using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
@@ -13,7 +14,7 @@ using OtterGui.Classes;
 using OtterGui.Text;
 using SixLabors.ImageSharp.Metadata;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel
 {
     private static IconCheckboxStimulation StimulationIconCheckbox = new(FAI.VolumeUp, FAI.VolumeDown, FAI.VolumeOff, FAI.VolumeMute, CkGui.Color(ImGuiColors.DalamudGrey), CkColor.FancyHeaderContrast.Uint());
@@ -23,7 +24,7 @@ public partial class RestrictionsPanel
     private void DrawEditorHeaderLeft(float width)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } item)
+        if (_manager.ItemInEditor is not { } item)
             return;
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)
@@ -45,7 +46,7 @@ public partial class RestrictionsPanel
     private void DrawEditorHeaderRight(Vector2 contentRegionAvail)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } item)
+        if (_manager.ItemInEditor is not { } item)
             return;
 
         using var group = ImRaii.Group();
@@ -141,7 +142,7 @@ public partial class RestrictionsPanel
     private void DrawEditorLeft(float width)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } item)
+        if (_manager.ItemInEditor is not { } item)
             return;
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
@@ -170,7 +171,7 @@ public partial class RestrictionsPanel
 
     public void DrawEditorRight(float width)
     {
-        if (_manager.ActiveEditorItem is not { } item)
+        if (_manager.ItemInEditor is not { } item)
             return;
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
@@ -181,10 +182,11 @@ public partial class RestrictionsPanel
     private void DrawBlindfoldInfo(BlindfoldRestriction blindfoldItem, float width)
     {
         var pos = ImGui.GetCursorScreenPos();
-        var style = ImGui.GetStyle();
-        var iconH = ImGui.GetFrameHeight() * 2 + style.ItemSpacing.Y;
+        var displaySize = ImGui.GetIO().DisplaySize;
+        var scaledPreview = displaySize * (width.MinusWinPadX() / ImGui.GetIO().DisplaySize.X);
+        var iconH = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + scaledPreview.Y;
         var winSize = new Vector2(width, iconH);
-        using (CkComponents.CenterHeaderChild("BlindfoldItem" + blindfoldItem.Label, "Blindfold Information", winSize, WFlags.AlwaysUseWindowPadding))
+        using (var bfInfo = CkRaii.HeaderChild("Blindfold Information", winSize, CkRaii.HeaderFlags.AddPaddingToHeight))
         {
             var widthInner = ImGui.GetContentRegionAvail().X;
 
@@ -199,12 +201,11 @@ public partial class RestrictionsPanel
                 ImGui.SameLine(widthInner - rightSize);
                 if (CkGui.IconTextButton(FAI.PenSquare, "Edit Image"))
                 {
-                    var metaData = new ImageMetadataGS(ImageDataType.Blindfolds, ImGui.GetIO().DisplaySize, Guid.Empty);
+                    var metaData = new ImageMetadataGS(ImageDataType.Blindfolds, displaySize, Guid.Empty);
                     Mediator.Publish(new OpenThumbnailBrowser(metaData));
                 }
 
-                var scaledPreview = ImGui.GetIO().DisplaySize * (widthInner / ImGui.GetIO().DisplaySize.X);
-                using (CkComponents.FramedChild("Blindfold_Preview", CkColor.FancyHeaderContrast.Uint()))
+                using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
                 {
                     if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.BlindfoldPath) is { } validImage)
                     {
@@ -213,7 +214,7 @@ public partial class RestrictionsPanel
                         var scaledImage = validImage.Size * scaler;
 
                         pos = ImGui.GetCursorScreenPos();
-                        ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkComponents.FCRounding);
+                        ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkRaii.GetHeaderRounding());
                     }
                 }
                 CkGui.AttachToolTip("This is the image that the blindfold will overlay on your screen while active.");
@@ -227,7 +228,7 @@ public partial class RestrictionsPanel
         var style = ImGui.GetStyle();
         var iconH = ImGui.GetFrameHeight() * 2 + style.ItemSpacing.Y;
         var winSize = new Vector2(width, iconH);
-        using (CkComponents.CenterHeaderChild("CollarItem" + collarItem.Label, "Collar Information", winSize, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Collar Information", winSize))
         {
             var widthInner = ImGui.GetContentRegionAvail().X;
             var collarOwner = collarItem.OwnerUID;

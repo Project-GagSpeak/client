@@ -6,7 +6,7 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.StateManagers;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Enums;
 
 namespace GagSpeak.PlayerData.Services;

@@ -4,12 +4,12 @@ using Dalamud.Interface.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.UiToybox;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.UiToybox;
 using ImGuiNET;
 using System.Windows.Forms;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public class ToyboxUI : WindowMediatorSubscriberBase
 {

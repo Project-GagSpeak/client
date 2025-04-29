@@ -1,6 +1,6 @@
 using GagspeakAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.IPC;
@@ -354,16 +354,22 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataAlias(PushAliasDataUpdateDto dto)
-    {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataAlias), dto).ConfigureAwait(false);
-    }
-
     public async Task<GsApiErrorCodes> UserPushDataToybox(PushToyboxDataUpdateDto dto)
     {
         if (!IsConnected) return GsApiErrorCodes.NotConnected;
         return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
+    }
+
+    public async Task<GsApiErrorCodes> UserPushAliasGlobalUpdate(PushAliasGlobalUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushAliasGlobalUpdate), dto).ConfigureAwait(false);
+    }
+
+    public async Task<GsApiErrorCodes> UserPushAliasPairUpdate(PushAliasPairUpdateDto dto)
+    {
+        if (!IsConnected) return GsApiErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushAliasPairUpdate), dto).ConfigureAwait(false);
     }
 
     public async Task<GsApiErrorCodes> UserPushDataLightStorage(PushLightStorageMessageDto dto)
@@ -421,16 +427,16 @@ public partial class MainHub
         return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataRestraint), dto);
     }
 
-    public async Task<GsApiPairErrorCodes> UserPushPairDataAliasStorage(PushPairAliasDataUpdateDto dto)
-    {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataAliasStorage), dto).ConfigureAwait(false);
-    }
-
     public async Task<GsApiPairErrorCodes> UserPushPairDataToybox(PushPairToyboxDataUpdateDto dto)
     {
         if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
         return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataToybox), dto).ConfigureAwait(false);
+    }
+
+    public async Task<GsApiPairErrorCodes> UserPushPairListenerName(UserDto recipient, string listenerName)
+    {
+        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
+        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairListenerName), recipient, listenerName).ConfigureAwait(false);
     }
 
     private async Task ExecuteSafelyAsync(Func<Task> pushAction)

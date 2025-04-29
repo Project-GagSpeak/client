@@ -1,18 +1,18 @@
 using Dalamud.Interface;
 using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.Permissions;
 using GagspeakAPI.Enums;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Permissions;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 /// <summary>
 /// Contains functions relative to the paired users permissions for the client user.

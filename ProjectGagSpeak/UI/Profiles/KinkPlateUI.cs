@@ -13,7 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
 using System.Globalization;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
 {
     private readonly PairManager _pairManager;

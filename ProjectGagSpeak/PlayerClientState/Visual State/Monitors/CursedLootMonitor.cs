@@ -14,6 +14,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using ImPlotNET;
@@ -254,81 +255,74 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         }
     }
 
-    private async Task<bool> HandleGagApplication(CursedItem cursedItem, TimeSpan lockTime)
+    private async Task<bool> HandleGagApplication(CursedItem item, TimeSpan lockTime)
     {
-        if (_gags.ActiveGagsData is not { } gagData)
+        if (_gags.ServerGagData is not { } gagData)
             return false;
 
         var Idx = gagData.FindFirstUnused();
-        if (Idx is - 1 || cursedItem.RestrictionRef is not GarblerRestriction gagRestriction)
+        if (Idx is - 1 || item.RestrictionRef is not GarblerRestriction gag)
             return false;
 
         // Apply the gag restriction to that player.
-        Logger.LogInformation("Applying a cursed Gag Item (" + gagRestriction.GagType + ") to layer " + Idx, LoggerType.CursedLoot);
-        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveItems.Select(i => i.Identifier))
-        {
-            InteractedLoot = new CursedItemInfo()
-            {
-                LootId = cursedItem.Identifier,
-                RestrictionRefId = Guid.Empty,
-                ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime)
-            }
-        };
+        Logger.LogInformation("Applying a cursed Gag Item (" + gag.GagType + ") to layer " + Idx, LoggerType.CursedLoot);
+        var interactedItem = new LightCursedItem(item.Identifier, item.Label, gag.GagType, Guid.Empty, DateTimeOffset.UtcNow.Add(lockTime));
+        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, interactedItem);
         
-        var retCode = await _hub.UserPushDataCursedLoot(newInfo);
-        if (retCode is GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GsApiErrorCodes.Success)
         {
             Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
-            var item = new SeStringBuilder()
-                .AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
-
-            Mediator.Publish(new NotifyChatMessage(item, NotificationType.Error));
+            var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
+            Mediator.Publish(new NotifyChatMessage(message, NotificationType.Error));
 
             if (_globals.GlobalPerms is not null && _globals.GlobalPerms.ChatGarblerActive)
-                Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! " +
-                    "Be cautious of chatting around strangers!", NotificationType.Warning));
+                Mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! Be cautious of chatting around strangers!", NotificationType.Warning));
+
+            // Update the cursed items offset time.
+            if(_manager.Storage.TryGetLoot(item.Identifier, out var loot))
+                loot.ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime);
 
             return true;
         }
         else
         {
-            Logger.LogError("Failed to apply gag restriction to player. Error Code: " + retCode);
+            Logger.LogError("Failed to apply gag restriction to player. Error Code: " + res);
             return false;
         }
     }
 
     private async Task<bool> HandleRestrictionApplication(CursedItem cursedItem, TimeSpan lockTime)
     {
-        if (_restrictions.ActiveRestrictions is not { } restrictionData)
+        if (_restrictions.AppliedRestrictions is not { } restrictionData)
             return false;
 
         // If the attached restriction item is already in the container of active restrictions, return false.
-        if(restrictionData.Values.Any(x => x.Identifier == cursedItem.Identifier))
+        if(restrictionData.Any(x => x.Identifier == cursedItem.Identifier))
             return false;
 
-        // Apply the gag restriction to that player.
-        Logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedLoot);
-        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveItems.Select(i => i.Identifier))
-        {
-            InteractedLoot = new CursedItemInfo()
-            {
-                LootId = cursedItem.Identifier,
-                RestrictionRefId = Guid.Empty,
-                ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime)
-            }
-        };
+        // Get the first unused restriction index.
+        if(cursedItem.RestrictionRef is not IRestrictionItem restriction)
+            return false;
 
-        // attempt to apply the item. If successful, display message.
-        var retCode = await _hub.UserPushDataCursedLoot(newInfo);
-        if(retCode is GsApiErrorCodes.Success)
+        // Apply the restriction to that player.
+        Logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedLoot);
+        var item = new LightCursedItem(cursedItem.Identifier, cursedItem.Label, GagType.None, restriction.Identifier, DateTimeOffset.UtcNow.Add(lockTime));
+        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, item);
+
+        if(await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GsApiErrorCodes.Success)
         {
             Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
                 "forth, binding you in an inescapable restraint!").BuiltString, NotificationType.Error));
+
+            // Update the items release time if successful.
+            if (_manager.Storage.TryGetLoot(cursedItem.Identifier, out var loot))
+                loot.ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime);
+
             return true;
         }
         else
         {
-            Logger.LogError("Failed to apply restriction to player. Error Code: " + retCode);
+            Logger.LogError("Failed to apply restriction to player. Error Code: " + res);
             return false;
         }
     }

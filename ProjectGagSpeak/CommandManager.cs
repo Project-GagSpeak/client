@@ -7,8 +7,8 @@ using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
-using GagSpeak.UI.MainWindow;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.MainWindow;
 using GagSpeak.UpdateMonitoring.Chat;
 using OtterGui.Classes;
 

@@ -8,7 +8,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Connection;
 using GagspeakAPI.Dto.User;
@@ -60,8 +60,8 @@ public class Pair : IComparable<Pair>
     public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
     public CharaActiveRestraint LastRestraintData { get; set; } = new();
     public IEnumerable<Guid> ActiveCursedItems { get; set; } = new List<Guid>();
-    public CharaOrdersData LastOrdersData { get; set; } = new();
-    public CharaAliasData LastAliasData { get; set; } = new();
+    public AliasStorage LastGlobalAliasData { get; set; } = new();
+    public NamedAliasStorage LastPairAliasData { get; set; } = new();
     public CharaToyboxData LastToyboxData { get; set; } = new();
     public CharaLightStorageData LastLightStorage { get; set; } = new();
 
@@ -192,11 +192,11 @@ public class Pair : IComparable<Pair>
         LastGagData = dto.CompositeData.Gags;
         LastRestrictionsData = dto.CompositeData.Restrictions;
         LastRestraintData = dto.CompositeData.Restraint;
-        ActiveCursedItems = dto.CompositeData.CursedItems;
-        LastOrdersData = new CharaOrdersData();
+        ActiveCursedItems = dto.CompositeData.ActiveCursedItems;
+        LastGlobalAliasData = dto.CompositeData.GlobalAliasData;
         LastToyboxData = dto.CompositeData.ToyboxData;
         LastLightStorage = dto.CompositeData.LightStorageData;
-        // Update Kinkplate display.
+        // Update KinkPlate display.
         UpdateCachedLockedSlots();
         // publish a mediator message that is listened to by the achievement manager for duration cleanup.
         _mediator.Publish(new PlayerLatestActiveItems(UserData, LastGagData, LastRestrictionsData, LastRestraintData));
@@ -205,8 +205,8 @@ public class Pair : IComparable<Pair>
             return;
 
         // Deterministic AliasData setting.
-        var hasUser = dto.CompositeData.AliasData.ContainsKey(UserData.UID);
-        LastAliasData = hasUser ? dto.CompositeData.AliasData[UserData.UID] : new CharaAliasData();
+        if (dto.CompositeData.PairAliasData.TryGetValue(UserData.UID, out var match))
+            LastPairAliasData = match;
     }
 
     public void UpdateGagData(CallbackGagDataDto data)
@@ -303,35 +303,36 @@ public class Pair : IComparable<Pair>
         UpdateCachedLockedSlots();
     }
 
-    public void UpdateOrdersData(CallbackOrdersDataDto data)
-    {
-        _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastOrdersData = data.NewData;
-    }
-
-    public void UpdateAliasData(CallbackAliasDataDto data)
-    {
-        _logger.LogDebug("Applying updated alias data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        switch(data.Type)
-        {
-            case DataUpdateType.AliasListUpdated:
-                LastAliasData.AliasList = data.NewData.AliasList;
-                return;
-            case DataUpdateType.NameRegistered:
-                _logger.LogTrace("Updating Listener name to " + data.NewData.ListenerName + " and HasStored to " + data.NewData.HasNameStored, LoggerType.PairDataTransfer);
-                LastAliasData.HasNameStored = data.NewData.HasNameStored;
-                LastAliasData.ListenerName = data.NewData.ListenerName;
-                return;
-            default:
-                _logger.LogWarning("Invalid Update Type!");
-                break;
-        }
-    }
-
     public void UpdateToyboxData(CallbackToyboxDataDto data)
     {
         _logger.LogDebug("Applying updated toybox data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastToyboxData = data.NewData;
+    }
+
+    public void UpdateGlobalAlias(AliasTrigger newData)
+    {
+        if (LastGlobalAliasData.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        {
+            _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            match = newData;
+            return;
+        }
+    }
+
+    public void UpdateUniqueAlias(AliasTrigger newData)
+    {
+        if (LastPairAliasData.Storage.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        {
+            _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            match = newData;
+            return;
+        }
+    }
+
+    public void UpdateListenerName(string nameWithWorld)
+    {
+        _logger.LogDebug("Updating Listener name to " + nameWithWorld, LoggerType.PairDataTransfer);
+        LastPairAliasData.StoredNameWorld = nameWithWorld;
     }
 
     public void UpdateLightStorageData(CallbackLightStorageDto data)

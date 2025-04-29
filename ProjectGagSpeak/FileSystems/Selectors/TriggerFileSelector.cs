@@ -11,7 +11,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
@@ -20,6 +20,7 @@ using Dalamud.Interface.Utility.Raii;
 using OtterGui.Text;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Widgets;
 
 namespace GagSpeak.Triggers;
 

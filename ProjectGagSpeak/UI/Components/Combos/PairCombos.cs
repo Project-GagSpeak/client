@@ -1,4 +1,5 @@
 using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
 using GagSpeak.CustomCombos.PairActions;
@@ -8,7 +9,7 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public class PairCombos : DisposableMediatorSubscriberBase
 {

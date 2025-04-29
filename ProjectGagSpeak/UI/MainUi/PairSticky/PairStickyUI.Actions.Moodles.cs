@@ -1,6 +1,6 @@
 using GagSpeak.PlayerState.Visual;
 
-namespace GagSpeak.UI.Permissions;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 /// <summary>
 /// Contains functions relative to the paired users permissions for the client user.

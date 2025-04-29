@@ -421,37 +421,6 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    // Do nothing for now because it is not implemented.
-    public Task Client_UserReceiveDataOrders(CallbackOrdersDataDto dataDto)
-    {
-        if (dataDto.Direction is UpdateDir.Own)
-        {
-            Logger.LogDebug("OWN Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug("OTHER Client_UserReceiveDataOrders:" + dataDto.User, LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
-    }
-
-    public Task Client_UserReceiveDataAlias(CallbackAliasDataDto dataDto)
-    {
-        if (dataDto.Direction is UpdateDir.Own)
-        {
-            Logger.LogDebug("OWN Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
-            _puppetListener.UpdateListener(dataDto.User.UID, dataDto.NewData.ListenerName);
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug("OTHER Client_UserReceiveDataAlias:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _pairs.ReceiveCharaAliasData(dataDto));
-            return Task.CompletedTask;
-        }
-    }
-
     public Task Client_UserReceiveDataToybox(CallbackToyboxDataDto dataDto)
     {
         if (dataDto.Direction is UpdateDir.Own)
@@ -483,6 +452,27 @@ public partial class MainHub
             ExecuteSafely(() => _pairs.ReceiveCharaToyboxData(dataDto));
             return Task.CompletedTask;
         }
+    }
+
+    public Task Client_UserReceiveAliasGlobalUpdate(CallbackAliasGlobalUpdateDto dataDto)
+    {
+        Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
+        ExecuteSafely(() => _pairs.ReceiveCharaAliasGlobalUpdate(dataDto));
+        return Task.CompletedTask;
+    }
+
+    public Task Client_UserReceiveAliasPairUpdate(CallbackAliasPairUpdateDto dataDto)
+    {
+        Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
+        ExecuteSafely(() => _pairs.ReceiveCharaAliasPairUpdate(dataDto));
+        return Task.CompletedTask;
+    }
+
+    public Task Client_UserReceiveListenerName(UserData user, string trueNameWithWorld)
+    {
+        Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + user, LoggerType.Callbacks);
+        ExecuteSafely(() => _pairs.ReceiveListenerName(user, trueNameWithWorld));
+        return Task.CompletedTask;
     }
 
     /// <summary> Update The Light Storage data of another pair. </summary>
@@ -773,23 +763,28 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Client_UserReceiveDataCursedLoot), act);
     }
 
-    public void OnUserReceiveDataOrders(Action<CallbackOrdersDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataOrders), act);
-    }
-
-
-    public void OnUserReceiveDataAlias(Action<CallbackAliasDataDto> act)
-    {
-        if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataAlias), act);
-    }
-
     public void OnUserReceiveDataToybox(Action<CallbackToyboxDataDto> act)
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Client_UserReceiveDataToybox), act);
+    }
+
+    public void OnUserReceiveAliasGlobalUpdate(Action<CallbackAliasGlobalUpdateDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveAliasGlobalUpdate), act);
+    }
+
+    public void OnUserReceiveAliasPairUpdate(Action<CallbackAliasPairUpdateDto> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveAliasPairUpdate), act);
+    }
+
+    public void OnUserReceiveListenerName(Action<UserData, string> act)
+    {
+        if (Initialized) return;
+        GagSpeakHubMain!.On(nameof(Client_UserReceiveListenerName), act);
     }
 
     public void OnUserReceiveLightStorage(Action<CallbackLightStorageDto> act)

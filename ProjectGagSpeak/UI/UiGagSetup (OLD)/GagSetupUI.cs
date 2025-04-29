@@ -8,7 +8,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using ImGuiNET;
 
-namespace GagSpeak.UI.UiGagSetup;
+namespace GagSpeak.CkCommons.Gui.UiGagSetup;
 
 public class GagSetupUI : WindowMediatorSubscriberBase
 {

@@ -4,14 +4,14 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.MainWindow;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.MainWindow;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
 
-namespace GagSpeak.UI.Permissions;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {

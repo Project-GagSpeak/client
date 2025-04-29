@@ -17,7 +17,7 @@ using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 
-namespace GagSpeak.UI.Profile;
+namespace GagSpeak.CkCommons.Gui.Profile;
 
 /// <summary>
 /// The UI Design for the KinkPlates.

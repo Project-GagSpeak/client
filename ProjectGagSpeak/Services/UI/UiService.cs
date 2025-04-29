@@ -4,11 +4,11 @@ using Dalamud.Interface.Windowing;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.MainWindow;
-using GagSpeak.UI.Permissions;
-using GagSpeak.UI.Profile;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.MainWindow;
+using GagSpeak.CkCommons.Gui.Permissions;
+using GagSpeak.CkCommons.Gui.Profile;
 
 namespace GagSpeak.Services;
 

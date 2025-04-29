@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.WebAPI;
-#pragma warning disable MA0040
+#pragma warning disable MA0040 
 /// <summary>
 /// This connections class maintains the responsibilities for how we connect, disconnect, and reconnect.
 /// Manages GagSpeak Hub.
@@ -443,9 +443,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         OnUserReceiveDataGags(dto => _ = Client_UserReceiveDataGags(dto));
         OnUserReceiveDataRestrictions(dto => _ = Client_UserReceiveDataRestrictions(dto));
         OnUserReceiveDataRestraint(dto => _ = Client_UserReceiveDataRestraint(dto));
-        OnUserReceiveDataOrders(dto => _ = Client_UserReceiveDataOrders(dto));
-        OnUserReceiveDataAlias(dto => _ = Client_UserReceiveDataAlias(dto));
         OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
+        OnUserReceiveAliasGlobalUpdate(dto => _ = Client_UserReceiveAliasGlobalUpdate(dto));
+        OnUserReceiveAliasPairUpdate(dto => _ = Client_UserReceiveAliasPairUpdate(dto));
+        OnUserReceiveListenerName((user, name) => _ = Client_UserReceiveListenerName(user, name));
         OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
 
         OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));

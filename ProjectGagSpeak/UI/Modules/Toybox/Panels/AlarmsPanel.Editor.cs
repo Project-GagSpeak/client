@@ -4,7 +4,7 @@ using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public partial class AlarmsPanel
 {

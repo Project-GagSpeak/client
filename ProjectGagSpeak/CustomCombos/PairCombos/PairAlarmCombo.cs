@@ -1,11 +1,12 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using ImGuiNET;
 using OtterGui.Text;

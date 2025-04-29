@@ -8,7 +8,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public partial class PermissionsDrawer
 {

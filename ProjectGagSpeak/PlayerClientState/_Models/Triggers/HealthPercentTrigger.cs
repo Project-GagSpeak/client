@@ -1,7 +1,7 @@
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public record HealthPercentTrigger : Trigger
+public class HealthPercentTrigger : Trigger
 {
     public override TriggerKind Type => TriggerKind.HealthPercent;
 
@@ -20,9 +20,12 @@ public record HealthPercentTrigger : Trigger
     // the maxValue to display (can either be in percent or normal numbers, based on above option)
     public int MaxHealthValue { get; set; } = 10000000;
 
-    public HealthPercentTrigger() { }
+    public HealthPercentTrigger()
+    { }
 
-    public HealthPercentTrigger(Trigger baseTrigger, bool keepId) : base(baseTrigger, keepId) { }
+    public HealthPercentTrigger(Trigger baseTrigger, bool keepId)
+        : base(baseTrigger, keepId)
+    { }
 
     public HealthPercentTrigger(HealthPercentTrigger other, bool keepId)
         : base(other, keepId)
@@ -32,5 +35,17 @@ public record HealthPercentTrigger : Trigger
         PassKind = other.PassKind;
         MinHealthValue = other.MinHealthValue;
         MaxHealthValue = other.MaxHealthValue;
+    }
+
+    public override HealthPercentTrigger Clone(bool keepId) => new HealthPercentTrigger(this, keepId);
+
+    public void ApplyChanges(HealthPercentTrigger other)
+    {
+        PlayerToMonitor = other.PlayerToMonitor;
+        UsePercentageHealth = other.UsePercentageHealth;
+        PassKind = other.PassKind;
+        MinHealthValue = other.MinHealthValue;
+        MaxHealthValue = other.MaxHealthValue;
+        base.ApplyChanges(other);
     }
 }

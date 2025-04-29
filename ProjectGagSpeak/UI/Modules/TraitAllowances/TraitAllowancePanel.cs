@@ -6,13 +6,14 @@ using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
+using GagSpeak.CkCommons.Raii;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 public class TraitAllowancePanel
 {
@@ -99,16 +100,16 @@ public class TraitAllowancePanel
 
     public void DrawAllowancesEditor()
     {
-        // we want to draw 2 childs here, one for module selection, and another for viewing the active pairs.
+        // we want to draw 2 child containers here, one for module selection, and another for viewing the active pairs.
         var childWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
         // Group this to get the full height.
         using (ImRaii.Group())
         {
-            using (CkComponents.CenterHeaderChild("ModuleViewer", "Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), WFlags.AlwaysUseWindowPadding))
+            using (CkRaii.HeaderChild("Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
             {
                 var selectorHeight = ImGui.GetFrameHeightWithSpacing() * Options.Length - ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
                 var region = new Vector2(ImGui.GetContentRegionAvail().X, selectorHeight);
-                using (CkComponents.FramedChild("ModuleSelector", CkColor.FancyHeaderContrast.Uint(), region, WFlags.AlwaysUseWindowPadding))
+                using (CkRaii.FramedChildPadded("ModuleSelector", region, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -123,7 +124,7 @@ public class TraitAllowancePanel
                 var childStartY = ImGui.GetContentRegionAvail().Y - actionsH - ImGui.GetTextLineHeightWithSpacing();
                 ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, childStartY));
                 ImGuiUtil.Center("Module Actions");
-                using (CkComponents.FramedChild("ModuleActions", CkColor.FancyHeaderContrast.Uint(), actionsRegion, WFlags.AlwaysUseWindowPadding))
+                using (CkRaii.FramedChildPadded("ModuleActions", actionsRegion, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -172,9 +173,9 @@ public class TraitAllowancePanel
         }
         // then draw out the allowed pairs list.
         ImGui.SameLine();
-        using (CkComponents.CenterHeaderChild("AllowedPairs", "Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
         {
-            using (CkComponents.FramedChild("PairsInner", CkColor.FancyHeaderContrast.Uint(), ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding))
+            using (CkRaii.FramedChildPadded("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
             {
                 if (_allowedPairs.Count <= 0)
                     return;
@@ -189,7 +190,7 @@ public class TraitAllowancePanel
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
         var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
-        using (CkComponents.FramedChild("AllowanceAction-" + label, color, size))
+        using (CkRaii.FramedChild("AllowanceAction-" + label, size, color))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             ImGui.AlignTextToFramePadding();
@@ -210,7 +211,7 @@ public class TraitAllowancePanel
         var color = selected
             ? CkColor.ElementBG.Uint()
             : hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
-        using (CkComponents.FramedChild("ModuleSection-" + option, color, size))
+        using (CkRaii.FramedChild("ModuleSection-" + option, size, color))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             DrawModuleImage(option);
@@ -246,7 +247,7 @@ public class TraitAllowancePanel
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
         var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
-        using (CkComponents.FramedChild("AllowedPair"+pair.UserData.UID, color, size))
+        using (CkRaii.FramedChild("AllowedPair"+pair.UserData.UID, size, color))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             if(pair.UserData.Tier is { } tier && tier is not CkSupporterTier.NoRole)

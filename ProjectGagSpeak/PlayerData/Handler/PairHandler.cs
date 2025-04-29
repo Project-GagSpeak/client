@@ -4,7 +4,7 @@ using GagSpeak.Interop.Ipc;
 using GagSpeak.PlayerData.Factories;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Connection;
 using Microsoft.Extensions.Hosting;
 

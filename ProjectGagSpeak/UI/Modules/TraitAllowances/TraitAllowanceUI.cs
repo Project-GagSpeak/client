@@ -4,11 +4,12 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGuiInternal.Structs;
+using GagSpeak.CkCommons.Widgets;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 public class TraitAllowanceUI : WindowMediatorSubscriberBase
 {
@@ -81,15 +82,15 @@ public class TraitAllowanceUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         var winPadding = ImGui.GetStyle().WindowPadding;
-        var headerInnder = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        var headerInner = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         var splitterSize = ImGui.GetFrameHeight() / 4;
 
         // Draw a flat header.
-        var drawRegions = DrawerHelpers.FlatHeader(CkColor.FancyHeader.Uint(), headerInnder, LeftLength, splitterSize);
+        var drawRegions = CkHeader.Flat(CkColor.FancyHeader.Uint(), headerInner, LeftLength, splitterSize);
 
         // Create a child for each region, drawn to the size.
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("TraitsTL", drawRegions.Topleft.Size))
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("TraitsTL", drawRegions.TopLeft.Size))
             _selector.DrawSearch();
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);

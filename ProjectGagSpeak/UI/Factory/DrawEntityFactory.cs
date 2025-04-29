@@ -3,13 +3,13 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Handlers;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.UserPair;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class DrawEntityFactory
 {
@@ -21,8 +21,7 @@ public class DrawEntityFactory
     private readonly CosmeticService _cosmetics;
 
     public DrawEntityFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, MainHub hub,
-        ServerConfigurationManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics,
-        CkGui uiShared)
+        ServerConfigurationManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;

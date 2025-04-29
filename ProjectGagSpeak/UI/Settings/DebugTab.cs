@@ -1,12 +1,13 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Configs;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -15,7 +16,7 @@ using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using System.Windows.Forms;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public class DebugTab
 {
@@ -184,9 +185,9 @@ public class DebugTab
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", _playerData.GlobalPerms ?? new UserGlobalPermissions());
-        DrawGagData("Player", _gags.ActiveGagsData ?? new CharaActiveGags());
-        DrawRestrictions("Player", _restrictions.ActiveRestrictionsData ?? new CharaActiveRestrictions());
-        DrawRestraint("Player", _restraints.ActiveRestraintData ?? new CharaActiveRestraint());
+        DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
+        DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
+        DrawRestraint("Player", _restraints.ServerRestraintData ?? new CharaActiveRestraint());
         // draw an enclosed tree node here for the alias data. Inside of this, we will have a different tree node for each of the keys in our alias storage,.
         using (ImRaii.TreeNode("Alias Data"))
         {
@@ -194,8 +195,13 @@ public class DebugTab
             {
                 using (ImRaii.TreeNode("Your Alias List for: " + alias.Key))
                 {
-                    ImGui.Text("Listener Name: " + alias.Value.StoredNameWorld);
-                    DrawAlias(alias.Key, alias.Value.Storage.ToAliasData());
+                    ImGui.Text("Has Name Stored: ");
+                    CkGui.BooleanToColoredIcon(!alias.Value.StoredNameWorld.IsNullOrEmpty(), true);
+
+                    ImGui.Text("Listener Name: '" + alias.Value.StoredNameWorld + "'");
+                    ImGui.Text("Extracted Listener Name: '" + alias.Value.ExtractedListenerName + "'");
+
+                    DrawAlias(alias.Key, alias.Value.Storage);
                 }
             }
         }
@@ -224,7 +230,8 @@ public class DebugTab
             DrawGagData(pair.UserData.UID, pair.LastGagData ?? new CharaActiveGags());
             DrawRestrictions(pair.UserData.UID, pair.LastRestrictionsData ?? new CharaActiveRestrictions());
             DrawRestraint(pair.UserData.UID, pair.LastRestraintData ?? new CharaActiveRestraint());
-            DrawAlias(pair.UserData.UID, pair.LastAliasData ?? new CharaAliasData());
+            DrawAlias(pair.UserData.UID, pair.LastGlobalAliasData ?? new AliasStorage());
+            DrawAlias(pair.UserData.UID, pair.LastPairAliasData.Storage ?? new AliasStorage());
             DrawToybox(pair.UserData.UID, pair.LastToyboxData ?? new CharaToyboxData());
             DrawLightStorage(pair.UserData.UID, pair.LastLightStorage ?? new CharaLightStorageData());
         }
@@ -571,23 +578,17 @@ public class DebugTab
 
     }
 
-    private void DrawAlias(string uid, CharaAliasData alias)
+    private void DrawAlias(string uid, AliasStorage alias)
     {
         using var nodeMain = ImRaii.TreeNode("Alias Data");
         if (!nodeMain) return;
-
-        ImGui.Text("Has Name Stored: ");
-        CkGui.BooleanToColoredIcon(alias.HasNameStored, true);
-
-        ImGui.Text("Listener Name: '" + alias.ListenerName + "'");
-        ImGui.Text("Extracted Listener Name: '" + alias.ExtractedListenerName + "'");
 
         using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGui.TableSetupColumn("Alias Input");
             ImGui.TableSetupColumn("Alias Output");
             ImGui.TableHeadersRow();
-            foreach (var aliasData in alias.AliasList)
+            foreach (var aliasData in alias)
             {
                 ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
                 ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
@@ -687,7 +688,7 @@ public class DebugTab
                     {
                         ImGuiUtil.DrawTableColumn(item.Id.ToString());
                         ImGuiUtil.DrawTableColumn(item.Label);
-                        ImGuiUtil.DrawTableColumn(item.Type.ToString());
+                        ImGuiUtil.DrawTableColumn(item.GagType.ToString());
                         ImGui.TableNextRow();
                     }
                 }

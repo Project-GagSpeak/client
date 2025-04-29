@@ -9,7 +9,7 @@ using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
@@ -21,7 +21,7 @@ using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
 
-namespace GagSpeak.UI.Publications;
+namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
 {
     private readonly MoodlesDisplayer _monitor;

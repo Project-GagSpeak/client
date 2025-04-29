@@ -2,11 +2,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 using ImGuiNET;
 using OtterGui.Text;
@@ -75,15 +76,15 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             ImGui.BeginTooltip();
 
             // draw trigger description
-            if (!item.Desc.IsNullOrWhitespace())
+            if (!item.Description.IsNullOrWhitespace())
             {
                 // push the text wrap position to the font size times 35
                 ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
                 // we will then check to see if the text contains a tooltip
-                if (item.Desc.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
+                if (item.Description.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
                 {
                     // if it does, we will split the text by the tooltip
-                    var splitText = item.Desc.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
+                    var splitText = item.Description.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
                     // for each of the split text, we will display the text unformatted
                     for (var i = 0; i < splitText.Length; i++)
                     {
@@ -93,7 +94,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
                 }
                 else
                 {
-                    ImGui.TextUnformatted(item.Desc);
+                    ImGui.TextUnformatted(item.Description);
                 }
                 // finally, pop the text wrap position
                 ImGui.PopTextWrapPos();

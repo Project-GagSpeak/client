@@ -1,7 +1,9 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;
@@ -12,12 +14,10 @@ public class PresetLogicDrawer
 {
     private readonly ILogger<PresetLogicDrawer> _logger;
     private readonly MainHub _hub;
-    private readonly CkGui _ckGui;
-    public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub, CkGui ckGui)
+    public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub)
     {
         _logger = logger;
         _hub = hub;
-        _ckGui = ckGui;
     }
 
     public DateTime LastApplyTime { get; private set; } = DateTime.MinValue;
@@ -29,11 +29,12 @@ public class PresetLogicDrawer
         // It's OK if things are active for the player, since it doesn't actually trigger everything at once.
         var disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
 
-        var comboWidth = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
+        var comboW = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
         using (var disabled = ImRaii.Disabled(disabledCondition))
         {
-            _ckGui.DrawCombo("Permission Preset Selector", comboWidth, Enum.GetValues<PresetName>(),
-            (preset) => preset.ToName(), (i) => SelectedPreset = (PresetName)i, SelectedPreset, false);
+            if(CkGuiUtils.EnumCombo("##Presets", comboW, SelectedPreset, out PresetName newVal))
+                SelectedPreset = newVal;
+
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
             {

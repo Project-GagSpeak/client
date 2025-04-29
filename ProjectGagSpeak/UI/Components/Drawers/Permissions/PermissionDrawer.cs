@@ -1,13 +1,14 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary> An assister for drawing out the various permissions in the pair action window. </summary>
 /// <remarks> This helps by using predefined data to avoid high calculations each draw frame. </remarks>
@@ -20,8 +21,7 @@ public partial class PermissionsDrawer : IMediatorSubscriber, IDisposable
 
     private Dictionary<SPPID, string> _timespanCache = new();
     private DateTime _lastRefresh = DateTime.MinValue;
-    public PermissionsDrawer(GagspeakMediator mediator, MainHub hub, PermissionData permData, 
-        PiShockProvider shockies, CkGui uiShared)
+    public PermissionsDrawer(GagspeakMediator mediator, MainHub hub, PermissionData permData, PiShockProvider shockies)
     {
         Mediator = mediator;
         _hub = hub;

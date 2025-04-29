@@ -7,12 +7,12 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Profile;
+using GagSpeak.CkCommons.Gui.Profile;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 internal class ReportPopupHandler : IPopupHandler
 {

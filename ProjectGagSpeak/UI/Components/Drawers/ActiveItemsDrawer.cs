@@ -1,6 +1,7 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
 using GagSpeak.PlayerData.Data;
@@ -10,7 +11,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -21,7 +22,7 @@ using Penumbra.GameData.Structs;
 using System.Drawing;
 using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 public class ActiveItemsDrawer
 {
@@ -53,29 +54,29 @@ public class ActiveItemsDrawer
         _cosmetics = cosmetics;
 
         // Initialize the GagCombos.
-        _gagItems = new RestrictionGagCombo[Globals.MaxGagSlots];
+        _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
         for (var i = 0; i < _gagItems.Length; i++)
             _gagItems[i] = new RestrictionGagCombo(logger, favorites, () => [
                 ..gags.Storage.Values.OrderByDescending(p => favorites._favoriteGags.Contains(p.GagType)).ThenBy(p => p.GagType)
             ]);
 
         // Init Gag Padlocks.
-        _gagPadlocks = new PadlockGagsClient[Globals.MaxGagSlots];
+        _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, (layerIdx) => gags.ActiveGagsData?.GagSlots[layerIdx] ?? new ActiveGagSlot());
+            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, (layerIdx) => gags.ServerGagData?.GagSlots[layerIdx] ?? new ActiveGagSlot());
 
         // Init Restriction Combos.
-        _restrictionItems = new RestrictionCombo[Globals.MaxRestrictionSlots];
+        _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionItems.Length; i++)
             _restrictionItems[i] = new RestrictionCombo(logger, favorites, () => [
                 ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
 
         // Init Restriction Padlocks.
-        _restrictionPadlocks = new PadlockRestrictionsClient[Globals.MaxRestrictionSlots];
+        _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
             _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions, (slotIdx) =>
-                restrictions.ActiveRestrictionsData?.Restrictions[slotIdx] ?? new ActiveRestriction());
+                restrictions.ServerRestrictionData?.Restrictions[slotIdx] ?? new ActiveRestriction());
 
         // Init Restraint Combos.
         _restraintItem = new RestraintCombo(logger, favorites, () => [
@@ -84,7 +85,7 @@ public class ActiveItemsDrawer
 
         // Init Restraint Padlocks.
         _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints, (_) =>
-            restraints.ActiveRestraintData ?? new CharaActiveRestraint());
+            restraints.ServerRestraintData ?? new CharaActiveRestraint());
     }
 
     // Draw out all of the possible combos for active items.
@@ -99,7 +100,7 @@ public class ActiveItemsDrawer
 
     public void DisplayGagSlots(float width)
     {
-        if (_gags.ActiveGagsData is not { } activeGagSlots)
+        if (_gags.ServerGagData is not { } activeGagSlots)
             return;
 
         // get the current content height.
@@ -132,7 +133,7 @@ public class ActiveItemsDrawer
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         using var _ = ImRaii.Child("RestrictionSlotsChild", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
 
-        if (_restrictions.ActiveRestrictionsData is not { } activeRestrictionSlots)
+        if (_restrictions.ServerRestrictionData is not { } activeRestrictionSlots)
             return;
 
         // get the current content height.
@@ -148,7 +149,7 @@ public class ActiveItemsDrawer
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
             // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
-            if (_restrictions.ActiveRestrictions.TryGetValue(index, out var item))
+            if (_restrictions.AppliedRestrictions[index] is { } item)
             {
                 if (restrictionData.IsLocked())
                     RestrictionUnlockingUi(width, index, restrictionData, item);
@@ -193,7 +194,7 @@ public class ActiveItemsDrawer
 
     public void DisplayRestraintPadlock(Vector2 region)
     {
-        if(_restraints.ActiveRestraintData is not { } activeRestraint)
+        if(_restraints.ServerRestraintData is not { } activeRestraint)
             return;
 
         // unlike gags or restrictions, these only display the locking, or unlocking, interface.

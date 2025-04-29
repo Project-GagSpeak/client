@@ -2,7 +2,7 @@ using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 
 namespace GagSpeak.Services.Configs;
 

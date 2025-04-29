@@ -1,7 +1,7 @@
 using Buttplug.Client;
 using GagSpeak.PlayerState.Models;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;
 

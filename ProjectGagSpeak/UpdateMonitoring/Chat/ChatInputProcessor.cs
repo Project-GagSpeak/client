@@ -65,7 +65,7 @@ public unsafe class ChatInputDetour : IDisposable
         // Put all this shit in a try-catch loop so we can catch any possible thrown exception.
         try
         {
-            if (_globals.GlobalPerms is not { } globals || _gags.ActiveGagsData is not { } gagData)
+            if (_globals.GlobalPerms is not { } globals || _gags.ServerGagData is not { } gagData)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             // Grab the original string.

@@ -4,7 +4,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;

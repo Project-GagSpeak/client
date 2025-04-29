@@ -2,15 +2,16 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UI.Handlers;
+namespace GagSpeak.CkCommons.Gui.Handlers;
 
 /// <summary>
 /// Handler for drawing the list of user pairs in various ways.
@@ -32,7 +33,7 @@ public class UserPairListHandler
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
         PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
-        GagspeakConfigService configService, CkGui uiShared)
+        GagspeakConfigService configService)
     {
         _logger = logger;
         _mediator = mediator;
@@ -98,7 +99,7 @@ public class UserPairListHandler
             foreach (var item in _drawFolders)
             {
                 // draw the content
-                if (item is DrawFolderBase folderBase && folderBase.ID == Globals.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
+                if (item is DrawFolderBase folderBase && folderBase.ID == Constants.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
                     continue;
                 // draw folder if not all tag.
                 item.Draw();
@@ -110,7 +111,7 @@ public class UserPairListHandler
     /// <summary> Draws all bi-directionally paired users (online or offline) without any tag header. </summary>
     public void DrawPairListSelectable(bool showOffline, byte id)
     {
-        var tagToUse = Globals.CustomAllTag;
+        var tagToUse = Constants.CustomAllTag;
 
         var allTagFolder = _drawFolders
             .FirstOrDefault(folder => folder is DrawFolderBase && ((DrawFolderBase)folder).ID == tagToUse);
@@ -252,7 +253,7 @@ public class UserPairListHandler
                 .Where(FilterVisibleUsers));
 
             // add the draw folders based on the 
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomVisibleTag, filteredVisiblePairs, allVisiblePairs));
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomVisibleTag, filteredVisiblePairs, allVisiblePairs));
         }
 
         var allOnlinePairs = ImmutablePairList(allPairs.Where(FilterOnlineOrPausedSelf));
@@ -261,16 +262,16 @@ public class UserPairListHandler
         var bidirectionalTaggedPairs = BasicSortedList(filteredPairs
             .Where(u => FilterOnlineUsers(u) && FilterPairedOrPausedSelf(u)));
 
-        _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomAllTag, LoggerType.UserPairDrawer);
-        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
+        _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomAllTag, LoggerType.UserPairDrawer);
+        drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
 
 
         // if we want to show offline users seperately,
         if (_configService.Config.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
-            _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomOnlineTag, LoggerType.UserPairDrawer);
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
+            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UserPairDrawer);
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
 
             // then do so.
             var allOfflinePairs = ImmutablePairList(allPairs
@@ -279,8 +280,8 @@ public class UserPairListHandler
                 .Where(FilterOfflineUsers));
 
             // add the folder.
-            _logger.LogDebug("Adding Pair Section List Tag: " + Globals.CustomOfflineTag, LoggerType.UserPairDrawer);
-            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Globals.CustomOfflineTag, filteredOfflinePairs,
+            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOfflineTag, LoggerType.UserPairDrawer);
+            drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOfflineTag, filteredOfflinePairs,
                 allOfflinePairs));
 
         }

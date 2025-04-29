@@ -1,10 +1,11 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Widgets;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 public class AchievementTabs : IconTabBar<AchievementTabs.SelectedTab>
 {
     public enum SelectedTab
@@ -38,7 +39,7 @@ public class AchievementTabs : IconTabBar<AchievementTabs.SelectedTab>
         if (_tabButtons.Count == 0)
             return;
 
-        using var btncolor = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
+        using var color = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
         var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
         var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
@@ -52,7 +53,7 @@ public class AchievementTabs : IconTabBar<AchievementTabs.SelectedTab>
 
         // advance to the new line and dispose of the button color.
         ImGui.NewLine();
-        btncolor.Dispose();
+        color.Dispose();
 
         ImGuiHelpers.ScaledDummy(3f);
         ImGui.Separator();

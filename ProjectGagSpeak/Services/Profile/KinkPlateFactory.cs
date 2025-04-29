@@ -1,7 +1,7 @@
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services;

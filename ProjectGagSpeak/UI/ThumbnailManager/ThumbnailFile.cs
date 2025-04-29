@@ -1,7 +1,7 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Services.Configs;
 
-namespace GagSpeak.UI;
+namespace GagSpeak.CkCommons.Gui;
 
 public sealed class ThumbnailFile : IDisposable
 {

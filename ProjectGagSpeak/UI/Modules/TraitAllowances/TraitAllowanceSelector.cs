@@ -3,22 +3,19 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Drawers;
+using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Handlers;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using OtterGui.Text;
 using System.Collections.Immutable;
-namespace GagSpeak.UI.Wardrobe;
 
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 {
     private readonly GagspeakConfigService _config;
@@ -55,7 +52,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 
     public void DrawSearch()
     {
-        if (DrawerHelpers.FancySearchFilter("Pair Search", ImGui.GetContentRegionAvail().X, "Search for Pairs", ref _searchValue, 128, ImGui.GetFrameHeight(), FavoritesFilter))
+        if (FancySearchBar.Draw("Pair Search", ImGui.GetContentRegionAvail().X, "Search for Pairs", ref _searchValue, 128, ImGui.GetFrameHeight(), FavoritesFilter))
         {
             UpdatePairList();
         }

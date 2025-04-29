@@ -258,7 +258,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
         }
 
         // Block out Chat Input if we should be.
-        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ChatInputBlocked))
+        if (_traits.ActiveHcState.HasAny(HardcoreState.ChatInputBlocked))
             ChatLogAddonHelper.DiscardCursorNodeWhenFocused();
     }
 
@@ -272,7 +272,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
                 return false;
 
             // If ForcedStay, prevent teleports and methods of death.
-            if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceStay))
+            if (_traits.ActiveHcState.HasAny(HardcoreState.ForceStay))
             {
                 // check if we are trying to hit teleport or return from hotbars /  menus
                 if (type is ActionType.GeneralAction && acId is 7 or 8)

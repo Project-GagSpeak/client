@@ -1,4 +1,3 @@
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
@@ -8,16 +7,12 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UI;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
-using static PInvoke.User32;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.PlayerState.Visual;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -28,6 +23,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly ItemService _items;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
+
+    private StorageItemEditor<RestraintSet> _itemEditor = new();
+    private VisualAdvancedRestrictionsCache _managerCache = new();
+    private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
         RestrictionManager restrictions, ModSettingPresetManager modPresets,
@@ -44,29 +43,23 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
     }
 
-    // Cached Information.
-    public RestraintSet? ActiveEditorItem = null;
-    public VisualAdvancedRestrictionsCache LatestVisualCache { get; private set; } = new();
-    public RestraintSet? ActiveRestraint = null;
-
-    // Stored Information
-    public CharaActiveRestraint? ActiveRestraintData { get; private set; }
+    public VisualAdvancedRestrictionsCache VisualCache => _managerCache;
+    public CharaActiveRestraint? ServerRestraintData => _serverRestraintData;
     public RestraintStorage Storage { get; private set; } = new RestraintStorage();
+    public RestraintSet? ItemInEditor => _itemEditor.ItemInEditor;
+    public RestraintSet AppliedRestraint { get; private set; } = new RestraintSet(); // Identifiers here dont madder here, so this is fine.
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
-    /// <param name="serverData"> The data from the server to update with. </param>
-    /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restraint. </remarks>
     public void LoadServerData(CharaActiveRestraint serverData)
     {
-        ActiveRestraintData = serverData;
-        if (!serverData.Identifier.IsEmptyGuid())
-            if (Storage.TryGetRestraint(serverData.Identifier, out var item))
-                ActiveRestraint = item;
-
-        LatestVisualCache.UpdateCache(ActiveRestraint);
+        _serverRestraintData = serverData;
+        if (Storage.TryGetRestraint(serverData.Identifier, out var item))
+        {
+            AppliedRestraint = item;
+            _managerCache.UpdateCache(AppliedRestraint);
+        }
     }
 
-    /// <summary> Create a new Restriction, where the item can be any restraint item. </summary>
     public RestraintSet CreateNew(string restraintName)
     {
         // Ensure that the new name is unique.
@@ -79,7 +72,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         return restraint;
     }
 
-    /// <summary> Create a clone of a Restriction. </summary>
     public RestraintSet CreateClone(RestraintSet clone, string newName)
     {
         // Ensure that the new name is unique.
@@ -93,12 +85,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     }
 
 
-    /// <summary> Delete a Restriction. </summary>
     public void Delete(RestraintSet restraint)
     {
-        if (ActiveEditorItem is null)
-            return;
-
         // should never be able to remove active restraints, but if that happens to occur, add checks here.
         if (Storage.Remove(restraint))
         {
@@ -108,8 +96,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         }
     }
 
-
-    /// <summary> Rename a Restriction. </summary>
     public void Rename(RestraintSet restraint, string newName)
     {
         var oldName = restraint.Label;
@@ -135,82 +121,38 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(RestraintSet item)
-    {
-        // create an exact clone of the passed in cursed item for editing, so long as it exists in storage.
-        if (Storage.Contains(item))
-            ActiveEditorItem = new RestraintSet(item, true);
-    }
+    public void StartEditing(RestraintSet item) => _itemEditor.StartEditing(item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-        => ActiveEditorItem = null;
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Restriction and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-        // Update the active restraint with the new data, update the cache, and clear the edited restraint.
-        if (Storage.TryGetRestraint(ActiveEditorItem.Identifier, out var item))
+        if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            item.ApplyChanges(ActiveEditorItem);
-            ActiveEditorItem = null;
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, item, null));
+            Logger.LogDebug($"Saved changes to restraint {sourceItem.Identifier}.");
+            _managerCache.UpdateCache(AppliedRestraint);
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
     }
 
-    public void AddFavorite(RestraintSet restraint)
-        => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, restraint.Identifier);
+    public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
+    public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
 
-    public void RemoveFavorite(RestraintSet restraint)
-        => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, restraint.Identifier);
-
-    #region Validators
-    public bool CanApply(Guid restraintId)
-    {
-        if (!Storage.Contains(restraintId))
-            return false;
-
-        if (ActiveRestraintData is { } data && data.CanApply())
-            return true;
-        Logger.LogTrace("Not able to Apply at this time due to errors!");
-        return false;
-    }
-
-    public bool CanLock(Guid restraintId)
-    {
-        if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanLock()))
-            return true;
-        Logger.LogTrace("Not able to Lock at this time due to errors!");
-        return false;
-    }
-
-    public bool CanUnlock(Guid restraintId)
-    {
-        if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanUnlock()))
-            return true;
-        Logger.LogTrace("Not able to Unlock at this time due to errors!");
-        return false;
-    }
-
-    public bool CanRemove(Guid restraintId)
-    {
-        if (ActiveRestraintData is { } data && (data.Identifier == restraintId && data.CanRemove()))
-            return true;
-        Logger.LogTrace("Not able to Remove at this time due to errors!");
-        return false;
-    }
-    #endregion Validators
+    public bool CanApply(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanLock());
+    public bool CanLock(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanLock());
+    public bool CanUnlock(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanUnlock());
+    public bool CanRemove(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanRemove());
 
     #region Active Set Updates
     public VisualUpdateFlags ApplyRestraint(Guid restraintId, string enactor, out RestraintSet? set)
     {
         set = null; var flags = VisualUpdateFlags.None;
 
-        if (ActiveRestraintData is not { } data)
+        if (_serverRestraintData is not { } data)
             return flags;
 
         // update values & ping achievement.
@@ -229,15 +171,16 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             if(set.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
             if(set.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
             if(set.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
+
+            AppliedRestraint = set;
+            _managerCache.UpdateCache(AppliedRestraint);
         }
-        ActiveRestraint = set;
-        LatestVisualCache.UpdateCache(ActiveRestraint);
         return flags;
     }
 
     public void LockRestraint(Guid restraintId, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
     {
-        if (ActiveRestraintData is not { } data)
+        if (_serverRestraintData is not { } data)
             return;
 
         data.Padlock = padlock;
@@ -250,7 +193,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void UnlockRestraint(Guid restraintId, string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
-        if (ActiveRestraintData is not { } data)
+        if (_serverRestraintData is not { } data)
             return;
 
         var prevLock = data.Padlock;
@@ -269,7 +212,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     {
         item = null; var flags = VisualUpdateFlags.None;
 
-        if (ActiveRestraintData is not { } data)
+        if (_serverRestraintData is not { } data)
             return flags;
 
         // store the new data, then fire the achievement.
@@ -286,9 +229,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestraint(removedRestraint, out var matchedItem))
         {
-            // Do recalculations first since it doesnt madder here.
-            ActiveRestraint = null;
-            LatestVisualCache.UpdateCache(ActiveRestraint);
+            AppliedRestraint = new RestraintSet();
+            _managerCache.UpdateCache(AppliedRestraint);
 
             // begin by assuming all aspects are removed.
             flags = VisualUpdateFlags.AllGag;
@@ -627,18 +569,18 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (!MainHub.IsConnected)
             return;
 
-        if (ActiveRestraintData is null || !ActiveRestraintData.IsLocked())
+        if (_serverRestraintData is null || !_serverRestraintData.IsLocked())
             return;
 
-        if (PadlockEx.IsTimerLock(ActiveRestraintData.Padlock) && ActiveRestraintData.HasTimerExpired())
+        if (PadlockEx.IsTimerLock(_serverRestraintData.Padlock) && _serverRestraintData.HasTimerExpired())
         {
             Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.PadlockHandling);
             // only set data relevant to the new change.
             var newData = new CharaActiveRestraint()
             {
-                Padlock = ActiveRestraintData.Padlock, // match the padlock
-                Password = ActiveRestraintData.Password, // use the same password.
-                PadlockAssigner = ActiveRestraintData.PadlockAssigner // use the same assigner. (To remove devotional timers)
+                Padlock = _serverRestraintData.Padlock, // match the padlock
+                Password = _serverRestraintData.Password, // use the same password.
+                PadlockAssigner = _serverRestraintData.PadlockAssigner // use the same assigner. (To remove devotional timers)
             };
 
             Mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Unlocked, newData));

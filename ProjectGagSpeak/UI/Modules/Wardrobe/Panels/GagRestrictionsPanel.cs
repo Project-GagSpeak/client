@@ -3,6 +3,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Pairs;
@@ -11,7 +13,7 @@ using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -19,7 +21,7 @@ using OtterGui.Raii;
 using OtterGui.Text;
 using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentHousingPlant;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
 {
     private readonly ILogger<GagRestrictionsPanel> _logger;
@@ -33,7 +35,7 @@ public partial class GagRestrictionsPanel
     private readonly PairManager _pairs;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
-    public bool IsEditing => _manager.ActiveEditorItem != null;
+    public bool IsEditing => _manager.ItemInEditor != null;
     public GagRestrictionsPanel(
         ILogger<GagRestrictionsPanel> logger,
         GagRestrictionFileSelector selector,
@@ -61,11 +63,11 @@ public partial class GagRestrictionsPanel
         _profileCombo = new CustomizeProfileCombo(logger);
     }
 
-    public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("GagsTopLeft", drawRegions.Topleft.Size))
-            _selector.DrawFilterRow(drawRegions.Topleft.SizeX);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("GagsTopLeft", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("GagsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
@@ -92,11 +94,11 @@ public partial class GagRestrictionsPanel
         }
     }
 
-    public void DrawEditorContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize)
+    public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestraintsTopLeft", drawRegions.Topleft.Size))
-            DrawEditorHeaderLeft(drawRegions.Topleft.Size);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("RestraintsTopLeft", drawRegions.TopLeft.Size))
+            DrawEditorHeaderLeft(drawRegions.TopLeft.Size);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
@@ -223,7 +225,7 @@ public partial class GagRestrictionsPanel
 
     private void DrawActiveItemInfo()
     {
-        if (_manager.ActiveGagsData is null)
+        if (_manager.ServerGagData is null)
             return;
 
         using var _ = ImRaii.Child("ActiveGagItems", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);

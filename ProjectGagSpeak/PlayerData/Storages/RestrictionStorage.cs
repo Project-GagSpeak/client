@@ -1,7 +1,10 @@
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
+using GagspeakAPI.Dto.User;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace GagSpeak.PlayerData.Storage;
 
@@ -61,6 +64,10 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
     /// <summary> Gets if the respective gag is enabled, if it exists. </summary>
     /// <returns> True if it exists and is enabled, false otherwise. </returns>
     public bool IsEnabled(GagType gag) => ContainsKey(gag) && this[gag].IsEnabled;
+
+    
+    public Dictionary<GagType, AppliedSlot> ToLightStorage()
+        => this.Where(x => x.Value.IsEnabled).ToDictionary(x => x.Key, x => x.Value.ToAppliedSlot());
 }
 
 public class CursedLootStorage : List<CursedItem>
@@ -91,6 +98,20 @@ public class CursedLootStorage : List<CursedItem>
         return false;
     }
 
+    public List<LightCursedItem> GetItemInfoList() => this
+        .Select(x => x.RestrictionRef switch
+        {
+            GarblerRestriction gag => new LightCursedItem(x.Identifier, x.Label, gag.GagType, Guid.Empty, x.ReleaseTime),
+            RestrictionItem item => new LightCursedItem(x.Identifier, x.Label, GagType.None, item.Identifier, x.ReleaseTime),
+            _ => null
+        })
+        .Where(item => item != null)
+        .ToList()!;
+
+    public IEnumerable<Guid> ActiveIds => this
+        .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
+        .Select(x => x.Identifier);
+
     public IReadOnlyList<CursedItem> ActiveItems => this
         .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
         .OrderBy(x => x.AppliedTime)
@@ -104,13 +125,5 @@ public class CursedLootStorage : List<CursedItem>
 
     public IReadOnlyList<CursedItem> InactiveItemsInPool => this
         .Where(x => x.InPool && x.AppliedTime == DateTimeOffset.MinValue)
-        .ToList();
-
-    public IReadOnlyList<CursedItem> ItemsInPool => this
-        .Where(x => x.InPool)
-        .ToList();
-
-    public IReadOnlyList<CursedItem> ItemsNotInPool => this
-        .Where(x => !x.InPool)
         .ToList();
 }

@@ -4,13 +4,14 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Models;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
 {
     private CustomizeProfileCombo _profileCombo;
@@ -19,7 +20,7 @@ public partial class GagRestrictionsPanel
     private void DrawEditorHeaderLeft(Vector2 region)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } gagItem)
+        if (_manager.ItemInEditor is not { } gagItem)
             return;
 
         using var group = ImRaii.Group();
@@ -48,7 +49,7 @@ public partial class GagRestrictionsPanel
     private void DrawEditorHeaderRight(Vector2 region)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } gagItem)
+        if (_manager.ItemInEditor is not { } gagItem)
             return;
 
         using var group = ImRaii.Group();
@@ -108,7 +109,7 @@ public partial class GagRestrictionsPanel
     private void DrawEditorLeft(float width)
     {
         // Dont draw anything if the editor is not active.
-        if (_manager.ActiveEditorItem is not { } gagItem)
+        if (_manager.ItemInEditor is not { } gagItem)
             return;
 
         var defaultChildBg = ImGui.GetColorU32(ImGuiCol.ChildBg);
@@ -126,10 +127,10 @@ public partial class GagRestrictionsPanel
 
     public void DrawEditorRight(float width)
     {
-        // encapsulate this component in a child window to prevent overheight from breaking the layout.
+        // encapsulate this component in a child window to prevent over height from breaking the layout.
         //using var _ = ImRaii.Child("EditorRight", ImGui.GetContentRegionAvail());
 
-        if (_manager.ActiveEditorItem is not { } gagItem)
+        if (_manager.ItemInEditor is not { } gagItem)
             return;
 
         var rounding = ImGui.GetStyle().FrameRounding * 1.25f;
@@ -144,9 +145,9 @@ public partial class GagRestrictionsPanel
         var style = ImGui.GetStyle();
         var iconH = ImGui.GetFrameHeight();
         var winSize = new Vector2(width, iconH);
-        using (CkComponents.CenterHeaderChild("CustomizeProfile", "Customize+ Preset", winSize, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Customize+ Preset", winSize))
         {
-            // get the innder width after the padding is applied.
+            // get the inner width after the padding is applied.
             var widthInner = ImGui.GetContentRegionAvail().X;
 
             using (ImRaii.Group())

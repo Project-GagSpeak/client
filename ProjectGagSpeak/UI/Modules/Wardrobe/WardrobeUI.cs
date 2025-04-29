@@ -1,13 +1,15 @@
 using Dalamud.Interface.Utility;
 using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
-using static GagSpeak.UI.Components.WardrobeTabs;
+using static GagSpeak.CkCommons.Gui.Components.WardrobeTabs;
+using OtterGui;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
 public class WardrobeUI : WindowMediatorSubscriberBase
 {
@@ -34,7 +36,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu = new WardrobeTabs();
         _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Restrained], SelectedTab.MyRestraints,
             "Restraints--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
         _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
@@ -90,9 +91,13 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         };
         RespectCloseHotkey = false;
     }
-    private WardrobeTabs _tabMenu { get; init; }
+
+    private static WardrobeTabs _tabMenu = new WardrobeTabs();
     private bool ThemePushed = false;
-    private static float LeftLength = 275f * ImGuiHelpers.GlobalScale;
+
+    public static float SelectedRestraintH() => ImGui.GetFrameHeight() * 2 + ImGui.GetTextLineHeightWithSpacing() * 4 + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float SelectedOtherH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
+    private static float RightLength() => 7 * ImGui.GetFrameHeightWithSpacing() + (SelectedRestraintH() / 1.2f);
 
     protected override void PreDrawInternal()
     {
@@ -118,50 +123,38 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
-
-        var wdl = ImGui.GetWindowDrawList();
-        var winMinPos = wdl.GetClipRectMin();
-        var winMaxPos = wdl.GetClipRectMax();
-
-        var winPadding = ImGui.GetStyle().WindowPadding;
-        var headerLeftInner = new Vector2(LeftLength, ImGui.GetFrameHeight());
-        var splitterSize = headerLeftInner.Y;
         var isEditing = IsEditing(_tabMenu.TabSelection);
 
-
         // Restraints Module is Special <3
-        if (_tabMenu.TabSelection is SelectedTab.MyRestraints)
+        if (_tabMenu.TabSelection is SelectedTab.MyRestraints && isEditing)
         {
             // if we are editing draw the editor header, otherwise, draw the normal header.
-            if (isEditing)
-            {
-                var rsEditorRegions = DrawerHelpers.FlatHeaderWithCurve(CkColor.FancyHeader.Uint(), headerLeftInner.Y, headerLeftInner.Y);
-                _restraintPanel.DrawEditorContents(rsEditorRegions.Top, rsEditorRegions.Bottom);
-                return;
-            }
+            var rsEditorRegions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
+            _restraintPanel.DrawEditorContents(rsEditorRegions.Top, rsEditorRegions.Bottom);
+            return;
         }
 
         // Otherwise, perform the normal logic for these.
-        var drawRegions = DrawerHelpers.CurvedHeader(isEditing, CkColor.FancyHeader.Uint(), headerLeftInner, headerLeftInner.Y);
+        var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), RightLength(), !isEditing);
 
         switch (_tabMenu.TabSelection)
         {
             case SelectedTab.MyRestraints:
-                _restraintPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                _restraintPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
                 break;
 
             case SelectedTab.MyRestrictions:
-                if (isEditing) _restrictionsPanel.DrawEditorContents(drawRegions, splitterSize);
-                else _restrictionsPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                if (isEditing) _restrictionsPanel.DrawEditorContents(drawRegions, ImGui.GetFrameHeight());
+                else _restrictionsPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
                 break;
 
             case SelectedTab.MyGags:
-                if (isEditing) _gagRestrictionsPanel.DrawEditorContents(drawRegions, splitterSize);
-                else _gagRestrictionsPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                if (isEditing) _gagRestrictionsPanel.DrawEditorContents(drawRegions, ImGui.GetFrameHeight());
+                else _gagRestrictionsPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
                 break;
 
             case SelectedTab.MyCursedLoot:
-                _cursedLootPanel.DrawContents(drawRegions, splitterSize, _tabMenu);
+                _cursedLootPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
                 break;
         }
     }

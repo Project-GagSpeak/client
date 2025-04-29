@@ -1,16 +1,14 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Textures;
-using GagspeakAPI.Enums;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 // Drawing methods for shared IRestriction based interactions without required dependancies.
 public class TraitsDrawer
@@ -45,8 +43,7 @@ public class TraitsDrawer
 
     public void DrawOneRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
     {
-        var size = new Vector2(width, ImGui.GetFrameHeight());
-        using (CkComponents.CenterHeaderChild("HC_Traits", "Hardcore Traits", size, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight()), CkRaii.HeaderFlags.AddPaddingToHeight))
         {
             var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * TraitCount)) / (TraitCount - 1);
 
@@ -68,8 +65,7 @@ public class TraitsDrawer
 
     public void DrawTwoRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
     {
-        var size = new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y);
-        using (CkComponents.CenterHeaderChild("HC_Traits", "Hardcore Traits", size, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), CkRaii.HeaderFlags.AddPaddingToHeight))
         {
             var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * 4)) / 3;
 

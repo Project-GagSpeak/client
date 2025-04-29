@@ -99,7 +99,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
 
         traits.OnTraitStateChanged += ProcessTraitChange;
-        traits.OnHardcoreStateChanged += ProcessHardcoreTraitChange;
+        traits.OnHcStateChanged += ProcessHardcoreStateChange;
 
     }
 
@@ -119,7 +119,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
 
     }
 
-    private async void ProcessHardcoreTraitChange(HardcoreTraits prevTraits, HardcoreTraits newTraits)
+    private async void ProcessHardcoreStateChange(HardcoreState prevTraits, HardcoreState newTraits)
     {
         var changed = prevTraits ^ newTraits;
 
@@ -127,9 +127,9 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             return;
 
         // Enable Forced Follow if it was set to enabled.
-        if(changed.HasAny(HardcoreTraits.ForceFollow))
+        if(changed.HasAny(HardcoreState.ForceFollow))
         {
-            if(newTraits.HasAny(HardcoreTraits.ForceFollow))
+            if(newTraits.HasAny(HardcoreState.ForceFollow))
             {
                 // Cache movement mode to keep original movement set afterwards.
                 _traits.CachedMovementMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
@@ -156,9 +156,9 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         }
 
         // Handle Forced Emote if it was changed.
-        if (changed.HasAny(HardcoreTraits.ForceEmote))
+        if (changed.HasAny(HardcoreState.ForceEmote))
         {
-            if (newTraits.HasAny(HardcoreTraits.ForceFollow))
+            if (newTraits.HasAny(HardcoreState.ForceFollow))
             {
                 Logger.LogDebug("Enabled forced Emote State for pair.", LoggerType.HardcoreMovement);
                 _moveController.EnableMovementLock();
@@ -227,9 +227,9 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             }
         }
 
-        if (changed.HasAny(HardcoreTraits.ChatBoxHidden))
+        if (changed.HasAny(HardcoreState.ChatBoxHidden))
         {
-            if (newTraits.HasAny(HardcoreTraits.ChatBoxHidden))
+            if (newTraits.HasAny(HardcoreState.ChatBoxHidden))
             {
                 Logger.LogDebug("Hiding ChatBox", LoggerType.HardcoreActions);
                 ChatLogAddonHelper.SetChatLogPanelsVisibility(false);
@@ -241,9 +241,9 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             }
         }
 
-        if (changed.HasAny(HardcoreTraits.ChatInputHidden))
+        if (changed.HasAny(HardcoreState.ChatInputHidden))
         {
-            if (newTraits.HasAny(HardcoreTraits.ChatInputHidden))
+            if (newTraits.HasAny(HardcoreState.ChatInputHidden))
             {
                 Logger.LogDebug("Hiding Chat Input", LoggerType.HardcoreActions);
                 ChatLogAddonHelper.SetMainChatLogVisibility(false);
@@ -296,7 +296,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         if (!_clientMonitor.IsPresent || _clientMonitor.IsDead)
             return;
 
-        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceFollow))
+        if (_traits.ActiveHcState.HasAny(HardcoreState.ForceFollow))
         {
             _moveController.EnableUnfollowHook();
             if (LastMovement.IsRunning)
@@ -318,7 +318,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
             if (isWalking is 0) Marshal.WriteByte((nint)gameControl, 30211, 0x1);
         }
 
-        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceStay))
+        if (_traits.ActiveHcState.HasAny(HardcoreState.ForceStay))
         {
             if (!_clientMonitor.InQuestEvent)
             {
@@ -381,7 +381,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         }
 
         // Handle Prompt Logic.
-        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceStay) || _clientMonitor.InCutscene)
+        if (_traits.ActiveHcState.HasAny(HardcoreState.ForceStay) || _clientMonitor.InCutscene)
         {
             _promptsString.Enable();
             _promptsYesNo.Enable();
@@ -403,14 +403,14 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         else _moveController.DisableMouseAutoMoveHook();
 
         // Force Lock First Person if desired.
-        if (_traits.ActiveBlindfoldForcesFirstPerson)
+        if (false) // Need to revamp this soon.
         {
             if (cameraManager->Camera is not null && cameraManager->Camera->Mode is not (int)CameraControlMode.FirstPerson)
                 cameraManager->Camera->Mode = (int)CameraControlMode.FirstPerson;
         }
 
         // Ensure restricted movement.
-        if (_traits.ActiveHcTraits.HasAny(HardcoreTraits.ForceEmote))
+        if (_traits.ActiveHcState.HasAny(HardcoreState.ForceEmote))
             _moveController.EnableMovementLock();
     }
 
@@ -446,16 +446,16 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
 
     private void CancelMoveKeys()
     {
-        MoveKeys.Each(x =>
+        foreach (var x in MoveKeys)
         {
             // the action to execute for each of our moved keys
-            if (_keyState.GetRawValue(x) != 0)
+            if (_keyState.GetRawValue(x) == 0)
             {
-                // if the value is set to execute, cancel it.
-                _keyState.SetRawValue(x, 0);
+                // if the value is not set to execute, set it.
+                _keyState.SetRawValue(x, 1);
                 WasCancelled = true;
             }
-        });
+        }
     }
 
     private void ResetCancelledMoveKeys()
@@ -464,11 +464,11 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         {
             WasCancelled = false;
             // Restore the state of the virtual keys
-            MoveKeys.Each(x =>
+            foreach (var x in MoveKeys)
             {
                 if (KeyMonitor.IsKeyPressed((int)(Keys)x))
                     SetKeyState(x, 3);
-            });
+            }
         }
     }
 

@@ -1,9 +1,9 @@
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public class Alarm
+public class Alarm : IEditableStorageItem<Alarm>
 {
     public Guid Identifier { get; set; } = Guid.NewGuid();
     public bool Enabled { get; set; } = false;
@@ -14,20 +14,26 @@ public class Alarm
     public TimeSpan PatternDuration { get; set; } = TimeSpan.Zero;
     public List<DayOfWeek> RepeatFrequency { get; set; } = [];
 
-    public Alarm() { }
+    public Alarm()
+    { }
 
     public Alarm(Alarm other, bool copyIdentifier = true)
     {
-        if (copyIdentifier)
-            Identifier = other.Identifier;
+        Identifier = copyIdentifier ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
+    }
 
-        Enabled = other.Enabled;
-        Label = other.Label;
-        SetTimeUTC = other.SetTimeUTC;
-        PatternToPlay = other.PatternToPlay;
-        PatternStartPoint = other.PatternStartPoint;
-        PatternDuration = other.PatternDuration;
-        RepeatFrequency = other.RepeatFrequency;
+    public Alarm Clone(bool keepId) => new Alarm(this, keepId);
+
+    public void ApplyChanges(Alarm changedItem)
+    {
+        Enabled = changedItem.Enabled;
+        Label = changedItem.Label;
+        SetTimeUTC = changedItem.SetTimeUTC;
+        PatternToPlay = changedItem.PatternToPlay;
+        PatternStartPoint = changedItem.PatternStartPoint;
+        PatternDuration = changedItem.PatternDuration;
+        RepeatFrequency = changedItem.RepeatFrequency;
     }
 
     public void Deserialize(JToken alarmToken)
@@ -53,6 +59,6 @@ public class Alarm
         RepeatFrequency = alarmObject["RepeatFrequency"]?.ToObject<List<DayOfWeek>>() ?? [];
     }
 
-    public LightAlarm ToLightData()
+    public LightAlarm ToLightAlarm()
         => new LightAlarm(Identifier, Label, SetTimeUTC, PatternToPlay);
 }

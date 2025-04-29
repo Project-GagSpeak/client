@@ -6,6 +6,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GagSpeak.Achievements;
 using GagSpeak.Achievements.Services;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.FileSystems;
 using GagSpeak.Hardcore.ForcedStay;
 using GagSpeak.Hardcore.Movement;
@@ -35,18 +36,17 @@ using GagSpeak.StateManagers;
 using GagSpeak.Toybox.Services;
 using GagSpeak.Toybox.SimulatedVibe;
 using GagSpeak.Triggers;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
-using GagSpeak.UI.Handlers;
-using GagSpeak.UI.MainWindow;
-using GagSpeak.UI.Orders;
-using GagSpeak.UI.Profile;
-using GagSpeak.UI.Publications;
-using GagSpeak.UI.Puppeteer;
-using GagSpeak.UI.Toybox;
-using GagSpeak.UI.UiRemote;
-using GagSpeak.UI.UiToybox;
-using GagSpeak.UI.Wardrobe;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.CkCommons.Gui.MainWindow;
+using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+using GagSpeak.CkCommons.Gui.Profile;
+using GagSpeak.CkCommons.Gui.Publications;
+using GagSpeak.CkCommons.Gui.Toybox;
+using GagSpeak.CkCommons.Gui.UiRemote;
+using GagSpeak.CkCommons.Gui.UiToybox;
+using GagSpeak.CkCommons.Gui.Wardrobe;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
@@ -287,6 +287,9 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<FavoritesManager>()
         .AddSingleton<ItemService>()
 
+        // Services (NEW)
+        .AddSingleton<BlindfoldService>()
+        .AddSingleton<HypnoService>()
 
         // Spatial Audio (Depricated)
         .AddSingleton((s) => new ResourceLoader(s.GetRequiredService<ILogger<ResourceLoader>>(),
@@ -444,16 +447,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PatternHubTab>()
         .AddScoped<MoodleHubTab>()
         .AddScoped<GlobalChatTab>()
-        .AddScoped((s) => new AccountTab(s.GetRequiredService<ILogger<AccountTab>>(),
-            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<CkGui>(), s.GetRequiredService<OnFrameworkService>(),
-            s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<KinkPlateService>(),
-            s.GetRequiredService<TutorialService>(), pi))
-        // Scoped UI (Orders)
-        .AddScoped<WindowMediatorSubscriberBase, OrdersUI>()
-        .AddScoped<OrdersViewActive>()
-        .AddScoped<OrdersCreator>()
-        .AddScoped<OrdersAssigner>()
+        .AddScoped<AccountTab>()
         // Scoped UI (Wardrobe)
         .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
         .AddScoped<RestraintsPanel>()
@@ -466,7 +460,9 @@ public static class GagSpeakServiceExtensions
         .AddScoped<CursedLootPanel>()
         // Scoped UI (Puppeteer)
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
-        .AddScoped<PuppeteerComponents>()
+        .AddScoped<PuppetVictimGlobalPanel>()
+        .AddScoped<PuppetVictimUniquePanel>()
+        .AddScoped<PuppetControllerUniquePanel>()
         // Scoped UI (Toybox)
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<SexToysPanel>()
@@ -528,17 +524,13 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
         .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
-        .AddScoped<WindowMediatorSubscriberBase, BlindfoldUI>((s) => new BlindfoldUI(s.GetRequiredService<ILogger<BlindfoldUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<GagspeakConfigService>(),
-            s.GetRequiredService<OnFrameworkService>(), s.GetRequiredService<CosmeticService>(), pi))
         .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebuggerStandaloneUI>()
 
         // Scoped Services
         .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<ChatMonitor>(), s.GetRequiredService<DeathRollService>(), cg, cs, cm))
-        .AddScoped<OnlinePairManager>()
-        .AddScoped<VisiblePairManager>()
+        .AddScoped<DataDistributionService>()
         .AddScoped((s) => new TextureService(pi.UiBuilder, dm, tp))
         .AddScoped((s) => new UiService(s.GetRequiredService<ILogger<UiService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GagspeakConfigService>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<WindowSystem>(), s.GetServices<WindowMediatorSubscriberBase>(), s.GetRequiredService<UiFactory>(),
@@ -566,9 +558,9 @@ public static class GagSpeakServiceExtensions
     #endregion HostedServices
 }
 
-public static class ValidateDependancyInjectorEx
+public static class ValidateDependencyInjectorEx
 {
-    public static void ValidateDependancyInjector(this IServiceCollection services)
+    public static void ValidateDependencyInjector(this IServiceCollection services)
     {
         try
         {
@@ -608,13 +600,13 @@ public static class ValidateDependancyInjectorEx
         }
         catch (AggregateException ex)
         {
-            // join all the innterexception strings together by \n newline.
+            // join all the inner exception strings together by \n newline.
             var fullException = string.Join("\n\n", ex.InnerExceptions.Select(e => e.Message.ToString()));
             throw new InvalidOperationException(fullException);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("ValidateDependancyInjector error detected.", ex);
+            throw new InvalidOperationException("ValidateDependencyInjector error detected.", ex);
             // Log the exception to catch any circular dependencies
         }
     }

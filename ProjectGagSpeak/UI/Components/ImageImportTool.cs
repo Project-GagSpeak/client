@@ -6,6 +6,7 @@ using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.ImageHandling;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -17,7 +18,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 public class ImageImportTool
 {
     private readonly ILogger<ImageImportTool> _logger;
@@ -462,51 +463,44 @@ public class ImageImportTool
         Rotation = Math.Clamp(Rotation, -180f, 180f);
         imageData.ZoomFactor = Math.Clamp(imageData.ZoomFactor, imageData.MinZoom, imageData.MaxZoom);
 
-        // _logger.LogInformation("---------------------");
-        var image = imageData.OriginalImage;
-
         var targetWidth = (int)imageData.SizeConstraint.X;
         var targetHeight = (int)imageData.SizeConstraint.Y;
 
         // Step 1: Calculate the scaled size based on the zoom factor
-        var scaledWidth = (int)(image.Width * imageData.ZoomFactor);
-        var scaledHeight = (int)(image.Height * imageData.ZoomFactor);
-        _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}");
+        var scaledWidth = (int)(imageData.OriginalImage.Width * imageData.ZoomFactor);
+        var scaledHeight = (int)(imageData.OriginalImage.Height * imageData.ZoomFactor);
+        _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}", LoggerType.Cosmetics);
 
         // Step 2: Resize the image based on zoom
-        using var scaled = image.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
+        using var scaled = imageData.OriginalImage.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
 
         // Step 3: Calculate corrected pan offset so that pan moves in screen-space (not image-space)
         var radians = -Rotation * (Math.PI / 180.0); // negative to counteract rotation
         var cos = Math.Cos(radians);
         var sin = Math.Sin(radians);
-
-        // PanX and PanY now affect the image horizontally and vertically (screen space)
         var adjustedPanX = PanX * cos - PanY * sin;
         var adjustedPanY = PanX * sin + PanY * cos;
         _logger.LogTrace($"Adjusted Pan: {adjustedPanX} x {adjustedPanY}", LoggerType.Cosmetics);
 
-        // Step 3: Calculate viewport center (the center of the cropped frame in the current view)
+        // Step 4: Calculate viewport center (the center of the cropped frame in the current view)
         var viewportCenterX = scaledWidth / 2 + (int)PanX;
         var viewportCenterY = scaledHeight / 2 + (int)PanY;
         _logger.LogTrace($"Viewport Center: {viewportCenterX} x {viewportCenterY}", LoggerType.Cosmetics);
 
-        // Step 4: Create a new padded canvas large enough to avoid clipping during rotation
+        // Step 5: Create a new padded canvas large enough to avoid clipping during rotation
         var paddedSize = (int)(Math.Sqrt(targetWidth * targetWidth + targetHeight * targetHeight) * 1.5); // extra room
         var canvasWidth = paddedSize;
         var canvasHeight = paddedSize;
         _logger.LogTrace($"Canvas Size: {canvasWidth} x {canvasHeight}", LoggerType.Cosmetics);
 
-        // Step 5: Create padded image and draw scaled image onto it, so the desired rotation center is at the canvas center
+        // Step 6: Create padded image and draw scaled image onto it, so the desired rotation center is at the canvas center
         using var padded = new Image<Rgba32>(canvasWidth, canvasHeight);
         var drawX = (canvasWidth / 2) - viewportCenterX;
         var drawY = (canvasHeight / 2) - viewportCenterY;
+        padded.Mutate(ctx => ctx.DrawImage(scaled, new Point(drawX, drawY), 1f));
         _logger.LogTrace($"Draw Position: {drawX} x {drawY}", LoggerType.Cosmetics);
 
-        // WHY IS THIS BEING USED
-        padded.Mutate(ctx => ctx.DrawImage(scaled, new Point(drawX, drawY), 1f));
-
-        // Step 6: Calculate the crop region in the scaled image based on pan and zoom
+        // Step 7: Calculate the crop region in the scaled image based on pan and zoom
         var offsetX = (scaledWidth - targetWidth) / 2 + (int)PanX;
         var offsetY = (scaledHeight - targetHeight) / 2 + (int)PanY;
         _logger.LogTrace($"Crop Offset: {offsetX} x {offsetY}", LoggerType.Cosmetics);
@@ -523,10 +517,8 @@ public class ImageImportTool
         var rotated = padded.Clone(ctx =>
         {
             if (Math.Abs(Rotation) > 0.01f)
-            {
                 // Rotate around the center of the cropped area
                 ctx.Rotate(Rotation);
-            }
         });
         _logger.LogTrace($"Rotated Image Size: {rotated.Width} x {rotated.Height}", LoggerType.Cosmetics);
 

@@ -2,7 +2,7 @@ using Buttplug.Client;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox;
-using GagSpeak.UI;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.PlayerState.Controllers;

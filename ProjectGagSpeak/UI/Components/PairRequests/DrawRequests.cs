@@ -1,13 +1,14 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 
 /// <summary>
 /// The base for the draw folder, which is a dropdown section in the list of paired users, and handles the basic draw functionality
@@ -33,8 +34,7 @@ public class DrawRequests : IRequestsFolder
     public int TotalIncoming => _clientData.IncomingRequests.Count();
 
     public DrawRequests(MainHub mainHub, GlobalData clientData,
-        DrawEntityFactory pairRequestFactory, CosmeticService cosmetics,
-        CkGui uiShared)
+        DrawEntityFactory pairRequestFactory, CosmeticService cosmetics)
     {
         _hub = mainHub;
         _clientData = clientData;
@@ -145,7 +145,7 @@ public class DrawRequests : IRequestsFolder
     }
     private void DrawViewTypeSelection()
     {
-        bool viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
+        var viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
         var icon = viewingOutgoing ? FAI.PersonArrowUpFromLine : FAI.PersonArrowDownToLine;
         var text = viewingOutgoing ? "View Incoming (" + TotalIncoming + ")" : "View Outgoing (" + TotalOutgoing + ")";
         var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";

@@ -3,6 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
@@ -11,12 +12,12 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.UI.Wardrobe;
+namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestrictionFileSelector _selector;
@@ -28,7 +29,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly RestrictionManager _manager;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
-    public bool IsEditing => _manager.ActiveEditorItem != null;
+    public bool IsEditing => _manager.ItemInEditor != null;
     public RestrictionsPanel(
         ILogger<RestrictionsPanel> logger,
         GagspeakMediator mediator,
@@ -63,12 +64,12 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                     manager.UpdateThumbnail(match, msg.Name);
                 }
             }
-            else if (msg.MetaData.Kind is ImageDataType.Blindfolds && manager.ActiveEditorItem is BlindfoldRestriction blindfold)
+            else if (msg.MetaData.Kind is ImageDataType.Blindfolds && manager.ItemInEditor is BlindfoldRestriction blindfold)
             {
                 Logger.LogDebug($"Thumbnail updated for {blindfold.Label} to {blindfold.BlindfoldPath}");
                 blindfold.BlindfoldPath = msg.Name;
             }
-            else if (msg.MetaData.Kind is ImageDataType.Hypnosis && manager.ActiveEditorItem is HypnoticRestriction hypnoItem)
+            else if (msg.MetaData.Kind is ImageDataType.Hypnosis && manager.ItemInEditor is HypnoticRestriction hypnoItem)
             {
                 Logger.LogDebug($"Thumbnail updated for {hypnoItem.Label} to {hypnoItem.HypnotizePath}");
                 hypnoItem.HypnotizePath = msg.Name;
@@ -76,11 +77,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         });
     }
 
-    public void DrawContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.Topleft.Size))
-            _selector.DrawFilterRow(drawRegions.Topleft.SizeX);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
@@ -107,11 +108,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         }
     }
 
-    public void DrawEditorContents(DrawerHelpers.CkHeaderDrawRegions drawRegions, float curveSize)
+    public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
     {
-        ImGui.SetCursorScreenPos(drawRegions.Topleft.Pos);
-        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.Topleft.Size))
-            DrawEditorHeaderLeft(drawRegions.Topleft.SizeX);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("RestrictionsTopLeft", drawRegions.TopLeft.Size))
+            DrawEditorHeaderLeft(drawRegions.TopLeft.SizeX);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
@@ -242,7 +243,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
     private void DrawActiveItemInfo()
     {
-        if (_manager.ActiveRestrictionsData is null)
+        if (_manager.ServerRestrictionData is null)
             return;
 
         using var _ = ImRaii.Child("ActiveRestrictionItems", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);

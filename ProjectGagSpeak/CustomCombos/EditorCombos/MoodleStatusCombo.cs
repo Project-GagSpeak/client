@@ -3,9 +3,9 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 

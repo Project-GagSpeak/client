@@ -3,10 +3,11 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data.Character;
+using GagspeakAPI.Data;
 using System.Linq;
 
 namespace GagSpeak.PlayerState.Toybox;
@@ -16,6 +17,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
+
+    private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
         PatternApplier applier, FavoritesManager favorites, ConfigFileProvider fileNames,
@@ -28,27 +31,29 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         Load();
     }
 
-    // Cached Information
-    public Pattern? ActiveEditorItem { get; private set; } = null;
-    public Pattern? ActivePattern => _applier.ActivePatternInfo;
-
-    // Storage
     public PatternStorage Storage { get; private set; } = new PatternStorage();
+    public Pattern? ItemInEditor => _itemEditor.ItemInEditor;
+    public Pattern? ActivePattern => _applier.ActivePatternInfo;
 
     public Pattern CreateNew(string patternName)
     {
+        patternName = RegexEx.EnsureUniqueName(patternName, Storage, t => t.Label);
         var newPattern = new Pattern() { Label = patternName };
         Storage.Add(newPattern);
         _saver.Save(this);
+
+        Logger.LogDebug($"Created new pattern {newPattern.Label}.");
         Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Created, newPattern, null));
         return newPattern;
     }
 
     public Pattern CreateClone(Pattern other, string newName)
     {
+        newName = RegexEx.EnsureUniqueName(newName, Storage, t => t.Label);
         var clonedItem = new Pattern(other, false) { Label = newName };
         Storage.Add(clonedItem);
         _saver.Save(this);
+
         Logger.LogDebug($"Cloned pattern {other.Label} to {newName}.");
         Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Created, clonedItem, null));
         return clonedItem;
@@ -56,68 +61,52 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     public void Rename(Pattern pattern, string newName)
     {
-        if (Storage.Contains(pattern))
-        {
-            Logger.LogDebug($"Storage contained pattern, renaming {pattern.Label} to {newName}.");
-            var newNameReal = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
-            pattern.Label = newNameReal;
-            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Renamed, pattern, newNameReal));
-            _saver.Save(this);
-        }
+        var prevName = pattern.Label;
+        newName = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
+        pattern.Label = newName;
+        _saver.Save(this);
+
+        Logger.LogDebug($"Storage contained pattern, renaming {pattern.Label} to {newName}.");
+        Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Renamed, pattern, prevName));
     }
 
     public void Delete(Pattern pattern)
     {
-        if (ActiveEditorItem is null)
-            return;
-
         if (Storage.Remove(pattern))
         {
             Logger.LogDebug($"Deleted pattern {pattern.Label}.");
             Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Deleted, pattern, null));
             _saver.Save(this);
         }
-
     }
 
-    public void StartEditing(Pattern pattern)
-    {
-        if (Storage.Contains(pattern))
-            ActiveEditorItem = pattern;
-    }
+
+    /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
+    public void StartEditing(Pattern item) => _itemEditor.StartEditing(item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing()
-        => ActiveEditorItem = null;
+    public void StopEditing() => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the Restriction and applies them to the actual item. </summary>
+    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
     public void SaveChangesAndStopEditing()
     {
-        if (ActiveEditorItem is null)
-            return;
-
-        if (Storage.ByIdentifier(ActiveEditorItem.Identifier) is { } item)
+        if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            item = ActiveEditorItem;
-            ActiveEditorItem = null;
-            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Modified, item, null));
+            Logger.LogDebug($"Saved changes to pattern {sourceItem.Identifier}.");
+            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }
 
     /// <summary> Attempts to add the pattern as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool AddFavorite(Pattern pattern)
-        => _favorites.TryAddRestriction(FavoriteIdContainer.Pattern, pattern.Identifier);
+    public bool AddFavorite(Pattern p) => _favorites.TryAddRestriction(FavoriteIdContainer.Pattern, p.Identifier);
 
     /// <summary> Attempts to remove the pattern as a favorite. </summary>
-    /// <returns> True if successful, false otherwise. </returns>
-    public bool RemoveFavorite(Pattern pattern)
-        => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, pattern.Identifier);
+    public bool RemoveFavorite(Pattern p) => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, p.Identifier);
 
 
-    public bool CanEnable(Guid patternId)
+    public bool CanEnable(Guid id)
     {
         if (ActivePattern is not null)
             return false;
@@ -125,7 +114,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         return true;
     }
 
-    public bool CanDisable(Guid patternId)
+    public bool CanDisable(Guid id)
     {
         if(ActivePattern is null)
             return false;
@@ -140,6 +129,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         // This only actually fires if a pattern is active, and is skipped otherwise.
         if(ActivePattern is not null)
             DisablePattern(ActivePattern.Identifier, enactor);
+
         // now enable it.
         EnablePattern(patternId, enactor);
     }

@@ -1,8 +1,8 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Intiface;
+using GagSpeak.CkCommons.Gui.UiRemote;
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Controllers;
@@ -11,40 +11,42 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Toybox;
 using GagSpeak.Toybox.Services;
-using GagSpeak.UI.UiRemote;
 using ImGuiNET;
 using OtterGui.Text;
+using GagSpeak.CkCommons.Intiface;
 
-namespace GagSpeak.UI.Toybox;
+namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public class SexToysPanel
 {
     private readonly ILogger<SexToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
-
-    private readonly GlobalData _playerManager;
+    private readonly GlobalData _globals;
+    private readonly SexToyManager _manager;
     private readonly GagspeakConfigService _clientConfigs;
     private readonly ServerConfigService _serverConfigs;
-    private readonly SexToyManager _vibeService;
     private readonly TutorialService _guides;
 
-    public SexToysPanel(ILogger<SexToysPanel> logger, GagspeakMediator mediator,
-        CkGui uiShared, GlobalData playerData,
-        GagspeakConfigService clientConfigs, ServerConfigService serverConfigs,
-        SexToyManager vibeService, TutorialService guides)
+    public SexToysPanel(
+        ILogger<SexToysPanel> logger,
+        GagspeakMediator mediator,
+        GlobalData playerData,
+        SexToyManager toysManager,
+        GagspeakConfigService clientConfigs,
+        ServerConfigService serverConfigs,
+        TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
-
-        _playerManager = playerData;
+        _globals = playerData;
+        _manager = toysManager;
         _clientConfigs = clientConfigs;
         _serverConfigs = serverConfigs;
-        _vibeService = vibeService;
         _guides = guides;
 
         // grab path to the intiface
-        if (Intiface.AppPath == string.Empty)
-            Intiface.GetApplicationPath();
+        if (IntifaceCentral.AppPath == string.Empty)
+            IntifaceCentral.GetApplicationPath();
     }
 
     public void DrawPanel(Vector2 remainingRegion, float selectorSize)
@@ -82,10 +84,10 @@ public class SexToysPanel
         ImUtf8.SameLineInner();
         ImGui.Text("Open Personal Remote");
 
-        if (_playerManager.GlobalPerms is not null)
-            ImGui.Text("Active Toys State: " + (_playerManager.GlobalPerms.ToysAreConnected ? "Active" : "Inactive"));
+        if (_globals.GlobalPerms is not null)
+            ImGui.Text("Active Toys State: " + (_globals.GlobalPerms.ToysAreConnected ? "Active" : "Inactive"));
 
-        ImGui.Text("ConnectedToyActive: " + _vibeService.ConnectedToyActive);
+        ImGui.Text("ConnectedToyActive: " + _manager.ConnectedToyActive);
 
         // draw out the list of devices
         ImGui.Separator();
@@ -111,7 +113,7 @@ public class SexToysPanel
             {
                 if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Config.VibeSimAudio))
                 {
-                    _vibeService.UpdateVibeSimAudioType(mode);
+                    _manager.UpdateVibeSimAudioType(mode);
                 }
             }
             ImGui.EndCombo();
@@ -120,16 +122,16 @@ public class SexToysPanel
 
         // draw out the combo for the audio device selection to play to
         ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        var prevDeviceId = _vibeService.VibeSimAudio.ActivePlaybackDeviceId; // to only execute code to update data once it is changed
+        var prevDeviceId = _manager.VibeSimAudio.ActivePlaybackDeviceId; // to only execute code to update data once it is changed
         // display the list        
-        if (ImGui.BeginCombo("Playback Device##Playback Device", _vibeService.ActiveSimPlaybackDevice))
+        if (ImGui.BeginCombo("Playback Device##Playback Device", _manager.ActiveSimPlaybackDevice))
         {
-            foreach (var device in _vibeService.PlaybackDevices)
+            foreach (var device in _manager.PlaybackDevices)
             {
-                var isSelected = (_vibeService.ActiveSimPlaybackDevice == device);
+                var isSelected = (_manager.ActiveSimPlaybackDevice == device);
                 if (ImGui.Selectable(device, isSelected))
                 {
-                    _vibeService.SwitchPlaybackDevice(_vibeService.PlaybackDevices.IndexOf(device));
+                    _manager.SwitchPlaybackDevice(_manager.PlaybackDevices.IndexOf(device));
                 }
             }
             ImGui.EndCombo();
@@ -139,21 +141,21 @@ public class SexToysPanel
 
     public void DrawDevicesTable()
     {
-        if (CkGui.IconTextButton(FAI.Search, "Device Scanner", null, false, !_vibeService.IntifaceConnected))
+        if (CkGui.IconTextButton(FAI.Search, "Device Scanner", null, false, !_manager.IntifaceConnected))
         {
             // search scanning if we are not scanning, otherwise stop scanning.
-            if (_vibeService.ScanningForDevices)
+            if (_manager.ScanningForDevices)
             {
-                _vibeService.DeviceHandler.StopDeviceScanAsync().ConfigureAwait(false);
+                _manager.DeviceHandler.StopDeviceScanAsync().ConfigureAwait(false);
             }
             else
             {
-                _vibeService.DeviceHandler.StartDeviceScanAsync().ConfigureAwait(false);
+                _manager.DeviceHandler.StartDeviceScanAsync().ConfigureAwait(false);
             }
         }
 
-        var color = _vibeService.ScanningForDevices ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudRed;
-        var scanText = _vibeService.ScanningForDevices ? "Scanning..." : "Idle";
+        var color = _manager.ScanningForDevices ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudRed;
+        var scanText = _manager.ScanningForDevices ? "Scanning..." : "Idle";
         ImGui.SameLine();
         ImGui.TextUnformatted("Scanner Status: ");
         ImGui.SameLine();
@@ -162,7 +164,7 @@ public class SexToysPanel
             ImGui.TextUnformatted(scanText);
         }
 
-        foreach (var device in _vibeService.DeviceHandler.ConnectedDevices)
+        foreach (var device in _manager.DeviceHandler.ConnectedDevices)
         {
             DrawDeviceInfo(device);
         }
@@ -214,7 +216,7 @@ public class SexToysPanel
         // push the style var to supress the Y window padding.
         var intifaceOpenIcon = FAI.ArrowUpRightFromSquare;
         var intifaceIconSize = CkGui.IconButtonSize(intifaceOpenIcon);
-        var connectedIcon = !_vibeService.IntifaceConnected ? FAI.Link : FAI.Unlink;
+        var connectedIcon = !_manager.IntifaceConnected ? FAI.Link : FAI.Unlink;
         var buttonSize = CkGui.IconButtonSize(FAI.Link);
         var buttplugServerAddr = IntifaceController.IntifaceClientName;
         var addrSize = ImGui.CalcTextSize(buttplugServerAddr);
@@ -237,15 +239,13 @@ public class SexToysPanel
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
             if (CkGui.IconButton(intifaceOpenIcon))
-            {
-                Intiface.OpenIntiface(_logger, true);
-            }
+                IntifaceCentral.OpenIntiface(_logger, true);
             CkGui.AttachToolTip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
 
             // in the next column, draw the centered status.
             ImGui.TableNextColumn();
 
-            if (_vibeService.IntifaceConnected)
+            if (_manager.IntifaceConnected)
             {
                 // fancy math shit for clean display, adjust when moving things around
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - (addrSize.X) / 2);
@@ -265,7 +265,7 @@ public class SexToysPanel
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
             // now we need to display the connection link button beside it.
-            var color = CkGui.GetBoolColor(_vibeService.IntifaceConnected);
+            var color = CkGui.GetBoolColor(_manager.IntifaceConnected);
 
             // we need to turn the button from the connected link to the disconnected link.
             using (ImRaii.PushColor(ImGuiCol.Text, color))
@@ -273,17 +273,17 @@ public class SexToysPanel
                 if (CkGui.IconButton(connectedIcon))
                 {
                     // if we are connected to intiface, then we should disconnect.
-                    if (_vibeService.IntifaceConnected)
+                    if (_manager.IntifaceConnected)
                     {
-                        _vibeService.DeviceHandler.DisconnectFromIntifaceAsync();
+                        _manager.DeviceHandler.DisconnectFromIntifaceAsync();
                     }
                     // otherwise, we should connect to intiface.
                     else
                     {
-                        _vibeService.DeviceHandler.ConnectToIntifaceAsync();
+                        _manager.DeviceHandler.ConnectToIntifaceAsync();
                     }
                 }
-                CkGui.AttachToolTip(_vibeService.IntifaceConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
+                CkGui.AttachToolTip(_manager.IntifaceConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
             }
         }
         // draw out the vertical slider.

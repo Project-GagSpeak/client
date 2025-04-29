@@ -1,7 +1,9 @@
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto;
 using GagspeakAPI.Extensions;
@@ -35,17 +37,14 @@ public interface ICustomizePlus
 }
 
 /// <summary> Basic Restriction Item Contract requirements. </summary>
-public interface IRestriction : IModPreset
+/// <remarks> Also contains ModSettingsPreset, and Traits, and Stimulation. </remarks>
+public interface IRestriction : IModPreset, ITraitHolder
 {
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
     GlamourSlot Glamour { get; set; }
 
     /// <summary> Determines the Moodle applied from this restriction item. </summary>
-    /// <remarks> Can be either singular status or preset. </remarks>
     Moodle Moodle { get; set; }
-
-    /// <summary> Various Hardcore Traits for a restriction item. </summary>
-    Traits Traits { get; set; }
 
     /// <summary> If a redraw should be performed after application or removal. </summary>
     bool DoRedraw { get; set; }
@@ -55,7 +54,7 @@ public interface IRestriction : IModPreset
 }
 
 /// <summary> Requirements for a restriction Item. </summary>
-/// <remarks> Used to keep GagRestrictions and other restrictions with seperate identifier sources but shared material. </remarks>
+/// <remarks> Used to keep GagRestrictions and other restrictions with separate identifier sources but shared material. </remarks>
 public interface IRestrictionItem : IRestriction
 {
     Guid Identifier { get; }
@@ -63,7 +62,7 @@ public interface IRestrictionItem : IRestriction
 }
 
 // Used for Gags. | Ensure C+ Allowance & Meta Allowance. Uses shared functionality but is independent.
-public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IComparable
+public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRestriction, ICustomizePlus
 {
     public GagType GagType { get; init; }
     public bool IsEnabled { get; set; } = false;
@@ -85,6 +84,8 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
         ApplyChanges(other);
     }
 
+    public GarblerRestriction Clone(bool _ = true) => new GarblerRestriction(this);
+
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(GarblerRestriction other)
     {
@@ -99,13 +100,6 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
         ProfileGuid = other.ProfileGuid;
         ProfilePriority = other.ProfilePriority;
         DoRedraw = other.DoRedraw;
-    }
-
-    public int CompareTo(object? obj) // Useful for sorted set stuff.
-    {
-        if (obj is GarblerRestriction other)
-            return string.Compare(GagType.GagName(), other.GagType.GagName());
-        return -1;
     }
 
     public JObject Serialize()
@@ -123,9 +117,11 @@ public class GarblerRestriction : IRestriction, ICustomizePlus, ITraitHolder, IC
             ["ProfilePriority"] = ProfilePriority,
             ["DoRedraw"] = DoRedraw,
         };
+
+    public AppliedSlot ToAppliedSlot() => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
 }
 
-public class RestrictionItem : IRestrictionItem, ITraitHolder
+public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestrictionItem
 {
     public virtual RestrictionType Type { get; } = RestrictionType.Normal;
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
@@ -144,6 +140,8 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
         Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
         ApplyChanges(other);
     }
+
+    public virtual RestrictionItem Clone(bool keepId = false) => new RestrictionItem(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(RestrictionItem other)
@@ -172,6 +170,12 @@ public class RestrictionItem : IRestrictionItem, ITraitHolder
             ["Stimulation"] = Stimulation.ToString(),
             ["Redraw"] = DoRedraw,
         };
+
+    public LightRestriction ToLightRestriction()
+        => new LightRestriction(Identifier, Label, ThumbnailPath, ToAppliedSlot(), new Attributes(RestraintFlags.Restriction, Traits, Stimulation));
+
+    public AppliedSlot ToAppliedSlot() 
+        => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
 }
 
 public class HypnoticRestriction : RestrictionItem
@@ -183,7 +187,9 @@ public class HypnoticRestriction : RestrictionItem
     public string HypnotizePath { get; set; } = string.Empty;
     public HypnoticEffect Effect { get; set; } = new HypnoticEffect();
 
-    public HypnoticRestriction() { }
+    public HypnoticRestriction() 
+    { }
+
     public HypnoticRestriction(HypnoticRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
@@ -193,6 +199,8 @@ public class HypnoticRestriction : RestrictionItem
         HypnotizePath = other.HypnotizePath;
         Effect = other.Effect;
     }
+
+    public override HypnoticRestriction Clone(bool keepId = false) => new HypnoticRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(HypnoticRestriction other)
@@ -204,7 +212,6 @@ public class HypnoticRestriction : RestrictionItem
         HypnotizePath = other.HypnotizePath;
         Effect = other.Effect;
     }
-
 
     public override JObject Serialize()
     {
@@ -237,6 +244,8 @@ public class BlindfoldRestriction : RestrictionItem
         ForceFirstPerson = other.ForceFirstPerson;
         BlindfoldPath = other.BlindfoldPath;
     }
+
+    public override BlindfoldRestriction Clone(bool keepId = false) => new BlindfoldRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(BlindfoldRestriction other)
@@ -274,6 +283,8 @@ public class CollarRestriction : RestrictionItem
         OwnerUID = other.OwnerUID;
         CollarWriting = other.CollarWriting;
     }
+
+    public override CollarRestriction Clone(bool keepId = false) => new CollarRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(CollarRestriction other)

@@ -1,17 +1,18 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
 
-namespace GagSpeak.UI.Components;
+namespace GagSpeak.CkCommons.Gui.Components;
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
     private readonly DtrBarService _dtrBarService;
     private bool ThemePushed = false;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
-        DtrBarService dtrService, CkGui uiShared) : base(logger, mediator, "##DtrLinker")
+        DtrBarService dtrService) : base(logger, mediator, "##DtrLinker")
     {
         _dtrBarService = dtrService;
 
@@ -68,9 +69,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         // close window if its not focused.
         if (!ImGui.IsWindowFocused())
-        {
-            this.IsOpen = false;
-        }
+            IsOpen = false;
     }
     protected override void PostDrawInternal()
     {

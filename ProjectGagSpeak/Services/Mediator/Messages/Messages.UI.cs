@@ -1,6 +1,6 @@
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UI;
-using GagSpeak.UI.Components;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Connection;
 
