@@ -5,16 +5,22 @@ namespace GagSpeak.CkCommons.Raii;
 
 public static partial class CkRaii
 {
-    public static ImRaii.IEndObject SideHeaderChild(string text, float height)
-        => SideHeaderChild(text, height, HeaderChildColors.Default, GetHeaderRounding(), WFlags.None);
+    /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"
+    public static ImRaii.IEndObject DragDropHeader(string text, float height, WFlags flags = WFlags.None)
+        => DragDropHeader(text, height, HeaderChildColors.Default, GetHeaderRounding(), WFlags.None);
 
-    public static ImRaii.IEndObject SideHeaderChild(string text, float height, HeaderChildColors colors)
-        => SideHeaderChild(text, height, colors, GetHeaderRounding(), WFlags.None);
+    /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"
+    public static ImRaii.IEndObject DragDropHeader(string text, float height, HeaderChildColors colors, WFlags flags = WFlags.None)
+        => DragDropHeader(text, height, colors, GetHeaderRounding(), flags);
 
-    public static ImRaii.IEndObject SideHeaderChild(string text, float height, float rounding)
-        => SideHeaderChild(text, height, HeaderChildColors.Default, rounding, WFlags.None);
 
-    public static ImRaii.IEndObject SideHeaderChild(string text, float height, HeaderChildColors colors, float rounding, WFlags flags)
+    /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"
+    public static ImRaii.IEndObject DragDropHeader(string text, float height, float rounding, WFlags flags = WFlags.None)
+        => DragDropHeader(text, height, HeaderChildColors.Default, rounding, WFlags.None);
+
+    /// <summary> A Defined header to the left, of a content body to the right. </summary>
+    /// <remarks> The left body is drag-droppable. </remarks>
+    public static ImRaii.IEndObject DragDropHeader(string text, float height, HeaderChildColors colors, float rounding, WFlags flags)
     {
         // Begin the group combining the two elements.
         ImGui.BeginGroup();
