@@ -56,15 +56,12 @@ public static partial class CkRaii
 
 
     // Measurement Helpers
-    public static float GetSeparatorHeight() => 4 * ImGuiHelpers.GlobalScale;
-
+    public static float GetSplitHeight() => ImGui.GetStyle().ItemSpacing.Y;
     public static float GetHeaderHeight() => ImGui.GetFrameHeight();
 
-    public static float GetHeaderRounding() => ImGui.GetStyle().FrameRounding * 2f;
-
     public static float GetChildRounding() => ImGui.GetStyle().FrameRounding * 1.25f;
-
     public static float GetChildRoundingLarge() => ImGui.GetStyle().FrameRounding * 1.75f;
+    public static float GetHeaderRounding() => ImGui.GetStyle().FrameRounding * 2f;
 
     public struct HeaderChildColors(uint headerColor, uint splitColor, uint bodyColor)
     {
@@ -94,7 +91,7 @@ public static partial class CkRaii
 
     /// <summary> An IEndObject that serves for ImRaii.EndUnconditionally, exclusively for containers. </summary>
     /// <remarks> This should only be used for unconditionally ended ImGui.Group objects. </remarks>
-    private struct EndObjectContainer(Action endAction, bool success, Vector2 innerRegion) : ImRaii.IEndObject
+    private struct EndObjectContainer(Action endAction, bool success, Vector2 innerRegion) : IEndObjectContainer
     {
         private Action EndAction { get; } = endAction;
         public Vector2 InnerRegion { get; } = innerRegion;
@@ -109,5 +106,11 @@ public static partial class CkRaii
             EndAction();
             Disposed = true;
         }
+    }
+
+    public interface IEndObjectContainer : ImRaii.IEndObject
+    {
+        /// <summary> The inner region of the container. </summary>
+        Vector2 InnerRegion { get; }
     }
 }

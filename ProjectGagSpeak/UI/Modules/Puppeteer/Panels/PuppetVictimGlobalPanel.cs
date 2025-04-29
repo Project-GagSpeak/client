@@ -7,10 +7,12 @@ using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
 using OtterGui.Widgets;
 
@@ -22,6 +24,7 @@ public sealed partial class PuppetVictimGlobalPanel
     private readonly GlobalData _globals;
     private readonly PuppeteerManager _manager;
     private readonly FavoritesManager _favorites;
+    private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
 
     private LazyCSVCache _triggerPhraseCSV { get; init; }
@@ -33,6 +36,7 @@ public sealed partial class PuppetVictimGlobalPanel
         GlobalData globals,
         PuppeteerManager manager,
         FavoritesManager favorites,
+        CosmeticService cosmetics,
         TutorialService guides)
     {
         _logger = logger;
@@ -40,6 +44,7 @@ public sealed partial class PuppetVictimGlobalPanel
         _globals = globals;
         _manager = manager;
         _favorites = favorites;
+        _cosmetics = cosmetics;
         _guides = guides;
 
         _triggerPhraseCSV = new LazyCSVCache(() => _globals.GlobalPerms?.TriggerPhrase ?? string.Empty);
@@ -97,41 +102,39 @@ public sealed partial class PuppetVictimGlobalPanel
     {
         using var _ = ImRaii.Group();
 
-        var wdl = ImGui.GetWindowDrawList();
-        wdl.ChannelsSplit(2);
-
-        wdl.ChannelsSetCurrent(1);
-        DrawPermissionsBoxForeground(drawRegion, wdl);
-
-        wdl.ChannelsSetCurrent(0);
-
-
-        wdl.ChannelsMerge();
+        DrawPermissionsBoxHeader(drawRegion);
+        ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetItemRectSize().Y));
+        DrawPermissionsBoxBody(drawRegion);
     }
 
-    private void DrawPermissionsBoxForeground(CkHeader.DrawRegion drawRegion, ImDrawListPtr drawlist)
+    private void DrawPermissionsBoxHeader(CkHeader.DrawRegion drawRegion)
     {
-        var paddedRegion = drawRegion.Size - ImGui.GetStyle().WindowPadding * 2;
-        var triggerPhraseSize = new Vector2(drawRegion.SizeX, ImGui.GetFrameHeightWithSpacing() * 4);
-
-        ImGui.SetCursorScreenPos(drawRegion.Pos + ImGui.GetStyle().WindowPadding);
-        using var _ = ImRaii.Group();
-
-        var cursorPos = ImGui.GetCursorPos();
-        var pos = ImGui.GetCursorScreenPos();
-        using (ImRaii.Group())
+        var pos = ImGui.GetCursorPos();
+        var splitH = CkRaii.GetSplitHeight();
+        using (CkRaii.Group(CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft))
         {
-            var headerSize = new Vector2(drawRegion.SizeX, ImGui.GetFrameHeight());
-            var headerMaxPos = drawRegion.Pos + headerSize;
-            drawlist.AddRectFilled(drawRegion.Pos, headerMaxPos, CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft);
-            drawlist.AddLine(drawRegion.Pos with { Y = headerMaxPos.Y + 2 }, headerMaxPos + new Vector2(0, 2), CkColor.FancyHeaderContrast.Uint(), 4);
+            // Ensure our width.
+            ImGui.Dummy(new Vector2(drawRegion.SizeX, ImGui.GetFrameHeight() + splitH));
+            ImGui.SetCursorPos(pos);
 
-            ImGui.SetCursorPosX(cursorPos.X + ImGui.GetFrameHeight());
+            // Ensure the Spacing, and draw the header.
+            ImGui.SameLine(ImGui.GetFrameHeight());
             ImUtf8.TextFrameAligned("Global Puppeteer Settings");
         }
+        var max = ImGui.GetItemRectMax();
+        var linePos = ImGui.GetItemRectMin() with { Y = max.Y - splitH / 2 };
+        ImGui.GetWindowDrawList().AddLine(linePos, linePos with { X = max.X }, CkColor.SideButton.Uint(), CkRaii.GetSplitHeight());
+    }
+
+    private void DrawPermissionsBoxBody(CkHeader.DrawRegion drawRegion)
+    {
+        using var bodyChild = CkRaii.FakeChild(drawRegion.SizeX, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);
+
+        ImGui.Spacing();
 
         // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPadded("Trigger Phrases", triggerPhraseSize, CkColor.FancyHeader.Uint()))
+        var triggerPhraseSize = new Vector2(bodyChild.InnerRegion.X, ImGui.GetFrameHeightWithSpacing() * 4);
+        using (CkRaii.FramedChildPadded("Trigger Phrases", triggerPhraseSize, CkColor.FancyHeaderContrast.Uint()))
         {
             _triggerPhraseCSV.Sync();
 
@@ -149,7 +152,36 @@ public sealed partial class PuppetVictimGlobalPanel
             }
         }
 
+        ImGui.Spacing();
 
+        ImGui.Dummy(new Vector2(bodyChild.InnerRegion.X, ImGui.GetStyle().ItemSpacing.Y));
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetSplitHeight());
+
+        ImGui.Spacing();
+
+        var sideLength = ImGui.GetFrameHeight() * 4 + ImGui.GetStyle().ItemSpacing.Y * 3;
+        if (_cosmetics.CoreTextures[CoreTexture.PuppetVictimGlobal] is { } wrap)
+        {
+            var pos = ImGui.GetCursorPos();
+            ImGui.SetCursorPosX(pos.X + (((bodyChild.InnerRegion.X / 2) - sideLength) / 2));
+            ImGui.Image(wrap.ImGuiHandle, new Vector2(sideLength));
+        }
+
+        ImGui.SameLine(bodyChild.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
+        using (ImRaii.Group())
+            {
+                var categoryFilter = (uint)(_globals.GlobalPerms?.PuppetPerms ?? PuppetPerms.None);
+                foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+                    ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
+
+                if (_globals.GlobalPerms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
+                {
+                    _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                        new KeyValuePair<string, object>(nameof(UserGlobalPermissions.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own)).ConfigureAwait(false);
+                }
+            }
+
+        ImGui.Spacing();
     }
 
     private void UpdateTriggerPhrase(string newPhrase)

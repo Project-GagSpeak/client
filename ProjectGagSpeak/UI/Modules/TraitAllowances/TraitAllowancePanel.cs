@@ -1,17 +1,15 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Helpers;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
-using GagSpeak.CkCommons.Raii;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 

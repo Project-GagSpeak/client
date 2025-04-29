@@ -212,8 +212,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
-            _ = _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(globals.WardrobeEnabled), wardrobeEnabled), UpdateDir.Own));
+            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
+                new KeyValuePair<string, object>(nameof(globals.WardrobeEnabled), wardrobeEnabled), UpdateDir.Own)).ConfigureAwait(false);
             if (wardrobeEnabled is false)
             {
                 _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 

@@ -16,6 +16,7 @@ public sealed class GlobalData : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DalamudLogoutMessage>(this, (_) => { GlobalPerms = null; });
     }
 
+    public bool GlobalsValid => GlobalPerms is not null;
     public UserGlobalPermissions? GlobalPerms { get; set; } = null;
     public HashSet<UserPairRequestDto> CurrentRequests { get; set; } = new();
     public HashSet<UserPairRequestDto> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
