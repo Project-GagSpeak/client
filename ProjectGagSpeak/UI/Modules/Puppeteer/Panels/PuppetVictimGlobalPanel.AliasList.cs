@@ -56,13 +56,13 @@ public partial class PuppetVictimGlobalPanel
         {
             switch (triggerAction)
             {
-                case TextAction ta: _aliasDrawer.DrawOutputTextAction(ta); break;
-                case GagAction ga: _aliasDrawer.DrawGagAction(ga); break;
-                case RestrictionAction rsa: _aliasDrawer.DrawRestrictionAction(rsa); break;
-                case RestraintAction rta: _aliasDrawer.DrawRestraintAction(rta); break;
-                case MoodleAction ma: _aliasDrawer.DrawMoodleAction(ma); break;
-                case PiShockAction ps: _aliasDrawer.DrawShockAction(ps); break;
-                case SexToyAction sta: _aliasDrawer.DrawSexToyAction(sta); break;
+                case TextAction ta:         _aliasDrawer.DrawOutputTextAction(ta);  break;
+                case GagAction ga:          _aliasDrawer.DrawGagAction(ga);         break;
+                case RestrictionAction rsa: _aliasDrawer.DrawRestrictionAction(rsa);break;
+                case RestraintAction rta:   _aliasDrawer.DrawRestraintAction(rta);  break;
+                case MoodleAction ma:       _aliasDrawer.DrawMoodleAction(ma);      break;
+                case PiShockAction ps:      _aliasDrawer.DrawShockAction(ps);       break;
+                case SexToyAction sta:      _aliasDrawer.DrawSexToyAction(sta);     break;
 
                 default: throw new InvalidOperationException($"Bad Type: {triggerAction.ActionType}");
             }
