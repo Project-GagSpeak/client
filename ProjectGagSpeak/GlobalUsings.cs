@@ -9,6 +9,7 @@ global using System.Text;
 global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
+global using DrFlags = ImGuiNET.ImDrawFlags;
 global using WFlags = ImGuiNET.ImGuiWindowFlags;
 global using FAI = Dalamud.Interface.FontAwesomeIcon;
 

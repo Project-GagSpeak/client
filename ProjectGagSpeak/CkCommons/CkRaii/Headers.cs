@@ -54,7 +54,7 @@ public static partial class CkRaii
         return new EndObjectContainer(
             () => HeaderChildEndAction(colors.BodyColor, rounding),
             ImGui.BeginChild("CHC_" + text, innerSize, false, WFlags.AlwaysUseWindowPadding),
-            innerSize.MinusWinPadding()
+            innerSize.WithoutWinPadding()
         );
     }
 
@@ -120,7 +120,7 @@ public static partial class CkRaii
         return new EndObjectContainer(
             () => HeaderChildEndAction(colors.BodyColor, rounding),
             ImGui.BeginChild("CHC_" + text, innerSize, false, WFlags.AlwaysUseWindowPadding),
-            innerSize.MinusWinPadding()
+            innerSize.WithoutWinPadding()
         );
     }
 
@@ -181,7 +181,7 @@ public static partial class CkRaii
         return new EndObjectContainer(
             () => HeaderChildEndAction(colors.BodyColor, rounding),
             ImGui.BeginChild("CHC_" + text, innerSize, false, WFlags.AlwaysUseWindowPadding),
-            innerSize.MinusWinPadding()
+            innerSize.WithoutWinPadding()
         );
     }
     private static void HeaderChildEndAction(uint bgCol, float rounding)

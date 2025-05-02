@@ -5,6 +5,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
@@ -138,6 +139,17 @@ public partial class CkGui
         ImGui.PopID();
         // return the result
         return result;
+    }
+
+    public static float GetSeparatorHeight(float? height = null)
+        => height + ImGui.GetStyle().ItemSpacing.Y * 4 ?? ImGui.GetStyle().ItemSpacing.Y * 5;
+
+    public static void Separator(float? height = null, float? width = null, uint? col = null)
+    {
+        ImGui.Spacing();
+        ImGui.Dummy(new Vector2(width ?? ImGui.GetContentRegionAvail().X, height ?? ImGui.GetStyle().ItemSpacing.Y));
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col ?? CkColor.FancyHeaderContrast.Uint());
+        ImGui.Spacing();
     }
 
     public static void DrawGrouped(Action imguiDrawAction, float? width = null, float height = 0, float rounding = 5f, Vector4 color = default)

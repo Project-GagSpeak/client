@@ -45,14 +45,14 @@ public class PuppeteerComponents
     /// <remarks> When an alias item is closed in the editor, all the combos are garbage collected as the object is destroyed. </remarks>
     public sealed class ExpandedAliasCache
     {
-        public          InvokableActionType? SelectedActionType;
-        public readonly RestrictionCombo    RestrictionCombo;
-        public readonly RestraintCombo      RestraintCombo;
-        public readonly MoodleStatusCombo   StatusCombo;
-        public readonly MoodlePresetCombo   PresetCombo;
+        public InvokableActionType? SelectedActionType;
+        public readonly RestrictionCombo RestrictionCombo;
+        public readonly RestraintCombo RestraintCombo;
+        public readonly MoodleStatusCombo StatusCombo;
+        public readonly MoodlePresetCombo PresetCombo;
 
         public ExpandedAliasCache(AliasTrigger aliasItem, RestrictionCombo restrictionCombo,
-            RestraintCombo restraintCombo,MoodleStatusCombo statusCombo, MoodlePresetCombo presetCombo)
+            RestraintCombo restraintCombo, MoodleStatusCombo statusCombo, MoodlePresetCombo presetCombo)
         {
             SelectedActionType = aliasItem.Actions.Any() ? aliasItem.Actions.First().ActionType : null;
             RestrictionCombo = restrictionCombo;
@@ -62,203 +62,9 @@ public class PuppeteerComponents
         }
     }
 
-    public void DrawListenerClientGroup(bool isEditing, Action<bool>? onSitsChange = null, Action<bool>? onMotionChange = null,
-        Action<bool>? onAliasChange = null, Action<bool>? onAllChange = null, Action<bool>? onEditToggle = null)
+*//*    public void DrawAliasItemBox(string id, AliasTrigger aliasItem)
     {
-        if(_pairList.SelectedPair is not { } pair)
-            return;
-
-        using var group = ImRaii.Group();
-
-        ImGui.AlignTextToFramePadding();
-        CkGui.ColorText("Listening To", ImGuiColors.ParsedPink);
-
-        var remainingWidth = CkGui.IconButtonSize(FAI.Save).X * 5 + ImGui.GetStyle().ItemInnerSpacing.X * 4;
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - remainingWidth);
-
-        // so they let sits?
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FAI.Chair, inPopup: true))
-                onSitsChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Sit));
-        CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform /sit and /groundsit (cycle pose included)");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FAI.Walking, inPopup: true))
-                onMotionChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
-        CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform emotes and expressions (cycle Pose included)");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FAI.Scroll, inPopup: true))
-                onAliasChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.Alias));
-        CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to execute any of your Pair Alias Triggers.");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(FAI.CheckDouble, inPopup: true))
-                onAllChange?.Invoke(!pair.OwnPerms.PuppetPerms.HasFlag(PuppetPerms.All));
-        CkGui.AttachToolTip("Allows " + pair.GetNickAliasOrUid() + " to make you perform any command.");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, isEditing ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudGrey))
-            if (CkGui.IconButton(isEditing ? FAI.Save : FAI.Edit, inPopup: true))
-                onEditToggle?.Invoke(!isEditing);
-        CkGui.AttachToolTip(isEditing ? "Stop Editing your TriggerPhrase Info." : "Modify Your TriggerPhrase Info");
-    }
-
-    public void DrawListenerPairGroup(Action? onSendName = null)
-    {
-        if (_pairList.SelectedPair is not { } pair)
-            return;
-
-        bool pairHasName = !pair.LastPairAliasData.StoredNameWorld.IsNullOrEmpty();
-        using var group = ImRaii.Group();
-
-        // display name, then display the downloads and likes on the other side.
-        var ButtonWidth = CkGui.IconButtonSize(FAI.Save).X * 5 - ImGui.GetStyle().ItemInnerSpacing.X * 4;
-        using (ImRaii.PushColor(ImGuiCol.Text, pairHasName ? ImGuiColors.DalamudGrey : ImGuiColors.ParsedGold))
-        {
-            var isDisabled = !pair.IsOnline || (pairHasName && !KeyMonitor.ShiftPressed());
-            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Send Name", ImGui.GetContentRegionAvail().X - ButtonWidth, true, isDisabled))
-                onSendName?.Invoke();
-        }
-        CkGui.AttachToolTip("Send this Pair your In-Game Character Name.\nThis allows them to listen to you for triggers!" +
-        "--SEP--Hold SHIFT to Resend Name.");
-
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - ButtonWidth);
-        using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Sit) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FAI.Chair, inPopup: true);
-        CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform /sit and /groundsit (cycle pose included)");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Emotes) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FAI.Walking, inPopup: true);
-        CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform emotes and expressions (cycle Pose included)");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.Alias) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FAI.Scroll, inPopup: true);
-        CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to execute any of their Alias Triggers.");
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.Disabled())
-        using (ImRaii.PushColor(ImGuiCol.Text, pair.PairPerms.PuppetPerms.HasFlag(PuppetPerms.All) ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey))
-            CkGui.IconButton(FAI.CheckDouble, inPopup: true);
-        CkGui.AttachToolTip(pair.GetNickAliasOrUid() + " allows you to make them perform any command.");
-    }
-
-    public void DrawEditingTriggersWindow(ref string tempTriggers, ref string tempSartChar, ref string tempEndChar)
-    {
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.AlignTextToFramePadding();
-        CkGui.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
-
-        ImGui.Spacing();
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-        ImGui.InputTextWithHint("##TriggerPhrase", "Leave Blank for none...", ref tempTriggers, 64);
-        CkGui.AttachToolTip("You can create multiple trigger phrases by placing a | between phrases.");
-
-        using (ImRaii.Group())
-        {
-            ImGui.Spacing();
-            ImGui.AlignTextToFramePadding();
-            CkGui.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
-
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-            ImGui.InputText("##sStarChar", ref tempSartChar, 1);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                if (string.IsNullOrWhiteSpace(tempSartChar)) tempSartChar = "(";
-            CkGui.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
-
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.GripLinesVertical, ImGuiColors.ParsedPink);
-            ImUtf8.SameLineInner();
-
-            ImGui.SetNextItemWidth(20 * ImGuiHelpers.GlobalScale);
-            ImGui.InputText("##sEndChar", ref tempEndChar, 1);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                if (string.IsNullOrWhiteSpace(tempEndChar)) tempEndChar = ")";
-            CkGui.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
-        }
-    }
-
-    public void DrawTriggersWindow(string triggerPhrases, string startChar, string endChar)
-    {
-        if(_pairList.SelectedPair is not { } pair)
-            return;
-
-        var TriggerPhrase = triggerPhrases;
-        var triggers = TriggerPhrase.Split('|');
-
-        using (ImRaii.Group())
-        {
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.AlignTextToFramePadding();
-            CkGui.ColorText("Your Trigger Phrases", ImGuiColors.ParsedPink);
-
-            if (!triggers.Any() || triggers[0].IsNullOrEmpty())
-            {
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Trigger Phrase Set.");
-            }
-
-            foreach (var trigger in triggers)
-            {
-                if (trigger.IsNullOrEmpty())
-                    continue;
-
-                CkGui.IconText(FAI.QuoteLeft, ImGuiColors.ParsedPink);
-
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(trigger);
-
-                ImUtf8.SameLineInner();
-                CkGui.IconText(FAI.QuoteRight, ImGuiColors.ParsedPink);
-            }
-        }
-
-        using (ImRaii.Group())
-        {
-            ImGui.Spacing();
-            ImGui.AlignTextToFramePadding();
-            CkGui.ColorText("Custom Brackets:", ImGuiColors.ParsedPink);
-            ImGui.SameLine();
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(startChar);
-            CkGui.AttachToolTip($"Custom Start Character that replaces the left enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ( ] in: [ TriggerPhrase (commandToExecute) ]");
-
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.GripLinesVertical, ImGuiColors.ParsedPink);
-            ImUtf8.SameLineInner();
-
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted(endChar);
-            CkGui.AttachToolTip($"Custom End Character that replaces the right enclosing bracket." +
-                Environment.NewLine + "Replaces the [ ) ] in Ex: [ TriggerPhrase (commandToExecute) ]");
-        }
-
-        if (triggerPhrases.IsNullOrEmpty())
-            return;
-
-        ImGui.Spacing();
-        ImGui.Separator();
-
-        var charaName = $"<YourNameWorld> ";
-        CkGui.ColorText("Example Usage:", ImGuiColors.ParsedPink);
-        ImGui.TextWrapped(charaName + triggers[0] + " " + pair.OwnPerms.StartChar + " glamour apply Hogtied | p | [me] " + pair.PairPerms.EndChar);
-
-    }
-
-    public void DrawAliasItemBox(string id, AliasTrigger aliasItem)
-    {
-        *//*// if the id is not present in the dictionary, add it.
+        // if the id is not present in the dictionary, add it.
         if (!ExpandedAliasItems.ContainsKey(aliasItem.Identifier.ToString()))
             ExpandedAliasItems.Add(id, false);
 
@@ -500,9 +306,9 @@ public class PuppeteerComponents
                     CkGui.ColorText("No Output Types Added! Output won't execute correctly!", ImGuiColors.DalamudYellow);
                 }
             }
-        }*//*
+        }
     }
-
+*//*
     /// <summary>
     /// Draws the editor for an alias item.
     /// </summary>
@@ -510,7 +316,7 @@ public class PuppeteerComponents
     public bool DrawAliasItemEditBox(AliasTrigger aliasItem, out bool shouldRemove)
     {
         shouldRemove = false;
-        *//*// Assume we are not removing, and have made no modifications.
+        // Assume we are not removing, and have made no modifications.
         var wasModified = false;
         shouldRemove = false;
 
@@ -631,7 +437,7 @@ public class PuppeteerComponents
                 ImGui.SameLine();
                 ImGui.TextUnformatted("Invoke");
                 ImGui.SameLine();
-                if(ImGuiUtil.GenericEnumCombo("AliasGagState" + aliasItem.Identifier, 60f, gagAction.NewState, out NewState newState, [ NewState.Enabled, NewState.Locked, NewState.Disabled ])) 
+                if (ImGuiUtil.GenericEnumCombo("AliasGagState" + aliasItem.Identifier, 60f, gagAction.NewState, out NewState newState, [NewState.Enabled, NewState.Locked, NewState.Disabled]))
                 {
                     gagAction.NewState = newState;
                     wasModified = true;
@@ -641,7 +447,7 @@ public class PuppeteerComponents
                 ImGui.SameLine();
                 ImGui.TextUnformatted("state for");
                 ImGui.SameLine();
-                if(ImGuiUtil.GenericEnumCombo("AliasGagType" + aliasItem.Identifier, 150f, gagAction.GagType, out GagType gagType))
+                if (ImGuiUtil.GenericEnumCombo("AliasGagType" + aliasItem.Identifier, 150f, gagAction.GagType, out GagType gagType))
                 {
                     gagAction.GagType = gagType;
                     wasModified = true;
@@ -830,7 +636,7 @@ public class PuppeteerComponents
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("No Output types set for this Alias!");
             }
         }
-*//*
+
         return false;
     }
 
@@ -841,4 +647,7 @@ public class PuppeteerComponents
             onClick();
     }
 }
+
+
+
 */

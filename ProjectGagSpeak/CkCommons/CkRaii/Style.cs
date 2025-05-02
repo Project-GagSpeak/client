@@ -43,20 +43,19 @@ public static partial class CkRaii
         };
 
     // Flag Style Helpers
-    public static WFlags WithPadding(this WFlags flags) => flags | WFlags.AlwaysUseWindowPadding;
+    public static WFlags WithPadding(this WFlags flags) => flags |= WFlags.AlwaysUseWindowPadding;
 
 
     // Size Helpers
-    public static float MinusWinPadX(this float s) => s - ImGui.GetStyle().WindowPadding.X * 2;
-    public static float MinusWinPadY(this float s) => s - ImGui.GetStyle().WindowPadding.Y * 2;
+    public static float RemoveWinPadX(this float s) => s - ImGui.GetStyle().WindowPadding.X * 2;
+    public static float RemoveWinPadY(this float s) => s - ImGui.GetStyle().WindowPadding.Y * 2;
     public static float AddWinPadX(this float s) => s + ImGui.GetStyle().WindowPadding.X * 2;
     public static float AddWinPadY(this float s) => s + ImGui.GetStyle().WindowPadding.Y * 2;
-    public static Vector2 MinusWinPadding(this Vector2 s) => s - ImGui.GetStyle().WindowPadding * 2;
-    public static Vector2 AddWinPadding(this Vector2 s) => s + ImGui.GetStyle().WindowPadding * 2;
+    public static Vector2 WithoutWinPadding(this Vector2 s) => s - ImGui.GetStyle().WindowPadding * 2;
+    public static Vector2 WithWinPadding(this Vector2 s) => s + ImGui.GetStyle().WindowPadding * 2;
 
 
     // Measurement Helpers
-    public static float GetSplitHeight() => ImGui.GetStyle().ItemSpacing.Y;
     public static float GetHeaderHeight() => ImGui.GetFrameHeight();
 
     public static float GetChildRounding() => ImGui.GetStyle().FrameRounding * 1.25f;

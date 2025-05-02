@@ -76,6 +76,17 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         }
     }
 
+    public void ToggleState(AliasTrigger trigger, string? userUid = null)
+    {
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (storage is null)
+            return;
+
+        trigger.Enabled = !trigger.Enabled;
+        Logger.LogDebug($"Toggled Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
+        _saver.Save(this);
+    }
+
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
     public void StartEditing(AliasTrigger trigger) => _itemEditor.StartEditing(trigger);
 
@@ -196,10 +207,18 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         {
             foreach (var item in globalStorageArray)
             {
-                if (item is JObject aliasObject)
+                try
                 {
-                    var aliasTrigger = ParseAliasTrigger(aliasObject);
-                    GlobalAliasStorage.Add(aliasTrigger);
+                    if (item is JObject aliasObject)
+                    {
+                        var aliasTrigger = ParseAliasTrigger(aliasObject);
+                        GlobalAliasStorage.Add(aliasTrigger);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("A GlobalAliasStorage Item failed to parse or had an empty GUID. Skipping.: " + ex.Message, LoggerType.Puppeteer);
+                    continue;
                 }
             }
         }
@@ -247,7 +266,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     {
         return new AliasTrigger
         {
-            Identifier = Guid.TryParse(obj["AliasIdentifier"]?.Value<string>(), out var guid) ? guid : Guid.Empty,
+            Identifier = Guid.TryParse(obj["AliasIdentifier"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,

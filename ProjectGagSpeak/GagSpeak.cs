@@ -462,7 +462,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
         .AddScoped<PuppetVictimGlobalPanel>()
         .AddScoped<PuppetVictimUniquePanel>()
-        .AddScoped<PuppetControllerUniquePanel>()
+        .AddScoped<ControllerUniquePanel>()
         // Scoped UI (Toybox)
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<SexToysPanel>()

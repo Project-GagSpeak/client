@@ -15,6 +15,7 @@ using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Dto;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
 using Microsoft.IdentityModel.Tokens;

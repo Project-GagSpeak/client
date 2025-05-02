@@ -163,17 +163,15 @@ public class RestraintEditorModsMoodles : IFancyTab
 
     private void DrawModsList()
     {
-        using var _ = CkRaii.FramedChildPadded("MoodlesList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
+        using var _ = CkRaii.FrameChildPadded("MoodlesList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
 
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
-        var listingSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().WindowPadding.Y * 2);
-
         foreach (var mod in _manager.ItemInEditor!.RestraintMods.ToList())
         {
             var itemLabel = mod.Label;
             var itemSource = mod.Container.ModName;
 
-            using (CkRaii.FramedChildPadded(mod.Container.DirectoryPath + mod.Label, listingSize, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChildPaddedW(mod.Container.DirectoryPath + mod.Label, ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))
             {
                 using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
                 using (ImRaii.Group())
@@ -194,14 +192,14 @@ public class RestraintEditorModsMoodles : IFancyTab
 
     private void DrawMoodlesList()
     {
-        var size = ImGui.GetContentRegionAvail() - new Vector2(0, MoodleDrawer.FramedIconDisplayHeight(2) + ImGui.GetStyle().ItemSpacing.Y);
+        var size = ImGui.GetContentRegionAvail();
+        var height = size.Y - (MoodleDrawer.FramedIconDisplayHeight(2) + ImGui.GetStyle().ItemSpacing.Y);
 
-        using var _ = CkRaii.FramedChildPadded("MoodlesList", size, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
+        using var _ = CkRaii.FramedChildPaddedW("MoodlesList", size.X, height, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
         
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
         var presetLookup = VisualApplierMoodles.LatestIpcData.MoodlesPresets.ToDictionary(p => p.GUID, p => p.Title);
         var statusLookup = VisualApplierMoodles.LatestIpcData.MoodlesStatuses.ToDictionary(s => s.GUID, s => s.Title);
-        var listingSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().WindowPadding.Y * 2);
 
         foreach (var moodle in _manager.ItemInEditor!.RestraintMoodles.ToList())
         {
@@ -210,7 +208,7 @@ public class RestraintEditorModsMoodles : IFancyTab
                 : statusLookup.TryGetValue(moodle.Id, out var statusTitle) ? statusTitle : "INVALID STATUS";
             var typeText = moodle is MoodlePreset ? "Moodle Preset Item" : "Moodle Status Item";
 
-            using (CkRaii.FramedChildPadded(moodle.Id.ToString(), listingSize, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChildPaddedW(moodle.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))
             {
                 using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
                 using (ImRaii.Group())

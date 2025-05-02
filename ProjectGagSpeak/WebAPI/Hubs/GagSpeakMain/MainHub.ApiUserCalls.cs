@@ -168,7 +168,7 @@ public partial class MainHub
         await GagSpeakHubMain!.InvokeAsync(nameof(SendGlobalChat), dto).ConfigureAwait(false);
     }
 
-    public async Task UserShockActionOnPair(PiShockAction dto)
+    public async Task UserShockActionOnPair(ShockCollarAction dto)
     {
         if (!IsConnected) return;
         await GagSpeakHubMain!.InvokeAsync(nameof(UserShockActionOnPair), dto).ConfigureAwait(false);

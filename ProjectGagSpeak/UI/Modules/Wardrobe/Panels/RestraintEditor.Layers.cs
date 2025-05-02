@@ -243,7 +243,7 @@ public class RestraintEditorLayers : IFancyTab
             ImGui.SameLine();
             var hoverBoxRegion = ImGui.CalcTextSize("Hover To See Settings") + ImGui.GetStyle().FramePadding;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (ImGui.GetContentRegionAvail().Y - hoverBoxRegion.Y) / 2);
-            using (CkRaii.FramedChildPadded($"ModPresetPreview{modPresetLayer.ID}", hoverBoxRegion, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FrameChildPadded($"ModPresetPreview{modPresetLayer.ID}", hoverBoxRegion, CkColor.FancyHeaderContrast.Uint()))
             {
                 ImGuiUtil.Center("Hover To See Settings");
 

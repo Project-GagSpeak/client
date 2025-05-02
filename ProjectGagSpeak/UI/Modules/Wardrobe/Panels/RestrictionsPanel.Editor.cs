@@ -183,7 +183,7 @@ public partial class RestrictionsPanel
     {
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
-        var scaledPreview = displaySize * (width.MinusWinPadX() / ImGui.GetIO().DisplaySize.X);
+        var scaledPreview = displaySize * (width.RemoveWinPadX() / ImGui.GetIO().DisplaySize.X);
         var iconH = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + scaledPreview.Y;
         var winSize = new Vector2(width, iconH);
         using (var bfInfo = CkRaii.HeaderChild("Blindfold Information", winSize, CkRaii.HeaderFlags.AddPaddingToHeight))

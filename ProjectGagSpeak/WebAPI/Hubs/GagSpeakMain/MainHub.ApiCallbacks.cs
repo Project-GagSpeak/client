@@ -489,7 +489,7 @@ public partial class MainHub
     }
 
     /// <summary> Receive a Shock Instruction from another Pair. </summary>
-    public Task Client_UserReceiveShockInstruction(PiShockAction dto)
+    public Task Client_UserReceiveShockInstruction(ShockCollarAction dto)
     {
         Logger.LogInformation($"Received Instruction OpCode: {dto.OpCode}, Intensity: {dto.Intensity}, Duration Value: {dto.Duration}");
         ExecuteSafely(() =>
@@ -793,7 +793,7 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Client_UserReceiveLightStorage), act);
     }
 
-    public void OnUserReceiveShockInstruction(Action<PiShockAction> act)
+    public void OnUserReceiveShockInstruction(Action<ShockCollarAction> act)
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Client_UserReceiveShockInstruction), act);

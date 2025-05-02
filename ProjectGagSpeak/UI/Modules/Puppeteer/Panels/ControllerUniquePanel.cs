@@ -8,14 +8,14 @@ using ImGuiNET;
 using Dalamud.Interface.Utility;
 
 namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
-public partial class PuppetControllerUniquePanel
+public partial class ControllerUniquePanel
 {
-    private readonly ILogger<PuppetControllerUniquePanel> _logger;
+    private readonly ILogger<ControllerUniquePanel> _logger;
     private readonly PuppeteerManager _manager;
     private readonly FavoritesManager _favorites;
     private readonly TutorialService _guides;
-    public PuppetControllerUniquePanel(
-        ILogger<PuppetControllerUniquePanel> logger,
+    public ControllerUniquePanel(
+        ILogger<ControllerUniquePanel> logger,
         PuppeteerManager manager,
         FavoritesManager favorites,
         TutorialService guides)

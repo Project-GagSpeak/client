@@ -34,11 +34,8 @@ public class MoodleDrawer
     public static Vector2 IconSizeFramed
         => new(ImGui.GetFrameHeight() * .75f, ImGui.GetFrameHeight());
 
-    public static float FramedIconDisplayHeight(int rows = 1)
-        => IconSize.Y * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1) + ImGui.GetStyle().WindowPadding.Y * 2;
-
-    public static float FramedIconDisplayHeight(float iconH, int rows = 1)
-        => iconH * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1) + ImGui.GetStyle().WindowPadding.Y * 2;
+    public static float FramedIconDisplayHeight(int rows = 1) => IconSize.Y * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1);
+    public static float FramedIconDisplayHeight(float h, int rows = 1) => h * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1);
 
     public string MoodleTypeTooltip(Moodle moodle)
         => $"Switch Moodle Types. (Hold Shift)--SEP--Current: Moodle {(moodle is MoodlePreset ? MoodleType.Preset.ToString() : MoodleType.Status.ToString())}";
@@ -121,8 +118,7 @@ public class MoodleDrawer
 
     public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2 iconSize, int rows = 1)
     {
-        var size = new Vector2(width, FramedIconDisplayHeight(iconSize.Y, rows));
-        using (CkRaii.FramedChildPadded("MoodleRowDrawn", size, CkColor.FancyHeaderContrast.Uint(), rounding))
+        using (CkRaii.FramedChildPaddedW("MoodleRowDrawn", width, FramedIconDisplayHeight(iconSize.Y, rows), CkColor.FancyHeaderContrast.Uint(), rounding))
         {
             if (moodles == null || moodles.Count() <= 0)
                 return;
@@ -187,38 +183,37 @@ public class MoodleDrawer
                     : Enumerable.Empty<MoodlesStatusInfo>(),
             };
 
-            foreach (var status in moodleStatuses)
-            {
-                _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, MoodleDrawer.IconSize);
-                if (ImGui.IsItemHovered())
-                    _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
-                ImGui.SameLine();
-            }
+            DrawMoodleStatuses(moodleStatuses, IconSize);
         }
     }
 
     public void DrawMoodles(Moodle moodleItem, Vector2 size)
     {
-        using (ImRaii.Group())
+        // determine what moodle statuses we are drawing.
+        var moodleStatuses = moodleItem switch
         {
-            // determine what moodle statuses we are drawing.
-            var moodleStatuses = moodleItem switch
-            {
-                MoodlePreset p => VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Where(x => p.StatusIds.Contains(x.GUID)),
-                _              => !moodleItem.Id.IsEmptyGuid() 
-                    ? new[] { VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == moodleItem.Id) } 
-                    : Enumerable.Empty<MoodlesStatusInfo>(),
-            };
+            MoodlePreset p => VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Where(x => p.StatusIds.Contains(x.GUID)),
+            _              => !moodleItem.Id.IsEmptyGuid() 
+                ? new[] { VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == moodleItem.Id) } 
+                : Enumerable.Empty<MoodlesStatusInfo>(),
+        };
 
-            // Calculate the remaining height in the region.
-            foreach (var status in moodleStatuses)
-            {
-                _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, size);
-                if (ImGui.IsItemHovered())
-                    _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
-                ImGui.SameLine();
-            }
-            ImGui.NewLine();
+        DrawMoodleStatuses(moodleStatuses, size);
+    }
+
+    public void DrawMoodleStatuses(IEnumerable<MoodlesStatusInfo> statuses, Vector2 iconSize)
+    {
+        using var _ = ImRaii.Group();
+
+        // Calculate the remaining height in the region.
+        foreach (var status in statuses)
+        {
+            _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            if (ImGui.IsItemHovered())
+                _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
+            ImGui.SameLine();
         }
+
+        ImGui.NewLine();
     }
 }

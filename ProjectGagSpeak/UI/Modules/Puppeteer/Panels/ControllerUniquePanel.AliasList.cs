@@ -1,5 +1,5 @@
 namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
-public partial class PuppetControllerUniquePanel
+public partial class ControllerUniquePanel
 {
     private void DrawAliasTrigger()
     {

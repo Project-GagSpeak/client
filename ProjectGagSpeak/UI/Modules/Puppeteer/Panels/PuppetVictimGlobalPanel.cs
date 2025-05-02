@@ -1,5 +1,7 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
@@ -10,9 +12,9 @@ using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
 using OtterGui.Widgets;
 
@@ -22,6 +24,7 @@ public sealed partial class PuppetVictimGlobalPanel
     private readonly ILogger<PuppetVictimGlobalPanel> _logger;
     private readonly MainHub _hub;
     private readonly GlobalData _globals;
+    private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
     private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
@@ -34,6 +37,7 @@ public sealed partial class PuppetVictimGlobalPanel
         ILogger<PuppetVictimGlobalPanel> logger,
         MainHub hub,
         GlobalData globals,
+        AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,
         FavoritesManager favorites,
         CosmeticService cosmetics,
@@ -43,6 +47,7 @@ public sealed partial class PuppetVictimGlobalPanel
         _hub = hub;
         _globals = globals;
         _manager = manager;
+        _aliasDrawer = aliasDrawer;
         _favorites = favorites;
         _cosmetics = cosmetics;
         _guides = guides;
@@ -74,43 +79,70 @@ public sealed partial class PuppetVictimGlobalPanel
     }
 
     private string _searchStr = string.Empty;
+    private IReadOnlyList<AliasTrigger> FilteredItems = new List<AliasTrigger>();
+
     private void DrawAliasSearch(float width)
     {
         var change = FancySearchBar.Draw("##GlobalAliasSearch", width, "Search for an Alias", ref _searchStr, 200);
         if(change)
+        {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
+            FilteredItems = _manager.GlobalAliasStorage
+                .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
     }
 
     private void DrawAliasItems(Vector2 region)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12);
-        using var _ = ImRaii.Child("GlobalAliasList", region, false, WFlags.AlwaysUseWindowPadding);
+        using var _ = CkRaii.ChildPadded("GlobalAliasList", region);
+
+        // Push styles for our inner child items.
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12)
+            .Push(ImGuiStyleVar.ChildRounding, 5f)
+            .Push(ImGuiStyleVar.WindowPadding, new Vector2(8, 5))
+            .Push(ImGuiStyleVar.FramePadding, new Vector2(4, 2))
+            .Push(ImGuiStyleVar.WindowBorderSize, 1f)
+            .Push(ImGuiStyleVar.FrameBorderSize, 1f);
+        using var color = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
+            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+
+        // Place these into a list, so that when we finish changing an item, the list does not throw an error.
+        foreach (var aliasItem in _manager.GlobalAliasStorage.ToList())
+        {
+            if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
+                DrawAliasTriggerEditor();
+            else
+                DrawAliasTrigger(aliasItem);
+        }
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
     {
-        DrawPermissionsBox(region);
+        using (ImRaii.Group())
+        {
+            DrawPermissionsBoxHeader(region);
+            ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetItemRectSize().Y));
+            DrawPermissionsBoxBody(region);
+        }
+        var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
 
-        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y);
+        // Shift down and draw the lower.
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
         ImGui.SetCursorScreenPos(region.Pos + verticalShift);
         DrawExamplesBox(region.Size - verticalShift);
-
-        // Draw the grey strip thingy here.
-    }
-
-    private void DrawPermissionsBox(CkHeader.DrawRegion drawRegion)
-    {
-        using var _ = ImRaii.Group();
-
-        DrawPermissionsBoxHeader(drawRegion);
-        ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetItemRectSize().Y));
-        DrawPermissionsBoxBody(drawRegion);
+        var botLineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
+        var botLineBotRight = botLineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(botLineTopLeft, botLineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
     private void DrawPermissionsBoxHeader(CkHeader.DrawRegion drawRegion)
     {
         var pos = ImGui.GetCursorPos();
-        var splitH = CkRaii.GetSplitHeight();
+        var splitH = ImGui.GetStyle().ItemSpacing.Y;
         using (CkRaii.Group(CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft))
         {
             // Ensure our width.
@@ -123,18 +155,25 @@ public sealed partial class PuppetVictimGlobalPanel
         }
         var max = ImGui.GetItemRectMax();
         var linePos = ImGui.GetItemRectMin() with { Y = max.Y - splitH / 2 };
-        ImGui.GetWindowDrawList().AddLine(linePos, linePos with { X = max.X }, CkColor.SideButton.Uint(), CkRaii.GetSplitHeight());
+        ImGui.GetWindowDrawList().AddLine(linePos, linePos with { X = max.X }, CkColor.SideButton.Uint(), splitH);
     }
 
     private void DrawPermissionsBoxBody(CkHeader.DrawRegion drawRegion)
     {
-        using var bodyChild = CkRaii.FakeChild(drawRegion.SizeX, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);
+        var spacing = ImGui.GetStyle().ItemSpacing;
+        var triggerPhrasesH = ImGui.GetFrameHeightWithSpacing() * 3; // 3 lines of buttons.
+        var spacingsH = spacing.Y * 2;
+        var permissionsH = ImGui.GetFrameHeight() * 4 + spacing.Y * 3;
+        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorHeight(spacing.Y);
 
+        // Create the inner child box.
+        using var child = CkRaii.ChildPaddedW("PermBoxBody", drawRegion.SizeX, childH, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);
+
+        var cursorPos = ImGui.GetCursorPosY();
         ImGui.Spacing();
 
         // extract the tabs by splitting the string by comma's
-        var triggerPhraseSize = new Vector2(bodyChild.InnerRegion.X, ImGui.GetFrameHeightWithSpacing() * 4);
-        using (CkRaii.FramedChildPadded("Trigger Phrases", triggerPhraseSize, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
             _triggerPhraseCSV.Sync();
 
@@ -142,7 +181,7 @@ public sealed partial class PuppetVictimGlobalPanel
             {
                 if (idx < _triggerPhraseCSV.Count)
                 {
-                    if (editedTag.Length == 0) 
+                    if (editedTag.Length == 0)
                         _triggerPhraseCSV.Remove(idx);
                     else
                         _triggerPhraseCSV.Rename(idx, editedTag);
@@ -152,22 +191,18 @@ public sealed partial class PuppetVictimGlobalPanel
             }
         }
 
-        ImGui.Spacing();
-
-        ImGui.Dummy(new Vector2(bodyChild.InnerRegion.X, ImGui.GetStyle().ItemSpacing.Y));
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetSplitHeight());
-
-        ImGui.Spacing();
-
-        var sideLength = ImGui.GetFrameHeight() * 4 + ImGui.GetStyle().ItemSpacing.Y * 3;
+        CkGui.Separator(spacing.Y, child.InnerRegion.X);
+        
+        // Draw out the global puppeteer image.
         if (_cosmetics.CoreTextures[CoreTexture.PuppetVictimGlobal] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
-            ImGui.SetCursorPosX(pos.X + (((bodyChild.InnerRegion.X / 2) - sideLength) / 2));
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(sideLength));
+            ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));
+            ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
         }
 
-        ImGui.SameLine(bodyChild.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
+        // Draw out the permission checkboxes
+        ImGui.SameLine(child.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         using (ImRaii.Group())
             {
                 var categoryFilter = (uint)(_globals.GlobalPerms?.PuppetPerms ?? PuppetPerms.None);
@@ -193,7 +228,16 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private void DrawExamplesBox(Vector2 region)
     {
+        var examplesRegion = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
+        var colorTheme = new CkRaii.HeaderChildColors(CkColor.VibrantPink.Uint(), CkColor.ElementSplit.Uint(), CkColor.FancyHeader.Uint());
+        var labelWidth = region.X * .7f;
 
+        using (var child = CkRaii.LabelHeaderChild(examplesRegion, "Example Uses", labelWidth, ImGui.GetFrameHeight(), ImGui.GetFrameHeight(),
+            colorTheme, ImDrawFlags.RoundCornersLeft, ImDrawFlags.RoundCornersTopLeft | ImDrawFlags.RoundCornersBottomRight))
+        {
+            ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
+            ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");
+        }
     }
 
 }

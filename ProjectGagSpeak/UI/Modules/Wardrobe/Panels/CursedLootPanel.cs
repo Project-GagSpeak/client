@@ -132,8 +132,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("CursedLootPoolFrame", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding))
         {
             var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
-            var innerSize = ImGui.GetContentRegionAvail();
-            using (CkRaii.FramedChildPadded("CursedLootPoolItems", innerSize, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FrameChildPadded("PoolItems", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
             {
                 if (allItemsInPool.Count <= 0)
                     return;

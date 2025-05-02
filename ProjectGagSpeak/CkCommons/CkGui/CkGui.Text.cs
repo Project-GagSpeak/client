@@ -85,12 +85,51 @@ public partial class CkGui
 
     public static void HelpText(string helpText, bool inner = false)
     {
-        if (inner) { ImUtf8.SameLineInner(); }
-        else { ImGui.SameLine(); }
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
         var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
         IconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
         AttachToolTip(helpText);
     }
+
+    public static void SameLineText(string text, bool inner = false)
+    {
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
+        ImGui.TextUnformatted(text);
+    }
+
+    /// <summary> An Unformatted Text version of ImGui.TextColored accepting UINT </summary>
+    public static void SameLineColorText(string text, uint color, bool inner = false)
+    {
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
+        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
+        ImGui.TextUnformatted(text);
+    }
+
+
+    /// <summary> An Unformatted Text version of ImGui.TextColored </summary>
+    public static void SameLineColorText(string text, Vector4 color, bool inner = false)
+    {
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
+        using var raiicolor = ImRaii.PushColor(ImGuiCol.Text, color);
+        ImGui.TextUnformatted(text);
+    }
+
 
     /// <summary> An Unformatted Text version of ImGui.TextColored accepting UINT </summary>
     public static void ColorText(string text, uint color)

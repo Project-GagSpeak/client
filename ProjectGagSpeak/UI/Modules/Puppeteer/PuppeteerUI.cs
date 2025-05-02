@@ -14,7 +14,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 {
     private readonly PuppetVictimGlobalPanel _victimGlobalPanel;
     private readonly PuppetVictimUniquePanel _victimUniquePanel;
-    private readonly PuppetControllerUniquePanel _controllerUniquePanel;
+    private readonly ControllerUniquePanel _controllerUniquePanel;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
 
@@ -25,7 +25,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         GagspeakMediator mediator,
         PuppetVictimGlobalPanel globalPanel,
         PuppetVictimUniquePanel victimUniquePanel,
-        PuppetControllerUniquePanel controllerUniquePanel,
+        ControllerUniquePanel controllerUniquePanel,
         CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator, "Puppeteer UI")
     {

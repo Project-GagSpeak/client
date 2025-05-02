@@ -105,9 +105,8 @@ public class TraitAllowancePanel
         {
             using (CkRaii.HeaderChild("Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
             {
-                var selectorHeight = ImGui.GetFrameHeightWithSpacing() * Options.Length - ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-                var region = new Vector2(ImGui.GetContentRegionAvail().X, selectorHeight);
-                using (CkRaii.FramedChildPadded("ModuleSelector", region, CkColor.FancyHeaderContrast.Uint()))
+                var selectorHeight = ImGui.GetFrameHeightWithSpacing() * Options.Length - ImGui.GetStyle().ItemSpacing.Y;
+                using (CkRaii.FramedChildPaddedW("Selector", ImGui.GetContentRegionAvail().X, selectorHeight, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -117,12 +116,11 @@ public class TraitAllowancePanel
                 }
 
                 // Action elements.
-                var actionsH = ImGui.GetFrameHeightWithSpacing() * 6 - ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-                var actionsRegion = new Vector2(ImGui.GetContentRegionAvail().X, actionsH);
+                var actionsH = ImGui.GetFrameHeightWithSpacing() * 6 - ImGui.GetStyle().ItemSpacing.Y;
                 var childStartY = ImGui.GetContentRegionAvail().Y - actionsH - ImGui.GetTextLineHeightWithSpacing();
                 ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, childStartY));
                 ImGuiUtil.Center("Module Actions");
-                using (CkRaii.FramedChildPadded("ModuleActions", actionsRegion, CkColor.FancyHeaderContrast.Uint()))
+                using (CkRaii.FramedChildPaddedW("ActList", ImGui.GetContentRegionAvail().X, actionsH, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -173,7 +171,7 @@ public class TraitAllowancePanel
         ImGui.SameLine();
         using (CkRaii.HeaderChild("Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
         {
-            using (CkRaii.FramedChildPadded("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FrameChildPadded("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
             {
                 if (_allowedPairs.Count <= 0)
                     return;

@@ -190,7 +190,7 @@ public partial class PairStickyUI
                         else { newMaxDuration = (int)(Duration * 1000); }
 
                         _logger.LogDebug("Sending Shock to Shock Collar with duration: " + newMaxDuration + "(milliseconds)");
-                        _ = _hub.UserShockActionOnPair(new PiShockAction(SPair.UserData, 0, Intensity, newMaxDuration));
+                        _ = _hub.UserShockActionOnPair(new ShockCollarAction(SPair.UserData, 0, Intensity, newMaxDuration));
                         UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockSent);
                         PairCombos.Opened = InteractionType.None;
                     }
@@ -229,7 +229,7 @@ public partial class PairStickyUI
                         else { newMaxDuration = (int)(VibeDuration * 1000); }
 
                         _logger.LogDebug("Sending Vibration to Shock Collar with duration: " + newMaxDuration + "(milliseconds)");
-                        _ = _hub.UserShockActionOnPair(new PiShockAction(SPair.UserData, 1, VibrateIntensity, newMaxDuration));
+                        _ = _hub.UserShockActionOnPair(new ShockCollarAction(SPair.UserData, 1, VibrateIntensity, newMaxDuration));
                         PairCombos.Opened = InteractionType.None;
                     }
                 }
@@ -264,7 +264,7 @@ public partial class PairStickyUI
                         if (VibeDuration % 1 == 0 && VibeDuration >= 1 && VibeDuration <= 15) { newMaxDuration = (int)VibeDuration; }
                         else { newMaxDuration = (int)(VibeDuration * 1000); }
                         _logger.LogDebug("Sending Beep to Shock Collar with duration: " + newMaxDuration + "(note that values between 1 and 15 are full seconds)");
-                        _ = _hub.UserShockActionOnPair(new PiShockAction(SPair.UserData, 2, Intensity, newMaxDuration));
+                        _ = _hub.UserShockActionOnPair(new ShockCollarAction(SPair.UserData, 2, Intensity, newMaxDuration));
                         PairCombos.Opened = InteractionType.None;
                     }
                 }
