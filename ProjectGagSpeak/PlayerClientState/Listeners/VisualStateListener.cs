@@ -10,6 +10,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;

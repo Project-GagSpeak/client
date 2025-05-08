@@ -1,21 +1,13 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
-using ImGuizmoNET;
-using NAudio.SoundFont;
 using OtterGui;
 using OtterGui.Raii;
-using OtterGui.Text;
 using Penumbra.Api.Enums;
-using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 

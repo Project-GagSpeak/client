@@ -1,10 +1,9 @@
 using Dalamud.Interface.Utility;
-using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using static GagSpeak.CkCommons.Gui.Components.PuppeteerTabs;
 

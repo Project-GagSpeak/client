@@ -194,7 +194,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                         return false;
                 }
 
-                // If we have selected a spesific gag to lock, look for it, and if none are found, return false.
+                // If we have selected a specific gag to lock, look for it, and if none are found, return false.
                 if (act.GagType is not GagType.None && gagData.FindOutermostActive(act.GagType) is -1)
                     return false;
 
@@ -404,21 +404,14 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
 
     private bool DoMoodleAction(MoodleAction act, string enactor)
     {
-        if(!IpcCallerMoodles.APIAvailable)
+        if(!IpcCallerMoodles.APIAvailable || act.MoodleItem.Id.IsEmptyGuid())
         {
             Logger.LogWarning("Moodles not available, cannot execute moodle trigger.");
             return false;
         }
 
-        var moodlesToApply = act.MoodleItem switch
-        {
-            MoodlePresetApi p => p.Statuses.Select(m => new Moodle() { Id = m.GUID }),
-            MoodleStatusApi s => new[] { new Moodle(s.Status.GUID) },
-            _ => Enumerable.Empty<Moodle>()
-        };
-
         Logger.LogDebug("Applying a Moodle action to the player.", LoggerType.IpcMoodles);
-        _moodles.AddRestrictedMoodle(moodlesToApply);
+        _moodles.AddRestrictedMoodle(act.MoodleItem);
         return true;
     }
 

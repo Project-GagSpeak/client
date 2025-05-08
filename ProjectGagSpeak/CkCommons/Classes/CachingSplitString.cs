@@ -4,7 +4,6 @@ namespace GagSpeak.CkCommons.Classes;
 
 /// <summary> Lazy Comma Separated Value Cache
 /// <para> Stores a comma separated string as a list of strings for ImGui performance efficiency. </para> 
-/// <para> Running CheckIfDirty will automatically run a comparison on the latest cache versus current value and recalculate. </para>
 /// </summary>
 /// <remarks> Any successful changes invoke an action returning the new string after the change. </remarks>
 public class LazyCSVCache : LazyList<string>

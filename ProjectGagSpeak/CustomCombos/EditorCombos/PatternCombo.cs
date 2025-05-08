@@ -1,17 +1,11 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
-using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui.Raii;
 using OtterGui.Text;

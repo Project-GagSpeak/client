@@ -422,6 +422,8 @@ public static class GagSpeakServiceExtensions
         .AddScoped<MoodleDrawer>()
         .AddScoped<PlaybackDrawer>()
         .AddScoped<ActiveItemsDrawer>()
+        .AddScoped<AliasItemDrawer>()
+        .AddScoped<PuppeteerHelper>()
         .AddScoped<ImageImportTool>()
 
         // Scoped Factories

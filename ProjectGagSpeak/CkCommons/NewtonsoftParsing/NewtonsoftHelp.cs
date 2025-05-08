@@ -1,4 +1,5 @@
 using GagSpeak.PlayerState.Models;
+using GagspeakAPI.Data;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;
 
@@ -33,8 +34,8 @@ public static class JParser
         IEnumerable<Guid> statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
         return type switch
         {
-            MoodleType.Preset => new MoodlePreset { Id = id, StatusIds = statusIds },
-            _ => new Moodle { Id = id }
+            MoodleType.Preset => new MoodlePreset(id, statusIds),
+            _ => new Moodle(id)
         };
     }
 

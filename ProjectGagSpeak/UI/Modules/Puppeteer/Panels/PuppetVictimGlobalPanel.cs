@@ -1,8 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
-using GagSpeak.CkCommons.Classes;
+using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
@@ -10,13 +9,11 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 using OtterGui.Text;
-using OtterGui.Widgets;
 
 namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
 public sealed partial class PuppetVictimGlobalPanel
@@ -26,12 +23,14 @@ public sealed partial class PuppetVictimGlobalPanel
     private readonly GlobalData _globals;
     private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
-    private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
-    private readonly TutorialService _guides;
 
-    private LazyCSVCache _triggerPhraseCSV { get; init; }
-    private TagButtons _phraseButtonList = new();
+    private string _searchStr = string.Empty;
+    private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
+    private IEnumerable<InvokableActionType> _actionTypes = Enum.GetValues<InvokableActionType>();
+    private InvokableActionType _selectedType = InvokableActionType.Gag;
+
+    private static TagCollection GlobalTriggerTags = new();
 
     public PuppetVictimGlobalPanel(
         ILogger<PuppetVictimGlobalPanel> logger,
@@ -40,20 +39,16 @@ public sealed partial class PuppetVictimGlobalPanel
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,
         FavoritesManager favorites,
-        CosmeticService cosmetics,
-        TutorialService guides)
+        CosmeticService cosmetics)
     {
         _logger = logger;
         _hub = hub;
         _globals = globals;
         _manager = manager;
         _aliasDrawer = aliasDrawer;
-        _favorites = favorites;
         _cosmetics = cosmetics;
-        _guides = guides;
 
-        _triggerPhraseCSV = new LazyCSVCache(() => _globals.GlobalPerms?.TriggerPhrase ?? string.Empty);
-        _triggerPhraseCSV.StringChanged += UpdateTriggerPhrase;
+        _filteredItems = _manager.GlobalAliasStorage;
     }
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, PuppeteerTabs tabMenu)
@@ -78,43 +73,42 @@ public sealed partial class PuppetVictimGlobalPanel
             DrawAliasItems(drawRegions.BotRight.Size);
     }
 
-    private string _searchStr = string.Empty;
-    private IReadOnlyList<AliasTrigger> FilteredItems = new List<AliasTrigger>();
-
     private void DrawAliasSearch(float width)
     {
-        var change = FancySearchBar.Draw("##GlobalAliasSearch", width, "Search for an Alias", ref _searchStr, 200);
-        if(change)
+        if(FancySearchBar.Draw("##GlobalSearch", width, "Search for an Alias", ref _searchStr, 200, ImGui.GetFrameHeight(), AddTriggerButton))
         {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
-            FilteredItems = _manager.GlobalAliasStorage
+            _filteredItems = _searchStr.IsNullOrEmpty()
+                ? _manager.GlobalAliasStorage
+                : _manager.GlobalAliasStorage
                 .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+        }
+
+        void AddTriggerButton()
+        {
+            if (CkGui.IconButton(FAI.Plus, inPopup: true))
+            {
+                _manager.CreateNew();
+                _logger.LogInformation("Added a new Alias Trigger.");
+            }
         }
     }
 
     private void DrawAliasItems(Vector2 region)
     {
-        using var _ = CkRaii.ChildPadded("GlobalAliasList", region);
-
         // Push styles for our inner child items.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12)
-            .Push(ImGuiStyleVar.ChildRounding, 5f)
-            .Push(ImGuiStyleVar.WindowPadding, new Vector2(8, 5))
-            .Push(ImGuiStyleVar.FramePadding, new Vector2(4, 2))
-            .Push(ImGuiStyleVar.WindowBorderSize, 1f)
-            .Push(ImGuiStyleVar.FrameBorderSize, 1f);
-        using var color = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
-            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-
-
+            .Push(ImGuiStyleVar.WindowPadding, new Vector2(4))
+            .Push(ImGuiStyleVar.FramePadding, new Vector2(2));
+        using var _ = CkRaii.Child("##GlobalAliasList", region);
         // Place these into a list, so that when we finish changing an item, the list does not throw an error.
-        foreach (var aliasItem in _manager.GlobalAliasStorage.ToList())
+        foreach (var aliasItem in _filteredItems.ToList())
         {
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
-                DrawAliasTriggerEditor();
+                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
             else
-                DrawAliasTrigger(aliasItem);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, VisualApplierMoodles.LatestIpcData);
         }
     }
 
@@ -175,19 +169,12 @@ public sealed partial class PuppetVictimGlobalPanel
         // extract the tabs by splitting the string by comma's
         using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
-            _triggerPhraseCSV.Sync();
-
-            if (_phraseButtonList.Draw("", "", _triggerPhraseCSV, out var editedTag) is { } idx && idx != -1)
+            var globalPhrase = _globals.GlobalPerms?.TriggerPhrase ?? string.Empty;
+            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString))
             {
-                if (idx < _triggerPhraseCSV.Count)
-                {
-                    if (editedTag.Length == 0)
-                        _triggerPhraseCSV.Remove(idx);
-                    else
-                        _triggerPhraseCSV.Rename(idx, editedTag);
-                }
-                else
-                    _triggerPhraseCSV.Add(editedTag);
+                _logger.LogTrace("The Tag Editor had an update!");
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>(nameof(UserGlobalPermissions.TriggerPhrase), updatedString), UpdateDir.Own)).ConfigureAwait(false);
             }
         }
 
@@ -204,27 +191,18 @@ public sealed partial class PuppetVictimGlobalPanel
         // Draw out the permission checkboxes
         ImGui.SameLine(child.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         using (ImRaii.Group())
-            {
-                var categoryFilter = (uint)(_globals.GlobalPerms?.PuppetPerms ?? PuppetPerms.None);
-                foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
-                    ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
+        {
+            var categoryFilter = (uint)(_globals.GlobalPerms?.PuppetPerms ?? PuppetPerms.None);
+            foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+                ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
 
-                if (_globals.GlobalPerms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
-                {
-                    _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                        new KeyValuePair<string, object>(nameof(UserGlobalPermissions.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own)).ConfigureAwait(false);
-                }
-            }
+            if (_globals.GlobalPerms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
+                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
+                    new KeyValuePair<string, object>(nameof(UserGlobalPermissions.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own)).ConfigureAwait(false);
+        }
 
         ImGui.Spacing();
     }
-
-    private void UpdateTriggerPhrase(string newPhrase)
-    {
-        _logger.LogInformation($"Updated own pair permission: TriggerPhrase to {newPhrase} from {_triggerPhraseCSV.CurrentCache}");
-        _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>(nameof(UserGlobalPermissions.TriggerPhrase), newPhrase), UpdateDir.Own)).ConfigureAwait(false);
-    }
-
 
     private void DrawExamplesBox(Vector2 region)
     {
@@ -239,5 +217,4 @@ public sealed partial class PuppetVictimGlobalPanel
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");
         }
     }
-
 }

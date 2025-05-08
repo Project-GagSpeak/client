@@ -1,12 +1,9 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;

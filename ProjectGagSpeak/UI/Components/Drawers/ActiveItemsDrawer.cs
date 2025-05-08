@@ -1,10 +1,7 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Drawers;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
-using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
@@ -12,15 +9,11 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
-using System.Drawing;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 

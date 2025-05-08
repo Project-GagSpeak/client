@@ -1,9 +1,7 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
@@ -106,7 +104,7 @@ public partial class PermissionsDrawer
 
         var buttonW = width - ImGui.GetFrameHeightWithSpacing();
         var pos = ImGui.GetCursorScreenPos();
-        bool isActive = !curState.IsNullOrWhitespace();
+        var isActive = !curState.IsNullOrWhitespace();
 
         using (ImRaii.Disabled(inHardcore))
         {
@@ -147,7 +145,7 @@ public partial class PermissionsDrawer
         using var butt = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
         var data = _pad.ClientPermData[SPPID.ForcedEmoteState];
 
-        bool isActive = !curState.IsNullOrWhitespace();
+        var isActive = !curState.IsNullOrWhitespace();
 
         var buttonW = width - (2 * ImGui.GetFrameHeightWithSpacing());
         using (ImRaii.Disabled(inHardcore))
@@ -213,7 +211,7 @@ public partial class PermissionsDrawer
         }
 
         // special case for this.
-        float seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
+        var seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
         using (var group = ImRaii.Group())
         {
             if (CkGui.IconSliderFloat("##maxVibeTime" + PermissionData.DispName, FAI.Stopwatch, "Max Vibe Duration",
@@ -223,8 +221,8 @@ public partial class PermissionsDrawer
             }
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                TimeSpan timespanValue = TimeSpan.FromSeconds(seconds);
-                ulong ticks = (ulong)timespanValue.Ticks;
+                var timespanValue = TimeSpan.FromSeconds(seconds);
+                var ticks = (ulong)timespanValue.Ticks;
                 UiBlockingTask = AssignBlockingTask(SPPID.MaxVibrateDuration.ToPermValue().name, ticks, PermissionType.UniquePairPerm, UpdateDir.Own);
             }
             CkGui.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");

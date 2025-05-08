@@ -15,6 +15,7 @@ using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 

@@ -47,7 +47,7 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     }
 
     /// <summary> Invokes SelectionChanged & updates Current. </summary>
-    /// <remarks> Called if a change occured in the DrawList override. </remarks>
+    /// <remarks> Called if a change occurred in the DrawList override. </remarks>
     protected virtual void UpdateSelection(T? newSelection)
     {
         if (!ReferenceEquals(Current, newSelection))

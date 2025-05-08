@@ -9,6 +9,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
@@ -49,15 +50,13 @@ public class MoodleDrawer
             if (change && !preset.Id.Equals(_presetCombo.Current.GUID))
             {
                 _logger.LogTrace($"Item changed to {_presetCombo.Current.GUID} [{_presetCombo.Current.Title}] from {preset.Id}");
-                preset.Id = _presetCombo.Current.GUID;
-                preset.StatusIds = _presetCombo.Current.Statuses;
+                preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             }
 
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
                 _logger.LogTrace("Combo Was Right Clicked, and Cleared the Moodle Preset.");
-                preset.Id = Guid.Empty;
-                preset.StatusIds = Enumerable.Empty<Guid>();
+                preset.UpdatePreset(Guid.Empty, Enumerable.Empty<Guid>());
             }
         }
         else if (item is Moodle status)
@@ -66,12 +65,12 @@ public class MoodleDrawer
             if (change && !status.Id.Equals(_statusCombo.Current.GUID))
             {
                 _logger.LogTrace($"Item changed to {_statusCombo.Current.GUID} [{_statusCombo.Current.Title}] from {status.Id}");
-                status.Id = _statusCombo.Current.GUID;
+                status.UpdateId(_statusCombo.Current.GUID);
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
                 _logger.LogTrace("Combo Was Right Clicked, and Cleared the Moodle Status.");
-                status.Id = Guid.Empty;
+                status.UpdateId(Guid.Empty);
             }
         }
     }
@@ -147,6 +146,10 @@ public class MoodleDrawer
             var moodlesInRow = 0;
             foreach (var status in statuses)
             {
+                // Prevent invalid draws
+                if (status.IconID is 0)
+                    continue;
+
                 _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
                 if (ImGui.IsItemHovered())
                     _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
@@ -208,6 +211,10 @@ public class MoodleDrawer
         // Calculate the remaining height in the region.
         foreach (var status in statuses)
         {
+            // Prevent invalid draws
+            if(status.IconID is 0)
+                continue;
+
             _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
                 _statusMonitor.DrawMoodleStatusTooltip(status, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);

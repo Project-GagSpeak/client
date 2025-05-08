@@ -243,7 +243,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         if (convertedValue is null)
             return;
 
-        propertyInfo.SetValue(pair.UserPair.OtherEditAccessPerms, convertedValue);
+        propertyInfo.SetValue(pair.UserPair.OwnPairPerms, convertedValue);
         Logger.LogDebug($"Updated self pair permission '{ChangedPermission}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
 
         var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);

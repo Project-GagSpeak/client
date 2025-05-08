@@ -34,7 +34,10 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public AliasTrigger? CreateNew(string? userUid = null)
     {
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (userUid is not null && !ValidatePairStorage(userUid))
+            return null;
+
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null)
             return null;
 
@@ -50,7 +53,10 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public AliasTrigger? CreateClone(AliasTrigger clone, string? userUid = null)
     {
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (userUid is not null && !ValidatePairStorage(userUid))
+            return null;
+
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null) 
             return null;
 
@@ -65,7 +71,10 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void Delete(AliasTrigger trigger, string? userUid = null)
     {
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if (userUid is not null && !ValidatePairStorage(userUid))
+            return;
+
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null)
             return;
         
@@ -78,7 +87,10 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void ToggleState(AliasTrigger trigger, string? userUid = null)
     {
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage.GetValueOrDefault(userUid)?.Storage;
+        if(userUid is not null && !ValidatePairStorage(userUid))
+            return;
+
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null)
             return;
 
@@ -123,13 +135,31 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void UpdateStoredAliasName(string pairUid, string listenerName)
     {
-        if (!PairAliasStorage.ContainsKey(pairUid))
-            PairAliasStorage[pairUid] = new NamedAliasStorage();
-        // set the name.
-        PairAliasStorage[pairUid].StoredNameWorld = listenerName;
-        _saver.Save(this);
+        if(ValidatePairStorage(pairUid))
+        {
+            // set the name.
+            PairAliasStorage[pairUid].StoredNameWorld = listenerName;
+            _saver.Save(this);
+        }
     }
 
+    /// <summary> Validates the puppeteer storage for a user UID </summary>
+    /// <returns> True if valid, false otherwise. </returns>
+    private bool ValidatePairStorage(string userUid)
+    {
+        // If the storage does not yet exist.
+        if (!PairAliasStorage.ContainsKey(userUid))
+        {
+            // Add it only if the pair itself exists.
+            if (_pairs.GetUserDataFromUID(userUid) is { } userData)
+            {
+                PairAliasStorage[userUid] = new NamedAliasStorage();
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
 
     #region HybridSavable
     public int ConfigVersion => 0;
@@ -147,16 +177,15 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             // Serialize GlobalAliasStorage (AliasStorage contains a List<AliasTrigger>)
             ["GlobalStorage"] = JArray.FromObject(GlobalAliasStorage),
             // Serialize PairAliasStorage (a dictionary of string -> NamedAliasStorage)
-            ["PairStorage"] = new JObject(
-            PairAliasStorage.ToDictionary(
-                pair => pair.Key,
-                pair => new JObject
-                {
-                    ["StoredNameWorld"] = pair.Value.StoredNameWorld,
-                    // Serialize the AliasStorage list (List<AliasTrigger>) in NamedAliasStorage
-                    ["AliasList"] = JArray.FromObject(pair.Value.Storage)
-                })
-            )
+            ["PairStorage"] = JObject.FromObject(
+                PairAliasStorage.ToDictionary(
+                    pair => pair.Key,
+                    pair => new JObject
+                    {
+                        ["StoredNameWorld"] = pair.Value.StoredNameWorld,
+                        ["Storage"] = JArray.FromObject(pair.Value.Storage),
+                    })
+                )
         };
 
         // Convert JObject to string
@@ -229,14 +258,12 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
         foreach (var property in pairStorageObj.Properties())
         {
-            var key = property.Name;
-            var aliasStorageValue = property.Value as JObject;
-            if (aliasStorageValue is not null)
-            {
-                var aliasStorage = ParseNamedAliasStorage(aliasStorageValue);
-                if (aliasStorage is not null)
-                    PairAliasStorage[key] = aliasStorage;
-            }
+            if (property.Value is not JObject pairStorageValue)
+                continue;
+
+            var aliasStorage = ParseNamedAliasStorage(pairStorageValue);
+            if (aliasStorage is not null)
+                PairAliasStorage[property.Name] = aliasStorage;
         }
     }
 
@@ -249,7 +276,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         };
 
         // Parse AliasList
-        if(obj["AliasList"] is not JArray aliasListArray)
+        if(obj["Storage"] is not JArray aliasListArray)
             return aliasStorage;
 
         foreach (var item in aliasListArray)
@@ -266,45 +293,42 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     {
         return new AliasTrigger
         {
-            Identifier = Guid.TryParse(obj["AliasIdentifier"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
+            Identifier = Guid.TryParse(obj["Identifier"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,
-            Actions = ParseExecutions(obj["Actions"] as JObject ?? new JObject())
+            Actions = ParseExecutions(obj["Actions"] as JArray)
         };
     }
 
-    private static HashSet<InvokableGsAction> ParseExecutions(JObject obj)
+    private static HashSet<InvokableGsAction> ParseExecutions(JArray? array)
     {
         var executions = new HashSet<InvokableGsAction>();
 
-        if (obj is null) 
+        if (array == null)
             return executions;
-/*
-        foreach (var property in obj.Properties())
+
+        foreach (var token in array)
         {
-            if (Enum.TryParse(property.Name, out InvokableActionType executionType))
+            var typeValue = token["ActionType"]?.Value<int>() ?? -1;
+            var executionType = (InvokableActionType)typeValue;
+            
+            InvokableGsAction? action = executionType switch
             {
-                var executionObj = property.Value as JObject;
-                if (executionObj == null) continue;
+                InvokableActionType.TextOutput => token.ToObject<TextAction>() ?? new TextAction(),
+                InvokableActionType.Gag => token.ToObject<GagAction>() ?? new GagAction(),
+                InvokableActionType.Restriction => token.ToObject<RestrictionAction>() ?? new RestrictionAction(),
+                InvokableActionType.Restraint => token.ToObject<RestraintAction>() ?? new RestraintAction(),
+                InvokableActionType.Moodle => token.ToObject<MoodleAction>() ?? new MoodleAction(),
+                InvokableActionType.ShockCollar => token.ToObject<PiShockAction>() ?? new PiShockAction(),
+                InvokableActionType.SexToy => token.ToObject<SexToyAction>() ?? new SexToyAction(),
+                _ => throw new NotImplementedException()
+            };
 
-                InvokableGsAction action = executionType switch
-                {
-                    InvokableActionType.TextOutput => executionObj.ToObject<TextAction>() ?? new TextAction(),
-                    InvokableActionType.Gag => executionObj.ToObject<GagAction>() ?? new GagAction(),
-                    InvokableActionType.Restraint => executionObj.ToObject<RestraintAction>() ?? new RestraintAction(),
-                    InvokableActionType.Moodle => executionObj.ToObject<MoodleAction>() ?? new MoodleAction(),
-                    InvokableActionType.ShockCollar => executionObj.ToObject<PiShockAction>() ?? new PiShockAction(),
-                    InvokableActionType.SexToy => executionObj.ToObject<SexToyAction>() ?? new SexToyAction(),
-                    _ => throw new NotImplementedException()
-                };
+            if (action != null)
+                executions.Add(action);
+        }
 
-                if (action is not null)
-                {
-                    executions[executionType] = action;
-                }
-            }
-        }*/
         return executions;
     }
 

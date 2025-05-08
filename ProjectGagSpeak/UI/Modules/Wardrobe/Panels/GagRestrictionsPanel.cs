@@ -213,13 +213,6 @@ public partial class GagRestrictionsPanel
         if (_selector.Selected!.Moodle.Id.IsEmptyGuid())
             return;
 
-        // Draw them out.
-        var moodleIds = _selector.Selected!.Moodle switch
-        {
-            MoodlePreset preset => preset.StatusIds,
-            Moodle set => new[] { set.Id },
-            _ => Array.Empty<Guid>()
-        };
         _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
     }
 

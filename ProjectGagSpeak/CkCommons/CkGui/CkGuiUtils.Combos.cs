@@ -9,19 +9,19 @@ public static partial class CkGuiUtils
     /// </summary>
     /// <returns> True if the value was changed. </returns>
     /// <remarks> Uses the supplied toString function if any, otherwise ToString. </remarks>
-    public static bool EnumCombo<T>(string label, float width, T current, out T newValue,
-        Func<T, string>? toString = null, string defaultText = "Select Item..", int skip = 0) where T : struct, Enum
-        => EnumCombo(label, width, current, out newValue, Enum.GetValues<T>().Skip(skip), toString, defaultText);
+    public static bool EnumCombo<T>(string label, float width, T current, out T newValue, Func<T, string>? toString = null, 
+        string defaultText = "Select Item..", int skip = 0, ImGuiComboFlags flags = ImGuiComboFlags.NoArrowButton) where T : struct, Enum
+        => EnumCombo(label, width, current, out newValue, Enum.GetValues<T>().Skip(skip), toString, defaultText, flags);
 
     /// <summary> Yanked variant of GenericEnumCombo from ImGui, with a custom display text when not found. </summary>
     /// <returns> True if the value was changed. </returns>
     /// <remarks> Uses the supplied toString function if any, otherwise ToString. </remarks>
-    public static bool EnumCombo<T>(string label, float width, T current, out T newValue,
-        IEnumerable<T> options, Func<T, string>? toString = null, string defaultText = "Select Item..") where T : struct, Enum
+    public static bool EnumCombo<T>(string label, float width, T current, out T newValue, IEnumerable<T> options, Func<T, string>? toString = null,
+        string defaultText = "Select Item..", ImGuiComboFlags flags = ImGuiComboFlags.None) where T : struct, Enum
     {
         ImGui.SetNextItemWidth(width);
         var previewText = options.Contains(current) ? (toString?.Invoke(current) ?? current.ToString()) : defaultText;
-        using var combo = ImRaii.Combo(label, previewText, ImGuiComboFlags.NoArrowButton);
+        using var combo = ImRaii.Combo(label, previewText, flags);
         if (combo)
             foreach (var data in options)
             {

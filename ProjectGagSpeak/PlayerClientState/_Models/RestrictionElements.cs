@@ -4,29 +4,6 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.PlayerState.Models;
 
-public class Moodle
-{
-    public Guid Id { get; internal set; } = Guid.Empty;
-
-    public Moodle() { }
-    public Moodle(Moodle other) => Id = other.Id;
-    public Moodle(Guid id) => Id = id;
-
-    public override bool Equals(object? obj) => obj is Moodle other && Id.Equals(other.Id);
-    public override int GetHashCode() => Id.GetHashCode();
-}
-
-public class MoodlePreset : Moodle
-{
-    public IEnumerable<Guid> StatusIds { get; internal set; } = Enumerable.Empty<Guid>();
-
-    public MoodlePreset()
-        => (Id, StatusIds) = (Guid.Empty, Enumerable.Empty<Guid>());
-
-    public MoodlePreset(MoodlePreset other)
-        => (Id, StatusIds) = (other.Id, other.StatusIds);
-}
-
 public class GlamourBonusSlot
 {
     public BonusItemFlag Slot { get; internal set; } = BonusItemFlag.Glasses;

@@ -7,42 +7,62 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Raii;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.EditorCombos;
 
 public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 {
     private readonly FavoritesManager _favorites;
+    public Guid _currentRestraint { get; private set; }
     public RestraintCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<RestraintSet>> restraintsGenerator)
         : base(restraintsGenerator, log)
     {
         _favorites = favorites;
+        _currentRestraint = Guid.Empty;
         SearchByParts = true;
     }
 
     protected override string ToString(RestraintSet obj)
         => obj.Label;
 
+    protected override int UpdateCurrentSelected(int currentSelected)
+    {
+        if (Current?.Identifier == _currentRestraint)
+            return currentSelected;
+
+        CurrentSelectionIdx = Items.IndexOf(i => i.Identifier == _currentRestraint);
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : null;
+        return CurrentSelectionIdx;
+    }
+
+    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
+    /// <returns> True if a new item was selected, false otherwise. </returns>
+    public bool Draw(string label, Guid current, float width)
+        => Draw(label, current, width, ImGuiComboFlags.None);
+
+    public bool Draw(string label, Guid current, float width, ImGuiComboFlags flags)
+    {
+        InnerWidth = width * 1.25f;
+        _currentRestraint = current;
+        var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Restraint...";
+        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+    }
+
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var pattern = Items[globalIdx];
 
-        if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
         {
-            // Force a recalculation on the cached display.
             CurrentSelectionIdx = -1;
             Current = default;
         }
-
+        ImUtf8.SameLineInner();
         var ret = ImGui.Selectable(pattern.Label, selected);
         return ret;
-    }
-
-    public void Draw(float width)
-    {
-        var name = Current?.Label ?? string.Empty;
-        Draw("##RestraintSets", name, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 
     private void DrawItemTooltip(Pattern item)
