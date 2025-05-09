@@ -329,8 +329,8 @@ public sealed class AliasItemDrawer
         CkGui.AttachToolTip("The Following Gag State that will be applied to the Kinkster.");
 
         ImUtf8.SameLineInner();
-        if (ImGuiUtil.GenericEnumCombo("##GagState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, ImGuiComboFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##GagState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted gag.");
 
@@ -340,7 +340,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (ImGuiUtil.GenericEnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
@@ -352,7 +352,7 @@ public sealed class AliasItemDrawer
         else
         {
             ImUtf8.SameLineInner();
-            if (ImGuiUtil.GenericEnumCombo("##GagType", 100f, action.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##GagType", 100f, action.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: ImGuiComboFlags.NoArrowButton))
                 action.GagType = newVal;
         }
 
@@ -401,8 +401,8 @@ public sealed class AliasItemDrawer
         CkGui.AttachToolTip("The Restriction Action performed to the Kinkster.");
 
         ImUtf8.SameLineInner();
-        if (ImGuiUtil.GenericEnumCombo("##RestrictionState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, ImGuiComboFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##RestrictionState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted restriction item.");
 
@@ -411,7 +411,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (ImGuiUtil.GenericEnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
@@ -474,8 +474,8 @@ public sealed class AliasItemDrawer
         CkGui.AttachToolTip("The Restraint Set Action performed to the Kinkster.");
 
         ImUtf8.SameLineInner();
-        if (ImGuiUtil.GenericEnumCombo("##RestraintState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, ImGuiComboFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##RestraintState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the chosen restraint set.");
 
@@ -485,7 +485,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (ImGuiUtil.GenericEnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
