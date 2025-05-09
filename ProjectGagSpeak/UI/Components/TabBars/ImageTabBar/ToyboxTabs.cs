@@ -1,0 +1,19 @@
+using GagSpeak.CkCommons.Widgets;
+
+namespace GagSpeak.CkCommons.Gui.Components;
+
+public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
+{
+    // Look, its hard to come up with a proper way to word this, it's very confusing in technical terms.
+    public enum SelectedTab
+    {
+        ToysAndLobbies,
+        Patterns,
+        Alarms,
+        Triggers
+    }
+
+    public ToyboxTabs()
+    { }
+
+}

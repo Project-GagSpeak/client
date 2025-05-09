@@ -7,6 +7,7 @@ using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
+// REMOVE THIS AND MIGRATE IT OVER TO THE MAIN PANEL. (or just functionalize it here)
 public partial class PatternsPanel
 {
     // Placeholder data inside currently.

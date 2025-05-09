@@ -81,7 +81,7 @@ public partial class CkGui
     {
         // add a scaled dummy over this area.
         if(ImGui.IsMouseHoveringRect(pos, pos + size))
-            AttachToolTip(text);
+            AttachToolTip(text, displayAnyways: true);
     }
 
     public static void HelpText(string helpText, bool inner = false)

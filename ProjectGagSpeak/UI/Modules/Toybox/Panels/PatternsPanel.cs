@@ -2,11 +2,15 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using OtterGui.Text;
+using System.Drawing;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -29,32 +33,49 @@ public partial class PatternsPanel
         _guides = guides;
     }
 
-    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, ToyboxTabs tabMenu)
     {
-        using var group = ImRaii.Group();
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("PatternsTL", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
-        // within this group, if we are editing an item, draw the editor.
-        if (_manager.ItemInEditor is not null)
-        {
-            DrawEditor(remainingRegion);
+        ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
+        using (ImRaii.Child("PatternsBL", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+            _selector.DrawList(drawRegions.BotLeft.SizeX);
+
+        ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
+        using (ImRaii.Child("PatternsTR", drawRegions.TopRight.Size))
+            tabMenu.Draw(drawRegions.TopRight.Size);
+
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
+        DrawPatternInfo(drawRegions.BotRight, curveSize);
+    }
+
+    private void DrawPatternInfo(CkHeader.DrawRegion region, float curveSize)
+    {
+        DrawSelectedPattern(region);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+    }
+
+    private void DrawSelectedPattern(CkHeader.DrawRegion region)
+    {
+        if (_selector.Selected is null)
             return;
-        }
-        else
+
+        using (CkRaii.LabelChildText(region.Size, new Vector2(region.SizeX/2, ImGui.GetFrameHeight()), "Testing Label", ImGui.GetFrameHeight(), 2f))
         {
-            using (ImRaii.Group())
-            {
-                _selector.DrawFilterRow(selectorSize);
-                ImGui.Spacing();
-                _selector.DrawList(selectorSize);
-            }
-            ImGui.SameLine();
-            using (ImRaii.Group())
-            {
-                DrawActiveItemInfo();
-                DrawSelectedItemInfo();
-            }
+            ImGui.Text("What");
         }
     }
+
+    private void DrawPatternPlayback(Vector2 region)
+    {
+        using var _ = CkRaii.Group(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), 0);
+        ImGui.Text("Hi Im pattern Playback!");
+    }
+
 
     private void DrawActiveItemInfo()
     {

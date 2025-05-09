@@ -62,6 +62,15 @@ public static partial class CkRaii
     public static float GetChildRoundingLarge() => ImGui.GetStyle().FrameRounding * 1.75f;
     public static float GetHeaderRounding() => ImGui.GetStyle().FrameRounding * 2f;
 
+    public struct ColorsLC(uint label, uint shadow, uint background, uint labelHovered = 0)
+    {
+        public uint Label { get; } = label;
+        public uint LabelHovered { get; } = labelHovered;
+        public uint Shadow { get; } = shadow;
+        public uint BG { get; } = background;
+        public static ColorsLC Default => new ColorsLC(CkColor.VibrantPink.Uint(), CkColor.ElementSplit.Uint(), CkColor.FancyHeader.Uint(), CkColor.VibrantPinkHovered.Uint());
+    }
+
     public struct HeaderChildColors(uint headerColor, uint splitColor, uint bodyColor)
     {
         public uint HeaderColor { get; } = headerColor;
@@ -90,7 +99,7 @@ public static partial class CkRaii
 
     /// <summary> An IEndObject that serves for ImRaii.EndUnconditionally, exclusively for containers. </summary>
     /// <remarks> This should only be used for unconditionally ended ImGui.Group objects. </remarks>
-    private struct EndObjectContainer(Action endAction, bool success, Vector2 innerRegion) : IEndObjectContainer
+    private struct EndObjectContainer(Action endAction, bool success, Vector2 innerRegion) : IEOContainer
     {
         private Action EndAction { get; } = endAction;
         public Vector2 InnerRegion { get; } = innerRegion;
@@ -107,7 +116,33 @@ public static partial class CkRaii
         }
     }
 
-    public interface IEndObjectContainer : ImRaii.IEndObject
+    /// <summary> An IEndObject extention of EndObjectContainer, for advanced container objects built from CkRaii. </summary>
+    /// <remarks> This should only be used for unconditionally ended ImGui.Group and ImGui.Child objects. </remarks>
+    private struct EndObjectLabelContainer(Action endAction, bool success, Vector2 inner, Vector2 label) : IEOLabelContainer
+    {
+        private Action EndAction { get; } = endAction;
+        public Vector2 InnerRegion { get; } = inner;
+        public Vector2 LabelRegion { get; } = label;
+        public bool Success { get; } = success;
+        public bool Disposed { get; private set; } = false;
+
+        public void Dispose()
+        {
+            if (Disposed)
+                return;
+
+            EndAction();
+            Disposed = true;
+        }
+    }
+
+    public interface IEOLabelContainer : IEOContainer
+    {
+        /// <summary> The label region of the container. </summary>
+        Vector2 LabelRegion { get; }
+    }
+
+    public interface IEOContainer : ImRaii.IEndObject
     {
         /// <summary> The inner region of the container. </summary>
         Vector2 InnerRegion { get; }

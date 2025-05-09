@@ -14,12 +14,15 @@ using GagSpeak.Toybox.Services;
 using ImGuiNET;
 using OtterGui.Text;
 using GagSpeak.CkCommons.Intiface;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.CkCommons.Widgets;
+using GagSpeak.CkCommons.Gui.Components;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
-public class SexToysPanel
+public class ToysPanel
 {
-    private readonly ILogger<SexToysPanel> _logger;
+    private readonly ILogger<ToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly GlobalData _globals;
     private readonly SexToyManager _manager;
@@ -27,8 +30,8 @@ public class SexToysPanel
     private readonly ServerConfigService _serverConfigs;
     private readonly TutorialService _guides;
 
-    public SexToysPanel(
-        ILogger<SexToysPanel> logger,
+    public ToysPanel(
+        ILogger<ToysPanel> logger,
         GagspeakMediator mediator,
         GlobalData playerData,
         SexToyManager toysManager,
@@ -49,17 +52,39 @@ public class SexToysPanel
             IntifaceCentral.GetApplicationPath();
     }
 
-    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
+    public void DrawContents(CkHeader.DrawRegions regions, float rightLength, float curveSize, ToyboxTabs tabMenu)
     {
-        // draw the top display field for Intiface connectivity, similar to our other servers.
-        DrawIntifaceConnectionStatus();
-        // special case for the intiface connection, where if it is empty, we reset it to the default address.
-        if (string.IsNullOrEmpty(_clientConfigs.Config.IntifaceConnectionSocket))
+        ImGui.SetCursorScreenPos(regions.Top.Pos);
+        using (ImRaii.Child("ToysAndLobbiesTop", regions.Top.Size))
+            DrawHeader(regions.Top, rightLength, curveSize, tabMenu);
+
+        ImGui.SetCursorScreenPos(regions.Bottom.Pos);
+        using (CkRaii.ChildPadded("ToysAndLobbiesBot", regions.Bottom.Size))
+            DrawPanel(regions.Bottom);
+    }
+
+    private void DrawHeader(CkHeader.DrawRegion drawRegion, float rightLen, float curveSize, ToyboxTabs tabMenu)
+    {
+        // Calculate the size of the left box, and the size of the right box, with the spacing in mind.
+        var leftBoxSize = new Vector2(drawRegion.Size.X - rightLen - ImGui.GetFrameHeight(), drawRegion.Size.Y);
+        var rightBoxSize = new Vector2(rightLen, drawRegion.Size.Y);
+
+        // Create the CkRaii Child for the left side to draw the connection status inside.
+        ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(curveSize, 0));
+        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
-            _clientConfigs.Config.IntifaceConnectionSocket = "ws://localhost:12345";
-            _clientConfigs.Save();
+            DrawIntifaceConnectionStatus();
         }
 
+        // Setup position for the right area.
+        ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(leftBoxSize.X + ImGui.GetFrameHeight(), 0));
+        // draw out the tab menu display here.
+        tabMenu.Draw(rightBoxSize);
+
+    }
+
+    public void DrawPanel(CkHeader.DrawRegion drawRegion)
+    {
         // display a dropdown for the type of vibrator to use
         ImGui.SetNextItemWidth(125f);
         if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.Config.VibratorMode.ToString()))
@@ -238,7 +263,7 @@ public class SexToysPanel
             // draw the add user button
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
-            if (CkGui.IconButton(intifaceOpenIcon))
+            if (CkGui.IconButton(intifaceOpenIcon, inPopup: true))
                 IntifaceCentral.OpenIntiface(_logger, true);
             CkGui.AttachToolTip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
 
@@ -270,7 +295,7 @@ public class SexToysPanel
             // we need to turn the button from the connected link to the disconnected link.
             using (ImRaii.PushColor(ImGuiCol.Text, color))
             {
-                if (CkGui.IconButton(connectedIcon))
+                if (CkGui.IconButton(connectedIcon, inPopup: true))
                 {
                     // if we are connected to intiface, then we should disconnect.
                     if (_manager.IntifaceConnected)
@@ -286,7 +311,5 @@ public class SexToysPanel
                 CkGui.AttachToolTip(_manager.IntifaceConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
             }
         }
-        // draw out the vertical slider.
-        ImGui.Separator();
     }
 }

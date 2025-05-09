@@ -1,32 +1,28 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.UiToybox;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.UiToybox;
 using ImGuiNET;
-using System.Windows.Forms;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
 public class ToyboxUI : WindowMediatorSubscriberBase
 {
-    private readonly ToyboxTabs _tabMenu = new ToyboxTabs();
-    private readonly SexToysPanel _sexToysPanel;
-    private readonly VibeLobbiesPanel _vibeLobbyPanel;
+    private readonly ToysPanel _sexToysPanel;
     private readonly PatternsPanel _patternsPanel;
     private readonly AlarmsPanel _alarmsPanel;
     private readonly TriggersPanel _triggersPanel;
     private readonly PlaybackDrawer _playback;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
+
     public ToyboxUI(
         ILogger<ToyboxUI> logger,
         GagspeakMediator mediator,
-        SexToysPanel sexToysPanel,
-        VibeLobbiesPanel vibeLobbyPanel,
+        ToysPanel sexToysPanel,
         PatternsPanel patternsPanel,
         AlarmsPanel alarmsPanel,
         TriggersPanel triggersPanel,
@@ -35,13 +31,21 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         TutorialService guides) : base(logger, mediator, "Toybox UI")
     {
         _sexToysPanel = sexToysPanel;
-        _vibeLobbyPanel = vibeLobbyPanel;
         _patternsPanel = patternsPanel;
         _alarmsPanel = alarmsPanel;
         _triggersPanel = triggersPanel;
         _playback = playback;
         _cosmetics = cosmetics;
         _guides = guides;
+
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.ToysAndLobbies,
+            "Configure & use your Toys, or join lobbies to control others");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Stimulated], ToyboxTabs.SelectedTab.Patterns,
+            "Create, Edit, and playback patterns");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Clock], ToyboxTabs.SelectedTab.Alarms,
+            "Set various Alarms that play patterns when triggered");
+        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.CircleDot], ToyboxTabs.SelectedTab.Triggers,
+            "Create various kinds of Triggers");
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -67,11 +71,10 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                     ImGui.BeginTooltip();
                     var text = _tabMenu.TabSelection switch
                     {
-                        ToyboxTabs.SelectedTab.ToyOverview => "Start/Stop Toy Manager Tutorial",
-                        ToyboxTabs.SelectedTab.VibeServer => "Start/Stop Vibe Lobby Tutorial",
-                        ToyboxTabs.SelectedTab.PatternManager => "Start/Stop Patterns Tutorial",
-                        ToyboxTabs.SelectedTab.AlarmManager => "Start/Stop Alarms Tutorial",
-                        ToyboxTabs.SelectedTab.TriggerManager => "Start/Stop Triggers Tutorial",
+                        ToyboxTabs.SelectedTab.ToysAndLobbies => "Start/Stop Toys & Vibe Lobbies Tutorial",
+                        ToyboxTabs.SelectedTab.Patterns => "Start/Stop Patterns Tutorial",
+                        ToyboxTabs.SelectedTab.Alarms => "Start/Stop Alarms Tutorial",
+                        ToyboxTabs.SelectedTab.Triggers => "Start/Stop Triggers Tutorial",
                         _ => "No Tutorial Available"
                     };
                     ImGui.Text(text);
@@ -83,20 +86,24 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(760, 470),
-            MaximumSize = new Vector2(760 * 1.5f, 1000f)
+            MinimumSize = new Vector2(600, 490),
+            MaximumSize = ImGui.GetIO().DisplaySize,
         };
         RespectCloseHotkey = false;
     }
 
+    private static ToyboxTabs _tabMenu = new ToyboxTabs();
     private bool ThemePushed = false;
+
+    private static float RightLength() => 300 * ImGuiHelpers.GlobalScale;
+
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
         {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
+            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
             ThemePushed = true;
         }
     }
@@ -105,64 +112,50 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     {
         if (ThemePushed)
         {
+            ImGui.PopStyleVar();
             ImGui.PopStyleColor(2);
             ThemePushed = false;
         }
     }
 
-    // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
-        var wdl = ImGui.GetWindowDrawList();
-        var mainMinPos = wdl.GetClipRectMin();
-        var mainMaxPos = wdl.GetClipRectMax();
-        var padding = ImGui.GetStyle().WindowPadding;
-        var fdl = ImGui.GetForegroundDrawList();
-        fdl.AddRectFilled(mainMinPos with { X = mainMinPos.X - padding.X / 2 }, mainMaxPos with { X = mainMinPos.X}, ImGui.GetColorU32(ImGuiCol.ButtonActive));
-
-        var region = ImGui.GetContentRegionAvail();
-        var itemSpacing = ImGui.GetStyle().ItemSpacing;
-        var cellPadding = ImGui.GetStyle().CellPadding;
-
-        _tabMenu.Draw(region.X);
-
-        ImGui.Separator();
-        // Now we should draw out the contents of the respective tab. Each tab having their own set of rules.
-        switch (_tabMenu.TabSelection)
+        var frameH = ImGui.GetFrameHeight();
+        // Toys and Vibe Lobbies are special <3
+        if (_tabMenu.TabSelection is ToyboxTabs.SelectedTab.ToysAndLobbies)
         {
-            case ToyboxTabs.SelectedTab.ToyOverview:
-                _sexToysPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case ToyboxTabs.SelectedTab.VibeServer:
-                _vibeLobbyPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case ToyboxTabs.SelectedTab.PatternManager:
-                _patternsPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case ToyboxTabs.SelectedTab.AlarmManager:
-                _alarmsPanel.DrawPanel(region, GetSelectorSize());
-                break;
-            case ToyboxTabs.SelectedTab.TriggerManager:
-                _triggersPanel.DrawPanel(region, GetSelectorSize());
-                break;
+            var talDrawRegions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH * 2, frameH);
+            _sexToysPanel.DrawContents(talDrawRegions, RightLength(), frameH, _tabMenu);
+            return;
         }
 
-        // All content should be drawn by this point.
-        // if we want to move the tutorial down to the bottom right we can draw that here.
+        // Handle other cases.
+        var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), frameH, frameH, RightLength(), true);
+
+        switch (_tabMenu.TabSelection)
+        {
+            case ToyboxTabs.SelectedTab.Patterns:
+                _patternsPanel.DrawContents(drawRegions, frameH, _tabMenu);
+                break;
+
+            case ToyboxTabs.SelectedTab.Alarms:
+                _alarmsPanel.DrawContents(drawRegions, frameH, _tabMenu);
+                break;
+
+            case ToyboxTabs.SelectedTab.Triggers:
+                _triggersPanel.DrawContents(drawRegions, frameH, _tabMenu);
+                break;
+        }
     }
-
-    private float GetSelectorSize() => 300f * ImGuiHelpers.GlobalScale;
-
 
     private void TutorialClickedAction()
     {
         switch (_tabMenu.TabSelection)
         {
-            case ToyboxTabs.SelectedTab.ToyOverview:
-            case ToyboxTabs.SelectedTab.VibeServer:
-            case ToyboxTabs.SelectedTab.PatternManager:
-            case ToyboxTabs.SelectedTab.AlarmManager:
-            case ToyboxTabs.SelectedTab.TriggerManager:
+            case ToyboxTabs.SelectedTab.ToysAndLobbies:
+            case ToyboxTabs.SelectedTab.Patterns:
+            case ToyboxTabs.SelectedTab.Alarms:
+            case ToyboxTabs.SelectedTab.Triggers:
                 // DO LATER. I hate everything! :D
                 break;
         }

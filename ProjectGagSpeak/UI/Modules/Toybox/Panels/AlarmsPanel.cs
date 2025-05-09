@@ -1,4 +1,7 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
@@ -25,30 +28,42 @@ public partial class AlarmsPanel
         _guides = guides;
     }
 
-    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, ToyboxTabs tabMenu)
     {
-        using var group = ImRaii.Group();
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("AlarmsTL", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
-        // within this group, if we are editing an item, draw the editor.
-        if (_manager.ItemInEditor is not null)
-        {
-            DrawEditor(remainingRegion);
+        ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
+        using (ImRaii.Child("AlarmsBL", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+            _selector.DrawList(drawRegions.BotLeft.SizeX);
+
+        ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
+        using (ImRaii.Child("AlarmsTR", drawRegions.TopRight.Size))
+            tabMenu.Draw(drawRegions.TopRight.Size);
+
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
+        DrawAlarmInfo(drawRegions.BotRight, curveSize);
+    }
+
+    private void DrawAlarmInfo(CkHeader.DrawRegion region, float curveSize)
+    {
+        DrawSelectedAlarm(region);
+        var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+    }
+
+    private void DrawSelectedAlarm(CkHeader.DrawRegion region)
+    {
+        if (_selector.Selected is null)
             return;
-        }
-        else
+        using (ImRaii.Child("AlarmInfo", region.Size, true, WFlags.NoScrollbar))
         {
-            using (ImRaii.Group())
-            {
-                _selector.DrawFilterRow(selectorSize);
-                ImGui.Spacing();
-                _selector.DrawList(selectorSize);
-            }
-            ImGui.SameLine();
-            using (ImRaii.Group())
-            {
-                DrawActiveItemInfo();
-                DrawSelectedItemInfo();
-            }
+            ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetStyle().ItemSpacing.Y));
+            DrawActiveItemInfo();
+            ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetStyle().ItemSpacing.Y));
+            DrawSelectedItemInfo();
         }
     }
 

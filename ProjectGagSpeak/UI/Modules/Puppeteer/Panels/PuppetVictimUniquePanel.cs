@@ -249,12 +249,10 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
 
     private void DrawExamplesBox(Vector2 region)
     {
-        var examplesRegion = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        var colorTheme = new CkRaii.HeaderChildColors(CkColor.VibrantPink.Uint(), CkColor.ElementSplit.Uint(), CkColor.FancyHeader.Uint());
-        var labelWidth = region.X * .7f;
+        var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
+        var labelSize = new Vector2(region.X * .7f, ImGui.GetTextLineHeightWithSpacing());
 
-        using (var child = CkRaii.LabelHeaderChild(examplesRegion, "Example Uses", labelWidth, ImGui.GetFrameHeight(), ImGui.GetFrameHeight(),
-            colorTheme, ImDrawFlags.RoundCornersLeft, ImDrawFlags.RoundCornersTopLeft | ImDrawFlags.RoundCornersBottomRight))
+        using (var child = CkRaii.LabelChildText(size, labelSize, "Example Uses", ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");

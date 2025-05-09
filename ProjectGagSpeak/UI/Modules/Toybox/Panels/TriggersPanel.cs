@@ -1,7 +1,8 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
 using ImGuiNET;
@@ -12,26 +13,13 @@ public partial class TriggersPanel
 {
     private readonly ILogger<TriggersPanel> _logger;
     private readonly TriggerFileSelector _selector;
-    private readonly GagRestrictionManager _gags;
-    private readonly RestrictionManager _restrictions;
-    private readonly RestraintManager _restraints;
     private readonly TriggerManager _manager;
-    private readonly VisualApplierMoodles _moodles;
     private readonly TutorialService _guides;
-
-    // Custom Combo's:
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
-    // others...
 
     public TriggersPanel(
         ILogger<TriggersPanel> logger,
         TriggerFileSelector selector,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
-        RestraintManager restraints,
         TriggerManager manager,
-        VisualApplierMoodles moodles,
         TutorialService guides)
     {
         _logger = logger;
@@ -40,41 +28,33 @@ public partial class TriggersPanel
         _guides = guides;
     }
 
-    public void DrawPanel(Vector2 remainingRegion, float selectorSize)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, ToyboxTabs tabMenu)
     {
-        using var group = ImRaii.Group();
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("TriggersTL", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
-        // within this group, if we are editing an item, draw the editor.
-        if (_manager.ItemInEditor is not null)
-        {
-            DrawEditor(remainingRegion);
-            return;
-        }
-        else
-        {
-            using (ImRaii.Group())
-            {
-                _selector.DrawFilterRow(selectorSize);
-                ImGui.Spacing();
-                _selector.DrawList(selectorSize);
-            }
-            ImGui.SameLine();
-            using (ImRaii.Group())
-            {
-                DrawActiveItemInfo();
-                DrawSelectedItemInfo();
-            }
-        }
+        ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
+        using (ImRaii.Child("TriggersBL", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+            _selector.DrawList(drawRegions.BotLeft.SizeX);
+
+        ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
+        using (ImRaii.Child("TriggersTR", drawRegions.TopRight.Size))
+            tabMenu.Draw(drawRegions.TopRight.Size);
+
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
+        DrawTriggerInfo(drawRegions.BotRight, curveSize);
     }
 
-    private void DrawActiveItemInfo()
+    private void DrawTriggerInfo(CkHeader.DrawRegion region, float curveSize)
     {
-        if (_manager.ActiveTriggers is not { } activeItems)
-            return;
-        ImGui.Text("Active Triggers:");
+        DrawSelectedTrigger(region.Size);
+        var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
-    private void DrawSelectedItemInfo()
+    private void DrawSelectedTrigger(Vector2 region)
     {
         // Draws additional information about the selected item. Uses the Selector for reference.
         if (_selector.Selected is null)

@@ -16,6 +16,8 @@ using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using GagSpeak.CkCommons.Raii;
+using System.Drawing;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
@@ -91,21 +93,20 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
-        // For drawing the grey "selected Item" line.
-        var style = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + style.ItemSpacing.Y * 2 + style.WindowPadding.Y * 2;
-        var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
-
+        // Draw the selected Item
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("RestrictionsBR", drawRegions.BotRight.Size))
-        {
-            DrawSelectedItemInfo(selectedSize, curveSize);
-            DrawActiveItemInfo();
-        }
+        DrawSelectedItemInfo(drawRegions.BotRight, curveSize);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+
+        // Shift down and draw the Active items
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
+        DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
+        var botLineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var botLineBotRight = botLineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(botLineTopLeft, botLineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
     public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
@@ -128,83 +129,66 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     }
 
 
-    private void DrawSelectedItemInfo(Vector2 region, float rounding)
+    private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var ItemSelected = _selector.Selected is not null;
-        var styler = ImGui.GetStyle();
         var wdl = ImGui.GetWindowDrawList();
+        var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
+        var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
+        var tooltipAct = "Double Click me to begin editing!";
 
-        using (ImRaii.Child("SelectedItemOuter", new Vector2(ImGui.GetContentRegionAvail().X, region.Y)))
+        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tt: tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
+
+        var pos = ImGui.GetItemRectMin();
+        var imgSize = new Vector2(inner.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+        // Draw the left items.
+        if (_selector.Selected is not null) 
+            DrawSelectedInner(imgSize.X);
+        
+        // Draw the right image item.
+        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.SetCursorScreenPos(imgDrawPos);
+        if (_selector.Selected is not null)
         {
-            var imgSize = new Vector2(region.Y) - styler.WindowPadding * 2;
-            var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - region.Y, 0) + styler.WindowPadding;
-            // Draw the left items.
-            if (ItemSelected)
+            _activeItemDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
+            if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
             {
-                DrawSelectedInner(imgSize.X);
-            }
-
-            // move to the cursor position and attempt to draw it.
-            ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
-            ImGui.SetCursorScreenPos(imgDrawPos);
-            if (ItemSelected)
-            {
-                _activeItemDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
-                if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 {
-                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                    {
-                        var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
-                        Mediator.Publish(new OpenThumbnailBrowser(metaData));
-                    }
-                    CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
+                    var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
+                    Mediator.Publish(new OpenThumbnailBrowser(metaData));
                 }
+                CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
             }
         }
 
-        // draw the actual design element.
-        var minPos = ImGui.GetItemRectMin();
-        var size = ImGui.GetItemRectSize();
-        wdl.AddRectFilled(minPos, minPos + size, CkColor.FancyHeader.Uint(), rounding, ImDrawFlags.RoundCornersRight);
-
-        // Draw a secondary rect just like the first but going slightly bigger.
-        var secondaryRect = new Vector2(size.X * .65f + styler.ItemInnerSpacing.Y, ImGui.GetFrameHeight() + styler.ItemInnerSpacing.Y);
-        wdl.AddRectFilled(minPos, minPos + secondaryRect, CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
-
-        // Add a rect that spans the top row up to about .67 of the height.
-        var pinkSize = new Vector2(size.X * .65f, ImGui.GetFrameHeight());
-        var hoveringTitle = ImGui.IsMouseHoveringRect(minPos, minPos + pinkSize);
-        var col = hoveringTitle ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
-        wdl.AddRectFilled(minPos, minPos + pinkSize, col, rounding, ImDrawFlags.RoundCornersBottomRight);
-
-        // Draw the type of restriction item as an image path here.
-        if(ItemSelected)
+        void DrawLabel()
         {
-            (var image, var tooltip) = _selector.Selected!.Type switch
+            using var _ = ImRaii.Child("LabelChild", new Vector2(region.X * .6f, ImGui.GetFrameHeight()));
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
+            ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
+            ImGui.SameLine(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing());
+            var imgPos = ImGui.GetCursorScreenPos();
+
+            // Draw the type of restriction item as an image path here.
+            if (_selector.Selected is not null)
             {
-                RestrictionType.Gag => (_textures.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!"),
-                RestrictionType.Collar => (_textures.CoreTextures[CoreTexture.Collar], "This is a Collar Restriction!"),
-                RestrictionType.Blindfold => (_textures.CoreTextures[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
-                _ => (_textures.CoreTextures[CoreTexture.Restrained], "This is a generic Restriction.")
-            };
-            wdl.AddDalamudImage(image, minPos + new Vector2(size.X * .6f - ImGui.GetFrameHeight(), 0), new Vector2(ImGui.GetFrameHeight()), tooltip);
+                (var image, var tooltip) = _selector.Selected?.Type switch
+                {
+                    RestrictionType.Gag => (_textures.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!"),
+                    RestrictionType.Collar => (_textures.CoreTextures[CoreTexture.Collar], "This is a Collar Restriction!"),
+                    RestrictionType.Blindfold => (_textures.CoreTextures[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
+                    _ => (_textures.CoreTextures[CoreTexture.Restrained], "This is a generic Restriction.")
+                };
+                ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
+            }
         }
 
-        if (hoveringTitle)
-        {
-            if (ItemSelected && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                _manager.StartEditing(_selector.Selected!);
-            CkGui.AttachToolTip("Double Click me to begin editing!", displayAnyways: true);
-        }
+        void BeginEdits() { if (_selector.Selected is not null) _manager.StartEditing(_selector.Selected!); }
     }
 
     private void DrawSelectedInner(float rightOffset)
     {
-        using var group = ImRaii.Group();
-        ImUtf8.SameLineInner();
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text(_selector.Selected!.Label);
-
         using var innerGroup = ImRaii.Group();
         // Next row we need to draw the Glamour Icon, Mod Icon, and hardcore Traits.
         var hasGlamour = ItemService.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
@@ -221,7 +205,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             : "This Restriction Item has no associated Mod Preset.");
 
         // go right aligned for the trait previews.
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().ItemSpacing.X);
         _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits, _selector.Selected!.Stimulation);
         DrawMoodlePreview();
     }
@@ -234,12 +217,12 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
     }
 
-    private void DrawActiveItemInfo()
+    private void DrawActiveItemInfo(Vector2 region)
     {
         if (_manager.ServerRestrictionData is null)
             return;
 
-        using var _ = ImRaii.Child("ActiveRestrictionItems", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);
+        using var _ = ImRaii.Child("ActiveRestrictionItems", region, false, WFlags.AlwaysUseWindowPadding);
 
         var innerWidth = ImGui.GetContentRegionAvail().X;
         _activeItemDrawer.DisplayRestrictionSlots(innerWidth);

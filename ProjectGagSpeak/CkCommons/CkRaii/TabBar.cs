@@ -3,6 +3,8 @@ using GagSpeak.CkCommons.Widgets;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Raii;
+
+// Improve this to have better compatibility with other CkRaii objecta later.
 public static partial class CkRaii
 {
     public static ImRaii.IEndObject TabBarChild(string id, out IFancyTab? selected, params IFancyTab[] tabs)

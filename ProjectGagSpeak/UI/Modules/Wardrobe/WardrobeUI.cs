@@ -120,7 +120,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         }
     }
 
-    // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
         var isEditing = IsEditing(_tabMenu.TabSelection);
