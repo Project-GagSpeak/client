@@ -5,6 +5,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Services;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
 using System.Runtime.CompilerServices;
 
@@ -304,18 +305,14 @@ public partial class CkGui
         using var font = UiFontService.IconFont.Push();
         // Get the text size.
         var text = icon.ToIconString();
-        var vector = ImGui.CalcTextSize(text);
-        // Get current pos.
-        var pos = ImGui.GetCursorScreenPos();
-        // Get the frame height.
-        var frameHeight = ImGui.GetFrameHeight();
-        var region = new Vector2(frameHeight);
-        // move the pos so that it is centered within the region
-        var centerPos = new Vector2(pos.X + ImGui.GetStyle().FramePadding.X, pos.Y + (frameHeight / 2f - (vector.Y / 2f)));
+        var region = new Vector2(ImGui.GetFrameHeight());
+        var iconSize = ImGui.CalcTextSize(text);
+        var currentPos = ImGui.GetCursorScreenPos();
+        var iconPosition = currentPos + (region - iconSize) * 0.5f;
         // Draw a dummy to fill the frame region.
         ImGui.Dummy(region);
         // Then draw the text in the center.
-        ImGui.GetWindowDrawList().AddText(centerPos, color ?? ImGui.GetColorU32(ImGuiCol.Text), text);
+        ImGui.GetWindowDrawList().AddText(iconPosition, color ?? ImGui.GetColorU32(ImGuiCol.Text), text);
     }
 
 
@@ -329,16 +326,28 @@ public partial class CkGui
         IconText(icon, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
     }
 
-    private static void FontText(string text, IFontHandle font, Vector4? color = null)
+    public static void FontText(string text, IFontHandle font, Vector4? color = null)
     {
         FontText(text, font, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
     }
 
-    private static void FontText(string text, IFontHandle font, uint color)
+    public static void FontText(string text, IFontHandle font, uint color)
     {
         using var pushedFont = font.Push();
         using var pushedColor = ImRaii.PushColor(ImGuiCol.Text, color);
         ImGui.TextUnformatted(text);
+    }
+
+    public static void FontTextCentered(string text, IFontHandle font, Vector4? color = null)
+    {
+        FontTextCentered(text, font, color == null ? ImGui.GetColorU32(ImGuiCol.Text) : ImGui.GetColorU32(color.Value));
+    }
+
+    public static void FontTextCentered(string text, IFontHandle font, uint color)
+    {
+        using var pushedFont = font.Push();
+        using var pushedColor = ImRaii.PushColor(ImGuiCol.Text, color);
+        ImGuiUtil.Center(text);
     }
 
     // Helper function to draw an input text for a set width, with an icon drawn right aligned.

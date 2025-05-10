@@ -113,6 +113,38 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
             CkGui.AttachToolTip("Delete this pattern. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
 
+/*        using (ImRaii.Group())
+        {
+            // display name, then display the downloads and likes on the other side.
+            CkGui.GagspeakText(activeItem.Label);
+            CkGui.HelpText("Description:--SEP--" + activeItem.Description);
+
+            // playback button
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X);
+            // Draw the delete button
+            ImGui.SameLine();
+        }
+        // next line:
+        using (var group2 = ImRaii.Group())
+        {
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(FAI.Clock);
+            ImUtf8.SameLineInner();
+            CkGui.ColorText(durationTxt, ImGuiColors.DalamudGrey);
+            CkGui.AttachToolTip("Total Length of the Pattern.");
+
+            ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(FAI.Stopwatch20);
+            ImUtf8.SameLineInner();
+            CkGui.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
+            CkGui.AttachToolTip("Start Point of the Pattern.");
+
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
+            CkGui.IconText(FAI.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
+            CkGui.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
+        }*/
+
         // the border if selected.
         if (selected)
         {

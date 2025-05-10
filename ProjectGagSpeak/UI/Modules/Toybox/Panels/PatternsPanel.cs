@@ -1,16 +1,15 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Drawing;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -61,72 +60,78 @@ public partial class PatternsPanel
 
     private void DrawSelectedPattern(CkHeader.DrawRegion region)
     {
+        var labelSize = new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight());
+
+        // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
-            return;
+            DrawSelectedStatic(region.Size, labelSize);
+        else
+            DrawSelectedDisplay(region, labelSize);
+    }
 
-        using (CkRaii.LabelChildText(region.Size, new Vector2(region.SizeX/2, ImGui.GetFrameHeight()), "Testing Label", ImGui.GetFrameHeight(), 2f))
+    private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
+    { 
+        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
+        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this pattern. "
+            + "--SEP-- Right Click to cancel changes and edit Editor.";
+
+        using (var c = CkRaii.LabelChildAction("Selected", region.Size, LabelDraw, ImGui.GetFrameHeight(),
+            OnLeftClick, OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
         {
-            ImGui.Text("What");
+            // Show the info for either the editor item details, or the selected item details.
+            DrawSelectedItemInfo(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
+        }
+
+        void LabelDraw()
+        {
+            ImGui.Dummy(labelSize);
+            ImGui.SetCursorScreenPos(region.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
+            ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
+            ImGui.SameLine(labelSize.X - ImGui.GetFrameHeight() * 1.5f);
+            CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
+        }
+
+        void OnLeftClick()
+        {
+            if (IsEditorItem)
+                _manager.SaveChangesAndStopEditing();
+            else
+                _manager.StartEditing(_selector.Selected!);
+        }
+
+        void OnRightClick()
+        {
+            if (IsEditorItem)
+                _manager.StopEditing();
+            else
+                _logger.LogWarning("Right Click on a pattern that is not in the editor.");
         }
     }
 
-    private void DrawPatternPlayback(Vector2 region)
+    private void DrawSelectedStatic(Vector2 region, Vector2 labelRegion)
     {
-        using var _ = CkRaii.Group(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), 0);
-        ImGui.Text("Hi Im pattern Playback!");
+        using var _ = CkRaii.LabelChildText(region, labelRegion, "No Pattern Selected!",
+            ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
     }
 
-
-    private void DrawActiveItemInfo()
+    // This will draw out the respective information for the pattern info.
+    // Displayed information can call the preview or editor versions of each field.
+    private void DrawSelectedItemInfo(Pattern pattern, bool isEditorItem)
     {
-        if (_manager.ActivePattern is not { } activeItem)
-            return;
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));
+        //DrawLabel(pattern, isEditorItem);
 
-        var durationTxt = activeItem.Duration.Hours > 0 ? activeItem.Duration.ToString("hh\\:mm\\:ss") : activeItem.Duration.ToString("mm\\:ss");
-        var startpointTxt = activeItem.StartPoint.Hours > 0 ? activeItem.StartPoint.ToString("hh\\:mm\\:ss") : activeItem.StartPoint.ToString("mm\\:ss");
-        
-        using (ImRaii.Group())
-        {
-            // display name, then display the downloads and likes on the other side.
-            CkGui.GagspeakText(activeItem.Label);
-            CkGui.HelpText("Description:--SEP--" + activeItem.Description);
+        CkGui.Separator();
+        DrawDescription(pattern, isEditorItem);
 
-            // playback button
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X);
-            // Draw the delete button
-            ImGui.SameLine();
-        }
-        // next line:
-        using (var group2 = ImRaii.Group())
-        {
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FAI.Clock);
-            ImUtf8.SameLineInner();
-            CkGui.ColorText(durationTxt, ImGuiColors.DalamudGrey);
-            CkGui.AttachToolTip("Total Length of the Pattern.");
+        CkGui.Separator();
+        DrawDurationLength(pattern, isEditorItem);
 
-            ImGui.SameLine();
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FAI.Stopwatch20);
-            ImUtf8.SameLineInner();
-            CkGui.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
-            CkGui.AttachToolTip("Start Point of the Pattern.");
+        CkGui.Separator();
+        DrawPatternTimeSpans(pattern, isEditorItem);
 
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
-            CkGui.IconText(FAI.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
-            CkGui.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
-        }
-    }
-
-    private void DrawSelectedItemInfo()
-    {
-        // Draws additional information about the selected item. Uses the Selector for reference.
-        if (_selector.Selected is null)
-            return;
-
-        ImGui.Text("Selected Item:" + _selector.Selected.Label);
-
-        if (ImGui.Button("Begin Editing"))
-            _manager.StartEditing(_selector.Selected);
+        CkGui.Separator();
+        DrawFooter(pattern);
     }
 }

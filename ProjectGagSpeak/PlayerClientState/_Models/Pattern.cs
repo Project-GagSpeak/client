@@ -23,6 +23,7 @@ public class Pattern : IEditableStorageItem<Pattern>
         ApplyChanges(other);
     }
 
+    public static Pattern AsEmpty() => new Pattern { Identifier = Guid.Empty };
     public Pattern Clone(bool keepId) => new Pattern(this, keepId);
 
     public void ApplyChanges(Pattern other)

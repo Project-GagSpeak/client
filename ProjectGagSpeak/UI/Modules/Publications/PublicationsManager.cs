@@ -20,6 +20,7 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
+using GagSpeak.PlayerState.Models;
 
 namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
@@ -31,7 +32,11 @@ public class PublicationsManager
     {
         _monitor = monitor;
         _shareHub = shareHub;
-        _patternCombo = new PatternCombo(patterns, favorites, logger);
+
+        _patternCombo = new PatternCombo(logger, favorites, () => [
+            ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+        ]);
+
         _statusCombo = new MoodleStatusCombo(1.5f, monitor, logger);
     }
 
@@ -40,11 +45,13 @@ public class PublicationsManager
     private readonly PatternCombo _patternCombo;
     private readonly MoodleStatusCombo _statusCombo;
 
+    private Pattern _selectedPattern = Pattern.AsEmpty();
+
     public void DrawPatternPublications()
     {
         CkGui.GagspeakBigText("Publish A Pattern");
 
-        _patternCombo.Draw(200f);
+        _patternCombo.Draw("PatternSelector", _selectedPattern.Identifier, 200f);
 
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
@@ -88,12 +95,10 @@ public class PublicationsManager
         });
 
         if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
-            false, _authorName.IsNullOrEmpty() || _patternCombo.Current is null))
+            false, _authorName.IsNullOrEmpty() || _selectedPattern.Identifier.IsEmptyGuid()))
         {
-            if (_patternCombo.Current is null)
-                return;
             // upload itttt
-            _shareHub.UploadPattern(_patternCombo.Current, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
+            _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
         }
         CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
         ImGui.Spacing();

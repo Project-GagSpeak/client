@@ -157,7 +157,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     public string JsonSerialize()
     {
         // we need to iterate through our list of trigger objects and serialize them.
-        var alarmItems = JArray.FromObject(Storage);
+        var alarmItems = JArray.FromObject(Storage.Select(a => a.Serialize()));
         return new JObject()
         {
             ["Version"] = ConfigVersion,
@@ -212,12 +212,9 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         {
             try
             {
-                var newAlarm = JsonConvert.DeserializeObject<Alarm>(alarmToken.ToString());
-                if (newAlarm is Alarm)
-                {
-                    Logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
-                    Storage.Add(newAlarm); // try and add it in.
-                }
+                var newAlarm = Alarm.FromToken(alarmToken, _patterns);
+                Logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
+                Storage.Add(newAlarm);
             }
             catch (Exception ex)
             {
@@ -259,11 +256,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
             // check if current time matches execution time and if so play
             if (DateTime.Now.TimeOfDay.Hours == alarmTime.TimeOfDay.Hours && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
             {
-                Logger.LogInformation("Playing Alarm : " + alarm.PatternToPlay, LoggerType.ToyboxAlarms);
-                // locate the alarm in the alarm storage that we need to play based on the alarms alarm to play.
-                if (_patterns.Storage.TryGetPattern(alarm.PatternToPlay, out var pattern))
-                    // Use the patternManager to switch the patterns if this is buggy.
-                    _applier.StartPlayback(pattern, alarm.PatternStartPoint, alarm.PatternDuration);
+                Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.ToyboxAlarms);
+                _applier.StartPlayback(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
             }
         }
     }

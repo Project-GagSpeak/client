@@ -18,7 +18,7 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> The passed in <paramref name="width"/> will have its winPaddingX appended before the child is made. </remarks>
     public static IEOContainer ChildPaddedH(string id, float width, float height, uint bgCol, float rounding, ImDrawFlags rFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => ChildPadded(id, new Vector2(width.AddWinPadX(), height), bgCol, rounding, rFlags, wFlags);
+        => Child(id, new Vector2(width.AddWinPadX(), height), bgCol, rounding, rFlags, wFlags.WithPadding());
 
 
     /// <inheritdoc cref="ChildPaddedW(string, float, float, uint, float, ImDrawFlags, WFlags)"/>/>
@@ -34,7 +34,7 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> The passed in <paramref name="height"/> will have its winPaddingY appended before the child is made. </remarks>
     public static IEOContainer ChildPaddedW(string id, float width, float height, uint bgCol, float rounding, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => ChildPadded(id, new Vector2(width, height.AddWinPadY()), bgCol, rounding, dFlags, wFlags);
+        => Child(id, new Vector2(width, height.AddWinPadY()), bgCol, rounding, dFlags, wFlags.WithPadding());
 
 
     /// <inheritdoc cref="ChildPadded(string, Vector2, uint, float, ImDrawFlags, WFlags)"/>/>
@@ -50,9 +50,7 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> In this method, <paramref name="size"/> is expected to be the innerContentRegion() </remarks>
     public static IEOContainer ChildPadded(string id, Vector2 size, uint bgCol, float rounding, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => new EndObjectContainer(() => FramedChildEndAction(bgCol, rounding, 0, dFlags), ImGui.BeginChild(id, size, false, wFlags.WithPadding()), size.WithoutWinPadding());
-
-
+        => Child(id, size.WithWinPadding(), bgCol, rounding, dFlags, wFlags.WithPadding());
 
 
     /// <inheritdoc cref="FramedChildPaddedH(string, float, float, uint, float, float, ImDrawFlags, WFlags)"/>/>
@@ -68,7 +66,7 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> The passed in <paramref name="width"/> will have its winPaddingX appended before the child is made. </remarks>
     public static IEOContainer FramedChildPaddedH(string id, float width, float height, uint bgCol, float rounding, float thickness, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => FrameChildPadded(id, new Vector2(width.AddWinPadX(), height), bgCol, rounding, thickness, dFlags, wFlags);
+        => FramedChild(id, new Vector2(width.AddWinPadX(), height), bgCol, rounding, thickness, dFlags, wFlags.WithPadding());
 
 
     /// <inheritdoc cref="FramedChildPaddedW(string, float, float, uint, float, float, ImDrawFlags, WFlags)"/>/>
@@ -84,7 +82,7 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> The passed in <paramref name="height"/> will have its winPaddingY appended before the child is made. </remarks>
     public static IEOContainer FramedChildPaddedW(string id, float width, float height, uint bgCol, float rounding, float thickness, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => FrameChildPadded(id, new Vector2(width, height.AddWinPadY()), bgCol, rounding, thickness, dFlags, wFlags);
+        => FramedChild(id, new Vector2(width, height.AddWinPadY()), bgCol, rounding, thickness, dFlags, wFlags.WithPadding());
 
 
 
@@ -101,5 +99,5 @@ public static partial class CkRaii
     /// </summary>
     /// <remarks> In this method, <paramref name="size"/> is expected to be the outerContentRegion(), that will be padded. </remarks>
     public static IEOContainer FrameChildPadded(string id, Vector2 size, uint bgCol, float rounding, float thickness, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => new EndObjectContainer(() => FramedChildEndAction(bgCol, rounding, thickness, dFlags), ImGui.BeginChild(id, size, false, wFlags.WithPadding()), size.WithoutWinPadding());
+        => FramedChild(id, size.WithWinPadding(), bgCol, rounding, thickness, dFlags, wFlags.WithPadding());
 }

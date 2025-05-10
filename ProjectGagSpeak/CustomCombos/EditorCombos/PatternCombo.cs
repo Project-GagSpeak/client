@@ -7,6 +7,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
 
@@ -15,20 +16,40 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class PatternCombo : CkFilterComboCache<Pattern>
 {
     private readonly FavoritesManager _favorites;
-    public PatternCombo(PatternManager patterns, FavoritesManager favorites, ILogger log)
-        : base(() => GetPatterns(favorites, patterns), log)
+    public Guid _current { get; private set; }
+    public PatternCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<Pattern>> generator)
+        : base(generator, log)
     {
         _favorites = favorites;
+        _current = Guid.Empty;
         SearchByParts = true;
-    }
-
-    private static List<Pattern> GetPatterns(FavoritesManager favorites, PatternManager patterns)
-    {
-        return patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label).ToList();
     }
 
     protected override string ToString(Pattern obj)
         => obj.Label;
+
+    protected override int UpdateCurrentSelected(int currentSelected)
+    {
+        if (Current?.Identifier == _current)
+            return currentSelected;
+
+        CurrentSelectionIdx = Items.IndexOf(i => i.Identifier == _current);
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : null;
+        return CurrentSelectionIdx;
+    }
+
+    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
+    /// <returns> True if a new item was selected, false otherwise. </returns>
+    public bool Draw(string label, Guid current, float width, float widthScaler = 1.25f)
+        => Draw(label, current, width, widthScaler, ImGuiComboFlags.None);
+
+    public bool Draw(string label, Guid current, float width, float widthScaler, ImGuiComboFlags flags)
+    {
+        InnerWidth = width * widthScaler;
+        _current = current;
+        var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Pattern...";
+        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+    }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
@@ -36,11 +57,11 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
 
         if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
         {
-            // Force a recalculation on the cached display.
             CurrentSelectionIdx = -1;
             Current = default;
         }
 
+        ImUtf8.SameLineInner();
         var ret = ImGui.Selectable(pattern.Label, selected);
 
         // draws a fancy box when the mod is hovered giving you the details about the mod.
@@ -63,13 +84,6 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
         }
 
         return ret;
-    }
-
-    public void Draw(float width)
-    {
-        // Begin Draw.
-        var name = Current?.Label ?? "Select a Pattern...";
-        Draw("##Patterns", name, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
     }
 
     private void DrawItemTooltip(Pattern item)

@@ -53,32 +53,15 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
-        var pattern = Items[globalIdx];
+        var restraint = Items[globalIdx];
 
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, restraint.Identifier) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;
         }
         ImUtf8.SameLineInner();
-        var ret = ImGui.Selectable(pattern.Label, selected);
+        var ret = ImGui.Selectable(restraint.Label, selected);
         return ret;
     }
-
-    private void DrawItemTooltip(Pattern item)
-    {
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-
-            // begin the tooltip interface
-            ImGui.BeginTooltip();
-            ImGui.TextUnformatted(item.Label);
-            ImGui.EndTooltip();
-        }
-    }
-
 }

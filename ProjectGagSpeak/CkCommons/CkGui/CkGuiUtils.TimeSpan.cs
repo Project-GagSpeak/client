@@ -6,7 +6,7 @@ using OtterGui.Text;
 namespace GagSpeak.CkCommons.Gui.Utility;
 public static partial class CkGuiUtils
 {
-    public static void DrawTimeSpanCombo(string label, TimeSpan patternMaxDuration, ref TimeSpan patternDuration, float width, string format = "hh\\:mm\\:ss", bool showLabel = true)
+/*    public static void DrawTimeSpanCombo(string label, TimeSpan patternMaxDuration, ref TimeSpan patternDuration, float width, string format = "hh\\:mm\\:ss", bool showLabel = true)
     {
         if (patternDuration > patternMaxDuration) patternDuration = patternMaxDuration;
 
@@ -33,7 +33,7 @@ public static partial class CkGuiUtils
             DrawTimeSpanUI(ref patternDuration, patternMaxDuration, width, format);
             ImGui.EndPopup();
         }
-    }
+    }*/
 
     private static void DrawTimeSpanUI(ref TimeSpan patternDuration, TimeSpan maxDuration, float width, string format)
     {

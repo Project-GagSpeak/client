@@ -17,6 +17,7 @@ using GagSpeak.CkCommons.Intiface;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CkCommons.Gui.Components;
+using System.Drawing;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -59,8 +60,8 @@ public class ToysPanel
             DrawHeader(regions.Top, rightLength, curveSize, tabMenu);
 
         ImGui.SetCursorScreenPos(regions.Bottom.Pos);
-        using (CkRaii.ChildPadded("ToysAndLobbiesBot", regions.Bottom.Size))
-            DrawPanel(regions.Bottom);
+        using (var c = CkRaii.Child("ToysAndLobbiesBot", regions.Bottom.Size, WFlags.AlwaysUseWindowPadding))
+            DrawPanel(c.InnerRegion);
     }
 
     private void DrawHeader(CkHeader.DrawRegion drawRegion, float rightLen, float curveSize, ToyboxTabs tabMenu)
@@ -71,19 +72,16 @@ public class ToysPanel
 
         // Create the CkRaii Child for the left side to draw the connection status inside.
         ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(curveSize, 0));
-        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
-        {
+        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize.WithoutWinPadding(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             DrawIntifaceConnectionStatus();
-        }
 
         // Setup position for the right area.
         ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(leftBoxSize.X + ImGui.GetFrameHeight(), 0));
-        // draw out the tab menu display here.
         tabMenu.Draw(rightBoxSize);
 
     }
 
-    public void DrawPanel(CkHeader.DrawRegion drawRegion)
+    public void DrawPanel(Vector2 region)
     {
         // display a dropdown for the type of vibrator to use
         ImGui.SetNextItemWidth(125f);

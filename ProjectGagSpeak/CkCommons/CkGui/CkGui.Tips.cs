@@ -84,7 +84,7 @@ public partial class CkGui
             AttachToolTip(text, displayAnyways: true);
     }
 
-    public static void HelpText(string helpText, bool inner = false)
+    public static void HelpText(string helpText, bool inner = false, uint? offColor = null)
     {
         if (inner)
             ImUtf8.SameLineInner();
@@ -92,7 +92,7 @@ public partial class CkGui
             ImGui.SameLine();
 
         var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
-        IconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : offColor ?? ImGui.GetColorU32(ImGuiCol.TextDisabled));
         AttachToolTip(helpText);
     }
 }
