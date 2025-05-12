@@ -16,11 +16,14 @@ using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Data.Interfaces;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -30,7 +33,10 @@ public class DebuggerBinds
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly CursedLootManager _cursedLoot;
+    private readonly PuppeteerManager _puppeteer;
     private readonly TriggerManager _triggers;
+    private readonly AlarmManager _alarms;
+    private readonly PatternManager _patterns;
     private readonly RestrictionFileSystem _restrictionsFS;
     private readonly RestraintSetFileSystem _restraintsFS;
     private readonly MoodleDrawer _moodleDrawer;
@@ -40,7 +46,10 @@ public class DebuggerBinds
         RestrictionManager restrictions,
         RestraintManager restraints,
         CursedLootManager cursedLoot,
+        PuppeteerManager puppeteer,
         TriggerManager triggers,
+        AlarmManager alarms,
+        PatternManager patterns,
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
         MoodleDrawer moodleDrawer,
@@ -50,7 +59,10 @@ public class DebuggerBinds
         _restrictions = restrictions;
         _restraints = restraints;
         _cursedLoot = cursedLoot;
+        _puppeteer = puppeteer;
         _triggers = triggers;
+        _alarms = alarms;
+        _patterns = patterns;
         _restrictionsFS = restrictionsFS;
         _restraintsFS = restraintsFS;
         _moodleDrawer = moodleDrawer;
@@ -109,87 +121,87 @@ public class DebuggerBinds
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGuiUtil.DrawTableColumn("ChatGarblerChannelsBitfield:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerChannelsBitfield.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatGarblerChannelsBitfield.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerActive.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatGarblerActive.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerLocked:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatGarblerLocked.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatGarblerLocked.ToString());
                     ImGui.TableNextRow();
 
                     // wardrobe global modifiable permissions
                     ImGuiUtil.DrawTableColumn("WardrobeEnabled:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.WardrobeEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.WardrobeEnabled.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("GagVisuals:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.GagVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.GagVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("RestrictionVisuals:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.RestrictionVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.RestrictionVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("RestraintSetVisuals:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.RestraintSetVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.RestraintSetVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("PuppeteerEnabled:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.PuppeteerEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.PuppeteerEnabled.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("TriggerPhrase:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.TriggerPhrase.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.TriggerPhrase.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("PuppetPerms:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.PuppetPerms.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.PuppetPerms.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ToyboxEnabled:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToyboxEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ToyboxEnabled.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("LockToyboxUI:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.LockToyboxUI.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.LockToyboxUI.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ToysAreConnected:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToysAreConnected.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ToysAreConnected.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ToysAreInUse:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ToysAreInUse.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ToysAreInUse.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("SpatialAudio:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.SpatialAudio.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.SpatialAudio.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedFollow:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedFollow.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ForcedFollow.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedEmoteState:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedEmoteState.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ForcedEmoteState.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedStay:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ForcedStay.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ForcedStay.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatBoxesHidden:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatBoxesHidden.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatBoxesHidden.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatInputHidden:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatInputHidden.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatInputHidden.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatInputBlocked:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ChatInputBlocked.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.ChatInputBlocked.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("GlobalShockShareCode:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.GlobalShockShareCode.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.GlobalShockShareCode.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowShocks:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowShocks.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.AllowShocks.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowVibrations:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowVibrations.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.AllowVibrations.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowBeeps:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.AllowBeeps.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.AllowBeeps.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("MaxIntensity:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.MaxIntensity.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.MaxIntensity.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("MaxDuration:");
-                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.MaxDuration.ToString());
+                    ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms.MaxDuration.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ShockVibrateDuration:");
                     ImGuiUtil.DrawTableColumn(_playerData.GlobalPerms?.ShockVibrateDuration.ToString());
@@ -273,6 +285,81 @@ public class DebuggerBinds
             if (!node)
                 continue;
             DrawTrigger(trigger);
+        }
+    }
+
+    public void DrawPuppeteerGlobalStorage() {
+        if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
+            return;
+        if (_puppeteer.GlobalAliasStorage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Puppeteer Storage is null or empty");
+            return;
+        }
+        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.WithIndex()) {
+            using var node = ImRaii.TreeNode($"{alias.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawAliasTrigger(alias);
+        }
+    }
+    
+    public void DrawPuppeteerPairStorage() {
+        if (!ImGui.CollapsingHeader("Puppeteer Pair Alias Storage"))
+            return;
+        if (_puppeteer.PairAliasStorage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Puppeteer Storage is null or empty");
+            return;
+        }
+
+        foreach (var (alias, idx) in _puppeteer.PairAliasStorage.WithIndex())
+        {
+            using var pairNode = ImRaii.TreeNode($"{alias.Key}##{idx}");
+            if (!pairNode)
+                continue;
+            var world = alias.Value.StoredNameWorld;
+            var listener = alias.Value.ExtractedListenerName;
+            foreach(var aliasTrigger in alias.Value.Storage)
+            {
+                using var aliasNode = ImRaii.TreeNode($"{aliasTrigger.Label}##{idx}");
+                if (!aliasNode)
+                    continue;
+                DrawAliasTrigger(aliasTrigger);
+            }
+        }
+
+    }
+    public void DrawPatternStorage () {
+        if (!ImGui.CollapsingHeader("Pattern Storage"))
+            return;
+        if (_patterns.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Pattern Storage is null or empty");
+            return;
+        }
+        foreach (var (pattern, idx) in _patterns.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{pattern.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawPattern(pattern);
+        }
+    }
+    public void DrawAlarmStorage() {
+        if (!ImGui.CollapsingHeader("Alarm Storage"))
+            return;
+        if (_alarms.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Alarm Storage is null or empty");
+            return;
+        }
+        foreach (var (alarm, idx) in _alarms.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{alarm.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawAlarm(alarm);
         }
     }
 
@@ -584,6 +671,244 @@ public class DebuggerBinds
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Invokable Action");
             ImGuiUtil.DrawTableColumn(trigger.InvokableAction.ToString());
+        }
+    }
+
+    private void DrawPattern(Pattern pattern)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(pattern.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(pattern.Label);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Description");
+            ImGuiUtil.DrawTableColumn(pattern.Description);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Duration");
+            ImGuiUtil.DrawTableColumn(pattern.Duration.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("StartPoint");
+            ImGuiUtil.DrawTableColumn(pattern.StartPoint.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("PlaybackDuration");
+            ImGuiUtil.DrawTableColumn(pattern.PlaybackDuration.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShouldLoop");
+            ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("PatternData");
+            var data = pattern.PatternData.ToString();
+            if (data.IsNullOrEmpty()) {
+                ImGuiUtil.DrawTableColumn("Data is null");
+            } else {
+                ImGuiUtil.DrawTableColumn(data);
+            }
+        }
+    }
+    private void DrawAlarm(Alarm alarm)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(alarm.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Enabled");
+            ImGuiUtil.DrawTableColumn(alarm.Enabled.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(alarm.Label);
+            
+            ImGuiUtil.DrawTableColumn("SetTimeUTC");
+            ImGuiUtil.DrawTableColumn(alarm.SetTimeUTC.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("PatternToPlay");
+            ImGuiUtil.DrawTableColumn(alarm.PatternRef.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("PatternStartPoint");
+            ImGuiUtil.DrawTableColumn(alarm.PatternStartPoint.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("PatternDuration");
+            ImGuiUtil.DrawTableColumn(alarm.PatternDuration.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("RepeatFrequency");
+            var freq = alarm.RepeatFrequency.ToString();
+            if (freq.IsNullOrEmpty()) {
+                ImGuiUtil.DrawTableColumn("Null or empty");
+            } else {
+                ImGuiUtil.DrawTableColumn(freq);
+            }
+        }
+    }
+
+    private void DrawAliasTrigger(AliasTrigger alias) {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(alias.Identifier.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Enabled");
+            ImGuiUtil.DrawTableColumn(alias.Enabled.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(alias.Label.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("InputCommand");
+            ImGuiUtil.DrawTableColumn(alias.InputCommand.ToString());
+            ImGui.TableNextRow();
+
+        }
+        
+        using var node = ImRaii.TreeNode($"Actions##actions-{alias.Identifier}");
+        if (!node)
+            return;
+
+        foreach (var (action, idx) in alias.Actions.WithIndex())
+        {
+            using var actionNode = ImRaii.TreeNode($"{action.ActionType}##{idx}");
+            if (!actionNode)
+                continue;
+            using (ImRaii.Table($"##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            {
+                DrawActionTable(action);
+                ImGui.TableNextRow();
+            }
+        }
+    }
+
+    private void DrawActionTable(InvokableGsAction action) {
+        if (action is TextAction text)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("TextAction");
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("OutputCommand");
+            ImGuiUtil.DrawTableColumn(text.OutputCommand.ToString());
+        }
+        else if (action is GagAction gag)
+        {
+            
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("GagAction");
+            ImGui.TableNextRow();
+            
+            ImGuiUtil.DrawTableColumn("LayerIdx");
+            ImGuiUtil.DrawTableColumn(gag.LayerIdx.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("NewState"); 
+            ImGuiUtil.DrawTableColumn(gag.NewState.ToString());
+            ImGui.TableNextRow();
+             
+            ImGuiUtil.DrawTableColumn("GagType"); 
+            ImGuiUtil.DrawTableColumn(gag.GagType.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Padlock"); 
+            ImGuiUtil.DrawTableColumn(gag.Padlock.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(gag.LowerBound.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("UpperBound"); 
+            ImGuiUtil.DrawTableColumn(gag.UpperBound.ToString());
+        }
+        else if (action is RestrictionAction restriction)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("RestrictionAction");
+            ImGui.TableNextRow();
+            
+            ImGuiUtil.DrawTableColumn("LayerIdx");
+            ImGuiUtil.DrawTableColumn(restriction.LayerIdx.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("NewState");
+            ImGuiUtil.DrawTableColumn(restriction.NewState.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("RestrictionId");
+            ImGuiUtil.DrawTableColumn(restriction.RestrictionId.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("Padlock");
+            ImGuiUtil.DrawTableColumn(restriction.Padlock.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(restriction.LowerBound.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("UpperBound");
+            ImGuiUtil.DrawTableColumn(restriction.UpperBound.ToString());
+        }
+        else if (action is RestraintAction restrain)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("RestraintAction");
+            ImGui.TableNextRow();
+            
+            ImGuiUtil.DrawTableColumn("NewState");
+            ImGuiUtil.DrawTableColumn(restrain.NewState.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("RestrictionId");
+            ImGuiUtil.DrawTableColumn(restrain.RestrictionId.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("Padlock");
+            ImGuiUtil.DrawTableColumn(restrain.Padlock.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(restrain.LowerBound.ToString());
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("UpperBound");
+            ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
+        }
+        else if (action is MoodleAction moodle)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("MoodleAction");
+            ImGui.TableNextRow(); 
+            ImGuiUtil.DrawTableColumn("MoodleItem");
+            ImGuiUtil.DrawTableColumn(moodle.MoodleItem.Id.ToString());
+            // MoodleItem
+        }
+        else if (action is PiShockAction shock)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("PiShockAction");
+            ImGui.TableNextRow();
+            
+            ImGuiUtil.DrawTableColumn("ShockInstruction.OpCode");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.OpCode.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Duration");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.Duration.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.Intensity.ToString());
+        }
+        else if (action is SexToyAction toy)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("SexToyAction");
+            ImGui.TableNextRow();
+            
+            ImGuiUtil.DrawTableColumn("StartAfter");
+            ImGuiUtil.DrawTableColumn(toy.StartAfter.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("EndAfter");
+            ImGuiUtil.DrawTableColumn(toy.EndAfter.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
+            ImGuiUtil.DrawTableColumn(toy.DeviceActions.ToString());
+        }
+        else {
+
+            // If it's not a type of action that we know of, we'll just brute for it so that we at least _have_ the data even if it's not pretty.
+            ImGuiUtil.DrawTableColumn("Unknown Action");
+            ImGuiUtil.DrawTableColumn(action.ToString());
         }
     }
 }

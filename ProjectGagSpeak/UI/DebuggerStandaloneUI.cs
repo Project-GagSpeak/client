@@ -38,6 +38,18 @@ public class DebuggerStandaloneUI : WindowMediatorSubscriberBase
         _bindsDebugger.DrawCursedLootStorage();
         
         ImGui.Separator();
+        _bindsDebugger.DrawPuppeteerGlobalStorage();
+        
+        ImGui.Separator();
+        _bindsDebugger.DrawPuppeteerPairStorage();
+
+        ImGui.Separator();
         _bindsDebugger.DrawTriggerStorage();
+        
+        ImGui.Separator();
+        _bindsDebugger.DrawAlarmStorage();
+        
+        ImGui.Separator();
+        _bindsDebugger.DrawPatternStorage();
     }
 }
