@@ -108,6 +108,9 @@ public partial class CkGui
         return ImGui.CalcTextSize(icon.ToIconString());
     }
 
+    public static float CalcCheckboxWidth(string? label = null)
+        => label is null ? ImGui.GetFrameHeight() : ImGui.CalcTextSize(label).X + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.GetFrameHeight();
+
     public static float GetWindowContentRegionWidth() => ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
 
     public static bool DrawScaledCenterButtonImage(string ID, Vector2 buttonSize, Vector4 buttonColor,
@@ -142,13 +145,23 @@ public partial class CkGui
     }
 
     public static float GetSeparatorHeight(float? height = null)
-        => height + ImGui.GetStyle().ItemSpacing.Y * 4 ?? ImGui.GetStyle().ItemSpacing.Y * 5;
+        => height + ImGui.GetStyle().ItemSpacing.Y * 2 ?? ImGui.GetStyle().ItemSpacing.Y * 3;
+
+    public static float GetSeparatorSpacedHeight(float? height = null)
+    => height + ImGui.GetStyle().ItemSpacing.Y * 2 ?? ImGui.GetStyle().ItemSpacing.Y * 5;
 
     public static void Separator(float? height = null, float? width = null, uint? col = null)
     {
-        ImGui.Spacing();
         ImGui.Dummy(new Vector2(width ?? ImGui.GetContentRegionAvail().X, height ?? ImGui.GetStyle().ItemSpacing.Y));
         if(col is not null)
+            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col ?? CkColor.FancyHeaderContrast.Uint());
+    }
+
+    public static void SeparatorSpaced (float? height = null, float? width = null, uint? col = null)
+    {
+        ImGui.Spacing();
+        ImGui.Dummy(new Vector2(width ?? ImGui.GetContentRegionAvail().X, height ?? ImGui.GetStyle().ItemSpacing.Y));
+        if (col is not null)
             ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col ?? CkColor.FancyHeaderContrast.Uint());
         ImGui.Spacing();
     }

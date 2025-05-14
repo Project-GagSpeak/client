@@ -72,31 +72,37 @@ public static partial class CkRaii
         );
     }
 
+    /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
         => LabelChildAction(id, size, labelDraw, GetChildRounding(), onLClick, onRClick, tt, dFlag);
 
+    /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, ColorsLC col, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
         => LabelChildAction(id, size, labelDraw, GetChildRounding(), col, onLClick, onRClick, tt, dFlag);
 
+    /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, float bend, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
         => LabelChildAction(id, size, labelDraw, bend, ImGui.GetStyle().WindowPadding.X/2, onLClick, onRClick, tt, dFlag);
 
+    /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, float bend, float fade, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
         => LabelChildAction(id, size, labelDraw, bend, fade, ColorsLC.Default, onLClick, onRClick, tt, dFlag);
 
+    /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, float bend, ColorsLC col, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
         => LabelChildAction(id, size, labelDraw, bend, ImGui.GetStyle().WindowPadding.X/2, col, onLClick, onRClick, tt, dFlag);
 
+    /// <summary> Interactable label header within a padded child. </summary>
+    /// <remarks> Note that the dummy covering the header is part of the child. If you intend to make this scrollable, make another child inside. </remarks>
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, float bend, float fade, ColorsLC col, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None, WFlags wFlags = WFlags.None)
     {
         var tooltip = tt.IsNullOrWhitespace() ? "Double Click to Interact--SEP--Right-Click to Cancel" : tt;
 
-        ImGui.BeginGroup();
         var wdl = ImGui.GetWindowDrawList();
         var pos = ImGui.GetCursorScreenPos();
-
+        ImGui.BeginGroup();
         // Begin the child object.
-        var success = ImGui.BeginChild($"##LabelChildOuter-{id}", size);
+        var success = ImGui.BeginChild($"##LabelChildActionOuter-{id}", size);
 
         // Handle drawing the label.
         using (ImRaii.Group()) labelDraw.Invoke();
@@ -111,7 +117,7 @@ public static partial class CkRaii
 
         // Draw the padded Child (The inner contents we actually draw in).
         ImGui.SetCursorScreenPos(pos);
-        success &= ImGui.BeginChild($"##LabelChild-{id}", size, false, wFlags | WFlags.AlwaysUseWindowPadding);
+        success &= ImGui.BeginChild($"##LabelChildAction-{id}", size, false, wFlags | WFlags.AlwaysUseWindowPadding);
 
         // Draw the dummy inside the child, so it spans the label size, ensuring we cannot draw in that space.
         var labelThickness = (labelMax - labelMin) + new Vector2(fade);
@@ -122,11 +128,7 @@ public static partial class CkRaii
         {
             // End inner child.
             ImGui.EndChild();
-            var min = ImGui.GetItemRectMin();
-            var max = ImGui.GetItemRectMax();
-
-            // Draw out the child BG.
-            wdl.AddRectFilled(min, max, col.BG, bend, dFlag);
+            wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col.BG, bend, dFlag);
             
             // make sure that if the dFlags include DFlags.RoundCornersTopLeft, to apply that flag.
             var labelDFlags = DFlags.RoundCornersBottomRight | ((dFlag & DFlags.RoundCornersTopLeft) != 0 ? DFlags.RoundCornersTopLeft : DFlags.None);

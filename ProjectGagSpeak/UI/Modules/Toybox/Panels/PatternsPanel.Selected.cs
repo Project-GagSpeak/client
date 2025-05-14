@@ -85,14 +85,10 @@ public partial class PatternsPanel
             CkGui.TextFrameAlignedInline("Loop");
         }
         CkGui.AttachToolTip($"This pattern {(pattern.ShouldLoop ? "will loop upon finishing." : "will stop after reaching the end.")}");
-
-
     }
 
     private void DrawPatternTimeSpans(Pattern pattern, bool isEditing)
     {
-        var refStartPoint = pattern.StartPoint;
-        var refPlaybackDuration = pattern.PlaybackDuration;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         // Split things up into 2 columns.
@@ -104,6 +100,7 @@ public partial class PatternsPanel
         using (var c = CkRaii.ChildPaddedW("PatternStartPoint", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
             CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
+            var refStartPoint = pattern.StartPoint;
             CkGui.ColorTextCentered("Start Point", ImGuiColors.ParsedGold);
             var format = pattern.Duration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
             if (isEditing)
@@ -117,40 +114,52 @@ public partial class PatternsPanel
             }
         }
 
-        // get time difference and apply the changes.
+        // Prevent Overflow.
         if (pattern.StartPoint > pattern.Duration)
             pattern.StartPoint = pattern.Duration;
 
+        // Ensure duration + startpoint does not exceed threshold.
+        if (pattern.StartPoint + pattern.PlaybackDuration > pattern.Duration)
+            pattern.PlaybackDuration = pattern.Duration - pattern.StartPoint;
+
         // set the maximum possible playback duration allowed.
         var maxPlaybackDuration = pattern.Duration - pattern.StartPoint;
-
-        // If the playback duration is greater than the max, set it to the max.
-        if (pattern.PlaybackDuration > maxPlaybackDuration)
-            pattern.PlaybackDuration = maxPlaybackDuration;
 
         // Shift to next column and display the pattern playback child.
         ImGui.SameLine();
         using (var c = CkRaii.ChildPaddedW("PlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
             CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
+            var refPlaybackDur = pattern.PlaybackDuration;
             CkGui.ColorTextCentered("Playback Duration", ImGuiColors.ParsedGold);
-            var format2 = refPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
+            var format = refPlaybackDur.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
             if (isEditing)
             {
-                CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDuration, format2, c.InnerRegion.X);
-                pattern.PlaybackDuration = refPlaybackDuration;
+                CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDur, format, c.InnerRegion.X);
+                pattern.PlaybackDuration = refPlaybackDur;
             }
             else
             {
-                CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDuration, format2, c.InnerRegion.X);
+                CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDur, format, c.InnerRegion.X);
             }
         }
     }
 
     private void DrawFooter(Pattern pattern)
     {
+        // get the remaining region.
+        var regionLeftover = ImGui.GetContentRegionAvail().Y;
+
+        // Determine how to space the footer.
+        if (regionLeftover < (CkGui.GetSeparatorHeight() + ImGui.GetFrameHeight()))
+            CkGui.Separator();
+        else
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + regionLeftover - ImGui.GetFrameHeight());
+
+        // Draw it.
         ImUtf8.TextFrameAligned("ID:");
-        CkGui.ColorTextFrameAlignedInline(pattern.Identifier.ToString(), ImGuiColors.DalamudGrey3);
+        ImGui.SameLine();
+        ImUtf8.TextFrameAligned(pattern.Identifier.ToString());
     }
 
     // Unused.

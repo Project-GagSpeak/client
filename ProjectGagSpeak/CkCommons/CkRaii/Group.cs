@@ -16,7 +16,7 @@ public static partial class CkRaii
     /// <param name="bgCol"> The color drawn out behind the group. </param>
     /// <param name="rounding"> The rounding applied to the drawn BG. </param>
     /// <remarks> DO NOT NEST THESE WITHIN OTHER GROUPS. If you want to simply group things, use ImRaii.Group() </remarks>
-    public static ImRaii.IEndObject Group(uint bgCol, float rounding, float frameThickness = 0, ImDrawFlags flags = ImDrawFlags.None)
+    public static ImRaii.IEndObject Group(uint bgCol, float rounding, float frameThickness, ImDrawFlags flags = ImDrawFlags.None)
     {
         var wdl = ImGui.GetWindowDrawList();
         wdl.ChannelsSplit(2);

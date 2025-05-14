@@ -369,7 +369,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             if(setJson["RestraintMods"] is JArray modArray)
             {
                 foreach (var modToken in modArray)
-                    Generic.ExecuteSafely(() => restraintMods.Add(ModSettingsPreset.FromReferenceJToken(modToken, _modPresets)));
+                    Generic.ExecuteSafely(() => restraintMods.Add(ModSettingsPreset.FromRefToken(modToken, _modPresets)));
             }
 
             var restraintMoodles = new HashSet<Moodle>();
@@ -553,7 +553,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             throw new Exception("Invalid JSON Token for Slot.");
 
         // Load the ModRef sub-object using ModSettingsPreset's loader
-        var modItem = ModSettingsPreset.FromReferenceJToken(json["Mod"], _modPresets);
+        var modItem = ModSettingsPreset.FromRefToken(json["Mod"], _modPresets);
         return new ModPresetLayer()
         {
             ID = Guid.TryParse(json["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!"),

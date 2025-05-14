@@ -120,7 +120,6 @@ public partial class PatternsPanel
     {
         using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));
-        //DrawLabel(pattern, isEditorItem);
 
         CkGui.Separator();
         DrawDescription(pattern, isEditorItem);
@@ -131,7 +130,6 @@ public partial class PatternsPanel
         CkGui.Separator();
         DrawPatternTimeSpans(pattern, isEditorItem);
 
-        CkGui.Separator();
         DrawFooter(pattern);
     }
 }

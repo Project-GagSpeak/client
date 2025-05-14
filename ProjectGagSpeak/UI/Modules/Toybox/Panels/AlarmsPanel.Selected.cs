@@ -1,6 +1,8 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
@@ -8,8 +10,11 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
+using Lumina.Data;
+using Microsoft.VisualBasic;
 using OtterGui;
 using OtterGui.Text;
+using System.Windows.Forms;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -78,32 +83,42 @@ public partial class AlarmsPanel
 
     private void DrawPatternSelection(Alarm alarm, bool isEditing)
     {
-        CkGui.ColorTextFrameAligned("Pattern to Play", ImGuiColors.ParsedGold);
-        var comboW = ImGui.GetContentRegionAvail().X * .5f;
-        var change = _patternCombo.Draw("##AlarmPattern", alarm.PatternRef.Identifier, comboW);
-        
-        // Updates upon change.
-        if(change && _patterns.Storage.FirstOrDefault(x => x.Identifier == alarm.PatternRef.Identifier) is { } match)
-        {
-            alarm.PatternRef = match;
-            alarm.PatternStartPoint = TimeSpan.Zero;
-            alarm.PatternDuration = match.Duration;
-        }
-        // Resets upon right click.
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        {
-            alarm.PatternRef = Pattern.AsEmpty();
-            alarm.PatternStartPoint = TimeSpan.Zero;
-            alarm.PatternDuration = TimeSpan.Zero;
-        }
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
 
+        var comboW = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) * .5f;
+        CkGui.ColorTextFrameAligned("Alarm Pattern to Play", ImGuiColors.ParsedGold);
+        using (CkRaii.Child("AlarmPattern", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            // Draw the pattern selection combo box.
+            if (isEditing)
+            {
+                var change = _patternCombo.Draw("##AlarmPattern", alarm.PatternRef.Identifier, comboW);
+
+                // Updates upon change.
+                if (change && _patterns.Storage.FirstOrDefault(x => x.Identifier == _patternCombo.Current?.Identifier) is { } match)
+                {
+                    alarm.PatternRef = match;
+                    alarm.PatternStartPoint = TimeSpan.Zero;
+                    alarm.PatternDuration = match.Duration;
+                }
+                // Resets upon right click.
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                {
+                    alarm.PatternRef = Pattern.AsEmpty();
+                    alarm.PatternStartPoint = TimeSpan.Zero;
+                    alarm.PatternDuration = TimeSpan.Zero;
+                }
+            }
+            else
+            {
+                CkGui.TextFrameAlignedInline(alarm.PatternRef.Label);
+            }
+        }
     }
 
     private void DrawPatternTimeSpans(Alarm alarm, bool isEditing)
     {
-        var refDuration = alarm.PatternDuration;
-        var refStartPoint = alarm.PatternStartPoint;
-        var refPlaybackDuration = alarm.PatternDuration;
+        var refDuration = alarm.PatternRef.Duration;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         // Split things up into 2 columns.
@@ -111,99 +126,104 @@ public partial class AlarmsPanel
         var height = CkGuiUtils.GetTimeDisplayHeight() + ImGui.GetFrameHeightWithSpacing();
 
         // Enter the first column.
-        using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using (ImRaii.Group())
         {
-            CkGui.ColorTextCentered("Start Point", ImGuiColors.ParsedGold);
-            var format = refDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-            if (isEditing)
+            var refStartPoint = alarm.PatternStartPoint;
+            using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+                CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
-                CkGuiUtils.TimeSpanEditor("AlarmStartPnt", refDuration, ref refStartPoint, format, c.InnerRegion.X);
-                alarm.PatternStartPoint = refStartPoint;
-            }
-            else
-            {
-                CkGuiUtils.TimeSpanPreview("AlarmStartPnt", refDuration, refStartPoint, format, c.InnerRegion.X);
+                ImGuiUtil.Center("Start Point");
+                var format = refDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
+                if (isEditing)
+                {
+                    CkGuiUtils.TimeSpanEditor("AlarmStartPnt", refDuration, ref refStartPoint, format, c.InnerRegion.X);
+                    alarm.PatternStartPoint = refStartPoint;
+                }
+                else
+                {
+                    CkGuiUtils.TimeSpanPreview("AlarmStartPnt", refDuration, refStartPoint, format, c.InnerRegion.X);
+                }
             }
         }
 
-        // get time difference and apply the changes.
+        // Prevent Overflow.
         if (alarm.PatternStartPoint > refDuration)
             alarm.PatternStartPoint = refDuration;
+
+        // Ensure duration + startpoint does not exceed threshold.
+        if (alarm.PatternStartPoint + alarm.PatternDuration > refDuration)
+            alarm.PatternDuration = refDuration - alarm.PatternStartPoint;
 
         // set the maximum possible playback duration allowed.
         var maxPlaybackDuration = refDuration - alarm.PatternStartPoint;
 
         // Shift to next column and display the pattern playback child.
         ImGui.SameLine();
-        using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using (ImRaii.Group())
         {
-            CkGui.ColorTextCentered("Playback Duration", ImGuiColors.ParsedGold);
-            var format = refPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
-            if (isEditing)
+            var refPlaybackDuration = alarm.PatternDuration;
+            using (var c = CkRaii.ChildPaddedW("AlarmPlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+                CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
-                CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDuration, format, c.InnerRegion.X);
-                alarm.PatternDuration = refPlaybackDuration;
-            }
-            else
-            {
-                CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDuration, format, c.InnerRegion.X);
+                ImGuiUtil.Center("Playback Duration");
+                var format = refPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
+                if (isEditing)
+                {
+                    CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDuration, format, c.InnerRegion.X);
+                    alarm.PatternDuration = refPlaybackDuration;
+                }
+                else
+                {
+                    CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDuration, format, c.InnerRegion.X);
+                }
             }
         }
     }
 
     private void DrawAlarmFrequency(Alarm alarm, bool isEditing)
     {
+        using var _ = ImRaii.Group();
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        
         // Frequency of occurrence
-        ImGui.Text("Alarm Frequency Per Week");
-        var alarmRepeatValues = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().ToArray();
-        var totalValues = alarmRepeatValues.Length;
-        var splitIndex = 4; // Index to split the groups
+        CkGui.ColorText("Alarm Frequency Per Week", ImGuiColors.ParsedGold);
 
-        using (ImRaii.Group())
+        using var dis = ImRaii.Disabled(!isEditing);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f, !isEditing);
+        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
+
+        // calc the exact width of each checkbox.
+        var checkboxWidth = ImGui.CalcTextSize("MMM").X + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.GetFrameHeight();
+        var dayFilters = (uint)alarm.DaysToFire;
+        var daysOfTheWeek = Enum.GetValues<DaysOfWeek>().Skip(1).ToArray();
+        for (var i = 0; i < daysOfTheWeek.Length; i++)
         {
-            // Group 1: First four
-            using (ImRaii.Group())
-            {
-                for (var i = 0; i < splitIndex && i < totalValues; i++)
-                {
-                    var day = alarmRepeatValues[i];
-                    var isSelected = alarm.RepeatFrequency.Contains(day);
-                    if (ImGui.Checkbox(day.ToString(), ref isSelected))
-                    {
-                        if (isSelected)
-                            alarm.RepeatFrequency.Add(day);
-                        else
-                            alarm.RepeatFrequency.Remove(day);
-                    }
-                }
-            }
+            ImGui.CheckboxFlags(daysOfTheWeek[i].ToShortName(), ref dayFilters, (uint)daysOfTheWeek[i]);
             ImGui.SameLine();
 
-            // Group 2: Last three
-            using (ImRaii.Group())
-            {
-                for (var i = splitIndex; i < totalValues; i++)
-                {
-                    var day = alarmRepeatValues[i];
-                    var isSelected = alarm.RepeatFrequency.Contains(day);
-                    if (ImGui.Checkbox(day.ToString(), ref isSelected))
-                    {
-                        if (isSelected)
-                            alarm.RepeatFrequency.Add(day);
-                        else
-                            alarm.RepeatFrequency.Remove(day);
-                    }
-                }
-            }
+            if (ImGui.GetContentRegionAvail().X - checkboxWidth < 0)
+                ImGui.NewLine();
         }
         _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingFrequency, Vector2.Zero, Vector2.Zero);
+
+        if (dayFilters != (uint)alarm.DaysToFire)
+            alarm.DaysToFire = (DaysOfWeek)dayFilters;
     }
 
-    private void DrawFooter(Alarm pattern)
+    private void DrawFooter(Alarm alarm)
     {
+        // get the remaining region.
+        var regionLeftover = ImGui.GetContentRegionAvail().Y;
+
+        // Determine how to space the footer.
+        if (regionLeftover < (CkGui.GetSeparatorHeight() + ImGui.GetFrameHeight()))
+            CkGui.Separator();
+        else
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + regionLeftover - ImGui.GetFrameHeight());
+
+        // Draw it.
         ImUtf8.TextFrameAligned("ID:");
-        CkGui.ColorTextFrameAlignedInline(pattern.Identifier.ToString(), ImGuiColors.DalamudGrey3);
+        ImGui.SameLine();
+        ImUtf8.TextFrameAligned(alarm.Identifier.ToString());
     }
 }

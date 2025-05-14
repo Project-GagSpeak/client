@@ -8,31 +8,6 @@ namespace GagSpeak.CkCommons.Newtonsoft;
 
 public static class JParserBinds
 {
-    public static GarblerRestriction FromGagToken(JToken token, GagType gagType, ItemService items, ModSettingPresetManager modPresets)
-    {
-        if (token is not JObject json)
-            throw new ArgumentException("Invalid JObjectToken!");
-
-        var modAttachment = ModSettingsPreset.FromReferenceJToken(json["Mod"], modPresets);
-        var moodleType = Enum.TryParse<MoodleType>(json["Moodle"]?["Type"]?.ToObject<string>(), out var moodle) ? moodle : MoodleType.Status;
-        var moodles = JParser.LoadMoodle(json["Moodle"]);
-
-        return new GarblerRestriction(gagType)
-        {
-            IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
-            Mod = modAttachment,
-            Moodle = moodles,
-            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
-            Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None,
-            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
-            VisorState = JParser.FromJObject(json["VisorState"]),
-            ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid"),
-            ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority"),
-            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-        };
-    }
-
     public static RestrictionItem FromNormalToken(JToken token, ItemService items, ModSettingPresetManager modPresets)
     {
         if (token is not JObject jsonObject)
@@ -91,7 +66,7 @@ public static class JParserBinds
     // Load in the base restriction information.
     private static void LoadBindTokenCommon(RestrictionItem item, JObject json, ItemService items, ModSettingPresetManager modPresets)
     {
-        var modAttachment = ModSettingsPreset.FromReferenceJToken(json["Mod"], modPresets);
+        var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], modPresets);
         var moodleType = Enum.TryParse<MoodleType>(json["Moodle"]?["Type"]?.ToObject<string>(), out var moodle) ? moodle : MoodleType.Status;
         var moodles = JParser.LoadMoodle(json["Moodle"]);
 

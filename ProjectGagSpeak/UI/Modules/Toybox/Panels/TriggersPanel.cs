@@ -1,11 +1,14 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
 using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 
@@ -48,21 +51,77 @@ public partial class TriggersPanel
 
     private void DrawTriggerInfo(CkHeader.DrawRegion region, float curveSize)
     {
-        DrawSelectedTrigger(region.Size);
-        var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
+        DrawSelectedTrigger(region);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
         var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
         ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
-    private void DrawSelectedTrigger(Vector2 region)
+    private void DrawSelectedTrigger(CkHeader.DrawRegion region)
     {
-        // Draws additional information about the selected item. Uses the Selector for reference.
+        var labelSize = new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight());
+
+        // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
-            return;
+        {
+            using var _ = CkRaii.LabelChildText(region.Size, labelSize, "No Trigger Selected!",
+                ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+        }
+        else
+        {
+            DrawSelectedDisplay(region, labelSize);
+        }
+    }
 
-        ImGui.Text("Selected Item:" + _selector.Selected.Label);
+    private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
+    {
+        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
+        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Trigger. "
+            + "--SEP-- Right Click to cancel and exit Editor.";
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
 
-        if (ImGui.Button("Begin Editing"))
-            _manager.StartEditing(_selector.Selected);
+        using (var c = CkRaii.LabelChildAction("Sel_Trigger", region.Size, LabelDraw, ImGui.GetFrameHeight(), OnLeftClick,
+            OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
+        {
+            using (ImRaii.Child("Trigger_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
+                DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
+        }
+
+        void LabelDraw()
+        {
+            ImGui.Dummy(labelSize);
+            ImGui.SetCursorScreenPos(region.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
+            ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
+            ImGui.SameLine(labelSize.X - ImGui.GetFrameHeight() * 1.5f);
+            CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
+        }
+
+        void OnLeftClick()
+        {
+            if (IsEditorItem) _manager.SaveChangesAndStopEditing();
+            else _manager.StartEditing(_selector.Selected!);
+        }
+
+        void OnRightClick()
+        {
+            if (IsEditorItem) _manager.StopEditing();
+            else _logger.LogWarning("Right Clicked on a Trigger that isn't in the editor.");
+        }
+    }
+
+    private void DrawSelectedInner(Trigger trigger, bool isEditorItem)
+    {
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));
+
+
+
+        CkGui.Separator();
+        DrawTriggerTypeSelector(trigger, isEditorItem);
+
+        CkGui.Separator();
+        DrawDescription(trigger, isEditorItem);
+
+        DrawFooter(trigger);
     }
 }

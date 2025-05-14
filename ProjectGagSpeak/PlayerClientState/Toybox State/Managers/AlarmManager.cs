@@ -245,19 +245,17 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
             if (!alarm.Enabled)
                 continue;
 
-            // grab the current day of the week in our local timezone
-            var currentDay = DateTime.Now.DayOfWeek;
-
-            // check if current day is in our frequency list
-            if (!alarm.RepeatFrequency.Contains(currentDay))
-                continue;
-
-            var alarmTime = alarm.SetTimeUTC.ToLocalTime();
-            // check if current time matches execution time and if so play
-            if (DateTime.Now.TimeOfDay.Hours == alarmTime.TimeOfDay.Hours && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
+            // check if the alarm is set to repeat on this day
+            if(!alarm.DaysToFire.HasAny(DateTime.Now.DayOfWeek.ToFlagVariant()))
             {
-                Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.ToyboxAlarms);
-                _applier.StartPlayback(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
+                var alarmTime = alarm.SetTimeUTC.ToLocalTime();
+                // check if current time matches execution time and if so play
+                if (DateTime.Now.TimeOfDay.Hours == alarmTime.TimeOfDay.Hours 
+                 && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
+                {
+                    Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.ToyboxAlarms);
+                    _applier.StartPlayback(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
+                }
             }
         }
     }

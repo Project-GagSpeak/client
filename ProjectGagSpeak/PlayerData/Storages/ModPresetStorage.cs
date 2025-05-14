@@ -104,9 +104,10 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         };
     }
 
-    public static ModSettingsPreset FromReferenceJToken(JToken? modPresetLight, ModSettingPresetManager modPresets)
+    // For other managers outside modPresetStorage
+    public static ModSettingsPreset FromRefToken(JToken? token, ModSettingPresetManager mp)
     {
-        if (modPresetLight is not JObject jsonObject)
+        if (token is not JObject jsonObject)
             throw new Exception("Invalid ModSettingsPreset data!");
 
         var dirPath = jsonObject["DirectoryPath"]?.Value<string>();
@@ -117,9 +118,9 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         else
         {
             // if the directory path is not in the mod preset storage, then we should throw an exception.
-            var container = modPresets.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
+            var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
                 ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
-                $"\nCurrent Containers are: {string.Join("\n", modPresets.ModPresetStorage.Select(x => x.DirectoryPath))}");
+                $"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
 
             var preset = container.ModPresets.FirstOrDefault(x => x.Label == presetName)
                 ?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
@@ -129,10 +130,10 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         }
     }
 
-
-    public static ModSettingsPreset FromJToken(JToken? modPreset, ModSettingPresetManager modPresets)
+    // For mod preset storage
+    public static ModSettingsPreset FromToken(JToken? token, ModSettingPresetManager mp)
     {
-        if (modPreset is not JObject jsonObject)
+        if (token is not JObject jsonObject)
             throw new Exception("Invalid ModSettingsPreset data!");
 
         var dirPath = jsonObject["DirectoryPath"]?.Value<string>();
@@ -142,9 +143,9 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         else
         {
             // if the directory path is not in the mod preset storage, then we should throw an exception.
-            var container = modPresets.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
+            var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
                 ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
-                $"\nCurrent Containers are: {string.Join("\n", modPresets.ModPresetStorage.Select(x => x.DirectoryPath))}");
+                $"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
 
             return new ModSettingsPreset(container)
             {

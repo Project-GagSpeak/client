@@ -13,7 +13,7 @@ public class Alarm : IEditableStorageItem<Alarm>
     public Pattern PatternRef { get; set; } = Pattern.AsEmpty();
     public TimeSpan PatternStartPoint { get; set; } = TimeSpan.Zero;
     public TimeSpan PatternDuration { get; set; } = TimeSpan.Zero;
-    public List<DayOfWeek> RepeatFrequency { get; set; } = [];
+    public DaysOfWeek DaysToFire { get; set; } = DaysOfWeek.None;
 
     public Alarm()
     { }
@@ -35,7 +35,7 @@ public class Alarm : IEditableStorageItem<Alarm>
         PatternRef = changedItem.PatternRef;
         PatternStartPoint = changedItem.PatternStartPoint;
         PatternDuration = changedItem.PatternDuration;
-        RepeatFrequency = changedItem.RepeatFrequency;
+        DaysToFire = changedItem.DaysToFire;
     }
 
     public JObject Serialize()
@@ -49,7 +49,7 @@ public class Alarm : IEditableStorageItem<Alarm>
             ["PatternRef"] = PatternRef.Identifier,
             ["PatternStartPoint"] = PatternStartPoint,
             ["PatternDuration"] = PatternDuration,
-            ["RepeatFrequency"] = JArray.FromObject(RepeatFrequency),
+            ["DaysToFire"] = DaysToFire.ToString(),
         };
     }
 
@@ -90,7 +90,8 @@ public class Alarm : IEditableStorageItem<Alarm>
                 ? startPoint : TimeSpan.Zero,
             PatternDuration = TimeSpan.TryParse(alarmObject["PatternDuration"]?.ToString(), out var duration)
                 ? duration : TimeSpan.Zero,
-            RepeatFrequency = alarmObject["RepeatFrequency"]?.ToObject<List<DayOfWeek>>() ?? [],
+            DaysToFire = Enum.TryParse<DaysOfWeek>(alarmObject["DaysToFire"]?.ToObject<string>(), out var traits) 
+                ? traits : DaysOfWeek.None,
         };
         return alarm;
     }

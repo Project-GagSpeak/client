@@ -118,7 +118,32 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             ["DoRedraw"] = DoRedraw,
         };
 
-    public AppliedSlot ToAppliedSlot() => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
+    public AppliedSlot ToAppliedSlot() 
+        => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
+
+    public static GarblerRestriction FromToken(JToken? token, GagType gagType, ItemService items, ModSettingPresetManager mp)
+    {
+        if (token is not JObject json)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
+          var moodles = JParser.LoadMoodle(json["Moodle"]);
+
+        return new GarblerRestriction(gagType)
+        {
+            IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
+            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Mod = modAttachment,
+            Moodle = moodles,
+            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None,
+            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
+            VisorState = JParser.FromJObject(json["VisorState"]),
+            ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid"),
+            ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority"),
+            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+        };
+    }
 }
 
 public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestrictionItem

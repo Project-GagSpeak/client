@@ -1,58 +1,66 @@
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 public partial class TriggersPanel
 {
-    private void DrawEditor(Vector2 region)
+    private void DrawDescription(Trigger trigger, bool isEditing)
     {
-        if(_manager.ItemInEditor is not { } activeTrigger)
-            return;
+        CkGui.ColorTextFrameAligned("Description", ImGuiColors.ParsedGold);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
+        using var _ = CkRaii.ChildPaddedW("Description", ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 3,
+            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll);
 
-        // If we converted our trigger, return early so the rest of the draw is not errored.
-        if (DrawTriggerTypeSelector(activeTrigger))
-            return;
+        // Display the correct text field based on the editing state.
+        if (isEditing)
+        {
+            var description = trigger.Description;
+            if (ImGui.InputTextMultiline("##DescriptionField", ref description, 200, ImGui.GetContentRegionAvail()))
+                trigger.Description = description;
+        }
+        else
+            ImGui.TextWrapped(trigger.Description);
 
-        ImGui.Separator();
-
-
+        // Draw a hint if no text is present.
+        if (trigger.Description.IsNullOrWhitespace())
+            ImGui.GetWindowDrawList().AddText(ImGui.GetItemRectMin() + ImGui.GetStyle().FramePadding,
+                0xFFBBBBBB, "Input a description in the space provided...");
     }
 
-    public bool DrawTriggerTypeSelector(Trigger trigger)
+    public bool DrawTriggerTypeSelector(Trigger trigger, bool isEditing)
     {
-        var cur = trigger.Type;
-        if (ImGuiUtil.GenericEnumCombo("##TriggerKind", ImGui.GetContentRegionAvail().X, cur, out var newType, Enum.GetValues<TriggerKind>(), (t) => t.ToName()))
-            if (newType != cur)
+        CkGui.ColorText("Trigger Type", ImGuiColors.ParsedGold);
+        var comboW = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) * .5f;
+
+        using (var c = CkRaii.Child("TriggerType", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
+            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            // Draw the pattern selection combo box.
+            var curType = trigger.Type;
+            if (isEditing)
             {
-                _manager.ChangeTriggerType(trigger, newType);
-                return true;
+                if (ImGuiUtil.GenericEnumCombo("##TriggerKind", c.InnerRegion.X, curType, out var newType, Enum.GetValues<TriggerKind>(), t => t.ToName()))
+                    if (newType != curType)
+                    {
+                        _manager.ChangeTriggerType(trigger, newType);
+                        return true;
+                    }
             }
-
+            else
+            {
+                CkGui.TextFrameAlignedInline(curType.ToName());
+            }
+        }
         return false;
-    }
-
-    private void DrawInfoSettings(Trigger triggerToCreate)
-    {
-        // draw out the details for the base of the abstract type.
-        var name = triggerToCreate.Label;
-        CkGui.ColorText("Name", ImGuiColors.ParsedGold);
-        ImGui.SetNextItemWidth(225f);
-        if (ImGui.InputTextWithHint("##NewTriggerName", "Enter Trigger Name", ref name, 40))
-        {
-            triggerToCreate.Label = name;
-        }
-
-        var desc = triggerToCreate.Description;
-        CkGui.ColorText("Description", ImGuiColors.ParsedGold);
-        if (ImGui.InputTextMultiline("##NewTriggerDescription", ref desc, 100, new Vector2(225f, ImGui.GetFrameHeightWithSpacing() * 3)))
-        {
-            triggerToCreate.Description = desc;
-        }
     }
 
     private void DrawSpellActionTriggerEditor(SpellActionTrigger spellActionTrigger)
@@ -124,7 +132,7 @@ public partial class TriggersPanel
             "Any ⇒ Skips over the Direction Filter. Source and Target can be anyone.");
 
         // create a dropdown storing the enum values of TriggerDirection
-        if (ImGuiUtil.GenericEnumCombo("##Direction", 150f, spellActionTrigger.Direction, out TriggerDirection newDir, dir => dir.ToName()))
+        if (ImGuiUtil.GenericEnumCombo("##Direction", 150f, spellActionTrigger.Direction, out var newDir, dir => dir.ToName()))
             spellActionTrigger.Direction = newDir;
     }
 
@@ -479,5 +487,22 @@ public partial class TriggersPanel
         {
             GagSpeak.StaticLog.Error(ex, "Error drawing VibeActionSettings");
         }*/
+    }
+
+    private void DrawFooter(Trigger trigger)
+    {
+        // get the remaining region.
+        var regionLeftover = ImGui.GetContentRegionAvail().Y;
+
+        // Determine how to space the footer.
+        if (regionLeftover < (CkGui.GetSeparatorHeight() + ImGui.GetFrameHeight()))
+            CkGui.Separator();
+        else
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + regionLeftover - ImGui.GetFrameHeight());
+
+        // Draw it.
+        ImUtf8.TextFrameAligned("ID:");
+        ImGui.SameLine();
+        ImUtf8.TextFrameAligned(trigger.Identifier.ToString());
     }
 }

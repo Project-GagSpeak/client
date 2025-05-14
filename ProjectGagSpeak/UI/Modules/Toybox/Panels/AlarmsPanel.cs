@@ -74,22 +74,28 @@ public partial class AlarmsPanel
 
         // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
-            DrawSelectedStatic(region.Size, labelSize);
+        {
+            using var _ = CkRaii.LabelChildText(region.Size, labelSize, "No Alarm Selected!",
+                ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+        }
         else
+        {
             DrawSelectedDisplay(region, labelSize);
+        }
     }
 
     private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
     {
         var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
         var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm. "
-            + "--SEP-- Right Click to cancel changes and edit Editor.";
+            + "--SEP-- Right Click to cancel and exit Editor.";
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
 
-        using (var c = CkRaii.LabelChildAction("Selected", region.Size, LabelDraw, ImGui.GetFrameHeight(),
-            OnLeftClick, OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
+        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, LabelDraw, ImGui.GetFrameHeight(), OnLeftClick, 
+            OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
         {
-            // Show the info for either the editor item details, or the selected item details.
-            DrawSelectedItemInfo(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
+            using (ImRaii.Child("Alarm_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
+                DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
         }
 
         void LabelDraw()
@@ -118,32 +124,23 @@ public partial class AlarmsPanel
         }
     }
 
-    private void DrawSelectedStatic(Vector2 region, Vector2 labelRegion)
+    private void DrawSelectedInner(Alarm alarm, bool isEditorItem)
     {
-        using var _ = CkRaii.LabelChildText(region, labelRegion, "No Alarm Selected!",
-            ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
-    }
+        using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1)))
+        {
+            CkGui.Separator();
+            DrawAlarmTime(alarm, isEditorItem);
 
-    // This will draw out the respective information for the Alarm info.
-    // Displayed information can call the preview or editor versions of each field.
-    private void DrawSelectedItemInfo(Alarm alarm, bool isEditorItem)
-    {
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));
-        // DrawLabel(alarm, isEditorItem);
+            CkGui.Separator();
+            DrawPatternSelection(alarm, isEditorItem);
 
-        CkGui.Separator();
-        DrawAlarmTime(alarm, isEditorItem);
+            CkGui.Separator();
+            DrawPatternTimeSpans(alarm, isEditorItem);
 
-        CkGui.Separator();
-        DrawPatternSelection(alarm, isEditorItem);
-
-        CkGui.Separator();
-        DrawPatternTimeSpans(alarm, isEditorItem);
-
-        CkGui.Separator();
+            CkGui.Separator();
+        }
         DrawAlarmFrequency(alarm, isEditorItem);
 
-        CkGui.Separator();
         DrawFooter(alarm);
     }
 }

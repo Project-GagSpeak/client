@@ -323,7 +323,7 @@ public class ModSettingPresetManager : DisposableMediatorSubscriberBase, IHybrid
                     if (presetToken is not JObject presetObj)
                         continue;
 
-                    var preset = ModSettingsPreset.FromJToken(presetObj, this);
+                    var preset = ModSettingsPreset.FromToken(presetObj, this);
                     container.ModPresets.Add(preset);
                 }
 

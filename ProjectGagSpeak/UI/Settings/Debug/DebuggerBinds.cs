@@ -698,14 +698,6 @@ public class DebuggerBinds
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("ShouldLoop");
             ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("PatternData");
-            var data = pattern.PatternData.ToString();
-            if (data.IsNullOrEmpty()) {
-                ImGuiUtil.DrawTableColumn("Data is null");
-            } else {
-                ImGuiUtil.DrawTableColumn(data);
-            }
         }
     }
     private void DrawAlarm(Alarm alarm)
@@ -734,12 +726,7 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn(alarm.PatternDuration.ToString());
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("RepeatFrequency");
-            var freq = alarm.RepeatFrequency.ToString();
-            if (freq.IsNullOrEmpty()) {
-                ImGuiUtil.DrawTableColumn("Null or empty");
-            } else {
-                ImGuiUtil.DrawTableColumn(freq);
-            }
+            ImGuiUtil.DrawTableColumn(alarm.DaysToFire.ToString());
         }
     }
 

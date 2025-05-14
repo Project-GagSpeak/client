@@ -1,5 +1,4 @@
 using GagspeakAPI.Data;
-using static FFXIVClientStructs.FFXIV.Client.Game.Character.VfxContainer;
 
 namespace GagSpeak.PlayerState.Models;
 
@@ -34,7 +33,7 @@ public class Pattern : IEditableStorageItem<Pattern>
         StartPoint = other.StartPoint;
         PlaybackDuration = other.PlaybackDuration;
         ShouldLoop = other.ShouldLoop;
-        PatternData = new List<byte>(other.PatternData);
+        PatternData = [ ..other.PatternData ];
     }
 
     public LightPattern ToLightPattern() 

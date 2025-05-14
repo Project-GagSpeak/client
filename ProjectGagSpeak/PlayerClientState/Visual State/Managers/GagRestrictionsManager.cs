@@ -313,13 +313,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     continue;
                 }
 
-                if (gagData is not JObject gagObject)
-                {
-                    Logger.LogWarning("Invalid GagData: {0}", gagName);
-                    continue;
-                }
-
-                var newGagItem = JParserBinds.FromGagToken(gagObject, gagType, _items, _modPresets);
+                var newGagItem = GarblerRestriction.FromToken(gagData, gagType, _items, _modPresets);
                 Storage[gagType] = newGagItem;
             }
         }

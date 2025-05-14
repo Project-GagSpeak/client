@@ -156,7 +156,7 @@ public partial class ControllerUniquePanel : IDisposable
         var triggerPhrasesH = ImGui.GetFrameHeightWithSpacing() * 3; // 3 lines of buttons.
         var spacingsH = spacing.Y * 2;
         var permissionsH = ImGui.GetFrameHeight() * 4 + spacing.Y * 3;
-        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorHeight(spacing.Y);
+        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
 
         // Create the inner child box.
         using var child = CkRaii.ChildPaddedW("PermBoxBody", drawRegion.SizeX, childH, CkColor.FancyHeader.Uint(),
@@ -175,7 +175,7 @@ public partial class ControllerUniquePanel : IDisposable
         using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
             PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
 
-        CkGui.Separator(spacing.Y, child.InnerRegion.X);
+        CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X);
 
         // Draw out the global puppeteer image.
         if (_cosmetics.CoreTextures[CoreTexture.PuppetMaster] is { } wrap)
