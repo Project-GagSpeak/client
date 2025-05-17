@@ -14,7 +14,7 @@ public class EmoteTrigger : Trigger
     public TriggerDirection EmoteDirection { get; set; } = TriggerDirection.Self;
 
     // if the 'other' is player specific, define the player here.
-    public string EmotePlayerNameWorld { get; set; } = string.Empty;
+    public string PlayerNameWorld { get; set; } = string.Empty;
 
     public EmoteTrigger()
     { }
@@ -28,7 +28,7 @@ public class EmoteTrigger : Trigger
     {
         EmoteID = other.EmoteID;
         EmoteDirection = other.EmoteDirection;
-        EmotePlayerNameWorld = other.EmotePlayerNameWorld;
+        PlayerNameWorld = other.PlayerNameWorld;
     }
 
     public override EmoteTrigger Clone(bool keepId) => new EmoteTrigger(this, keepId);
@@ -37,7 +37,7 @@ public class EmoteTrigger : Trigger
     {
         EmoteID = other.EmoteID;
         EmoteDirection = other.EmoteDirection;
-        EmotePlayerNameWorld = other.EmotePlayerNameWorld;
+        PlayerNameWorld = other.PlayerNameWorld;
         base.ApplyChanges(other);
     }
 }

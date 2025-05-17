@@ -175,7 +175,7 @@ public partial class ControllerUniquePanel : IDisposable
         using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
             PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
 
-        CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X);
+        CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
         if (_cosmetics.CoreTextures[CoreTexture.PuppetMaster] is { } wrap)

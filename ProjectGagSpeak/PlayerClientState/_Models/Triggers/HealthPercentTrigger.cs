@@ -6,7 +6,7 @@ public class HealthPercentTrigger : Trigger
     public override TriggerKind Type => TriggerKind.HealthPercent;
 
     // Player Name to monitor the health % of. use format Player Name@World
-    public string PlayerToMonitor { get; set; } = string.Empty;
+    public string PlayerNameWorld { get; set; } = string.Empty;
 
     // if allowing percentageHealth
     public bool UsePercentageHealth { get; set; } = false;
@@ -30,7 +30,7 @@ public class HealthPercentTrigger : Trigger
     public HealthPercentTrigger(HealthPercentTrigger other, bool keepId)
         : base(other, keepId)
     {
-        PlayerToMonitor = other.PlayerToMonitor;
+        PlayerNameWorld = other.PlayerNameWorld;
         UsePercentageHealth = other.UsePercentageHealth;
         PassKind = other.PassKind;
         MinHealthValue = other.MinHealthValue;
@@ -41,7 +41,7 @@ public class HealthPercentTrigger : Trigger
 
     public void ApplyChanges(HealthPercentTrigger other)
     {
-        PlayerToMonitor = other.PlayerToMonitor;
+        PlayerNameWorld = other.PlayerNameWorld;
         UsePercentageHealth = other.UsePercentageHealth;
         PassKind = other.PassKind;
         MinHealthValue = other.MinHealthValue;

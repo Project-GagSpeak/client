@@ -411,7 +411,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
 
         // Group triggers by the player being monitored.
         var playerTriggers = _triggerManager.Storage.HealthPercent
-            .GroupBy(trigger => trigger.PlayerToMonitor)
+            .GroupBy(trigger => trigger.PlayerNameWorld)
             .ToDictionary(group => group.Key, group => new PlayerHealth(group.AsEnumerable()));
 
         // Get the visible characters.

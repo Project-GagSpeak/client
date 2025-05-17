@@ -13,55 +13,38 @@ using OtterGui.Text;
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 public partial class TriggersPanel
 {
-    private void DrawDescription(Trigger trigger, bool isEditing)
+    // Shared Stuff (I guess?)
+    private void DrawPlayerNameWorldField(ref string playerNameWorld, bool isEditingItem)
     {
-        CkGui.ColorTextFrameAligned("Description", ImGuiColors.ParsedGold);
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
-        using var _ = CkRaii.ChildPaddedW("Description", ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 3,
-            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll);
 
-        // Display the correct text field based on the editing state.
-        if (isEditing)
-        {
-            var description = trigger.Description;
-            if (ImGui.InputTextMultiline("##DescriptionField", ref description, 200, ImGui.GetContentRegionAvail()))
-                trigger.Description = description;
-        }
-        else
-            ImGui.TextWrapped(trigger.Description);
-
-        // Draw a hint if no text is present.
-        if (trigger.Description.IsNullOrWhitespace())
-            ImGui.GetWindowDrawList().AddText(ImGui.GetItemRectMin() + ImGui.GetStyle().FramePadding,
-                0xFFBBBBBB, "Input a description in the space provided...");
     }
 
-    public bool DrawTriggerTypeSelector(Trigger trigger, bool isEditing)
+    // Spell-Action
+    private void DrawActionKind(SpellActionTrigger trigger, bool isEditingItem)
     {
-        CkGui.ColorText("Trigger Type", ImGuiColors.ParsedGold);
-        var comboW = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) * .5f;
 
-        using (var c = CkRaii.Child("TriggerType", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
-        {
-            // Draw the pattern selection combo box.
-            var curType = trigger.Type;
-            if (isEditing)
-            {
-                if (ImGuiUtil.GenericEnumCombo("##TriggerKind", c.InnerRegion.X, curType, out var newType, Enum.GetValues<TriggerKind>(), t => t.ToName()))
-                    if (newType != curType)
-                    {
-                        _manager.ChangeTriggerType(trigger, newType);
-                        return true;
-                    }
-            }
-            else
-            {
-                CkGui.TextFrameAlignedInline(curType.ToName());
-            }
-        }
-        return false;
     }
+
+    private void DrawSpellDirection(SpellActionTrigger trigger, bool isEditingItem)
+    {
+
+    }
+
+    private void DrawActionSelector(SpellActionTrigger trigger, bool isEditingItem)
+    {
+
+    }
+
+    private void DrawActionThreshold(SpellActionTrigger trigger, bool isEditingItem)
+    {
+
+    }
+
+    // Health-Percent
+    // Maybe maxhealth idk
+
+
+
 
     private void DrawSpellActionTriggerEditor(SpellActionTrigger spellActionTrigger)
     {

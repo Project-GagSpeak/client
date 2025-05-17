@@ -77,12 +77,12 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
 
         Trigger convertedTrigger = newType switch
         {
-            TriggerKind.SpellAction => new SpellActionTrigger(newTrigger, false),
-            TriggerKind.HealthPercent => new HealthPercentTrigger(newTrigger, false),
-            TriggerKind.RestraintSet => new RestraintTrigger(newTrigger, false),
-            TriggerKind.GagState => new GagTrigger(newTrigger, false),
-            TriggerKind.SocialAction => new SocialTrigger(newTrigger, false),
-            TriggerKind.EmoteAction => new EmoteTrigger(newTrigger, false),
+            TriggerKind.SpellAction => new SpellActionTrigger(newTrigger, true),
+            TriggerKind.HealthPercent => new HealthPercentTrigger(newTrigger, true),
+            TriggerKind.RestraintSet => new RestraintTrigger(newTrigger, true),
+            TriggerKind.GagState => new GagTrigger(newTrigger, true),
+            TriggerKind.SocialAction => new SocialTrigger(newTrigger, true),
+            TriggerKind.EmoteAction => new EmoteTrigger(newTrigger, true),
             _ => throw new NotImplementedException("Unknown trigger type."),
         };
 

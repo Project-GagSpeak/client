@@ -38,12 +38,12 @@ public static partial class CkRaii
 
 
     /// <inheritdoc cref="ChildPadded(string, Vector2, uint, float, ImDrawFlags, WFlags)"/>/>
-    public static IEOContainer ChildPadded(string id, Vector2 size, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => ChildPadded(id, size, 0, GetChildRounding(), dFlags, wFlags);
+    public static IEOContainer ChildPadded(string id, Vector2 size, ImDrawFlags dFlags = ImDrawFlags.None)
+        => ChildPadded(id, size, 0, GetChildRounding(), dFlags);
 
     /// <inheritdoc cref="ChildPadded(string, Vector2, uint, float, ImDrawFlags, WFlags)"/>/>
-    public static IEOContainer ChildPadded(string id, Vector2 size, uint bgCol, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
-        => ChildPadded(id, size, bgCol, GetChildRounding(), dFlags, wFlags);
+    public static IEOContainer ChildPadded(string id, Vector2 size, uint bgCol, ImDrawFlags dFlags = ImDrawFlags.None)
+        => ChildPadded(id, size, bgCol, GetChildRounding(), dFlags);
 
     /// <summary> 
     ///     ImRaii.Child variant that accepts InnerContentRegion dimensions, handling padding internally. 
@@ -97,7 +97,7 @@ public static partial class CkRaii
     /// <summary>
     ///     ImRaii.Child variant that accepts InnerContentRegion dimensions, handling padding internally.
     /// </summary>
-    /// <remarks> In this method, <paramref name="size"/> is expected to be the outerContentRegion(), that will be padded. </remarks>
+    /// <remarks> In this method, <paramref name="size"/> is expected to be the InnerContentRegion(), that will be padded. </remarks>
     public static IEOContainer FrameChildPadded(string id, Vector2 size, uint bgCol, float rounding, float thickness, ImDrawFlags dFlags = ImDrawFlags.None, WFlags wFlags = WFlags.None)
         => FramedChild(id, size.WithWinPadding(), bgCol, rounding, thickness, dFlags, wFlags.WithPadding());
 }

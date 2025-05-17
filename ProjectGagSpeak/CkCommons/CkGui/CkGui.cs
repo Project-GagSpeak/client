@@ -162,7 +162,7 @@ public partial class CkGui
         ImGui.Spacing();
         ImGui.Dummy(new Vector2(width ?? ImGui.GetContentRegionAvail().X, height ?? ImGui.GetStyle().ItemSpacing.Y));
         if (col is not null)
-            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col ?? CkColor.FancyHeaderContrast.Uint());
+            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col.Value);
         ImGui.Spacing();
     }
 

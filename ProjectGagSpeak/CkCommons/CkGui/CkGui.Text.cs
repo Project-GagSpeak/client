@@ -152,6 +152,13 @@ public partial class CkGui
         ColorText(text, color);
     }
 
+    public static void CenterTextAligned(string text)
+    {
+        var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
+        ImUtf8.TextFrameAligned(text);
+    }
+
     public static void ColorTextCentered(string text, Vector4 color)
     {
         var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
@@ -302,19 +309,18 @@ public partial class CkGui
     /// <summary> Draws iconText centered within ImGui.GetFrameHeight() square. </summary>
     public static void FramedIconText(FAI icon, uint? color = null)
     {
+        var region = new Vector2(ImGui.GetFrameHeight());
+
         using var font = UiFontService.IconFont.Push();
         // Get the text size.
         var text = icon.ToIconString();
-        var region = new Vector2(ImGui.GetFrameHeight());
         var iconSize = ImGui.CalcTextSize(text);
         var currentPos = ImGui.GetCursorScreenPos();
         var iconPosition = currentPos + (region - iconSize) * 0.5f;
         // Draw a dummy to fill the frame region.
         ImGui.Dummy(region);
-        // Then draw the text in the center.
         ImGui.GetWindowDrawList().AddText(iconPosition, color ?? ImGui.GetColorU32(ImGuiCol.Text), text);
     }
-
 
     public static void IconText(FAI icon, uint color)
     {

@@ -7,8 +7,10 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
+using GagspeakAPI.Data;
+using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Dto;
 using ImGuiNET;
-using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 
@@ -30,6 +32,8 @@ public partial class TriggersPanel
         _manager = manager;
         _guides = guides;
     }
+
+    private TriggerTab _selectedTab = TriggerTab.Detection;
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, ToyboxTabs tabMenu)
     {
@@ -75,53 +79,165 @@ public partial class TriggersPanel
 
     private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
     {
-        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
-        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Trigger. "
-            + "--SEP-- Right Click to cancel and exit Editor.";
+        var item = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
+        var IsEditorItem = item.Identifier == _manager.ItemInEditor?.Identifier;
+
+        // Styles shared throughout all draw settings.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
 
-        using (var c = CkRaii.LabelChildAction("Sel_Trigger", region.Size, LabelDraw, ImGui.GetFrameHeight(), OnLeftClick,
-            OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
+        // Begin the child constraint.
+        using (var c = CkRaii.Child("Sel_Outer", region.Size, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), DFlags.RoundCornersRight))
         {
-            using (ImRaii.Child("Trigger_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
-                DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
-        }
+            var minPos = ImGui.GetItemRectMin();
+            DrawSelectedHeader(labelSize, item, IsEditorItem);
 
-        void LabelDraw()
-        {
-            ImGui.Dummy(labelSize);
-            ImGui.SetCursorScreenPos(region.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
-            ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
-            ImGui.SameLine(labelSize.X - ImGui.GetFrameHeight() * 1.5f);
-            CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
-        }
+            ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
+            DrawTabSelector();
 
-        void OnLeftClick()
-        {
-            if (IsEditorItem) _manager.SaveChangesAndStopEditing();
-            else _manager.StartEditing(_selector.Selected!);
-        }
+            ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
+            DrawSelectedBody(item, IsEditorItem);
 
-        void OnRightClick()
-        {
-            if (IsEditorItem) _manager.StopEditing();
-            else _logger.LogWarning("Right Clicked on a Trigger that isn't in the editor.");
+            // Back to topleft and draw the label yes yes.
+            ImGui.SetCursorScreenPos(minPos);
+            DrawLabelWithToggle(labelSize, item, IsEditorItem);
         }
     }
 
-    private void DrawSelectedInner(Trigger trigger, bool isEditorItem)
+    private void DrawSelectedHeader(Vector2 region, Trigger trigger, bool isEditorItem)
     {
-        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));
+        var descH = ImGui.GetTextLineHeightWithSpacing() * 2;
+        var height = descH.AddWinPadY() + ImGui.GetFrameHeightWithSpacing();
+        var bgCol = CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        using var _ = CkRaii.ChildPaddedW("Sel_Header", ImGui.GetContentRegionAvail().X, height, bgCol, ImGui.GetFrameHeight(), DFlags.RoundCornersTopRight);
 
+        // Dummy is a placeholder for the label area drawn afterward.
+        ImGui.Dummy(region + new Vector2(CkRaii.GetFrameThickness()) - ImGui.GetStyle().ItemSpacing - ImGui.GetStyle().WindowPadding / 2);
+        ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X * 2);
+        DrawPrioritySetter(trigger, isEditorItem);
 
-
-        CkGui.Separator();
-        DrawTriggerTypeSelector(trigger, isEditorItem);
-
-        CkGui.Separator();
         DrawDescription(trigger, isEditorItem);
+    }
+
+    private void DrawTabSelector()
+    {
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
+
+        var wdl = ImGui.GetWindowDrawList();
+        var width = ImGui.GetContentRegionAvail().X;
+        var stripSize = new Vector2(width, CkRaii.GetFrameThickness());
+        var tabSize = new Vector2(width / 2, ImGui.GetFrameHeight());
+        var textYOffset = (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) / 2;
+
+        // Top Strip.
+        ImGui.Dummy(stripSize);
+        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementSplit.Uint());
+        // Left Button.
+        if (ImGui.InvisibleButton("tab_left", tabSize))
+            _selectedTab = TriggerTab.Detection;
+
+        DrawButtonText("Detection", TriggerTab.Detection);
+
+        // Right Button.
+        ImGui.SameLine();
+        if (ImGui.InvisibleButton("tab_right", tabSize))
+            _selectedTab = TriggerTab.Action;
+
+        DrawButtonText("Applied Action", TriggerTab.Action);
+
+        // Bot Strip.
+        ImGui.Dummy(stripSize);
+        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementSplit.Uint());
+
+        void DrawButtonText(string text, TriggerTab tab)
+        {
+            var min = ImGui.GetItemRectMin();
+            var col = ImGui.IsItemHovered()
+                ? CkColor.VibrantPinkHovered 
+                : (_selectedTab == tab ? CkColor.VibrantPink : CkColor.FancyHeaderContrast);
+            wdl.AddRectFilled(min, ImGui.GetItemRectMax(), col.Uint());
+            var textPos = min + new Vector2((tabSize.X - ImGui.CalcTextSize(text).X) / 2, textYOffset);
+            wdl.AddText(textPos, ImGui.GetColorU32(ImGuiCol.Text), text);
+        }
+    }
+
+    private void DrawSelectedBody(Trigger trigger, bool isEditorItem)
+    {
+        using var bodyChild = CkRaii.Child("Sel_Body", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding);
+
+        if (_selectedTab is TriggerTab.Detection)
+        {
+            ImGui.Spacing();
+            DrawTriggerTypeSelector(bodyChild.InnerRegion.X / 2, trigger, isEditorItem);
+            CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
+            DrawDetectionInfo(trigger, isEditorItem);
+        }
+        else
+        {
+            ImGui.Spacing();
+            DrawTriggerActionType(bodyChild.InnerRegion.X / 2, trigger, isEditorItem);
+            CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
+            DrawActionInfo(trigger, isEditorItem);
+        }
 
         DrawFooter(trigger);
+    }
+
+    private void DrawDetectionInfo(Trigger trigger, bool isEditorItem)
+    {
+        // What we draw, should be based on what triggerkind it is.
+        switch (trigger)
+        {
+            case SpellActionTrigger spellAct:
+                // stuff for spell action trigger.
+                break;
+            case HealthPercentTrigger healthPerc:
+                // stuff for health percent trigger.
+                break;
+            case RestraintTrigger restraint:
+                // stuff for restraint trigger.
+                break;
+            case RestrictionTrigger restriction:
+                // stuff for restriction trigger.
+                break;
+            case GagTrigger gag:
+                // stuff for gag trigger.
+                break;
+            case SocialTrigger social:
+                // stuff for social trigger.
+                break;
+            case EmoteTrigger emote:
+                // stuff for emote trigger.
+                break;
+        }
+    }
+
+    private void DrawActionInfo(Trigger trigger, bool isEditorItem)
+    {
+        // What we draw, should be based on what triggerkind it is.
+        switch (trigger.InvokableAction)
+        {
+            case TextAction textAct:
+                // stuff for text responce action.
+                break;
+            case GagAction gagAct:
+                // stuff for gag action.
+                break;
+            case RestraintAction restraintAct:
+                // stuff for restraint action.
+                break; 
+            case RestrictionAction restrictionAct:
+                // stuff for restriction action.
+                break;
+            case MoodleAction moodleAct:
+                // stuff for moodle action.
+                break;
+            case PiShockAction shockAct:
+                // stuff for shock collar action.
+                break;
+            case SexToyAction sexToyAct:
+                // stuff for toys.
+                break;
+        }
     }
 }

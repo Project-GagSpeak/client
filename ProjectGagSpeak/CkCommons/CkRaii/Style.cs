@@ -61,6 +61,7 @@ public static partial class CkRaii
     public static float GetChildRounding() => ImGui.GetStyle().FrameRounding * 1.25f;
     public static float GetChildRoundingLarge() => ImGui.GetStyle().FrameRounding * 1.75f;
     public static float GetHeaderRounding() => ImGui.GetStyle().FrameRounding * 2f;
+    public static float GetFrameThickness() => ImGui.GetStyle().WindowPadding.X / 2;
 
     public struct ColorsLC(uint label, uint shadow, uint background, uint labelHovered = 0)
     {
