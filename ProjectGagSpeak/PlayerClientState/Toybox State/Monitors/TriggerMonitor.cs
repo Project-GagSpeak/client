@@ -262,9 +262,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         Logger.LogTrace("SourceID: " + actionEffect.SourceID + " TargetID: " + actionEffect.TargetID + " ActionID: " + actionEffect.ActionID + " Type: " + actionEffect.Type + " Damage: " + actionEffect.Damage, LoggerType.ToyboxTriggers);
 
         var relevantTriggers = _triggerManager.Storage.SpellAction
-            .Where(trigger =>
-                (trigger.ActionID == uint.MaxValue || trigger.ActionID == actionEffect.ActionID) &&
-                trigger.ActionKind == actionEffect.Type)
+            .Where(t => t.ActionIDs.Contains(actionEffect.ActionID) && t.ActionKind == actionEffect.Type )
             .ToList();
 
         if (!relevantTriggers.Any())
@@ -459,18 +457,18 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
                 if (trigger.PassKind == ThresholdPassType.Under)
                 {
                     isValid = trigger.UsePercentageHealth
-                        ? (previousPercentageHP > trigger.MinHealthValue && percentageHP <= trigger.MinHealthValue) ||
-                            (previousPercentageHP > trigger.MaxHealthValue && percentageHP <= trigger.MaxHealthValue)
-                        : (player.Value.LastHp > trigger.MinHealthValue && player.Key.CurrentHp <= trigger.MinHealthValue) ||
-                            (player.Value.LastHp > trigger.MaxHealthValue && player.Key.CurrentHp <= trigger.MaxHealthValue);
+                        ? (previousPercentageHP > trigger.ThresholdMinValue && percentageHP <= trigger.ThresholdMinValue) ||
+                            (previousPercentageHP > trigger.ThresholdMaxValue && percentageHP <= trigger.ThresholdMaxValue)
+                        : (player.Value.LastHp > trigger.ThresholdMinValue && player.Key.CurrentHp <= trigger.ThresholdMinValue) ||
+                            (player.Value.LastHp > trigger.ThresholdMaxValue && player.Key.CurrentHp <= trigger.ThresholdMaxValue);
                 }
                 else if (trigger.PassKind == ThresholdPassType.Over)
                 {
                     isValid = trigger.UsePercentageHealth
-                        ? (previousPercentageHP < trigger.MinHealthValue && percentageHP >= trigger.MinHealthValue) ||
-                            (previousPercentageHP < trigger.MaxHealthValue && percentageHP >= trigger.MaxHealthValue)
-                        : (player.Value.LastHp < trigger.MinHealthValue && player.Key.CurrentHp >= trigger.MinHealthValue) ||
-                            (player.Value.LastHp < trigger.MaxHealthValue && player.Key.CurrentHp >= trigger.MaxHealthValue);
+                        ? (previousPercentageHP < trigger.ThresholdMinValue && percentageHP >= trigger.ThresholdMinValue) ||
+                            (previousPercentageHP < trigger.ThresholdMaxValue && percentageHP >= trigger.ThresholdMaxValue)
+                        : (player.Value.LastHp < trigger.ThresholdMinValue && player.Key.CurrentHp >= trigger.ThresholdMinValue) ||
+                            (player.Value.LastHp < trigger.ThresholdMaxValue && player.Key.CurrentHp >= trigger.ThresholdMaxValue);
                 }
 
                 if (isValid)

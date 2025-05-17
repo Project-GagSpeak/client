@@ -100,7 +100,17 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(AliasTrigger trigger) => _itemEditor.StartEditing(trigger);
+    public void StartEditing(AliasTrigger trigger, string? userUid = null)
+    {
+        if (userUid is not null && !ValidatePairStorage(userUid))
+            return;
+
+        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
+        if (storage is null)
+            return;
+
+        _itemEditor.StartEditing(storage, trigger);
+    }
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() => _itemEditor.QuitEditing();

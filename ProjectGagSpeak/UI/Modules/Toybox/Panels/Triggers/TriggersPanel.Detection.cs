@@ -4,6 +4,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -14,56 +15,122 @@ namespace GagSpeak.CkCommons.Gui.UiToybox;
 public partial class TriggersPanel
 {
     // Shared Stuff (I guess?)
-    private void DrawPlayerNameWorldField(ref string playerNameWorld, bool isEditingItem)
+    private bool DrawNameWorldField(float width, ref string playerNameWorld, string tooltip, bool isEditing)
     {
-
+        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
+        using (var c = CkRaii.Child("NameWorldInput", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            if (isEditing)
+            {
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.InputTextWithHint("##NameWatcher", "John FinalFantasy@Goblin...", ref playerNameWorld, 68))
+                    return true;
+            }
+            else
+            {
+                var displayTxt = playerNameWorld.IsNullOrEmpty() ? "<No Name@World Set!>" : playerNameWorld;
+                CkGui.CenterTextAligned(displayTxt);
+            }
+        }
+        CkGui.AttachToolTip(tooltip +
+            "--SEP--Must follow the format Player Name@World.");
+        return false;
     }
 
     // Spell-Action
-    private void DrawActionKind(SpellActionTrigger trigger, bool isEditingItem)
+    private void DrawSpellDirection(float width, SpellActionTrigger spellAct, bool isEditing)
     {
+        CkGui.ColorText("Direction", ImGuiColors.ParsedGold);
 
+        ImGui.SameLine();
+        using (var c = CkRaii.Child("DirectionChild", new Vector2(width, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
+            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            if (isEditing)
+            {
+                if (CkGuiUtils.EnumCombo("##Direction", c.InnerRegion.X, spellAct.Direction, out var newDir, _ => _.ToName()))
+                    spellAct.Direction = newDir;
+            }
+            else
+            {
+                CkGui.CenterTextAligned(spellAct.Direction.ToName());
+            }
+        }
+        CkGui.HelpText("Determines how the trigger is fired." +
+            "--SEP--From Self ⇒ ActionType was performed BY YOU (Target can be anything)" +
+            "--SEP--Self to Others ⇒ ActionType was performed by you, and the target was NOT you." +
+            "--SEP--From Others ⇒ ActionType was performed by someone besides you. (Target can be anything)" +
+            "--SEP--Others to You ⇒ ActionType was performed by someone else, and YOU were the target." +
+            "--SEP--Any ⇒ Skips over the Direction Filter. Source and Target can be anyone.");
     }
 
-    private void DrawSpellDirection(SpellActionTrigger trigger, bool isEditingItem)
+    private void DrawThresholdPercent(float width, IThresholdContainer trigger, bool isEditing, string? tt = null, string format = "%d%%")
     {
-
+        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
+        using (var c = CkRaii.Child("Perc_Thres", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            var healthPercentRef = trigger.ThresholdMinValue;
+            if (isEditing)
+            {
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.DragInt("##HealthPercentage", ref healthPercentRef, 0.1f, 0, 100, format))
+                    trigger.ThresholdMinValue = healthPercentRef;
+            }
+            else
+            {
+                CkGui.CenterTextAligned($"{healthPercentRef}%");
+            }
+        }
+        CkGui.AttachToolTip(tt ?? "Maximum Percent Damage/Heal number to trigger effect.");
     }
 
-    private void DrawActionSelector(SpellActionTrigger trigger, bool isEditingItem)
+    private void DrawThresholds(float width, IThresholdContainer trigger, bool isEditing, string? lowerTT = null, 
+        string? upperTT = null, string lowerFormat = "%d", string upperFormat = "%d")
     {
+        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
+        var length = (width - ImGui.GetStyle().ItemInnerSpacing.X) / 2;
+        using (var c = CkRaii.Child("MinThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            var minThresRef = trigger.ThresholdMinValue;
+            if (isEditing)
+            {
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.DragInt("##MinThresSlider", ref minThresRef, 10.0f, -1, 1000000, lowerFormat))
+                    trigger.ThresholdMinValue = minThresRef;
+            }
+            else
+            {
+                string displayStr = lowerFormat.Replace("%d", minThresRef.ToString());
+                CkGui.CenterTextAligned(displayStr);
+            }
+        }
+        CkGui.AttachToolTip(lowerTT ?? "Minimum Damage/Heal number to trigger effect.\nLeave -1 for any.");
 
-    }
-
-    private void DrawActionThreshold(SpellActionTrigger trigger, bool isEditingItem)
-    {
-
+        ImUtf8.SameLineInner();
+        using (var c = CkRaii.Child("MaxThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            var maxThresRef = trigger.ThresholdMaxValue;
+            if (isEditing)
+            {
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.DragInt("##MaxThresSlider", ref maxThresRef, 10.0f, -1, 1000000, upperFormat))
+                    trigger.ThresholdMaxValue = maxThresRef;
+            }
+            else
+            {
+                string displayStr = upperFormat.Replace("%d", maxThresRef.ToString());
+                CkGui.CenterTextAligned(displayStr);
+            }
+        }
+        CkGui.AttachToolTip(upperTT ?? "Maximum Damage/Heal number to trigger effect.");
     }
 
     // Health-Percent
     // Maybe maxhealth idk
 
-
-
-
     private void DrawSpellActionTriggerEditor(SpellActionTrigger spellActionTrigger)
     {
-/*
-        if (!CanDrawSpellActionTriggerUI())
-            return;
-
-        CkGui.ColorText("Action Type", ImGuiColors.ParsedGold);
-        CkGui.HelpText("The type of action to monitor for.");
-
-        CkGui.DrawCombo("##ActionKindCombo", 150f, Enum.GetValues<LimitedActionEffectType>(), (ActionKind) => ActionKind.ToName(),
-        (i) => spellActionTrigger.ActionKind = i, spellActionTrigger.ActionKind);
-
-        // the name of the action to listen to.
-        CkGui.ColorText("Action Name", ImGuiColors.ParsedGold);
-        CkGui.HelpText("Action To listen for." + Environment.NewLine + Environment.NewLine
-            + "NOTE: Effects Divine Benison or regen, that cast no heal value, do not count as heals.");
-
-        bool anyChecked = spellActionTrigger.ActionID == uint.MaxValue;
+/*        bool anyChecked = spellActionTrigger.ActionIDs == uint.MaxValue;
         if (ImGui.Checkbox("Any", ref anyChecked))
         {
             spellActionTrigger.ActionID = anyChecked ? uint.MaxValue : 0;
@@ -84,114 +151,6 @@ public partial class TriggersPanel
             var loadedActions = ClientMonitor.LoadedActions[(int)SelectedJobId];
             CkGui.DrawComboSearchable("##ActionToListenTo" + SelectedJobId, 150f, loadedActions, (action) => action.Name.ToString(),
             false, (i) => spellActionTrigger.ActionID = (uint)i.RowId, defaultPreviewText: "Select Job Action..");
-        }
-
-        // Determine how we draw out the rest of this based on the action type:
-        switch (spellActionTrigger.ActionKind)
-        {
-            case LimitedActionEffectType.Miss:
-            case LimitedActionEffectType.Attract1:
-            case LimitedActionEffectType.Knockback:
-                DrawDirection(spellActionTrigger);
-                return;
-            case LimitedActionEffectType.BlockedDamage:
-            case LimitedActionEffectType.ParriedDamage:
-            case LimitedActionEffectType.Damage:
-            case LimitedActionEffectType.Heal:
-                DrawDirection(spellActionTrigger);
-                DrawThresholds(spellActionTrigger);
-                return;
-        }*/
-    }
-
-    private void DrawDirection(SpellActionTrigger spellActionTrigger)
-    {
-        CkGui.ColorText("Direction", ImGuiColors.ParsedGold);
-        CkGui.HelpText("Determines how the trigger is fired. --SEP--" +
-            "From Self ⇒ ActionType was performed BY YOU (Target can be anything)--SEP--" +
-            "Self to Others ⇒ ActionType was performed by you, and the target was NOT you--SEP--" +
-            "From Others ⇒ ActionType was performed by someone besides you. (Target can be anything)--SEP--" +
-            "Others to You ⇒ ActionType was performed by someone else, and YOU were the target.--SEP--" +
-            "Any ⇒ Skips over the Direction Filter. Source and Target can be anyone.");
-
-        // create a dropdown storing the enum values of TriggerDirection
-        if (ImGuiUtil.GenericEnumCombo("##Direction", 150f, spellActionTrigger.Direction, out var newDir, dir => dir.ToName()))
-            spellActionTrigger.Direction = newDir;
-    }
-
-    private void DrawThresholds(SpellActionTrigger spellActionTrigger)
-    {
-/*        CkGui.ColorText("Threshold Min Value: ", ImGuiColors.ParsedGold);
-        CkGui.HelpText("Minimum Damage/Heal number to trigger effect.\nLeave -1 for any.");
-        var minVal = spellActionTrigger.ThresholdMinValue;
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.InputInt("##ThresholdMinValue", ref minVal))
-        {
-            spellActionTrigger.ThresholdMinValue = minVal;
-        }
-
-        CkGui.ColorText("Threshold Max Value: ", ImGuiColors.ParsedGold);
-        CkGui.HelpText("Maximum Damage/Heal number to trigger effect.");
-        var maxVal = spellActionTrigger.ThresholdMaxValue;
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.InputInt("##ThresholdMaxValue", ref maxVal))
-        {
-            spellActionTrigger.ThresholdMaxValue = maxVal;
-        }*/
-    }
-
-    private void DrawHealthPercentTriggerEditor(HealthPercentTrigger healthPercentTrigger)
-    {
-/*        string playerName = healthPercentTrigger.PlayerToMonitor;
-        CkGui.ColorText("Track Health % of:", ImGuiColors.ParsedGold);
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.InputTextWithHint("##PlayerToTrackHealthOf", "Player Name@World", ref playerName, 72))
-        {
-            healthPercentTrigger.PlayerToMonitor = playerName;
-        }
-        CkGui.HelpText("Must follow the format Player Name@World." + Environment.NewLine + "Example: Y'shtola Rhul@Mateus");
-
-        CkGui.ColorText("Use % Threshold: ", ImGuiColors.ParsedGold);
-        var usePercentageHealth = healthPercentTrigger.UsePercentageHealth;
-        if (ImGui.Checkbox("##Use Percentage Health", ref usePercentageHealth))
-        {
-            healthPercentTrigger.UsePercentageHealth = usePercentageHealth;
-        }
-        CkGui.HelpText("When Enabled, will watch for when health goes above or below a specific %" +
-            Environment.NewLine + "Otherwise, listens for when it goes above or below a health range.");
-
-        CkGui.ColorText("Pass Kind: ", ImGuiColors.ParsedGold);
-        CkGui.DrawCombo("##PassKindCombo", 150f, Enum.GetValues<ThresholdPassType>(), (passKind) => passKind.ToString(),
-            (i) => healthPercentTrigger.PassKind = i, healthPercentTrigger.PassKind);
-        CkGui.HelpText("If the trigger should fire when the health passes above or below the threshold.");
-
-        if (healthPercentTrigger.UsePercentageHealth)
-        {
-            CkGui.ColorText("Health % Threshold: ", ImGuiColors.ParsedGold);
-            int minHealth = healthPercentTrigger.MinHealthValue;
-            if (ImGui.SliderInt("##HealthPercentage", ref minHealth, 0, 100, "%d%%"))
-            {
-                healthPercentTrigger.MinHealthValue = minHealth;
-            }
-            CkGui.HelpText("The Health % that must be crossed to activate the trigger.");
-        }
-        else
-        {
-            CkGui.ColorText("Min Health Range Threshold: ", ImGuiColors.ParsedGold);
-            int minHealth = healthPercentTrigger.MinHealthValue;
-            if (ImGui.InputInt("##MinHealthValue", ref minHealth))
-            {
-                healthPercentTrigger.MinHealthValue = minHealth;
-            }
-            CkGui.HelpText("Lowest HP Value the health should be if triggered upon going below");
-
-            CkGui.ColorText("Max Health Range Threshold: ", ImGuiColors.ParsedGold);
-            int maxHealth = healthPercentTrigger.MaxHealthValue;
-            if (ImGui.InputInt("##MaxHealthValue", ref maxHealth))
-            {
-                healthPercentTrigger.MaxHealthValue = maxHealth;
-            }
-            CkGui.HelpText("Highest HP Value the health should be if triggered upon going above");
         }*/
     }
 
@@ -245,50 +204,6 @@ public partial class TriggersPanel
             (i) => emoteTrigger.EmoteID = i.Key, default, false, ImGuiComboFlags.None, "Select an Emote..");
 
         CkGui.ColorText("Currently under construction.\nExpect trigger rework with UI soon?", ImGuiColors.ParsedGold);*/
-    }
-
-    private void DrawTriggerActions(Trigger trigger)
-    {
-        /*CkGui.ColorText("Trigger Action Kind", ImGuiColors.ParsedGold);
-        CkGui.HelpText("The kind of action to perform when the trigger is activated.");
-
-        // Prevent Loopholes
-        var allowedKinds = trigger is RestraintTrigger
-            ? GenericHelpers.ActionTypesRestraint
-            : trigger is GagTrigger
-                ? GenericHelpers.ActionTypesOnGag
-                : GenericHelpers.ActionTypesTrigger;
-
-        CkGui.DrawCombo("##TriggerActionTypeCombo" + trigger.Identifier, 175f, allowedKinds, (newType) => newType.ToName(),
-            (i) =>
-            {
-                switch (i)
-                {
-                    case InvokableActionType.Gag: trigger.InvokableAction = new GagAction(); break;
-                    case InvokableActionType.Restraint: trigger.InvokableAction = new RestraintAction(); break;
-                    case InvokableActionType.Moodle: trigger.InvokableAction = new MoodleAction(); break;
-                    case InvokableActionType.ShockCollar: trigger.InvokableAction = new PiShockAction(); break;
-                    case InvokableActionType.SexToy: trigger.InvokableAction = new SexToyAction(); break;
-                    default: throw new NotImplementedException("Action Type not implemented.");
-                };
-            }, trigger.ActionType.ToName(), false);
-        _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.InvokableActionType, ToyboxUI.LastWinPos, ToyboxUI.LastWinSize);
-
-        ImGui.Separator();
-        if (trigger.InvokableAction is GagAction gagAction)
-            DrawGagSettings(trigger.Identifier, gagAction);
-
-        else if (trigger.InvokableAction is RestraintAction restraintAction)
-            DrawRestraintSettings(trigger.Identifier, restraintAction);
-
-        else if (trigger.InvokableAction is MoodleAction moodleAction)
-            DrawMoodlesSettings(trigger.Identifier, moodleAction);
-
-        else if (trigger.InvokableAction is PiShockAction shockAction)
-            DrawShockSettings(trigger.Identifier, shockAction);
-
-        else if (trigger.InvokableAction is SexToyAction sexToyAction)
-            DrawSexToyActions(trigger.Identifier, sexToyAction);*/
     }
 
     private void DrawGagSettings(Guid id, GagAction gagAction)

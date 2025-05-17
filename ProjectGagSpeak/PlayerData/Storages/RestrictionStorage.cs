@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace GagSpeak.PlayerData.Storage;
 
-public class RestraintStorage : List<RestraintSet>
+public class RestraintStorage : List<RestraintSet>, IEditableStorage<RestraintSet>
 {
     public bool TryGetRestraint(Guid id, [NotNullWhen(true)] out RestraintSet? set)
     {
@@ -16,13 +16,21 @@ public class RestraintStorage : List<RestraintSet>
         return set != null;
     }
 
-
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
         => this.Any(x => x.Identifier == id);
+
+    // Interface Requirements:
+    public bool TryApplyChanges(RestraintSet oldItem, RestraintSet changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }
 
-public class RestrictionStorage : List<RestrictionItem>
+public class RestrictionStorage : List<RestrictionItem>, IEditableStorage<RestrictionItem>
 {
     public bool TryGetRestriction(Guid id, [NotNullWhen(true)] out RestrictionItem? item)
     {
@@ -33,9 +41,18 @@ public class RestrictionStorage : List<RestrictionItem>
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
         => this.Any(x => x.Identifier == id);
+
+    // Interface Requirements:
+    public bool TryApplyChanges(RestrictionItem oldItem, RestrictionItem changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }
 
-public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
+public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>, IEditableStorage<GarblerRestriction>
 {
     public bool TryGetGag(GagType gag, [NotNullWhen(true)] out GarblerRestriction? item)
         => this.TryGetValue(gag, out item);
@@ -68,9 +85,18 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>
     
     public Dictionary<GagType, AppliedSlot> ToLightStorage()
         => this.Where(x => x.Value.IsEnabled).ToDictionary(x => x.Key, x => x.Value.ToAppliedSlot());
+
+    // Interface Requirements:
+    public bool TryApplyChanges(GarblerRestriction oldItem, GarblerRestriction changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }
 
-public class CursedLootStorage : List<CursedItem>
+public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
 {
     /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
     /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
@@ -126,4 +152,13 @@ public class CursedLootStorage : List<CursedItem>
     public IReadOnlyList<CursedItem> InactiveItemsInPool => this
         .Where(x => x.InPool && x.AppliedTime == DateTimeOffset.MinValue)
         .ToList();
+
+    // Interface Requirements:
+    public bool TryApplyChanges(CursedItem oldItem, CursedItem changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }

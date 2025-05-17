@@ -143,7 +143,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(RestrictionItem item) => _itemEditor.StartEditing(item);
+    public void StartEditing(RestrictionItem item) => _itemEditor.StartEditing(Storage, item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() => _itemEditor.QuitEditing();

@@ -1,7 +1,9 @@
+using GagspeakAPI.Data;
+
 namespace GagSpeak.PlayerState.Models;
 
 [Serializable]
-public class SpellActionTrigger : Trigger
+public class SpellActionTrigger : Trigger, IThresholdContainer
 {
     public override TriggerKind Type => TriggerKind.SpellAction;
 
@@ -12,7 +14,7 @@ public class SpellActionTrigger : Trigger
     public TriggerDirection Direction { get; set; } = TriggerDirection.Self;
 
     // the ID of the action to listen to.
-    public uint ActionID { get; set; } = uint.MaxValue;
+    public uint[] ActionIDs { get; set; } = Array.Empty<uint>();
 
     // the threshold value that must be healed/dealt to trigger the action (-1 = full, 0 = onAction)
     public int ThresholdMinValue { get; set; } = -1;
@@ -30,7 +32,7 @@ public class SpellActionTrigger : Trigger
     {
         ActionKind = other.ActionKind;
         Direction = other.Direction;
-        ActionID = other.ActionID;
+        ActionIDs = other.ActionIDs;
         ThresholdMinValue = other.ThresholdMinValue;
         ThresholdMaxValue = other.ThresholdMaxValue;
     }
@@ -41,7 +43,7 @@ public class SpellActionTrigger : Trigger
     {
         ActionKind = other.ActionKind;
         Direction = other.Direction;
-        ActionID = other.ActionID;
+        ActionIDs = other.ActionIDs;
         ThresholdMinValue = other.ThresholdMinValue;
         ThresholdMaxValue = other.ThresholdMaxValue;
         base.ApplyChanges(other);

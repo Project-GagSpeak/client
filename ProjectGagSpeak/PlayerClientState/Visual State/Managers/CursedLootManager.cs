@@ -104,7 +104,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(CursedItem lootItem) => _itemEditor.StartEditing(lootItem);
+    public void StartEditing(CursedItem lootItem) => _itemEditor.StartEditing(Storage, lootItem);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() => _itemEditor.QuitEditing();

@@ -1,9 +1,10 @@
 using GagSpeak.PlayerState.Models;
+using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Storage;
 
-public class PatternStorage : List<Pattern>
+public class PatternStorage : List<Pattern>, IEditableStorage<Pattern>
 {
     public bool TryGetPattern(Guid id, [NotNullWhen(true)] out Pattern? item)
     {
@@ -16,9 +17,17 @@ public class PatternStorage : List<Pattern>
 
     public bool Contains(Guid id)
         => ByIdentifier(id) != null;
+
+    public bool TryApplyChanges(Pattern oldItem, Pattern changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }
 
-public class AlarmStorage : List<Alarm>
+public class AlarmStorage : List<Alarm>, IEditableStorage<Alarm>
 {
     /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
     /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
@@ -40,9 +49,18 @@ public class AlarmStorage : List<Alarm>
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
         => this.Any(x => x.Identifier == id);
+
+    public bool TryApplyChanges(Alarm oldItem, Alarm changedItem)
+    {
+        if (changedItem is null)
+            return false;
+
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }
 
-public class TriggerStorage : List<Trigger>
+public class TriggerStorage : List<Trigger>, IEditableStorage<Trigger>
 {
     /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.
     /// <para> Modifying the object itself will not update the actual item in the list, and must be accessed by index. </para>
@@ -62,7 +80,6 @@ public class TriggerStorage : List<Trigger>
     public bool Contains(Guid id)
         => this.Any(x => x.Identifier == id);
 
-
     public IEnumerable<SpellActionTrigger> SpellAction => this.OfType<SpellActionTrigger>().Where(x => x.Enabled);
     public IEnumerable<HealthPercentTrigger> HealthPercent => this.OfType<HealthPercentTrigger>().Where(x => x.Enabled);
     public IEnumerable<RestraintTrigger> RestraintState => this.OfType<RestraintTrigger>().Where(x => x.Enabled);
@@ -70,4 +87,29 @@ public class TriggerStorage : List<Trigger>
     public IEnumerable<GagTrigger> GagState => this.OfType<GagTrigger>().Where(x => x.Enabled);
     public IEnumerable<SocialTrigger> Social => this.OfType<SocialTrigger>().Where(x => x.Enabled);
     public IEnumerable<EmoteTrigger> Emote => this.OfType<EmoteTrigger>().Where(x => x.Enabled);
+
+    public Trigger? ReplaceSource(Trigger oldItem, Trigger newItem)
+    {
+        if (oldItem is null || newItem is null)
+            return null;
+
+        int index = IndexOf(oldItem);
+        if (index is -1)
+            return null;
+
+        // Update the object directly. (This will void any references to the old item)
+        this[index] = newItem;
+
+        // return the new item that is set.
+        return this[index];
+    }
+
+    public bool TryApplyChanges(Trigger oldItem, Trigger changedItem)
+    {
+        if (changedItem is null)
+            return false;
+
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
 }

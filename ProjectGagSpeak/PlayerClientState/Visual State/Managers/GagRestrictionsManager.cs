@@ -74,7 +74,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(GarblerRestriction restriction) => _itemEditor.StartEditing(restriction);
+    public void StartEditing(GarblerRestriction restriction) => _itemEditor.StartEditing(Storage, restriction);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() => _itemEditor.QuitEditing();

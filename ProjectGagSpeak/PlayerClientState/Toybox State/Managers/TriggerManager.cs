@@ -70,19 +70,19 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         return clonedItem;
     }
 
-    public void ChangeTriggerType(Trigger newTrigger, TriggerKind newType)
+    public void ChangeTriggerType(Trigger oldTrigger, TriggerKind newType)
     {
         if (ItemInEditor is null)
             return;
 
         Trigger convertedTrigger = newType switch
         {
-            TriggerKind.SpellAction => new SpellActionTrigger(newTrigger, true),
-            TriggerKind.HealthPercent => new HealthPercentTrigger(newTrigger, true),
-            TriggerKind.RestraintSet => new RestraintTrigger(newTrigger, true),
-            TriggerKind.GagState => new GagTrigger(newTrigger, true),
-            TriggerKind.SocialAction => new SocialTrigger(newTrigger, true),
-            TriggerKind.EmoteAction => new EmoteTrigger(newTrigger, true),
+            TriggerKind.SpellAction => new SpellActionTrigger(oldTrigger, true),
+            TriggerKind.HealthPercent => new HealthPercentTrigger(oldTrigger, true),
+            TriggerKind.RestraintSet => new RestraintTrigger(oldTrigger, true),
+            TriggerKind.GagState => new GagTrigger(oldTrigger, true),
+            TriggerKind.SocialAction => new SocialTrigger(oldTrigger, true),
+            TriggerKind.EmoteAction => new EmoteTrigger(oldTrigger, true),
             _ => throw new NotImplementedException("Unknown trigger type."),
         };
 
@@ -113,7 +113,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(Trigger item) => _itemEditor.StartEditing(item);
+    public void StartEditing(Trigger item) => _itemEditor.StartEditing(Storage, item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() => _itemEditor.QuitEditing();
@@ -176,14 +176,11 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
-        // we need to iterate through our list of trigger objects and serialize them.
-        var triggerItems = JsonConvert.SerializeObject(Storage, Formatting.Indented);
-
         // construct the config object to serialize.
         return new JObject()
         {
             ["Version"] = ConfigVersion,
-            ["Triggers"] = triggerItems,
+            ["Triggers"] = JToken.FromObject(Storage),
         }.ToString(Formatting.Indented);
     }
 
@@ -206,7 +203,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         var jObject = JObject.Parse(jsonText);
 
         // Migrate the jObject if it is using the old format.
-        if (jObject["TriggerStorage"] is JObject)
+        if (jObject["Triggers"] is JObject)
             jObject = ConfigMigrator.MigrateTriggersConfig(jObject, _fileNames, file);
 
         var version = jObject["Version"]?.Value<int>() ?? 0;

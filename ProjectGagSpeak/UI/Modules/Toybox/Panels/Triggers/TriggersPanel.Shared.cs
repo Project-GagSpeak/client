@@ -61,13 +61,15 @@ public partial class TriggersPanel
         ImGui.GetWindowDrawList().AddRectFilled(min, min + region, col, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
     }
 
-    private void DrawPrioritySetter(Trigger trigger, bool isEditingItem)
+    private void DrawPrioritySetter(Trigger trigger, bool isEditing)
     {
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
+
         var size = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight());
         using var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetFrameThickness(), DFlags.RoundCornersAll);
         
-        if (isEditingItem)
+        if (isEditing)
         {
             var priority = trigger.Priority;
             ImGui.SetNextItemWidth(c.InnerRegion.X);
@@ -84,9 +86,11 @@ public partial class TriggersPanel
 
     private void DrawDescription(Trigger trigger, bool isEditing)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
+        var flags = isEditing ? WFlags.None : WFlags.AlwaysUseWindowPadding;
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, ImGui.GetStyle().FramePadding);
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
         using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRoundingLarge(), 2f, DFlags.RoundCornersAll, WFlags.AlwaysUseWindowPadding);
+            CkRaii.GetChildRoundingLarge(), 2f, DFlags.RoundCornersAll, flags);
 
         // Display the correct text field based on the editing state.
         if (isEditing)
@@ -107,10 +111,11 @@ public partial class TriggersPanel
     public bool DrawTriggerTypeSelector(float width, Trigger trigger, bool isEditing)
     {
         // get offset for drawn space.
+        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
         var offset = (ImGui.GetContentRegionAvail().X - width) / 2;
         
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-        using (var c = CkRaii.Child("TriggerKindCombo", new Vector2(width, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
+        using (var c = CkRaii.Child("TriggerKindCombo", new Vector2(width, ImGui.GetFrameHeight()), col,
             CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             var curType = trigger.Type;
@@ -134,10 +139,10 @@ public partial class TriggersPanel
     public bool DrawTriggerActionType(float width, Trigger trigger, bool isEditing)
     {
         // get offset for drawn space.
+        var col = isEditing ? CkColor.FancyHeaderContrast.Uint() : 0;
         var offset = (ImGui.GetContentRegionAvail().X - width) / 2;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-        using (var c = CkRaii.Child("TriggerActCombo", new Vector2(width, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.Child("Sel_ActType", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             var curType = trigger.ActionType;
             if (isEditing)
