@@ -365,7 +365,8 @@ public partial class CkGui
         // Get the itemrect
         var itemRect = ImGui.GetItemRectSize();
         // run a sameline from the position to set the cursorPosX to the end for us to draw the right aligned icon.
-        ImGui.SameLine(ImGui.GetCursorPosX() + itemRect.X - ImGui.GetTextLineHeight());
+        //ImGui.SameLine(ImGui.GetCursorPosX() + itemRect.X - ImGui.GetTextLineHeight());
+        ImUtf8.SameLineInner();
         IconText(icon, ImGui.GetColorU32(ImGuiCol.Text));
     }
 }

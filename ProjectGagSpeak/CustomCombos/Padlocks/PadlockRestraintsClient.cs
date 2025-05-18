@@ -27,10 +27,10 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         => !MonitoredItem.CanLock() || MonitoredItem.Padlock == SelectedLock;
 
     public void DrawLockCombo(float width, string tooltip)
-    => DrawLockCombo("ClientRestraintLock", width, 0, string.Empty, tooltip, false);
+    => DrawLockCombo("##ClientRestraintLock", width, 0, string.Empty, tooltip, false);
 
     public void DrawUnlockCombo(float width, string tooltip)
-        => DrawUnlockCombo("ClientRestraintUnlock", width, 0, string.Empty, tooltip);
+        => DrawUnlockCombo("##ClientRestraintUnlock", width, 0, string.Empty, tooltip);
 
     protected override void OnLockButtonPress(int _)
     {

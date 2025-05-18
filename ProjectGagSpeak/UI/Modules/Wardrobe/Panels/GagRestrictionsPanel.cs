@@ -141,7 +141,7 @@ public partial class GagRestrictionsPanel
         wdl.AddRectFilled(minPos, minPos + new Vector2(size.X * .65f + styler.ItemInnerSpacing.Y, ImGui.GetFrameHeight() + styler.ItemInnerSpacing.Y), CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
 
         var pinkSize = new Vector2(size.X * .65f, ImGui.GetFrameHeight());
-        var hoveringTitle = ImGui.IsMouseHoveringRect(minPos + new Vector2(ImGui.GetFrameHeightWithSpacing()), minPos + pinkSize);
+        var hoveringTitle = ImGui.IsMouseHoveringRect(minPos + new Vector2(ImGui.GetFrameHeightWithSpacing(), 0), minPos + pinkSize);
         var col = hoveringTitle ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
         wdl.AddRectFilled(minPos, minPos + pinkSize, col, rounding, ImDrawFlags.RoundCornersBottomRight);
 

@@ -233,11 +233,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     new KeyValuePair<string, object>(nameof(globals.RestrictionVisuals), restrictionVisuals), UpdateDir.Own)).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.RestraintSetVisuals), restraintSetVisuals), UpdateDir.Own)).ConfigureAwait(false);
-            CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
-
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.CursedLootActive, ref cursedDungeonLoot))
             {
                 _mainConfig.Config.CursedLootPanel = cursedDungeonLoot;
