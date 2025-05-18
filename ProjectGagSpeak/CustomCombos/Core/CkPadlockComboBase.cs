@@ -152,7 +152,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var buttonWidth = buttonTxt.IsNullOrEmpty()
             ? CkGui.IconButtonSize(FAI.Unlock).X
             : CkGui.IconTextButtonSize(FAI.Unlock, "Unlock");
-        var unlockFieldWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+        var unlockFieldWidth = width - buttonWidth - (ImGui.GetStyle().ItemInnerSpacing.X * 6);
 
         // If for whatever reason the current layer is different from the previous, reset & regenerate inputs & combo list.
         if (_currentLayer != layerIdx)
@@ -204,7 +204,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     protected void TwoRowLockFields(string id, float width)
     {
         var leftWidth = width * (2 / 3f);
-        var rightWidth = width - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+        var rightWidth = leftWidth / 2f;
 
         var passFieldLabel = "##Input_" + id;
         var passFieldHint = SelectedLock switch
@@ -220,7 +220,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         };
 
         CkGui.InputTextRightIcon(passFieldLabel, leftWidth, passFieldHint, ref Password, maxLength, FAI.Key);
-        ImUtf8.SameLineInner();
         CkGui.InputTextRightIcon("##Timer_" + id, rightWidth, timerFieldHint, ref Timer, 12, FAI.Clock);
     }
 

@@ -25,10 +25,10 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         => MonitoredItem.GagItem is GagType.None;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
-        => DrawLockCombo("ClientGagLock_"+ layerIdx, width, layerIdx, string.Empty, tooltip, false);
+        => DrawLockCombo("##ClientGagLock_"+ layerIdx, width, layerIdx, string.Empty, tooltip, false);
 
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
-        => DrawUnlockCombo("ClientGagUnlock_" + layerIdx, width, layerIdx, string.Empty, tooltip);
+        => DrawUnlockCombo("##ClientGagUnlock_" + layerIdx, width, layerIdx, string.Empty, tooltip);
 
     protected override void OnLockButtonPress(int layerIdx)
     {
