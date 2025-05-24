@@ -19,17 +19,14 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairAlarmCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT) 
-        : base(() => [
-            .. pairData.LastLightStorage.Alarms.OrderBy(x => x.Label),
-        ], log, FAI.Bell, bText, bTT)
+    public PairAlarmCombo(Pair pair, MainHub hub, ILogger log) 
+        : base([ ..pair.LastLightStorage.Alarms.OrderBy(x => x.Label)], log, FAI.Bell, "Enable")
     {
-        _mainHub = mainHub;
-        _pairRef = pairData;
+        _mainHub = hub;
+        _pairRef = pair;
 
         // update current selection to the last registered LightAlarm from that pair on construction.
-        if (_pairRef.LastToyboxData is not null && _pairRef.LastLightStorage is not null)
-            Current = _pairRef.LastLightStorage.Alarms.FirstOrDefault();
+        Current = _pairRef.LastLightStorage?.Alarms.FirstOrDefault();
     }
 
     protected override bool DisableCondition() => _pairRef.PairPerms.ToggleAlarms is false;
@@ -59,20 +56,29 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
         return ret;
     }
 
-    protected override void OnButtonPress()
+    protected override async Task<bool> OnButtonPress()
     {
         if (_pairRef.LastToyboxData is null || Current is null) 
-            return;
+            return false;
 
         // Construct the dto, and then send it off.
         var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, DataUpdateType.AlarmToggled)
         {
             AffectedIdentifier = Current.Id,
         };
+
         // Send out the command.
-        _ = _mainHub.UserPushPairDataToybox(dto);
-        PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Toggling Alarm " + Current.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s AlarmList", LoggerType.Permissions);
+        var result = await _mainHub.UserPushPairDataToybox(dto);
+        if (result is not GsApiPairErrorCodes.Success)
+        {
+            Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+            return false;
+        }
+        else
+        {
+            Log.LogDebug($"Toggling Alarm on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
     }
 
     private void DrawItemTooltip(LightAlarm item)

@@ -1,11 +1,8 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
@@ -19,13 +16,12 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairRestraintCombo(ILogger log, Pair pairData, MainHub mainHub, Func<IReadOnlyList<LightRestraintSet>> generator)
-        : base(generator, log)
+    public PairRestraintCombo(Pair pair, MainHub hub, ILogger log)
+        : base([.. pair.LastLightStorage.Restraints.OrderBy(x => x.Label)], log)
     {
-        _mainHub = mainHub;
-        _pairRef = pairData;
-        Current = _pairRef.LastLightStorage.Restraints
-            .FirstOrDefault(r => r.Id == _pairRef.LastRestraintData.Identifier);
+        _mainHub = hub;
+        _pairRef = pair;
+        Current = _pairRef.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == _pairRef.LastRestraintData.Identifier);
     }
 
     protected override bool DisableCondition()
@@ -59,11 +55,11 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         return ret;
     }
 
-    protected override void OnButtonPress(int _)
+    protected override async Task<bool> OnButtonPress(int _)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (Current is null)
-            return;
+            return false;
 
         var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
@@ -74,9 +70,17 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
             Enabler = MainHub.UID,
         };
 
-        _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
-        PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        var result = await _mainHub.UserPushPairDataRestraint(dto);
+        if (result is not GsApiPairErrorCodes.Success)
+        {
+            Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result}");
+            return false;
+        }
+        else
+        {
+            Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+            return true;
+        }
     }
 
     private void DrawItemTooltip(LightRestraintSet setItem)

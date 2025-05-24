@@ -12,56 +12,97 @@ using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
+// WORRY ABOUT FUNCTIONALIZATION LATER.
 public partial class TriggersPanel
 {
-    // Shared Stuff (I guess?)
-    private bool DrawNameWorldField(float width, ref string playerNameWorld, string tooltip, bool isEditing)
+    private bool CheckboxOrPreview(string id, bool curr, out bool newVal, bool isEditing)
+    {
+        using var dis = ImRaii.Disabled(!isEditing);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f, !isEditing);
+
+        var refVal = curr;
+        if (ImGui.Checkbox(id, ref refVal))
+        {
+            newVal = refVal;
+            return true;
+        }
+
+        newVal = curr;
+        return false;
+    }
+
+    private bool InputWithHintOrPreview(string id, float width, ref string dispText, bool isEditing, string hint,
+        string errorStr = "", ImGuiInputTextFlags flags = ImGuiInputTextFlags.None)
+    {
+        var changed = InputWithHintOrPreview(id, width, dispText, out var newVal, isEditing, hint, errorStr, flags);
+        if (changed)
+            dispText = newVal;
+        return changed;
+    }
+
+    private bool InputWithHintOrPreview(string id, float width, string curStr, out string newVal, bool isEditing,
+        string hint, string errorStr = "", ImGuiInputTextFlags flags = ImGuiInputTextFlags.None)
     {
         var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
-        using (var c = CkRaii.Child("NameWorldInput", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.Child(id, new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             if (isEditing)
             {
                 ImGui.SetNextItemWidth(c.InnerRegion.X);
-                if (ImGui.InputTextWithHint("##NameWatcher", "John FinalFantasy@Goblin...", ref playerNameWorld, 68))
+                if (ImGui.InputTextWithHint($"{id}##InputHint", hint, ref curStr, 68, flags))
+                {
+                    newVal = curStr;
+                    return true;
+                }
+            }
+            else
+            {
+                CkGui.CenterTextAligned(curStr.IsNullOrWhitespace() ? errorStr : curStr);
+            }
+        }
+
+        newVal = curStr;
+        return false;
+    }
+
+    private bool EnumComboOrPreview<T>(string id, float width, ref T current, bool isEditing, Func<T, string>? toStr = null,
+        string none = "Select Item..", int skip = 0, CFlags flags = CFlags.None) where T : struct, Enum
+        => EnumComboOrPreview(id, width, ref current, Enum.GetValues<T>().Skip(skip), isEditing, toStr, none, flags);
+
+    private bool EnumComboOrPreview<T>(string id, float width, ref T ItemValue, IEnumerable<T> items, bool isEditing,
+        Func<T, string>? toStr = null, string none = "Select Item..", CFlags flags = CFlags.None) where T : struct, Enum
+    {
+        var changed = EnumComboOrPreview(id, width, ItemValue, out T newVal, items, isEditing, toStr, none, flags);
+        if (changed)
+            ItemValue = newVal;
+
+        return changed;
+    }
+
+    private bool EnumComboOrPreview<T>(string id, float width, T cur, out T newVal, bool isEditing, Func<T, string>? toStr = null,
+        string none = "Select Item..", int skip = 0, CFlags flags = CFlags.None) where T : struct, Enum
+        => EnumComboOrPreview(id, width, cur, out newVal, Enum.GetValues<T>().Skip(skip), isEditing, toStr, none, flags);
+
+    private bool EnumComboOrPreview<T>(string id, float width, T cur, out T newVal, IEnumerable<T> items, bool isEditing,
+        Func<T, string>? toStr = null, string none = "Select Item..", CFlags flags = CFlags.None) where T : struct, Enum
+    {
+        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
+        using (CkRaii.Child(id, new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        {
+            if (isEditing)
+            {
+                if (CkGuiUtils.EnumCombo("Combo" + id, width, cur, out newVal, toStr, flags: flags))
                     return true;
             }
             else
             {
-                var displayTxt = playerNameWorld.IsNullOrEmpty() ? "<No Name@World Set!>" : playerNameWorld;
-                CkGui.CenterTextAligned(displayTxt);
+                var dispName = toStr?.Invoke(cur) ?? cur.ToString();
+                CkGui.CenterTextAligned(dispName);
             }
         }
-        CkGui.AttachToolTip(tooltip +
-            "--SEP--Must follow the format Player Name@World.");
+
+        newVal = cur;
         return false;
-    }
-
-    // Spell-Action
-    private void DrawSpellDirection(float width, SpellActionTrigger spellAct, bool isEditing)
-    {
-        CkGui.ColorText("Direction", ImGuiColors.ParsedGold);
-
-        ImGui.SameLine();
-        using (var c = CkRaii.Child("DirectionChild", new Vector2(width, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
-        {
-            if (isEditing)
-            {
-                if (CkGuiUtils.EnumCombo("##Direction", c.InnerRegion.X, spellAct.Direction, out var newDir, _ => _.ToName()))
-                    spellAct.Direction = newDir;
-            }
-            else
-            {
-                CkGui.CenterTextAligned(spellAct.Direction.ToName());
-            }
-        }
-        CkGui.HelpText("Determines how the trigger is fired." +
-            "--SEP--From Self ⇒ ActionType was performed BY YOU (Target can be anything)" +
-            "--SEP--Self to Others ⇒ ActionType was performed by you, and the target was NOT you." +
-            "--SEP--From Others ⇒ ActionType was performed by someone besides you. (Target can be anything)" +
-            "--SEP--Others to You ⇒ ActionType was performed by someone else, and YOU were the target." +
-            "--SEP--Any ⇒ Skips over the Direction Filter. Source and Target can be anyone.");
     }
 
     private void DrawThresholdPercent(float width, IThresholdContainer trigger, bool isEditing, string? tt = null, string format = "%d%%")
@@ -134,7 +175,7 @@ public partial class TriggersPanel
         if (ImGui.Checkbox("Any", ref anyChecked))
         {
             spellActionTrigger.ActionID = anyChecked ? uint.MaxValue : 0;
-        }
+        } 
         CkGui.HelpText("If checked, will listen for any action from any class for this type.");
 
         using (var disabled = ImRaii.Disabled(anyChecked))

@@ -14,7 +14,7 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 {
     private Guid _currentItem;
-    public MoodleStatusCombo(float iconScale, MoodlesDisplayer displayer, ILogger log)
+    public MoodleStatusCombo(float iconScale, IconDisplayer displayer, ILogger log)
         : base(iconScale, displayer, log, () => [.. VisualApplierMoodles.LatestIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
@@ -78,7 +78,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, new Vector2(GetFilterWidth(), MoodleDrawer.IconSize.Y));
+        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, new Vector2(GetFilterWidth(), IconSize.Y));
 
         if (moodleStatus.IconID > 200000)
         {

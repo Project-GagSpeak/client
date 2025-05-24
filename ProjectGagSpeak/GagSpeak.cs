@@ -286,6 +286,8 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerApplier>(), cg))
         .AddSingleton<FavoritesManager>()
         .AddSingleton<ItemService>()
+        .AddSingleton((s) => new SpellActionService(dm))
+        .AddSingleton((s) => new EmoteService(dm))
 
         // Services (NEW)
         .AddSingleton<BlindfoldService>()
@@ -332,21 +334,20 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new ChatSender(ss))
         .AddSingleton((s) => new ChatInputDetour(s.GetRequiredService<ILogger<ChatInputDetour>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<GlobalData>(), s.GetRequiredService<GagGarbler>(),
-            s.GetRequiredService<EmoteMonitor>(), s.GetRequiredService<GagRestrictionManager>(), ss, gip))
+            s.GetRequiredService<EmoteService>(), s.GetRequiredService<GagRestrictionManager>(), ss, gip))
 
         .AddSingleton((s) => new OnEmote(s.GetRequiredService<ILogger<OnEmote>>(), s.GetRequiredService<TraitsManager>(), s.GetRequiredService<OnFrameworkService>(), ss, gip))
-        .AddSingleton((s) => new EmoteMonitor(s.GetRequiredService<ILogger<EmoteMonitor>>(), s.GetRequiredService<ClientMonitor>(), dm))
 
         .AddSingleton((s) => new ActionMonitor(s.GetRequiredService<ILogger<ActionMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<GlobalData>(),
             s.GetRequiredService<TraitsManager>(), s.GetRequiredService<ClientMonitor>(), gip))
         .AddSingleton((s) => new MovementMonitor(s.GetRequiredService<ILogger<MovementMonitor>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
             s.GetRequiredService<GlobalData>(), s.GetRequiredService<ChatSender>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<SelectStringPrompt>(),
             s.GetRequiredService<YesNoPrompt>(), s.GetRequiredService<RoomSelectPrompt>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<TraitsManager>(),
-            s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<EmoteMonitor>(), s.GetRequiredService<MoveController>(), ks, ot, tm))
+            s.GetRequiredService<ClientMonitor>(), s.GetRequiredService<EmoteService>(), s.GetRequiredService<MoveController>(), ks, ot, tm))
         .AddSingleton((s) => new MoveController(s.GetRequiredService<ILogger<MoveController>>(), gip, ot))
         .AddSingleton((s) => new ForcedStayCallback(s.GetRequiredService<ILogger<ForcedStayCallback>>(), s.GetRequiredService<GagspeakConfigService>(), ss, gip))
 
-        .AddSingleton((s) => new MoodlesDisplayer(s.GetRequiredService<ILogger<MoodlesDisplayer>>(), dm, tp))
+        .AddSingleton((s) => new IconDisplayer(s.GetRequiredService<ILogger<IconDisplayer>>(), dm, tp))
 
         .AddSingleton((s) => new ClientMonitor(s.GetRequiredService<ILogger<ClientMonitor>>(), s.GetRequiredService<GagspeakMediator>(), cs, con, dm, fw, gg, pl))
         .AddSingleton((s) => new OnFrameworkService(s.GetRequiredService<ILogger<OnFrameworkService>>(),
@@ -424,6 +425,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<ActiveItemsDrawer>()
         .AddScoped<AliasItemDrawer>()
         .AddScoped<PuppeteerHelper>()
+        .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
 
         // Scoped Factories
@@ -491,7 +493,6 @@ public static class GagSpeakServiceExtensions
 
         // StickyWindow
         .AddScoped<PermissionsDrawer>()
-        .AddScoped((s) => new PairCombos(s.GetRequiredService<ILogger<PairCombos>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),tp))
         .AddScoped<PresetLogicDrawer>()
 
 
@@ -547,6 +548,8 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
         .AddHostedService(p => p.GetRequiredService<NotificationService>())
         .AddHostedService(p => p.GetRequiredService<ClientMonitor>())
+        .AddHostedService(p => p.GetRequiredService<SpellActionService>())
+        .AddHostedService(p => p.GetRequiredService<EmoteService>())
         .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())
         .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())
         .AddHostedService(p => p.GetRequiredService<EventAggregator>())

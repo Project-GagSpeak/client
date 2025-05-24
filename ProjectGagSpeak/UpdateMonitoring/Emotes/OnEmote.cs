@@ -86,7 +86,7 @@ public class OnEmote : IDisposable
             {
                 var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
                 var emoteCallerName = (emoteCaller as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Emote Caller";
-                var emoteName = EmoteMonitor.GetEmoteName(emoteId);
+                var emoteName = EmoteService.EmoteName(emoteId);
                 var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
                 var targetName = (targetObj as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Target";
                 _logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
@@ -111,7 +111,7 @@ public class OnEmote : IDisposable
     {
         try
         {
-            _logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteMonitor.GetEmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
+            _logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
             // Block all emotes if forced to follow
             if(_traits.ActiveHcState.HasAny(HardcoreState.ForceFollow))
                 return;

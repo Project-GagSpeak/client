@@ -1,3 +1,4 @@
+using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
@@ -10,8 +11,8 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly GagspeakMediator _mediator;
     private readonly RestrictionManager _manager;
-    public PadlockRestrictionsClient(ILogger log, GagspeakMediator mediator, RestrictionManager manager, 
-        Func<int, ActiveRestriction> activeSlotGenerator) : base(activeSlotGenerator, log)
+    public PadlockRestrictionsClient(ILogger log, GagspeakMediator mediator, RestrictionManager manager)
+        : base([ ..(manager.ServerRestrictionData?.Restrictions ?? []) ], log)
     {
         _mediator = mediator;
         _manager = manager;
@@ -24,8 +25,8 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         => _manager.Storage.TryGetRestriction(item.Identifier, out var restriction) ? restriction.Label : "None";
 
 
-    protected override bool DisableCondition()
-        => MonitoredItem.CanLock() is false || MonitoredItem.Padlock == SelectedLock;
+    protected override bool DisableCondition(int layerIdx)
+        => Items[layerIdx].CanLock() is false || Items[layerIdx].Padlock == SelectedLock;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
         => DrawLockCombo("ClientRestrictionLock", width, layerIdx, string.Empty, tooltip, true);
@@ -33,9 +34,9 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
         => DrawUnlockCombo("ClientRestrictionUnlock", width, layerIdx, string.Empty, tooltip);
 
-    protected override void OnLockButtonPress(int layerIdx)
+    protected override Task<bool> OnLockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanLock())
+        if (Items[layerIdx].CanLock())
         {
             var newData = new ActiveRestriction()
             {
@@ -51,18 +52,20 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         {
             ResetInputs();
         }
+        return Task.FromResult(true);
     }
 
-    protected override void OnUnlockButtonPress(int layerIdx)
+    protected override Task<bool> OnUnlockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanUnlock())
+        if (Items[layerIdx].CanUnlock())
         {
             var newData = new ActiveRestriction()
             {
-                Padlock = MonitoredItem.Padlock,
-                Password = MonitoredItem.Password,
+                Padlock = Items[layerIdx].Padlock,
+                Password = Items[layerIdx].Password,
                 PadlockAssigner = MainHub.UID
             };
+
             _mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));
             ResetSelection();
         }
@@ -70,5 +73,6 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         {
             ResetInputs();
         }
+        return Task.FromResult(true);
     }
 }

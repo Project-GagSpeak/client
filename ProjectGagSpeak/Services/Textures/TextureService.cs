@@ -7,6 +7,8 @@ using Penumbra.GameData.Structs;
 using System.Numerics;
 
 // pulled from glamourer pretty much 1:1... optimize later.
+// This is actually a fairly smart way to handle texture caching for internal gamedata.
+// If it is possible to reconstruct this into an internal game storage cache for job actions and other things, do so.
 namespace GagSpeak.Services.Textures;
 
 public sealed class TextureService(IUiBuilder uiBuilder, IDataManager dataManager, ITextureProvider textureProvider)

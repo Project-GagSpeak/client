@@ -149,7 +149,7 @@ public partial class GagRestrictionsPanel
         {
             if (ItemSelected && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _manager.StartEditing(_selector.Selected!);
-            CkGui.AttachToolTip("Double Click me to begin editing!", displayAnyways: true);
+            CkGui.AttachToolTip("Double Click me to begin editing!");
         }
     }
 

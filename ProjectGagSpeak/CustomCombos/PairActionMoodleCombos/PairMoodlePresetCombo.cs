@@ -1,7 +1,5 @@
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.IPC;
@@ -13,12 +11,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private int longestPresetCount => _pairRef.LastIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
-    public PairMoodlePresetCombo(float iconScale, MoodlesDisplayer monitor, Pair pair, MainHub hub,
-        ILogger log, CkGui ui, string bText, string bTT)
+    public PairMoodlePresetCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log)
         : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesPresets.OrderBy(x => x.Title)])
     { }
-
-    private float ComboBoxWidth => IconSize.X * (longestPresetCount - 1);
 
     protected override bool DisableCondition()
         => _pairRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) is false;
@@ -61,16 +56,28 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
     }
 
     protected override bool CanDoAction(MoodlePresetInfo item)
-        => _statuses.CanApplyPairStatus(_pairRef.PairPerms, item.Statuses.Select(
+        => IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, item.Statuses.Select(
             x => _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(y => y.GUID == x)).ToList());
 
-    protected override void DoAction(MoodlePresetInfo item)
+    protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)
     {
         var statusInfos = item.Statuses
             .Select(x => _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(y => y.GUID == x))
             .ToArray();
 
         var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, statusInfos.Select(x => x.GUID).ToArray(), MoodleType.Preset);
-        _ = _mainHub.UserApplyMoodlesByGuid(dto);
+        if (await _mainHub.UserApplyMoodlesByGuid(dto))
+        {
+            Log.LogDebug($"Applying moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
+        else
+        {
+            Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return false;
+        }
     }
+
+    protected override async Task<bool> OnRemoveButton(MoodlePresetInfo item)
+        => await Task.FromResult(false);
 }

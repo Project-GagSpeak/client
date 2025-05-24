@@ -2,24 +2,24 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos;
 
-public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
+public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
 {
-    protected readonly MoodlesDisplayer _statuses;
+    protected readonly IconDisplayer _statuses;
     protected readonly MainHub _mainHub;
     protected readonly Pair _pairRef;
     protected float _iconScale;
 
-    protected CkMoodleComboButtonBase(float iconScale, MoodlesDisplayer monitor, Pair pair, MainHub hub,
+    protected CkMoodleComboButtonBase(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub,
         ILogger log, Func<IReadOnlyList<T>> itemSource)
         : base(itemSource, log)
     {
@@ -30,6 +30,12 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
     }
 
     protected virtual Vector2 IconSize => MoodleDrawer.IconSize * _iconScale;
+
+    /// <summary> The condition that when met, prevents the combo from being interacted. </summary>
+    protected abstract bool DisableCondition();
+    protected abstract bool CanDoAction(T item);
+    protected abstract Task<bool> OnApplyButton(T item);
+    protected virtual Task<bool> OnRemoveButton(T item) => Task.FromResult(true);
 
     protected override void DrawList(float width, float itemHeight)
     {
@@ -44,19 +50,45 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboButton<T>
         }
     }
 
-    protected abstract bool CanDoAction(T item);
-    protected abstract void DoAction(T item);
-
-    protected override void OnButtonPress(int _)
+    /// <summary> The virtual function for all filter combo buttons. </summary>
+    /// <returns> True if anything was selected, false otherwise. </returns>
+    /// <remarks> The action passed in will be invoked if the button interaction was successful. </remarks>
+    public bool DrawComboButton(string label, float width, bool isApply, string tt, Action? onButtonSuccess = null)
     {
-        if(Current is null)
-            return;
+        // we need to first extract the width of the button.
+        var buttonText = isApply ? "Apply" : "Remove";
+        var comboWidth = width - ImGui.GetStyle().ItemInnerSpacing.X - CkGui.IconTextButtonSize(FAI.PersonRays, buttonText);
+        InnerWidth = width;
 
-        if (!CanDoAction(Current))
-            return;
+        // if we have a new item selected we need to update some conditionals.
 
-        DoAction(Current);
-        PairCombos.Opened = InteractionType.None;
+        var previewLabel = Current?.ToString() ?? "Select an Item...";
+        var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), ImGuiComboFlags.None);
+        
+        // move just beside it to draw the button.
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.PersonRays, buttonText, disabled: DisableCondition()))
+        {
+            if (Current is { } item)
+            {
+                _ = Task.Run(async () =>
+                {
+                    if (isApply)
+                    {
+                        if (await OnApplyButton(item))
+                            onButtonSuccess?.Invoke();
+                    }
+                    else
+                    {
+                        if (await OnRemoveButton(item))
+                            onButtonSuccess?.Invoke();
+                    }
+                });
+            }
+        }
+        CkGui.AttachToolTip(tt);
+
+        return ret;
     }
 
     protected void DrawItemTooltip(MoodlesStatusInfo item, string dispellMoodleTitle)

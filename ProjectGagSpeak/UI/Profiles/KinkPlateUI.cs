@@ -125,7 +125,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
         // Draw the close button.
         CloseButton(wdl);
-        CkGui.AddRelativeTooltip(CloseButtonPos, CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
+        CkGui.AttachToolTipRect(CloseButtonPos, CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
     }
 
     private void DrawProfilePic(ImDrawListPtr wdl, KinkPlate profile)
@@ -423,7 +423,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                     if (!empty)
                     {
                         wdl.AddImageRounded(ptr, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
-                        CkGui.AddRelativeTooltip(blockedSlotsPos, LockedSlotSize, Pair.LockedSlots[equipSlot].Item2);
+                        CkGui.AttachToolTipRect(blockedSlotsPos, LockedSlotSize, Pair.LockedSlots[equipSlot].Item2);
                     }
                 }
                 else

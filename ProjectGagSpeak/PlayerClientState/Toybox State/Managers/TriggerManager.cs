@@ -56,7 +56,8 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         {
             SpellActionTrigger   sa => new SpellActionTrigger(sa, false) { Label = newName },
             HealthPercentTrigger hp => new HealthPercentTrigger(hp, false) { Label = newName },
-            RestraintTrigger     r  => new RestraintTrigger(r, false) { Label = newName },
+            RestraintTrigger     rs => new RestraintTrigger(rs, false) { Label = newName },
+            RestrictionTrigger   r  => new RestrictionTrigger(r, false) { Label = newName },
             GagTrigger           g  => new GagTrigger(g, false) { Label = newName },
             SocialTrigger        s  => new SocialTrigger(s, false) { Label = newName },
             EmoteTrigger         e  => new EmoteTrigger(e, false) { Label = newName },
@@ -80,6 +81,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
             TriggerKind.SpellAction => new SpellActionTrigger(oldTrigger, true),
             TriggerKind.HealthPercent => new HealthPercentTrigger(oldTrigger, true),
             TriggerKind.RestraintSet => new RestraintTrigger(oldTrigger, true),
+            TriggerKind.Restriction => new RestrictionTrigger(oldTrigger, true),
             TriggerKind.GagState => new GagTrigger(oldTrigger, true),
             TriggerKind.SocialAction => new SocialTrigger(oldTrigger, true),
             TriggerKind.EmoteAction => new EmoteTrigger(oldTrigger, true),
@@ -240,6 +242,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                     TriggerKind.SpellAction => triggerToken.ToObject<SpellActionTrigger>() ?? new SpellActionTrigger(),
                     TriggerKind.HealthPercent => triggerToken.ToObject<HealthPercentTrigger>() ?? new HealthPercentTrigger(),
                     TriggerKind.RestraintSet => triggerToken.ToObject<RestraintTrigger>() ?? new RestraintTrigger(),
+                    TriggerKind.Restriction => triggerToken.ToObject<RestrictionTrigger>() ?? new RestrictionTrigger(),
                     TriggerKind.GagState => triggerToken.ToObject<GagTrigger>() ?? new GagTrigger(),
                     TriggerKind.SocialAction => triggerToken.ToObject<SocialTrigger>() ?? new SocialTrigger(),
                     TriggerKind.EmoteAction => triggerToken.ToObject<EmoteTrigger>() ?? new EmoteTrigger(),
@@ -252,6 +255,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                     {
                         InvokableActionType.TextOutput => triggerToken["ExecutableAction"]?.ToObject<TextAction>() ?? new TextAction(),
                         InvokableActionType.Gag => triggerToken["ExecutableAction"]?.ToObject<GagAction>() ?? new GagAction(),
+                        InvokableActionType.Restriction => triggerToken["ExecutableAction"]?.ToObject<RestrictionAction>() ?? new RestrictionAction(),
                         InvokableActionType.Restraint => triggerToken["ExecutableAction"]?.ToObject<RestraintAction>() ?? new RestraintAction(),
                         InvokableActionType.Moodle => triggerToken["ExecutableAction"]?.ToObject<MoodleAction>() ?? new MoodleAction(),
                         InvokableActionType.ShockCollar => triggerToken["ExecutableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),

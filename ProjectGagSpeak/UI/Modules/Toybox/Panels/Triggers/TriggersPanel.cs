@@ -1,19 +1,13 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Dto;
 using ImGuiNET;
-using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 
@@ -21,26 +15,20 @@ public partial class TriggersPanel
 {
     private readonly ILogger<TriggersPanel> _logger;
     private readonly TriggerFileSelector _selector;
+    private readonly TriggerDrawer _drawer;
     private readonly TriggerManager _manager;
     private readonly TutorialService _guides;
-
-    private RestraintCombo _restraintCombo;
-    private RestrictionCombo _restrictionCombo;
-    private RestrictionGagCombo _gagCombo;
-    private JobActionCombo _jobActionCombo;
-    private EmoteCombo _emoteCombo;
-    private MoodleStatusCombo _moodleStatusCombo;
-    private MoodlePresetCombo _moodlePresetCombo;
-    private PatternCombo _patternCombo;
 
     public TriggersPanel(
         ILogger<TriggersPanel> logger,
         TriggerFileSelector selector,
+        TriggerDrawer drawer,
         TriggerManager manager,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
+        _drawer = drawer;
         _manager = manager;
         _guides = guides;
     }
@@ -94,6 +82,9 @@ public partial class TriggersPanel
         var item = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
         var IsEditorItem = item.Identifier == _manager.ItemInEditor?.Identifier;
 
+        // Need to keep original frameBgCol for the search BG.
+        var frameBgCol = ImGui.GetColorU32(ImGuiCol.FrameBg);
+
         // Styles shared throughout all draw settings.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
         using var color = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
@@ -101,17 +92,24 @@ public partial class TriggersPanel
         // Begin the child constraint.
         using (var c = CkRaii.Child("Sel_Outer", region.Size, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), DFlags.RoundCornersRight))
         {
-            var minPos = ImGui.GetItemRectMin();
-            DrawSelectedHeader(labelSize, item, IsEditorItem);
+            try
+            {
+                var minPos = ImGui.GetItemRectMin();
+                DrawSelectedHeader(labelSize, item, IsEditorItem);
 
-            ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
-            DrawTabSelector();
+                ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
+                DrawTabSelector();
 
-            ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
-            DrawSelectedBody(item, IsEditorItem);
+                ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
+                DrawSelectedBody(item, IsEditorItem, frameBgCol);
 
-            ImGui.SetCursorScreenPos(minPos);
-            DrawLabelWithToggle(labelSize, item, IsEditorItem);
+                ImGui.SetCursorScreenPos(minPos);
+                DrawLabelWithToggle(labelSize, item, IsEditorItem);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while drawing the selected trigger.");
+            }
         }
     }
 
@@ -172,222 +170,29 @@ public partial class TriggersPanel
         }
     }
 
-    private void DrawSelectedBody(Trigger trigger, bool isEditorItem)
+    private void DrawSelectedBody(Trigger trigger, bool isEditorItem, uint? customSearchBg)
     {
         using var bodyChild = CkRaii.Child("Sel_Body", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding);
 
         if (_selectedTab is TriggerTab.Detection)
         {
             ImGui.Spacing();
-            DrawTriggerTypeSelector(bodyChild.InnerRegion.X / 2, trigger, isEditorItem);
+            DrawTriggerTypeSelector(bodyChild.InnerRegion.X * .65f, trigger, isEditorItem);
             CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
-            DrawDetectionInfo(trigger, isEditorItem);
+            // re-aquire the trigger item.
+            var triggerItem = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
+            _drawer.DrawDetectionInfo(triggerItem, isEditorItem, customSearchBg);
+            
+            DrawFooter(triggerItem);
         }
         else
         {
             ImGui.Spacing();
-            DrawTriggerActionType(bodyChild.InnerRegion.X / 2, trigger, isEditorItem);
+            DrawTriggerActionType(bodyChild.InnerRegion.X * .65f, trigger, isEditorItem);
             CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
-            DrawActionInfo(trigger, isEditorItem);
-        }
+            _drawer.DrawActionInfo(trigger, isEditorItem);
 
-        DrawFooter(trigger);
-    }
-
-    private void DrawDetectionInfo(Trigger trigger, bool isEditorItem)
-    {
-        // What we draw, should be based on what triggerkind it is.
-        switch (trigger)
-        {
-            case SpellActionTrigger spellAct:
-                DrawSpellActionTrigger(spellAct);
-                break;
-            case HealthPercentTrigger healthPerc:
-                DrawHealthPercentTrigger(healthPerc);
-                break;
-            case RestraintTrigger restraint:
-                DrawRestraintTrigger(restraint);
-                break;
-            case RestrictionTrigger restriction:
-                DrawRestrictionTrigger(restriction);
-                break;
-            case GagTrigger gag:
-                DrawGagTrigger(gag);
-                break;
-            case SocialTrigger social:
-                DrawSocialTrigger(social);
-                break;
-            case EmoteTrigger emote:
-                DrawEmoteTrigger(emote);
-                break;
-        }
-
-        void DrawSpellActionTrigger(SpellActionTrigger spellAct)
-        {
-            // Action Kind.
-            CkGui.FramedIconText(FAI.Sitemap);
-            ImGui.SameLine();
-            var width = ImGui.GetContentRegionAvail().X / 3;
-            if(CkGuiUtils.EnumCombo("##ActionType", width, spellAct.ActionKind, out var newVal, af => af.ToName()))
-                spellAct.ActionKind = newVal;
-            CkGui.HelpText("The action property type to detect." +
-                "--SEP--Effects like shields or regen, that cast no heal value, do not count as heals.");
-
-            // Display the Job selection and Action Selection Combo.
-            // N I G H T M A R E (to later please save your sanity)
-
-            // Determine how we draw out the rest of this based on the action type:
-            switch (spellAct.ActionKind)
-            {
-                case LimitedActionEffectType.Miss:
-                case LimitedActionEffectType.Attract1:
-                case LimitedActionEffectType.Knockback:
-                    DrawSpellDirection(ImGui.GetContentRegionAvail().X / 2, spellAct, isEditorItem);
-                    return;
-                case LimitedActionEffectType.BlockedDamage:
-                case LimitedActionEffectType.ParriedDamage:
-                case LimitedActionEffectType.Damage:
-                case LimitedActionEffectType.Heal:
-                    DrawSpellDirection(ImGui.GetContentRegionAvail().X/2, spellAct, isEditorItem);
-                    DrawThresholds(ImGui.GetContentRegionAvail().X, spellAct, isEditorItem);
-                    return;
-            }
-        }
-
-        void DrawHealthPercentTrigger(HealthPercentTrigger healthPerc)
-        {
-            // Player to Track.
-            CkGui.FramedIconText(FAI.Eye);
-
-            ImUtf8.SameLineInner();
-            var nameRef = healthPerc.PlayerNameWorld;
-            if (DrawNameWorldField(ImGui.GetContentRegionAvail().X, ref nameRef, "The Monitored Player.", isEditorItem))
-                healthPerc.PlayerNameWorld = nameRef;
-
-            // If we use % based values.
-            CkGui.FramedIconText(FAI.Filter);
-            
-            var usePercent = healthPerc.UsePercentageHealth;
-            ImUtf8.SameLineInner();
-            if (ImGui.Checkbox("Prefer Percentage", ref usePercent))
-                healthPerc.UsePercentageHealth = usePercent;
-            CkGui.HelpText("Calculates HP differences in % to overall HP, over fixed values." +
-                "--SEP--Otherwise, listens for when it goes above or below a health range.");
-
-            // The Pass Kind.
-            CkGui.FramedIconText(FAI.Flag);
-
-            ImUtf8.SameLineInner();
-            if (CkGuiUtils.EnumCombo("Pass Type", ImGui.CalcTextSize("undermmm").X, healthPerc.PassKind, out var newVal))
-                healthPerc.PassKind = newVal;
-            CkGui.HelpText("Should Detection be true upon passing above or below the defined threshold?");
-
-            // Draw out thresholds based on type.
-            CkGui.FramedIconText(FAI.Percent);
-
-            ImUtf8.SameLineInner();
-            if (healthPerc.UsePercentageHealth)
-            {
-                var tt = "The Health % difference that must be crossed to activate the trigger.";
-                DrawThresholdPercent(ImGui.GetContentRegionAvail().X, healthPerc, isEditorItem, tt);
-            }
-            else
-            {
-                var ttLower = "The lowest HP that is \"In Range\"." +
-                    "--SEP--HP Dropping below the Minimum threshold is considered \"Passing Under\"";
-                var ttUpper = "The highest HP that is \"In Range\"." +
-                    "--SEP--Health that increases past this Max Threshold is considered \"Passing Over\"";
-                DrawThresholds(ImGui.GetContentRegionAvail().X, healthPerc, isEditorItem, ttLower, ttUpper, "Min. %d%HP", "Max. %d%HP");
-            }
-        }
-
-        void DrawRestraintTrigger(RestraintTrigger restraint)
-        {
-            // stuff for restraint trigger.
-        }
-
-        void DrawRestrictionTrigger(RestrictionTrigger restriction)
-        {
-            // stuff for restriction trigger.
-        }
-
-        void DrawGagTrigger(GagTrigger gag)
-        {
-            // stuff for gag trigger.
-        }
-
-        void DrawSocialTrigger(SocialTrigger social)
-        {
-            // stuff for social trigger.
-        }
-
-        void DrawEmoteTrigger(EmoteTrigger emote)
-        {
-            // stuff for emote trigger.
-        }
-    }
-
-    private void DrawActionInfo(Trigger trigger, bool isEditorItem)
-    {
-        // What we draw, should be based on what triggerkind it is.
-        switch (trigger.InvokableAction)
-        {
-            case TextAction textAct:
-                // stuff for text responce action.
-                break;
-            case GagAction gagAct:
-                // stuff for gag action.
-                break;
-            case RestraintAction restraintAct:
-                // stuff for restraint action.
-                break; 
-            case RestrictionAction restrictionAct:
-                // stuff for restriction action.
-                break;
-            case MoodleAction moodleAct:
-                // stuff for moodle action.
-                break;
-            case PiShockAction shockAct:
-                // stuff for shock collar action.
-                break;
-            case SexToyAction sexToyAct:
-                // stuff for toys.
-                break;
-        }
-
-        void DrawTextAction(TextAction textAct)
-        {
-            // stuff for text action.
-        }
-
-        void DrawGagAction(GagAction gagAct)
-        {
-            // stuff for gag action.
-        }
-
-        void DrawRestraintAction(RestraintAction restraintAct)
-        {
-            // stuff for restraint action.
-        }
-
-        void DrawRestrictionAction(RestrictionAction restrictionAct)
-        {
-            // stuff for restriction action.
-        }
-
-        void DrawMoodleAction(MoodleAction moodleAct)
-        {
-            // stuff for moodle action.
-        }
-
-        void DrawPiShockAction(PiShockAction shockAct)
-        {
-            // stuff for shock collar action.
-        }
-
-        void DrawToyAction(SexToyAction sexToyAct)
-        {
-            // stuff for toys.
+            DrawFooter(trigger);
         }
     }
 }

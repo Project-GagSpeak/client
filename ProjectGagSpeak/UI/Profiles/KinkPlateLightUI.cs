@@ -87,7 +87,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         // Draw the close button.
         CloseButton(drawList, DisplayName);
-        CkGui.AddRelativeTooltip(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
+        CkGui.AttachToolTipRect(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
     }
 
     private void CloseButton(ImDrawListPtr drawList, string displayName)

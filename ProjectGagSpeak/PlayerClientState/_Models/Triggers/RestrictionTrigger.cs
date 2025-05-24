@@ -7,6 +7,9 @@ public class RestrictionTrigger : Trigger
     public Guid RestrictionId { get; set; } = Guid.Empty;
     public NewState RestrictionState { get; set; } = NewState.Enabled;
 
+    public RestrictionTrigger()
+    { }
+
     public RestrictionTrigger(Trigger baseTrigger, bool keepId)
         : base(baseTrigger, keepId)
     { }

@@ -23,10 +23,10 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly MoodlesDisplayer _moodleDisplay;
+    private readonly IconDisplayer _moodleDisplay;
     private readonly ShareHubService _shareHub;
     public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, MainHub hub,
-        MoodlesDisplayer moodleDisplay, ShareHubService moodleHubService) : base(logger, mediator)
+        IconDisplayer moodleDisplay, ShareHubService moodleHubService) : base(logger, mediator)
     {
         _hub = hub;
         _moodleDisplay = moodleDisplay;

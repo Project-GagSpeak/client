@@ -7,10 +7,10 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
 {
-    protected readonly MoodlesDisplayer _displayer;
+    protected readonly IconDisplayer _displayer;
     protected float _iconScale;
 
-    protected CkMoodleComboBase(float iconScale, MoodlesDisplayer displayer, ILogger log,
+    protected CkMoodleComboBase(float iconScale, IconDisplayer displayer, ILogger log,
         Func<IReadOnlyList<T>> generator) : base(generator, log)
     {
         _displayer = displayer;

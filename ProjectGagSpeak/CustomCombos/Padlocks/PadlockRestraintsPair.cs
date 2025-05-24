@@ -1,7 +1,4 @@
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.MainWindow;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
@@ -13,8 +10,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairRestraintPadlockCombo(ILogger log, Pair pair, MainHub hub, Func<int, CharaActiveRestraint> generator)
-        : base(generator, log)
+    public PairRestraintPadlockCombo(Pair pair, MainHub hub, ILogger log)
+        : base([ pair.LastRestraintData ], log)
     {
         _mainHub = hub;
         _pairRef = pair;
@@ -25,12 +22,12 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     protected override string ItemName(CharaActiveRestraint item)
         => _pairRef.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
             ? restraint.Label : "None";
-    protected override bool DisableCondition()
-        => !_pairRef.PairPerms.ApplyRestraintSets || SelectedLock == MonitoredItem.Padlock || !MonitoredItem.CanLock();
+    protected override bool DisableCondition(int _)
+        => !_pairRef.PairPerms.ApplyRestraintSets || SelectedLock == Items[0].Padlock || !Items[0].CanLock();
 
-    protected override void OnLockButtonPress(int _)
+    protected override async Task<bool> OnLockButtonPress(int _)
     {
-        if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockRestraintSets)
+        if (Items[0].CanLock() && _pairRef.PairPerms.LockRestraintSets)
         {
             var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
@@ -40,33 +37,52 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 PadlockAssigner = MainHub.UID,
             };
 
-            _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
-            Log.LogDebug("Locking Restraint with " + SelectedLock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
+            var result = await _mainHub.UserPushPairDataRestraint(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
         }
-
-        ResetInputs();
+        return false;
     }
 
-    protected override void OnUnlockButtonPress(int _)
+    protected override async Task<bool> OnUnlockButtonPress(int _)
     {
-        if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockRestraintSets)
+        if (Items[0].CanUnlock() && _pairRef.PairPerms.UnlockRestraintSets)
         {
             var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
-                Padlock = MonitoredItem.Padlock,
+                Padlock = Items[0].Padlock,
                 Password = Password,
                 PadlockAssigner = MainHub.UID,
             };
-            _mainHub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
-            Log.LogDebug("Unlocking Restraint with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
-        }
 
-        ResetInputs();
+            var result = await _mainHub.UserPushPairDataRestraint(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
+        }
+        return false;
     }
 }

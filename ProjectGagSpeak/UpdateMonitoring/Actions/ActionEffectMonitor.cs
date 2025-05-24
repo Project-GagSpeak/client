@@ -77,7 +77,7 @@ public unsafe class ActionEffectMonitor : IDisposable
     {
         try
         {
-            _logger.LogDebug($"--- source actor: {sourceCharacter->GameObject.EntityId}, action id {effectHeader->ActionId}, numTargets: {effectHeader->NumTargets} ---", LoggerType.ActionEffects);
+            _logger.LogTrace($"--- source actor: {sourceCharacter->GameObject.EntityId}, action id {effectHeader->ActionId}, numTargets: {effectHeader->NumTargets} ---", LoggerType.ActionEffects);
 
             var TargetEffects = new TargetEffect[effectHeader->NumTargets];
             for (var i = 0; i < effectHeader->NumTargets; i++)
@@ -90,12 +90,15 @@ public unsafe class ActionEffectMonitor : IDisposable
             {
                 effect.ForEach(entry =>
                 {
-                    if(entry.type == 0) return; // ignore blank entries.
+                    if(entry.type == 0)
+                        return;
+
                     if (!entry.TryGetActionEffectType(out var actionEffectType))
                     {
-                        _logger.LogDebug("EffectType was of type : " + entry.type, LoggerType.ActionEffects);
+                        _logger.LogTrace("EffectType was of type : " + entry.type, LoggerType.ActionEffects);
                         return;
                     }
+
                     // the effect is valid, so add it to targeted effects 
                     affectedTargets.Add(new ActionEffectEntry(sourceID, effect.TargetID, actionEffectType, effectHeader->ActionId, entry.Damage));
                 });
@@ -116,7 +119,9 @@ public struct ActionEffectEntry
 {
     public uint SourceID { get; }
     public ulong TargetID { get; }
-    public LimitedActionEffectType Type { get; } // make this use a byte over ActionEffectType, so we fetch the type even if its not one we care about, and only accept it if it is one we care about.
+
+    // make this use a byte over ActionEffectType, so we fetch the type even if its not one we care about, and only accept it if it is one we care about.
+    public LimitedActionEffectType Type { get; }
     public uint ActionID { get; }
     public uint Damage { get; }
 

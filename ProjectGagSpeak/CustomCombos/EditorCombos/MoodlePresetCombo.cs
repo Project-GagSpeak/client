@@ -16,7 +16,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
     private Guid _currentItem;
     private float MaxIconWidth => IconWithPadding * (longestPresetCount - 1);
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
-    public MoodlePresetCombo(float iconScale, MoodlesDisplayer monitor, ILogger log)
+    public MoodlePresetCombo(float iconScale, IconDisplayer monitor, ILogger log)
         : base(iconScale, monitor, log, () => [ .. VisualApplierMoodles.LatestIpcData.MoodlesPresets.OrderBy(x => x.Title)])
     {
         SearchByParts = false;

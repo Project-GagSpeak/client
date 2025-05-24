@@ -10,30 +10,58 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
+using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.CustomCombos.Padlockable;
+using GagSpeak.CustomCombos.PairActions;
+using GagSpeak.CustomCombos.Moodles;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
 
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
-    private readonly PermissionData _permData;
-    private readonly PermissionsDrawer _drawer;
-    private readonly PairCombos _pairCombos;
-    private readonly PresetLogicDrawer _presets;
-
     private readonly MainHub _hub;
     private readonly GlobalData _globals;
+    private readonly PermissionData _permData;
+    private readonly PermissionsDrawer _drawer;
+    private readonly PresetLogicDrawer _presets;
     private readonly PairManager _pairs;
     private readonly ClientMonitor _monitor;
 
-    public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pair,
-        StickyWindowType drawType, PermissionData permData, PermissionsDrawer permDrawer,
-        PairCombos combos, PresetLogicDrawer presets, MainHub hub, GlobalData globals,
-        PiShockProvider shocks, PairManager pairs, ClientMonitor monitor)
-        : base(logger, mediator, "PairStickyUI for " + pair.UserData.UID + "pair.")
+    // Private variables for the sticky UI and its respective combos.
+    private float WindowMenuWidth = -1;
+    private PairGagCombo _pairGags;
+    private PairGagPadlockCombo _pairGagPadlocks;
+    private PairRestrictionCombo _pairRestrictionItems;
+    private PairRestrictionPadlockCombo _pairRestrictionPadlocks;
+    private PairRestraintCombo _pairRestraintSets;
+    private PairRestraintPadlockCombo _pairRestraintSetPadlocks;
+    private PairMoodleStatusCombo _pairMoodleStatuses;
+    private PairMoodlePresetCombo _pairMoodlePresets;
+    private PairPatternCombo _pairPatterns;
+    private PairAlarmCombo _pairAlarmToggles;
+    private PairTriggerCombo _pairTriggerToggles;
+    private OwnMoodleStatusToPairCombo _moodleStatuses;
+    private OwnMoodlePresetToPairCombo _moodlePresets;
+    private EmoteCombo _emoteCombo;
+    private PairMoodleStatusCombo _activePairStatusCombo;
+
+    public PairStickyUI(
+        ILogger<PairStickyUI> logger,
+        GagspeakMediator mediator, 
+        Pair pair,
+        StickyWindowType drawType,
+        MainHub hub,
+        GlobalData globals,
+        PermissionData permData,
+        PermissionsDrawer permDrawer,
+        PresetLogicDrawer presets,
+        IconDisplayer iconDisplayer,
+        PiShockProvider shocks,
+        PairManager pairs,
+        ClientMonitor monitor) : base(logger, mediator, $"PairStickyUI-{pair.UserData.UID}")
     {
         _permData = permData;
         _drawer = permDrawer;
-        _pairCombos = combos;
         _presets = presets;
         _hub = hub;
         _globals = globals;
@@ -46,15 +74,40 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         // Define the pair and window type.
         SPair = pair;
         DrawType = drawType;
+        OpenedInteraction = InteractionType.None;
+
+        // Init the combos and stuff.
+        _pairGags = new PairGagCombo(pair, hub, logger);
+        _pairGagPadlocks = new PairGagPadlockCombo(pair, hub, logger);
+        _pairRestrictionItems = new PairRestrictionCombo(pair, hub, logger);
+        _pairRestrictionPadlocks = new PairRestrictionPadlockCombo(pair, hub, logger);
+        _pairRestraintSets = new PairRestraintCombo(pair, hub, logger);
+        _pairRestraintSetPadlocks = new PairRestraintPadlockCombo(pair, hub, logger);
+        _pairMoodleStatuses = new PairMoodleStatusCombo(1.3f, iconDisplayer, pair, hub, logger);
+        _pairMoodlePresets = new PairMoodlePresetCombo(1.3f, iconDisplayer, pair, hub, logger);
+        _pairPatterns = new PairPatternCombo(pair, hub, logger);
+        _pairAlarmToggles = new PairAlarmCombo(pair, hub, logger);
+        _pairTriggerToggles = new PairTriggerCombo(pair, hub, logger);
+        _emoteCombo = new EmoteCombo(1.3f, iconDisplayer, logger, () => [
+            ..pair.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
+        ]);
+        _moodleStatuses = new OwnMoodleStatusToPairCombo(1.3f, iconDisplayer, pair, hub, logger);
+        _moodlePresets = new OwnMoodlePresetToPairCombo(1.3f, iconDisplayer, pair, hub, logger);
+
+        _activePairStatusCombo = new PairMoodleStatusCombo(1.3f, iconDisplayer, pair, hub, logger, () => [
+            .. pair.LastIpcData.MoodlesDataStatuses.OrderBy(x => x.Title)
+        ]);
 
         // Publish a mediator event to let us know a new pair was made for the stickyUI.
         Mediator.Publish(new StickyPairWindowCreated(pair));
-        PairCombos.Opened = InteractionType.None;
     }
 
     public Pair SPair { get; init; }
     public StickyWindowType DrawType = StickyWindowType.None;
-    private float WindowMenuWidth = -1;
+    public InteractionType OpenedInteraction = InteractionType.None;
+
+    private void OpenOrClose(InteractionType type) => OpenedInteraction = (type == OpenedInteraction) ? InteractionType.None : type;
+    private void CloseInteraction() => OpenedInteraction = InteractionType.None;
 
     protected override void PreDrawInternal()
     {
@@ -99,7 +152,8 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         }
     }
 
-    protected override void PostDrawInternal() { }
+    protected override void PostDrawInternal()
+    { }
 
     public override void OnClose()
     {

@@ -36,7 +36,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
     private readonly PairManager _pairs;
     private readonly TraitsManager _traits;
     private readonly ClientMonitor _clientMonitor;
-    private readonly EmoteMonitor _emoteMonitor;
+    private readonly EmoteService _emoteMonitor;
     private readonly MoveController _moveController;
     private readonly IKeyState _keyState;
     private readonly IObjectTable _objectTable;
@@ -66,7 +66,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
         PairManager pairs,
         TraitsManager traits,
         ClientMonitor clientMonitor,
-        EmoteMonitor emoteMonitor,
+        EmoteService emoteMonitor,
         MoveController moveController, 
         IKeyState keyState,
         IObjectTable objectTable,
@@ -169,45 +169,45 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
                 // cache emote state set.
                 _traits.CachedEmoteState = perms.ExtractEmoteState();
 
-                var currentEmote = _emoteMonitor.CurrentEmoteId();
+                var currentEmote = EmoteService.CurrentEmoteId(_clientMonitor.Address);
                 if (_traits.CachedEmoteState.EmoteID is 50 or 52)
                 {
-                    if (!EmoteMonitor.IsSittingAny(currentEmote))
+                    if (!EmoteService.IsSittingAny(currentEmote))
                     {
                         Logger.LogDebug("Forcing Emote: /SIT [or /GROUNDSIT]. (Current emote was: " + currentEmote + ").");
-                        EmoteMonitor.ExecuteEmote(_traits.CachedEmoteState.EmoteID);
+                        EmoteService.ExecuteEmote(_traits.CachedEmoteState.EmoteID);
                     }
 
                     // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
                     var emoteID = _traits.CachedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the _traits.CachedEmoteState getter multiple times.
-                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _emoteCTS.Token))
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteService.CanUseEmote(emoteID), 5, _emoteCTS.Token))
                     {
                         Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
                         return;
                     }
 
                     // get our cycle pose.
-                    var currentCyclePose = _emoteMonitor.CurrentCyclePose();
+                    var currentCyclePose = EmoteService.CurrentCyclePose(_clientMonitor.Address);
                     if (currentCyclePose != _traits.CachedEmoteState.CyclePoseByte)
                     {
                         Logger.LogDebug("Your Cpose [" + currentCyclePose + "] doesn't match requested cpose [" + _traits.CachedEmoteState.CyclePoseByte + "]");
-                        if (!EmoteMonitor.IsCyclePoseTaskRunning)
-                            _emoteMonitor.ForceCyclePose(_traits.CachedEmoteState.CyclePoseByte);
+                        if (!EmoteService.IsCyclePoseTaskRunning)
+                            _emoteMonitor.ForceCyclePose(_clientMonitor.Address, _traits.CachedEmoteState.CyclePoseByte);
                     }
                     Logger.LogDebug("Locking Player in Current State until released.");
                 }
                 else
                 {
                     // if we are currently sitting in any manner, stand up first.
-                    if (EmoteMonitor.IsSittingAny(currentEmote))
+                    if (EmoteService.IsSittingAny(currentEmote))
                     {
                         Logger.LogDebug("Forcing Emote: /STAND. (Current emote was: " + currentEmote + ").");
-                        EmoteMonitor.ExecuteEmote(51);
+                        EmoteService.ExecuteEmote(51);
                     }
 
                     // Wait until we are allowed to use another emote again, after which point, our cycle pose will have registered.
                     var emoteID = _traits.CachedEmoteState.EmoteID; // Assigned for condition below to avoid accessing the _traits.CachedEmoteState getter multiple times.
-                    if (!await _emoteMonitor.WaitForCondition(() => EmoteMonitor.CanUseEmote(emoteID), 5, _emoteCTS.Token))
+                    if (!await _emoteMonitor.WaitForCondition(() => EmoteService.CanUseEmote(emoteID), 5, _emoteCTS.Token))
                     {
                         Logger.LogWarning("Forced Emote State was not allowed to be executed. Cancelling.");
                         return;
@@ -215,7 +215,7 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
 
                     // Execute the desired emote.
                     Logger.LogDebug("Forcing Emote: " + _traits.CachedEmoteState.EmoteID + "(Current emote was: " + currentEmote + ")");
-                    EmoteMonitor.ExecuteEmote(_traits.CachedEmoteState.EmoteID);
+                    EmoteService.ExecuteEmote(_traits.CachedEmoteState.EmoteID);
                     Logger.LogDebug("Locking Player in Current State until released.");
                 }
             }

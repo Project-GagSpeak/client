@@ -111,7 +111,7 @@ public static partial class CkRaii
         var hovered = ImGui.IsMouseHoveringRect(labelMin, labelMax);
 
         // Handle Interaction.
-        if (hovered) CkGui.AttachToolTip(tooltip, displayAnyways: true);
+        if (hovered) CkGui.AttachToolTip(tooltip);
         if (hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) onLClick?.Invoke();
         if (hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Right)) onRClick?.Invoke();
 

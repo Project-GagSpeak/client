@@ -6,6 +6,13 @@ using OtterGui.Raii;
 
 // Credit to OtterGui for the original implementation.
 namespace GagSpeak.CustomCombos;
+public static class CkComboExtensions
+{
+    public static void SetSearchBgColor<T>(this CkFilterComboBase<T> combo, uint color)
+    {
+        combo.SetSearchBgColor(color);
+    }
+}
 
 public abstract class CkFilterComboBase<T>
 {
@@ -42,7 +49,7 @@ public abstract class CkFilterComboBase<T>
     /// <param name="label"> The label of the combo to clear the storage of.. </param>
     private void ClearStorage(string label)
     {
-        Log.LogTrace("Cleaning up Filter Combo Cache for {Label}.", label);
+        Log.LogTrace($"Cleaning up Filter Combo Cache for {label}");
         _filter = LowerString.Empty;
         _filterParts = [];
         _lastSelection = -1;
@@ -87,7 +94,7 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Called by the filter combo base Draw() call. Handles updates and changed items. </summary>
     private void DrawCombo(string label, string preview, string tooltip, int currentSelected, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags)
+        ImGuiComboFlags flags, uint? customSearchBg = null)
     {
         var id = ImGui.GetID(label);
         ImGui.SetNextItemWidth(previewWidth);
@@ -109,7 +116,7 @@ public abstract class CkFilterComboBase<T>
             var width = GetFilterWidth();
 
             // Draws the filter and updates the scroll to the selected items.
-            DrawFilter(currentSelected, width);
+            DrawFilter(currentSelected, width, customSearchBg);
 
             // Draws the remaining list of items.
             // If any items are selected, they are stored in `NewSelection`.
@@ -135,8 +142,9 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Updates the last selection with the currently selected item. This is then updated to the proper index in _available[] </summary>
     /// <remarks> Additionally scrolls the list to the last selected item, if any, and displays the filter. </remarks>
-    protected virtual void DrawFilter(int currentSelected, float width)
+    protected virtual void DrawFilter(int currentSelected, float width, uint? customSearchBg)
     {
+        using var _ = ImRaii.PushColor(ImGuiCol.FrameBg, customSearchBg!.Value, customSearchBg.HasValue);
         _setScroll = false;
         // Scroll to current selected when opened if any, and set keyboard focus to the filter field.
         if (ImGui.IsWindowAppearing())
@@ -213,9 +221,9 @@ public abstract class CkFilterComboBase<T>
     /// <returns> True if anything was selected, false otherwise. </returns>
     /// <remarks> This will return the index of the `ref` currentSelection, meaning Filter Combo Cache handles the selected item. </remarks>
     public virtual bool Draw(string label, string preview, string tooltip, ref int currentSelection, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags = ImGuiComboFlags.None)
+        ImGuiComboFlags flags = ImGuiComboFlags.None, uint? customSearchBg = null)
     {
-        DrawCombo(label, preview, tooltip, currentSelection, previewWidth, itemHeight, flags);
+        DrawCombo(label, preview, tooltip, currentSelection, previewWidth, itemHeight, flags, customSearchBg);
         if (NewSelection is null)
             return false;
 
@@ -231,6 +239,7 @@ public abstract class CkFilterComboBase<T>
         if (!_filterDirty)
             return;
 
+        Log.LogDebug("Updating Filter Combo Cache");
         _filterDirty = false;
         _available.EnsureCapacity(Items.Count);
 

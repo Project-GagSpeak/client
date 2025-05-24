@@ -21,17 +21,27 @@ public static partial class CkGuiUtils
     {
         ImGui.SetNextItemWidth(width);
         var previewText = options.Contains(current) ? (toString?.Invoke(current) ?? current.ToString()) : defaultText;
-        using var combo = ImRaii.Combo(label, previewText, flags);
-        if (combo)
-            foreach (var data in options)
+        using (var combo = ImRaii.Combo(label, previewText, flags))
+        {
+            if (combo)
             {
-                var name = toString?.Invoke(data) ?? data.ToString();
-                if (name.Length == 0 || !ImGui.Selectable(name, data.Equals(current)) || data.Equals(current))
-                    continue;
+                foreach (var data in options)
+                {
+                    var name = toString?.Invoke(data) ?? data.ToString();
+                    if (name.Length == 0 || !ImGui.Selectable(name, data.Equals(current)) || data.Equals(current))
+                        continue;
 
-                newValue = data;
-                return true;
+                    newValue = data;
+                    return true;
+                }
             }
+        }
+        // reset to None if right-clicked.
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            newValue = default(T);
+            return true;
+        }
 
         newValue = current;
         return false;

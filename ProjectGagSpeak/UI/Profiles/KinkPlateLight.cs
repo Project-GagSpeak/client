@@ -16,6 +16,7 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 
@@ -114,13 +115,13 @@ public class KinkPlateLight
         {
             // profile is pending report review.
             drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
-            CkGui.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
+            CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
         }
         else if ((!profile.KinkPlateInfo.PublicPlate && !isPair))
         {
             // profile is not public.
             drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
-            CkGui.AddRelativeTooltip(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
+            CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
         }
         else
         {

@@ -10,8 +10,8 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
     private readonly GagspeakMediator _mediator;
     private readonly RestraintManager _manager;
-    public PadlockRestraintsClient(ILogger log, GagspeakMediator mediator, RestraintManager manager, 
-        Func<int, CharaActiveRestraint> activeSlotGenerator) : base(activeSlotGenerator, log)
+    public PadlockRestraintsClient(ILogger log, GagspeakMediator mediator, RestraintManager manager)
+        : base([ manager.ServerRestraintData ?? new CharaActiveRestraint() ], log)
     {
         _mediator = mediator;
         _manager = manager;
@@ -23,8 +23,8 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     protected override string ItemName(CharaActiveRestraint item)
         => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";
 
-    protected override bool DisableCondition()
-        => !MonitoredItem.CanLock() || MonitoredItem.Padlock == SelectedLock;
+    protected override bool DisableCondition(int _)
+        => !Items[0].CanLock() || Items[0].Padlock == SelectedLock;
 
     public void DrawLockCombo(float width, string tooltip)
     => DrawLockCombo("ClientRestraintLock", width, 0, string.Empty, tooltip, false);
@@ -32,9 +32,9 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     public void DrawUnlockCombo(float width, string tooltip)
         => DrawUnlockCombo("ClientRestraintUnlock", width, 0, string.Empty, tooltip);
 
-    protected override void OnLockButtonPress(int _)
+    protected override Task<bool> OnLockButtonPress(int _)
     {
-        if (MonitoredItem.CanLock())
+        if (Items[0].CanLock())
         {
             var newData = new CharaActiveRestraint()
             {
@@ -45,26 +45,30 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             };
             _mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Locked, newData));
             ResetSelection();
-            return;
+            ResetInputs();
+            return Task.FromResult(true);
         }
 
         ResetInputs();
+        return Task.FromResult(false);
     }
-    protected override void OnUnlockButtonPress(int _)
+    protected override Task<bool> OnUnlockButtonPress(int _)
     {
-        if (MonitoredItem.CanUnlock())
+        if (Items[0].CanUnlock())
         {
             var newData = new CharaActiveRestraint()
             {
-                Padlock = MonitoredItem.Padlock,
-                Password = MonitoredItem.Password,
+                Padlock = Items[0].Padlock,
+                Password = Items[0].Password,
                 PadlockAssigner = MainHub.UID
             };
 
             _mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Unlocked, newData));
             ResetSelection();
-            return;
+            ResetInputs();
+            return Task.FromResult(true);
         }
         ResetInputs();
+        return Task.FromResult(false);
     }
 }

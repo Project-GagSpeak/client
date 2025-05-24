@@ -1,3 +1,4 @@
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -9,8 +10,8 @@ namespace GagSpeak.CustomCombos.Padlockable;
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly GagspeakMediator _mediator;
-    public PadlockGagsClient(ILogger log, GagspeakMediator mediator, Func<int, ActiveGagSlot> monitoredItemGenerator)
-        : base(monitoredItemGenerator, log)
+    public PadlockGagsClient(ILogger log, GagspeakMediator mediator, GagRestrictionManager manager)
+        : base([ ..manager.ServerGagData?.GagSlots ?? []], log)
     {
         _mediator = mediator;
     }
@@ -21,8 +22,8 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
 
-    protected override bool DisableCondition()
-        => MonitoredItem.GagItem is GagType.None;
+    protected override bool DisableCondition(int _)
+        => Items[0].GagItem is GagType.None;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
         => DrawLockCombo("ClientGagLock_"+ layerIdx, width, layerIdx, string.Empty, tooltip, false);
@@ -30,9 +31,9 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
         => DrawUnlockCombo("ClientGagUnlock_" + layerIdx, width, layerIdx, string.Empty, tooltip);
 
-    protected override void OnLockButtonPress(int layerIdx)
+    protected override Task<bool> OnLockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanLock())
+        if (Items[0].CanLock())
         {
             var newData = new ActiveGagSlot()
             {
@@ -43,30 +44,34 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             };
             _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
             ResetSelection();
-        }
-        else
-        {
             ResetInputs();
+            return Task.FromResult(true);
         }
+
+        // if we are not able to lock, we need to reset the inputs.
+        ResetInputs();
+        return Task.FromResult(false);
     }
 
-    protected override void OnUnlockButtonPress(int layerIdx)
+    protected override Task<bool> OnUnlockButtonPress(int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
-        if (MonitoredItem.CanUnlock())
+        if (Items[0].CanUnlock())
         {
             var newData = new ActiveGagSlot()
             {
-                Padlock = MonitoredItem.Padlock,
-                Password = MonitoredItem.Password,
+                Padlock = Items[0].Padlock,
+                Password = Items[0].Password,
                 PadlockAssigner = MainHub.UID
             };
             _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));
             ResetSelection();
-        }
-        else
-        {
             ResetInputs();
+            return Task.FromResult(true);
         }
+
+        // if we are not able to unlock, we need to reset the inputs.
+        ResetInputs();
+        return Task.FromResult(false);
     }
 }

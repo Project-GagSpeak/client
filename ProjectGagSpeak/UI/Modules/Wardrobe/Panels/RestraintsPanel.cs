@@ -163,7 +163,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         {
             if(ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _manager.StartEditing(_selector.Selected!);
-            CkGui.AttachToolTip("Double-Click me to open the editor!", displayAnyways: true);
+            CkGui.AttachToolTip("Double-Click me to open the editor!");
         }
 
         ImGui.SetCursorPosY(cursorPos.Y + ImGui.GetFrameHeight());
@@ -226,7 +226,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
                 var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
                 Mediator.Publish(new OpenThumbnailBrowser(metaData));
             }
-            CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
+            CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
     }
 

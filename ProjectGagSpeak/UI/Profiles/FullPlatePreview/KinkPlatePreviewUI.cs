@@ -120,7 +120,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
         // Draw the close button.
         CloseButton(drawList);
-        CkGui.AddRelativeTooltip(CloseButtonPos, CloseButtonSize, "Close KinkPlate™ Preview");
+        CkGui.AttachToolTipRect(CloseButtonPos, CloseButtonSize, "Close KinkPlate™ Preview");
     }
 
     private void DrawProfilePic(ImDrawListPtr drawList, KinkPlate profile)

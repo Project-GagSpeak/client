@@ -1,4 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Raii;
 using ImGuiNET;
 using OtterGui.Text;
 using OtterGui.Widgets;
@@ -8,6 +9,19 @@ namespace GagSpeak.CkCommons.Gui.Utility;
 // Mimics the penumbra mod groups from penumbra mod selection.
 public static partial class CkGuiUtils
 {
+    public static void FramedEditDisplay(string id, float width, bool inEdit, string curLabel, Action<float> drawAct, uint editorBg = 0)
+    {
+        var col = inEdit ? editorBg : CkColor.FancyHeaderContrast.Uint();
+        using (CkRaii.Child(id + "frameDisp", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), DFlags.RoundCornersAll))
+        {
+            if (inEdit)
+                drawAct?.Invoke(width);
+            else
+                CkGui.CenterTextAligned(curLabel);
+        }
+    }
+
+
     /// <summary> Draw a single group selector as a combo box. (For Previewing) </summary>
     public static void DrawSingleGroupCombo(string groupName, string[] options, string current)
     {

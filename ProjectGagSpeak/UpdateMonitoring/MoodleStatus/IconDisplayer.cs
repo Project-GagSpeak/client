@@ -1,32 +1,30 @@
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Helpers;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
-using OtterGui;
 using System.Buffers.Binary;
 
 namespace GagSpeak.UpdateMonitoring;
 
 /// <summary>
-/// Keeps tabs on the currently polled Moodle information. Contains an initial dictionary cache.
+/// Keeps tabs on the currently polled Icon Information. Contains an initial dictionary cache.
 /// ID's can then be efficiently looked up and stored into the cache instead of loading everything all at once.
 /// </summary>
-public class MoodlesDisplayer
+public class IconDisplayer
 {
-    private readonly ILogger<MoodlesDisplayer> _logger;
+    private readonly ILogger<IconDisplayer> _logger;
     private readonly IDataManager _data;
     private readonly ITextureProvider _textures;
 
-    public MoodlesDisplayer(ILogger<MoodlesDisplayer> logger, IDataManager data, ITextureProvider textures)
+    public IconDisplayer(ILogger<IconDisplayer> logger, IDataManager data, ITextureProvider textures)
     {
         _logger = logger;
         _data = data;
@@ -40,18 +38,27 @@ public class MoodlesDisplayer
 
     public static IReadOnlyDictionary<uint, ParsedIconInfo> StatusDict { get; private set; }
 
+
+    // Generic Helper method for icons.
+    public IDalamudTextureWrap? GetGameIconOrDefault(uint iconId)
+        => _textures.GetFromGameIcon(iconId).GetWrapOrDefault();
+
+    public IDalamudTextureWrap GetGameIconOrEmpty(uint iconId)
+        => _textures.GetFromGameIcon(iconId).GetWrapOrEmpty();
+
+
+    public IDalamudTextureWrap? GetGameIconOrDefault(int iconId, int stacks)
+    => _textures.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault();
+
+
     /// <summary> Draws the Moodle icon. This only draw a single image so you can use IsItemHovered() outside. </summary>
     /// <param name="iconId"> The icon ID of the moodle. </param>
     /// <param name="stacks"> The amount of stacks the moodle has. </param>
     /// <param name="size"> The size of the moodle icon. </param>
     public void DrawMoodleIcon(int iconId, int stacks, Vector2 size)
     {
-        var icon = _textures.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrEmpty();
-        if (icon is { } wrap)
-        {
-            // offset moodles draw with maybe?
-            ImGui.Image(icon.ImGuiHandle, size);
-        }
+        if (GetGameIconOrDefault(iconId, stacks) is { } wrap)
+            ImGui.Image(wrap.ImGuiHandle, size);
     }
 
     public void DrawMoodleStatusTooltip(MoodlesStatusInfo item, IEnumerable<MoodlesStatusInfo> otherStatuses)
@@ -114,27 +121,27 @@ public class MoodlesDisplayer
     /// <param name="pairPerms"> The permissions of the pair. </param>
     /// <param name="statuses"> The statuses to apply. </param>
     /// <returns> True if the statuses can be applied.
-    public bool CanApplyPairStatus(UserPairPermissions pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
+    public static bool CanApplyPairStatus(UserPairPermissions pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
     {
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
-            _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
             return false;
         }
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
         {
-            _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
             return false;
         }
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Special))
         {
-            _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles) && statuses.Any(statuses => statuses.NoExpire))
         {
-            _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
             return false;
         }
 
@@ -142,7 +149,7 @@ public class MoodlesDisplayer
         if (statuses.Any(status => status.NoExpire == false && // if the status is not permanent, and the time its set for is longer than max allowed time.
             new TimeSpan(status.Days, status.Hours, status.Minutes, status.Seconds) > pairPerms.MaxMoodleTime))
         {
-            _logger.LogWarning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
             return false;
         }
         // return true if reached here.
@@ -235,8 +242,8 @@ public class MoodlesDisplayer
 
 
             // store the valid count for each attribute.
-            ParsedSeStringText currentChunkText = ParsedSeStringText.Empty;
-            ParsedSeStringFlags currentChunkFlags = ParsedSeStringFlags.None;
+            var currentChunkText = ParsedSeStringText.Empty;
+            var currentChunkFlags = ParsedSeStringFlags.None;
 
             // for each found result within the split.
             foreach (var str in result)

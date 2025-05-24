@@ -47,34 +47,6 @@ public class ClientMonitor : IHostedService
         _gameGui = gameGui;
         _partyList = partyList;
 
-        // Lets just say fuck it and cache things on startup so we dont need to worry about them later.
-        ClassJobs = _gameData.GetExcelSheet<ClassJob>().ToList();
-        LoadedActions = new Dictionary<int, List<ActionRowLight>>();
-
-        var generalGameActions = _gameData.GetExcelSheet<GameAction>()
-            .Where(r => r.IsPlayerAction && r.ClassJob.ValueNullable.HasValue);
-
-        // load all of the actions from the excel sheet that are valid for player actions into the dictionary.
-        var battleJobIds = ClassJobs.Where(x => x.Role != 0).Select(x => x.RowId);
-        // I hope this doesnt make the plugin initializer cry on people with low PC's.
-        var stopwatch = Stopwatch.StartNew();
-        foreach (var action in generalGameActions)
-        {
-            // if the action contains any of the job ids, then append it to the respective id.
-            if (battleJobIds.Contains(action.ClassJob.Value.RowId))
-            {
-                if (LoadedActions.ContainsKey((int)action.ClassJob.Value.RowId))
-                    LoadedActions[(int)action.ClassJob.Value.RowId].Add(new ActionRowLight(action));
-                else
-                    LoadedActions[(int)action.ClassJob.Value.RowId] = new List<ActionRowLight> { new ActionRowLight(action) };
-            }
-        }
-        // Stop the performance timer.
-        stopwatch.Stop();
-
-        _logger.LogInformation($"Cached {generalGameActions.Count()} actions in {stopwatch.ElapsedMilliseconds}ms " +
-            $"for {ClassJobs.Count()} Jobs.");
-
         _clientState.ClassJobChanged += OnJobChanged;
         _clientState.Login += OnLogin;
         _clientState.Logout += OnLogout;
@@ -83,29 +55,6 @@ public class ClientMonitor : IHostedService
         if (_clientState.IsLoggedIn)
             OnLogin();
     }
-
-    public readonly struct ActionRowLight
-    {
-        public readonly int    RowId;
-        public readonly string Name;
-        public readonly ushort Icon;
-        public readonly byte   CooldownGroup;
-
-        public ActionRowLight(GameAction action)
-        {
-            RowId = (int)action.RowId;
-            Name = action.Name.ToString();
-            Icon = action.Icon;
-            CooldownGroup = action.CooldownGroup;
-        }
-
-        public uint GetIconId() => Icon;
-    }
-
-    public static IEnumerable<ClassJob> ClassJobs { get; private set; }
-    public static IEnumerable<ClassJob> BattleClassJobs => ClassJobs.Where(x => x.Role != 0).ToList();
-    public static Dictionary<int, List<ActionRowLight>> LoadedActions { get; private set; }
-
 
     public static readonly int MaxLevel = 100;
     public static IntPtr ClientPlayerAddress { get; private set; } = IntPtr.Zero; // Only use this if we run into problems with the normal one.
@@ -150,13 +99,6 @@ public class ClientMonitor : IHostedService
     public bool InSoloParty => _partyList.Length <= 1 && IsInDuty;
 
     public void OpenMapWithMapLink(MapLinkPayload mapLink) => _gameGui.OpenMapWithMapLink(mapLink);
-    public bool TryGetAction(uint actionId, out GameAction action)
-    {
-        action = _gameData.GetExcelSheet<GameAction>()!.GetRowOrDefault(actionId) ?? default;
-        return action.RowId != 0;
-    }
-
-    public ClassJob? GetClientClassJob() => ClassJobs.FirstOrDefault(x => x.RowId == ClientPlayer.ClassJobId());
     public DeepDungeonType? GetDeepDungeonType()
     {
         if (_gameData.GetExcelSheet<TerritoryType>()?.GetRow(_clientState.TerritoryType) is { } territoryInfo)

@@ -25,9 +25,9 @@ using GagSpeak.PlayerState.Models;
 namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
 {
-    private readonly MoodlesDisplayer _monitor;
+    private readonly IconDisplayer _monitor;
     private readonly ShareHubService _shareHub;
-    public PublicationsManager(ILogger<PublicationsManager> logger, MoodlesDisplayer monitor, FavoritesManager favorites,
+    public PublicationsManager(ILogger<PublicationsManager> logger, IconDisplayer monitor, FavoritesManager favorites,
         PatternManager patterns, ShareHubService shareHub, CkGui uiShared)
     {
         _monitor = monitor;

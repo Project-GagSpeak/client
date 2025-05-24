@@ -23,9 +23,9 @@ public class UiFactory
     private readonly GagspeakMediator _mediator;
     private readonly GagspeakConfigService _config;
     private readonly PiShockProvider _shockies;
-    private readonly PairCombos _pairCombos;
     private readonly PermissionsDrawer _permDrawer;
     private readonly PermissionData _permData;
+    private readonly IconDisplayer _iconDisplayer;
     private readonly ImageImportTool _imageImport;
 
     // Managers
@@ -54,9 +54,9 @@ public class UiFactory
         GagspeakMediator mediator,
         GagspeakConfigService config,
         PiShockProvider shockies,
-        PairCombos pairCombos,
         PermissionsDrawer permDrawer,
         PermissionData permActData,
+        IconDisplayer iconDisplayer,
         ImageImportTool imageImport,
         // Managers
         ClientMonitor clientMonitor,
@@ -78,9 +78,9 @@ public class UiFactory
         _mediator = mediator;
         _config = config;
         _shockies = shockies;
-        _pairCombos = pairCombos;
         _permDrawer = permDrawer;
         _permData = permActData;
+        _iconDisplayer = iconDisplayer;
         _imageImport = imageImport;
         
         _clientMonitor = clientMonitor;
@@ -115,7 +115,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
-            _permData, _permDrawer, _pairCombos, _presetService, _hub, _globals, _shockies,
+            _hub, _globals, _permData, _permDrawer, _presetService, _iconDisplayer, _shockies,
             _pairManager, _clientMonitor);
     }
 

@@ -158,7 +158,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                     var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
                     Mediator.Publish(new OpenThumbnailBrowser(metaData));
                 }
-                CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.", displayAnyways: true);
+                CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
             }
         }
 

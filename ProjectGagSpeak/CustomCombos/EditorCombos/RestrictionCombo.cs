@@ -38,15 +38,15 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid current, float width)
-        => Draw(label, current, width, ImGuiComboFlags.None);
+    public bool Draw(string label, Guid current, float width, uint? searchBg = null)
+        => Draw(label, current, width, ImGuiComboFlags.None, searchBg);
 
-    public bool Draw(string label, Guid current, float width, ImGuiComboFlags flags)
+    public bool Draw(string label, Guid current, float width, ImGuiComboFlags flags, uint? searchBg = null)
     {
         InnerWidth = width * 1.25f;
         _currentRestriction = current;
         var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Restriction...";
-        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags, searchBg);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -63,7 +63,7 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
         return ret;
     }
 
-    private void DrawItemTooltip(Pattern item)
+    private void DrawItemTooltip(RestrictionItem item)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {

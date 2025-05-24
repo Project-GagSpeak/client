@@ -1,6 +1,4 @@
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
@@ -12,61 +10,81 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairGagPadlockCombo(ILogger log, Pair pairData, MainHub mainHub, Func<int, ActiveGagSlot> generator)
-        : base(generator, log)
+    public PairGagPadlockCombo(Pair pair, MainHub hub, ILogger log)
+        : base([ ..pair.LastGagData.GagSlots ], log)
     {
-        _mainHub = mainHub;
-        _pairRef = pairData;
+        _mainHub = hub;
+        _pairRef = pair;
     }
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
         => PadlockEx.GetLocksForPair(_pairRef.PairPerms);
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
-    protected override bool DisableCondition()
-        => MonitoredItem.GagItem is GagType.None;
+    
+    protected override bool DisableCondition(int layerIdx)
+        => Items[layerIdx].GagItem is GagType.None;
 
-    protected override void OnLockButtonPress(int layerIdx)
+    protected override async Task<bool> OnLockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockGags)
+        if (Items[layerIdx].CanLock() && _pairRef.PairPerms.LockGags)
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
-                Layer = (int)layerIdx,
+                Layer = layerIdx,
                 Padlock = SelectedLock,
                 Password = Password,
                 Timer = Timer.GetEndTimeUTC(),
                 PadlockAssigner = MainHub.UID,
             };
 
-            _ = _mainHub.UserPushPairDataGags(dto);
-            Log.LogDebug("Locking Gag with GagPadlock " + SelectedLock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
+            var result = await _mainHub.UserPushPairDataGags(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
         }
-
-        ResetInputs();
+        return false;
     }
 
-    protected override void OnUnlockButtonPress(int layerIdx)
+    protected override async Task<bool> OnUnlockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockGags)
+        if (Items[layerIdx].CanUnlock() && _pairRef.PairPerms.UnlockGags)
         {
             var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
                 Layer = layerIdx,
-                Padlock = MonitoredItem.Padlock,
+                Padlock = Items[layerIdx].Padlock,
                 Password = Password, // Our guessed password.
                 PadlockAssigner = MainHub.UID,
             };
-            _ = _mainHub.UserPushPairDataGags(dto);
-            Log.LogDebug("Unlocking Gag with GagPadlock " + MonitoredItem.Padlock.ToName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
-        }
 
-        ResetInputs();
+            var result = await _mainHub.UserPushPairDataGags(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Unlocking Gag with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
+        }
+        return false;
     }
 }

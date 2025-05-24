@@ -22,14 +22,14 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     protected CkFilterComboCache(IEnumerable<T> items, ILogger log)
         : base(new TemporaryList<T>(items), log)
     {
-        Current = default;
+        Current = default(T);
         _items = (ICachingList<T>)Items;
     }
 
     protected CkFilterComboCache(Func<IReadOnlyList<T>> generator, ILogger log)
         : base(new LazyList<T>(generator), log)
     {
-        Current = default;
+        Current = default(T);
         _items = (ICachingList<T>)Items;
     }
 
@@ -58,9 +58,9 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     /// <summary> The main Draw function that should be used for any parenting client side FilterCombo's of all types. </summary>
     /// <remarks> Any selection, or any change, will be stored into the CurrentSelectionIdx. </remarks>
     public bool Draw(string label, string preview, string tooltip, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags = ImGuiComboFlags.None)
+        ImGuiComboFlags flags = ImGuiComboFlags.None, uint? customSearchBg = null)
     {
-        return Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags);
+        return Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags, customSearchBg);
     }
 
     /// <summary> Fires an event that gives us the previous and new selection. </summary>

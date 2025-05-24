@@ -216,7 +216,7 @@ public class ActionMonitor : DisposableMediatorSubscriberBase
                     continue;
 
                 var adjustedId = ActionManager.Instance()->GetAdjustedActionId(slot->CommandId);
-                if (!_monitor.TryGetAction(adjustedId, out var action))
+                if (!SpellActionService.AllActionsLookup.TryGetValue(adjustedId, out var action))
                     continue;
 
                 // there is a minus one offset for actions, while general actions do not have them.

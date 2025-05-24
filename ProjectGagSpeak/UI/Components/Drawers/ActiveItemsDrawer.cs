@@ -56,7 +56,7 @@ public class ActiveItemsDrawer
         // Init Gag Padlocks.
         _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, (layerIdx) => gags.ServerGagData?.GagSlots[layerIdx] ?? new ActiveGagSlot());
+            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, gags);
 
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
@@ -68,17 +68,13 @@ public class ActiveItemsDrawer
         // Init Restriction Padlocks.
         _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
-            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions, (slotIdx) =>
-                restrictions.ServerRestrictionData?.Restrictions[slotIdx] ?? new ActiveRestriction());
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions);
 
-        // Init Restraint Combos.
+        // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-
-        // Init Restraint Padlocks.
-        _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints, (_) =>
-            restraints.ServerRestraintData ?? new CharaActiveRestraint());
+        _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints);
     }
 
     // Draw out all of the possible combos for active items.

@@ -33,11 +33,11 @@ public sealed class ModCombo : CkFilterComboCache<ModInfo>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, string currentModItem, float width, float innerWidthScaler)
-        => Draw(label, currentModItem, width, innerWidthScaler, ImGuiComboFlags.None);
+        => Draw(label, currentModItem, width, innerWidthScaler, CFlags.None);
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, string currentModItem, float width, float innerWidthScaler, ImGuiComboFlags flags)
+    public bool Draw(string label, string currentModItem, float width, float innerWidthScaler, CFlags flags)
     {
         InnerWidth = width * innerWidthScaler;
         _currentPath = currentModItem;

@@ -1,11 +1,6 @@
 using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Interface.Utility;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
-using OtterGui.Raii;
 using OtterGuiInternal.Structs;
-using System.Security.Permissions;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -39,7 +34,7 @@ public static class CkGuiEx
         //drawlistPtr.AddRect(topLeftPos, topLeftPos + new Vector2(size), color);
 
         // Top Right = Center of Circle, whose arc is the "inner Bound"
-        ImVec2 circleCenter = bindingFlag switch
+        var circleCenter = bindingFlag switch
         {
             CkGuiCircleBound.TopLeft => bottomRight,
             CkGuiCircleBound.TopRight => bottomLeft,
@@ -50,7 +45,7 @@ public static class CkGuiEx
 
         // Start drawing the path
         drawlistPtr.PathClear();
-        ImVec2 cornerStartPoint = bindingFlag switch
+        var cornerStartPoint = bindingFlag switch
         {
             CkGuiCircleBound.TopLeft => topLeft,
             CkGuiCircleBound.TopRight => topRight,
@@ -61,7 +56,7 @@ public static class CkGuiEx
         drawlistPtr.PathLineTo(cornerStartPoint);
 
         // Arc Start Point
-        ImVec2 arcStartPoint = bindingFlag switch
+        var arcStartPoint = bindingFlag switch
         {
             CkGuiCircleBound.TopLeft => bottomLeft,
             CkGuiCircleBound.TopRight => topLeft,
@@ -72,7 +67,7 @@ public static class CkGuiEx
         drawlistPtr.PathLineTo(arcStartPoint);
 
         // Determine the arc's start and end angles
-        float startAngle = bindingFlag switch
+        var startAngle = bindingFlag switch
         {
             CkGuiCircleBound.TopRight => 3 * float.Pi / 2,  // 270° (CW from top)
             CkGuiCircleBound.TopLeft => float.Pi,           // 180° (CW from left)
@@ -80,13 +75,13 @@ public static class CkGuiEx
             CkGuiCircleBound.BottomRight => 0,              // 0°   (CW from right)
             _ => throw new ArgumentOutOfRangeException(nameof(bindingFlag), bindingFlag, null)
         };
-        float endAngle = startAngle + float.Pi / 2; // Quarter-circle (90°)
+        var endAngle = startAngle + float.Pi / 2; // Quarter-circle (90°)
 
         // Draw the arc using `PathArcTo`
         drawlistPtr._PathArcToN(circleCenter, size, startAngle, endAngle, segments);
 
         // Arc Start Point
-        ImVec2 arcEndPoint = bindingFlag switch
+        var arcEndPoint = bindingFlag switch
         {
             CkGuiCircleBound.TopLeft => topRight,
             CkGuiCircleBound.TopRight => bottomRight,
@@ -107,36 +102,27 @@ public static class CkGuiEx
         // Ensure the wrap is valid for drawing.
         if (wrap is { } valid)
             wdl.AddImageRounded(valid.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
-
-        // Add tooltip if desired.
-        if (!tt.IsNullOrEmpty())
-            CkGui.AddRelativeTooltip(pos, size, tt);
+        CkGui.AttachToolTipRect(pos, pos + size, tt);
     }
 
-    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, string ttText = "")
+    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, string tt = "")
     {
         if (wrap is { } valid)
             wdl.AddImage(valid.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
-
-        if (!ttText.IsNullOrEmpty())
-            CkGui.AddRelativeTooltip(pos, size, ttText);
+        CkGui.AttachToolTipRect(pos, pos + size, tt);
     }
 
-    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, uint tint, string ttText = "")
+    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, uint tint, string tt = "")
     {
         if (wrap is { } valid)
             wdl.AddImage(valid.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, tint);
-
-        if (!ttText.IsNullOrEmpty())
-            CkGui.AddRelativeTooltip(pos, size, ttText);
+        CkGui.AttachToolTipRect(pos, pos + size, tt);
     }
 
-    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, Vector4 tint, string ttText = "")
+    public static void AddDalamudImage(this ImDrawListPtr wdl, IDalamudTextureWrap? wrap, Vector2 pos, Vector2 size, Vector4 tint, string tt = "")
     {
         if (wrap is { } valid)
             wdl.AddImage(valid.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, CkGui.Color(tint));
-
-        if (!ttText.IsNullOrEmpty())
-            CkGui.AddRelativeTooltip(pos, size, ttText);
+        CkGui.AttachToolTipRect(pos, pos + size, tt);
     }
 }

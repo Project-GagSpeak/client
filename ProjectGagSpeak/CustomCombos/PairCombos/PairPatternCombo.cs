@@ -1,11 +1,8 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
@@ -19,17 +16,14 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairPatternCombo(Pair pairData, MainHub mainHub, ILogger log, string bText, string bTT)
-        : base(() => [
-            .. pairData.LastLightStorage.Patterns.OrderBy(x => x.Label),
-        ], log, FAI.PlayCircle, bText, bTT)
+    public PairPatternCombo(Pair pair, MainHub hub, ILogger log)
+        : base([ .. pair.LastLightStorage.Patterns.OrderBy(x => x.Label)], log, FAI.PlayCircle, "Execute")
     {
-        _mainHub = mainHub;
-        _pairRef = pairData;
+        _mainHub = hub;
+        _pairRef = pair;
 
         // update current selection to the last registered LightPattern from that pair on construction.
-        Current = _pairRef.LastLightStorage.Patterns
-            .FirstOrDefault(r => r.Id == _pairRef.LastToyboxData.ActivePattern);
+        Current = _pairRef.LastLightStorage.Patterns.FirstOrDefault(r => r.Id == _pairRef.LastToyboxData.ActivePattern);
     }
 
     protected override bool DisableCondition()
@@ -58,11 +52,11 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         return ret;
     }
 
-    protected override void OnButtonPress()
+    protected override async Task<bool> OnButtonPress()
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (Current is null || _pairRef.LastToyboxData.ActivePattern == Current.Id)
-            return;
+            return false;
 
         var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
@@ -73,9 +67,17 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
             AffectedIdentifier = Current.Id,
         };
 
-        _ = _mainHub.UserPushPairDataToybox(dto);
-        PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Executing Pattern " + Current.Label + " on " + _pairRef.GetNickAliasOrUid() + "'s Toy", LoggerType.Permissions);
+        var result = await _mainHub.UserPushPairDataToybox(dto);
+        if (result is not GsApiPairErrorCodes.Success)
+        {
+            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+            return false;
+        }
+        else
+        {
+            Log.LogDebug($"Executing Pattern {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s Toy", LoggerType.Permissions);
+            return true;
+        }
     }
 
     private void DrawItemTooltip(LightPattern item)

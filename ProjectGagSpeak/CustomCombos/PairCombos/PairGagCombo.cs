@@ -2,8 +2,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
@@ -11,19 +9,26 @@ using ImGuiNET;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CustomCombos.PairActions;
-
 public sealed class PairGagCombo : CkFilterComboButton<GagType>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairGagCombo(ILogger log, Pair pair, MainHub hub, Func<IReadOnlyList<GagType>> generator)
-        : base(generator, log)
+
+    public PairGagCombo(Pair pair, MainHub hub, ILogger log)
+        : base([.. Enum.GetValues<GagType>().Skip(1)], log)
     {
         _mainHub = hub;
         _pairRef = pair;
 
         // update current selection to the last registered gagType from that pair on construction.
         Current = GagType.None;
+    }
+
+    // Should hopefully never need to be called.
+    public void UpdatePairRef(Pair newPair)
+    {
+        _pairRef = newPair;
+        Cleanup();
     }
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -46,14 +51,15 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
     protected override bool DisableCondition()
         => Current == GagType.None || !_pairRef.PairPerms.ApplyGags;
 
-    protected override void OnButtonPress(int layerIdx)
+    protected override async Task<bool> OnButtonPress(int layerIdx)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (_pairRef.LastGagData.GagSlots[layerIdx].GagItem == Current)
-            return;
+            return false;
 
         var updateType = _pairRef.LastGagData.GagSlots[layerIdx].GagItem is GagType.None
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
+        
         // construct the dto to send.
         var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
         {
@@ -63,9 +69,17 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         };
 
         // push to server.
-        _mainHub.UserPushPairDataGags(dto).ConfigureAwait(false);
-        PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Selected Gag " + Current.GagName() + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        var result = await _mainHub.UserPushPairDataGags(dto);
+        if (result is not GsApiPairErrorCodes.Success)
+        {
+            Log.LogDebug($"Failed to perform ApplyGag with {Current.GagName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
+            return false;
+        }
+        else
+        {
+            Log.LogDebug($"Applying Gag with {Current.GagName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
     }
 
     private void DrawItemTooltip(GagType item, string headerText)

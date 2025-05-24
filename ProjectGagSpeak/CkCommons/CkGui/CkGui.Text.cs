@@ -56,6 +56,16 @@ public partial class CkGui
         RightFrameAligned(text, offset);
     }
 
+    /// <summary> An Unformatted Text version of ImGui.TextColored accepting UINT </summary>
+    public static void TextInline(string text, bool inner = true)
+    {
+        if (inner) ImUtf8.SameLineInner();
+        else ImGui.SameLine();
+
+        ImGui.TextUnformatted(text);
+    }
+
+
     public static void TextFrameAlignedInline(string text, bool inner = true)
     {
         if (inner) 

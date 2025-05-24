@@ -1,4 +1,4 @@
-using Dalamud.Interface.Colors;
+     using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Dto.User;
@@ -9,77 +9,77 @@ namespace GagSpeak.CkCommons.Gui.Permissions;
 
 public partial class PairStickyUI
 {
+    private int _restrictionLayer = 0;
     private void DrawRestrictionActions()
     {
 
         // Drawing out restriction layers.
-        _pairCombos.DrawRestrictionLayerSelection(ImGui.GetContentRegionAvail().X);
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        ImGui.Combo("##RestrictionLayer", ref _restrictionLayer, ["Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5"], 5);
+        CkGui.AttachToolTip("Select the layer to apply a Restriction to.");
 
-        var restrictionSlot = SPair.LastRestrictionsData.Restrictions[_pairCombos.CurRestrictionLayer];
+        var curSlot = SPair.LastRestrictionsData.Restrictions[_restrictionLayer];
 
         // register display texts for the buttons.
-        var applyRestrictionText = "Apply Restriction";
-        var applyRestrictionTT = "Applies a Restriction to " + PermissionData.DispName + ". Click to select set.";
-        var lockRestrictionText = restrictionSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Restriction" : "Locked with a " + restrictionSlot.Padlock;
-        var lockRestrictionTT = restrictionSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + PermissionData.DispName+ ". Click to view options." : "This Restriction is locked with a " + restrictionSlot.Padlock;
-
-        var unlockRestrictionText = "Unlock " + PermissionData.DispName + "'s Restriction";
-        var unlockRestrictionTT = "Unlock " + PermissionData.DispName + "'s Restriction. Click to view options.";
-        var removeRestrictionText = "Remove " + PermissionData.DispName + "'s Restriction";
-        var removeRestrictionTT = "Remove " + PermissionData.DispName + "'s Restriction. Click to view options.";
+        var applyText = "Apply Restriction";
+        var applyTT = "Applies a Restriction to " + PermissionData.DispName + ". Click to select set.";
+        var lockText = curSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Restriction" : "Locked with a " + curSlot.Padlock;
+        var lockTT = curSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + PermissionData.DispName+ ". Click to view options." : "This Restriction is locked with a " + curSlot.Padlock;
+        var unlockText = "Unlock " + PermissionData.DispName + "'s Restriction";
+        var unlockTT = "Unlock " + PermissionData.DispName + "'s Restriction. Click to view options.";
+        var removeText = "Remove " + PermissionData.DispName + "'s Restriction";
+        var removeTT = "Remove " + PermissionData.DispName + "'s Restriction. Click to view options.";
 
 
         // Expander for ApplyRestriction
-        if (CkGui.IconTextButton(FAI.CommentDots, applyRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
-            PairCombos.Opened = (PairCombos.Opened == InteractionType.ApplyRestriction) ? InteractionType.None : InteractionType.ApplyRestriction;
-        CkGui.AttachToolTip(applyRestrictionTT);
+        if (CkGui.IconTextButton(FAI.CommentDots, applyText, WindowMenuWidth, true, !curSlot.CanApply() || !SPair.PairPerms.ApplyRestrictions))
+            OpenOrClose(InteractionType.ApplyRestriction);
+        CkGui.AttachToolTip(applyTT);
 
         // Interaction Window for ApplyRestriction
-        if (PairCombos.Opened is InteractionType.ApplyRestriction)
+        if (OpenedInteraction is InteractionType.ApplyRestriction)
         {
             using (ImRaii.Child("###RestrictionApply", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairCombos.RestrictionItemCombo.DrawComboButton("##PairApplyRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, "Apply", "Select a Restriction to apply");
+                _pairRestrictionItems.DrawComboButton("##PairApplyRestriction", WindowMenuWidth, _restrictionLayer, "Apply", "Select a Restriction to apply");
             ImGui.Separator();
         }
 
         // Expander for LockRestriction
-        using (ImRaii.PushColor(ImGuiCol.Text, (restrictionSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
+        using (ImRaii.PushColor(ImGuiCol.Text, (curSlot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FAI.Lock, lockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
-                PairCombos.Opened = (PairCombos.Opened == InteractionType.LockRestriction) ? InteractionType.None : InteractionType.LockRestriction;
+            if (CkGui.IconTextButton(FAI.Lock, lockText, WindowMenuWidth, true, !curSlot.CanLock() || !SPair.PairPerms.LockRestrictions))
+                OpenOrClose(InteractionType.LockRestriction);
         }
-        CkGui.AttachToolTip(lockRestrictionTT + 
-            ((PadlockEx.IsTimerLock(restrictionSlot.Padlock)) ? "--SEP----COL--" + restrictionSlot.Timer.ToGsRemainingTimeFancy() : "")
-            , color: ImGuiColors.ParsedPink);
+        CkGui.AttachToolTip(lockTT + (PadlockEx.IsTimerLock(curSlot.Padlock) ? "--SEP----COL--" + curSlot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestriction
-        if (PairCombos.Opened is InteractionType.LockRestriction)
+        if (OpenedInteraction is InteractionType.LockRestriction)
         {
-            using (ImRaii.Child("###RestrictionLock", new Vector2(WindowMenuWidth, _pairCombos.RestrictionPadlockCombo.PadlockLockWindowHeight())))
-                _pairCombos.RestrictionPadlockCombo.DrawLockComboWithActive("PairLockRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, lockRestrictionText, lockRestrictionTT, false);
+            using (ImRaii.Child("###RestrictionLock", new Vector2(WindowMenuWidth, _pairRestrictionPadlocks.PadlockLockWindowHeight())))
+                _pairRestrictionPadlocks.DrawLockComboWithActive("PairLockRestriction", WindowMenuWidth, _restrictionLayer, lockText, lockTT, false);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        if (CkGui.IconTextButton(FAI.Unlock, unlockRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
-            PairCombos.Opened = (PairCombos.Opened == InteractionType.UnlockRestriction) ? InteractionType.None : InteractionType.UnlockRestriction;
-        CkGui.AttachToolTip(unlockRestrictionTT);
+        if (CkGui.IconTextButton(FAI.Unlock, unlockText, WindowMenuWidth, true, !curSlot.CanUnlock() || !SPair.PairPerms.UnlockRestrictions))
+            OpenOrClose(InteractionType.UnlockRestriction);
+        CkGui.AttachToolTip(unlockTT);
 
         // Interaction Window for UnlockRestriction
-        if (PairCombos.Opened is InteractionType.UnlockRestriction)
+        if (OpenedInteraction is InteractionType.UnlockRestriction)
         {
-            using (ImRaii.Child("###RestrictionUnlockNew", new Vector2(WindowMenuWidth, _pairCombos.RestrictionPadlockCombo.PadlockUnlockWindowHeight())))
-                _pairCombos.RestrictionPadlockCombo.DrawUnlockCombo("PairUnlockRestriction", WindowMenuWidth, _pairCombos.CurRestrictionLayer, unlockRestrictionTT, unlockRestrictionText);
+            using (ImRaii.Child("###RestrictionUnlockNew", new Vector2(WindowMenuWidth, _pairRestrictionPadlocks.PadlockUnlockWindowHeight(_restrictionLayer))))
+                _pairRestrictionPadlocks.DrawUnlockCombo("PairUnlockRestriction", WindowMenuWidth, _restrictionLayer, unlockTT, unlockText);
             ImGui.Separator();
         }
 
         // Expander for removing.
-        if (CkGui.IconTextButton(FAI.TimesCircle, removeRestrictionText, WindowMenuWidth, true, !restrictionSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
-            PairCombos.Opened = (PairCombos.Opened == InteractionType.RemoveRestriction) ? InteractionType.None : InteractionType.RemoveRestriction;
-        CkGui.AttachToolTip(removeRestrictionTT);
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeText, WindowMenuWidth, true, !curSlot.CanRemove() || !SPair.PairPerms.RemoveRestrictions))
+            OpenOrClose(InteractionType.RemoveRestriction);
+        CkGui.AttachToolTip(removeTT);
 
         // Interaction Window for RemoveRestriction
-        if (PairCombos.Opened is InteractionType.RemoveRestriction)
+        if (OpenedInteraction is InteractionType.RemoveRestriction)
         {
             using (ImRaii.Child("###RestrictionRemove", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
             {
@@ -88,15 +88,15 @@ public partial class PairStickyUI
                     // construct the dto to send.
                     var dto = new PushPairRestrictionDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
                     {
-                        Layer = _pairCombos.CurRestrictionLayer,
+                        Layer = _restrictionLayer,
                         RestrictionId = Guid.Empty,
                         Enabler = string.Empty,
                     };
 
                     // push to server.
                     _hub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
-                    PairCombos.Opened = InteractionType.None;
-                    _logger.LogDebug("Removing Restriction From layer " + _pairCombos.CurRestrictionLayer, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Restriction From layer " + _restrictionLayer, LoggerType.Permissions);
+                    CloseInteraction();
                 }
             }
         }

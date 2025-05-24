@@ -40,7 +40,7 @@ public sealed class AliasItemDrawer
     public AliasItemDrawer(
         ILogger<AliasItemDrawer> logger,
         MoodleDrawer moodleDrawer,
-        MoodlesDisplayer moodleDisplayer,
+        IconDisplayer moodleDisplayer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,

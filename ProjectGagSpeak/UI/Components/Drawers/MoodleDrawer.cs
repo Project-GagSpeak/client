@@ -18,10 +18,10 @@ namespace GagSpeak.CkCommons.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
-    private readonly MoodlesDisplayer _statusMonitor;
+    private readonly IconDisplayer _statusMonitor;
     private MoodleStatusCombo _statusCombo { get; init; }
     private MoodlePresetCombo _presetCombo { get; init; }
-    public MoodleDrawer(ILogger<MoodleDrawer> logger, MoodlesDisplayer statusMonitor)
+    public MoodleDrawer(ILogger<MoodleDrawer> logger, IconDisplayer statusMonitor)
     {
         _logger = logger;
         _statusMonitor = statusMonitor;
@@ -110,7 +110,7 @@ public class MoodleDrawer
     }
 
     public void FramedMoodleIconDisplay(Moodle moodle, float width, float rounding, int rows = 1)
-        => FramedMoodleIconDisplay(new[] { moodle }, width, rounding, IconSize, rows);
+        => FramedMoodleIconDisplay([ moodle ], width, rounding, IconSize, rows);
 
     public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, int rows = 1)
         => FramedMoodleIconDisplay(moodles, width, rounding, IconSize, rows);

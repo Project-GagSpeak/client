@@ -12,8 +12,8 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly MainHub _mainHub;
     private Pair _pairRef;
-    public PairRestrictionPadlockCombo(ILogger log, Pair pair, MainHub hub, Func<int, ActiveRestriction> generator)
-        : base(generator, log)
+    public PairRestrictionPadlockCombo(Pair pair, MainHub hub, ILogger log)
+        : base([ ..pair.LastRestrictionsData.Restrictions ], log)
     {
         _mainHub = hub;
         _pairRef = pair;
@@ -24,12 +24,12 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     protected override string ItemName(ActiveRestriction item)
         => _pairRef.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
             ? restriction.Label : "None";
-    protected override bool DisableCondition()
-        => !_pairRef.PairPerms.ApplyRestrictions || SelectedLock == MonitoredItem.Padlock || !MonitoredItem.CanLock();
+    protected override bool DisableCondition(int layerIdx)
+        => !_pairRef.PairPerms.ApplyRestrictions || SelectedLock == Items[layerIdx].Padlock || !Items[layerIdx].CanLock();
 
-    protected override void OnLockButtonPress(int layerIdx)
+    protected override async Task<bool> OnLockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanLock() && _pairRef.PairPerms.LockRestrictions)
+        if (Items[layerIdx].CanLock() && _pairRef.PairPerms.LockRestrictions)
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
             {
@@ -40,34 +40,53 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
                 PadlockAssigner = MainHub.UID,
             };
 
-            _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
-            Log.LogDebug("Locking Restriction with " + SelectedLock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
+            var result = await _mainHub.UserPushPairDataRestrictions(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
         }
-
-        ResetInputs();
+        return false;
     }
 
-    protected override void OnUnlockButtonPress(int layerIdx)
+    protected override async Task<bool> OnUnlockButtonPress(int layerIdx)
     {
-        if (MonitoredItem.CanUnlock() && _pairRef.PairPerms.UnlockRestrictions)
+        if (Items[layerIdx].CanUnlock() && _pairRef.PairPerms.UnlockRestrictions)
         {
             var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
             {
                 Layer = layerIdx,
-                Padlock = MonitoredItem.Padlock,
+                Padlock = Items[layerIdx].Padlock,
                 Password = Password,
                 PadlockAssigner = MainHub.UID,
             };
-            _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
-            Log.LogDebug("Unlocking Restriction with " + MonitoredItem.Padlock.ToName() + " on " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
-            PairCombos.Opened = InteractionType.None;
-            ResetSelection();
-            return;
-        }
 
-        ResetInputs();
+            var result = await _mainHub.UserPushPairDataRestrictions(dto);
+            if (result is not GsApiPairErrorCodes.Success)
+            {
+                Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                ResetSelection();
+                ResetInputs();
+                return false;
+            }
+            else
+            {
+                Log.LogDebug($"Unlocking Restriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                ResetSelection();
+                ResetInputs();
+                return true;
+            }
+        }
+        return false;
     }
 }

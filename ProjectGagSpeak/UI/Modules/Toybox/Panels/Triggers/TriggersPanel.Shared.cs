@@ -42,7 +42,7 @@ public partial class TriggersPanel
 
             // Handle Interaction.
             if (isHovered)
-                CkGui.AttachToolTip(tooltip, displayAnyways: true);
+                CkGui.AttachToolTip(tooltip);
             if (isHovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 if (isEditingItem) _manager.SaveChangesAndStopEditing();
@@ -67,21 +67,23 @@ public partial class TriggersPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight());
-        using var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetFrameThickness(), DFlags.RoundCornersAll);
-        
-        if (isEditing)
+        using (var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetFrameThickness(), DFlags.RoundCornersAll))
         {
-            var priority = trigger.Priority;
-            ImGui.SetNextItemWidth(c.InnerRegion.X);
-            if (ImGui.DragInt("##DragID", ref priority, 1.0f, 0, 100, "%d"))
-                trigger.Priority = priority;
-            CkGui.AttachToolTip("Set the Priority of this Trigger.--SEP--Double-Click to edit directly.");
+            if (isEditing)
+            {
+                var priority = trigger.Priority;
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.DragInt("##DragID", ref priority, 1.0f, 0, 100, "%d"))
+                    trigger.Priority = priority;
+            }
+            else
+            {
+                ImGuiUtil.Center(trigger.Priority.ToString());
+            }
         }
-        else
-        {
-            ImGuiUtil.Center(trigger.Priority.ToString());
-            CkGui.AttachToolTip("The priority of this Trigger.");
-        }
+        CkGui.AttachToolTip(isEditing
+            ? "Set the Priority of this Trigger.--SEP--Double-Click to edit directly."
+            : "The priority of this Trigger.");
     }
 
     private void DrawDescription(Trigger trigger, bool isEditing)
@@ -108,32 +110,19 @@ public partial class TriggersPanel
                 0xFFBBBBBB, "Input a description in the space provided...");
     }
 
-    public bool DrawTriggerTypeSelector(float width, Trigger trigger, bool isEditing)
+    public void DrawTriggerTypeSelector(float width, Trigger trigger, bool isEditing)
     {
         // get offset for drawn space.
-        var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
         var offset = (ImGui.GetContentRegionAvail().X - width) / 2;
-        
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-        using (var c = CkRaii.Child("TriggerKindCombo", new Vector2(width, ImGui.GetFrameHeight()), col,
-            CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        if(EnumComboOrPreview("##TriggerKind", width, trigger.Type, out var newVal, isEditing, t => t.ToName()))
         {
-            var curType = trigger.Type;
-            if (isEditing)
+            if (newVal != trigger.Type)
             {
-                if (ImGuiUtil.GenericEnumCombo("##TriggerKind", c.InnerRegion.X, curType, out var newType, t => t.ToName()))
-                    if (newType != curType)
-                    {
-                        _manager.ChangeTriggerType(trigger, newType);
-                        return true;
-                    }
-            }
-            else
-            {
-                CkGui.CenterTextAligned(curType.ToName());
+                _logger.LogInformation($"Trigger Type changed from {trigger.Type} to {newVal}");
+                _manager.ChangeTriggerType(trigger, newVal);
             }
         }
-        return false;
     }
 
     public bool DrawTriggerActionType(float width, Trigger trigger, bool isEditing)

@@ -21,8 +21,8 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
     private readonly MainHub _mainHub;
     private Pair _pairRef;
 
-    public PairRestrictionCombo(ILogger log, Pair pair, MainHub hub, Func<IReadOnlyList<LightRestriction>> generator)
-        : base(generator, log)
+    public PairRestrictionCombo(Pair pair, MainHub hub, ILogger log)
+        : base([.. pair.LastLightStorage.Restrictions.OrderBy(x => x.Label)], log)
     {
         _mainHub = hub;
         _pairRef = pair;
@@ -61,10 +61,10 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
     protected override bool DisableCondition()
         => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == Current.Id;
 
-    protected override void OnButtonPress(int layerIdx)
+    protected override async Task<bool> OnButtonPress(int layerIdx)
     {
         if (Current is null)
-            return;
+            return false;
 
         var updateType = _pairRef.LastRestrictionsData.Restrictions[layerIdx].Identifier.IsEmptyGuid()
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
@@ -77,9 +77,17 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
             Enabler = MainHub.UID,
         };
 
-        _mainHub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
-        PairCombos.Opened = InteractionType.None;
-        Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+        var result = await _mainHub.UserPushPairDataRestrictions(dto);
+        if (result is not GsApiPairErrorCodes.Success)
+        {
+            Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
+            return false;
+        }
+        else
+        {
+            Log.LogDebug($"Applying Restraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
     }
 
     private void DrawItemTooltip(LightRestriction setItem)

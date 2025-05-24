@@ -1,7 +1,5 @@
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.IPC;
@@ -12,9 +10,12 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    public PairMoodleStatusCombo(float iconScale, MoodlesDisplayer monitor, Pair pair,
-        MainHub hub, ILogger log, string bText, string bTT)
+    public PairMoodleStatusCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log)
         : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
+    { }
+
+    public PairMoodleStatusCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log,
+        Func<IReadOnlyList<MoodlesStatusInfo>> generator) : base(iconScale, monitor, pair, hub, log, generator)
     { }
 
     protected override bool DisableCondition()
@@ -42,11 +43,35 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     }
 
     protected override bool CanDoAction(MoodlesStatusInfo item)
-        => _statuses.CanApplyPairStatus(_pairRef.PairPerms, new[] { item });
+        => IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, [ item ]);
 
-    protected override void DoAction(MoodlesStatusInfo item)
+    protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {
-        var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, new[] { item.GUID }, MoodleType.Status);
-        _ = _mainHub.UserApplyMoodlesByGuid(dto);
+        var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, [item.GUID], MoodleType.Status);
+        if(await _mainHub.UserApplyMoodlesByGuid(dto))
+        {
+            Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
+        else
+        {
+            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return false;
+        }
+    }
+
+    protected override async Task<bool> OnRemoveButton(MoodlesStatusInfo item)
+    {
+        var dto = new RemoveMoodlesDto(_pairRef.UserData, [item.GUID]);
+        if(await _mainHub.UserRemoveMoodles(dto))
+        {
+            Log.LogDebug($"Removing moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
+        else
+        {
+            Log.LogDebug($"Failed to remove moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return false;
+        }
     }
 }

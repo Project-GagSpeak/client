@@ -1,7 +1,6 @@
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -13,13 +12,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    private readonly CharaIPCData _ownMoodles;
-    public OwnMoodleStatusToPairCombo(float iconScale, MoodlesDisplayer monitor, CharaIPCData data,
-        Pair pair, MainHub hub, ILogger log)
-        : base(iconScale, monitor, pair, hub, log, () => [ ..data.MoodlesStatuses.OrderBy(x => x.Title)])
-    {
-        _ownMoodles = data;
-    }
+    public OwnMoodleStatusToPairCombo(float scale, IconDisplayer disp, Pair pair, MainHub hub, ILogger log)
+        : base(scale, disp, pair, hub, log, () => [ ..VisualApplierMoodles.LatestIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
+    { }
 
     protected override bool DisableCondition()
         => _pairRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou) is false;
@@ -46,11 +41,20 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
         return ret;
     }
     protected override bool CanDoAction(MoodlesStatusInfo item)
-        => _statuses.CanApplyPairStatus(_pairRef.PairPerms, new[] { item });
+        => IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, new[] { item });
 
-    protected override void DoAction(MoodlesStatusInfo item)
+    protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {
         var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, new[] { item.GUID }, MoodleType.Status);
-        _ = _mainHub.UserApplyMoodlesByGuid(dto);
+        if (await _mainHub.UserApplyMoodlesByGuid(dto))
+        {
+            Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return true;
+        }
+        else
+        {
+            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            return false;
+        }
     }
 }

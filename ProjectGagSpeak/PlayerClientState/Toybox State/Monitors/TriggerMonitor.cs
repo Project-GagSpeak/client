@@ -223,14 +223,14 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         if (perms.HasFlag(PuppetPerms.Sit))
         {
             Logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
-            var sitEmote = EmoteMonitor.SitEmoteComboList.FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
+            var sitEmote = EmoteExtensions.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
             if (sitEmote.RowId is 50 or 52)
             {
                 Logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, sitEmote.RowId);
                 return true;
             }
-            if (EmoteMonitor.ValidEmotes.Where(e => e.RowId is 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
+            if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId is 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
             {
                 Logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
                 UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, 90);
@@ -243,7 +243,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         // Helper function to check if the message matches any emote
         bool IsEmoteMatch(SeString msg)
         {
-            var emote = EmoteMonitor.ValidEmotes.FirstOrDefault(e
+            var emote = EmoteService.ValidLightEmoteCache.FirstOrDefault(e
                 => e.EmoteCommands.Any(c => string.Equals(msg.TextValue, c.Replace(" ", ""), StringComparison.OrdinalIgnoreCase)));
 
             if (!string.IsNullOrEmpty(emote.Name))
@@ -262,7 +262,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         Logger.LogTrace("SourceID: " + actionEffect.SourceID + " TargetID: " + actionEffect.TargetID + " ActionID: " + actionEffect.ActionID + " Type: " + actionEffect.Type + " Damage: " + actionEffect.Damage, LoggerType.ToyboxTriggers);
 
         var relevantTriggers = _triggerManager.Storage.SpellAction
-            .Where(t => t.ActionIDs.Contains(actionEffect.ActionID) && t.ActionKind == actionEffect.Type )
+            .Where(t => t.GetStoredIds().Contains(actionEffect.ActionID) && t.ActionKind == actionEffect.Type )
             .ToList();
 
         if (!relevantTriggers.Any())
@@ -492,6 +492,8 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         if (!_clientMonitor.IsPresent || !_triggerManager.Storage.SpellAction.Any())
             return;
 
+        // maybe run this in async but idk it could also be a very bad idea.
+        // Only do if we know what we are doing and have performance issues.
         await _frameworkUtils.RunOnFrameworkThread(() =>
         {
             foreach (var actionEffect in actionEffects)
@@ -501,8 +503,9 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
                     // Perform logging and action processing for each effect
                     var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.NameWithWorld() ?? "UNKN OBJ";
                     var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.NameWithWorld() ?? "UNKN OBJ";
-                    var actionStr = "UNKN ACT";
-                    if (_clientMonitor.TryGetAction(actionEffect.ActionID, out var action)) actionStr = action.Name.ToString();
+                    
+                    var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
+
                     Logger.LogTrace($"Source:{sourceCharaStr}, Target: {targetCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
                         $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
                 }
