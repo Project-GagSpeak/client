@@ -311,22 +311,25 @@ public class EquipmentDrawer
     private void DrawItem(GlamourSlot item, float width, float innerWidthScaler)
     {
         // draw the item itemCombo.
-        var itemCombo = _itemCombos[item.Slot.ToIndex()];
-
-        var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.ItemId, width, width * innerWidthScaler);
-
-        if (change && !item.GameItem.Equals(itemCombo.Current))
+        if (item.Slot != EquipSlot.Nothing)
         {
-            _logger.LogTrace($"Item changed from {itemCombo.Current} " +
-                $"[{itemCombo.Current.ItemId}] to {item.GameItem} [{item.GameItem.ItemId}]");
-            item.GameItem = itemCombo.Current;
-        }
+            var itemCombo = _itemCombos[item.Slot.ToIndex()];
 
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        {
-            _logger.LogTrace($"Item changed to {ItemService.NothingItem(item.Slot)} " +
-                $"[{ItemService.NothingItem(item.Slot).ItemId}] from {item.GameItem} [{item.GameItem.ItemId}]");
-            item.GameItem = ItemService.NothingItem(item.Slot);
+            var change = itemCombo.Draw(item.GameItem.Name, item.GameItem.ItemId, width, width * innerWidthScaler);
+
+            if (change && !item.GameItem.Equals(itemCombo.Current))
+            {
+                _logger.LogTrace($"Item changed from {itemCombo.Current} " +
+                    $"[{itemCombo.Current.ItemId}] to {item.GameItem} [{item.GameItem.ItemId}]");
+                item.GameItem = itemCombo.Current;
+            }
+
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _logger.LogTrace($"Item changed to {ItemService.NothingItem(item.Slot)} " +
+                    $"[{ItemService.NothingItem(item.Slot).ItemId}] from {item.GameItem} [{item.GameItem.ItemId}]");
+                item.GameItem = ItemService.NothingItem(item.Slot);
+            }
         }
     }
 

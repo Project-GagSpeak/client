@@ -29,10 +29,10 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         => Items[layerIdx].CanLock() is false || Items[layerIdx].Padlock == SelectedLock;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
-        => DrawLockCombo("ClientRestrictionLock", width, layerIdx, string.Empty, tooltip, true);
+        => DrawLockCombo("##ClientRestrictionLock", width, layerIdx, string.Empty, tooltip, true);
 
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
-        => DrawUnlockCombo("ClientRestrictionUnlock", width, layerIdx, string.Empty, tooltip);
+        => DrawUnlockCombo("##ClientRestrictionUnlock", width, layerIdx, string.Empty, tooltip);
 
     protected override Task<bool> OnLockButtonPress(int layerIdx)
     {
