@@ -127,14 +127,9 @@ public partial class GagRestrictionsPanel
 
     public void DrawEditorRight(float width)
     {
-        // encapsulate this component in a child window to prevent over height from breaking the layout.
-        //using var _ = ImRaii.Child("EditorRight", ImGui.GetContentRegionAvail());
-
         if (_manager.ItemInEditor is not { } gagItem)
             return;
 
-        var rounding = ImGui.GetStyle().FrameRounding * 1.25f;
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
         _modDrawer.DrawModPresetBox("GagModPreset", gagItem, width);
     }
 
@@ -143,37 +138,27 @@ public partial class GagRestrictionsPanel
         // construct a child object here.
         var pos = ImGui.GetCursorScreenPos();
         var style = ImGui.GetStyle();
-        var iconH = ImGui.GetFrameHeight();
-        var winSize = new Vector2(width, iconH);
-        using (CkRaii.HeaderChild("Customize+ Preset", winSize))
+        using var child = CkRaii.HeaderChild("Customize+ Preset", new Vector2(width, ImGui.GetFrameHeight()), HeaderFlags.AddPaddingToHeight);
+
+        var change = _profileCombo.Draw("Customize Profile", gagItem.ProfileGuid, child.InnerRegion.X * .6f, child.InnerRegion.X * .8f);
+        if (change && !gagItem.ProfileGuid.Equals(_profileCombo.Current.ProfileGuid))
         {
-            // get the inner width after the padding is applied.
-            var widthInner = ImGui.GetContentRegionAvail().X;
-
-            using (ImRaii.Group())
-            {
-                var change = _profileCombo.Draw("Customize Profile", gagItem.ProfileGuid, widthInner * .6f, widthInner * .8f);
-
-                if (change && !gagItem.ProfileGuid.Equals(_profileCombo.Current.ProfileGuid))
-                {
-                    _logger.LogTrace($"Profile Guid changed to {_profileCombo.Current.ProfileGuid} " +
-                        $"[{_profileCombo.Current.ProfileName}] from {gagItem.ProfileGuid}");
-                    gagItem.ProfileGuid = _profileCombo.Current.ProfileGuid;
-                }
-
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    _logger.LogTrace("Profile Guid item was cleared. and is now Guid.Empty");
-                    gagItem.ProfileGuid = Guid.Empty;
-                }
-
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                // Get the length of a inputInt box.
-                var priority = (int)gagItem.ProfilePriority;
-                if (ImGui.InputInt("##PriorityAdjuster", ref priority))
-                    gagItem.ProfilePriority = (uint)priority;
-            }
+            _logger.LogTrace($"Profile Guid changed to {_profileCombo.Current.ProfileGuid} " +
+                $"[{_profileCombo.Current.ProfileName}] from {gagItem.ProfileGuid}");
+            gagItem.ProfileGuid = _profileCombo.Current.ProfileGuid;
         }
+
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            _logger.LogTrace("Profile Guid item was cleared. and is now Guid.Empty");
+            gagItem.ProfileGuid = Guid.Empty;
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        // Get the length of a inputInt box.
+        var priority = (int)gagItem.ProfilePriority;
+        if (ImGui.InputInt("##PriorityAdjuster", ref priority))
+            gagItem.ProfilePriority = (uint)priority;
     }
 }

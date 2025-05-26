@@ -98,7 +98,7 @@ public partial class PatternsPanel
 
         // First child. (left, startpoint)
         using (var c = CkRaii.ChildPaddedW("PatternStartPoint", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+            CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             var refStartPoint = pattern.StartPoint;
             CkGui.ColorTextCentered("Start Point", ImGuiColors.ParsedGold);
@@ -128,7 +128,7 @@ public partial class PatternsPanel
         // Shift to next column and display the pattern playback child.
         ImGui.SameLine();
         using (var c = CkRaii.ChildPaddedW("PlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-            CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+            CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             var refPlaybackDur = pattern.PlaybackDuration;
             CkGui.ColorTextCentered("Playback Duration", ImGuiColors.ParsedGold);

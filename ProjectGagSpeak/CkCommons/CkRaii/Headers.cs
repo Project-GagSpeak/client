@@ -9,36 +9,36 @@ namespace GagSpeak.CkCommons.Raii;
 public static partial class CkRaii
 {
     /// <inheritdoc cref="HeaderChild(string, Vector2, HeaderChildColors, float, HeaderFlags)"/>"
-    public static ImRaii.IEndObject HeaderChild(string text, Vector2 size, HeaderFlags flags = HeaderFlags.AlignCenter)
-        => HeaderChild(text, size, HeaderChildColors.Default, GetHeaderRounding(), flags);
+    public static IEOContainer HeaderChild(string text, Vector2 size, HeaderFlags flags = HeaderFlags.AlignCenter)
+        => HeaderChild(text, size, HeaderChildColors.Default, CkStyle.HeaderRounding(), flags);
 
 
     /// <inheritdoc cref="HeaderChild(string, Vector2, HeaderChildColors, float, HeaderFlags)"/>"
-    public static ImRaii.IEndObject HeaderChild(string text, Vector2 size, HeaderChildColors colors, HeaderFlags flags = HeaderFlags.AlignCenter)
-        => HeaderChild(text, size, colors, GetHeaderRounding(), flags);
+    public static IEOContainer HeaderChild(string text, Vector2 size, HeaderChildColors colors, HeaderFlags flags = HeaderFlags.AlignCenter)
+        => HeaderChild(text, size, colors, CkStyle.HeaderRounding(), flags);
 
 
     /// <inheritdoc cref="HeaderChild(string, Vector2, HeaderChildColors, float, HeaderFlags)"/>"
-    public static ImRaii.IEndObject HeaderChild(string text, Vector2 size, float rounding, HeaderFlags flags = HeaderFlags.AlignCenter)
+    public static IEOContainer HeaderChild(string text, Vector2 size, float rounding, HeaderFlags flags = HeaderFlags.AlignCenter)
         => HeaderChild(text, size, HeaderChildColors.Default, rounding, flags);
 
     /// <summary> Creates a Head with the labeled text, and a child beneath it. </summary>
     /// <remarks> The inner Width after padding is applied can be found in the returned IEndObject </remarks>
-    public static ImRaii.IEndObject HeaderChild(string text, Vector2 size, HeaderChildColors colors, float rounding, HeaderFlags flags = HeaderFlags.AlignCenter)
+    public static IEOContainer HeaderChild(string text, Vector2 size, HeaderChildColors colors, float rounding, HeaderFlags flags = HeaderFlags.AlignCenter)
     {
         ImGui.BeginGroup();
 
         var wdl = ImGui.GetWindowDrawList();
         var min = ImGui.GetCursorScreenPos();
         var lineH = 2 * ImGuiHelpers.GlobalScale;
-        var headerSize = new Vector2(size.X, GetHeaderHeight() + lineH);
+        var headerSize = new Vector2(size.X, ImGui.GetFrameHeight() + lineH);
         var max = min + headerSize;
-        var linePos = min + new Vector2(0, GetHeaderHeight());
+        var linePos = min + new Vector2(0, ImGui.GetFrameHeight());
 
         // Draw the header.
         wdl.AddRectFilled(min, max, colors.HeaderColor, rounding, ImDrawFlags.RoundCornersTop);
         wdl.AddLine(linePos, linePos with { X = max.X }, colors.SplitColor, lineH);
-        var textStart = HeaderTextOffset(size.X, GetHeaderHeight(), ImGui.CalcTextSize(text).X, flags);
+        var textStart = HeaderTextOffset(size.X, ImGui.GetFrameHeight(), ImGui.CalcTextSize(text).X, flags);
         wdl.AddText(min + textStart, ImGui.GetColorU32(ImGuiCol.Text), text);
 
         // Adjust the cursor.
@@ -60,12 +60,12 @@ public static partial class CkRaii
 
     /// <inheritdoc cref="ButtonHeaderChild(string, Vector2, Action, HeaderChildColors, float, HeaderFlags, string)"/>
     public static ImRaii.IEndObject ButtonHeaderChild(string text, Action act, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
-        => ButtonHeaderChild(text, ImGui.GetContentRegionAvail(), act, HeaderChildColors.Default, GetHeaderRounding(), flags, tt);
+        => ButtonHeaderChild(text, ImGui.GetContentRegionAvail(), act, HeaderChildColors.Default, CkStyle.HeaderRounding(), flags, tt);
 
 
     /// <inheritdoc cref="ButtonHeaderChild(string, Vector2, Action, HeaderChildColors, float, HeaderFlags, string)"/>
     public static ImRaii.IEndObject ButtonHeaderChild(string text, Vector2 size, Action act, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
-        => ButtonHeaderChild(text, size, act, HeaderChildColors.Default, GetHeaderRounding(), flags, tt);
+        => ButtonHeaderChild(text, size, act, HeaderChildColors.Default, CkStyle.HeaderRounding(), flags, tt);
 
 
     /// <inheritdoc cref="ButtonHeaderChild(string, Vector2, Action, HeaderChildColors, float, HeaderFlags, string)"/>
@@ -74,7 +74,7 @@ public static partial class CkRaii
 
     /// <inheritdoc cref="ButtonHeaderChild(string, Vector2, Action, HeaderChildColors, float, HeaderFlags, string)"/>
     public static ImRaii.IEndObject ButtonHeaderChild(string text, Vector2 size, Action act, HeaderChildColors colors, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
-        => ButtonHeaderChild(text, size, act, colors, GetHeaderRounding(), flags, tt);
+        => ButtonHeaderChild(text, size, act, colors, CkStyle.HeaderRounding(), flags, tt);
 
     /// <summary> Interactable Button Header that has a child body. </summary>
     /// <remarks> WindowPadding is always applied. Size passed in should be the size of the inner child space after padding. </remarks>
@@ -85,17 +85,17 @@ public static partial class CkRaii
         var wdl = ImGui.GetWindowDrawList();
         var min = ImGui.GetCursorScreenPos();
         var lineH = 2 * ImGuiHelpers.GlobalScale;
-        var headerSize = new Vector2(size.X, GetHeaderHeight() + lineH);
+        var headerSize = new Vector2(size.X, ImGui.GetFrameHeight() + lineH);
         var max = min + headerSize;
-        var linePos = min + new Vector2(0, GetHeaderHeight());
+        var linePos = min + new Vector2(0, ImGui.GetFrameHeight());
 
         wdl.AddRectFilled(min, max, CkColor.ElementHeader.Uint(), rounding, ImDrawFlags.RoundCornersTop);
         wdl.AddLine(linePos, linePos with { X = max.X }, CkColor.ElementSplit.Uint(), lineH);
 
         // Text & Icon Alignment
         var textWidth = ImGui.CalcTextSize(text).X;
-        var textStart = min + HeaderTextOffset(size.X, GetHeaderHeight(), textWidth, flags);
-        var hoverSize = new Vector2((size.X - textWidth) / 2, GetHeaderHeight());
+        var textStart = min + HeaderTextOffset(size.X, ImGui.GetFrameHeight(), textWidth, flags);
+        var hoverSize = new Vector2((size.X - textWidth) / 2, ImGui.GetFrameHeight());
 
         // Text & Icon Drawing.
         var isHovered = ImGui.IsMouseHoveringRect(textStart, textStart + hoverSize);
@@ -125,13 +125,13 @@ public static partial class CkRaii
     }
 
     public static ImRaii.IEndObject IconButtonHeaderChild(string text, FAI icon, Vector2 size, Action act, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
-        => IconButtonHeaderChild(text, icon, size, act, HeaderChildColors.Default, GetHeaderRounding(), flags, tt);
+        => IconButtonHeaderChild(text, icon, size, act, HeaderChildColors.Default, CkStyle.HeaderRounding(), flags, tt);
 
     public static ImRaii.IEndObject IconButtonHeaderChild(string text, FAI icon, Vector2 size, Action act, float rounding, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
         => IconButtonHeaderChild(text, icon, size, act, HeaderChildColors.Default, rounding, flags, tt);
 
     public static ImRaii.IEndObject IconButtonHeaderChild(string text, FAI icon, Vector2 size, Action act, HeaderChildColors colors, HeaderFlags flags = HeaderFlags.AlignCenter, string tt = "")
-        => IconButtonHeaderChild(text, icon, size, act, colors, GetHeaderRounding(), flags, tt);
+        => IconButtonHeaderChild(text, icon, size, act, colors, CkStyle.HeaderRounding(), flags, tt);
 
     /// <summary> Interactable Button Header that has a child body. </summary>
     /// <remarks> WindowPadding is always applied. Size passed in should be the size of the inner child space after padding. </remarks>
@@ -142,9 +142,9 @@ public static partial class CkRaii
         var wdl = ImGui.GetWindowDrawList();
         var min = ImGui.GetCursorScreenPos();
         var lineH = 2 * ImGuiHelpers.GlobalScale;
-        var headerSize = new Vector2(size.X, GetHeaderHeight() + lineH);
+        var headerSize = new Vector2(size.X, ImGui.GetFrameHeight() + lineH);
         var max = min + headerSize;
-        var linePos = min + new Vector2(0, GetHeaderHeight());
+        var linePos = min + new Vector2(0, ImGui.GetFrameHeight());
 
         wdl.AddRectFilled(min, max, colors.HeaderColor, rounding, ImDrawFlags.RoundCornersTop);
         wdl.AddLine(linePos, linePos with { X = max.X }, colors.SplitColor, lineH);
@@ -152,8 +152,8 @@ public static partial class CkRaii
         // Text & Icon Alignment
         var textWidth = ImGui.CalcTextSize(text).X;
         var textIconWidth = textWidth + ImGui.GetStyle().ItemInnerSpacing.X + CkGui.IconSize(icon).X;
-        var textStart = min + HeaderTextOffset(size.X, GetHeaderHeight(), textIconWidth, flags);
-        var hoverSize = new Vector2(textIconWidth, GetHeaderHeight());
+        var textStart = min + HeaderTextOffset(size.X, ImGui.GetFrameHeight(), textIconWidth, flags);
+        var hoverSize = new Vector2(textIconWidth, ImGui.GetFrameHeight());
 
         // Text & Icon Drawing.
         var isHovered = ImGui.IsMouseHoveringRect(textStart, textStart + hoverSize);

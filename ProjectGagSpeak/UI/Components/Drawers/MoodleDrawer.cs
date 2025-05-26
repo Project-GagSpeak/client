@@ -76,15 +76,14 @@ public class MoodleDrawer
     }
 
     /// <summary> Draw the items associated moodle. This can be either a Moodle Status or Moodle Preset. </summary>
-    public void DrawAssociatedMoodle(string id, IRestriction item, float width)
+    public void DrawAssociatedMoodle(string id, IRestriction item, float width, Vector2? iconSize = null)
     {
         // construct a child object here.
-        var pos = ImGui.GetCursorScreenPos();
+        var moodleSize = iconSize ?? IconSize;
         var style = ImGui.GetStyle();
-        var moodleDisplayHeight = FramedIconDisplayHeight();
-        var statusRowHeight = ImGui.GetFrameHeight() + style.ItemSpacing.Y;
-        var winSize = new Vector2(width, moodleDisplayHeight + statusRowHeight);
-        using (CkRaii.HeaderChild("Associated Moodle", winSize))
+        var moodleDisplayHeight = moodleSize.Y.AddWinPadY();
+        var winSize = new Vector2(width, moodleDisplayHeight + style.ItemSpacing.Y + ImGui.GetFrameHeight());
+        using (CkRaii.HeaderChild("Associated Moodle", winSize, HeaderFlags.AddPaddingToHeight))
         {
             using (ImRaii.Group())
             {
@@ -105,15 +104,15 @@ public class MoodleDrawer
             }
 
             // Below this, we need to draw the display field of the moodles that the selected status has.
-            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkRaii.GetChildRounding());
+            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), moodleSize);
         }
     }
 
-    public void FramedMoodleIconDisplay(Moodle moodle, float width, float rounding, int rows = 1)
-        => FramedMoodleIconDisplay([ moodle ], width, rounding, IconSize, rows);
+    public void FramedMoodleIconDisplay(Moodle moodle, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+        => FramedMoodleIconDisplay([ moodle ], width, rounding, iconSize ?? IconSize, rows);
 
-    public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, int rows = 1)
-        => FramedMoodleIconDisplay(moodles, width, rounding, IconSize, rows);
+    public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+        => FramedMoodleIconDisplay(moodles, width, rounding, iconSize ?? IconSize, rows);
 
     public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2 iconSize, int rows = 1)
     {

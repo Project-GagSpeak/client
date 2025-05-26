@@ -9,10 +9,12 @@ namespace GagSpeak.CkCommons.Gui.Utility;
 // Mimics the penumbra mod groups from penumbra mod selection.
 public static partial class CkGuiUtils
 {
-    public static void FramedEditDisplay(string id, float width, bool inEdit, string curLabel, Action<float> drawAct, uint editorBg = 0)
+    public static void FramedEditDisplay(string id, float width, bool inEdit, string curLabel,
+        Action<float> drawAct, uint editorBg = 0, float? height = null)
     {
         var col = inEdit ? editorBg : CkColor.FancyHeaderContrast.Uint();
-        using (CkRaii.Child(id + "frameDisp", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), DFlags.RoundCornersAll))
+        using (CkRaii.Child(id + "frameDisp", new Vector2(width, height ?? ImGui.GetFrameHeight()), col, 
+            CkStyle.ChildRounding(), DFlags.RoundCornersAll))
         {
             if (inEdit)
                 drawAct?.Invoke(width);

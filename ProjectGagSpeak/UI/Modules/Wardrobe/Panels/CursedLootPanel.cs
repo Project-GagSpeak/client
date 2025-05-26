@@ -110,12 +110,11 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         var pos = ImGui.GetCursorScreenPos();
         var style = ImGui.GetStyle();
         var height = ImGui.GetFrameHeight() + style.FramePadding.Y * 3;
-        var rounding = style.FrameRounding * 2f;
         var padding = style.WindowPadding;
         var region = new Vector2(ImGui.GetContentRegionAvail().X, height);
 
         // Draw the header frame and line
-        wdl.AddRectFilled(pos, pos + new Vector2(region.X, height), CkColor.ElementHeader.Uint(), rounding, ImDrawFlags.RoundCornersTop);
+        wdl.AddRectFilled(pos, pos + new Vector2(region.X, height), CkColor.ElementHeader.Uint(), CkStyle.HeaderRounding(), ImDrawFlags.RoundCornersTop);
         wdl.AddLine(pos + new Vector2(0, height - 2), pos + new Vector2(region.X, height - 2), CkColor.ElementSplit.Uint(), 2);
 
         // Position content within the header
@@ -129,10 +128,10 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         // Set the cursor screen pos to the end of the group
         ImGui.SetCursorScreenPos(pos + new Vector2(0, height));
-        using (ImRaii.Child("CursedLootPoolFrame", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.ChildPadded("LootpoolFrame", ImGui.GetContentRegionAvail().WithoutWinPadding(), CkColor.ElementBG.Uint(), dFlags: ImDrawFlags.RoundCornersBottom))
         {
             var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
-            using (CkRaii.FrameChildPadded("PoolItems", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChildPaddedWH("PoolItems", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
             {
                 if (allItemsInPool.Count <= 0)
                     return;
@@ -141,7 +140,6 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
                     DrawLootPoolItem(item, wdl);
             }
         }
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), rounding, ImDrawFlags.RoundCornersAll);
     }
 
     private void DrawLootPoolItem(CursedItem item, ImDrawListPtr wdl)

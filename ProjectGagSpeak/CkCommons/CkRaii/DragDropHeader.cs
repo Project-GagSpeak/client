@@ -7,11 +7,11 @@ public static partial class CkRaii
 {
     /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"
     public static ImRaii.IEndObject DragDropHeader(string text, float height, WFlags flags = WFlags.None)
-        => DragDropHeader(text, height, HeaderChildColors.Default, GetHeaderRounding(), WFlags.None);
+        => DragDropHeader(text, height, HeaderChildColors.Default, CkStyle.HeaderRounding(), WFlags.None);
 
     /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"
     public static ImRaii.IEndObject DragDropHeader(string text, float height, HeaderChildColors colors, WFlags flags = WFlags.None)
-        => DragDropHeader(text, height, colors, GetHeaderRounding(), flags);
+        => DragDropHeader(text, height, colors, CkStyle.HeaderRounding(), flags);
 
 
     /// <inheritdoc cref="DragDropHeader(string, float, HeaderChildColors, float, WFlags)"/>"

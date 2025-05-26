@@ -69,22 +69,13 @@ public sealed class ModPresetDrawer
     // Method for Drawing the Associated Glamour Item (Singular)
     public void DrawModPresetBox(string id, IRestriction item, float width)
     {
-        // construct a child object here.
-        var pos = ImGui.GetCursorScreenPos();
-        var style = ImGui.GetStyle();
-        var dropdownH = ImGui.GetFrameHeight()*2 + style.ItemSpacing.Y;
-        var previewH = 9 * ImGui.GetFrameHeightWithSpacing();
-        var winSize = new Vector2(width, previewH);
-
-        // Can migrate to usings later but for now am lazy.
-        using (CkRaii.HeaderChild("Associated Mod", winSize))
+        var winSize = new Vector2(width, CkStyle.GetFrameRowsHeight(2) + (9 * ImGui.GetFrameHeightWithSpacing()));
+        using (var c = CkRaii.HeaderChild("Associated Mod", winSize, HeaderFlags.AddPaddingToHeight))
         {
-            var widthInner = ImGui.GetContentRegionAvail().X;
-
             using (ImRaii.Group())
             {
                 // The Mod Selection.
-                var change = _manager.ModCombo.Draw("AMP-ModCombo-" + id, item.Mod.Container.DirectoryPath, widthInner, 1.4f);
+                var change = _manager.ModCombo.Draw("AMP-ModCombo-" + id, item.Mod.Container.DirectoryPath, c.InnerRegion.X, 1.4f);
                 if (change && !item.Mod.Container.DirectoryPath.Equals(_manager.ModCombo.Current?.DirPath))
                 {
                     // retrieve and set the new container reference.
@@ -101,7 +92,7 @@ public sealed class ModPresetDrawer
                 }
 
                 // The Mod Preset Selection.
-                var presetChange = _manager.PresetCombo.Draw("AMP-ModPresetCombo-" + id, item.Mod.Label, widthInner, 1f);
+                var presetChange = _manager.PresetCombo.Draw("AMP-ModPresetCombo-" + id, item.Mod.Label, c.InnerRegion.X, 1f);
                 if (presetChange && !item.Mod.Label.Equals(_manager.PresetCombo.Current?.Label))
                 {
                     // recreate the same modsettingPreset, but at the new label.
@@ -120,7 +111,6 @@ public sealed class ModPresetDrawer
                 }
             }
 
-            // now we need to draw a preview display, this should be 10x ImGui.GetFrameHeightWithSpacing() in size, spanning the same width.
             DrawPresetPreview(item.Mod);
         }
     }
@@ -138,7 +128,7 @@ public sealed class ModPresetDrawer
     public void DrawPresetPreview(ModSettingsPreset preset)
     {
         var region = ImGui.GetContentRegionAvail();
-        using (CkRaii.FrameChildPadded("MP-Preview" + preset.Container.DirectoryPath, region, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedWH("MP-Preview" + preset.Container.DirectoryPath, region, CkColor.FancyHeaderContrast.Uint()))
         {
             using (UiFontService.GagspeakLabelFont.Push())
             {
@@ -190,7 +180,8 @@ public sealed class ModPresetDrawer
     public void DrawPresetEditor()
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkRaii.FrameChildPadded("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(),
+            2 * ImGuiHelpers.GlobalScale, wFlags: WFlags.AlwaysUseWindowPadding))
         {
             if (_manager.ItemInEditor is not { } activeEditor)
                 return;

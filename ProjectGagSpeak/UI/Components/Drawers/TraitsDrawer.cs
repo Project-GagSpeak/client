@@ -43,7 +43,7 @@ public class TraitsDrawer
 
     public void DrawOneRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
     {
-        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight()), CkRaii.HeaderFlags.AddPaddingToHeight))
+        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight()), HeaderFlags.AddPaddingToHeight))
         {
             var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * TraitCount)) / (TraitCount - 1);
 
@@ -65,7 +65,7 @@ public class TraitsDrawer
 
     public void DrawTwoRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
     {
-        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), CkRaii.HeaderFlags.AddPaddingToHeight))
+        using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), HeaderFlags.AddPaddingToHeight))
         {
             var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * 4)) / 3;
 

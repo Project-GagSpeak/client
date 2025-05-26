@@ -218,7 +218,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var imgCol = hoveringImg ? CkColor.FancyHeader.Uint() : CkColor.FancyHeaderContrast.Uint();
         ImGui.SetCursorScreenPos(imgPos);
         ImGui.GetWindowDrawList().AddRectFilled(imgPos, imgPos + thumbnailRegion, imgCol, rounding);
-        _activeDrawer.DrawImage(_selector.Selected!, thumbnailRegion, rounding);
+        _activeDrawer.DrawFramedImage(_selector.Selected!, thumbnailRegion, rounding, true);
         if (hoveringImg)
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -241,11 +241,11 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var activeSetSize = new Vector2(ImGui.GetContentRegionAvail().X, activeSetHeight);
         if (_manager.AppliedRestraint is null)
         {
-            using var inactive = CkRaii.HeaderChild("No Restraint Set Is Active", activeSetSize, CkRaii.HeaderFlags.AddPaddingToHeight);
+            using var inactive = CkRaii.HeaderChild("No Restraint Set Is Active", activeSetSize, HeaderFlags.AddPaddingToHeight);
         }
         else
         {
-            using (CkRaii.HeaderChild("Active Restraint Set", activeSetSize, CkRaii.GetHeaderRounding(), CkRaii.HeaderFlags.AddPaddingToHeight))
+            using (CkRaii.HeaderChild("Active Restraint Set", activeSetSize, CkStyle.HeaderRounding(), HeaderFlags.AddPaddingToHeight))
             {
                 // Draw the restraint set equipment, grouped.
                 _activeDrawer.DrawRestraintSlots(_manager.AppliedRestraint, new Vector2(ImGui.GetFrameHeightWithSpacing()));

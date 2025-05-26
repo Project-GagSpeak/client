@@ -1,13 +1,18 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Triggers;
+using GagspeakAPI.Data.Interfaces;
 using ImGuiNET;
+using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui.UiToybox;
 
@@ -121,7 +126,7 @@ public partial class TriggersPanel
         using var _ = CkRaii.ChildPaddedW("Sel_Header", ImGui.GetContentRegionAvail().X, height, bgCol, ImGui.GetFrameHeight(), DFlags.RoundCornersTopRight);
 
         // Dummy is a placeholder for the label area drawn afterward.
-        ImGui.Dummy(region + new Vector2(CkRaii.GetFrameThickness()) - ImGui.GetStyle().ItemSpacing - ImGui.GetStyle().WindowPadding / 2);
+        ImGui.Dummy(region + new Vector2(CkStyle.FrameThickness()) - ImGui.GetStyle().ItemSpacing - ImGui.GetStyle().WindowPadding / 2);
         ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X * 2);
         DrawPrioritySetter(trigger, isEditorItem);
 
@@ -134,7 +139,7 @@ public partial class TriggersPanel
 
         var wdl = ImGui.GetWindowDrawList();
         var width = ImGui.GetContentRegionAvail().X;
-        var stripSize = new Vector2(width, CkRaii.GetFrameThickness());
+        var stripSize = new Vector2(width, CkStyle.FrameThickness());
         var tabSize = new Vector2(width / 2, ImGui.GetFrameHeight());
         var textYOffset = (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) / 2;
 
@@ -170,29 +175,179 @@ public partial class TriggersPanel
         }
     }
 
-    private void DrawSelectedBody(Trigger trigger, bool isEditorItem, uint? customSearchBg)
+    private void DrawSelectedBody(Trigger trigger, bool isEditorItem, uint searchBg)
     {
         using var bodyChild = CkRaii.Child("Sel_Body", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding);
 
+        ImGui.Spacing();
+
+        // get offset for drawn space.
+        var comboW = bodyChild.InnerRegion.X * .65f;
+        var offset = (ImGui.GetContentRegionAvail().X - comboW) / 2;
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
+
+        // Draw it based on the tab.
         if (_selectedTab is TriggerTab.Detection)
         {
-            ImGui.Spacing();
-            DrawTriggerTypeSelector(bodyChild.InnerRegion.X * .65f, trigger, isEditorItem);
+            CkGuiUtils.FramedEditDisplay("##DetectionType", comboW, isEditorItem, trigger.Type.ToName(), _ =>
+            {
+                if (CkGuiUtils.EnumCombo("##DetectionType", comboW, trigger.Type, out var newVal, _ => _.ToName(), flags: CFlags.None))
+                {
+                    if (newVal != trigger.Type)
+                    {
+                        _logger.LogInformation($"Trigger Type changed from {trigger.Type} to {newVal}");
+                        _manager.ChangeTriggerType(trigger, newVal);
+                    }
+                }
+            });
+
             CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
+            
             // re-aquire the trigger item.
             var triggerItem = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
-            _drawer.DrawDetectionInfo(triggerItem, isEditorItem, customSearchBg);
-            
+            _drawer.DrawDetectionInfo(triggerItem, isEditorItem, searchBg);
             DrawFooter(triggerItem);
         }
         else
         {
-            ImGui.Spacing();
-            DrawTriggerActionType(bodyChild.InnerRegion.X * .65f, trigger, isEditorItem);
-            CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
-            _drawer.DrawActionInfo(trigger, isEditorItem);
+            CkGuiUtils.FramedEditDisplay("##ActionType", comboW, isEditorItem, trigger.ActionType.ToName(), _ =>
+            {
+                if (CkGuiUtils.EnumCombo("##ActionType", comboW, trigger.ActionType, out var newVal, _ => _.ToName(), flags: CFlags.None))
+                {
+                    if (newVal != trigger.ActionType)
+                    {
+                        trigger.InvokableAction = newVal switch
+                        {
+                            InvokableActionType.TextOutput => new TextAction(),
+                            InvokableActionType.Gag => new GagAction(),
+                            InvokableActionType.Restriction => new RestrictionAction(),
+                            InvokableActionType.Restraint => new RestraintAction(),
+                            InvokableActionType.Moodle => new MoodleAction(),
+                            InvokableActionType.ShockCollar => new PiShockAction(),
+                            _ => new SexToyAction(),
+                        };
+                    }
+                }
+            });
 
+            CkGui.SeparatorSpaced(col: CkColor.FancyHeaderContrast.Uint());
+
+            _drawer.DrawActionInfo(trigger, isEditorItem, searchBg);
             DrawFooter(trigger);
         }
+    }
+
+    private void DrawPrioritySetter(Trigger trigger, bool isEditing)
+    {
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
+
+        var size = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight());
+        using (var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), CkStyle.FrameThickness(), DFlags.RoundCornersAll))
+        {
+            if (isEditing)
+            {
+                var priority = trigger.Priority;
+                ImGui.SetNextItemWidth(c.InnerRegion.X);
+                if (ImGui.DragInt("##DragID", ref priority, 1.0f, 0, 100, "%d"))
+                    trigger.Priority = priority;
+            }
+            else
+            {
+                ImGuiUtil.Center(trigger.Priority.ToString());
+            }
+        }
+        CkGui.AttachToolTip(isEditing
+            ? "Set the Priority of this Trigger.--SEP--Double-Click to edit directly."
+            : "The priority of this Trigger.");
+    }
+
+    private void DrawDescription(Trigger trigger, bool isEditing)
+    {
+        var flags = isEditing ? WFlags.None : WFlags.AlwaysUseWindowPadding;
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, ImGui.GetStyle().FramePadding);
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
+        using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(),
+            CkStyle.ChildRoundingLarge(), 2f, DFlags.RoundCornersAll, flags);
+
+        // Display the correct text field based on the editing state.
+        if (isEditing)
+        {
+            var description = trigger.Description;
+            if (ImGui.InputTextMultiline("##DescriptionField", ref description, 200, c.InnerRegion))
+                trigger.Description = description;
+        }
+        else
+            ImGui.TextWrapped(trigger.Description);
+
+        // Draw a hint if no text is present.
+        if (trigger.Description.IsNullOrWhitespace())
+            ImGui.GetWindowDrawList().AddText(ImGui.GetItemRectMin() + ImGui.GetStyle().FramePadding,
+                0xFFBBBBBB, "Input a description in the space provided...");
+    }
+
+    private void DrawLabelWithToggle(Vector2 region, Trigger trigger, bool isEditingItem)
+    {
+        bool isHovered = false;
+        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Trigger."
+            + "--SEP-- Right Click to cancel and exit Editor.";
+
+        using (CkRaii.Child("Sel_Label_Piece", new Vector2(region.X, ImGui.GetFrameHeight())))
+        {
+            // Advance forward by window padding.
+            ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X / 2);
+            CkGui.BooleanToColoredIcon(trigger.Enabled, false);
+            if (ImGui.IsItemHovered() && ImGui.IsItemClicked())
+                trigger.Enabled = !trigger.Enabled;
+            CkGui.AttachToolTip((trigger.Enabled ? "Enable" : "Disable") + " this Trigger.");
+
+            // Now draw out the label and icon.
+            ImGui.SameLine();
+            var remainingSpace = ImGui.GetContentRegionAvail();
+            using (ImRaii.Group())
+            {
+                ImUtf8.TextFrameAligned(trigger.Label);
+                ImGui.SameLine(remainingSpace.X - ImGui.GetFrameHeight() * 1.5f);
+                CkGui.FramedIconText(isEditingItem ? FAI.Save : FAI.Edit);
+            }
+            var minInner = ImGui.GetItemRectMin();
+            isHovered = ImGui.IsMouseHoveringRect(minInner, minInner + remainingSpace);
+
+            // Handle Interaction.
+            if (isHovered)
+                CkGui.AttachToolTip(tooltip);
+            if (isHovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                if (isEditingItem) _manager.SaveChangesAndStopEditing();
+                else _manager.StartEditing(_selector.Selected!);
+            }
+            if (isHovered && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+            {
+                if (isEditingItem) _manager.StopEditing();
+                else _logger.LogWarning("Right Clicked on a Trigger that isn't in the editor.");
+            }
+        }
+        var min = ImGui.GetItemRectMin();
+        var col = isHovered ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
+        ImGui.GetWindowDrawList().AddRectFilled(min, min + region + new Vector2(ImGui.GetStyle().WindowPadding.X / 2),
+            CkColor.ElementSplit.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
+        ImGui.GetWindowDrawList().AddRectFilled(min, min + region, col, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
+    }
+
+    private void DrawFooter(Trigger trigger)
+    {
+        // get the remaining region.
+        var regionLeftover = ImGui.GetContentRegionAvail().Y;
+
+        // Determine how to space the footer.
+        if (regionLeftover < (CkGui.GetSeparatorHeight() + ImGui.GetFrameHeight()))
+            CkGui.Separator();
+        else
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + regionLeftover - ImGui.GetFrameHeight());
+
+        // Draw it.
+        ImUtf8.TextFrameAligned("ID:");
+        ImGui.SameLine();
+        ImUtf8.TextFrameAligned(trigger.Identifier.ToString());
     }
 }

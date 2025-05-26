@@ -148,7 +148,7 @@ public partial class CkGui
         => height + ImGui.GetStyle().ItemSpacing.Y * 2 ?? ImGui.GetStyle().ItemSpacing.Y * 3;
 
     public static float GetSeparatorSpacedHeight(float? height = null)
-    => height + ImGui.GetStyle().ItemSpacing.Y * 2 ?? ImGui.GetStyle().ItemSpacing.Y * 5;
+    => height + ImGui.GetStyle().ItemSpacing.Y * 4 ?? ImGui.GetStyle().ItemSpacing.Y * 5;
 
     public static void Separator(float? height = null, float? width = null, uint? col = null)
     {
@@ -157,7 +157,7 @@ public partial class CkGui
             ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col ?? CkColor.FancyHeaderContrast.Uint());
     }
 
-    public static void SeparatorSpaced (float? height = null, float? width = null, uint? col = null)
+    public static void SeparatorSpaced(float? height = null, float? width = null, uint? col = null)
     {
         ImGui.Spacing();
         ImGui.Dummy(new Vector2(width ?? ImGui.GetContentRegionAvail().X, height ?? ImGui.GetStyle().ItemSpacing.Y));

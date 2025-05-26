@@ -1,7 +1,10 @@
+using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
+using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
@@ -14,6 +17,8 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+using System.Drawing;
+using static Penumbra.GameData.Data.GamePaths;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 
@@ -27,6 +32,16 @@ public class ActiveItemsDrawer
     private readonly FavoritesManager _favorites;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
+
+    private RestrictionGagCombo[] _gagItems;
+    private PadlockGagsClient[] _gagPadlocks;
+
+    private RestrictionCombo[] _restrictionItems;
+    private PadlockRestrictionsClient[] _restrictionPadlocks;
+
+    private RestraintCombo _restraintItem;
+    private PadlockRestraintsClient _restraintPadlocks;
+
     public ActiveItemsDrawer(
         ILogger<ActiveItemsDrawer> logger,
         GagspeakMediator mediator,
@@ -77,16 +92,6 @@ public class ActiveItemsDrawer
         _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints);
     }
 
-    // Draw out all of the possible combos for active items.
-    private RestrictionGagCombo[] _gagItems;
-    private PadlockGagsClient[] _gagPadlocks;
-
-    private RestrictionCombo[] _restrictionItems;
-    private PadlockRestrictionsClient[] _restrictionPadlocks;
-
-    private RestraintCombo _restraintItem;
-    private PadlockRestraintsClient _restraintPadlocks;
-
     public void DisplayGagSlots(float width)
     {
         if (_gags.ServerGagData is not { } activeGagSlots)
@@ -94,7 +99,6 @@ public class ActiveItemsDrawer
 
         // get the current content height.
         var height = ImGui.GetContentRegionAvail().Y;
-        // calculate the Y spacing for the items.
         var groupH = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
         var groupSpacing = (height - 3 * groupH) / 4;
 
@@ -102,52 +106,17 @@ public class ActiveItemsDrawer
         foreach (var (gagData, index) in activeGagSlots.GagSlots.WithIndex())
         {
             // Spacing.
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
+            if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
             // Lock Display.
-            if(gagData.GagItem is not GagType.None)
+            if(gagData.GagItem is GagType.None)
+                ApplyItemGroup(groupH, index, gagData);
+            else
             {
                 if (gagData.IsLocked())
-                    GagSlotUnlockingUi(width, index, gagData);
+                    UnlockItemGroup(groupH, index, gagData);
                 else
-                    GagSlotLockingUi(width, index, gagData);
-            }
-            else
-                GagSlotApplyOrRemoveUi(width, index, gagData);
-        }
-    }
-
-    public void DisplayRestrictionSlots(float width)
-    {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        using var _ = ImRaii.Child("RestrictionSlotsChild", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
-
-        if (_restrictions.ServerRestrictionData is not { } activeRestrictionSlots)
-            return;
-
-        // get the current content height.
-        var height = ImGui.GetContentRegionAvail().Y;
-        // calculate the Y spacing for the items.
-        var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-        var groupSpacing = (height - 5 * groupH) / 7;
-
-        // Draw the Gag Slots.
-        foreach (var (restrictionData, index) in activeRestrictionSlots.Restrictions.WithIndex())
-        {
-            // Spacing.
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
-
-            // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
-            if (_restrictions.AppliedRestrictions[index] is { } item)
-            {
-                if (restrictionData.IsLocked())
-                    RestrictionUnlockingUi(width, index, restrictionData, item);
-                else
-                    RestrictionLockingUi(width, index, restrictionData, item);
-            }
-            else
-            {
-                RestrictionApplyOrRemoveUi(width, index, restrictionData);
+                    LockItemGroup(groupH, index, gagData);
             }
         }
     }
@@ -194,110 +163,48 @@ public class ActiveItemsDrawer
 
     }
 
-    #region GagRestrictionDisplays
-    public void GagSlotApplyOrRemoveUi(float width, int slotIdx, ActiveGagSlot gagData)
+    // New Revised and Optimized displays:
+    public void ApplyItemGroup(float height, int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var gagCombo = _gagItems[slotIdx];
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-        // Draw out the gag image first, but only if it exists at the layer we want to draw at. (Otherwise draw nothing)
-        DrawImage(gagData.GagItem, new Vector2(height), 10f, false, true);
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var slotBG))
-            wdl.AddDalamudImageRounded(slotBG, imgPos, imgSize, 10f);
 
-        // Perform actions based on the itemRect. (In this case, clear the gag.)
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove((int)slotIdx))
-        {
-            _logger.LogTrace($"Gag Layer {slotIdx} was cleared. and is now Empty");
-            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
-        }
+        // Draw out the framed image first.
+        DrawFramedImage(data.GagItem, height, 10f);
 
-        // Item Combos and Interactions.
+        // Beside it begin a secondary group.
         ImUtf8.SameLineInner();
-        var rightWidth = ImGui.GetContentRegionAvail().X;
         using (ImRaii.Group())
         {
-            ImGui.Dummy(new Vector2(rightWidth, ImGui.GetFrameHeight()));
-            var change = gagCombo.Draw("##GagApplyRemove" + slotIdx, gagData.GagItem, rightWidth);
-            if (change && gagCombo.Current is not null && gagData.GagItem != gagCombo.Current.GagType)
+            // Center vertically the combo.
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
+            var width = ImGui.GetContentRegionAvail().X;
+            var combo = _gagItems[slotIdx];
+
+            var change = combo.Draw($"##GagSelector-{slotIdx}", data.GagItem, width);
+            if (change && combo.Current != null && data.GagItem != combo.Current.GagType)
             {
                 // return if we are not allow to do the application.
-                if (_gags.CanApply((int)slotIdx, gagCombo.Current.GagType))
+                if (_gags.CanApply(slotIdx, combo.Current.GagType))
                 {
-                    var updateType = (gagCombo.Current.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+                    var updateType = (combo.Current.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveGagSlot()
                     {
-                        GagItem = gagCombo.Current.GagType,
+                        GagItem = combo.Current.GagType,
                         Enabler = MainHub.UID,
                     };
                     _mediator.Publish(new GagDataChangedMessage(updateType, slotIdx, newSlotData));
-                    _logger.LogTrace($"Requesting Server to change gag layer {(int)slotIdx} to {gagCombo.Current.GagType} from {gagData.GagItem}");
+                    _logger.LogTrace($"Requesting Server to update layer {slotIdx}'s Gag to {combo.Current.GagType} from {data.GagItem}");
                 }
             }
         }
     }
 
-    public void GagSlotLockingUi(float width, int slotIdx, ActiveGagSlot gagData)
+    public void ApplyItemGroup(float height, int slotIdx, ActiveRestriction data)
     {
         using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-        DrawImage(gagData.GagItem, new Vector2(height), 10f, true, true);
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var slotBG))
-            wdl.AddDalamudImageRounded(slotBG, imgPos, imgSize, 10f);
 
-        ImUtf8.SameLineInner();
-        var rightWidth = ImGui.GetContentRegionAvail().X;
-        _gagPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
-    }
-
-    public void GagSlotUnlockingUi(float width, int slotIdx, ActiveGagSlot gagData)
-    {
-        using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var padlockSize = new Vector2(height / 2);
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-        DrawImage(gagData.GagItem, new Vector2(height), 10f, true, true);
-
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var gagFrame))
-            wdl.AddDalamudImageRounded(gagFrame, imgPos, imgSize, 10f);
-
-        // now we must center for the lock and draw this as well.
-        ImGui.SetCursorScreenPos(imgPos + new Vector2(height - padlockSize.X / 2, (height - padlockSize.Y) / 2));
-        DrawPadlockImage(gagData, padlockSize);
-        if (_cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var padlockFrame))
-            wdl.AddDalamudImageRounded(padlockFrame, imgPos, imgSize, 10f);
-
-        ImUtf8.SameLineInner();
-        var rightWidth = ImGui.GetContentRegionAvail().X;
-        _gagPadlocks[slotIdx].DrawUnlockCombo(rightWidth, slotIdx, "Unlock this Padlock!");
-    }
-    #endregion GagRestrictionDisplays
-
-    #region RestrictionDisplays
-    public void RestrictionApplyOrRemoveUi(float width, int slotIdx, ActiveRestriction itemData)
-    {
-        using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-
-        ImGui.Dummy(new Vector2(height));
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var slotBG))
-            wdl.AddDalamudImageRounded(slotBG, imgPos, imgSize, 10f);
-
+        // Draw out the framed image first.
+        DrawRestrictionImage(null, height, 10f);
         // Perform actions based on the itemRect. (In this case, clear the gag.)
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
         {
@@ -305,149 +212,156 @@ public class ActiveItemsDrawer
             _mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveRestriction()));
         }
 
-        // Item Combos and Interactions.
+        // Beside it begin a secondary group.
         ImUtf8.SameLineInner();
-        var rightWidth = ImGui.GetContentRegionAvail().X;
         using (ImRaii.Group())
         {
+            // Center vertically the combo.
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
+            var width = ImGui.GetContentRegionAvail().X;
             var combo = _restrictionItems[slotIdx];
-            ImGui.Dummy(new Vector2(rightWidth, ImGui.GetFrameHeight()/2));
-            var change = combo.Draw("##RestrictionApplyRemove" + slotIdx, itemData.Identifier, rightWidth);
-            if (change && combo.Current is not null && itemData.Identifier != combo.Current.Identifier)
+
+            var change = combo.Draw($"##Restrictions-{slotIdx}", data.Identifier, width);
+            if (change && combo.Current != null && data.Identifier != combo.Current.Identifier)
             {
                 // return if we are not allow to do the application.
                 if (_restrictions.CanApply(slotIdx))
                 {
-                    var updateType = combo.Current.Identifier.IsEmptyGuid() 
-                        ? DataUpdateType.Applied : DataUpdateType.Swapped;
+                    var updateType = combo.Current.Identifier.IsEmptyGuid() ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveRestriction()
                     {
                         Identifier = combo.Current.Identifier,
                         Enabler = MainHub.UID,
                     };
                     _mediator.Publish(new RestrictionDataChangedMessage(updateType, slotIdx, newSlotData));
-                    _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.Current.Identifier} from {itemData.Identifier}");
+                    _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.Current.Identifier} from {data.Identifier}");
                 }
             }
         }
     }
 
-    public void RestrictionLockingUi(float width, int slotIdx, ActiveRestriction itemData, RestrictionItem internalData)
+    public void LockItemGroup(float height, int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-        DrawImage(internalData, new Vector2(height), 10f, true);
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var slotBG))
-            wdl.AddDalamudImageRounded(slotBG, imgPos, imgSize, 10f);
+
+        // Draw out the framed image first.
+        DrawFramedImage(data.GagItem, height, 10f);
+        // We can remove if we are not yet locked (unlocked)
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx))
+        {
+            _logger.LogTrace($"Gag Layer {slotIdx} was cleared. and is now Empty");
+            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
+        }
+
+        ImUtf8.SameLineInner();
+        var rightWidth = ImGui.GetContentRegionAvail().X;
+        _gagPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
+    }
+
+    public void LockItemGroup(float height, int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    {
+        using var group = ImRaii.Group();
+        // Draw out the framed image first.
+        DrawRestrictionImage(dispData, height, 10f);
+        // We can remove if we are not yet locked (unlocked)
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
+        {
+            _logger.LogTrace($"Restriction Layer {slotIdx} was cleared. and is now Empty");
+            _mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveRestriction()));
+        }
 
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
         _restrictionPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
     }
 
-    public void RestrictionUnlockingUi(float width, int slotIdx, ActiveRestriction itemData, RestrictionItem internalData)
+    public void UnlockItemGroup(float height, int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
-        var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var padlockSize = new Vector2(height / 2);
-        var imgPos = ImGui.GetCursorScreenPos();
-        var imgSize = new Vector2(height);
-        DrawImage(internalData, new Vector2(height), 10f, true);
+        var size = new Vector2(height);
+        var padlockSize = size / 2;
+        // Draw out the framed image first.
+        DrawFramedImage(data.GagItem, height, 10f);
+        ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + (size - padlockSize) / 2);
+        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
 
-        // Draw out the border frame next.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var gagFrame))
-            wdl.AddDalamudImageRounded(gagFrame, imgPos, imgSize, 10f);
+        ImUtf8.SameLineInner();
+        var rightWidth = ImGui.GetContentRegionAvail().X;
+        _gagPadlocks[slotIdx].DrawUnlockCombo(rightWidth, slotIdx, "Attempt to unlock this Padlock!");
+    }
 
-        // now we must center for the lock and draw this as well.
-        ImGui.SetCursorScreenPos(imgPos + new Vector2(height - padlockSize.X / 2, (height - padlockSize.Y) / 2));
-        DrawPadlockImage(itemData, padlockSize);
-        if (_cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var padlockFrame))
-            wdl.AddDalamudImageRounded(padlockFrame, imgPos, imgSize, 10f);
+    public void UnlockItemGroup(float height, int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    {
+        using var group = ImRaii.Group();
+        var size = new Vector2(height);
+        var padlockSize = size / 2;
+        // Draw out the framed image first.
+        DrawRestrictionImage(dispData, height, 10f);
+        ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + (size - padlockSize) / 2);
+        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
 
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
         _restrictionPadlocks[slotIdx].DrawUnlockCombo(rightWidth, slotIdx, "Attempt to unlock this Padlock!");
     }
-    #endregion RestrictionDisplays
 
-    public void DrawImage(GagType gag, Vector2 region, float rounding = 0f, bool drawBg = false, bool blockNone = true)
+    public void DrawFramedImage(GagType gag, float size, float rounding, bool excludeFrame = false)
     {
-        var pos = ImGui.GetCursorScreenPos();
-        if(drawBg)
-            ImGui.GetWindowDrawList().AddRectFilled(pos, pos + region, 0xFF000000, rounding);
-
-        if (gag is GagType.None && blockNone)
-        {
-            ImGui.Dummy(region);
-            return;
-        }
-        else if(_cosmetics.GagImageFromType(gag) is { } image)
-        {
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, rounding);
-            ImGui.Dummy(region);
-        }
+        var gagImage = gag is GagType.None ? null : _cosmetics.GagImageFromType(gag);
+        var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frame) ? frame : null;
+        DrawImageInternal(gagImage, gagFrame, size, rounding, excludeFrame);
     }
 
-    public void DrawImage(RestrictionItem restrictionItem, Vector2 region, float rounding = 0f, bool drawBg = false)
+    public void DrawFramedImage(Padlocks padlock, float size, float rounding, bool excludeFrame = false)
     {
-        var pos = ImGui.GetCursorScreenPos();
-        if (drawBg)
-            ImGui.GetWindowDrawList().AddRectFilled(pos, pos + region, 0xFF000000, rounding);
+        var padlockImage = padlock is Padlocks.None ? null : _cosmetics.PadlockImageFromType(padlock);
+        var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frame) ? frame : null;
+        DrawImageInternal(padlockImage, padlockFrame, size, rounding, excludeFrame);
+    }
 
-        if (_cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restrictionItem.ThumbnailPath) is { } image)
+    public void DrawRestrictionImage(RestrictionItem? restriction, float size, float rounding, bool excludeFrame = false)
+    {
+        // Attempt custom thumbnail.
+        if (restriction != null && _cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.ThumbnailPath) is { } image)
         {
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, rounding);
-            ImGui.Dummy(region);
+            ImGuiHelpers.ScaledDummy(size);
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(image, ImGui.GetItemRectMin(), new Vector2(size), rounding);
         }
-        else if (restrictionItem.Glamour.Slot is not EquipSlot.Nothing)
+        else if (restriction != null && restriction.Glamour.Slot is not EquipSlot.Nothing)
         {
-            restrictionItem.Glamour.GameItem.DrawIcon(_textures, region, restrictionItem.Glamour.Slot, rounding);
+            restriction.Glamour.GameItem.DrawIcon(_textures, new Vector2(size), restriction.Glamour.Slot, rounding);
         }
         else
         {
-            ImGui.Dummy(region);
+            ImGuiHelpers.ScaledDummy(size);
         }
+
+        // Fill out the frame.
+        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameWrap) && !excludeFrame)
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, ImGui.GetItemRectMin(), new Vector2(size), rounding);
     }
 
-    public void DrawImage(RestraintSet restraintItem, Vector2 region, float rounding = 0f, bool drawBg = false)
+    public void DrawFramedImage(RestraintSet? rs, Vector2 size, float rounding, bool excludeFrame = false)
     {
-        var pos = ImGui.GetCursorScreenPos();
-        if (drawBg)
-            ImGui.GetWindowDrawList().AddRectFilled(pos, pos + region, 0xFF000000, rounding);
-
-        if (_cosmetics.GetImageMetadataPath(ImageDataType.Restraints, restraintItem.ThumbnailPath) is { } image)
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, rounding);
-
-        ImGui.Dummy(region);
+        var image = rs is null ? null : _cosmetics.GetImageMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath);
+        DrawImageInternal(image, null, size, rounding);
     }
 
+    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, float size, float rounding, bool excludeFrame = false)
+        => DrawImageInternal(img, frame, new Vector2(size), rounding, excludeFrame);
 
-    public void DrawPadlockImage(IPadlockableRestriction gagData, Vector2 region, bool drawBg = false, bool blockNone = true)
+    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, Vector2 size, float rounding, bool excludeFrame = false)
     {
-        var wdl = ImGui.GetWindowDrawList();
-        var pos = ImGui.GetCursorScreenPos();
+        // Fill the area with the dummy region.
+        ImGui.Dummy(size);
+        var pos = ImGui.GetItemRectMin();
 
-        // Draw the backdrop.
-        if (drawBg)
-            wdl.AddRectFilled(pos, pos + region, 0xFF000000);
+        // Now draw out the image, if we should.
+        if(img is { } imageWrap)
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(imageWrap, pos, size, rounding);
 
-        // Draw the padlock.
-        if (gagData.Padlock is Padlocks.None && blockNone)
-        {
-            ImGui.Dummy(region);
-            return;
-        }
-        else if (_cosmetics.PadlockImageFromType(gagData.Padlock) is { } image)
-        {
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(image, pos, region, region.X / 2);
-            ImGui.Dummy(region);
-        }
+        // Fill out the frame.
+        if (frame is { } frameWrap && !excludeFrame)
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, pos, size, rounding);
     }
-
-
 }

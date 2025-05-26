@@ -46,7 +46,7 @@ public class RestraintEditorEquipment : IFancyTab
 
         // Draw out one area for the equipment. (And customization management.)
         using (CkRaii.IconButtonHeaderChild("Equipment", FAI.FileImport, subWindowSize, ImportEquipment, FancyTabBar.Rounding, 
-            CkRaii.HeaderFlags.ContentRegionHeaderCentered, "Import current Equipment on your Character."))
+            HeaderFlags.CR_HeaderCentered, "Import current Equipment on your Character."))
         {
             var region = ImGui.GetContentRegionAvail();
             var innerWidth = region.X;
@@ -60,7 +60,7 @@ public class RestraintEditorEquipment : IFancyTab
         ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
         // Draw out one area for the accessories. (And glasses management.)
         using (CkRaii.IconButtonHeaderChild("Accessories", FAI.FileImport, subWindowSize, ImportAccessories, FancyTabBar.Rounding,
-            CkRaii.HeaderFlags.ContentRegionHeaderCentered, "Import current Accessories on your Character."))
+            HeaderFlags.CR_HeaderCentered, "Import current Accessories on your Character."))
         {
             var region = ImGui.GetContentRegionAvail();
             var innerWidth = region.X;

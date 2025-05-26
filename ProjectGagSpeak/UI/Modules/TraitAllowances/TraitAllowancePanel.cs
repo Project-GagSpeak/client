@@ -103,10 +103,10 @@ public class TraitAllowancePanel
         // Group this to get the full height.
         using (ImRaii.Group())
         {
-            using (CkRaii.HeaderChild("Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
+            using (var c = CkRaii.HeaderChild("Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), HeaderFlags.SizeIncludesHeader))
             {
                 var selectorHeight = ImGui.GetFrameHeightWithSpacing() * Options.Length - ImGui.GetStyle().ItemSpacing.Y;
-                using (CkRaii.FramedChildPaddedW("Selector", ImGui.GetContentRegionAvail().X, selectorHeight, CkColor.FancyHeaderContrast.Uint()))
+                using (CkRaii.FramedChildPaddedW("Selector", c.InnerRegion.X, selectorHeight, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -117,10 +117,10 @@ public class TraitAllowancePanel
 
                 // Action elements.
                 var actionsH = ImGui.GetFrameHeightWithSpacing() * 6 - ImGui.GetStyle().ItemSpacing.Y;
-                var childStartY = ImGui.GetContentRegionAvail().Y - actionsH - ImGui.GetTextLineHeightWithSpacing();
+                var childStartY = ImGui.GetContentRegionAvail().Y - actionsH.AddWinPadY() - ImGui.GetTextLineHeightWithSpacing();
                 ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, childStartY));
                 ImGuiUtil.Center("Module Actions");
-                using (CkRaii.FramedChildPaddedW("ActList", ImGui.GetContentRegionAvail().X, actionsH, CkColor.FancyHeaderContrast.Uint()))
+                using (CkRaii.FramedChildPaddedW("ActList", c.InnerRegion.X, actionsH, CkColor.FancyHeaderContrast.Uint()))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -169,9 +169,9 @@ public class TraitAllowancePanel
         }
         // then draw out the allowed pairs list.
         ImGui.SameLine();
-        using (CkRaii.HeaderChild("Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), CkRaii.HeaderFlags.SizeIncludesHeader))
+        using (CkRaii.HeaderChild("Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), HeaderFlags.SizeIncludesHeader))
         {
-            using (CkRaii.FrameChildPadded("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChild("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), wFlags: ImGuiWindowFlags.AlwaysUseWindowPadding))
             {
                 if (_allowedPairs.Count <= 0)
                     return;

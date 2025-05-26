@@ -142,9 +142,11 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Updates the last selection with the currently selected item. This is then updated to the proper index in _available[] </summary>
     /// <remarks> Additionally scrolls the list to the last selected item, if any, and displays the filter. </remarks>
-    protected virtual void DrawFilter(int currentSelected, float width, uint? customSearchBg)
+    protected virtual void DrawFilter(int currentSelected, float width, uint? searchBg)
     {
-        using var _ = ImRaii.PushColor(ImGuiCol.FrameBg, customSearchBg!.Value, customSearchBg.HasValue);
+        if(searchBg.HasValue)
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, searchBg.Value);
+
         _setScroll = false;
         // Scroll to current selected when opened if any, and set keyboard focus to the filter field.
         if (ImGui.IsWindowAppearing())
@@ -163,6 +165,9 @@ public abstract class CkFilterComboBase<T>
             if (SearchByParts)
                 _filterParts = _filter.Lower.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         }
+
+        if (searchBg.HasValue)
+            ImGui.PopStyleColor();
     }
 
     /// <summary> Draws the list of items. </summary>

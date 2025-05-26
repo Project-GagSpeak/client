@@ -190,8 +190,15 @@ public class CkHeader
         // we need to return the content region struct, so create our end result content regions below.
         var topLeft = new DrawRegion(topLeftContentPos, leftSizeInner);
         var botLeft = new DrawRegion(botLeftContentPos, new Vector2(leftSizeInner.X, botContentH));
-        var topRight = new DrawRegion(topRightContentPos, new Vector2(maxPos.X - outerXOffset - topRightContentPos.X, leftSizeInner.Y + splitWidth));
-        var botRight = new DrawRegion(botRightContentPos, maxPos - clippedOffset - botRightContentPos);
+
+        // For when in editing mode to make things appear more aligned.
+        var rightShift = showSplit ? Vector2.Zero : new Vector2(splitWidth / 2, 0);
+
+        var topRightSize = new Vector2(maxPos.X - outerXOffset - topRightContentPos.X, leftSizeInner.Y + splitWidth);
+        var topRight = new DrawRegion(topRightContentPos - rightShift, topRightSize + rightShift);
+
+        var botRightSize = maxPos - clippedOffset - botRightContentPos;
+        var botRight = new DrawRegion(botRightContentPos - rightShift, botRightSize + rightShift);
 
         return new(topLeft, topRight, botLeft, botRight);
     }

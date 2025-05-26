@@ -86,7 +86,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(600, 490),
+            MinimumSize = new Vector2(600, 530),
             MaximumSize = ImGui.GetIO().DisplaySize,
         };
         RespectCloseHotkey = false;

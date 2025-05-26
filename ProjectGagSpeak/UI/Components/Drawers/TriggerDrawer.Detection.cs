@@ -82,7 +82,7 @@ public sealed partial class TriggerDrawer
         _emoteCombo = new EmoteCombo(1.15f, iconDisplayer, logger);
     }
 
-    public void DrawDetectionInfo(Trigger trigger, bool isEditorItem, uint? searchBg)
+    public void DrawDetectionInfo(Trigger trigger, bool isEditorItem, uint searchBg)
     {
         // What we draw, should be based on what triggerkind it is.
         switch (trigger)
@@ -117,7 +117,7 @@ public sealed partial class TriggerDrawer
         }
     }
 
-    private void DrawSpellActionTrigger(SpellActionTrigger spellAct, bool isEditorItem, uint? searchBg)
+    private void DrawSpellActionTrigger(SpellActionTrigger spellAct, bool isEditorItem, uint searchBg)
     {
         // The Direction of the SpellAction (Who was the action Source, who was the action target?)
         var tooltip = $"Required Direction of the {spellAct.ActionKind}";
@@ -225,13 +225,13 @@ public sealed partial class TriggerDrawer
         if(!spellAct.IsGenericDetection)
             DrawDetectableActions(spellAct, isEditorItem, searchBg);
 
-        ImGui.TextWrapped("This is currently only half functional, and will be the last thing i debug here... this UI is hell to work with.");
+        ImGui.TextWrapped("This is currently only half functional, and will be the last thing i debug here... this UI is hell.");
 
     }
 
     private JobType _selectedJob = JobType.ADV;
     private uint _selectedAction = uint.MaxValue;
-    private void DrawDetectableActions(SpellActionTrigger spellAct, bool isEditorItem, uint? searchBg)
+    private void DrawDetectableActions(SpellActionTrigger spellAct, bool isEditorItem, uint searchBg)
     {
         using var _ = ImRaii.Group();
 

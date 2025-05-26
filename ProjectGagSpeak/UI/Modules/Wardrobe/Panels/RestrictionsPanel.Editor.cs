@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
@@ -166,15 +167,13 @@ public partial class RestrictionsPanel
         };
         _traitsDrawer.DrawTwoRowTraits(item, width, disabled, false);
 
-        _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width);
+        _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width, MoodleDrawer.IconSizeFramed);
     }
 
     public void DrawEditorRight(float width)
     {
         if (_manager.ItemInEditor is not { } item)
             return;
-
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
 
         _modDrawer.DrawModPresetBox("RestrictionModPreset", item, width);
     }
@@ -183,13 +182,12 @@ public partial class RestrictionsPanel
     {
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
-        var scaledPreview = displaySize * (width.RemoveWinPadX() / ImGui.GetIO().DisplaySize.X);
-        var iconH = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y + scaledPreview.Y;
-        var winSize = new Vector2(width, iconH);
-        using (var bfInfo = CkRaii.HeaderChild("Blindfold Information", winSize, CkRaii.HeaderFlags.AddPaddingToHeight))
+        var leftWidth = CkGui.CalcCheckboxWidth("Force 1st Person");
+        var rightWidth = width.RemoveWinPadX() - leftWidth - ImGui.GetFrameHeightWithSpacing();
+        var scaledPreview = displaySize * (rightWidth / ImGui.GetIO().DisplaySize.X);
+        var winSize = new Vector2(width, scaledPreview.Y);
+        using (var bfInfo = CkRaii.HeaderChild("Blindfold Information", winSize, HeaderFlags.AddPaddingToHeight))
         {
-            var widthInner = ImGui.GetContentRegionAvail().X;
-
             // We will want to group together the first few elements together for the blindfold type & 1st PoV option.
             using (ImRaii.Group())
             {
@@ -198,27 +196,28 @@ public partial class RestrictionsPanel
                     blindfoldItem.ForceFirstPerson = isFirstPerson;
 
                 var rightSize = CkGui.IconTextButtonSize(FAI.PenSquare, "Edit Image");
-                ImGui.SameLine(widthInner - rightSize);
-                if (CkGui.IconTextButton(FAI.PenSquare, "Edit Image"))
+
+                if (CkGui.IconTextButton(FAI.PenSquare, "Edit Image", leftWidth))
                 {
                     var metaData = new ImageMetadataGS(ImageDataType.Blindfolds, displaySize, Guid.Empty);
                     Mediator.Publish(new OpenThumbnailBrowser(metaData));
                 }
-
-                using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
-                {
-                    if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.BlindfoldPath) is { } validImage)
-                    {
-                        // scale down the image to match the available widthInner.X.
-                        var scaler = widthInner / validImage.Width;
-                        var scaledImage = validImage.Size * scaler;
-
-                        pos = ImGui.GetCursorScreenPos();
-                        ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkRaii.GetHeaderRounding());
-                    }
-                }
-                CkGui.AttachToolTip("This is the image that the blindfold will overlay on your screen while active.");
             }
+
+            ImGui.SameLine(0, ImGui.GetFrameHeightWithSpacing());
+            using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
+            {
+                if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.BlindfoldPath) is { } validImage)
+                {
+                    // scale down the image to match the available widthInner.X.
+                    var scaler = rightWidth / validImage.Width;
+                    var scaledImage = validImage.Size * scaler;
+
+                    pos = ImGui.GetCursorScreenPos();
+                    ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkStyle.HeaderRounding());
+                }
+            }
+            CkGui.AttachToolTip("This is the image that the blindfold will overlay on your screen while active.");
         }
     }
 

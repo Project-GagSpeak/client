@@ -10,7 +10,7 @@ public static partial class CkRaii
         => LabelChildText(size, hSize, text, ImGui.GetStyle().WindowPadding.X, dFlag);
 
     public static IEOLabelContainer LabelChildText(Vector2 size, Vector2 hSize, string text, float offset, DFlags dFlag = DFlags.None)
-        => LabelChildText(size, hSize, text, offset, GetChildRounding(), dFlag);
+        => LabelChildText(size, hSize, text, offset,  CkStyle.ChildRounding(), dFlag);
 
     public static IEOLabelContainer LabelChildText(Vector2 size, Vector2 hSize, string text, float offset, float rounding, DFlags dFlag = DFlags.None)
         => LabelChildText(size, hSize, text, offset, rounding, ImGui.GetStyle().WindowPadding.X / 2, dFlag);
@@ -74,11 +74,11 @@ public static partial class CkRaii
 
     /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
-        => LabelChildAction(id, size, labelDraw, GetChildRounding(), onLClick, onRClick, tt, dFlag);
+        => LabelChildAction(id, size, labelDraw,  CkStyle.ChildRounding(), onLClick, onRClick, tt, dFlag);
 
     /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, ColorsLC col, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
-        => LabelChildAction(id, size, labelDraw, GetChildRounding(), col, onLClick, onRClick, tt, dFlag);
+        => LabelChildAction(id, size, labelDraw,  CkStyle.ChildRounding(), col, onLClick, onRClick, tt, dFlag);
 
     /// <inheritdoc cref="LabelChildAction(string, Vector2, Action, float, ColorsLC, Action?, Action?, string, DFlags)"/>"
     public static IEOLabelContainer LabelChildAction(string id, Vector2 size, Action labelDraw, float bend, Action? onLClick = null, Action? onRClick = null, string tt = "", DFlags dFlag = DFlags.None)
@@ -147,10 +147,10 @@ public static partial class CkRaii
 
 
     public static IEOContainer LabelHeaderChild(Vector2 size, string label, float labelWidth, DFlags cFlags = DFlags.None, DFlags lFlags = DFlags.None)
-        => LabelHeaderChild(size, label, labelWidth, ImGui.GetFrameHeight(), GetChildRounding(), cFlags, lFlags);
+        => LabelHeaderChild(size, label, labelWidth, ImGui.GetFrameHeight(),  CkStyle.ChildRounding(), cFlags, lFlags);
 
     public static IEOContainer LabelHeaderChild(Vector2 size, string label, float labelWidth, float labelOffset, DFlags cFlags = DFlags.None, DFlags lFlags = DFlags.None)
-        => LabelHeaderChild(size, label, labelWidth, labelOffset, GetChildRounding(), cFlags, lFlags);
+        => LabelHeaderChild(size, label, labelWidth, labelOffset,  CkStyle.ChildRounding(), cFlags, lFlags);
 
     public static IEOContainer LabelHeaderChild(Vector2 size, string label, float labelWidth, float labelOffset, float rounding, DFlags cFlags = DFlags.None, DFlags lFlags = DFlags.None)
         => LabelHeaderChild(size, label, labelWidth, labelOffset, rounding, HeaderChildColors.Default, cFlags, lFlags);

@@ -1,8 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Models;
@@ -12,12 +12,10 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
-using GagSpeak.CkCommons.Raii;
-using System.Drawing;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
@@ -104,9 +102,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
         DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
-        var botLineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
-        var botLineBotRight = botLineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
-        ImGui.GetWindowDrawList().AddRectFilled(botLineTopLeft, botLineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
     public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
@@ -150,16 +145,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            _activeItemDrawer.DrawImage(_selector.Selected!, imgSize, rounding);
-            if (ImGui.IsMouseHoveringRect(imgDrawPos, imgDrawPos + imgSize))
+            _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, true);
+            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                {
-                    var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
-                    Mediator.Publish(new OpenThumbnailBrowser(metaData));
-                }
-                CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
+                var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
+                Mediator.Publish(new OpenThumbnailBrowser(metaData));
             }
+            CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
 
         void DrawLabel()
@@ -219,12 +211,39 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
     private void DrawActiveItemInfo(Vector2 region)
     {
-        if (_manager.ServerRestrictionData is null)
+        using var child = CkRaii.Child("ActiveItems", region, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
+
+        if (_manager.ServerRestrictionData is not { } activeRestrictionSlots)
             return;
 
-        using var _ = ImRaii.Child("ActiveRestrictionItems", region, false, WFlags.AlwaysUseWindowPadding);
+        // get the current content height.
+        var height = ImGui.GetContentRegionAvail().Y;
+        // calculate the Y spacing for the items.
+        var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
+        var groupSpacing = (height - 5 * groupH) / 7;
 
-        var innerWidth = ImGui.GetContentRegionAvail().X;
-        _activeItemDrawer.DisplayRestrictionSlots(innerWidth);
+        foreach (var (restrictionData, index) in activeRestrictionSlots.Restrictions.WithIndex())
+        {
+            // Spacing.
+            if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
+
+            // Draw the framed Item.
+            if (restrictionData.Identifier.IsEmptyGuid())
+            {
+                // Display empty showing.
+                _activeItemDrawer.ApplyItemGroup(groupH, index, restrictionData);
+            }
+            else
+            {
+                // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
+                if (_manager.AppliedRestrictions[index] is { } item && !item.Identifier.IsEmptyGuid())
+                {
+                    if (restrictionData.IsLocked())
+                        _activeItemDrawer.UnlockItemGroup(height, index, restrictionData, item);
+                    else
+                        _activeItemDrawer.LockItemGroup(height, index, restrictionData, item);
+                }
+            }
+        }
     }
 }

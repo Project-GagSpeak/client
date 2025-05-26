@@ -47,6 +47,49 @@ public static partial class CkGuiUtils
         return false;
     }
 
+    public static string LayerIdxName(int idx) => idx < 0 ? "Any Layer" : $"Layer {idx + 1}";
+    public static bool LayerIdxCombo(string label, float width, int curIdx, out int newIdx, int items, bool showAny = false, CFlags flags = CFlags.None)
+    {
+        ImGui.SetNextItemWidth(width);
+        bool inRange = curIdx >= 0 && curIdx < items;
+        var previewText = inRange ? $"Layer {curIdx + 1}" : "Any Layer";
+        using (var c = ImRaii.Combo(label, previewText, flags))
+        {
+            if (c)
+            {
+                // Selection for "Any Layer".
+                if (showAny)
+                {
+                    if (ImGui.Selectable("Any Layer", curIdx == -1) && curIdx == -1)
+                    {
+                        newIdx = -1;
+                        return true;
+                    }
+                }
+                // Remaining layers.
+                for (var i = 0; i < items; i++)
+                {
+                    var name = $"Layer {i + 1}";
+                    if (!ImGui.Selectable(name, i == curIdx) || i == curIdx)
+                        continue;
+
+                    newIdx = i;
+                    return true;
+                }
+            }
+        }
+        // reset to None if right-clicked.
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            newIdx = -1;
+            return true;
+        }
+
+        newIdx = curIdx;
+        return false;
+    }
+
+
     /// <summary> a generic string combo for string usage. </summary>
     /// <returns> True if the value was changed. </returns>
     /// <remarks> Useful for non-enum based dropdowns for simplistic options. </remarks>

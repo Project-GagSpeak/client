@@ -29,8 +29,8 @@ public sealed class AliasItemDrawer
     private readonly PuppeteerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
 
-    private static readonly string[] ThreeLayerNames = new string[] { "Layer 1", "Layer 2", "Layer 3", "Any Layer" };
-    private static readonly string[] FiveLayerNames = new string[] { "Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer" };
+    private static readonly string[] ThreeLayerNames = [ "Layer 1", "Layer 2", "Layer 3", "Any Layer" ];
+    private static readonly string[] FiveLayerNames = [ "Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer" ];
     private HashSet<Guid> ExpandedTriggers = new HashSet<Guid>();
 
     private RestrictionCombo _restrictionCombo { get; init; }
@@ -632,22 +632,11 @@ public sealed class AliasItemDrawer
         CkGui.TextFrameAlignedInline("for");
 
         // We love wacky pi-shock API YIPPEEEEE *dies*
-        var duration = action.ShockInstruction.Duration;
-        var value = duration switch
-        {
-            > 15 and < 100 => 0f, // Invalid range
-            >= 100 and <= 15000 => duration / 1000f, // Milliseconds to seconds
-            _ => duration // Assume seconds
-        };
-
+        var durationRef = action.ShockInstruction.GetDurationFloat();
         ImGui.SameLine();
         ImGui.SetNextItemWidth(85f);
-        if (ImGui.SliderFloat("##ShockDur", ref value, 0.016f, 15f))
-        {
-            action.ShockInstruction.Duration = (value >= 1f && value % 1 == 0f)
-                ? (int)value // Whole seconds
-                : (int)(value * 1000); // Fractional => milliseconds
-        }
+        if (ImGui.SliderFloat("##ShockDur", ref durationRef, 0.016f, 15f))
+            action.ShockInstruction.SetDuration(durationRef);
         CkGui.AttachToolTip("The duration of the shock in seconds or milliseconds.");
 
         // display extra information if a vibrator or shock.
@@ -675,8 +664,6 @@ public sealed class AliasItemDrawer
         // in theory this listing could get pretty expansive so for now just list a summary.
         CkGui.TextFrameAlignedInline("After");
         CkGui.ColorTextFrameAlignedInline(action.StartAfter.ToString("ss\\:fff"), ImGuiColors.TankBlue);
-        CkGui.TextFrameAlignedInline(", actives");
-        CkGui.ColorTextFrameAlignedInline(action.DeviceActions.Count.ToString(), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline("toys to vibrate for");
         CkGui.ColorTextFrameAlignedInline(action.EndAfter.ToString("ss\\:fff"), ImGuiColors.TankBlue);
     }

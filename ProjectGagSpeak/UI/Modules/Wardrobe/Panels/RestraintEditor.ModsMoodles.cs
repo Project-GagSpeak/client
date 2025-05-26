@@ -61,7 +61,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         var panelSize = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / 2, ImGui.GetContentRegionAvail().Y);
 
         // Draw out the associated Mods Child.
-        using (CkRaii.HeaderChild("Associated Mods", panelSize, FancyTabBar.RoundingInner, CkRaii.HeaderFlags.SizeIncludesHeader))
+        using (CkRaii.HeaderChild("Associated Mods", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
         {
             DrawModSelector();
             DrawModsList();
@@ -69,12 +69,12 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         // Then the one for the moodles and such.
         ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
-        using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, CkRaii.HeaderFlags.SizeIncludesHeader))
+        using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
         {
             DrawMoodleSelector();
             DrawMoodlesList();
             // Draw out the moodle icon row.
-            _moodleDrawer.FramedMoodleIconDisplay(_manager.ItemInEditor!.RestraintMoodles, ImGui.GetContentRegionAvail().X, CkRaii.GetChildRoundingLarge(), 2);
+            _moodleDrawer.FramedMoodleIconDisplay(_manager.ItemInEditor!.RestraintMoodles, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
         }
     }
 
@@ -92,7 +92,10 @@ public class RestraintEditorModsMoodles : IFancyTab
         
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus))
-            _manager.ItemInEditor!.RestraintMods.Add(new ModSettingsPreset(_selectedPreset));
+        {
+            if (!_manager.ItemInEditor!.RestraintMods.Any(m => m.Label == _selectedPreset.Label))
+                _manager.ItemInEditor!.RestraintMods.Add(new ModSettingsPreset(_selectedPreset));
+        }
 
         void ModCombo()
         {
@@ -164,7 +167,8 @@ public class RestraintEditorModsMoodles : IFancyTab
 
     private void DrawModsList()
     {
-        using var _ = CkRaii.FrameChildPadded("MoodlesList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
+        var innerRegion = ImGui.GetContentRegionAvail().WithoutWinPadding();
+        using var _ = CkRaii.FrameChildPadded("MoodlesList", innerRegion, CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge());
 
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
         foreach (var mod in _manager.ItemInEditor!.RestraintMods.ToList())
@@ -194,9 +198,9 @@ public class RestraintEditorModsMoodles : IFancyTab
     private void DrawMoodlesList()
     {
         var size = ImGui.GetContentRegionAvail();
-        var height = size.Y - (MoodleDrawer.FramedIconDisplayHeight(2) + ImGui.GetStyle().ItemSpacing.Y);
+        var height = size.Y - (MoodleDrawer.FramedIconDisplayHeight(2).AddWinPadY() + ImGui.GetStyle().ItemSpacing.Y);
 
-        using var _ = CkRaii.FramedChildPaddedW("MoodlesList", size.X, height, CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge());
+        using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge());
         
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
         var presetLookup = VisualApplierMoodles.LatestIpcData.MoodlesPresets.ToDictionary(p => p.GUID, p => p.Title);

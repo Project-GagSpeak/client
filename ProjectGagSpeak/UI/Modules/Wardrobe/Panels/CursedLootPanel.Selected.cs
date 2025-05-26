@@ -36,11 +36,11 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             if(ItemSelected)
             {
                 if (_selector.Selected!.RestrictionRef is GarblerRestriction gagItem)
-                    _activeItemDrawer.DrawImage(gagItem.GagType, imgSize, rounding);
+                    _activeItemDrawer.DrawFramedImage(gagItem.GagType, imgSize.Y, rounding, true);
                 else if (_selector.Selected!.RestrictionRef is BlindfoldRestriction blindfoldRestrictItem)
-                    _activeItemDrawer.DrawImage(blindfoldRestrictItem, imgSize, rounding);
+                    _activeItemDrawer.DrawRestrictionImage(blindfoldRestrictItem, imgSize.Y, rounding, true);
                 else if (_selector.Selected!.RestrictionRef is RestrictionItem normalRestrictItem)
-                    _activeItemDrawer.DrawImage(normalRestrictItem, imgSize, rounding);
+                    _activeItemDrawer.DrawRestrictionImage(normalRestrictItem, imgSize.Y, rounding, true);
             }
         }
         // draw the actual design element.

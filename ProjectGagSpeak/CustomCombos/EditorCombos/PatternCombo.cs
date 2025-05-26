@@ -1,10 +1,8 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui;
@@ -40,15 +38,15 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid current, float width, float widthScaler = 1.25f)
-        => Draw(label, current, width, widthScaler, ImGuiComboFlags.None);
+    public bool Draw(string label, Guid current, float width, uint? searchBg = null)
+        => Draw(label, current, width, CFlags.None, searchBg);
 
-    public bool Draw(string label, Guid current, float width, float widthScaler, ImGuiComboFlags flags)
+    public bool Draw(string label, Guid current, float width, CFlags flags, uint? searchBg = null)
     {
-        InnerWidth = width * widthScaler;
+        InnerWidth = width * 1.45f;
         _current = current;
         var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Pattern...";
-        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+        return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags, searchBg);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -64,24 +62,17 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
         ImUtf8.SameLineInner();
         var ret = ImGui.Selectable(pattern.Label, selected);
 
-        // draws a fancy box when the mod is hovered giving you the details about the mod.
-        if (ImGui.IsItemHovered())
-        {
-            using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale);
-            using var tt = ImRaii.Tooltip();
+        // shift over and draw an info circle, and a loop circle if any.
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
 
-            // shift over and draw an info circle, and a loop circle if any.
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
+        // draw the shouldLoop icon.
+        CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
+        if (pattern.ShouldLoop) CkGui.AttachToolTip("This is a Looping Pattern.");
 
-            // draw the shouldLoop icon.
-            CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
-            if (pattern.ShouldLoop) CkGui.AttachToolTip("This is a Looping Pattern.");
-
-            // draw the info icon.
-            ImGui.SameLine();
-            CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
-            DrawItemTooltip(pattern);
-        }
+        // draw the info icon.
+        ImGui.SameLine();
+        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
+        DrawItemTooltip(pattern);
 
         return ret;
     }
@@ -127,11 +118,6 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>
             ImUtf8.SameLineInner();
             var durationStr = item.Duration.Hours > 0 ? item.Duration.ToString("hh\\:mm\\:ss") : item.Duration.ToString("mm\\:ss");
             ImGui.Text(durationStr);
-
-            CkGui.ColorText("Loops?:", ImGuiColors.ParsedGold);
-            ImUtf8.SameLineInner();
-            ImGui.Text(item.ShouldLoop ? "Yes" : "No");
-
             ImGui.EndTooltip();
         }
     }

@@ -51,24 +51,22 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 
     /// <summary> An override that does not provide a pre-determined value. Instead this value is selected after creation and maintained. </summary>
     /// <remarks> Not stored anywhere but in the combo itself. </remarks>
-    public bool Draw(string label, float width)
+    public bool Draw(string label, float width, uint? searchBg = null)
     {
         InnerWidth = width * 1.5f;
         _currentItem = Current.GUID;
-        return Draw(label, _currentItem, width);
+        return Draw(label, _currentItem, width, searchBg);
     }
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid currentStatus, float width)
-        => Draw(label, currentStatus, width, ImGuiComboFlags.None);
+    public bool Draw(string label, Guid current, float width, uint? searchBg = null)
+        => Draw(label, current, width, ImGuiComboFlags.None, searchBg);
 
-    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
-    /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid currentStatus, float width, ImGuiComboFlags flags)
+    public bool Draw(string label, Guid current, float width, CFlags flags, uint? searchBg = null)
     {
         InnerWidth = width * 1.5f;
-        _currentItem = currentStatus;
+        _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
         var previewName = currentTitle.IsNullOrWhitespace() ? "Select Moodle Status..." : currentTitle;

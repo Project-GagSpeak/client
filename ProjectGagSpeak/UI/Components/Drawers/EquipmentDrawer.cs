@@ -73,7 +73,7 @@ public class EquipmentDrawer
     }
 
     public static float GetRestraintItemH() => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-    public static float AssociatedGlamourH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float GlamourH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
 
     // Temporary Cached Storage holding the currently resolved item from the latest hover.
     private CachedSlotItemData LastCachedItem;
@@ -99,16 +99,16 @@ public class EquipmentDrawer
     {
         var pos = ImGui.GetCursorScreenPos();
         var style = ImGui.GetStyle();
-        using (CkRaii.HeaderChild("Associated Glamour", new Vector2(width, AssociatedGlamourH()) ))
+        var height = CkStyle.GetFrameRowsHeight(3);
+        using (var c = CkRaii.HeaderChild("Associated Glamour", new Vector2(width, height), HeaderFlags.AddPaddingToHeight))
         {
             // get the inner width after the padding is applied.
-            var widthInner = ImGui.GetContentRegionAvail().X;
-            item.GameItem.DrawIcon(_textures, new Vector2(AssociatedGlamourH()), item.Slot);
+            item.GameItem.DrawIcon(_textures, new Vector2(height), item.Slot);
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
                 // Begin by drawing out the slot enum dropdown that spans the remaining content region.
-                var barWidth = widthInner - AssociatedGlamourH() - ImGui.GetStyle().ItemInnerSpacing.X;
+                var barWidth = c.InnerRegion.X - height - ImGui.GetStyle().ItemInnerSpacing.X;
 
                 if (CkGuiUtils.EnumCombo("##" + id + "slot itemCombo", barWidth, item.Slot, out var newSlot,
                     EquipSlotExtensions.EqdpSlots, (slot) => slot.ToName(), "Select Slot..."))

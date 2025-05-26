@@ -12,11 +12,13 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     private readonly GagspeakMediator _mediator;
     private readonly RestrictionManager _manager;
     public PadlockRestrictionsClient(ILogger log, GagspeakMediator mediator, RestrictionManager manager)
-        : base([ ..(manager.ServerRestrictionData?.Restrictions ?? []) ], log)
+        : base(() => manager.ServerRestrictionData?.Restrictions ?? [], log)
     {
         _mediator = mediator;
         _manager = manager;
     }
+
+    public int ItemCount => Items.Count;
 
     protected override IEnumerable<Padlocks> ExtractPadlocks()
         => PadlockEx.ClientLocks;
@@ -29,10 +31,10 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         => Items[layerIdx].CanLock() is false || Items[layerIdx].Padlock == SelectedLock;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
-        => DrawLockCombo("ClientRestrictionLock", width, layerIdx, string.Empty, tooltip, true);
+        => DrawLockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
 
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
-        => DrawUnlockCombo("ClientRestrictionUnlock", width, layerIdx, string.Empty, tooltip);
+        => DrawUnlockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);
 
     protected override Task<bool> OnLockButtonPress(int layerIdx)
     {

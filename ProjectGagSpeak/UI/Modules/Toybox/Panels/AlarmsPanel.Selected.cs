@@ -53,7 +53,7 @@ public partial class AlarmsPanel
         var width = Math.Max(textlength, timeLengthDisp);
         var height = CkGuiUtils.GetTimeDisplayHeight() + ImGui.GetFrameHeightWithSpacing();
         // create a group with a background and some rounding.
-        using (var c = CkRaii.ChildPadded("C_AlarmTime", new Vector2(width, height), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.ChildPadded("C_AlarmTime", new Vector2(width, height), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             // Draw out the local timezone this alarm is relative too.
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (c.InnerRegion.X - textlength) / 2);
@@ -87,7 +87,7 @@ public partial class AlarmsPanel
 
         var comboW = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) * .5f;
         CkGui.ColorTextFrameAligned("Alarm Pattern to Play", ImGuiColors.ParsedGold);
-        using (CkRaii.Child("AlarmPattern", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.Child("AlarmPattern", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             // Draw the pattern selection combo box.
             if (isEditing)
@@ -130,7 +130,7 @@ public partial class AlarmsPanel
         {
             var refStartPoint = alarm.PatternStartPoint;
             using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-                CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+                CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("Start Point");
                 var format = refDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
@@ -163,7 +163,7 @@ public partial class AlarmsPanel
         {
             var refPlaybackDuration = alarm.PatternDuration;
             using (var c = CkRaii.ChildPaddedW("AlarmPlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
-                CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+                CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("Playback Duration");
                 var format = refPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";

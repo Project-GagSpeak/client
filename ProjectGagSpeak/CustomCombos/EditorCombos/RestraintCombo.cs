@@ -70,7 +70,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
     private void DrawThresholdPercent(float width, IThresholdContainer trigger, bool isEditing, string? tt = null, string format = "%d%%")
     {
         var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
-        using (var c = CkRaii.Child("Perc_Thres", new Vector2(width, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.Child("Perc_Thres", new Vector2(width, ImGui.GetFrameHeight()), col, CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             var healthPercentRef = trigger.ThresholdMinValue;
             if (isEditing)
@@ -92,7 +92,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
     {
         var col = isEditing ? 0 : CkColor.FancyHeaderContrast.Uint();
         var length = (width - ImGui.GetStyle().ItemInnerSpacing.X) / 2;
-        using (var c = CkRaii.Child("MinThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.Child("MinThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             var minThresRef = trigger.ThresholdMinValue;
             if (isEditing)
@@ -110,7 +110,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
         CkGui.AttachToolTip(lowerTT ?? "Minimum Damage/Heal number to trigger effect.\nLeave -1 for any.");
 
         ImUtf8.SameLineInner();
-        using (var c = CkRaii.Child("MaxThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkRaii.GetChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.Child("MaxThreshold", new Vector2(length, ImGui.GetFrameHeight()), col, CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             var maxThresRef = trigger.ThresholdMaxValue;
             if (isEditing)

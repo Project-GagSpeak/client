@@ -11,6 +11,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using GagSpeak.CkCommons.Raii;
+using Dalamud.Interface.Utility;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
@@ -56,7 +57,7 @@ public class ModPresetsPanel
         // Create two sub components here, a preset selector and a preset editor.
         var presetSelectorH = ImGui.GetFrameHeightWithSpacing() * 3;
         var headerName = _selector.SelectedContainer.ModName.IsNullOrEmpty() ? "Select a Mod to view its Presets" : _selector.SelectedContainer.ModName;
-        using (CkRaii.HeaderChild(headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH)))
+        using (CkRaii.HeaderChild(headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH), HeaderFlags.AddPaddingToHeight))
             DrawPresetListForSelected();
 
         if (!_selector.SelectedContainer.ModPresets.Any(p => p.Label == _selectedPreset))
@@ -67,12 +68,12 @@ public class ModPresetsPanel
 
         if (_selectedPreset.IsNullOrEmpty())
         {
-            using (CkRaii.HeaderChild("Customize Settings", ImGui.GetContentRegionAvail(), CkRaii.HeaderFlags.SizeIncludesHeader))
+            using (CkRaii.HeaderChild("Customize Settings", ImGui.GetContentRegionAvail(), HeaderFlags.SizeIncludesHeader))
                 _modDrawer.DrawPresetEditor();
         }
         else
         {
-            using (CkRaii.IconButtonHeaderChild("Settings Preset Editor", icon, ImGui.GetContentRegionAvail(), ToggleEditState, CkRaii.GetHeaderRounding(), CkRaii.HeaderFlags.SizeIncludesHeader))
+            using (CkRaii.IconButtonHeaderChild("Settings Preset Editor", icon, ImGui.GetContentRegionAvail(), ToggleEditState, CkStyle.HeaderRounding(), HeaderFlags.SizeIncludesHeader))
             {
                 if (editingPreset)
                     _modDrawer.DrawPresetEditor();
@@ -96,7 +97,8 @@ public class ModPresetsPanel
     private void DrawPresetListForSelected()
     {
         using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
-        using (CkRaii.FrameChildPadded("PresetList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChild("PresetList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(),
+            2 * ImGuiHelpers.GlobalScale, wFlags: WFlags.AlwaysUseWindowPadding))
         {
             // return if the size of the keys is 0.
             if (_selector.SelectedContainer.ModName.IsNullOrEmpty())

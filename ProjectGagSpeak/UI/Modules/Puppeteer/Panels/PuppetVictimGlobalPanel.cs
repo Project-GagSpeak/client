@@ -156,9 +156,8 @@ public sealed partial class PuppetVictimGlobalPanel
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
         var triggerPhrasesH = ImGui.GetFrameHeightWithSpacing() * 3; // 3 lines of buttons.
-        var spacingsH = spacing.Y * 2;
         var permissionsH = ImGui.GetFrameHeight() * 4 + spacing.Y * 3;
-        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
+        var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y) + spacing.Y * 2; 
 
         // Create the inner child box.
         using var child = CkRaii.ChildPaddedW("PermBoxBody", drawRegion.SizeX, childH, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);

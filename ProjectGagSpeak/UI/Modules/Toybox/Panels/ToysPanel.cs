@@ -72,13 +72,15 @@ public class ToysPanel
 
         // Create the CkRaii Child for the left side to draw the connection status inside.
         ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(curveSize, 0));
-        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize.WithoutWinPadding(), CkColor.FancyHeaderContrast.Uint(), CkRaii.GetChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize.WithoutWinPadding(), CkColor.FancyHeaderContrast.Uint(),
+            CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        {
             DrawIntifaceConnectionStatus();
+        }
 
         // Setup position for the right area.
         ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(leftBoxSize.X + ImGui.GetFrameHeight(), 0));
         tabMenu.Draw(rightBoxSize);
-
     }
 
     public void DrawPanel(Vector2 region)

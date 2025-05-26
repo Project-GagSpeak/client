@@ -54,20 +54,17 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid currentPreset, float width)
-        => Draw(label, currentPreset, width, ImGuiComboFlags.None);
+    public bool Draw(string label, Guid current, float width, uint? searchBg = null)
+        => Draw(label, current, width, ImGuiComboFlags.None, searchBg);
 
-    /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
-    /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, Guid currentPreset, float width, ImGuiComboFlags flags)
+    public bool Draw(string label, Guid current, float width, CFlags flags, uint? searchBg = null)
     {
-        // update the inner width.
         InnerWidth = (width * 1.25f) + MaxIconWidth;
-        _currentItem = currentPreset;
+        _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
-        var previewName = currentTitle.IsNullOrWhitespace() ? "Select Moodle Preset..." : currentTitle;
-        return Draw($"##preset{label}", previewName, string.Empty, width, MoodleDrawer.IconSize.Y, flags);
+        var preview = currentTitle.IsNullOrWhitespace() ? "Select Moodle Preset..." : currentTitle;
+        return Draw($"##preset{label}", preview, string.Empty, width, MoodleDrawer.IconSize.Y, flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)

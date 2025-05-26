@@ -889,7 +889,6 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn(toy.EndAfter.ToString());
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
-            ImGuiUtil.DrawTableColumn(toy.DeviceActions.ToString());
         }
         else {
 

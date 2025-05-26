@@ -130,7 +130,7 @@ public partial class GagRestrictionsPanel
             ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
             ImGui.SetCursorScreenPos(imgDrawPos);
             if(ItemSelected)
-                _activeItemDrawer.DrawImage(_selector.Selected!.GagType, imgSize, rounding);
+                _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding, true);
         }
         // draw the actual design element.
         var minPos = ImGui.GetItemRectMin();
