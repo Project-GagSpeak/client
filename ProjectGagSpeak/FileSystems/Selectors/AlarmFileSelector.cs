@@ -20,6 +20,7 @@ using OtterGui.Text;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Widgets;
+using GagSpeak.CkCommons;
 
 namespace GagSpeak.FileSystems;
 
@@ -80,19 +81,10 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         Mediator.Unsubscribe<ConfigAlarmChanged>(this);
     }
 
-    // can override the selector here to mark the last selected set in the config or something somewhere.
-
-    protected override bool DrawLeafName(CkFileSystem<Alarm>.Leaf leaf, in AlarmState state, bool selected)
+    protected override void DrawLeafInner(CkFileSystem<Alarm>.Leaf leaf, in AlarmState state, bool selected)
     {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        using var leafInternalGroup = ImRaii.Group();
-        return DrawLeafInternal(leaf, state, selected);
-    }
-
-    private bool DrawLeafInternal(CkFileSystem<Alarm>.Leaf leaf, in AlarmState state, bool selected)
-    {
-        // must be a valid drag-drop source, so use invisible button.
-        ImGui.InvisibleButton(leaf.Value.Identifier.ToString(), new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        // must be a valid drag-drop source, so use invisible button
+        ImGui.InvisibleButton("##leaf", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -115,22 +107,10 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         // the border if selected.
         if (selected)
         {
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
+            ImGui.GetWindowDrawList().AddRectFilled(rectMin, 
+                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y), CkColor.LushPinkButton.Uint(), 5);
         }
-        return hovered;
     }
-
-    protected override void DrawFolderName(CkFileSystem<Alarm>.Folder folder, bool selected)
-    {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var group = ImRaii.Group();
-        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
-    }
-    // if desired, can override the colors for expanded, collapsed, and folder line colors.
-    // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnAlarmChange(StorageItemChangeType type, Alarm alarm, string? oldString)

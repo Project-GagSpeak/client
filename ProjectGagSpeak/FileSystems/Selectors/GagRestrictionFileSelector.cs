@@ -58,19 +58,11 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     }
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
-
-    protected override bool DrawLeafName(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
-    {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        using var leafInternalGroup = ImRaii.Group();
-        return DrawLeafInternal(leaf, state, selected);
-    }
-
-    private bool DrawLeafInternal(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
+    protected override void DrawLeafInner(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
+        ImGui.InvisibleButton("##leaf", leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -103,19 +95,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
             ImGui.SameLine();
             ImGui.Text(leaf.Value.GagType.GagName());
         }
-
-        return hovered;
     }
-
-    protected override void DrawFolderName(CkFileSystem<GarblerRestriction>.Folder folder, bool selected)
-    {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var group = ImRaii.Group();
-        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
-    }
-
-    // if desired, can override the colors for expanded, collapsed, and folder line colors.
-    // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnGagRestrictionChange(StorageItemChangeType type, GarblerRestriction gagRestriction, string? oldString)

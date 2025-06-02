@@ -385,7 +385,8 @@ public sealed partial class TriggerDrawer
         }
 
         // Draw Framed Icons
-        _moodleDrawer.FramedMoodleIconDisplay([mAct.MoodleItem], ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), MoodleDrawer.IconSize, 2);
+        _moodleDrawer.FramedMoodleIconDisplay("MoodleAct", [mAct.MoodleItem], ImGui.GetContentRegionAvail().X,
+            CkStyle.ChildRounding(), MoodleDrawer.IconSize, 2);
     }
 
     private void DrawPiShockAction(PiShockAction shockAct, bool isEditorItem, uint searchBg)

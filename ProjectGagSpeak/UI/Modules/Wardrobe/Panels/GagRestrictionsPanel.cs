@@ -1,25 +1,22 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentHousingPlant;
+using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
@@ -77,21 +74,17 @@ public partial class GagRestrictionsPanel
         using (ImRaii.Child("GagsTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
-        // For drawing the grey "selected Item" line.
-        var style = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + style.ItemSpacing.Y * 2 + style.WindowPadding.Y * 2;
-        var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(style.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(style.WindowPadding.X, selectedSize.Y);
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
-
+        // Draw the selected Item
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("GagsBottomRight", drawRegions.BotRight.Size))
-        {
-            DrawSelectedItemInfo(selectedSize, curveSize);
-            DrawActiveItemInfo();
-        }
+        DrawSelectedItemInfo(drawRegions.BotRight, curveSize);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+
+        // Shift down and draw the Active items
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
+        DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
     }
 
     public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
@@ -113,75 +106,74 @@ public partial class GagRestrictionsPanel
             DrawEditorRight(drawRegions.BotRight.SizeX);
     }
 
-    private void DrawSelectedItemInfo(Vector2 region, float rounding)
+    private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var ItemSelected = _selector.Selected is not null;
-
-        var styler = ImGui.GetStyle();
-        using (ImRaii.Child("SelectedItemOuter", region))
-        {
-            var imgSize = new Vector2(region.Y) - styler.WindowPadding*2;
-            var imgDrawPos = ImGui.GetCursorScreenPos() + new Vector2(region.X - region.Y, 0) + styler.WindowPadding;
-            // Draw the left items.
-            if (ItemSelected)
-                DrawSelectedInner();
-
-            // move to the cursor position and attempt to draw it.
-            ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
-            ImGui.SetCursorScreenPos(imgDrawPos);
-            if(ItemSelected)
-                _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding, true);
-        }
-        // draw the actual design element.
-        var minPos = ImGui.GetItemRectMin();
-        var size = ImGui.GetItemRectSize();
         var wdl = ImGui.GetWindowDrawList();
-        wdl.AddRectFilled(minPos, minPos + size, CkColor.FancyHeader.Uint(), rounding, ImDrawFlags.RoundCornersRight);
+        var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
+        var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
+        var tooltipAct = "Double Click me to begin editing!";
 
-        wdl.AddRectFilled(minPos, minPos + new Vector2(size.X * .65f + styler.ItemInnerSpacing.Y, ImGui.GetFrameHeight() + styler.ItemInnerSpacing.Y), CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
+        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tt: tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
 
-        var pinkSize = new Vector2(size.X * .65f, ImGui.GetFrameHeight());
-        var hoveringTitle = ImGui.IsMouseHoveringRect(minPos + new Vector2(ImGui.GetFrameHeightWithSpacing()), minPos + pinkSize);
-        var col = hoveringTitle ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
-        wdl.AddRectFilled(minPos, minPos + pinkSize, col, rounding, ImDrawFlags.RoundCornersBottomRight);
+        var pos = ImGui.GetItemRectMin();
+        var imgSize = new Vector2(inner.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+        // Draw the left items.
+        if (_selector.Selected is not null)
+            DrawSelectedInner(imgSize.X);
 
-        if (hoveringTitle)
+        // Draw the right image item.
+        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.SetCursorScreenPos(imgDrawPos);
+        if (_selector.Selected is not null)
+            _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding, true);
+
+        void DrawLabel()
         {
-            if (ItemSelected && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                _manager.StartEditing(_selector.Selected!);
-            CkGui.AttachToolTip("Double Click me to begin editing!");
+            using var _ = ImRaii.Child("LabelChild", new Vector2(region.X * .6f, ImGui.GetFrameHeight()));
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
+            ImUtf8.TextFrameAligned(_selector.Selected?.GagType.GagName() ?? "No Item Selected!");
+            ImGui.SameLine(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing());
+            var imgPos = ImGui.GetCursorScreenPos();
+
+            // Draw the type of restriction item as an image path here.
+            if (_selector.Selected is not null)
+            {
+                (var image, var tooltip) = (_textures.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!");
+                ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
+            }
         }
+
+        void BeginEdits() { if (_selector.Selected is not null) _manager.StartEditing(_selector.Selected!); }
     }
 
-    private void DrawSelectedInner()
+    private void DrawSelectedInner(float rightOffset)
     {
-        using var group = ImRaii.Group();
-        // Draw out an icon check or x based on the state.
-        CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
-        var hoveringToggle = ImGui.IsItemHovered();
-        if (hoveringToggle && ImGui.IsItemClicked())
-            _logger.LogInformation("This will eventually toggle visual states!");
-
-        CkGui.AttachToolTip("Gag Visuals are " + (_selector.Selected!.IsEnabled ? "Enabled." : "Disabled."));
-        ImGui.SameLine();
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text(_selector.Selected!.GagType.GagName());
-
         using var innerGroup = ImRaii.Group();
-        // Next row we need to draw the Glamour Icon, Mod Icon, and hardcore Traits.
+
+        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        {
+            CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+            CkGui.TextFrameAlignedInline($"Visuals  ");
+        }
+        if (ImGui.IsItemHovered() && ImGui.IsItemClicked())
+            _manager.ToggleEnabledState(_selector.Selected!.GagType);
+        CkGui.AttachToolTip("Visual Alterations " + (_selector.Selected!.IsEnabled ? "will" : "will not") + " be applied with this Gag.");
+
+        ImUtf8.SameLineInner();
         var hasGlamour = ItemService.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
         CkGui.FramedIconText(FAI.Vest);
         CkGui.AttachToolTip(hasGlamour
-            ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to this --COL--{_selector.Selected!.GagType.GagName()}--COL--."
-            : $"There is no Glamour Item attached to this {_selector.Selected!.GagType.GagName()}.", color: ImGuiColors.ParsedGold);
+            ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the --COL--{_selector.Selected!.GagType.GagName()}--COL--."
+            : $"There is no Glamour Item attached to the {_selector.Selected!.GagType.GagName()}.", color: ImGuiColors.ParsedGold);
 
         ImUtf8.SameLineInner();
         var hasMod = !(_selector.Selected!.Mod.Label.IsNullOrEmpty());
         CkGui.FramedIconText(FAI.FileDownload);
         CkGui.AttachToolTip(hasMod
             ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
-            : "This Gag has no associated Mod Preset.");
-
+            : "This Restriction Item has no associated Mod Preset.");
+        
         DrawTraitPreview();
         DrawMoodlePreview();
     }
@@ -216,14 +208,34 @@ public partial class GagRestrictionsPanel
         _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
     }
 
-    private void DrawActiveItemInfo()
+    private void DrawActiveItemInfo(Vector2 region)
     {
-        if (_manager.ServerGagData is null)
+        using var child = CkRaii.Child("ActiveItems", region, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
+
+        if (_manager.ServerGagData is not { } activeGagData)
             return;
 
-        using var _ = ImRaii.Child("ActiveGagItems", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);
+        // get the current content height.
+        var height = ImGui.GetContentRegionAvail().Y;
+        var groupH = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
+        var groupSpacing = (height - 3 * groupH) / 4;
 
-        var innerWidth = ImGui.GetContentRegionAvail().X;
-        _activeItemDrawer.DisplayGagSlots(innerWidth);
+        // Draw the Gag Slots.
+        foreach (var (gagData, index) in activeGagData.GagSlots.WithIndex())
+        {
+            // Spacing.
+            if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
+
+            // Lock Display.
+            if (gagData.GagItem is GagType.None)
+                _activeItemDrawer.ApplyItemGroup(groupH, index, gagData);
+            else
+            {
+                if (gagData.IsLocked())
+                    _activeItemDrawer.UnlockItemGroup(groupH, index, gagData);
+                else
+                    _activeItemDrawer.LockItemGroup(groupH, index, gagData);
+            }
+        }
     }
 }

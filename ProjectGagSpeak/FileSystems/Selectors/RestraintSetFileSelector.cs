@@ -1,26 +1,21 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Text;
 
 namespace GagSpeak.RestraintSets;
 
@@ -86,20 +81,11 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         Mediator.Unsubscribe<ConfigRestraintSetChanged>(this);
     }
 
-    // can override the selector here to mark the last selected set in the config or something somewhere.
-
-    protected override bool DrawLeafName(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
-    {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        using var leafInternalGroup = ImRaii.Group();
-        return DrawLeafInternal(leaf, state, selected);
-    }
-
-    private bool DrawLeafInternal(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
+    protected override void DrawLeafInner(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2);
-        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
+        ImGui.InvisibleButton("button-leaf", leafSize);
 
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
@@ -125,10 +111,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
             using (ImRaii.Group())
             {
-                ImGui.AlignTextToFramePadding();
                 Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
-                ImGui.SameLine();
-                ImGui.Text(leaf.Value.Label);
+                CkGui.TextFrameAlignedInline(leaf.Name, false);
                 // below, in a darker text, draw out the description, up to 100 characters.
                 if(leaf.Value.Description.IsNullOrWhitespace())
                 {
@@ -148,19 +132,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 _manager.Delete(leaf.Value);
             CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
-
-        return hovered;
     }
-
-    protected override void DrawFolderName(CkFileSystem<RestraintSet>.Folder folder, bool selected)
-    {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var group = ImRaii.Group();
-        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
-    }
-
-    // if desired, can override the colors for expanded, collapsed, and folder line colors.
-    // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnRestraintSetChange(StorageItemChangeType type, RestraintSet restraintSet, string? oldString)

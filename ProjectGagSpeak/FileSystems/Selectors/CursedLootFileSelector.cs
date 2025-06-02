@@ -77,20 +77,10 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         Mediator.Unsubscribe<ConfigCursedItemChanged>(this);
     }
 
-    // can override the selector here to mark the last selected set in the config or something somewhere.
-
-    protected override bool DrawLeafName(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
-    {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        using var leafInternalGroup = ImRaii.Group();
-        var ret = DrawLeafInternal(leaf, state, selected);
-        return ret;
-    }
-
-    private bool DrawLeafInternal(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
+    protected override void DrawLeafInner(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
     {
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
+        ImGui.InvisibleButton("##leaf", leafSize);
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
 
@@ -140,19 +130,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
                 _manager.TogglePoolState(leaf.Value);
             CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
         }
-
-        return wasHovered;
     }
-
-    protected override void DrawFolderName(CkFileSystem<CursedItem>.Folder folder, bool selected)
-    {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var group = ImRaii.Group();
-        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
-    }
-
-    // if desired, can override the colors for expanded, collapsed, and folder line colors.
-    // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnCursedItemChange(StorageItemChangeType type, CursedItem cursedItem, string? oldString)

@@ -1,3 +1,4 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
@@ -104,22 +105,25 @@ public class MoodleDrawer
             }
 
             // Below this, we need to draw the display field of the moodles that the selected status has.
-            FramedMoodleIconDisplay(item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), moodleSize);
+            FramedMoodleIconDisplay(id, item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), moodleSize);
         }
     }
 
-    public void FramedMoodleIconDisplay(Moodle moodle, float width, float rounding, Vector2? iconSize = null, int rows = 1)
-        => FramedMoodleIconDisplay([ moodle ], width, rounding, iconSize ?? IconSize, rows);
+    public void FramedMoodleIconDisplay(string id, Moodle moodle, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+        => FramedMoodleIconDisplay(id, [ moodle ], width, rounding, iconSize ?? IconSize, rows);
 
-    public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2? iconSize = null, int rows = 1)
-        => FramedMoodleIconDisplay(moodles, width, rounding, iconSize ?? IconSize, rows);
+    public void FramedMoodleIconDisplay(string id, IEnumerable<Moodle> moodles, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+        => FramedMoodleIconDisplay(id, moodles, width, rounding, iconSize ?? IconSize, rows);
 
-    public void FramedMoodleIconDisplay(IEnumerable<Moodle> moodles, float width, float rounding, Vector2 iconSize, int rows = 1)
+    public void FramedMoodleIconDisplay(string id, IEnumerable<Moodle> moodles, float width, float rounding, Vector2 iconSize, int rows = 1)
     {
-        using (CkRaii.FramedChildPaddedW("MoodleRowDrawn", width, FramedIconDisplayHeight(iconSize.Y, rows), CkColor.FancyHeaderContrast.Uint(), rounding))
+        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(iconSize.Y, rows), CkColor.FancyHeaderContrast.Uint(), rounding))
         {
             if (moodles == null || moodles.Count() <= 0)
+            {
+                CkGui.ColorText("No Moodles To Display...", ImGuiColors.ParsedGrey);
                 return;
+            }
 
             var moodleStatusMap = VisualApplierMoodles.LatestIpcData.MoodlesStatuses
                 .ToDictionary(m => m.GUID, m => m);
@@ -166,11 +170,11 @@ public class MoodleDrawer
         }
     }
 
-    public void DrawMoodleIconRow(Moodle moodle, Vector2 region)
+    public void DrawMoodleIconRow(string id, Moodle moodle, Vector2 region)
     {
         var padding = ImGui.GetStyle().FramePadding;
         var pos = ImGui.GetCursorScreenPos();
-        using (CkRaii.FramedChild("MoodleRowDrawn", region, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChild($"##{id}-MoodleRowDrawn", region, CkColor.FancyHeaderContrast.Uint()))
         {
             // if no moodle is selected, draw nothing and early return.
             if (moodle.Id.IsEmptyGuid())

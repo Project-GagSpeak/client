@@ -1,27 +1,21 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using System.Drawing;
 
 namespace GagSpeak.Restrictions;
 
@@ -85,19 +79,10 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         Mediator.Unsubscribe<ConfigRestrictionChanged>(this);
     }
 
-    // can override the selector here to mark the last selected set in the config or something somewhere.
-
-    protected override bool DrawLeafName(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
-    {
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        using var leafInternalGroup = ImRaii.Group();
-        return DrawLeafInternal(leaf, state, selected);
-    }
-
-    private bool DrawLeafInternal(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
+    protected override void DrawLeafInner(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
     {
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        ImGui.InvisibleButton(leaf.Identifier.ToString(), leafSize);
+        ImGui.InvisibleButton("leaf", leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -118,34 +103,20 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
 
-        using (ImRaii.Group())
+        ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
+        ImGui.AlignTextToFramePadding();
+        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
+        ImGui.SameLine();
+        ImGui.Text(leaf.Value.Label);
+        ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+        if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
         {
-            ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-            ImGui.AlignTextToFramePadding();
-            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
-            ImGui.SameLine();
-            ImGui.Text(leaf.Value.Label);
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
-            {
-                Log.LogDebug($"Deleting {leaf.Value.Label}");
-                _manager.Delete(leaf.Value);
-            }
-            CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            Log.LogDebug($"Deleting {leaf.Value.Label}");
+            _manager.Delete(leaf.Value);
         }
+        CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
 
-        return hovered;
     }
-
-    protected override void DrawFolderName(CkFileSystem<RestrictionItem>.Folder folder, bool selected)
-    {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var group = ImRaii.Group();
-        CkGuiUtils.DrawFolderSelectable(folder, FolderLineColor, selected);
-    }
-
-    // if desired, can override the colors for expanded, collapsed, and folder line colors.
-    // Can also define if the folders are open by default or not.
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnRestrictionChange(StorageItemChangeType type, RestrictionItem restriction, string? oldString)
@@ -198,7 +169,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             ImGui.SetKeyboardFocusHere();
         var enterPressed = ImGui.InputTextWithHint("##newName", "Enter New Name...", ref newName, 512, ImGuiInputTextFlags.EnterReturnsTrue);
 
-        if (CkGuiUtils.EnumCombo("Restriction Kind", 100, _newType, out RestrictionType newType,
+        if (CkGuiUtils.EnumCombo("Restriction Kind", 100, _newType, out var newType,
             Enum.GetValues<RestrictionType>().SkipLast(1), defaultText: "Select Type.."))
         {
             _newType = newType;

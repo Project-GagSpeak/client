@@ -11,7 +11,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly GagspeakMediator _mediator;
     public PadlockGagsClient(ILogger log, GagspeakMediator mediator, GagRestrictionManager manager)
-        : base([ ..manager.ServerGagData?.GagSlots ?? []], log)
+        : base(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ], log)
     {
         _mediator = mediator;
     }

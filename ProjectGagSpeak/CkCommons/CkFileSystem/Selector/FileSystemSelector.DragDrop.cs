@@ -1,6 +1,5 @@
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Filesystem;
 using OtterGui.Raii;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;
@@ -17,7 +16,8 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <summary> The Source path for the drag-drop operation. </summary>
     private void DragDropSource(CkFileSystem<T>.IPath path)
     {
-        using var _ = ImRaii.DragDropSource();
+        // might regret that flag but we will see.
+        using var _ = ImRaii.DragDropSource(ImGuiDragDropFlags.SourceAllowNullID);
         if (!_)
             return;
 

@@ -2,9 +2,8 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.Services;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Services;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Widgets;

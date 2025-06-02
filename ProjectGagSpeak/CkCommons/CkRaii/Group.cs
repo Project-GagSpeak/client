@@ -9,6 +9,10 @@ public static partial class CkRaii
         => Group(0, 0, 0, ImDrawFlags.None);
 
     /// <inheritdoc cref="Group(uint, float, float, ImDrawFlags)"/>
+    public static ImRaii.IEndObject Group(uint bgCol, ImDrawFlags flags = ImDrawFlags.None)
+        => Group(bgCol, CkStyle.ChildRounding(), 0, flags);
+
+    /// <inheritdoc cref="Group(uint, float, float, ImDrawFlags)"/>
     public static ImRaii.IEndObject Group(uint bgCol, float rounding, ImDrawFlags flags = ImDrawFlags.None)
         => Group(bgCol, rounding, 0, flags);
 

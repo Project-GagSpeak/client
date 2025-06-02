@@ -94,7 +94,7 @@ public static class Icons
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FAI.Star, col);
+        CkGui.FramedIconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {

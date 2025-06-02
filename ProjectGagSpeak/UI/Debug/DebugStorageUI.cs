@@ -1,33 +1,23 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.FileSystems;
-using GagSpeak.Localization;
 using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.RestraintSets;
-using GagSpeak.Services.Configs;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Data.Interfaces;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
-using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 
 namespace GagSpeak.CkCommons.Gui;
 
-public class DebuggerBinds
+public class DebugStorageUI : WindowMediatorSubscriberBase
 {
     private readonly GlobalData _playerData;
     private readonly RestrictionManager _restrictions;
@@ -41,7 +31,9 @@ public class DebuggerBinds
     private readonly RestraintSetFileSystem _restraintsFS;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly ModPresetDrawer _modPresetDrawer;
-    public DebuggerBinds(
+    public DebugStorageUI(
+        ILogger<DebugStorageUI> logger,
+        GagspeakMediator mediator,
         GlobalData playerData,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -54,6 +46,7 @@ public class DebuggerBinds
         RestraintSetFileSystem restraintsFS,
         MoodleDrawer moodleDrawer,
         ModPresetDrawer modPresetDrawer)
+        : base(logger, mediator, "Debugger for Storages")
     {
         _playerData = playerData;
         _restrictions = restrictions;
@@ -67,6 +60,47 @@ public class DebuggerBinds
         _restraintsFS = restraintsFS;
         _moodleDrawer = moodleDrawer;
         _modPresetDrawer = modPresetDrawer;
+
+        IsOpen = false;
+
+        SizeConstraints = new WindowSizeConstraints()
+        {
+            MinimumSize = new Vector2(380, 400),
+            MaximumSize = ImGui.GetIO().DisplaySize,
+        };
+    }
+
+    protected override void PreDrawInternal() { }
+
+    protected override void PostDrawInternal() { }
+
+    protected override void DrawInternal()
+    {
+        DrawGlobalData();
+
+        ImGui.Separator();
+        DrawRestrictionStorage();
+
+        ImGui.Separator();
+        DrawRestraintStorage();
+        
+        ImGui.Separator();
+        DrawCursedLootStorage();
+        
+        ImGui.Separator();
+        DrawPuppeteerGlobalStorage();
+        
+        ImGui.Separator();
+        DrawPuppeteerPairStorage();
+
+        ImGui.Separator();
+        DrawTriggerStorage();
+        
+        ImGui.Separator();
+        DrawAlarmStorage();
+        
+        ImGui.Separator();
+        DrawPatternStorage();
     }
 
     public void DrawGlobalData()
@@ -288,7 +322,8 @@ public class DebuggerBinds
         }
     }
 
-    public void DrawPuppeteerGlobalStorage() {
+    public void DrawPuppeteerGlobalStorage()
+    {
         if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
             return;
         if (_puppeteer.GlobalAliasStorage.IsNullOrEmpty())
@@ -296,15 +331,17 @@ public class DebuggerBinds
             ImGui.TextUnformatted("Puppeteer Storage is null or empty");
             return;
         }
-        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.WithIndex()) {
+        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.WithIndex())
+        {
             using var node = ImRaii.TreeNode($"{alias.Label}##{idx}");
             if (!node)
                 continue;
             DrawAliasTrigger(alias);
         }
     }
-    
-    public void DrawPuppeteerPairStorage() {
+
+    public void DrawPuppeteerPairStorage()
+    {
         if (!ImGui.CollapsingHeader("Puppeteer Pair Alias Storage"))
             return;
         if (_puppeteer.PairAliasStorage.IsNullOrEmpty())
@@ -320,7 +357,7 @@ public class DebuggerBinds
                 continue;
             var world = alias.Value.StoredNameWorld;
             var listener = alias.Value.ExtractedListenerName;
-            foreach(var aliasTrigger in alias.Value.Storage)
+            foreach (var aliasTrigger in alias.Value.Storage)
             {
                 using var aliasNode = ImRaii.TreeNode($"{aliasTrigger.Label}##{idx}");
                 if (!aliasNode)
@@ -330,7 +367,8 @@ public class DebuggerBinds
         }
 
     }
-    public void DrawPatternStorage () {
+    public void DrawPatternStorage()
+    {
         if (!ImGui.CollapsingHeader("Pattern Storage"))
             return;
         if (_patterns.Storage.IsNullOrEmpty())
@@ -346,7 +384,8 @@ public class DebuggerBinds
             DrawPattern(pattern);
         }
     }
-    public void DrawAlarmStorage() {
+    public void DrawAlarmStorage()
+    {
         if (!ImGui.CollapsingHeader("Alarm Storage"))
             return;
         if (_alarms.Storage.IsNullOrEmpty())
@@ -642,7 +681,9 @@ public class DebuggerBinds
                 ImGuiUtil.DrawTableColumn("Restriction");
                 ImGuiUtil.DrawTableColumn("null");
                 ImGui.TableNextRow();
-            } else {
+            }
+            else
+            {
                 DrawRestriction(restrictionRef!);
             }
         }
@@ -712,7 +753,7 @@ public class DebuggerBinds
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Label");
             ImGuiUtil.DrawTableColumn(alarm.Label);
-            
+
             ImGuiUtil.DrawTableColumn("SetTimeUTC");
             ImGuiUtil.DrawTableColumn(alarm.SetTimeUTC.ToString());
             ImGui.TableNextRow();
@@ -730,7 +771,8 @@ public class DebuggerBinds
         }
     }
 
-    private void DrawAliasTrigger(AliasTrigger alias) {
+    private void DrawAliasTrigger(AliasTrigger alias)
+    {
         using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGuiUtil.DrawTableColumn("Identifier");
@@ -750,7 +792,7 @@ public class DebuggerBinds
             ImGui.TableNextRow();
 
         }
-        
+
         using var node = ImRaii.TreeNode($"Actions##actions-{alias.Identifier}");
         if (!node)
             return;
@@ -768,7 +810,8 @@ public class DebuggerBinds
         }
     }
 
-    private void DrawActionTable(InvokableGsAction action) {
+    private void DrawActionTable(InvokableGsAction action)
+    {
         if (action is TextAction text)
         {
             ImGuiUtil.DrawTableColumn("Type:");
@@ -779,24 +822,24 @@ public class DebuggerBinds
         }
         else if (action is GagAction gag)
         {
-            
+
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("GagAction");
             ImGui.TableNextRow();
-            
+
             ImGuiUtil.DrawTableColumn("LayerIdx");
             ImGuiUtil.DrawTableColumn(gag.LayerIdx.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("NewState"); 
+            ImGuiUtil.DrawTableColumn("NewState");
             ImGuiUtil.DrawTableColumn(gag.NewState.ToString());
             ImGui.TableNextRow();
-             
-            ImGuiUtil.DrawTableColumn("GagType"); 
+
+            ImGuiUtil.DrawTableColumn("GagType");
             ImGuiUtil.DrawTableColumn(gag.GagType.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Padlock"); 
+            ImGuiUtil.DrawTableColumn("Padlock");
             ImGuiUtil.DrawTableColumn(gag.Padlock.ToString());
             ImGui.TableNextRow();
 
@@ -804,7 +847,7 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn(gag.LowerBound.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("UpperBound"); 
+            ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(gag.UpperBound.ToString());
         }
         else if (action is RestrictionAction restriction)
@@ -812,22 +855,22 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("RestrictionAction");
             ImGui.TableNextRow();
-            
+
             ImGuiUtil.DrawTableColumn("LayerIdx");
             ImGuiUtil.DrawTableColumn(restriction.LayerIdx.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("NewState");
             ImGuiUtil.DrawTableColumn(restriction.NewState.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("RestrictionId");
             ImGuiUtil.DrawTableColumn(restriction.RestrictionId.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Padlock");
             ImGuiUtil.DrawTableColumn(restriction.Padlock.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("LowerBound");
             ImGuiUtil.DrawTableColumn(restriction.LowerBound.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(restriction.UpperBound.ToString());
         }
@@ -836,19 +879,19 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("RestraintAction");
             ImGui.TableNextRow();
-            
+
             ImGuiUtil.DrawTableColumn("NewState");
             ImGuiUtil.DrawTableColumn(restrain.NewState.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("RestrictionId");
             ImGuiUtil.DrawTableColumn(restrain.RestrictionId.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Padlock");
             ImGuiUtil.DrawTableColumn(restrain.Padlock.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("LowerBound");
             ImGuiUtil.DrawTableColumn(restrain.LowerBound.ToString());
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
         }
@@ -856,7 +899,7 @@ public class DebuggerBinds
         {
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("MoodleAction");
-            ImGui.TableNextRow(); 
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("MoodleItem");
             ImGuiUtil.DrawTableColumn(moodle.MoodleItem.Id.ToString());
             // MoodleItem
@@ -866,7 +909,7 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("PiShockAction");
             ImGui.TableNextRow();
-            
+
             ImGuiUtil.DrawTableColumn("ShockInstruction.OpCode");
             ImGuiUtil.DrawTableColumn(shock.ShockInstruction.OpCode.ToString());
             ImGui.TableNextRow();
@@ -881,7 +924,7 @@ public class DebuggerBinds
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("SexToyAction");
             ImGui.TableNextRow();
-            
+
             ImGuiUtil.DrawTableColumn("StartAfter");
             ImGuiUtil.DrawTableColumn(toy.StartAfter.ToString());
             ImGui.TableNextRow();
@@ -890,7 +933,8 @@ public class DebuggerBinds
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
         }
-        else {
+        else
+        {
 
             // If it's not a type of action that we know of, we'll just brute for it so that we at least _have_ the data even if it's not pretty.
             ImGuiUtil.DrawTableColumn("Unknown Action");

@@ -1,3 +1,4 @@
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
@@ -6,7 +7,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.User;
 
-namespace GagSpeak.PlayerData.Pairs;
+namespace GagSpeak.Services;
 
 /// <summary> Creates various calls to the server based on invoked events. </summary>
 public sealed class DataDistributionService : DisposableMediatorSubscriberBase

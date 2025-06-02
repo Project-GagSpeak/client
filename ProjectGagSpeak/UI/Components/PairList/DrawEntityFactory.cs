@@ -29,8 +29,8 @@ public class DrawEntityFactory
         _configs = configs;
         _nameDisplay = nameDisplay;
         _cosmetics = cosmetics;
-
     }
+
     public DrawFolderTag CreateDrawTagFolder(string tag, List<Pair> filteredPairs, IImmutableList<Pair> allPairs)
         => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs, _configs);
 

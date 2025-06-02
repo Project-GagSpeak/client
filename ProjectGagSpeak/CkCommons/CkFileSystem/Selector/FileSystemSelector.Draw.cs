@@ -30,8 +30,8 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <returns> The minimum and maximum points of the drawn item. </returns>
     private (Vector2, Vector2) DrawLeaf(CkFileSystem<T>.Leaf leaf, in TStateStorage state)
     {
-        var hovered = DrawLeafName(leaf, state, leaf == SelectedLeaf || SelectedPaths.Contains(leaf));
-        if(hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        DrawLeaf(leaf, state, leaf == SelectedLeaf || SelectedPaths.Contains(leaf));
+        if(ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             Select(leaf, state, ImGui.GetIO().KeyCtrl, ImGui.GetIO().KeyShift);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -144,7 +144,7 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     private (Vector2, Vector2) DrawFolder(CkFileSystem<T>.Folder folder)
     {
         var selected = SelectedPaths.Contains(folder);
-        DrawFolderName(folder, selected);
+        DrawFolder(folder, selected);
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             // update the state, then add or remove the descendants.
@@ -202,47 +202,51 @@ public partial class CkFileSystemSelector<T, TStateStorage>
     /// <returns> If the list was drawn. </returns>
     public bool DrawList(float width)
     {
-        // Idk maybe this will fix the annoying assertion that occurs on the first drawframe or whatever.
-        using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, uint.MinValue)
-            .Push(ImGuiCol.ButtonActive, uint.MinValue);
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        using var _ = ImRaii.Child(Label, new Vector2(width, -1), false, WFlags.NoScrollbar);
+        using var color = ImRaii.PushColor(ImGuiCol.ButtonHovered, 0).Push(ImGuiCol.ButtonActive, 0);
+
         try
         {
-            style.Pop();
-            MainContext();
-            if (!_)
-                return false;
-
-            ImGui.SetScrollX(0);
-            style.Push(ImGuiStyleVar.IndentSpacing, 14f * ImGuiHelpers.GlobalScale)
-                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, ImGuiHelpers.GlobalScale))
-                .Push(ImGuiStyleVar.FramePadding, new Vector2(ImGuiHelpers.GlobalScale, ImGui.GetStyle().FramePadding.Y));
-            //// Check if filters are dirty and re-compute them before the draw iteration if necessary.
-            ApplyFilters();
-            if (_jumpToSelection != null)
+            using (var outerStyle = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero))
             {
-                var idx = _state.FindIndex(s => s.Path == _jumpToSelection);
-                if (idx >= 0)
-                    ImGui.SetScrollFromPosY(ImGui.GetTextLineHeightWithSpacing() * idx - ImGui.GetScrollY());
+                using var child = ImRaii.Child(Label, new Vector2(width, -1), false, WFlags.NoScrollbar);
+                outerStyle.Pop();
 
-                _jumpToSelection = null;
-            }
+                MainContext();
+                if (!child)
+                    return false;
 
-            using (var clipper = ImUtf8.ListClipper(_state.Count, ImGui.GetTextLineHeightWithSpacing()))
-            {
-                while (clipper.Step())
+                ImGui.SetScrollX(0);
+                using (var innerStyle = ImRaii.PushStyle(ImGuiStyleVar.IndentSpacing, 14f * ImGuiHelpers.GlobalScale)
+                    .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, ImGuiHelpers.GlobalScale))
+                    .Push(ImGuiStyleVar.FramePadding, new Vector2(ImGuiHelpers.GlobalScale, ImGui.GetStyle().FramePadding.Y)))
                 {
-                    _currentIndex = clipper.DisplayStart;
-                    _currentEnd = Math.Min(_state.Count, clipper.DisplayEnd);
-                    if (_currentIndex >= _currentEnd)
-                        continue;
+                    //// Check if filters are dirty and re-compute them before the draw iteration if necessary.
+                    ApplyFilters();
+                    if (_jumpToSelection != null)
+                    {
+                        var idx = _state.FindIndex(s => s.Path == _jumpToSelection);
+                        if (idx >= 0)
+                            ImGui.SetScrollFromPosY(ImGui.GetTextLineHeightWithSpacing() * idx - ImGui.GetScrollY());
 
-                    if (_state[_currentIndex].Depth != 0)
-                        DrawPseudoFolders();
-                    _currentEnd = Math.Min(_state.Count, _currentEnd);
-                    for (; _currentIndex < _currentEnd; ++_currentIndex)
-                        DrawStateStruct(_state[_currentIndex]);
+                        _jumpToSelection = null;
+                    }
+
+                    using (var clipper = ImUtf8.ListClipper(_state.Count, ImGui.GetTextLineHeightWithSpacing()))
+                    {
+                        while (clipper.Step())
+                        {
+                            _currentIndex = clipper.DisplayStart;
+                            _currentEnd = Math.Min(_state.Count, clipper.DisplayEnd);
+                            if (_currentIndex >= _currentEnd)
+                                continue;
+
+                            if (_state[_currentIndex].Depth != 0)
+                                DrawPseudoFolders();
+                            _currentEnd = Math.Min(_state.Count, _currentEnd);
+                            for (; _currentIndex < _currentEnd; ++_currentIndex)
+                                DrawStateStruct(_state[_currentIndex]);
+                        }
+                    }
                 }
             }
 

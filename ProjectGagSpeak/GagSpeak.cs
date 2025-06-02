@@ -520,14 +520,15 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<MainHub>(), s.GetRequiredService<GagspeakConfigService>(), s.GetRequiredService<ServerConfigurationManager>(),
             s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<ClientMonitor>()))
         .AddScoped<DebugTab>()
-        .AddScoped<DebuggerBinds>()
 
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
         .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
         .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
-        .AddScoped<WindowMediatorSubscriberBase, DebuggerStandaloneUI>()
+        .AddScoped<WindowMediatorSubscriberBase, DebugStorageUI>()
+        .AddScoped<WindowMediatorSubscriberBase, DebugPersonalDataUI>()
+        .AddScoped<WindowMediatorSubscriberBase, DebugActiveStateUI>()
 
         // Scoped Services
         .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<GagspeakConfigService>(),

@@ -10,9 +10,11 @@ namespace GagSpeak.CkCommons.Gui.Components;
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
 {
-    public DrawFolderTag(string id, IImmutableList<DrawUserPair> drawPairs, 
-        IImmutableList<Pair> allPairs, ServerConfigurationManager configs)
-        : base(id, drawPairs, allPairs, configs)
+    public DrawFolderTag(
+        string id,
+        IImmutableList<DrawUserPair> drawPairs, 
+        IImmutableList<Pair> allPairs,
+        ServerConfigurationManager configs) : base(id, drawPairs, allPairs, configs)
     { }
 
     protected override bool RenderIfEmpty => _id switch

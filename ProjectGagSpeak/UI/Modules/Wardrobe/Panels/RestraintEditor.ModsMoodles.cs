@@ -74,7 +74,8 @@ public class RestraintEditorModsMoodles : IFancyTab
             DrawMoodleSelector();
             DrawMoodlesList();
             // Draw out the moodle icon row.
-            _moodleDrawer.FramedMoodleIconDisplay(_manager.ItemInEditor!.RestraintMoodles, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
+            _moodleDrawer.FramedMoodleIconDisplay("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles, 
+                ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
         }
     }
 

@@ -1,7 +1,5 @@
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerState.Models;
 using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui;
@@ -150,26 +148,49 @@ public partial class CkFileSystemSelector<T, TStateStorage> where T : class wher
     /// <param name="folder"> The folder to draw. </param>
     /// <param name="selected"> If the folder is selected. (This does NOT mean if it's expanded or not. </param>
     /// <remarks> Everything here is wrapped in a group. </remarks>
-    protected virtual void DrawFolderName(CkFileSystem<T>.Folder folder, bool selected)
+    protected virtual void DrawFolderInner(CkFileSystem<T>.Folder folder, bool selected)
     {
-        using var id = ImRaii.PushId((int)folder.Identifier);
-        using var color = ImRaii.PushColor(ImGuiCol.Text, folder.State ? ExpandedFolderColor : CollapsedFolderColor);
-        ImGui.Selectable(" ► " + folder.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
+        // must be a valid drag drop source, so use invisible button.
+        ImGui.InvisibleButton("##CkFileSystem-folder-button", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeightWithSpacing()));
+        var rectMin = ImGui.GetItemRectMin();
+        var rectMax = ImGui.GetItemRectMax();
+        var bgColor = ImGui.IsItemHovered() ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.3f, 0.3f, 0.3f, 0.5f));
+        ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+        ImGui.GetWindowDrawList().AddRect(rectMin, rectMax, FolderLineColor, 5);
+
+        // Then the actual items.
+        ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGuiHelpers.GlobalScale * 2 });
+        CkGui.FramedIconText(folder.State ? FAI.FolderOpen : FAI.FolderClosed);
+        CkGui.TextFrameAlignedInline(folder.Name);
     }
 
+    protected void DrawFolder(CkFileSystem<T>.Folder folder, bool selected)
+    {
+        using var id = ImRaii.PushId($"CkFileSystem-Folder-{folder.Identifier}");
+        using var color = ImRaii.PushColor(ImGuiCol.Text, folder.State ? ExpandedFolderColor : CollapsedFolderColor);
+        using var group = ImRaii.Group();
 
+        DrawFolderInner(folder, selected);
+    }
 
     /// <summary> Customization point: Should always create any interactable item. Item will be monitored for selection. </summary>
     /// <param name="leaf"> The leaf to draw. </param>
     /// <param name="state"> The state storage for the leaf. </param>
     /// <param name="selected"> Whether the leaf is currently selected. </param>
     /// <remarks> Can add additional icons or buttons if wanted. Everything drawn in here is wrapped in a group. </remarks>
-    protected virtual bool DrawLeafName(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
+    protected virtual void DrawLeafInner(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
+    {
+        ImGui.Selectable("○" + leaf.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
+    }
+
+    protected void DrawLeaf(CkFileSystem<T>.Leaf leaf, in TStateStorage state, bool selected)
     {
         // Can add custom color application in any override.
-        using var id = ImRaii.PushId((int)leaf.Identifier);
-        return ImGui.Selectable("○" + leaf.Name.Replace("%", "%%"), selected, ImGuiSelectableFlags.None);
+        using var id = ImRaii.PushId($"CKFS-Leaf-{leaf.Identifier}");
+        using var group = ImRaii.Group();
+        DrawLeafInner(leaf, state, selected);
     }
+
 
     protected void DrawFolderButton()
     {

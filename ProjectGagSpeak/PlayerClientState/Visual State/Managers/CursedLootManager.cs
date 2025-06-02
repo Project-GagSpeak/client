@@ -40,6 +40,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
     }
 
+    public VisualRestrictionsCache VisualCache => _managerCache;
     public CursedLootStorage Storage { get; private set; } = new CursedLootStorage();
     public CursedItem? ItemInEditor => _itemEditor.ItemInEditor;
     public IEnumerable<CursedItem> AppliedCursedItems => Storage.ActiveItems;

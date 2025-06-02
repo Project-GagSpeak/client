@@ -94,6 +94,11 @@ public class EquipmentDrawer
         LastCachedItem.Item.DrawIcon(_textures, GameIconSize, (EquipSlot)appliedSlot.Slot);
     }
 
+    public void DrawEquipItem(EquipSlot slot, EquipItem item, Vector2 size)
+    {
+        item.DrawIcon(_textures, size, slot);
+    }
+
     // Method for Drawing the Associated Glamour Item (Singular)
     public void DrawAssociatedGlamour(string id, GlamourSlot item, float width)
     {

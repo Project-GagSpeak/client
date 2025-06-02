@@ -92,35 +92,6 @@ public class ActiveItemsDrawer
         _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints);
     }
 
-    public void DisplayGagSlots(float width)
-    {
-        if (_gags.ServerGagData is not { } activeGagSlots)
-            return;
-
-        // get the current content height.
-        var height = ImGui.GetContentRegionAvail().Y;
-        var groupH = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var groupSpacing = (height - 3 * groupH) / 4;
-
-        // Draw the Gag Slots.
-        foreach (var (gagData, index) in activeGagSlots.GagSlots.WithIndex())
-        {
-            // Spacing.
-            if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
-
-            // Lock Display.
-            if(gagData.GagItem is GagType.None)
-                ApplyItemGroup(groupH, index, gagData);
-            else
-            {
-                if (gagData.IsLocked())
-                    UnlockItemGroup(groupH, index, gagData);
-                else
-                    LockItemGroup(groupH, index, gagData);
-            }
-        }
-    }
-
     public void DrawRestraintSlots(RestraintSet set, Vector2 iconFrameSize)
     {
         // Equip Group

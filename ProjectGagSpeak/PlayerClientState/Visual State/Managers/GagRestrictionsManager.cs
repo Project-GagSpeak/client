@@ -92,6 +92,16 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         }
     }
 
+    public void ToggleEnabledState(GagType gagItem)
+    {
+        if (Storage.TryGetGag(gagItem, out var item))
+        {
+            item.IsEnabled = !item.IsEnabled;
+            Mediator.Publish(new ConfigGagRestrictionChanged(StorageItemChangeType.Modified, item));
+            _saver.Save(this);
+        }
+    }
+
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
     public bool AddFavorite(GarblerRestriction restriction) => _favorites.TryAddGag(restriction.GagType);
 

@@ -6,13 +6,11 @@ using Penumbra.GameData.Enums;
 
 namespace GagSpeak.PlayerState.Visual;
 
-public interface IVisualCache
+public interface IVisualCache : ITraitHolder
 {
     Dictionary<EquipSlot, GlamourSlot> Glamour { get; }
     List<ModSettingsPreset> Mods { get; }
     HashSet<Moodle> Moodles { get; }
-    Traits Traits { get; }
-    Stimulation Stimulation { get; }
 }
 
 public class VisualRestrictionsCache : IVisualCache
@@ -20,8 +18,10 @@ public class VisualRestrictionsCache : IVisualCache
     public Dictionary<EquipSlot, GlamourSlot> Glamour { get; private set; } = new Dictionary<EquipSlot, GlamourSlot>();
     public List<ModSettingsPreset> Mods { get; private set; } = new List<ModSettingsPreset>();
     public HashSet<Moodle> Moodles { get; private set; } = new HashSet<Moodle>();
-    public Traits Traits { get; private set; } = Traits.None;
-    public Stimulation Stimulation { get; private set; } = Stimulation.None;
+
+    // Update this later to have a container or handler to ensure certain properties are upheld.
+    public Traits Traits { get; set; } = Traits.None;
+    public Stimulation Stimulation { get; set; } = Stimulation.None;
 
     public VisualRestrictionsCache() { }
 
@@ -29,7 +29,7 @@ public class VisualRestrictionsCache : IVisualCache
     {
         // Update them in order, such that the higher layers can replace the lower layers.
         Glamour = newRestrictions.Select(x => x.Glamour).Where(x => x.Slot is not EquipSlot.Nothing).GroupBy(x => x.Slot).ToDictionary(g => g.Key, g => g.Last());
-        Mods = newRestrictions.Select(x => x.Mod).ToList();
+        Mods = newRestrictions.Where(x => x.Mod.HasData).Select(x => x.Mod).ToList();
         Moodles = newRestrictions.Select(x => x.Moodle).ToHashSet();
         Traits = newRestrictions.Select(x => x.Traits).DefaultIfEmpty(Traits.None).Aggregate((x, y) => x | y);
         Stimulation = newRestrictions.Select(x => x.Stimulation).DefaultIfEmpty(Stimulation.None).Aggregate((x, y) => x | y);
@@ -89,8 +89,8 @@ public class VisualAdvancedRestrictionsCache : IVisualCache
     public OptionalBool Visor { get; private set; } = OptionalBool.Null;
     public OptionalBool Weapon { get; private set; } = OptionalBool.Null;
     public (Guid Profile, uint Priority) CustomizeProfile { get; private set; } = (Guid.Empty, 0);
-    public Traits Traits { get; private set; } = Traits.None;
-    public Stimulation Stimulation { get; private set; } = Stimulation.None;
+    public Traits Traits { get; set; } = Traits.None;
+    public Stimulation Stimulation { get; set; } = Stimulation.None;
 
     public VisualAdvancedRestrictionsCache()
     { }
@@ -112,7 +112,7 @@ public class VisualAdvancedRestrictionsCache : IVisualCache
     public void UpdateCache(GarblerRestriction[] gagRestrictions)
     {
         Glamour = gagRestrictions.Select(x => x.Glamour).Where(x => x.Slot is not EquipSlot.Nothing).GroupBy(x => x.Slot).ToDictionary(g => g.Key, g => g.Last());
-        Mods = gagRestrictions.Select(x => x.Mod).ToList();
+        Mods = gagRestrictions.Where(x => x.Mod.HasData).Select(x => x.Mod).ToList();
         Headgear = gagRestrictions.Select(x => x.HeadgearState).DefaultIfEmpty(OptionalBool.Null).Aggregate((x, y) => x | y);
         Visor = gagRestrictions.Select(x => x.VisorState).DefaultIfEmpty(OptionalBool.Null).Aggregate((x, y) => x | y);
         Moodles = gagRestrictions.Select(x => x.Moodle).ToHashSet();
@@ -123,6 +123,7 @@ public class VisualAdvancedRestrictionsCache : IVisualCache
     public void UpdateCache(RestraintSet activeSet)
     {
         // if the active set is null, it was disabled, and we should reset to defaults.
+        // NOTE: Not sure entirely if this is a good idea, but check later? Needs better optimization.
         if (activeSet is null)
         {
             ToDefaults();

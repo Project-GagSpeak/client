@@ -56,10 +56,35 @@ public class SettingsUi : WindowMediatorSubscriberBase
         SizeConstraints = new WindowSizeConstraints()
         {
             MinimumSize = new Vector2(625, 400),
-            MaximumSize = new Vector2(800, 2000),
+            MaximumSize = ImGui.GetIO().DisplaySize,
         };
 
-        Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
+#if DEBUG
+        TitleBarButtons = new()
+        {
+            new TitleBarButton()
+            {
+                Icon = FAI.Tshirt,
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))),
+                IconOffset = new(2,1),
+                ShowTooltip = () => CkGui.AttachToolTip("Open Active State Debugger")
+            },
+            new TitleBarButton()
+            {
+                Icon = FAI.PersonRays,
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(DebugPersonalDataUI))),
+                IconOffset = new(2,1),
+                ShowTooltip = () => CkGui.AttachToolTip("Open Personal Data Debugger")  
+            },
+            new TitleBarButton()
+            {
+                Icon = FAI.Database,
+                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(DebugStorageUI))),
+                IconOffset = new(2,1),
+                ShowTooltip = () => CkGui.AttachToolTip("Open Storages Debugger")
+            },
+        };
+#endif
     }
 
     private bool ThemePushed = false;
@@ -87,22 +112,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         CkGui.DrawOptionalPlugins();
-#if DEBUG
-        ImGuiUtil.RightAlign("Full Data Debugger");
-        if(ImGui.IsItemClicked())
-            Mediator.Publish(new UiToggleMessage(typeof(DebuggerStandaloneUI)));
-#endif
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextUnformatted(GSLoc.Settings.AccountClaimText);
+
+        ImUtf8.TextFrameAligned(GSLoc.Settings.AccountClaimText);
+        
         ImGui.SameLine();
         if (ImGui.Button("CK Discord"))
-        {
             Util.OpenLink("https://discord.gg/kinkporium");
-        }
+
         // draw out the tab bar for us.
         if (ImGui.BeginTabBar("mainTabBar"))
         {
-
             if (MainHub.IsConnected)
             {
                 if (ImGui.BeginTabItem(GSLoc.Settings.TabsGlobal))
@@ -134,13 +153,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 ImGui.EndTabItem();
             }
 
-#if DEBUG
-            if (ImGui.BeginTabItem("Dev"))
-            {
-                _debugTab.DrawDevDebug();
-                ImGui.EndTabItem();
-            }
-#endif
             ImGui.EndTabBar();
         }
     }
