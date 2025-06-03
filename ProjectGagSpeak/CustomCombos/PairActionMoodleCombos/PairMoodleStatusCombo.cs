@@ -62,7 +62,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
 
     protected override async Task<bool> OnRemoveButton(MoodlesStatusInfo item)
     {
-        var dto = new RemoveMoodlesDto(_pairRef.UserData, [item.GUID]);
+        var dto = new MoodlesRemoval(_pairRef.UserData, [item.GUID]);
         if(await _mainHub.UserRemoveMoodles(dto))
         {
             Log.LogDebug($"Removing moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);

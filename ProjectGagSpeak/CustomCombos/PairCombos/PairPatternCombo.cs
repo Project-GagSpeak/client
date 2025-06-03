@@ -68,7 +68,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         };
 
         var result = await _mainHub.UserPushPairDataToybox(dto);
-        if (result is not GsApiPairErrorCodes.Success)
+        if (result is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
             return false;

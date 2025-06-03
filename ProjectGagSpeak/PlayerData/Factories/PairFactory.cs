@@ -2,7 +2,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.PlayerData.Factories;
 
@@ -25,12 +25,9 @@ public class PairFactory
         _cosmetics = cosmetics;
     }
 
-    /// <summary> Creates a new Pair object from the UserPairDto</summary>
-    /// <param name="userPairDto"> The data transfer object of a user pair</param>
+    /// <summary> Creates a new Pair object from the KinksterPair</summary>
+    /// <param name="KinksterPair"> The data transfer object of a user pair</param>
     /// <returns> A new Pair object </returns>
-    public Pair Create(UserPairDto userPairDto)
-    {
-        return new Pair(_loggerFactory.CreateLogger<Pair>(), userPairDto, _mediator,
-            _cachedPlayerFactory, _serverConfigs, _cosmetics);
-    }
+    public Pair Create(KinksterPair kinksterPair)
+        => new(kinksterPair, _loggerFactory.CreateLogger<Pair>(), _mediator, _cachedPlayerFactory, _serverConfigs, _cosmetics);
 }

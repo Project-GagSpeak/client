@@ -1,13 +1,18 @@
-using GagSpeak.PlayerData.Pairs;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.PlayerData.Pairs;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.Connection;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
 
 /// <summary> How we want to modify the defined UI window. </summary>
-public enum ToggleType { Toggle, Show, Hide }
+public enum ToggleType
+{
+    Toggle,
+    Show,
+    Hide
+}
 
 public record UserPairSelected(Pair? Pair) : MessageBase; // This likely can be removed.
 
@@ -81,7 +86,7 @@ public record ReportKinkPlateMessage(UserData KinksterToReport) : MessageBase;
 
 
 /// <summary> This is fired whenever the discord bot wishes to send out an account verification to our client. </summary>
-public record VerificationPopupMessage(VerificationDto VerificationCode) : MessageBase;
+public record VerificationPopupMessage(VerificationCode VerificationCode) : MessageBase;
 
 
 /// <summary> Fires whenever we finished recording a new pattern, and need to finalize it's details. </summary>

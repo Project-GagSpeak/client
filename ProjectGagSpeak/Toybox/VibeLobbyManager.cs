@@ -4,6 +4,8 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Enums;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.VibeLobby;
 public class VibeRoomManager : DisposableMediatorSubscriberBase
@@ -12,7 +14,7 @@ public class VibeRoomManager : DisposableMediatorSubscriberBase
     private readonly OnFrameworkService _frameworkUtils;
     private readonly SexToyManager _vibeService;
 
-    private List<VibeRoomInviteDto> CurrentInvites = new();
+    private List<RoomInvite> CurrentInvites = new();
 
     public Task? LobbyManagementTask { get; private set; }
     public Task? LobbyDataStreamTask { get; private set; }
@@ -29,7 +31,8 @@ public class VibeRoomManager : DisposableMediatorSubscriberBase
     public async Task CreateVibeRoom(string roomName, string roomPassword = "")
     {
         // Attempt to create a Vibe Room.
-        if(await _hub.RoomCreate(roomName, roomPassword) is GsApiVibeErrorCodes.Success)
+        var result = await _hub.RoomCreate(new RoomCreateRequest(roomName, VibeRoomFlags.None) { Password = roomPassword });
+        if (result.ErrorCode is GagSpeakApiEc.Success)
         {
             Logger.LogInformation("Vibe Room created successfully.", LoggerType.VibeRooms);
 

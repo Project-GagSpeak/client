@@ -111,7 +111,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
-                    _ = _hub.UserSetKinkPlateContent(new UserKinkPlateContentDto(new UserData(MainHub.UID), profile.KinkPlateInfo));
+                    _ = _hub.UserSetKinkPlateContent(new KinkPlateContent(new UserData(MainHub.UID), profile.KinkPlateInfo));
                 CkGui.AttachToolTip("Updates your stored profile with latest information");
                 
                 ImUtf8.SameLineInner();

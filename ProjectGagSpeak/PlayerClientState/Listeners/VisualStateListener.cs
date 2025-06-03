@@ -11,9 +11,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.IPC;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
+using GagspeakAPI.Util;
 using Glamourer.Api.Enums;
 using Glamourer.Api.IpcSubscribers;
 using OtterGui.Classes;
@@ -192,7 +192,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     #region Gag Manipulation
-    public async Task SwapOrApplyGag(CallbackGagDataDto gagData)
+    public async Task SwapOrApplyGag(KinksterUpdateGags gagData)
     {
         if(gagData.PreviousGag is GagType.None)
             await ApplyGag(gagData);
@@ -202,7 +202,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> We have received the instruction to swap our gag as a callback from the server. </summary>
     /// <remarks> We can skip all validation checks for this, but don't update if not connected. </remarks>
-    public async Task SwapGag(CallbackGagDataDto gagData)
+    public async Task SwapGag(KinksterUpdateGags gagData)
     {
         if (!MainHub.IsConnected) 
             return;
@@ -219,7 +219,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
     /// <summary> Applies a Gag to a spesified layer. </summary>
-    public async Task ApplyGag(CallbackGagDataDto gagData)
+    public async Task ApplyGag(KinksterUpdateGags gagData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -243,7 +243,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks the gag with a padlock on a specified layer. </summary>
-    public void LockGag(CallbackGagDataDto gagData)
+    public void LockGag(KinksterUpdateGags gagData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -254,7 +254,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks the gag's padlock on a spesified layer. </summary>
-    public void UnlockGag(CallbackGagDataDto gagData)
+    public void UnlockGag(KinksterUpdateGags gagData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -265,7 +265,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes the gag from a defined layer. </summary>
-    public async Task RemoveGag(CallbackGagDataDto gagData, bool updateVisuals = true, bool doActionNotif = true)
+    public async Task RemoveGag(KinksterUpdateGags gagData, bool updateVisuals = true, bool doActionNotif = true)
     {
         if (!MainHub.IsConnected)
             return;
@@ -293,7 +293,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     #region Restrictions Manipulation
 
-    public async Task SwapOrApplyRestriction(CallbackRestrictionDataDto itemData)
+    public async Task SwapOrApplyRestriction(KinksterUpdateRestriction itemData)
     {
         if (itemData.PreviousRestriction.IsEmptyGuid())
             await ApplyRestriction(itemData);
@@ -301,7 +301,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
             await SwapRestriction(itemData);
     }
 
-    public async Task SwapRestriction(CallbackRestrictionDataDto itemData)
+    public async Task SwapRestriction(KinksterUpdateRestriction itemData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -313,7 +313,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies a Restriction to the client at a defined index. </summary>
-    public async Task ApplyRestriction(CallbackRestrictionDataDto itemData)
+    public async Task ApplyRestriction(KinksterUpdateRestriction itemData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -334,7 +334,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks a padlock from a restriction at a defined index. </summary>
-    public void LockRestriction(CallbackRestrictionDataDto itemData)
+    public void LockRestriction(KinksterUpdateRestriction itemData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -344,7 +344,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks a padlock from a restriction at a defined index. </summary>
-    public void UnlockRestriction(CallbackRestrictionDataDto itemData)
+    public void UnlockRestriction(KinksterUpdateRestriction itemData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -354,7 +354,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes a restraint item from a defined index. </summary>
-    public async Task RemoveRestriction(CallbackRestrictionDataDto itemData, bool updateVisuals = true)
+    public async Task RemoveRestriction(KinksterUpdateRestriction itemData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnected)
             return;
@@ -373,7 +373,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion Restrictions Manipulation
 
     #region RestraintSet Manipulation
-    public async Task SwapOrApplyRestraint(CallbackRestraintDataDto restraintData)
+    public async Task SwapOrApplyRestraint(KinksterUpdateRestraint restraintData)
     {
         if (restraintData.PreviousRestraint.IsEmptyGuid())
             await ApplyRestraint(restraintData);
@@ -382,7 +382,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Swapped a Restraint set to the client. </summary>
-    public async Task SwapRestraint(CallbackRestraintDataDto restraintData)
+    public async Task SwapRestraint(KinksterUpdateRestraint restraintData)
     {
         Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Callbacks);
         await RemoveRestraint(restraintData, false);
@@ -391,7 +391,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
 /// <summary> Applies a Restraint set to the client. </summary>
-    public async Task ApplyRestraint(CallbackRestraintDataDto restraintData)
+    public async Task ApplyRestraint(KinksterUpdateRestraint restraintData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -414,7 +414,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks the active restraint set. </summary>
-    public void LockRestraint(CallbackRestraintDataDto restraintData)
+    public void LockRestraint(KinksterUpdateRestraint restraintData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -424,7 +424,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks the active restraint set </summary>
-    public void UnlockRestraint(CallbackRestraintDataDto restraintData)
+    public void UnlockRestraint(KinksterUpdateRestraint restraintData)
     {
         if (!MainHub.IsConnected)
             return;
@@ -434,7 +434,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes the active restraint. </summary>
-    public async Task RemoveRestraint(CallbackRestraintDataDto restraintData, bool updateVisuals = true)
+    public async Task RemoveRestraint(KinksterUpdateRestraint restraintData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnected)
             return;
@@ -456,25 +456,25 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion RestraintSet Manipulation
 
     #region Direct Moodle Calls
-    public void ApplyStatusesByGuid(ApplyMoodlesByGuidDto dto)
+    public void ApplyStatusesByGuid(MoodlesApplierById dto)
     {
         if(PostActionMsg(dto.User.UID, InteractionType.ApplyOwnMoodle, "Moodle Status(s) Applied"))
-            _interop.Moodles.ApplyOwnStatusByGUID(dto.Statuses);
+            _interop.Moodles.ApplyOwnStatusByGUID(dto.Ids);
     }
 
-    public void ApplyStatusesToSelf(ApplyMoodlesByStatusDto dto, string clientPlayerNameWithWorld)
+    public void ApplyStatusesToSelf(MoodlesApplierByStatus dto, string clientPlayerNameWithWorld)
     {
         if(PostActionMsg(dto.User.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied"))
             _interop.Moodles.ApplyStatusesFromPairToSelf(dto.User.UID, clientPlayerNameWithWorld, dto.Statuses);
     }
 
-    public void RemoveStatusesFromSelf(RemoveMoodlesDto dto)
+    public void RemoveStatusesFromSelf(MoodlesRemoval dto)
     {
         if(PostActionMsg(dto.User.UID, InteractionType.RemoveMoodle, "Moodle Status Removed"))
-            _interop.Moodles.RemoveOwnStatusByGuid(dto.Statuses);
+            _interop.Moodles.RemoveOwnStatusByGuid(dto.StatusIds);
     }
 
-    public void ClearStatusesFromSelf(UserDto dto)
+    public void ClearStatusesFromSelf(KinksterBase dto)
     {
         if(PostActionMsg(dto.User.UID, InteractionType.ClearMoodle, "Moodles Cleared"))
             _interop.Moodles.ClearStatus();

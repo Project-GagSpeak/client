@@ -131,7 +131,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 _croppedImageData = null!;
                 _croppedImageToShow = null;
                 _useCompressedImage = false;
-                _ = _hub.UserSetKinkPlatePicture(new UserKinkPlatePictureDto(new UserData(MainHub.UID), string.Empty));
+                _ = _hub.UserSetKinkPlatePicture(new KinkPlateImage(new UserData(MainHub.UID), string.Empty));
             }
             CkGui.AttachToolTip("Clear your currently uploaded profile picture--SEP--Must be holding SHIFT to clear.");
 

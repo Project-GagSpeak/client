@@ -1,7 +1,7 @@
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.SignalR;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using System.Reflection;
 
 namespace GagSpeak.WebAPI;
@@ -35,25 +35,25 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
     public static string ClientVerString => "[Client: v" + ClientVersion + " (Api " + IGagspeakHub.ApiVersion + ")]";
     public static string ExpectedVerString => "[Server: v" + ExpectedClientVersion + " (Api " + ExpectedApiVersion + ")]";
 
-    private static ConnectionDto? _connectionDto = null;
-    public static ConnectionDto? ConnectionDto
+    private static ConnectionResponse? _ConnectionResponse = null;
+    public static ConnectionResponse? ConnectionResponse
     {
-        get => _connectionDto;
+        get => _ConnectionResponse;
         set
         {
-            _connectionDto = value;
+            _ConnectionResponse = value;
             if (value != null)
             {
-                ExpectedClientVersion = _connectionDto?.CurrentClientVersion ?? new Version(0, 0, 0, 0);
-                ExpectedApiVersion = _connectionDto?.ServerVersion ?? 0;
+                ExpectedClientVersion = _ConnectionResponse?.CurrentClientVersion ?? new Version(0, 0, 0, 0);
+                ExpectedApiVersion = _ConnectionResponse?.ServerVersion ?? 0;
             }
         }
     }
-    protected static SystemInfoDto? ServerSystemInfo = null;
+    protected static ServerInfoResponse? ServerInfo = null;
     protected string? LastToken;
     protected bool SuppressNextNotification = false;
     public static string AuthFailureMessage = string.Empty;
-    public static int MainOnlineUsers => ServerSystemInfo?.OnlineUsers ?? 0;
+    public static int MainOnlineUsers => ServerInfo?.OnlineUsers ?? 0;
 
     /// <summary> Creates a connection to our GagSpeakHub. </summary>
     /// <remarks> Not valid if secret key is not valid, account is not created, not logged in, or if client is connected already. </remarks>
@@ -74,7 +74,7 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
 
     /// <summary> Checks to see if our client is outdated after fetching the connection DTO. </summary>
     /// <returns> True if the client is outdated, false if it is not. </returns>
-    protected abstract Task<bool> ConnectionDtoAndVersionIsValid();
+    protected abstract Task<bool> ConnectionResponseAndVersionIsValid();
 
     /// <summary> Pings GagSpeakHub every 30s to update its status in the Redi's Pool. (Ensures connection is maintained) </summary>
     /// <remarks> If 2 checks fail, totaling 60s timeout, client will get disconnected by the server, requiring us to reconnect. </remarks>

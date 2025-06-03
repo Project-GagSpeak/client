@@ -1,14 +1,8 @@
-using GagspeakAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data;
-using GagspeakAPI.Dto;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.IPC;
-using GagspeakAPI.Dto.Permissions;
 using GagspeakAPI.Dto.Sharehub;
-using GagspeakAPI.Dto.User;
-using GagspeakAPI.Dto.UserPair;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -18,169 +12,103 @@ namespace GagSpeak.WebAPI;
 
 public partial class MainHub
 {
-    /// <summary> 
-    /// Creates a new Kinkster Pair request for the other user we wish to pair with.
-    /// Will generate a UserAddPairRequest on callback if valid.
-    /// </summary>
-    public async Task UserSendPairRequest(UserPairSendRequestDto request)
+    #region Retrievals
+    public async Task<List<OnlineKinkster>> UserGetOnlinePairs()
+        => await GagSpeakHubMain!.InvokeAsync<List<OnlineKinkster>>(nameof(UserGetOnlinePairs)).ConfigureAwait(false);
+
+    public async Task<List<KinksterPair>> UserGetPairedClients()
+        => await GagSpeakHubMain!.InvokeAsync<List<KinksterPair>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
+
+    public async Task<List<KinksterRequest>> UserGetPairRequests()
+        => await GagSpeakHubMain!.InvokeAsync<List<KinksterRequest>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
+
+    public async Task<KinkPlateFull> UserGetKinkPlate(KinksterBase dto)
     {
-        if (!IsConnected) return;
-        Logger.LogDebug("Pushing an outgoing kinkster request to " + request.User.UID, LoggerType.ApiCore);
-        await GagSpeakHubMain!.SendAsync(nameof(UserSendPairRequest), request).ConfigureAwait(false); // wait for request to send.
+        // if we are not connected, return a new user profile dto with the user data and disabled set to false
+        if (!IsConnected) 
+            return new KinkPlateFull(dto.User, Info: new KinkPlateContent(), ImageBase64: string.Empty);
+
+        return await GagSpeakHubMain!.InvokeAsync<KinkPlateFull>(nameof(UserGetKinkPlate), dto).ConfigureAwait(false);
+    }
+    #endregion Retrievals
+
+    #region ShareHubs
+    public async Task<HubResponse> UploadPattern(PatternUpload dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UploadPattern), dto).ConfigureAwait(false);
     }
 
-    public async Task UserCancelPairRequest(UserDto user)
+    public async Task<HubResponse> UploadMoodle(MoodleUpload dto)
     {
-        if (!IsConnected) return;
-        Logger.LogDebug("Cancelling an outgoing kinkster request to " + user, LoggerType.ApiCore);
-        await GagSpeakHubMain!.SendAsync(nameof(UserCancelPairRequest), user).ConfigureAwait(false); // wait for request to send.
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UploadMoodle), dto).ConfigureAwait(false);
     }
 
-    public async Task UserAcceptIncPairRequest(UserDto user)
+    public async Task<HubResponse<string>> DownloadPattern(Guid patternId)
     {
-        if (!IsConnected) return;
-        Logger.LogDebug("Accepting an incoming kinkster request from " + user, LoggerType.ApiCore);
-        await GagSpeakHubMain!.SendAsync(nameof(UserAcceptIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, string.Empty);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse<string>>(nameof(DownloadPattern), patternId).ConfigureAwait(false);
     }
 
-    public async Task UserRejectIncPairRequest(UserDto user)
+    public async Task<HubResponse> LikePattern(Guid patternId)
     {
-        if (!IsConnected) return;
-        Logger.LogDebug("Rejecting an incoming kinkster request from " + user, LoggerType.ApiCore);
-        await GagSpeakHubMain!.SendAsync(nameof(UserRejectIncPairRequest), user).ConfigureAwait(false); // wait for request to send.
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(LikePattern), patternId).ConfigureAwait(false);
     }
 
-
-    /// <summary> 
-    /// Send a request to the server, asking it to remove the declared UserDto from the clients userPair list.
-    /// </summary>
-    public async Task UserRemovePair(UserDto userDto)
+    public async Task<HubResponse> LikeMoodle(Guid moodleId)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.SendAsync(nameof(UserRemovePair), userDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
     }
 
-    /// <summary> 
-    /// Sends a request to the server, asking for the connected clients account to be deleted. 
-    /// </summary>
-    public async Task UserDelete()
+    public async Task<HubResponse> RemovePattern(Guid patternId)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.SendAsync(nameof(UserDelete)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RemovePattern), patternId).ConfigureAwait(false);
     }
 
-    /// <summary> 
-    /// Send a request to the server, asking it to return a list of all currently online users that you are paired with.
-    /// </summary>
-    /// <returns>Returns a list of OnlineUserIdent Data Transfer Objects</returns>
-    public async Task<List<OnlineUserIdentDto>> UserGetOnlinePairs()
+    public async Task<HubResponse> RemoveMoodle(Guid moodleId)
     {
-        return await GagSpeakHubMain!.InvokeAsync<List<OnlineUserIdentDto>>(nameof(UserGetOnlinePairs)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RemoveMoodle), moodleId).ConfigureAwait(false);
     }
 
-    /// <summary> 
-    /// Send a request to the server, asking it to return a list of your paired clients.
-    /// </summary>
-    /// <returns>Returns a list of UserPair data transfer objects</returns>
-    public async Task<List<UserPairDto>> UserGetPairedClients()
+    public async Task<HubResponse<List<ServerPatternInfo>>> SearchPatterns(PatternSearch patternSearchDto)
     {
-        return await GagSpeakHubMain!.InvokeAsync<List<UserPairDto>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerPatternInfo>());
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse<List<ServerPatternInfo>>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
     }
 
-    public async Task<List<UserPairRequestDto>> UserGetPairRequests()
+    public async Task<HubResponse<List<ServerMoodleInfo>>> SearchMoodles(MoodleSearch moodleSearchDto)
     {
-        return await GagSpeakHubMain!.InvokeAsync<List<UserPairRequestDto>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerMoodleInfo>());
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse<List<ServerMoodleInfo>>>(nameof(SearchMoodles), moodleSearchDto).ConfigureAwait(false);
     }
 
-    /// <summary> Uploads your pattern to the server. </summary>
-    public async Task<bool> UploadPattern(PatternUploadDto dto)
+    public async Task<HubResponse<HashSet<string>>> FetchSearchTags()
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UploadPattern), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HashSet<string>());
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse<HashSet<string>>>(nameof(FetchSearchTags)).ConfigureAwait(false);
+    }
+    #endregion ShareHubs
+
+    #region Client Vanity
+    public async Task<HubResponse> UserSendGlobalChat(ChatMessageGlobal dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserSendGlobalChat), dto).ConfigureAwait(false);
     }
 
-    /// <summary> Uploads your a new Moodle to the server. </summary>
-    public async Task<bool> UploadMoodle(MoodleUploadDto dto)
+    public async Task<HubResponse> UserUpdateAchievementData(AchievementsUpdate dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UploadMoodle), dto).ConfigureAwait(false);
-    }
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
 
-    /// <summary> Downloads a pattern from the server. </summary>
-    public async Task<string> DownloadPattern(Guid patternId)
-    {
-        if (!IsConnected) return string.Empty;
-        return await GagSpeakHubMain!.InvokeAsync<string>(nameof(DownloadPattern), patternId).ConfigureAwait(false);
-    }
-
-    /// <summary> Likes a pattern you see on the server. AddingLike==true means we liked it, false means we un-liked it. </summary>
-    public async Task<bool> LikePattern(Guid patternId)
-    {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikePattern), patternId).ConfigureAwait(false);
-    }
-
-    /// <summary> Likes a Moodle you see on the server. AddingLike==true means we liked it, false means we un-liked it. </summary>
-    public async Task<bool> LikeMoodle(Guid moodleId)
-    {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
-    }
-
-    /// <summary> Deletes a pattern from the server. </summary>
-    public async Task<bool> RemovePattern(Guid patternId)
-    {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(RemovePattern), patternId).ConfigureAwait(false);
-    }
-
-    public async Task<bool> RemoveMoodle(Guid moodleId)
-    {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(RemoveMoodle), moodleId).ConfigureAwait(false);
-    }
-
-    /// <summary> Grabs the search result of your specified query to the server. </summary>
-    public async Task<List<ServerPatternInfo>> SearchPatterns(PatternSearchDto patternSearchDto)
-    {
-        if (!IsConnected) return new List<ServerPatternInfo>();
-        return await GagSpeakHubMain!.InvokeAsync<List<ServerPatternInfo>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
-    }
-
-    /// <summary> Grabs the search result of your specified query to the server. </summary>
-    public async Task<List<ServerMoodleInfo>> SearchMoodles(MoodleSearchDto moodleSearchDto)
-    {
-        if (!IsConnected) return new List<ServerMoodleInfo>();
-        return await GagSpeakHubMain!.InvokeAsync<List<ServerMoodleInfo>>(nameof(SearchMoodles), moodleSearchDto).ConfigureAwait(false);
-    }
-
-    /// <summary> Grabs the search result of your specified query to the server. </summary>
-    public async Task<HashSet<string>> FetchSearchTags()
-    {
-        if (!IsConnected) return new HashSet<string>();
-        return await GagSpeakHubMain!.InvokeAsync<HashSet<string>>(nameof(FetchSearchTags)).ConfigureAwait(false);
-    }
-
-    /// <summary> Sends a message to the gagspeak Global chat. </summary>
-    public async Task SendGlobalChat(GlobalChatMessageDto dto)
-    {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(SendGlobalChat), dto).ConfigureAwait(false);
-    }
-
-    public async Task UserShockActionOnPair(ShockCollarAction dto)
-    {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserShockActionOnPair), dto).ConfigureAwait(false);
-    }
-
-
-    public async Task<bool> UserUpdateAchievementData(UserAchievementsDto dto)
-    {
-        if (!IsConnected) return false;
+        // Achievement Syncronization without resets is a pain in the ass :)
         try
         {
-            return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserUpdateAchievementData), dto);
+            return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserUpdateAchievementData), dto);
         }
         catch (OperationCanceledException ex)
         {
@@ -197,263 +125,294 @@ public partial class MainHub
             // Handle any other exceptions
             Logger.LogError(ex, "An unexpected error occurred while updating achievement data.");
         }
-        return false;
+        return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
     }
 
-    public async Task<UserKinkPlateDto> UserGetKinkPlate(UserDto dto)
+    public async Task<HubResponse> UserSetKinkPlateContent(KinkPlateInfo kinkPlateInfo)
     {
-        // if we are not connected, return a new user profile dto with the user data and disabled set to false
-        if (!IsConnected) return new UserKinkPlateDto(dto.User, Info: new KinkPlateContent(), ProfilePictureBase64: string.Empty);
-        // otherwise, if we are connected, invoke the UserGetKinkPlate function on the server with the user data transfer object
-        return await GagSpeakHubMain!.InvokeAsync<UserKinkPlateDto>(nameof(UserGetKinkPlate), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserSetKinkPlateContent), kinkPlateInfo).ConfigureAwait(false);
     }
 
-    public async Task UserReportKinkPlate(UserKinkPlateReportDto userProfileDto)
+    public async Task<HubResponse> UserSetKinkPlatePicture(KinkPlateImage kinkPlateImage)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserSetKinkPlatePicture), kinkPlateImage).ConfigureAwait(false);
     }
 
-    public async Task UserSetKinkPlateContent(UserKinkPlateContentDto kinkPlateInfo)
+    public async Task<HubResponse> UserReportKinkPlate(KinkPlateReport userProfileDto)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlateContent), kinkPlateInfo).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
     }
+    #endregion Client Vanity
 
-    public async Task UserSetKinkPlatePicture(UserKinkPlatePictureDto kinkPlateImage)
+    #region Personal Interactions
+    public async Task<HubResponse> UserPushData(PushClientCompositeUpdate dto)
     {
-        if (!IsConnected) return;
-        await GagSpeakHubMain!.InvokeAsync(nameof(UserSetKinkPlatePicture), kinkPlateImage).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushData), dto).ConfigureAwait(false);
     }
 
-    /// <summary> Moodles IPC senders. </summary>
-    public async Task<bool> UserApplyMoodlesByGuid(ApplyMoodlesByGuidDto dto)
+    public async Task<HubResponse> UserPushDataIpc(PushClientIpcUpdate dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserApplyMoodlesByGuid), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataIpc), dto).ConfigureAwait(false);
     }
 
-    /// <summary> For when we are applying OUR moodles to another pair. </summary>
-    public async Task<bool> UserApplyMoodlesByStatus(ApplyMoodlesByStatusDto dto)
+    public async Task<HubResponse> UserPushDataGags(PushClientGagSlotUpdate dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserApplyMoodlesByStatus), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserRemoveMoodles(RemoveMoodlesDto dto)
+    public async Task<HubResponse> UserPushDataRestrictions(PushClientRestrictionUpdate dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserRemoveMoodles), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
     }
 
-    public async Task<bool> UserClearMoodles(UserDto dto)
+    public async Task<HubResponse> UserPushDataRestraint(PushClientRestraintUpdate dto)
     {
-        if (!IsConnected) return false;
-        return await GagSpeakHubMain!.InvokeAsync<bool>(nameof(UserClearMoodles), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
     }
 
-
-
-    public async Task<GsApiVibeErrorCodes> RoomCreate(string roomName, string password)
+    public async Task<HubResponse> UserPushDataCursedLoot(PushClientCursedLootUpdate dto)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomCreate), roomName, password).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiVibeErrorCodes> SendRoomInvite(VibeRoomInviteDto dto)
+    public async Task<HubResponse> UserPushAliasGlobalUpdate(PushClientAliasGlobalUpdate dto)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(SendRoomInvite), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushAliasGlobalUpdate), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiVibeErrorCodes> ChangeRoomPassword(string roomName, string newPassword)
+    public async Task<HubResponse> UserPushAliasUniqueUpdate(PushClientAliasUniqueUpdate dto)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(ChangeRoomPassword), roomName, newPassword).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushAliasUniqueUpdate), dto).ConfigureAwait(false);
     }
 
-    public async Task<List<VibeRoomKinksterFullDto>> RoomJoin(string roomName, string password, VibeRoomKinkster dto)
+    public async Task<HubResponse> UserPushDataToybox(PushClientToyboxUpdate dto)
     {
-        if (!IsConnected) return new List<VibeRoomKinksterFullDto>();
-        return await GagSpeakHubMain!.InvokeAsync<List<VibeRoomKinksterFullDto>>(nameof(RoomJoin), roomName, password, dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomLeave()
+    public async Task<HubResponse> UserPushDataLightStorage(PushClientLightStorageUpdate dto)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomLeave)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomGrantAccess(UserDto allowedUser)
+    public async Task<HubResponse> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomGrantAccess), allowedUser).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserBulkChangeGlobal), allGlobalPerms);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomRevokeAccess(UserDto allowedUser)
+    public async Task<HubResponse> UserBulkChangeUnique(BulkChangeUnique allUniquePermsForPair)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomRevokeAccess), allowedUser).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserBulkChangeUnique), allUniquePermsForPair);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomPushDeviceUpdate(DeviceInfo info)
+    public async Task<HubResponse> UserChangeOwnGlobalPerm(SingleChangeGlobal userPermissions)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomPushDeviceUpdate), info).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeOwnGlobalPerm), userPermissions);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomSendDataStream(SexToyDataStreamDto dataStream)
+    public async Task<HubResponse> UserChangeOwnPairPerm(SingleChangeUnique userPermissions)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomSendDataStream), dataStream).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeOwnPairPerm), userPermissions);
     }
 
-    public async Task<GsApiVibeErrorCodes> RoomSendChat(string roomName, string message)
+    public async Task<HubResponse> UserChangeOwnPairPermAccess(SingleChangeAccess userPermissions)
     {
-        if (!IsConnected) return GsApiVibeErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiVibeErrorCodes>(nameof(RoomSendChat), message).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeOwnPairPermAccess), userPermissions);
     }
 
-    /* --------------------- Push Updates of Client Character Data --------------------- */
-    public async Task<GsApiErrorCodes> UserPushData(PushCompositeDataMessageDto dto)
+    public async Task<HubResponse> UserDelete()
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushData), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserDelete)).ConfigureAwait(false);
     }
 
-    public async Task UserPushDataIpc(PushIpcDataUpdateDto dto)
-        => await ExecuteSafelyAsync(async () => { await GagSpeakHubMain!.InvokeAsync(nameof(UserPushDataIpc), dto).ConfigureAwait(false); });
+    #endregion Personal Interactions
 
-    public async Task<GsApiErrorCodes> UserPushDataGags(PushGagDataUpdateDto dto)
+    #region Kinkster Interactions
+    public async Task<HubResponse> UserSendKinksterRequest(CreateKinksterRequest request)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserSendKinksterRequest), request).ConfigureAwait(false); // wait for request to send.
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataRestrictions(PushRestrictionDataUpdateDto dto)
+    public async Task<HubResponse> UserCancelKinksterRequest(KinksterBase user)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserCancelKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataRestraint(PushRestraintDataUpdateDto dto)
+    public async Task<HubResponse> UserAcceptKinksterRequest(KinksterBase user)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserAcceptKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataCursedLoot(PushCursedLootDataUpdateDto dto)
+    public async Task<HubResponse> UserRejectKinksterRequest(KinksterBase user)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserRejectKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataOrders(PushOrdersDataUpdateDto dto)
+    public async Task<HubResponse> UserRemoveKinkster(KinksterBase KinksterBase)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataOrders), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserRemoveKinkster), KinksterBase).ConfigureAwait(false);
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataToybox(PushToyboxDataUpdateDto dto)
+    public async Task<HubResponse> UserChangeKinksterGagState(PushKinksterGagSlotUpdate dto)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterGagState), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiErrorCodes> UserPushAliasGlobalUpdate(PushAliasGlobalUpdateDto dto)
+    public async Task<HubResponse> UserChangeKinksterRestrictionState(PushKinksterRestrictionUpdate dto)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushAliasGlobalUpdate), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterRestrictionState), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiErrorCodes> UserPushAliasPairUpdate(PushAliasPairUpdateDto dto)
+    public async Task<HubResponse> UserChangeKinksterRestraintState(PushKinksterRestraintUpdate dto)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushAliasPairUpdate), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterRestraintState), dto);
     }
 
-    public async Task<GsApiErrorCodes> UserPushDataLightStorage(PushLightStorageMessageDto dto)
+    public async Task<HubResponse> UserChangeKinksterToyboxState(PushKinksterToyboxUpdate dto)
     {
-        if (!IsConnected) return GsApiErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiErrorCodes>(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterToyboxState), dto).ConfigureAwait(false);
     }
 
-
-    /* --------------------- Permission Updates --------------------- */
-    public async Task UserPushAllGlobalPerms(BulkUpdatePermsGlobalDto allGlobalPerms)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllGlobalPerms), allGlobalPerms));
-
-    public async Task UserPushAllUniquePerms(BulkUpdatePermsUniqueDto allUniquePermsForPair)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserPushAllUniquePerms), allUniquePermsForPair));
-
-    public async Task UserUpdateOwnGlobalPerm(UserGlobalPermChangeDto userPermissions)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnGlobalPerm), userPermissions));
-
-    public async Task UserUpdateOtherGlobalPerm(UserGlobalPermChangeDto userPermissions)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherGlobalPerm), userPermissions));
-
-    public async Task UserUpdateOwnPairPerm(UserPairPermChangeDto userPermissions)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPerm), userPermissions));
-
-    public async Task UserUpdateOtherPairPerm(UserPairPermChangeDto userPermissions)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOtherPairPerm), userPermissions));
-
-    public async Task UserUpdateOwnPairPermAccess(UserPairAccessChangeDto userPermissions)
-        => await ExecuteSafelyAsync(() => GagSpeakHubMain!.InvokeAsync(nameof(UserUpdateOwnPairPermAccess), userPermissions));
-
-    // handle later.
-    public async Task PushClientIpcData(CharaIPCData data, List<UserData> visibleCharacters, DataUpdateType updateKind)
+    public async Task<HubResponse> UserSendNameToKinkster(KinksterBase recipient, string listenerName)
     {
-        Logger.LogDebug("Pushing Character IPC data to " + string.Join(", ", visibleCharacters.Select(v => v.AliasOrUID)) + "[" + updateKind + "]", LoggerType.VisiblePairs);
-        await UserPushDataIpc(new(visibleCharacters, data, updateKind)).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserSendNameToKinkster), recipient, listenerName).ConfigureAwait(false);
     }
 
-    // ----------------- Update Pair Data ---------------
-    public async Task<GsApiPairErrorCodes> UserPushPairDataGags(PushPairGagDataUpdateDto dto)
+    public async Task<HubResponse> UserChangeOtherGlobalPerm(SingleChangeGlobal userPermissions)
     {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataGags), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeOtherGlobalPerm), userPermissions);
     }
 
-    public async Task<GsApiPairErrorCodes> UserPushPairDataRestrictions(PushPairRestrictionDataUpdateDto dto)
+    public async Task<HubResponse> UserChangeOtherPairPerm(SingleChangeUnique userPermissions)
     {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataRestrictions), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserChangeOtherPairPerm), userPermissions);
+    }
+    #endregion Kinkster Interactions
+
+    #region IPC Interactions
+    public async Task<HubResponse> UserApplyMoodlesByGuid(MoodlesApplierById dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByGuid), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiPairErrorCodes> UserPushPairDataRestraint(PushPairRestraintDataUpdateDto dto)
+    public async Task<HubResponse> UserApplyMoodlesByStatus(MoodlesApplierByStatus dto)
     {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataRestraint), dto);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByStatus), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiPairErrorCodes> UserPushPairDataToybox(PushPairToyboxDataUpdateDto dto)
+    public async Task<HubResponse> UserRemoveMoodles(MoodlesRemoval dto)
     {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairDataToybox), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserRemoveMoodles), dto).ConfigureAwait(false);
     }
 
-    public async Task<GsApiPairErrorCodes> UserPushPairListenerName(UserDto recipient, string listenerName)
+    public async Task<HubResponse> UserClearMoodles(KinksterBase dto)
     {
-        if (!IsConnected) return GsApiPairErrorCodes.NotConnected;
-        return await GagSpeakHubMain!.InvokeAsync<GsApiPairErrorCodes>(nameof(UserPushPairListenerName), recipient, listenerName).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserClearMoodles), dto).ConfigureAwait(false);
     }
 
-    private async Task ExecuteSafelyAsync(Func<Task> pushAction)
+    public async Task<HubResponse> UserShockKinkster(ShockCollarAction dto)
     {
-        if (!IsConnected) return;
-        try
-        {
-            await pushAction().ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            Logger.LogCritical("Failed to execute async call. The Operation was cancelled!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogCritical("Failed to safely execute async function! :" + ex);
-        }
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserShockKinkster), dto).ConfigureAwait(false);
     }
+
+    #endregion IPC Interactions
+
+    #region Vibe Rooms
+    public async Task<HubResponse> RoomCreate(RoomCreateRequest dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomCreate), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> SendRoomInvite(RoomInvite dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(SendRoomInvite), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> ChangeRoomPassword(string roomName, string newPassword)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(ChangeRoomPassword), roomName, newPassword).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse<List<RoomParticipant>>> RoomJoin(string roomName, string password, RoomParticipantBase dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<RoomParticipant>());
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse<List<RoomParticipant>>>(nameof(RoomJoin), roomName, password, dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomLeave()
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomLeave)).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomGrantAccess(KinksterBase allowedUser)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomGrantAccess), allowedUser).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomRevokeAccess(KinksterBase allowedUser)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomRevokeAccess), allowedUser).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomPushDeviceUpdate(ToyInfo info)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomPushDeviceUpdate), info).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomSendDataStream(ToyDataStream dataStream)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomSendDataStream), dataStream).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> RoomSendChat(string roomName, string message)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(RoomSendChat), message).ConfigureAwait(false);
+    }
+    #endregion Vibe Rooms
 }
 #pragma warning restore MA0040

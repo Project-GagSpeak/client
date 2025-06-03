@@ -8,8 +8,8 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.SignalR;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
@@ -71,9 +71,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         Mediator.Subscribe<MainHubReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
     }
 
-    public static UserData PlayerUserData => ConnectionDto!.User;
-    public static string DisplayName => ConnectionDto?.User.AliasOrUID ?? string.Empty;
-    public static string UID => ConnectionDto?.User.UID ?? string.Empty;
+    public static UserData PlayerUserData => ConnectionResponse!.User;
+    public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
+    public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
 
     // Information gathered from our hub connection.
     private HubConnection? GagSpeakHubMain;
@@ -169,7 +169,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
                 InitializeApiHooks();
                 await GagSpeakHubMain.StartAsync(connectionToken).ConfigureAwait(false);
 
-                if (await ConnectionDtoAndVersionIsValid() is false)
+                if (await ConnectionResponseAndVersionIsValid() is false)
                 {
                     Logger.LogWarning("Connection was not valid, disconnecting.");
                     return;
@@ -186,7 +186,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
                 await LoadKinksterRequests().ConfigureAwait(false);
 
                 // Update our current authentication to reflect the information provided.
-                _serverConfigs.UpdateAuthentication(secretKey, ConnectionDto!);
+                _serverConfigs.UpdateAuthentication(secretKey, ConnectionResponse!);
             }
             catch (OperationCanceledException)
             {
@@ -275,9 +275,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
             Initialized = false;
             HubHealthCTS?.Cancel();
             Mediator.Publish(new MainHubDisconnectedMessage());
-            // set the connectionDto and hub to null.
+            // set the ConnectionResponse and hub to null.
             GagSpeakHubMain = null;
-            ConnectionDto = null;
+            ConnectionResponse = null;
         }
 
         // Update our server state to the necessary reason
@@ -391,12 +391,12 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
             // log a warning that no secret key is set for the current character
             Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LoggerType.ApiCore);
 
-            // If for WHATEVER reason the connectionDTO is not null here, log it.
-            if (ConnectionDto is not null)
+            // If for WHATEVER reason the ConnectionResponse is not null here, log it.
+            if (ConnectionResponse is not null)
                 Logger.LogWarning("Connection DTO is somehow not null, but no secret key is set for the" +
                     " current character. This is a problem.", LoggerType.ApiCore);
 
-            ConnectionDto = null; // This shouldnt even not be null?
+            ConnectionResponse = null; // This shouldnt even not be null?
 
             // Set our new ServerState to NoSecretKey and reject connection.
             ServerStatus = ServerState.NoSecretKey;
@@ -417,53 +417,53 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 
         Logger.LogDebug("Initializing data", LoggerType.ApiCore);
         // [ WHEN GET SERVER CALLBACK ] --------> [PERFORM THIS FUNCTION]
-        OnReceiveServerMessage((sev, msg) => _ = Client_ReceiveServerMessage(sev, msg));
-        OnReceiveHardReconnectMessage((sev, msg, state) => _ = Client_ReceiveHardReconnectMessage(sev, msg, state));
-        OnUpdateSystemInfo(dto => _ = Client_UpdateSystemInfo(dto));
+        OnServerMessage((sev, msg) => _ = Callback_ServerMessage(sev, msg));
+        OnHardReconnectMessage((sev, msg, state) => _ = Callback_HardReconnectMessage(sev, msg, state));
+        OnServerInfo(dto => _ = Callback_ServerInfo(dto));
 
-        OnUserAddClientPair(dto => _ = Client_UserAddClientPair(dto));
-        OnUserRemoveClientPair(dto => _ = Client_UserRemoveClientPair(dto));
-        OnUserAddPairRequest(dto => _ = Client_UserAddPairRequest(dto));
-        OnUserRemovePairRequest(dto => _ = Client_UserRemovePairRequest(dto));
+        OnAddClientPair(dto => _ = Callback_AddClientPair(dto));
+        OnRemoveClientPair(dto => _ = Callback_RemoveClientPair(dto));
+        OnAddPairRequest(dto => _ = Callback_AddPairRequest(dto));
+        OnRemovePairRequest(dto => _ = Callback_RemovePairRequest(dto));
 
-        OnUserApplyMoodlesByGuid(dto => _ = Client_UserApplyMoodlesByGuid(dto));
-        OnUserApplyMoodlesByStatus(dto => _ = Client_UserApplyMoodlesByStatus(dto));
-        OnUserRemoveMoodles(dto => _ = Client_UserRemoveMoodles(dto));
-        OnUserClearMoodles(dto => _ = Client_UserClearMoodles(dto));
+        OnApplyMoodlesByGuid(dto => _ = Callback_ApplyMoodlesByGuid(dto));
+        OnApplyMoodlesByStatus(dto => _ = Callback_ApplyMoodlesByStatus(dto));
+        OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));
+        OnClearMoodles(dto => _ = Callback_ClearMoodles(dto));
 
-        OnUserUpdateAllPerms(dto => _ = Client_UserUpdateAllPerms(dto));
-        OnUserUpdateAllGlobalPerms(dto => _ = Client_UserUpdateAllGlobalPerms(dto));
-        OnUserUpdateAllUniquePerms(dto => _ = Client_UserUpdateAllUniquePerms(dto));
-        OnUserUpdateGlobalPerm(dto => _ = Client_UserUpdateGlobalPerm(dto));
-        OnUserUpdateUniquePerm(dto => _ = Client_UserUpdateUniquePerm(dto));
-        OnUserUpdatePermAccess(dto => _ = Client_UserUpdatePermAccess(dto));
+        OnBulkChangeAll(dto => _ = Callback_BulkChangeAll(dto));
+        OnBulkChangeGlobal(dto => _ = Callback_BulkChangeGlobal(dto));
+        OnBulkChangeUnique(dto => _ = Callback_BulkChangeUnique(dto));
+        OnSingleChangeGlobal(dto => _ = Callback_SingleChangeGlobal(dto));
+        OnSingleChangeUnique(dto => _ = Callback_SingleChangeUnique(dto));
+        OnSingleChangeAccess(dto => _ = Callback_SingleChangeAccess(dto));
 
-        OnUserReceiveDataComposite(dto => _ = Client_UserReceiveDataComposite(dto));
-        OnUserReceiveDataIpc(dto => _ = Client_UserReceiveDataIpc(dto));
-        OnUserReceiveDataGags(dto => _ = Client_UserReceiveDataGags(dto));
-        OnUserReceiveDataRestrictions(dto => _ = Client_UserReceiveDataRestrictions(dto));
-        OnUserReceiveDataRestraint(dto => _ = Client_UserReceiveDataRestraint(dto));
-        OnUserReceiveDataToybox(dto => _ = Client_UserReceiveDataToybox(dto));
-        OnUserReceiveAliasGlobalUpdate(dto => _ = Client_UserReceiveAliasGlobalUpdate(dto));
-        OnUserReceiveAliasPairUpdate(dto => _ = Client_UserReceiveAliasPairUpdate(dto));
-        OnUserReceiveListenerName((user, name) => _ = Client_UserReceiveListenerName(user, name));
-        OnUserReceiveLightStorage(dto => _ = Client_UserReceiveLightStorage(dto));
+        OnKinksterUpdateComposite(dto => _ = Callback_KinksterUpdateComposite(dto));
+        OnKinksterUpdateIpc(dto => _ = Callback_KinksterUpdateIpc(dto));
+        OnKinksterUpdateGags(dto => _ = Callback_KinksterUpdateGags(dto));
+        OnKinksterUpdateRestriction(dto => _ = Callback_KinksterUpdateRestriction(dto));
+        OnKinksterUpdateRestraint(dto => _ = Callback_KinksterUpdateRestraint(dto));
+        OnKinksterUpdateCursedLoot(dto => _ = Callback_KinksterUpdateCursedLoot(dto));
+        OnKinksterUpdateAliasGlobal(dto => _ = Callback_KinksterUpdateAliasGlobal(dto));
+        OnKinksterUpdateAliasUnique(dto => _ = Callback_KinksterUpdateAliasUnique(dto));
+        OnKinksterUpdateToybox(dto => _ = Callback_KinksterUpdateToybox(dto));
+        OnKinksterUpdateLightStorage(dto => _ = Callback_KinksterUpdateLightStorage(dto));
+        OnListenerName((user, name) => _ = Callback_ListenerName(user, name));
+        OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
 
-        OnUserReceiveShockInstruction(dto => _ = Client_UserReceiveShockInstruction(dto));
+        OnChatMessageGlobal(dto => _ = Callback_ChatMessageGlobal(dto));
+        OnKinksterOffline(dto => _ = Callback_KinksterOffline(dto));
+        OnKinksterOnline(dto => _ = Callback_KinksterOnline(dto));
+        OnProfileUpdated(dto => _ = Callback_ProfileUpdated(dto));
+        OnShowVerification(dto => _ = Callback_ShowVerification(dto));
 
-        OnRoomJoin(dto => _ = Client_RoomJoin(dto));
-        OnRoomLeave(dto => _ = Client_RoomLeave(dto));
-        OnRoomReceiveDeviceUpdate((dto, data) => _ = Client_RoomReceiveDeviceUpdate(dto, data));
-        OnRoomReceiveDataStream(dto => _ = Client_RoomReceiveDataStream(dto));
-        OnRoomUserAccessGranted(dto => _ = Client_RoomUserAccessGranted(dto));
-        OnRoomUserAccessRevoked(dto => _ = Client_RoomUserAccessRevoked(dto));
-        OnRoomReceiveChatMessage((dto, message) => _ = Client_RoomReceiveChatMessage(dto, message));
-
-        OnGlobalChatMessage(dto => _ = Client_GlobalChatMessage(dto));
-        OnUserSendOffline(dto => _ = Client_UserSendOffline(dto));
-        OnUserSendOnline(dto => _ = Client_UserSendOnline(dto));
-        OnUserUpdateProfile(dto => _ = Client_UserUpdateProfile(dto));
-        OnDisplayVerificationPopup(dto => _ = Client_DisplayVerificationPopup(dto));
+        OnRoomJoin(dto => _ = Callback_RoomJoin(dto));
+        OnRoomLeave(dto => _ = Callback_RoomLeave(dto));
+        OnRoomDeviceUpdate((dto, data) => _ = Callback_RoomDeviceUpdate(dto, data));
+        OnRoomIncDataStream(dto => _ = Callback_RoomIncDataStream(dto));
+        OnRoomAccessGranted(dto => _ = Callback_RoomAccessGranted(dto));
+        OnRoomAccessRevoked(dto => _ = Callback_RoomAccessRevoked(dto));
+        OnRoomChatMessage((dto, message) => _ = Callback_RoomChatMessage(dto, message));
 
         // create a new health check token
         HubHealthCTS?.Cancel();
@@ -475,12 +475,12 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         Initialized = true;
     }
 
-    protected override async Task<bool> ConnectionDtoAndVersionIsValid()
+    protected override async Task<bool> ConnectionResponseAndVersionIsValid()
     {
-        // Grab the latest ConnectionDTO from the server.
-        ConnectionDto = await GetConnectionDto().ConfigureAwait(false);
+        // Grab the latest ConnectionResponse from the server.
+        ConnectionResponse = await GetConnectionResponse().ConfigureAwait(false);
         // Validate case where it's null.
-        if (ConnectionDto is null)
+        if (ConnectionResponse is null)
         {
             Logger.LogError("Your SecretKey is likely no longer valid for this character and it failed to properly connect." + Environment.NewLine
                 + "This likely means the key no longer exists in the database, you have been banned, or need to make a new one." + Environment.NewLine
@@ -503,8 +503,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         return true;
     }
 
-    public async Task<bool> CheckMainClientHealth() => await GagSpeakHubMain!.InvokeAsync<bool>(nameof(CheckMainClientHealth)).ConfigureAwait(false);
-    public async Task<ConnectionDto> GetConnectionDto() => await GagSpeakHubMain!.InvokeAsync<ConnectionDto>(nameof(GetConnectionDto)).ConfigureAwait(false);
+    public async Task<bool> CheckMainClientHealth() 
+        => await GagSpeakHubMain!.InvokeAsync<bool>(nameof(CheckMainClientHealth)).ConfigureAwait(false);
+    public async Task<ConnectionResponse> GetConnectionResponse() 
+        => await GagSpeakHubMain!.InvokeAsync<ConnectionResponse>(nameof(GetConnectionResponse)).ConfigureAwait(false);
 
     protected override async Task ClientHealthCheckLoop(CancellationToken ct)
     {
@@ -646,8 +648,8 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         {
             // Re-Initialize our API Hooks for the new hub instance.
             InitializeApiHooks();
-            // Obtain the new connectionDto and validate if we are out of date or not.
-            if (await ConnectionDtoAndVersionIsValid())
+            // Obtain the new ConnectionResponse and validate if we are out of date or not.
+            if (await ConnectionResponseAndVersionIsValid())
             {
                 ServerStatus = ServerState.Connected;
                 await LoadInitialPairs().ConfigureAwait(false);

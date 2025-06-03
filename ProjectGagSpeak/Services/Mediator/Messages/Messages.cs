@@ -3,6 +3,7 @@ using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.ChatMessages;
 using GagSpeak.Services.Events;
 using GagspeakAPI.Dto;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -41,7 +42,7 @@ public record MainHubConnectedMessage : MessageBase;
 public record OnlinePairsLoadedMessage : MessageBase;
 
 /// <summary> Contains the message content of a Global Chat message. </summary>
-public record GlobalChatMessage(GlobalChatMessageDto ChatMessage, bool FromSelf) : MessageBase;
+public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : MessageBase;
 
 /// <summary> Informs other places in GagSpeak about each important chat message fired. </summary>
 /// <param name="Channel"> The channel the message was sent to. </param>

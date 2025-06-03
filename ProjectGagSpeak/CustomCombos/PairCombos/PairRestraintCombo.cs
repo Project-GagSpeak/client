@@ -71,7 +71,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         };
 
         var result = await _mainHub.UserPushPairDataRestraint(dto);
-        if (result is not GsApiPairErrorCodes.Success)
+        if (result is not GagSpeakApiEc.Success)
         {
             Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result}");
             return false;

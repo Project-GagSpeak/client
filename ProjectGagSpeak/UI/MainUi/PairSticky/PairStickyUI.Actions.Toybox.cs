@@ -64,7 +64,7 @@ public partial class PairStickyUI
             _ = Task.Run(async () =>
             {
                 var res = await _hub.UserPushPairDataToybox(dto);
-                if (res is not GsApiPairErrorCodes.Success)
+                if (res is not GagSpeakApiEc.Success)
                 {
                     _logger.LogError($"Failed to stop pattern on {PermissionData.DispName} 's toy: {res}", LoggerType.Permissions);
                 }

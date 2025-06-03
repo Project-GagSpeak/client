@@ -70,7 +70,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
 
         // push to server.
         var result = await _mainHub.UserPushPairDataGags(dto);
-        if (result is not GsApiPairErrorCodes.Success)
+        if (result is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyGag with {Current.GagName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
             return false;

@@ -128,7 +128,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
             // Send message to the server
             Logger.LogTrace($"Sending Message: {NextChatMessage}");
-            _hub.SendGlobalChat(new GlobalChatMessageDto(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Config.PreferThreeCharaAnonName)).ConfigureAwait(false);
+            _hub.SendGlobalChat(new GlobalChatMessage(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Config.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
             // Clear message and trigger achievement event
             NextChatMessage = string.Empty;

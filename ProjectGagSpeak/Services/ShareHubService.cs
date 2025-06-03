@@ -29,10 +29,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
-            if (MainHub.ConnectionDto is null)
+            if (MainHub.ConnectionResponse is null)
                 return;
-            ClientPublishedPatterns = MainHub.ConnectionDto.PublishedPatterns;
-            ClientPublishedMoodles = MainHub.ConnectionDto.PublishedMoodles;
+            ClientPublishedPatterns = MainHub.ConnectionResponse.PublishedPatterns;
+            ClientPublishedMoodles = MainHub.ConnectionResponse.PublishedMoodles;
 
             // grab the tags.
             FetchLatestTags().ConfigureAwait(false);

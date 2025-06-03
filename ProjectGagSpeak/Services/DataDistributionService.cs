@@ -57,7 +57,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _triggerManager = triggerManager;
         _traitManager = traitManager;
 
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => FrameworkOnUpdate());
+        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         Mediator.Subscribe<MainHubConnectedMessage>(this, _     => PushCompositeData(_pairs.GetOnlineUserDatas()));
         Mediator.Subscribe<PairWentOnlineMessage>(this, arg     => _newOnlineKinksters.Add(arg.UserData));
@@ -88,7 +88,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private CharaToyboxData?        _prevToyboxData;
     private CharaLightStorageData?  _prevLightStorageData;
 
-    private void FrameworkOnUpdate()
+    private void DelayedFrameworkOnUpdate()
     {
         if (!MainHub.IsConnected) 
             return;
@@ -164,7 +164,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             };
             
             Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
-            if (await _hub.UserPushData(new(newOnlinePairs, data, false)).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+            if (await _hub.UserPushData(new(newOnlinePairs, data, false)).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
                 Logger.LogError("Failed to push Gag Data to server Reason: " + res);
 
             _prevLightStorageData = newLightStorage;
@@ -196,7 +196,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             return;
 
         _prevGagData = msg.NewData;
-        Logger.LogDebug($"Pushing GagData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing GagChange [{msg.UpdateType}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
         var dto = new PushGagDataUpdateDto(onlinePlayers, msg.UpdateType)
         {
@@ -209,7 +209,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataGags(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataGags(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push Gag Data to server Reason: " + res);
     }
 
@@ -221,7 +221,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             return;
 
         _prevRestrictionData = msg.NewData;
-        Logger.LogDebug($"Pushing RestrictionData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing RestrictionChange [{msg.UpdateType}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
         var dto = new PushRestrictionDataUpdateDto(onlinePlayers, msg.UpdateType)
         {
@@ -234,7 +234,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestrictions(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataRestrictions(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push RestrictionData to server Reason: " + res);
     }
 
@@ -259,7 +259,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestraint(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataRestraint(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push RestraintData to server Reason: " + res);
     }
 
@@ -289,7 +289,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             AffectedIdentifier = msg.InteractionId,
         };
 
-        if (await _hub.UserPushDataToybox(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataToybox(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push ToyboxData to server Reason: " + res);
     }
 
@@ -305,7 +305,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         var dto = new PushAliasGlobalUpdateDto(onlinePlayers, msg.NewData);
 
-        if (await _hub.UserPushAliasGlobalUpdate(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushAliasGlobalUpdate(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push Global AliasTrigger to server Reason: " + res);
     }
 
@@ -320,7 +320,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Pushing AliasPairUpdate to {msg.IntendedUser.AliasOrUID}", LoggerType.OnlinePairs);
 
         var dto = new PushAliasPairUpdateDto(msg.IntendedUser, msg.NewData);
-        if (await _hub.UserPushAliasPairUpdate(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushAliasPairUpdate(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push AliasPairUpdate to server Reason: " + res);
     }
 
@@ -336,7 +336,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         var dto = new PushLightStorageMessageDto(onlinePlayers, msg.NewData);
 
-        if (await _hub.UserPushDataLightStorage(dto).ConfigureAwait(false) is { } res && res is not GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataLightStorage(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push LightStorage to server Reason: " + res);
     }
 }

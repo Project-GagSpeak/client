@@ -27,7 +27,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
     private bool _isVisible;
 
-    public PairHandler(ILogger<PairHandler> logger, OnlineUserIdentDto onlineUser,
+    public PairHandler(ILogger<PairHandler> logger, OnlineKinkster onlineUser,
         GameObjectHandlerFactory gameObjectHandlerFactory, IpcManager ipcManager,
         OnFrameworkService dalamudUtil, IHostApplicationLifetime lifetime,
         GagspeakMediator mediator) : base(logger, mediator)
@@ -66,7 +66,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    public OnlineUserIdentDto OnlineUser { get; private set; }  // the online user Dto. Set when pairhandler is made for the cached player in the pair object.
+    public OnlineKinkster OnlineUser { get; private set; }  // the online user Dto. Set when pairhandler is made for the cached player in the pair object.
     public nint PairAddress => _charaHandler?.Address ?? nint.Zero; // the player character object address
     public IGameObject? PairObject => _charaHandler?.PlayerCharacterObjRef; // the player character object
     public string? PlayerName { get; private set; }

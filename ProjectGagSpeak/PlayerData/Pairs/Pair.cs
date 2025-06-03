@@ -8,11 +8,8 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.User;
-using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -30,27 +27,28 @@ public class Pair : IComparable<Pair>
     private readonly CosmeticService _cosmetics;
 
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
-    private OnlineUserIdentDto? _onlineUserIdentDto = null;
+    private OnlineKinkster? _OnlineKinkster = null;
 
-    public Pair(ILogger<Pair> logger, UserPairDto userPair, GagspeakMediator mediator,
-        PairHandlerFactory factory, ServerConfigurationManager nickConfig, CosmeticService cosmetics)
+    public Pair(KinksterPair pair, ILogger<Pair> logger, GagspeakMediator mediator,
+        PairHandlerFactory factory, ServerConfigurationManager nicks, CosmeticService cosmetics)
     {
         _logger = logger;
         _mediator = mediator;
         _cachedPlayerFactory = factory;
-        _nickConfig = nickConfig;
+        _nickConfig = nicks;
         _cosmetics = cosmetics;
-        UserPair = userPair;
+
+        UserPair = pair;
     }
 
     // Permissions
-    public UserPairDto UserPair { get; set; }
+    public KinksterPair UserPair { get; set; }
     public UserData UserData => UserPair.User;
-    public UserPairPermissions OwnPerms => UserPair.OwnPairPerms;
-    public UserEditAccessPermissions OwnPermAccess => UserPair.OwnEditAccessPerms;
-    public UserPairPermissions PairPerms => UserPair.OtherPairPerms;
-    public UserEditAccessPermissions PairPermAccess => UserPair.OtherEditAccessPerms;
-    public UserGlobalPermissions PairGlobals => UserPair.OtherGlobalPerms;
+    public UserPairPermissions OwnPerms => UserPair.OwnPerms;
+    public UserEditAccessPermissions OwnPermAccess => UserPair.OwnAccess;
+    public UserGlobalPermissions PairGlobals => UserPair.Globals;
+    public UserPairPermissions PairPerms => UserPair.Perms;
+    public UserEditAccessPermissions PairPermAccess => UserPair.Access;
 
     // Latest cached data for this pair.
     private PairHandler? CachedPlayer { get; set; }
@@ -66,9 +64,9 @@ public class Pair : IComparable<Pair>
     public CharaLightStorageData LastLightStorage { get; set; } = new();
 
     // Most of these attributes should be self explanatory, but they are public methods you can fetch from the pair manager.
-    public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _onlineUserIdentDto != null;
-    public OnlineUserIdentDto CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;
-    public bool IsPaused => UserPair.OwnPairPerms.IsPaused;
+    public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _OnlineKinkster != null;
+    public OnlineKinkster CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;
+    public bool IsPaused => UserPair.OwnPerms.IsPaused;
     public bool IsOnline => CachedPlayer != null;
     public bool IsVisible => CachedPlayer?.IsVisible ?? false;
     public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null;
@@ -147,7 +145,7 @@ public class Pair : IComparable<Pair>
 
 
     /// <summary> Update IPC Data </summary>
-    public void UpdateVisibleData(CallbackIpcDataDto data)
+    public void UpdateVisibleData(KinksterUpdateIpc data)
     {
         _applicationCts = _applicationCts.CancelRecreate();
         LastIpcData = data.NewData;
@@ -186,16 +184,16 @@ public class Pair : IComparable<Pair>
         ApplyLastIpcData();
     }
 
-    public void LoadCompositeData(OnlineUserCompositeDataDto dto)
+    public void LoadCompositeData(KinksterUpdateComposite dto)
     {
         _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastGagData = dto.CompositeData.Gags;
-        LastRestrictionsData = dto.CompositeData.Restrictions;
-        LastRestraintData = dto.CompositeData.Restraint;
-        ActiveCursedItems = dto.CompositeData.ActiveCursedItems;
-        LastGlobalAliasData = dto.CompositeData.GlobalAliasData;
-        LastToyboxData = dto.CompositeData.ToyboxData;
-        LastLightStorage = dto.CompositeData.LightStorageData;
+        LastGagData = dto.Data.Gags;
+        LastRestrictionsData = dto.Data.Restrictions;
+        LastRestraintData = dto.Data.Restraint;
+        ActiveCursedItems = dto.Data.ActiveCursedItems;
+        LastGlobalAliasData = dto.Data.GlobalAliasData;
+        LastToyboxData = dto.Data.ToyboxData;
+        LastLightStorage = dto.Data.LightStorageData;
         // Update KinkPlate display.
         UpdateCachedLockedSlots();
         // publish a mediator message that is listened to by the achievement manager for duration cleanup.
@@ -205,11 +203,11 @@ public class Pair : IComparable<Pair>
             return;
 
         // Deterministic AliasData setting.
-        if (dto.CompositeData.PairAliasData.TryGetValue(UserData.UID, out var match))
+        if (dto.Data.PairAliasData.TryGetValue(UserData.UID, out var match))
             LastPairAliasData = match;
     }
 
-    public void UpdateGagData(CallbackGagDataDto data)
+    public void UpdateGagData(KinksterUpdateGags data)
     {
         _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastGagData.GagSlots[data.AffectedLayer] = data.NewData;
@@ -238,7 +236,7 @@ public class Pair : IComparable<Pair>
         }
     }
 
-    public void UpdateRestrictionData(CallbackRestrictionDataDto data)
+    public void UpdateRestrictionData(KinksterUpdateRestriction data)
     {
         _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastRestrictionsData.Restrictions[data.AffectedLayer] = data.NewData;
@@ -267,7 +265,7 @@ public class Pair : IComparable<Pair>
         }
     }
 
-    public void UpdateRestraintData(CallbackRestraintDataDto data)
+    public void UpdateRestraintData(KinksterUpdateRestraint data)
     {
         _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastRestraintData = data.NewData;
@@ -296,14 +294,14 @@ public class Pair : IComparable<Pair>
         }
     }
 
-    public void UpdateCursedLootData(CallbackCursedLootDto data)
+    public void UpdateCursedLootData(KinksterUpdateCursedLoot data)
     {
         _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        ActiveCursedItems = data.NewActiveItems;
+        ActiveCursedItems = data.ActiveItems;
         UpdateCachedLockedSlots();
     }
 
-    public void UpdateToyboxData(CallbackToyboxDataDto data)
+    public void UpdateToyboxData(KinksterUpdateToybox data)
     {
         _logger.LogDebug("Applying updated toybox data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastToyboxData = data.NewData;
@@ -335,10 +333,10 @@ public class Pair : IComparable<Pair>
         LastPairAliasData.StoredNameWorld = nameWithWorld;
     }
 
-    public void UpdateLightStorageData(CallbackLightStorageDto data)
+    public void UpdateLightStorageData(KinksterUpdateLightStorage data)
     {
         _logger.LogDebug("Applying updated light storage data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastLightStorage = data.LightStorage;
+        LastLightStorage = data.NewData;
     }
 
     public void ApplyLastIpcData(bool forced = false)
@@ -354,7 +352,7 @@ public class Pair : IComparable<Pair>
     /// <para> This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkPairOnline</c> method! </para>
     /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
     /// </summary>
-    public void CreateCachedPlayer(OnlineUserIdentDto? dto = null)
+    public void CreateCachedPlayer(OnlineKinkster? dto = null)
     {
         try
         {
@@ -366,26 +364,26 @@ public class Pair : IComparable<Pair>
                 return;
             }
 
-            // if the Dto sent to us by the server is null, and the pairs onlineUserIdentDto is null, dispose of the cached player and return.
-            if (dto is null && _onlineUserIdentDto is null)
+            // if the Dto sent to us by the server is null, and the pairs OnlineKinkster is null, dispose of the cached player and return.
+            if (dto is null && _OnlineKinkster is null)
             {
                 // dispose of the cached player and set it to null before returning
-                _logger.LogDebug("No DTO provided for {uid}, and OnlineUserIdentDto object in Pair class is null. Disposing of CachedPlayer", UserData.UID);
+                _logger.LogDebug("No DTO provided for {uid}, and OnlineKinkster object in Pair class is null. Disposing of CachedPlayer", UserData.UID);
                 CachedPlayer?.Dispose();
                 CachedPlayer = null;
                 return;
             }
 
-            // if the OnlineUserIdentDto contains information, we should update our pairs _onlineUserIdentDto to the dto
+            // if the OnlineKinkster contains information, we should update our pairs _OnlineKinkster to the dto
             if (dto != null)
             {
-                _logger.LogDebug("Updating OnlineUserIdentDto for " + UserData.UID, LoggerType.PairInfo);
-                _onlineUserIdentDto = dto;
+                _logger.LogDebug("Updating OnlineKinkster for " + UserData.UID, LoggerType.PairInfo);
+                _OnlineKinkster = dto;
             }
 
             _logger.LogTrace("Disposing of existing CachedPlayer to create a new one for " + UserData.UID, LoggerType.PairInfo);
             CachedPlayer?.Dispose();
-            CachedPlayer = _cachedPlayerFactory.Create(new OnlineUserIdentDto(UserData, _onlineUserIdentDto!.Ident));
+            CachedPlayer = _cachedPlayerFactory.Create(new(UserData, _OnlineKinkster!.Ident));
         }
         finally
         {
@@ -422,7 +420,7 @@ public class Pair : IComparable<Pair>
         try
         {
             _creationSemaphore.Wait();
-            _onlineUserIdentDto = null;
+            _OnlineKinkster = null;
             LastIpcData = new();
             // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;

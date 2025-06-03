@@ -1,9 +1,7 @@
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.Connection;
-using Microsoft.Extensions.Hosting;
+using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.Configs;
@@ -149,7 +147,7 @@ public class ServerConfigurationManager
 
     /// <summary> Updates the authentication after successful connection to set the linked UID or flag good connection. </summary>
     /// <remarks> This will also remove any listed accounts that have the 1.3 format and whose UID is not in the connection list. </remarks>
-    public void UpdateAuthentication(string secretKey, ConnectionDto connectedInfo)
+    public void UpdateAuthentication(string secretKey, ConnectionResponse connectedInfo)
     {
         // Firstly, make sure that we have a valid authentication that just connected.
         var auth = ServerStorage.Authentications.Find(f => f.SecretKey.Key == secretKey);

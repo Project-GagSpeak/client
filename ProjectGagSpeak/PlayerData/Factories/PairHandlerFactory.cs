@@ -30,11 +30,11 @@ public class PairHandlerFactory
     }
 
     /// <summary> This create method in the pair handler factory will create a new pair handler object.</summary>
-    /// <param name="onlineUserIdentDto">The online user to create a pair handler for</param>
+    /// <param name="OnlineKinkster">The online user to create a pair handler for</param>
     /// <returns> A new PairHandler object </returns>
-    public PairHandler Create(OnlineUserIdentDto onlineUserIdentDto)
+    public PairHandler Create(OnlineKinkster OnlineKinkster)
     {
-        return new PairHandler(_loggerFactory.CreateLogger<PairHandler>(), onlineUserIdentDto, _gameObjectHandlerFactory,
+        return new PairHandler(_loggerFactory.CreateLogger<PairHandler>(), OnlineKinkster, _gameObjectHandlerFactory,
             _ipcManager, _frameworkUtilService, _hostApplicationLifetime, _GagspeakMediator);
     }
 }

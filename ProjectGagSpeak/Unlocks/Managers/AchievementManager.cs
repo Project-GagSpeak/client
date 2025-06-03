@@ -188,7 +188,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         }
         else // we have non-null string, so attempt to load it.
         {
-            Logger.LogInformation("Loading in AchievementData from ConnectionDto", LoggerType.Achievements);
+            Logger.LogInformation("Loading in AchievementData from ConnectionResponse", LoggerType.Achievements);
             LoadSaveDataDto(connectedAchievementString);
             // if the cache is valid for uploads, begin the save cycle, otherwise do not ever allow it to run a save cycle.
             if (LatestCache.CanUpload())
@@ -463,7 +463,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
             }
             else
             {
-                var profileData = await _mainHub.UserGetKinkPlate(new UserDto(MainHub.PlayerUserData));
+                var profileData = await _mainHub.UserGetKinkPlate(new KinksterBase(MainHub.PlayerUserData));
                 clientPlateContent = profileData.Info;
             }
 

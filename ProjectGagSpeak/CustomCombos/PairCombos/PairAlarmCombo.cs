@@ -69,7 +69,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
         // Send out the command.
         var result = await _mainHub.UserPushPairDataToybox(dto);
-        if (result is not GsApiPairErrorCodes.Success)
+        if (result is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
             return false;

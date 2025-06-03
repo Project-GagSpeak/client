@@ -1,28 +1,29 @@
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
 
 /// <summary> Fired whenever a Kinkster joins a VibeRoom. </summary>
 /// <param name="User"> The Kinkster that joined the room. </param>
-public record VibeRoomUserJoined(VibeRoomKinksterFullDto User) : MessageBase;
+public record VibeRoomUserJoined(RoomParticipant User) : MessageBase;
 
 /// <summary> Fired whenever a Kinkster leaves a VibeRoom. </summary>
 /// <param name="User"> The Kinkster that left the room. </param>
-public record VibeRoomUserLeft(VibeRoomKinksterFullDto User) : MessageBase;
+public record VibeRoomUserLeft(RoomParticipant User) : MessageBase;
 
 /// <summary> Fired upon receiving an invite to another VibeRoom. </summary>
 /// <param name="Invite"> The invite received. </param>
-public record VibeRoomInvite(VibeRoomInviteDto Invite) : MessageBase;
+public record VibeRoomInvite(RoomInvite Invite) : MessageBase;
 
 /// <summary> Whenever another Kinkster in a VibeRoom updates their Connected Device Status. </summary>
 /// <param name="User"> The Kinkster that updated their device. </param>
 /// <param name="Device"> The device that was updated. </param>
-public record VibeRoomUserUpdatedDevice(UserData User, DeviceInfo Device) : MessageBase;
+public record VibeRoomUserUpdatedDevice(UserData User, ToyInfo Device) : MessageBase;
 
 /// <summary> Contains a chunk of vibrator data sent by another Kinkster in the VibeRoom. </summary>
 /// <param name="dto"> The data stream received. </param>
-public record VibeRoomDataStreamReceived(SexToyDataStreamCallbackDto dto) : MessageBase;
+public record VibeRoomDataStreamReceived(ToyDataStreamResponse dto) : MessageBase;
 
 /// <summary> Notifies you that a Kinkster in the VibeRoom granted you access to use their toys. </summary>
 /// <param name="User"> The Kinkster that granted you access. </param>

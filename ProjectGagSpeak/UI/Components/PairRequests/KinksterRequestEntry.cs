@@ -16,12 +16,12 @@ namespace GagSpeak.CkCommons.Gui.Components;
 public class KinksterRequestEntry
 {
     private readonly string _id;
-    private UserPairRequestDto _requestEntry;
+    private KinksterRequest _requestEntry;
     private readonly MainHub _hub;
     private readonly CosmeticService _cosmetics;
 
     private bool IsHovered = false;
-    public KinksterRequestEntry(string id, UserPairRequestDto requestEntry, MainHub hub, CosmeticService cosmetics)
+    public KinksterRequestEntry(string id, KinksterRequest requestEntry, MainHub hub, CosmeticService cosmetics)
     {
         _id = id;
         _requestEntry = requestEntry;
@@ -32,7 +32,7 @@ public class KinksterRequestEntry
     }
 
     private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
-    public UserPairRequestDto Request => _requestEntry;
+    public KinksterRequest Request => _requestEntry;
     private TimeSpan TimeLeft => TimeSpan.FromDays(3) - (DateTime.UtcNow - _requestEntry.CreationTime);
     public void DrawRequestEntry()
     {

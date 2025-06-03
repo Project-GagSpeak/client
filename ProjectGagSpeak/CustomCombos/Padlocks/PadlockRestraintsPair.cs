@@ -38,7 +38,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             };
 
             var result = await _mainHub.UserPushPairDataRestraint(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();
@@ -68,7 +68,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             };
 
             var result = await _mainHub.UserPushPairDataRestraint(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();

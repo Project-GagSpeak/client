@@ -78,7 +78,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         };
 
         var result = await _mainHub.UserPushPairDataRestrictions(dto);
-        if (result is not GsApiPairErrorCodes.Success)
+        if (result is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
             return false;

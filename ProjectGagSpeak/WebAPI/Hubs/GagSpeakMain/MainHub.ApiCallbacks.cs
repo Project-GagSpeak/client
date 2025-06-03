@@ -3,13 +3,8 @@ using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.IPC;
-using GagspeakAPI.Dto.Permissions;
-using GagspeakAPI.Dto.User;
-using GagspeakAPI.Dto.UserPair;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace GagSpeak.WebAPI;
@@ -19,7 +14,7 @@ public partial class MainHub
 {
     #region Pairing & Messages
     /// <summary> Called when the server sends a message to the client. </summary>
-    public Task Client_ReceiveServerMessage(MessageSeverity messageSeverity, string message)
+    public Task Callback_ServerMessage(MessageSeverity messageSeverity, string message)
     {
         switch (messageSeverity)
         {
@@ -47,7 +42,7 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Client_ReceiveHardReconnectMessage(MessageSeverity messageSeverity, string message, ServerState newServerState)
+    public Task Callback_HardReconnectMessage(MessageSeverity messageSeverity, string message, ServerState newServerState)
     {
         switch (messageSeverity)
         {
@@ -97,35 +92,35 @@ public partial class MainHub
         return Task.CompletedTask;
     }
     
-    public Task Client_UpdateSystemInfo(SystemInfoDto systemInfo)
+    public Task Callback_ServerInfo(ServerInfoResponse serverInfo)
     {
-        ServerSystemInfo = systemInfo;
+        ServerInfo = serverInfo;
         return Task.CompletedTask;
     }
 
     /// <summary> 
-    /// Server has sent us a UserPairDto from one of our connected client pairs.
+    /// Server has sent us a KinksterPair from one of our connected client pairs.
     /// </summary>
-    public Task Client_UserAddClientPair(UserPairDto dto)
+    public Task Callback_AddClientPair(KinksterPair dto)
     {
-        Logger.LogDebug("Client_UserAddClientPair: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_AddClientPair: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.AddNewUserPair(dto));
         return Task.CompletedTask;
     }
 
     /// <summary> 
-    /// Server has sent us a UserDto that is requesting to be removed from our client pairs.
+    /// Server has sent us a KinksterBase that is requesting to be removed from our client pairs.
     /// </summary>
-    public Task Client_UserRemoveClientPair(UserDto dto)
+    public Task Callback_RemoveClientPair(KinksterBase dto)
     {
-        Logger.LogDebug("Client_UserRemoveClientPair: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_RemoveClientPair: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.RemoveUserPair(dto));
         return Task.CompletedTask;
     }
 
-    public Task Client_UserAddPairRequest(UserPairRequestDto dto)
+    public Task Callback_AddPairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug("Client_UserAddPairRequest: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_AddPairRequest: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _globals.AddPairRequest(dto));
         return Task.CompletedTask;
     }
@@ -133,9 +128,9 @@ public partial class MainHub
     /// <summary>
     /// Only recieved as a callback from the server when a request has been rejected. Timeouts should be handled on their own.
     /// </summary>
-    public Task Client_UserRemovePairRequest(UserPairRequestDto dto)
+    public Task Callback_RemovePairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug("Client_UserRemovePairRequest: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_RemovePairRequest: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _globals.RemovePairRequest(dto));
 
         return Task.CompletedTask;
@@ -144,16 +139,16 @@ public partial class MainHub
     #endregion Pairing & Messages
 
     #region Moodles
-    public Task Client_UserApplyMoodlesByGuid(ApplyMoodlesByGuidDto dto)
+    public Task Callback_ApplyMoodlesByGuid(MoodlesApplierById dto)
     {
-        Logger.LogDebug("Client_UserApplyMoodlesByGuid: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_ApplyMoodlesByGuid: "+dto, LoggerType.Callbacks);
         _visualListener.ApplyStatusesByGuid(dto);
         return Task.CompletedTask;
     }
 
-    public Task Client_UserApplyMoodlesByStatus(ApplyMoodlesByStatusDto dto)
+    public Task Callback_ApplyMoodlesByStatus(MoodlesApplierByStatus dto)
     {
-        Logger.LogDebug("Client_UserApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_ApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
         // obtain the local player name and world
         var NameWithWorld = _clientMonitor.ClientPlayer.NameWithWorld();
         _visualListener.ApplyStatusesToSelf(dto, NameWithWorld);
@@ -162,71 +157,71 @@ public partial class MainHub
 
     /// <summary> Intended to clear all moodles from OUR client player. </summary>
     /// <remarks> Should make a call to our moodles IPC to remove the statuses listed by their GUID's </remarks>
-    public Task Client_UserRemoveMoodles(RemoveMoodlesDto dto)
+    public Task Callback_RemoveMoodles(MoodlesRemoval dto)
     {
-        Logger.LogDebug("Client_UserRemoveMoodles: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_RemoveMoodles: "+dto, LoggerType.Callbacks);
         _visualListener.RemoveStatusesFromSelf(dto);
         return Task.CompletedTask;
     }
 
     /// <summary> Intended to clear all moodles from OUR client player. </summary>
     /// <remarks> Should make a call to our moodles IPC to clear all statuses. </remarks>
-    public Task Client_UserClearMoodles(UserDto dto)
+    public Task Callback_ClearMoodles(KinksterBase dto)
     {
-        Logger.LogDebug("Client_UserClearMoodles: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_ClearMoodles: "+dto, LoggerType.Callbacks);
         _visualListener.ClearStatusesFromSelf(dto);
         return Task.CompletedTask;
     }
     #endregion Moodles
 
     #region Pair Permission Exchange
-    public Task Client_UserUpdateAllPerms(BulkUpdatePermsAllDto dto)
+    public Task Callback_BulkChangeAll(BulkChangeAll dto)
     {
-        if(dto.Direction is UpdateDir.Own)
+        if(dto.User.UID == MainHub.UID)
         {
             Logger.LogError("Should never be calling self for an update all perms.");
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdateAllPerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_BulkChangeAll: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairAllPermissions(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdateAllGlobalPerms(BulkUpdatePermsGlobalDto dto)
+    public Task Callback_BulkChangeGlobal(BulkChangeGlobal dto)
     {
-        if (dto.Direction is UpdateDir.Own)
+        if (dto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserUpdateAllGlobalPerms: " + dto, LoggerType.Callbacks);
-            _globals.GlobalPerms = dto.GlobalPermissions;
+            Logger.LogWarning("Called Back BulkChangeGlobal that was intended for yourself!: " + dto);
+            _globals.GlobalPerms = dto.NewPerms;
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdateAllGlobalPerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_BulkChangeGlobal: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOtherAllGlobalPermissions(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdateAllUniquePerms(BulkUpdatePermsUniqueDto dto)
+    public Task Callback_BulkChangeUnique(BulkChangeUnique dto)
     {
-        if (dto.Direction is UpdateDir.Own)
+        if (dto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
+            Logger.LogWarning("Called Back BulkChangeUnique that was intended for yourself!: " + dto);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOwnAllUniquePermissions(dto)); return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdateAllUniquePerms: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_BulkChangeUnique: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdatePairUpdateOtherAllUniquePermissions(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdateGlobalPerm(UserGlobalPermChangeDto dto)
+    public Task Callback_SingleChangeGlobal(SingleChangeGlobal dto)
     {
         // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
@@ -234,12 +229,12 @@ public partial class MainHub
             // If we were the person who performed this, update the perm. If a pair did it, grab the pair.
             if(dto.Enactor.UID == UID)
             {
-                Logger.LogDebug("OWN Client_UserUpdateGlobalPerm (From Self): " + dto, LoggerType.Callbacks);
+                Logger.LogDebug("OWN Callback_SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
                 ExecuteSafely(() => _globals.ChangeGlobalPermission(dto));
             }
             else
             {
-                Logger.LogDebug("OWN Client_UserUpdateGlobalPerm (From Other): " + dto, LoggerType.Callbacks);
+                Logger.LogDebug("OWN Callback_SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
                 if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
                     ExecuteSafely(() => _globals.ChangeGlobalPermission(dto, pair));
             }
@@ -248,39 +243,39 @@ public partial class MainHub
         // One of our added Kinkster's Global Permissions should be updated.
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdateGlobalPerm: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_SingleChangeGlobal: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairGlobalPermission(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdateUniquePerm(UserPairPermChangeDto dto)
+    public Task Callback_SingleChangeUnique(SingleChangeUnique dto)
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Client_UserUpdateUniquePerm: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_SingleChangeUnique: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdateUniquePerm: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_SingleChangeUnique: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairPermission(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserUpdatePermAccess(UserPairAccessChangeDto dto)
+    public Task Callback_SingleChangeAccess(SingleChangeAccess dto)
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Client_UserUpdatePermAccess: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_SingleChangeAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateSelfPairAccessPermission(dto));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserUpdatePermAccess: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_SingleChangeAccess: " + dto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.UpdateOtherPairAccessPermission(dto));
             return Task.CompletedTask;
         }
@@ -288,7 +283,7 @@ public partial class MainHub
     #endregion Pair Permission Exchange
 
     /// <summary> Should only ever get the other pairs. If getting self, something is up. </summary>
-    public Task Client_UserReceiveDataComposite(OnlineUserCompositeDataDto dataDto)
+    public Task Callback_KinksterUpdateComposite(KinksterUpdateComposite dataDto)
     {
         if (dataDto.User.UID != MainHub.UID)
         {
@@ -300,26 +295,26 @@ public partial class MainHub
     }
 
     /// <summary> Update Other UserPair Ipc Data </summary>
-    public Task Client_UserReceiveDataIpc(CallbackIpcDataDto dataDto)
+    public Task Callback_KinksterUpdateIpc(KinksterUpdateIpc dataDto)
     {
-        if (dataDto.Direction is UpdateDir.Own)
+        if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("Client_UserReceiveOwnDataIpc (not executing any functions):" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("Callback_ReceiveOwnDataIpc (not executing any functions):" + dataDto.User, LoggerType.Callbacks);
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataIpc:" + dataDto, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_ReceiveDataIpc:" + dataDto, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveIpcData(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserReceiveDataGags(CallbackGagDataDto dataDto)
+    public Task Callback_KinksterUpdateGags(KinksterUpdateGags dataDto)
     {
-        if (dataDto.Direction is UpdateDir.Own)
+        if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserReceiveDataGags:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_ReceiveDataGags:" + dataDto.User, LoggerType.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -340,17 +335,17 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataGags");
+            Logger.LogDebug("OTHER Callback_ReceiveDataGags");
             ExecuteSafely(() => _pairs.ReceiveGagData(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserReceiveDataRestrictions(CallbackRestrictionDataDto dataDto)
+    public Task Callback_KinksterUpdateRestriction(KinksterUpdateRestriction dataDto)
     {
-        if (dataDto.Direction is UpdateDir.Own)
+        if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_ReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -371,17 +366,18 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_ReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveRestrictionData(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserReceiveDataRestraint(CallbackRestraintDataDto dataDto)
+    public Task Callback_KinksterUpdateRestraint(KinksterUpdateRestraint dataDto)
     {
-        if (dataDto.Direction is UpdateDir.Own)
+        // If the update is for us, handle it.
+        if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserReceiveDataRestraint:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_ReceiveDataRestraint:" + dataDto.User, LoggerType.Callbacks);
             switch(dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -400,32 +396,37 @@ public partial class MainHub
             }
             return Task.CompletedTask;
         }
+        // Update was for pair, so handle that.
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataRestraint:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_ReceiveDataRestraint:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaWardrobeData(dataDto));
             return Task.CompletedTask;
         }
     }
 
     /// <summary> The only condition that we receive this, is if it's for another pair. </summary>
-    public Task Client_UserReceiveDataCursedLoot(CallbackCursedLootDto dataDto)
+    public Task Callback_KinksterUpdateCursedLoot(KinksterUpdateCursedLoot dataDto)
     {
         if(dataDto.User.UID != UID)
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataCursedLoot:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_ReceiveDataCursedLoot:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaCursedLootData(dataDto));
             return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogWarning("Consuming Callback_ReceiveDataCursedLoot for self, this should never happen! " + dataDto.User, LoggerType.Callbacks);
         }
         // Consume any request for the Client.
         return Task.CompletedTask;
     }
 
-    public Task Client_UserReceiveDataToybox(CallbackToyboxDataDto dataDto)
+    public Task Callback_KinksterUpdateToybox(KinksterUpdateToybox dataDto)
     {
-        if (dataDto.Direction is UpdateDir.Own)
+        if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Client_UserReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OWN Callback_ReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.PatternSwitched:
@@ -448,50 +449,53 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug("OTHER Client_UserReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("OTHER Callback_ReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
             ExecuteSafely(() => _pairs.ReceiveCharaToyboxData(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Client_UserReceiveAliasGlobalUpdate(CallbackAliasGlobalUpdateDto dataDto)
+    public Task Callback_KinksterUpdateAliasGlobal(KinksterUpdateAliasGlobal dataDto)
     {
         Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.ReceiveCharaAliasGlobalUpdate(dataDto));
         return Task.CompletedTask;
     }
 
-    public Task Client_UserReceiveAliasPairUpdate(CallbackAliasPairUpdateDto dataDto)
+    public Task Callback_KinksterUpdateAliasUnique(KinksterUpdateAliasUnique dataDto)
     {
         Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.ReceiveCharaAliasPairUpdate(dataDto));
         return Task.CompletedTask;
     }
 
-    public Task Client_UserReceiveListenerName(UserData user, string trueNameWithWorld)
+    /// <summary> Update The Light Storage data of another pair. </summary>
+    public Task Callback_KinksterUpdateLightStorage(KinksterUpdateLightStorage dataDto)
+    {
+        if (dataDto.User.UID != MainHub.UID)
+        {
+            Logger.LogDebug("Callback_ReceiveOtherLightStorage:" + dataDto.User, LoggerType.Callbacks);
+            ExecuteSafely(() => _pairs.ReceiveCharaLightStorageData(dataDto));
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogWarning("Consuming Callback_ReceiveLightStorage for self, this should never happen! " + dataDto.User, LoggerType.Callbacks);
+        }
+        // Consume any request for the Client.
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_ListenerName(UserData user, string trueNameWithWorld)
     {
         Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + user, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.ReceiveListenerName(user, trueNameWithWorld));
         return Task.CompletedTask;
     }
 
-    /// <summary> Update The Light Storage data of another pair. </summary>
-    public Task Client_UserReceiveLightStorage(CallbackLightStorageDto dataDto)
-    {
-        if (dataDto.Direction is UpdateDir.Other)
-        {
-            Logger.LogDebug("Client_UserReceiveOtherLightStorage:" + dataDto.User, LoggerType.Callbacks);
-            ExecuteSafely(() => _pairs.ReceiveCharaLightStorageData(dataDto));
-            return Task.CompletedTask;
-        }
-        // Consume any request for the Client.
-        return Task.CompletedTask;
-    }
-
     /// <summary> Receive a Shock Instruction from another Pair. </summary>
-    public Task Client_UserReceiveShockInstruction(ShockCollarAction dto)
+    public Task Callback_ShockInstruction(ShockCollarAction dto)
     {
-        Logger.LogInformation($"Received Instruction OpCode: {dto.OpCode}, Intensity: {dto.Intensity}, Duration Value: {dto.Duration}");
         ExecuteSafely(() =>
         {
             // figure out who sent the command, and see if we have a unique sharecode setup for them.
@@ -506,6 +510,7 @@ public partial class MainHub
                     _ => "unknown"
                 };
                 var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
+                Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
 
                 if (!pairMatch.OwnPerms.PiShockShareCode.IsNullOrEmpty())
                 {
@@ -532,342 +537,342 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-
-    public Task Client_RoomJoin(VibeRoomKinksterFullDto dto)
-    {
-        Logger.LogDebug("Client_RoomJoin: "+dto, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Receive a Room Leave from a Room. </summary>
-    public Task Client_RoomLeave(VibeRoomKinksterFullDto dto)
-    {
-        Logger.LogDebug("Client_RoomLeave: "+dto, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Receive a Device Update from a Room. </summary>
-    public Task Client_RoomReceiveDeviceUpdate(UserData user, DeviceInfo device)
-    {
-        Logger.LogDebug("Client_RoomReceiveDeviceUpdate: "+user, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Receive a Data Stream from a Room. </summary>
-    public Task Client_RoomReceiveDataStream(SexToyDataStreamCallbackDto dto)
-    {
-        Logger.LogDebug("Client_RoomReceiveDataStream: "+dto, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> A User granted us access to control their sex toys. </summary>
-    public Task Client_RoomUserAccessGranted(UserData user)
-    {
-        Logger.LogDebug("Client_RoomUserAccessGranted: "+user, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> A User revoked access to their sextoys. </summary>
-    public Task Client_RoomUserAccessRevoked(UserData user)
-    {
-        Logger.LogDebug("Client_RoomUserAccessRevoked: "+user, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Receive a Chat Message from a Room. </summary>
-    public Task Client_RoomReceiveChatMessage(UserData user, string message)
-    {
-        Logger.LogDebug("Client_RoomReceiveChatMessage: "+user, LoggerType.Callbacks);
-        return Task.CompletedTask;
-    }
-
-
     /// <summary> Receive a Global Chat Message. </summary>
-    public Task Client_GlobalChatMessage(GlobalChatMessageDto dto)
+    public Task Callback_ChatMessageGlobal(ChatMessageGlobal dto)
     {
-        ExecuteSafely(() => Mediator.Publish(new GlobalChatMessage(dto, (dto.MessageSender.UID == UID))));
+        var fromSelf = dto.Sender.UID == MainHub.UID;
+        ExecuteSafely(() => Mediator.Publish(new GlobalChatMessage(dto, fromSelf)));
         return Task.CompletedTask;
     }
 
     /// <summary> Received whenever any of our client pairs disconnects from GagSpeak Servers. </summary>
-    /// <remarks> Use this info to update the UserDto in our pair manager so they are marked as offline. </remarks>
-    public Task Client_UserSendOffline(UserDto dto)
+    /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as offline. </remarks>
+    public Task Callback_KinksterOffline(KinksterBase dto)
     {
-        Logger.LogDebug("Client_UserSendOffline: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_SendOffline: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.MarkPairOffline(dto.User));
         return Task.CompletedTask;
     }
 
     /// <summary> Received whenever any of our client pairs connects from GagSpeak Servers. </summary>
-    /// <remarks> Use this info to update the UserDto in our pair manager so they are marked as online. </remarks>
-    public Task Client_UserSendOnline(OnlineUserIdentDto dto)
+    /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as online. </remarks>
+    public Task Callback_KinksterOnline(OnlineKinkster dto)
     {
-        Logger.LogDebug("Client_UserSendOnline: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_SendOnline: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _pairs.MarkPairOnline(dto));
         return Task.CompletedTask;
     }
 
     /// <summary> Received whenever we need to update the profile data of anyone, including ourselves. </summary>
-    public Task Client_UserUpdateProfile(UserDto dto)
+    public Task Callback_ProfileUpdated(KinksterBase dto)
     {
-        Logger.LogDebug("Client_UserUpdateProfile: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_UpdateProfile: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => Mediator.Publish(new ClearProfileDataMessage(dto.User)));
         return Task.CompletedTask;
     }
 
     /// <summary> The callback responsible for displaying verification codes to the clients monitor. </summary>
     /// <remarks> This is currently experiencing issues for some reason with the discord bot. Look into more? </remarks>
-    public Task Client_DisplayVerificationPopup(VerificationDto dto)
+    public Task Callback_ShowVerification(VerificationCode dto)
     {
-        Logger.LogDebug("Client_DisplayVerificationPopup: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_DisplayVerificationPopup: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => Mediator.Publish(new VerificationPopupMessage(dto)));
         return Task.CompletedTask;
     }
 
+    public Task Callback_RoomJoin(RoomParticipant dto)
+    {
+        Logger.LogDebug("Callback_RoomJoin: " + dto, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Receive a Room Leave from a Room. </summary>
+    public Task Callback_RoomLeave(RoomParticipant dto)
+    {
+        Logger.LogDebug("Callback_RoomLeave: " + dto, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Receive a Device Update from a Room. </summary>
+    public Task Callback_RoomDeviceUpdate(UserData user, ToyInfo device)
+    {
+        Logger.LogDebug("Callback_RoomDeviceUpdate: " + user, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Receive a Data Stream from a Room. </summary>
+    public Task Callback_RoomIncDataStream(ToyDataStreamResponse dto)
+    {
+        Logger.LogDebug("Callback_RoomIncDataStream: " + dto, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> A User granted us access to control their sex toys. </summary>
+    public Task Callback_RoomAccessGranted(UserData user)
+    {
+        Logger.LogDebug("Callback_RoomAccessGranted: " + user, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> A User revoked access to their sextoys. </summary>
+    public Task Callback_RoomAccessRevoked(UserData user)
+    {
+        Logger.LogDebug("Callback_RoomAccessRevoked: " + user, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Receive a Chat Message from a Room. </summary>
+    public Task Callback_RoomChatMessage(UserData user, string message)
+    {
+        Logger.LogDebug("Callback_RoomChatMessage: " + user, LoggerType.Callbacks);
+        return Task.CompletedTask;
+    }
+
     /* --------------------------------- void methods from the API to call the hooks --------------------------------- */
-    public void OnReceiveServerMessage(Action<MessageSeverity, string> act)
+    public void OnServerMessage(Action<MessageSeverity, string> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_ReceiveServerMessage), act);
+        GagSpeakHubMain!.On(nameof(Callback_ServerMessage), act);
     }
 
-    public void OnReceiveHardReconnectMessage(Action<MessageSeverity, string, ServerState> act)
+    public void OnHardReconnectMessage(Action<MessageSeverity, string, ServerState> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_ReceiveHardReconnectMessage), act);
+        GagSpeakHubMain!.On(nameof(Callback_HardReconnectMessage), act);
     }
 
-    public void OnUpdateSystemInfo(Action<SystemInfoDto> act)
+    public void OnServerInfo(Action<ServerInfoResponse> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UpdateSystemInfo), act);
+        GagSpeakHubMain!.On(nameof(Callback_ServerInfo), act);
     }
 
-    public void OnUserAddClientPair(Action<UserPairDto> act)
+    public void OnAddClientPair(Action<KinksterPair> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserAddClientPair), act);
+        GagSpeakHubMain!.On(nameof(Callback_AddClientPair), act);
     }
 
-    public void OnUserRemoveClientPair(Action<UserDto> act)
+    public void OnRemoveClientPair(Action<KinksterBase> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserRemoveClientPair), act);
+        GagSpeakHubMain!.On(nameof(Callback_RemoveClientPair), act);
     }
 
-    public void OnUserAddPairRequest(Action<UserPairRequestDto> act)
+    public void OnAddPairRequest(Action<KinksterRequest> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserAddPairRequest), act);
+        GagSpeakHubMain!.On(nameof(Callback_AddPairRequest), act);
     }
 
-    public void OnUserRemovePairRequest(Action<UserPairRequestDto> act)
+    public void OnRemovePairRequest(Action<KinksterRequest> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserRemovePairRequest), act);
+        GagSpeakHubMain!.On(nameof(Callback_RemovePairRequest), act);
     }
 
-    public void OnUserApplyMoodlesByGuid(Action<ApplyMoodlesByGuidDto> act)
+    public void OnApplyMoodlesByGuid(Action<MoodlesApplierById> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserApplyMoodlesByGuid), act);
+        GagSpeakHubMain!.On(nameof(Callback_ApplyMoodlesByGuid), act);
     }
 
-    public void OnUserApplyMoodlesByStatus(Action<ApplyMoodlesByStatusDto> act)
+    public void OnApplyMoodlesByStatus(Action<MoodlesApplierByStatus> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserApplyMoodlesByStatus), act);
+        GagSpeakHubMain!.On(nameof(Callback_ApplyMoodlesByStatus), act);
     }
 
-    public void OnUserRemoveMoodles(Action<RemoveMoodlesDto> act)
+    public void OnRemoveMoodles(Action<MoodlesRemoval> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserRemoveMoodles), act);
+        GagSpeakHubMain!.On(nameof(Callback_RemoveMoodles), act);
     }
 
-    public void OnUserClearMoodles(Action<UserDto> act)
+    public void OnClearMoodles(Action<KinksterBase> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserClearMoodles), act);
+        GagSpeakHubMain!.On(nameof(Callback_ClearMoodles), act);
     }
 
-    public void OnUserUpdateAllPerms(Action<BulkUpdatePermsAllDto> act)
+    public void OnBulkChangeAll(Action<BulkChangeAll> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllPerms), act);
+        GagSpeakHubMain!.On(nameof(Callback_BulkChangeAll), act);
     }
 
-    public void OnUserUpdateAllGlobalPerms(Action<BulkUpdatePermsGlobalDto> act)
+    public void OnBulkChangeGlobal(Action<BulkChangeGlobal> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllGlobalPerms), act);
+        GagSpeakHubMain!.On(nameof(Callback_BulkChangeGlobal), act);
     }
 
-    public void OnUserUpdateAllUniquePerms(Action<BulkUpdatePermsUniqueDto> act)
+    public void OnBulkChangeUnique(Action<BulkChangeUnique> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateAllUniquePerms), act);
+        GagSpeakHubMain!.On(nameof(Callback_BulkChangeUnique), act);
     }
 
-    public void OnUserUpdateGlobalPerm(Action<UserGlobalPermChangeDto> act)
+    public void OnSingleChangeGlobal(Action<SingleChangeGlobal> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateGlobalPerm), act);
+        GagSpeakHubMain!.On(nameof(Callback_SingleChangeGlobal), act);
     }
 
-    public void OnUserUpdateUniquePerm(Action<UserPairPermChangeDto> act)
+    public void OnSingleChangeUnique(Action<SingleChangeUnique> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateUniquePerm), act);
+        GagSpeakHubMain!.On(nameof(Callback_SingleChangeUnique), act);
     }
 
-    public void OnUserUpdatePermAccess(Action<UserPairAccessChangeDto> act)
+    public void OnSingleChangeAccess(Action<SingleChangeAccess> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdatePermAccess), act);
+        GagSpeakHubMain!.On(nameof(Callback_SingleChangeAccess), act);
     }
 
-    public void OnUserReceiveDataComposite(Action<OnlineUserCompositeDataDto> act)
+    public void OnKinksterUpdateComposite(Action<KinksterUpdateComposite> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataComposite), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateComposite), act);
     }
 
-    public void OnUserReceiveDataIpc(Action<CallbackIpcDataDto> act)
+    public void OnKinksterUpdateIpc(Action<KinksterUpdateIpc> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataIpc), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateIpc), act);
     }
 
-    public void OnUserReceiveDataGags(Action<CallbackGagDataDto> act)
+    public void OnKinksterUpdateGags(Action<KinksterUpdateGags> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataGags), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateGags), act);
     }
 
-    public void OnUserReceiveDataRestrictions(Action<CallbackRestrictionDataDto> act)
+    public void OnKinksterUpdateRestriction(Action<KinksterUpdateRestriction> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataRestrictions), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateRestriction), act);
     }
 
-    public void OnUserReceiveDataRestraint(Action<CallbackRestraintDataDto> act)
+    public void OnKinksterUpdateRestraint(Action<KinksterUpdateRestraint> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataRestraint), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateRestraint), act);
     }
 
-    public void OnUserReceiveDataCursedLoot(Action<CallbackCursedLootDto> act)
+    public void OnKinksterUpdateCursedLoot(Action<KinksterUpdateCursedLoot> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataCursedLoot), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateCursedLoot), act);
     }
 
-    public void OnUserReceiveDataToybox(Action<CallbackToyboxDataDto> act)
+    public void OnKinksterUpdateAliasGlobal(Action<KinksterUpdateAliasGlobal> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveDataToybox), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateAliasGlobal), act);
     }
 
-    public void OnUserReceiveAliasGlobalUpdate(Action<CallbackAliasGlobalUpdateDto> act)
+    public void OnKinksterUpdateAliasUnique(Action<KinksterUpdateAliasUnique> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveAliasGlobalUpdate), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateAliasUnique), act);
     }
 
-    public void OnUserReceiveAliasPairUpdate(Action<CallbackAliasPairUpdateDto> act)
+    public void OnKinksterUpdateToybox(Action<KinksterUpdateToybox> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveAliasPairUpdate), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateToybox), act);
     }
 
-    public void OnUserReceiveListenerName(Action<UserData, string> act)
+    public void OnKinksterUpdateLightStorage(Action<KinksterUpdateLightStorage> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveListenerName), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateLightStorage), act);
     }
 
-    public void OnUserReceiveLightStorage(Action<CallbackLightStorageDto> act)
+    public void OnListenerName(Action<UserData, string> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveLightStorage), act);
+        GagSpeakHubMain!.On(nameof(Callback_ListenerName), act);
     }
 
-    public void OnUserReceiveShockInstruction(Action<ShockCollarAction> act)
+    public void OnShockInstruction(Action<ShockCollarAction> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserReceiveShockInstruction), act);
+        GagSpeakHubMain!.On(nameof(Callback_ShockInstruction), act);
     }
 
-    public void OnRoomJoin(Action<VibeRoomKinksterFullDto> act)
+    public void OnChatMessageGlobal(Action<ChatMessageGlobal> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomJoin), act);
+        GagSpeakHubMain!.On(nameof(Callback_ChatMessageGlobal), act);
     }
 
-    public void OnRoomLeave(Action<VibeRoomKinksterFullDto> act)
+    public void OnKinksterOffline(Action<KinksterBase> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomLeave), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterOffline), act);
     }
 
-    public void OnRoomReceiveDeviceUpdate(Action<UserData, DeviceInfo> act)
+    public void OnKinksterOnline(Action<OnlineKinkster> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomReceiveDeviceUpdate), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterOnline), act);
     }
 
-    public void OnRoomReceiveDataStream(Action<SexToyDataStreamCallbackDto> act)
+    public void OnProfileUpdated(Action<KinksterBase> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomReceiveDataStream), act);
+        GagSpeakHubMain!.On(nameof(Callback_ProfileUpdated), act);
     }
 
-    public void OnRoomUserAccessGranted(Action<UserData> act)
+    public void OnShowVerification(Action<VerificationCode> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomUserAccessGranted), act);
+        GagSpeakHubMain!.On(nameof(Callback_ShowVerification), act);
     }
 
-    public void OnRoomUserAccessRevoked(Action<UserData> act)
+
+    public void OnRoomJoin(Action<RoomParticipant> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomUserAccessRevoked), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomJoin), act);
     }
 
-    public void OnRoomReceiveChatMessage(Action<UserData, string> act)
+    public void OnRoomLeave(Action<RoomParticipant> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_RoomReceiveChatMessage), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomLeave), act);
     }
 
-    public void OnGlobalChatMessage(Action<GlobalChatMessageDto> act)
+    public void OnRoomDeviceUpdate(Action<UserData, ToyInfo> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_GlobalChatMessage), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomDeviceUpdate), act);
     }
 
-    public void OnUserSendOffline(Action<UserDto> act)
+    public void OnRoomIncDataStream(Action<ToyDataStreamResponse> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserSendOffline), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomIncDataStream), act);
     }
 
-    public void OnUserSendOnline(Action<OnlineUserIdentDto> act)
+    public void OnRoomAccessGranted(Action<UserData> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserSendOnline), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomAccessGranted), act);
     }
 
-    public void OnUserUpdateProfile(Action<UserDto> act)
+    public void OnRoomAccessRevoked(Action<UserData> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_UserUpdateProfile), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomAccessRevoked), act);
     }
 
-    public void OnDisplayVerificationPopup(Action<VerificationDto> act)
+    public void OnRoomChatMessage(Action<UserData, string> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Client_DisplayVerificationPopup), act);
+        GagSpeakHubMain!.On(nameof(Callback_RoomChatMessage), act);
     }
 }

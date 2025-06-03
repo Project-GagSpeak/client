@@ -185,12 +185,12 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
-    public void ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, List<MoodlesStatusInfo> statuses)
+    public void ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
     {
         ExecuteIpcOnThread(() =>
         {
             _logger.LogInformation("Applying Moodles Status: " + recipientNameWithWorld + " from " + applierNameWithWorld, LoggerType.IpcMoodles);
-            _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, statuses);
+            _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [ ..statuses ]);
         });
     }
 

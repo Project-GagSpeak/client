@@ -191,11 +191,11 @@ public class ToysPanel
 
         foreach (var device in _manager.DeviceHandler.ConnectedDevices)
         {
-            DrawDeviceInfo(device);
+            DrawToyInfo(device);
         }
     }
 
-    private void DrawDeviceInfo(ButtPlugDevice Device)
+    private void DrawToyInfo(ButtPlugDevice Device)
     {
         if (Device == null) { ImGui.Text("Device is null for this index."); return; }
 

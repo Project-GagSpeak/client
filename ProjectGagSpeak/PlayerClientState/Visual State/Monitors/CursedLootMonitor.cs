@@ -269,7 +269,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         var interactedItem = new LightCursedItem(item.Identifier, item.Label, gag.GagType, Guid.Empty, DateTimeOffset.UtcNow.Add(lockTime));
         var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, interactedItem);
         
-        if (await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GsApiErrorCodes.Success)
+        if (await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GagSpeakApiEc.Success)
         {
             Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
@@ -309,7 +309,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         var item = new LightCursedItem(cursedItem.Identifier, cursedItem.Label, GagType.None, restriction.Identifier, DateTimeOffset.UtcNow.Add(lockTime));
         var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, item);
 
-        if(await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GsApiErrorCodes.Success)
+        if(await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GagSpeakApiEc.Success)
         {
             Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
                 "forth, binding you in an inescapable restraint!").BuiltString, NotificationType.Error));

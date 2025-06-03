@@ -111,7 +111,7 @@ public class KinkPlateService : MediatorSubscriberBase
         {
             Logger.LogTrace("Fetching profile for "+data.UID, LoggerType.KinkPlateMonitor);
             // Fetch userData profile info from server
-            var profile = await _hub.UserGetKinkPlate(new UserDto(data)).ConfigureAwait(false);
+            var profile = await _hub.UserGetKinkPlate(new KinksterBase(data)).ConfigureAwait(false);
 
             // apply the retrieved profile data to the profile object.
             _kinkPlates[data].KinkPlateInfo = profile.Info;

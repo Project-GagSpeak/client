@@ -39,7 +39,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             };
 
             var result = await _mainHub.UserPushPairDataGags(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
                 ResetSelection();
@@ -70,7 +70,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             };
 
             var result = await _mainHub.UserPushPairDataGags(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
                 ResetSelection();

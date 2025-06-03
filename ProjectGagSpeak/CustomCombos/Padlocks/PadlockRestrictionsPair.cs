@@ -41,7 +41,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             };
 
             var result = await _mainHub.UserPushPairDataRestrictions(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();
@@ -72,7 +72,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             };
 
             var result = await _mainHub.UserPushPairDataRestrictions(dto);
-            if (result is not GsApiPairErrorCodes.Success)
+            if (result is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();

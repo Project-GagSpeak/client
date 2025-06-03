@@ -164,7 +164,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if(_gags.ServerGagData is not { } gagData)
             return false;
 
-        GsApiErrorCodes retCode;
+        GagSpeakApiEc retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -244,7 +244,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 return false;
         }
 
-        if (retCode is not GsApiErrorCodes.Success)
+        if (retCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError("Gag action failed with error code: " + retCode);
             return false;
@@ -258,7 +258,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if (_restrictions.ServerRestrictionData is not { } restrictions)
             return false;
 
-        GsApiErrorCodes retCode;
+        GagSpeakApiEc retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -327,7 +327,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 return false;
         }
 
-        if (retCode is not GsApiErrorCodes.Success)
+        if (retCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError("Restriction action failed with error code: " + retCode);
             return false;
@@ -341,7 +341,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
         if(_restraints.ServerRestraintData is not { } restraint)
             return false;
 
-        GsApiErrorCodes retCode;
+        GagSpeakApiEc retCode;
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -393,7 +393,7 @@ public sealed class TriggerApplier : DisposableMediatorSubscriberBase
                 return false;
         }
 
-        if (retCode is not GsApiErrorCodes.Success)
+        if (retCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError("Restraint action failed with error code: " + retCode);
             return false;

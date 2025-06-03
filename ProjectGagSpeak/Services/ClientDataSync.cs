@@ -61,8 +61,8 @@ public sealed class ClientDataSync : DisposableMediatorSubscriberBase
 
     private async void SetClientDataForProfile()
     {
-        // if the connectionDto for whatever reason was null, dont process any of this.
-        if (MainHub.ConnectionDto is not { } connectionInfo)
+        // if the ConnectionResponse for whatever reason was null, dont process any of this.
+        if (MainHub.ConnectionResponse is not { } connectionInfo)
             return;
 
         // 1. Update the Config File Provider with the current UID.

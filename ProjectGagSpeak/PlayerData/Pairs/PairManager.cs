@@ -6,9 +6,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.User;
-using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerData.Pairs;
@@ -73,7 +71,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
     /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
     /// <remarks> This occurs upon initial connection while retrieving your pair list of established pairings. </remarks>
-    public void AddUserPair(UserPairDto dto)
+    public void AddUserPair(KinksterPair dto)
     {
         // if the user is not in the client's pair list, create a new pair for them.
         if (!_allClientPairs.ContainsKey(dto.User))
@@ -91,8 +89,8 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy();
     }
 
-    /// <summary> Method of addUserPair that allows multiple UserPairDto to be appended, with a single log output after. </summary>
-    public void AddUserPair(IEnumerable<UserPairDto> dtoList)
+    /// <summary> Method of addUserPair that allows multiple KinksterPair to be appended, with a single log output after. </summary>
+    public void AddUserPair(IEnumerable<KinksterPair> dtoList)
     {
         var created = new List<string>();
         var refreshed = new List<string>();
@@ -122,7 +120,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
     /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
     /// <remarks> Fired by a server callback upon someone accepting your pair request, or after you accept theirs. </remarks>
-    public void AddNewUserPair(UserPairDto dto)
+    public void AddNewUserPair(KinksterPair dto)
     {
         if (!_allClientPairs.ContainsKey(dto.User))
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
@@ -226,8 +224,8 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Called by ApiController.Callbacks, and marks our pair online, if cached and offline. </summary>
-    /// <remarks> This sends the client an OnlineUserIdentDto, meaning they were in the clients pair list and are now online. </remarks>
-    public void MarkPairOnline(OnlineUserIdentDto dto, bool sendNotification = true)
+    /// <remarks> This sends the client an OnlineKinkster, meaning they were in the clients pair list and are now online. </remarks>
+    public void MarkPairOnline(OnlineKinkster dto, bool sendNotification = true)
     {
         if (!_allClientPairs.ContainsKey(dto.User)) 
             throw new InvalidOperationException("No user found for " + dto);
@@ -262,7 +260,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Only called upon a safeword or initial connection for load. Not called otherwise. </summary>
-    public void ReceiveCompositeData(OnlineUserCompositeDataDto dto, string clientUID)
+    public void ReceiveCompositeData(KinksterUpdateComposite dto, string clientUID)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -270,7 +268,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].LoadCompositeData(dto);
     }
 
-    public void ReceiveIpcData(CallbackIpcDataDto dto)
+    public void ReceiveIpcData(KinksterUpdateIpc dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -278,7 +276,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateVisibleData(dto);
     }
 
-    public void ReceiveGagData(CallbackGagDataDto dto)
+    public void ReceiveGagData(KinksterUpdateGags dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -286,7 +284,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateGagData(dto);
     }
 
-    public void ReceiveRestrictionData(CallbackRestrictionDataDto dto)
+    public void ReceiveRestrictionData(KinksterUpdateRestriction dto)
     {
         if(!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -294,7 +292,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateRestrictionData(dto);
     }
 
-    public void ReceiveCharaWardrobeData(CallbackRestraintDataDto dto)
+    public void ReceiveCharaWardrobeData(KinksterUpdateRestraint dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -302,7 +300,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateRestraintData(dto);
     }
 
-    public void ReceiveCharaCursedLootData(CallbackCursedLootDto dto)
+    public void ReceiveCharaCursedLootData(KinksterUpdateCursedLoot dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -310,7 +308,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateCursedLootData(dto);
     }
 
-    public void ReceiveCharaToyboxData(CallbackToyboxDataDto dto)
+    public void ReceiveCharaToyboxData(KinksterUpdateToybox dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -318,7 +316,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateToyboxData(dto);
     }
 
-    public void ReceiveCharaAliasGlobalUpdate(CallbackAliasGlobalUpdateDto dto)
+    public void ReceiveCharaAliasGlobalUpdate(KinksterUpdateAliasGlobal dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair))
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -326,7 +324,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateGlobalAlias(dto.NewData);
     }
 
-    public void ReceiveCharaAliasPairUpdate(CallbackAliasPairUpdateDto dto)
+    public void ReceiveCharaAliasPairUpdate(KinksterUpdateAliasUnique dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair))
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -343,7 +341,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Method similar to compositeData, but this will only update the latest Light Storage Data of the user pair. </summary>
-    public void ReceiveCharaLightStorageData(CallbackLightStorageDto dto)
+    public void ReceiveCharaLightStorageData(KinksterUpdateLightStorage dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);
@@ -352,7 +350,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes a user pair from the client's pair list.</summary>
-    public void RemoveUserPair(UserDto dto)
+    public void RemoveUserPair(KinksterBase dto)
     {
         // try and get the value from the client's pair list
         if (_allClientPairs.TryGetValue(dto.User, out var pair))
