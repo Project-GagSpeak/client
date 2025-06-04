@@ -2,7 +2,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
-using GagspeakAPI.Dto.User;
+using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services;
@@ -115,7 +115,7 @@ public class KinkPlateService : MediatorSubscriberBase
 
             // apply the retrieved profile data to the profile object.
             _kinkPlates[data].KinkPlateInfo = profile.Info;
-            _kinkPlates[data].Base64ProfilePicture = profile.ProfilePictureBase64 ?? string.Empty;
+            _kinkPlates[data].Base64ProfilePicture = profile.ImageBase64 ?? string.Empty;
             Logger.LogDebug("KinkPlate™ for "+data.UID+" loaded.", LoggerType.KinkPlateMonitor);
         }
         catch (Exception ex)

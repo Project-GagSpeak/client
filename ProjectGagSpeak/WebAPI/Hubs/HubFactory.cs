@@ -1,7 +1,7 @@
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
-using GagspeakAPI.SignalR;
+using GagspeakAPI.Hub;
 using MessagePack;
 using MessagePack.Resolvers;
 using Microsoft.AspNetCore.Http.Connections;

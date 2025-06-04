@@ -30,7 +30,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
     public void DrawPatternHub()
     {
         // Handle grabbing new info from the server if none is present.
-        if(!_shareHub.InitialPatternsCall && _shareHub.CanShareHubTask)
+        if(!_shareHub.InitialPatternsCall && !_shareHub.DisableUI)
             _shareHub.PerformPatternSearch();
 
         DrawSearchFilter();
@@ -162,7 +162,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.Search, disabled: !_shareHub.CanShareHubTask))
+            if (CkGui.IconButton(FAI.Search, disabled: !_shareHub.DisableUI))
                 _shareHub.PerformPatternSearch();
             CkGui.AttachToolTip("Update Search Results");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubUpdate, ImGui.GetWindowPos(), ImGui.GetWindowSize());

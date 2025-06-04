@@ -3,9 +3,9 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
-using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Moodles;
@@ -45,15 +45,16 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
 
     protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {
-        var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, new[] { item.GUID }, MoodleType.Status);
-        if (await _mainHub.UserApplyMoodlesByGuid(dto))
+        var dto = new MoodlesApplierById(_pairRef.UserData, new[] { item.GUID }, MoodleType.Status);
+        HubResponse res = await _mainHub.UserApplyMoodlesByGuid(dto);
+        if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
             return false;
         }
     }

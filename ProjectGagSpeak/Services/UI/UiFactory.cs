@@ -23,8 +23,6 @@ public class UiFactory
     private readonly GagspeakMediator _mediator;
     private readonly GagspeakConfigService _config;
     private readonly PiShockProvider _shockies;
-    private readonly PermissionsDrawer _permDrawer;
-    private readonly PermissionData _permData;
     private readonly IconDisplayer _iconDisplayer;
     private readonly ImageImportTool _imageImport;
 
@@ -54,8 +52,6 @@ public class UiFactory
         GagspeakMediator mediator,
         GagspeakConfigService config,
         PiShockProvider shockies,
-        PermissionsDrawer permDrawer,
-        PermissionData permActData,
         IconDisplayer iconDisplayer,
         ImageImportTool imageImport,
         // Managers
@@ -78,8 +74,6 @@ public class UiFactory
         _mediator = mediator;
         _config = config;
         _shockies = shockies;
-        _permDrawer = permDrawer;
-        _permData = permActData;
         _iconDisplayer = iconDisplayer;
         _imageImport = imageImport;
         
@@ -115,8 +109,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
-            _hub, _globals, _permData, _permDrawer, _presetService, _iconDisplayer, _shockies,
-            _pairManager, _clientMonitor);
+            _hub, _globals, _presetService, _iconDisplayer, _pairManager, _clientMonitor, _shockies);
     }
 
     public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)

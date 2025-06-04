@@ -91,7 +91,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
-        var propertyInfo = typeof(UserGlobalPermissions).GetProperty(NewPerm);
+        var propertyInfo = typeof(GlobalPerms).GetProperty(NewPerm);
         if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
 
@@ -137,10 +137,10 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
-        var propertyInfo = typeof(UserPairPermissions).GetProperty(NewPerm);
+        var propertyInfo = typeof(PairPerms).GetProperty(NewPerm);
 
         // has the person just paused us.
-        if (NewPerm == nameof(UserPairPermissions.IsPaused))
+        if (NewPerm == nameof(PairPerms.IsPaused))
             if (pair.PairPerms.IsPaused != (bool)ChangedValue)
                 Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
@@ -168,7 +168,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (NewPerm is nameof(UserPairPermissions.MoodlePerms) || NewPerm is nameof(UserPairPermissions.MaxMoodleTime))
+        if (NewPerm is nameof(PairPerms.MoodlePerms) || NewPerm is nameof(PairPerms.MaxMoodleTime))
             if (GetOnlineUserDatas().Contains(pair.UserData))
                 Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
     }
@@ -183,7 +183,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
-        var propertyInfo = typeof(UserEditAccessPermissions).GetProperty(NewPerm);
+        var propertyInfo = typeof(PairPermAccess).GetProperty(NewPerm);
 
         if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
@@ -218,13 +218,13 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
-        var propertyInfo = typeof(UserPairPermissions).GetProperty(NewPerm);
+        var propertyInfo = typeof(PairPerms).GetProperty(NewPerm);
 
         if (NewPerm is "IsPaused" && (pair.UserPair.OwnPerms.IsPaused != (bool)ChangedValue))
             Mediator.Publish(new ClearProfileDataMessage(dto.User));
         
         var prevPerms = pair.OwnPerms.PuppetPerms;
-        var puppetChanged = NewPerm == nameof(UserPairPermissions.PuppetPerms);
+        var puppetChanged = NewPerm == nameof(PairPerms.PuppetPerms);
 
         if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
@@ -253,7 +253,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         RecreateLazy(false);
 
         // push notify after recreating lazy.
-        if (NewPerm is nameof(UserPairPermissions.MoodlePerms) || NewPerm is nameof(UserPairPermissions.MaxMoodleTime))
+        if (NewPerm is nameof(PairPerms.MoodlePerms) || NewPerm is nameof(PairPerms.MaxMoodleTime))
             Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
     }
 
@@ -267,7 +267,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
 
-        var propertyInfo = typeof(UserEditAccessPermissions).GetProperty(NewPerm);
+        var propertyInfo = typeof(PairPermAccess).GetProperty(NewPerm);
         if (propertyInfo != null)
         {
             if (propertyInfo.CanWrite)

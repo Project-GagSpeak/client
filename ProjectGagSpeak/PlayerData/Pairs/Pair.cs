@@ -44,11 +44,11 @@ public class Pair : IComparable<Pair>
     // Permissions
     public KinksterPair UserPair { get; set; }
     public UserData UserData => UserPair.User;
-    public UserPairPermissions OwnPerms => UserPair.OwnPerms;
-    public UserEditAccessPermissions OwnPermAccess => UserPair.OwnAccess;
-    public UserGlobalPermissions PairGlobals => UserPair.Globals;
-    public UserPairPermissions PairPerms => UserPair.Perms;
-    public UserEditAccessPermissions PairPermAccess => UserPair.Access;
+    public PairPerms OwnPerms => UserPair.OwnPerms;
+    public PairPermAccess OwnPermAccess => UserPair.OwnAccess;
+    public GlobalPerms PairGlobals => UserPair.Globals;
+    public PairPerms PairPerms => UserPair.Perms;
+    public PairPermAccess PairPermAccess => UserPair.Access;
 
     // Latest cached data for this pair.
     private PairHandler? CachedPlayer { get; set; }
@@ -112,7 +112,7 @@ public class Pair : IComparable<Pair>
             Name = new SeStringBuilder().AddText("Pair Actions").Build(),
             PrefixChar = 'G',
             PrefixColor = 561,
-            OnClicked = (a) => { _mediator.Publish(new OpenUserPairPermissions(this, StickyWindowType.PairActionFunctions, true)); },
+            OnClicked = (a) => { _mediator.Publish(new OpenPairPerms(this, StickyWindowType.PairActionFunctions, true)); },
         });
     }
 

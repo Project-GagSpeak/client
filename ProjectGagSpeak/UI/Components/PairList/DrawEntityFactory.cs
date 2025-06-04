@@ -1,12 +1,11 @@
-using Dalamud.Plugin.Services;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Network;
 using System.Collections.Immutable;
 
 namespace GagSpeak.CkCommons.Gui;

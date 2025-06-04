@@ -13,7 +13,9 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -202,14 +204,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(liveChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.ChatGarblerActive), liveChatGarblerActive), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerActive), liveChatGarblerActive).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(globals.GagVisuals), gagVisuals), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GagVisuals), gagVisuals).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.GagGlamoursTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagPadlockTimer, ref removeGagOnLockExpiration))
@@ -224,14 +224,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(globals.WardrobeEnabled), wardrobeEnabled), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled).ConfigureAwait(false);
             if (wardrobeEnabled is false)
             {
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.RestrictionVisuals), false), UpdateDir.Own)).ConfigureAwait(false);
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>(nameof(globals.RestraintSetVisuals), false), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestrictionVisuals), false).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestraintSetVisuals), false).ConfigureAwait(false);
                 _mainConfig.Config.CursedLootPanel = false;
                 _mainConfig.Save();
             }
@@ -241,13 +238,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(!wardrobeEnabled))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restrictionVisuals))
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>(nameof(globals.RestrictionVisuals), restrictionVisuals), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestrictionVisuals), restrictionVisuals).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.RestraintSetVisuals), restraintSetVisuals), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestraintSetVisuals), restraintSetVisuals).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.CursedLootActive, ref cursedDungeonLoot))
@@ -267,8 +262,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.PuppeteerActive, ref puppeteerEnabled))
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>(nameof(globals.PuppeteerEnabled), puppeteerEnabled), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppeteerEnabled), puppeteerEnabled).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
 
         using (ImRaii.Disabled(!puppeteerEnabled))
@@ -277,8 +271,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
             if (ImGui.InputText(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, ref globalTriggerPhrase, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.TriggerPhrase), globalTriggerPhrase), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.TriggerPhrase), globalTriggerPhrase).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
             // Correct these!
@@ -286,8 +279,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref refSits))
             {
                 var newPerms = globalPuppetPerms ^ PuppetPerms.Sit;
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), newPerms).ConfigureAwait(false);
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
 
@@ -295,8 +287,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref refEmotes))
             {
                 var newPerms = globalPuppetPerms ^ PuppetPerms.Emotes;
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), newPerms).ConfigureAwait(false);
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
 
@@ -304,8 +295,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref refAlias))
             {
                 var newPerms = globalPuppetPerms ^ PuppetPerms.Alias;
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), newPerms).ConfigureAwait(false);
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
 
@@ -313,8 +303,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref refAllPerms))
             {
                 var newPerms = globalPuppetPerms ^ PuppetPerms.All;
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                    new KeyValuePair<string, object>(nameof(globals.PuppetPerms), newPerms), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), newPerms).ConfigureAwait(false);
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
         }
@@ -323,8 +312,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.ToyboxActive, ref toyboxEnabled))
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(globals.ToyboxEnabled), toyboxEnabled), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ToyboxEnabled), toyboxEnabled).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
 
 
@@ -351,8 +339,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.HelpText(GSLoc.Settings.MainOptions.IntifaceAddressTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.SpatialAudioActive, ref spatialVibratorAudio))
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>(nameof(globals.SpatialAudio), spatialVibratorAudio), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.SpatialAudio), spatialVibratorAudio).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
         ImGui.Spacing();
@@ -376,8 +363,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
         if (ImGui.InputText("##Global PiShock Share Code", ref globalPiShockShareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, 
-                new KeyValuePair<string, object>(nameof(globals.GlobalShockShareCode), globalPiShockShareCode), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GlobalShockShareCode), globalPiShockShareCode).ConfigureAwait(false);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Sync, "Refresh", null, false, DateTime.UtcNow - _lastRefresh < TimeSpan.FromSeconds(5)))
@@ -399,7 +385,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     MaxDuration = newPerms.MaxDuration,
                     MaxIntensity = newPerms.MaxIntensity,
                 };
-                await _hub.UserPushAllGlobalPerms(new(MainHub.PlayerUserData, MainHub.PlayerUserData, newGlobalPerms, UpdateDir.Own));
+                await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobalPerms));
             });
         }
         CkGui.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
@@ -417,8 +403,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             // Convert TimeSpan to ticks and send as UInt64
             var ticks = (ulong)globals.ShockVibrateDuration.Ticks;
-            _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>(nameof(globals.ShockVibrateDuration), ticks), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ShockVibrateDuration), ticks).ConfigureAwait(false);
         }
         CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
@@ -470,8 +455,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 if (ImGui.Checkbox($"{e}", ref enabled))
                 {
                     var newBitfield = e.SetChannelState(globals.ChatGarblerChannelsBitfield, enabled);
-                    _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData, new KeyValuePair<string, object>
-                        (nameof(globals.ChatGarblerChannelsBitfield), newBitfield), UpdateDir.Own)).ConfigureAwait(false);
+                    PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerChannelsBitfield), newBitfield).ConfigureAwait(false);
                 }
 
                 ImGui.SameLine();

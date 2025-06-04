@@ -1,18 +1,14 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.CustomCombos;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
-using OtterGui;
 
 namespace GagSpeak.CustomCombos.PairActions;
 
@@ -70,15 +66,15 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
 
         // construct the dto to send.
-        var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, updateType)
+        var dto = new PushKinksterRestrictionUpdate(_pairRef.UserData, updateType)
         {
             Layer = layerIdx,
             RestrictionId = Current.Id,
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserPushPairDataRestrictions(dto);
-        if (result is not GagSpeakApiEc.Success)
+        var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
             return false;

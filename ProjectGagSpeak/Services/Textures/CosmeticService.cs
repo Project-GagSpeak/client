@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Penumbra.String.Classes;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using GagspeakAPI.Util;
 
 namespace GagSpeak.Services.Textures;
 

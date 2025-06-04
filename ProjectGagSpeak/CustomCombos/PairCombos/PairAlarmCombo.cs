@@ -1,13 +1,11 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Globalization;
@@ -62,14 +60,11 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
             return false;
 
         // Construct the dto, and then send it off.
-        var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, DataUpdateType.AlarmToggled)
-        {
-            AffectedIdentifier = Current.Id,
-        };
+        var dto = new PushKinksterToyboxUpdate(_pairRef.UserData, _pairRef.LastToyboxData, Current.Id, DataUpdateType.AlarmToggled);
 
         // Send out the command.
-        var result = await _mainHub.UserPushPairDataToybox(dto);
-        if (result is not GagSpeakApiEc.Success)
+        var result = await _mainHub.UserChangeKinksterToyboxState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
             return false;

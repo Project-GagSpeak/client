@@ -4,7 +4,7 @@ using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Dto.IPC;
+using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Interop.Ipc;
@@ -176,7 +176,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         // fetch the UID for the pair to apply for.
         _logger.LogInformation($"Received ApplyStatusesToPairRequest for {recipient} from {requester}, applying statuses");
-        var dto = new ApplyMoodlesByStatusDto(pairUser, statuses, (isPreset ? MoodleType.Preset : MoodleType.Status));
+        var dto = new MoodlesApplierByStatus(pairUser, statuses, (isPreset ? MoodleType.Preset : MoodleType.Status));
         Mediator.Publish(new MoodlesApplyStatusToPair(dto));
     }
 

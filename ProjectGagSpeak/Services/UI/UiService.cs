@@ -112,7 +112,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         });
 
 
-        Mediator.Subscribe<OpenUserPairPermissions>(this, (msg) =>
+        Mediator.Subscribe<OpenPairPerms>(this, (msg) =>
         {
             // if we are forcing the main UI, do so.
             if (msg.ForceOpenMainUI)

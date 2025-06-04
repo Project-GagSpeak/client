@@ -3,8 +3,9 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
+using GagspeakAPI.Network;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
 
 namespace GagSpeak.CustomCombos.Padlockable;
 
@@ -31,7 +32,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     {
         if (Items[layerIdx].CanLock() && _pairRef.PairPerms.LockRestrictions)
         {
-            var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
+            var dto = new PushKinksterRestrictionUpdate(_pairRef.UserData, DataUpdateType.Locked)
             {
                 Layer = layerIdx,
                 Padlock = SelectedLock,
@@ -40,8 +41,8 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataRestrictions(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();
@@ -63,7 +64,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     {
         if (Items[layerIdx].CanUnlock() && _pairRef.PairPerms.UnlockRestrictions)
         {
-            var dto = new PushPairRestrictionDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
+            var dto = new PushKinksterRestrictionUpdate(_pairRef.UserData, DataUpdateType.Unlocked)
             {
                 Layer = layerIdx,
                 Padlock = Items[layerIdx].Padlock,
@@ -71,8 +72,8 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataRestrictions(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();

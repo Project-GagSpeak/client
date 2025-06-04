@@ -21,7 +21,7 @@ public record UserPairSelected(Pair? Pair) : MessageBase; // This likely can be 
 /// <param name="Pair"> The pair we are opening the permissions for. </param>
 /// <param name="PermsWindowType"> The type of window we are opening. </param>
 /// <param name="ForceOpenMainUI"> Whether or not we should force open the main UI. </param>
-public record OpenUserPairPermissions(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase;
+public record OpenPairPerms(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase;
 
 
 /// <summary> Fires once a new StickyPair window is created </summary>

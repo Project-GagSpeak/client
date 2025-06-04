@@ -3,62 +3,32 @@ using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Collections.Immutable;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.CkCommons.Gui.Permissions;
 
 // A helper for providing all the preset variables for various gagspeak permissions.
-public class PermissionData : IMediatorSubscriber, IDisposable
+public partial class PairStickyUI
 {
-    /// <summary> The String of the current pairs Nick, Alias, or UID. </summary>
-    public static string DispName = "";
-    public static string PairAccessYesTT = DispName + " allows you to change this permission at will.";
-    public static string PairAccessNoTT = DispName + " is preventing you from changing this permission. Only they can update it.";
-    public static string ClientAccessYesTT = "Grant " + DispName + " control over this permission, allowing them to change the permission at any time";
-    public static string ClientAccessNoTT = "Revoke " + DispName + "'s control over this permission";
-
-    // Store the actual dictionaries as readonly fields to be immutable after initialization
-    public readonly IReadOnlyDictionary<SPPID, PermDataPair>   PairPermData   = _pairPermData;
-    public readonly IReadOnlyDictionary<SPPID, PermDataClient> ClientPermData = _clientPermData;
-    public UserData PairUserData { get; private set; }
-
-    public GagspeakMediator Mediator { get; }
-    public PermissionData(GagspeakMediator mediator)
-    {
-        Mediator = mediator;
-        Mediator.Subscribe<StickyPairWindowCreated>(this, (pair) =>
-        {
-            PairUserData = pair.newPair.UserData;
-            DispName = pair.newPair.GetNickAliasOrUid();
-        });
-    }
-
-    public void Dispose() => Mediator.Unsubscribe<StickyPairWindowCreated>(this);
-
     /// <summary> An Immutible record for permission settings recreated on each initialization. </summary>
     public record PermDataPair(FAI IconOn, FAI IconOff, string CondTrue, string CondFalse, string Text)
     {
-        public string TextPrefix(bool curState) => curState ? DispName + " has their " + Text : DispName;
+        public string TextPrefix(bool curState) => curState ? DisplayName + " has their " + Text : DisplayName;
         public string TextSuffix(bool curState) => curState ? "." : Text + ".";
-        public string ToggleTextTT => "You can toggle " + DispName + "'s permission state by clicking it!";
-    
-        public (FAI icon, string prefix, string suffix, string condText, string tt) TextInfo(bool useAlt)
-            => (useAlt ? IconOn : IconOff, TextPrefix(useAlt), TextSuffix(useAlt), useAlt ? CondTrue : CondFalse, ToggleTextTT);
+        public string ToggleTextTT => "You can toggle " + DisplayName + "'s permission state by clicking it!";
     }
 
     public record PermDataClient(FAI IconOn, FAI IconOff, string CondTrue, string CondFalse, string Text, string CondTrueTT, string CondFalseTT)
     {
         public string TextPrefix => Text + " ";
-        public string TextSuffix => ".";
-        public string Tooltip(bool curState) => curState ? TrueToFalseTT : FalseToTrueTT;
-        public string HardcoreTooltip(bool curState) => curState ? HcTrueTT : HcFalseTT;
-
-        private string TrueToFalseTT => DispName + " is currently " + CondTrue + CondTrueTT + ".--SEP-- Clicking this will change it to " + CondFalse + ".";
-        private string FalseToTrueTT => DispName + " is currently " + CondFalse + CondFalseTT + ".--SEP-- Clicking this will change it to " + CondTrue + ".";
-        private string HcTrueTT => Text + " " + CondTrueTT + " " + CondTrue + " for " + DispName + ".--SEP-- You are helpless to disable this!";
-        private string HcFalseTT => Text + " " + CondTrueTT + " " + CondFalse + " for " + DispName + ".";
+        public string Tooltip(bool curState) => curState 
+            ? DisplayName + " is currently " + CondTrue + CondTrueTT + ".--SEP-- Clicking this will change it to " + CondFalse + "."
+            : DisplayName + " is currently " + CondFalse + CondFalseTT + ".--SEP-- Clicking this will change it to " + CondTrue + ".";
+        public string HardcoreTooltip(bool curState) => curState 
+            ? $"{Text} {CondTrueTT} {CondTrue} for {DisplayName}.--SEP-- You are helpless to disable this!"
+            : $"{Text} {CondFalseTT} {CondFalse} for {DisplayName}.";
     }
 
     /// <summary> The Cache of PermissionData for each permission in the Magnifying Glass Window. </summary>
-    private static readonly ImmutableDictionary<SPPID, PermDataPair> _pairPermData = ImmutableDictionary<SPPID, PermDataPair>.Empty
+    private readonly ImmutableDictionary<SPPID, PermDataPair> PairPermData = ImmutableDictionary<SPPID, PermDataPair>.Empty
         .Add(SPPID.ChatGarblerActive,     new PermDataPair(FAI.MicrophoneSlash,       FAI.Microphone, "enabled",       "disabled",     "Chat Garbler"))
         .Add(SPPID.ChatGarblerLocked,     new PermDataPair(FAI.Key,                   FAI.UnlockAlt,  "locked",        "unlocked",     "Chat Garbler"))
         .Add(SPPID.LockToyboxUI,          new PermDataPair(FAI.Box,                   FAI.BoxOpen,    "locked",        "unlocked",     "Toybox UI"))
@@ -103,7 +73,7 @@ public class PermissionData : IMediatorSubscriber, IDisposable
         .Add(SPPID.HardcoreModeState,     new PermDataPair(FAI.Bolt,                  FAI.Ban,        "In",            "Not in",       "Hardcore Mode"));
 
     /// <summary> The Cache of PermissionData for each permission in the Gear Setting Menu. </summary>
-    private static readonly ImmutableDictionary<SPPID, PermDataClient> _clientPermData = ImmutableDictionary<SPPID, PermDataClient>.Empty
+    private readonly ImmutableDictionary<SPPID, PermDataClient> ClientPermData = ImmutableDictionary<SPPID, PermDataClient>.Empty
         .Add(SPPID.ChatGarblerActive,     new PermDataClient(FAI.MicrophoneSlash,       FAI.Microphone,    "active",        "inactive",        "Chat Garbler",             string.Empty,                       string.Empty))
         .Add(SPPID.ChatGarblerLocked,     new PermDataClient(FAI.Key,                   FAI.UnlockAlt,     "locked",        "unlocked",        "Chat Garbler",             string.Empty,                       string.Empty))
         .Add(SPPID.LockToyboxUI,          new PermDataClient(FAI.Box,                   FAI.BoxOpen,       "allowed",       "restricted",      "Toybox UI locking",        "to lock your Toybox UI",           "from locking your ToyboxUI"))

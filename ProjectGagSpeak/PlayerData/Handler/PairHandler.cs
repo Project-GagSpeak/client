@@ -5,7 +5,7 @@ using GagSpeak.PlayerData.Factories;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.Connection;
+using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.PlayerData.Handlers;
@@ -27,13 +27,17 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
     private bool _isVisible;
 
-    public PairHandler(ILogger<PairHandler> logger, OnlineKinkster onlineUser,
-        GameObjectHandlerFactory gameObjectHandlerFactory, IpcManager ipcManager,
-        OnFrameworkService dalamudUtil, IHostApplicationLifetime lifetime,
-        GagspeakMediator mediator) : base(logger, mediator)
+    public PairHandler(OnlineKinkster onlineUser,
+        ILogger<PairHandler> logger,
+        GagspeakMediator mediator,
+        GameObjectHandlerFactory factory,
+        IpcManager ipcManager,
+        OnFrameworkService dalamudUtil,
+        IHostApplicationLifetime lifetime)
+        : base(logger, mediator)
     {
         OnlineUser = onlineUser;
-        _gameObjectHandlerFactory = gameObjectHandlerFactory;
+        _gameObjectHandlerFactory = factory;
         _ipcManager = ipcManager;
         _frameworkUtil = dalamudUtil;
         _lifetime = lifetime;

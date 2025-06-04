@@ -14,18 +14,27 @@ using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.CustomCombos.Padlockable;
 using GagSpeak.CustomCombos.PairActions;
 using GagSpeak.CustomCombos.Moodles;
+using GagspeakAPI.Data;
+using GagspeakAPI.Hub;
+using GagSpeak.Utils;
+using GagspeakAPI.Extensions;
+using OtterGui.Text;
+using System.Collections.Immutable;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
 
+/// <summary>
+///     TODO: Refactor this into a class that is not spawned by a factory, allowing us to make static accessors
+///     and make it so it does not need to recreate all sub-files of this class object every time.
+/// </summary>
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly GlobalData _globals;
-    private readonly PermissionData _permData;
-    private readonly PermissionsDrawer _drawer;
     private readonly PresetLogicDrawer _presets;
     private readonly PairManager _pairs;
     private readonly ClientMonitor _monitor;
+    private readonly PiShockProvider _shockies;
 
     // Private variables for the sticky UI and its respective combos.
     private float WindowMenuWidth = -1;
@@ -44,6 +53,9 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private OwnMoodlePresetToPairCombo _moodlePresets;
     private EmoteCombo _emoteCombo;
     private PairMoodleStatusCombo _activePairStatusCombo;
+    private Dictionary<SPPID, string> _timespanCache = new();
+    private DateTime _lastRefresh = DateTime.MinValue;
+    private static string DisplayName;
 
     public PairStickyUI(
         ILogger<PairStickyUI> logger,
@@ -52,21 +64,19 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         StickyWindowType drawType,
         MainHub hub,
         GlobalData globals,
-        PermissionData permData,
-        PermissionsDrawer permDrawer,
         PresetLogicDrawer presets,
         IconDisplayer iconDisplayer,
-        PiShockProvider shocks,
         PairManager pairs,
-        ClientMonitor monitor) : base(logger, mediator, $"PairStickyUI-{pair.UserData.UID}")
+        ClientMonitor monitor,
+        PiShockProvider shocks)
+        : base(logger, mediator, $"PairStickyUI-{pair.UserData.UID}")
     {
-        _permData = permData;
-        _drawer = permDrawer;
         _presets = presets;
         _hub = hub;
         _globals = globals;
         _pairs = pairs;
         _monitor = monitor;
+        _shockies = shocks;
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
         IsOpen = true;
@@ -106,6 +116,10 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     public StickyWindowType DrawType = StickyWindowType.None;
     public InteractionType OpenedInteraction = InteractionType.None;
 
+    /// <summary> Task that blocks UI Interaction during a transaction update to prevent spamming and shiz. </summary>
+    public static Task? UiTask { get; private set; }
+    public static bool DisableUI => UiTask is not null && !UiTask.IsCompleted;
+
     private void OpenOrClose(InteractionType type) => OpenedInteraction = (type == OpenedInteraction) ? InteractionType.None : type;
     private void CloseInteraction() => OpenedInteraction = InteractionType.None;
 
@@ -127,17 +141,16 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         WindowMenuWidth = ImGui.GetContentRegionAvail().X;
-
         switch (DrawType)
         {
             case StickyWindowType.PairPerms:
-                ImGuiUtil.Center(PermissionData.DispName + "'s Permissions for You");
+                ImGuiUtil.Center($"{DisplayName}'s Permissions for You");
                 ImGui.Separator();
                 using (ImRaii.Child("PairPermsContent", new Vector2(0, ImGui.GetContentRegionAvail().Y), false, WFlags.NoScrollbar))
                     DrawPairPermsForClient();
                 break;
             case StickyWindowType.ClientPermsForPair:
-                ImGuiUtil.Center("Your Permissions for " + PermissionData.DispName);
+                ImGuiUtil.Center($"Your Permissions for {DisplayName}");
                 CkGui.SetCursorXtoCenter(225f);
                 _presets.DrawPresetList(SPair, 225f);
 
@@ -151,13 +164,11 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
                 break;
         }
     }
-
     protected override void PostDrawInternal()
     { }
 
     public override void OnClose()
     {
         Mediator.Publish(new RemoveWindowMessage(this));
-
     }
 }

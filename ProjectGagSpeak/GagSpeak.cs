@@ -310,7 +310,6 @@ public static class GagSpeakServiceExtensions
 
 
         // UI Components
-        .AddSingleton<PermissionData>()
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton((s) => new AccountInfoExchanger(pi.ConfigDirectory.FullName))
 
@@ -492,7 +491,6 @@ public static class GagSpeakServiceExtensions
 
 
         // StickyWindow
-        .AddScoped<PermissionsDrawer>()
         .AddScoped<PresetLogicDrawer>()
 
 

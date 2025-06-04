@@ -5,8 +5,9 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -62,13 +63,10 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
         // construct the dto to send.
-        var dto = new PushPairToyboxDataUpdateDto(_pairRef.UserData, _pairRef.LastToyboxData, updateType)
-        {
-            AffectedIdentifier = Current.Id,
-        };
+        var dto = new PushKinksterToyboxUpdate(_pairRef.UserData, _pairRef.LastToyboxData, Current.Id, updateType);
 
-        var result = await _mainHub.UserPushPairDataToybox(dto);
-        if (result is not GagSpeakApiEc.Success)
+        var result = await _mainHub.UserChangeKinksterToyboxState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
             return false;

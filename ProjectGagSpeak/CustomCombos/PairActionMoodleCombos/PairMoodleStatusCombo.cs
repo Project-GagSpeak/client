@@ -2,8 +2,9 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.IPC;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Moodles;
@@ -47,15 +48,16 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
 
     protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {
-        var dto = new ApplyMoodlesByGuidDto(_pairRef.UserData, [item.GUID], MoodleType.Status);
-        if(await _mainHub.UserApplyMoodlesByGuid(dto))
+        var dto = new MoodlesApplierById(_pairRef.UserData, [item.GUID], MoodleType.Status);
+        HubResponse res = await _mainHub.UserApplyMoodlesByGuid(dto);
+        if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
             return false;
         }
     }
@@ -63,15 +65,17 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     protected override async Task<bool> OnRemoveButton(MoodlesStatusInfo item)
     {
         var dto = new MoodlesRemoval(_pairRef.UserData, [item.GUID]);
-        if(await _mainHub.UserRemoveMoodles(dto))
+        HubResponse res = await _mainHub.UserRemoveMoodles(dto);
+        if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Removing moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to remove moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Failed to remove moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
             return false;
+
         }
     }
 }

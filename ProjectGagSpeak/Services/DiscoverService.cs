@@ -66,18 +66,18 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         if (_tabMenu.TabSelection is not MainMenuTabs.SelectedTab.GlobalChat)
             NewMessages++;
 
-        var userTagCode = msg.ChatMessage.UserTagCode;
+        var userTagCode = msg.Message.UserTagCode;
         var SenderName = "Kinkster-" + userTagCode;
 
 
         // extract the user data from the message
-        var userData = msg.ChatMessage.MessageSender;
+        var userData = msg.Message.Sender;
         // grab the list of our currently online pairs.
         var matchedPair = _pairManager.DirectPairs.FirstOrDefault(p => p.UserData.UID == userData.UID);
 
         // determine the display name
         if (msg.FromSelf) 
-            SenderName = msg.ChatMessage.MessageSender.AliasOrUID + " (" + userTagCode + ")";
+            SenderName = msg.Message.Sender.AliasOrUID + " (" + userTagCode + ")";
 
         if (matchedPair != null)
             SenderName = matchedPair.GetNickAliasOrUid() + " (" + userTagCode + ")";
@@ -87,7 +87,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             SenderName = $"Mistress Cordy";
 
         // construct the chat message struct to add.
-        var msgToAdd = new ChatMessage(userData, SenderName, msg.ChatMessage.Message);
+        var msgToAdd = new ChatMessage(userData, SenderName, msg.Message.Message);
 
         GlobalChat.AddMessage(msgToAdd);
     }

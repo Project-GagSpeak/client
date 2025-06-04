@@ -223,7 +223,7 @@ public void AddMessageRange(IEnumerable<ChatMessage> messages)
                 // Display each action as a selectable
                 if (ImGui.Selectable("Send Kinkster Request"))
                 {
-                    _ = _hub.UserSendPairRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage));
+                    _hub.UserSendKinksterRequest(new(new(_lastInteractedMsg.UID), _lastAttachedMessage)).ConfigureAwait(false);
                     _lastInteractedMsg = new ChatMessage();
                     ImGui.CloseCurrentPopup();
                 }

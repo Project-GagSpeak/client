@@ -1,8 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
@@ -13,14 +13,14 @@ public partial class PairStickyUI
     private void DrawWardrobeActions()
     {
         var applyText = "Apply Restraint Set";
-        var applyTT = "Applies a Restraint Set to " + PermissionData.DispName + ". Click to select set.";
+        var applyTT = "Applies a Restraint Set to " + DisplayName + ". Click to select set.";
         var lockText = SPair.LastRestraintData.Padlock is Padlocks.None ? "Lock Restraint Set" : "Locked with a " + SPair.LastRestraintData.Padlock;
-        var lockTT = SPair.LastRestraintData.Padlock is Padlocks.None ? "Locks the Restraint Set applied to " + PermissionData.DispName + ". Click to view options." 
+        var lockTT = SPair.LastRestraintData.Padlock is Padlocks.None ? "Locks the Restraint Set applied to " + DisplayName + ". Click to view options." 
             : "Set is currently locked with a " + SPair.LastRestraintData.Padlock;
         var unlockText = "Unlock Restraint Set";
-        var unlockTT = "Unlocks the Restraint Set applied to " + PermissionData.DispName + ". Click to view options.";
+        var unlockTT = "Unlocks the Restraint Set applied to " + DisplayName + ". Click to view options.";
         var removeText = "Remove Restraint Set";
-        var removeTT = "Removes the Restraint Set applied to " + PermissionData.DispName + ". Click to view options.";
+        var removeTT = "Removes the Restraint Set applied to " + DisplayName + ". Click to view options.";
 
         // Expander for ApplyRestraint
         var disableApplyExpand = !SPair.PairPerms.ApplyRestraintSets || SPair.LastRestraintData.Padlock is not Padlocks.None;
@@ -83,14 +83,14 @@ public partial class PairStickyUI
                 if (ImGui.Button("Remove Restraint", ImGui.GetContentRegionAvail()))
                 {
                     // construct the dto to send.
-                    var dto = new PushPairRestraintDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
+                    var dto = new PushKinksterRestraintUpdate(SPair.UserData, DataUpdateType.Removed)
                     {
                         ActiveSetId = Guid.Empty,
                         Enabler = string.Empty,
                     };
-                    _hub.UserPushPairDataRestraint(dto).ConfigureAwait(false);
+                    _hub.UserChangeKinksterRestraintState(dto).ConfigureAwait(false);
                     OpenedInteraction = InteractionType.None;
-                    _logger.LogDebug("Removing Restraint from " + PermissionData.DispName, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Restraint from " + DisplayName, LoggerType.Permissions);
                 }
             }
         }

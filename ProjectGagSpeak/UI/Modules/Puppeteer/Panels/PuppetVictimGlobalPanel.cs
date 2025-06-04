@@ -9,6 +9,7 @@ using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
@@ -169,11 +170,10 @@ public sealed partial class PuppetVictimGlobalPanel
         using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
             var globalPhrase = _globals.GlobalPerms?.TriggerPhrase ?? string.Empty;
-            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString))
+            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && _globals.GlobalPerms is { } globals)
             {
                 _logger.LogTrace("The Tag Editor had an update!");
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>(nameof(UserGlobalPermissions.TriggerPhrase), updatedString), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.TriggerPhrase), updatedString).ConfigureAwait(false);
             }
         }
 
@@ -196,8 +196,7 @@ public sealed partial class PuppetVictimGlobalPanel
                 ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
 
             if (_globals.GlobalPerms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
-                _hub.UserUpdateOwnGlobalPerm(new(MainHub.PlayerUserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>(nameof(UserGlobalPermissions.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter).ConfigureAwait(false);
         }
 
         ImGui.Spacing();

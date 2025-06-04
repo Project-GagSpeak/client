@@ -12,6 +12,7 @@ using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using Penumbra.GameData.Enums;
@@ -109,7 +110,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPlayerCharacterDebug()
     {
-        DrawGlobalPermissions("Player", _globals.GlobalPerms ?? new UserGlobalPermissions());
+        DrawGlobalPermissions("Player", _globals.GlobalPerms ?? new GlobalPerms());
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerRestraintData ?? new CharaActiveRestraint());
@@ -131,7 +132,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
     }
 
-    private void DrawGlobalPermissions(string uid, UserGlobalPermissions perms)
+    private void DrawGlobalPermissions(string uid, GlobalPerms perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Global Perms");
         if (!nodeMain) return;
@@ -177,7 +178,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
     }
 
-    private void DrawPairPerms(string uid, UserPairPermissions perms)
+    private void DrawPairPerms(string uid, PairPerms perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Pair Perms");
         if (!nodeMain) return;
@@ -253,7 +254,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
     }
 
-    private void DrawPairPermAccess(string uid, UserEditAccessPermissions perms)
+    private void DrawPairPermAccess(string uid, PairPermAccess perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Perm Edit Access");
         if (!nodeMain) return;

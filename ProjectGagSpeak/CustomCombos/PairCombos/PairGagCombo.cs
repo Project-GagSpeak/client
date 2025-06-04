@@ -3,8 +3,9 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.User;
-using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
+using GagspeakAPI.Util;
 using ImGuiNET;
 using Penumbra.GameData.Enums;
 
@@ -61,7 +62,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         
         // construct the dto to send.
-        var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, updateType)
+        var dto = new PushKinksterGagSlotUpdate(_pairRef.UserData, updateType)
         {
             Layer = layerIdx,
             Gag = Current,
@@ -69,8 +70,8 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         };
 
         // push to server.
-        var result = await _mainHub.UserPushPairDataGags(dto);
-        if (result is not GagSpeakApiEc.Success)
+        var result = await _mainHub.UserChangeKinksterGagState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyGag with {Current.GagName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
             return false;

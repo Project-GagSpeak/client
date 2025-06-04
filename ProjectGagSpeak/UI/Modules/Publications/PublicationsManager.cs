@@ -243,7 +243,7 @@ public class PublicationsManager
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.DisableUI))
                         _shareHub.RemovePattern(pattern.Identifier);
                 CkGui.AttachToolTip("Removes this pattern publication from the pattern hub." +
                     "--SEP--Must hold SHIFT");
@@ -299,7 +299,7 @@ public class PublicationsManager
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.CanShareHubTask))
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || !_shareHub.DisableUI))
                         _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID);
                 CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!" +
                     "--SEP--Must hold SHIFT");

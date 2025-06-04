@@ -2,8 +2,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
@@ -24,14 +24,14 @@ public partial class PairStickyUI
         var gagSlot = SPair.LastGagData.GagSlots[_gagLayer];
 
         // register display texts for the buttons.
-        var applyText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermissionData.DispName : "A " + gagSlot.GagItem + " is applied.";
-        var applyTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + PermissionData.DispName + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagItem;
-        var lockText = gagSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Gag" : "Locked with a " + gagSlot.Padlock;
-        var lockTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + PermissionData.DispName+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
-        var unlockText = "Unlock " + PermissionData.DispName + "'s Gag";
-        var unlockTT = "Unlock " + PermissionData.DispName + "'s Gag. Click to view options.";
-        var removeText = "Remove " + PermissionData.DispName + "'s Gag";
-        var removeTT = "Remove " + PermissionData.DispName + "'s Gag. Click to view options.";
+        var applyText = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + DisplayName : "A " + gagSlot.GagItem + " is applied.";
+        var applyTT = gagSlot.GagItem is GagType.None ? "Apply a Gag to " + DisplayName + ". Click to view options." : "This user is currently Gagged with a " + gagSlot.GagItem;
+        var lockText = gagSlot.Padlock is Padlocks.None ? "Lock "+DisplayName+"'s Gag" : "Locked with a " + gagSlot.Padlock;
+        var lockTT = gagSlot.Padlock is Padlocks.None ? "Locks the Gag on " + DisplayName+ ". Click to view options." : "This Gag is locked with a " + gagSlot.Padlock;
+        var unlockText = "Unlock " + DisplayName + "'s Gag";
+        var unlockTT = "Unlock " + DisplayName + "'s Gag. Click to view options.";
+        var removeText = "Remove " + DisplayName + "'s Gag";
+        var removeTT = "Remove " + DisplayName + "'s Gag. Click to view options.";
 
 
         // Expander for ApplyGag
@@ -93,7 +93,7 @@ public partial class PairStickyUI
                 if (ImGui.Button("Remove Gag", ImGui.GetContentRegionAvail()))
                 {
                     // construct the dto to send.
-                    var dto = new PushPairGagDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
+                    var dto = new PushKinksterGagSlotUpdate(SPair.UserData, DataUpdateType.Removed)
                     {
                         Layer = _gagLayer,
                         Gag = GagType.None,
@@ -101,7 +101,7 @@ public partial class PairStickyUI
                     };
 
                     // push to server.
-                    _hub.UserPushPairDataGags(dto).ConfigureAwait(false);
+                    _hub.UserChangeKinksterGagState(dto).ConfigureAwait(false);
                     OpenedInteraction = InteractionType.None;
                     _logger.LogDebug("Removing Gag From layer " + _gagLayer, LoggerType.Permissions);
                 }

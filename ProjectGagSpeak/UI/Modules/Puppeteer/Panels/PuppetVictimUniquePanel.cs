@@ -12,6 +12,7 @@ using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
@@ -212,12 +213,10 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         using (CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
             var triggerPhrase = _helper.SelectedPair?.OwnPerms.TriggerPhrase ?? string.Empty;
-            if (PairTriggerTags.DrawTagsEditor("##OwnPairPhrases", triggerPhrase, out string updatedString))
+            if (PairTriggerTags.DrawTagsEditor("##OwnPairPhrases", triggerPhrase, out string updatedString) && _helper.SelectedPair is { } validPair)
             {
                 _logger.LogTrace("The Tag Editor had an update!");
-                if(_helper.SelectedPair is { } validPair)
-                    _hub.UserUpdateOwnPairPerm(new(validPair.UserData, MainHub.PlayerUserData,
-                        new KeyValuePair<string, object>(nameof(UserPairPermissions.TriggerPhrase), updatedString), UpdateDir.Own)).ConfigureAwait(false);
+                PermissionHelper.ChangeOwnUnique(_hub, validPair.UserData, validPair.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString).ConfigureAwait(false);
             }
         }
     }
@@ -243,8 +242,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         }
 
         if (_helper.SelectedPair is { } validPair && validPair.OwnPerms.PuppetPerms != (PuppetPerms)categoryFilter)
-            _hub.UserUpdateOwnPairPerm(new(validPair.UserData, MainHub.PlayerUserData,
-                new KeyValuePair<string, object>(nameof(UserPairPermissions.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own)).ConfigureAwait(false);
+            PermissionHelper.ChangeOwnUnique(_hub, validPair.UserData, validPair.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)categoryFilter).ConfigureAwait(false);
     }
 
     private void DrawExamplesBox(Vector2 region)

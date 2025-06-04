@@ -88,7 +88,7 @@ public sealed class SafewordService : MediatorSubscriberBase
             {
                 // do it for the single pair we want to.
                 var isolatedPair = _pairManager.DirectPairs.FirstOrDefault(user => string.Equals(user.UserData.UID, isolatedUID, StringComparison.OrdinalIgnoreCase));
-                if (isolatedPair != null && isolatedPair.UserPair.OwnPairPerms.InHardcore)
+                if (isolatedPair != null && isolatedPair.UserPair.OwnPerms.InHardcore)
                 {
                     // put us out of hardcore, and disable any active
                     isolatedPair.OwnPerms.InHardcore = false;
@@ -102,7 +102,7 @@ public sealed class SafewordService : MediatorSubscriberBase
                 // do it for all the pairs.
                 foreach (var pair in _pairManager.DirectPairs)
                 {
-                    if (pair.UserPair.OwnPairPerms.InHardcore)
+                    if (pair.UserPair.OwnPerms.InHardcore)
                     {
                         // put us out of hardcore, and disable any active hardcore stuff.
                         pair.OwnPerms.InHardcore = false;
@@ -160,7 +160,7 @@ public sealed class SafewordService : MediatorSubscriberBase
         {
             // do it for the single pair we want to.
             var isolatedPair = _pairManager.DirectPairs.FirstOrDefault(user => string.Equals(user.UserData.UID, isolatedUID, StringComparison.OrdinalIgnoreCase));
-            if (isolatedPair != null && isolatedPair.UserPair.OwnPairPerms.InHardcore)
+            if (isolatedPair != null && isolatedPair.UserPair.OwnPerms.InHardcore)
             {
                 // put us out of hardcore, and disable any active
                 isolatedPair.OwnPerms.InHardcore = false;
@@ -174,14 +174,14 @@ public sealed class SafewordService : MediatorSubscriberBase
                 isolatedPair.OwnPerms.AllowChatInputBlocking = false;
                 // send the updates to the server.
                 if (MainHub.ServerStatus is ServerState.Connected)
-                    _ = _hub.UserPushAllUniquePerms(new(isolatedPair.UserData, MainHub.PlayerUserData, isolatedPair.UserPair.OwnPairPerms, isolatedPair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+                    _ = _hub.UserPushAllUniquePerms(new(isolatedPair.UserData, MainHub.PlayerUserData, isolatedPair.UserPair.OwnPerms, isolatedPair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
             }
         }
         else
         {
             foreach (var pair in _pairManager.DirectPairs)
             {
-                if (pair.UserPair.OwnPairPerms.InHardcore)
+                if (pair.UserPair.OwnPerms.InHardcore)
                 {
                     // put us out of hardcore, and disable any active hardcore stuff.
                     pair.OwnPerms.InHardcore = false;
@@ -195,7 +195,7 @@ public sealed class SafewordService : MediatorSubscriberBase
                     pair.OwnPerms.AllowChatInputBlocking = false;
                     // send the updates to the server.
                     if (MainHub.ServerStatus is ServerState.Connected)
-                        _ = _hub.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPairPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
+                        _ = _hub.UserPushAllUniquePerms(new(pair.UserData, MainHub.PlayerUserData, pair.UserPair.OwnPerms, pair.UserPair.OwnEditAccessPerms, UpdateDir.Own));
                 }
             }
         }*/

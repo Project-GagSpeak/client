@@ -5,7 +5,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Services;
 
@@ -71,10 +72,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeData(_pairs.GetOnlineUserDatas(), arg));
         Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeData(_pairs.GetOnlineUserDatas(), arg));
         Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<OrdersDataChangedMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
         Mediator.Subscribe<AliasPairUpdateMessage>(this,               DistributeData);
+        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
         Mediator.Subscribe<LightStorageDataChangedMessage>(this, arg=> DistributeData(_pairs.GetOnlineUserDatas(), arg));
     }
 
@@ -164,8 +164,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             };
             
             Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
-            if (await _hub.UserPushData(new(newOnlinePairs, data, false)).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
-                Logger.LogError("Failed to push Gag Data to server Reason: " + res);
+            if (await _hub.UserPushData(new(newOnlinePairs, data, false)) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+                Logger.LogError("Failed to push Gag Data to server Reason: " + res.ErrorCode);
 
             _prevLightStorageData = newLightStorage;
         }
@@ -198,7 +198,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevGagData = msg.NewData;
         Logger.LogDebug($"Pushing GagChange [{msg.UpdateType}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushGagDataUpdateDto(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientGagSlotUpdate(onlinePlayers, msg.UpdateType)
         {
             Layer = msg.Layer,
             Gag = msg.NewData.GagItem,
@@ -209,7 +209,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataGags(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _hub.UserPushDataGags(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push Gag Data to server Reason: " + res);
     }
 
@@ -223,7 +223,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevRestrictionData = msg.NewData;
         Logger.LogDebug($"Pushing RestrictionChange [{msg.UpdateType}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushRestrictionDataUpdateDto(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientRestrictionUpdate(onlinePlayers, msg.UpdateType)
         {
             Layer = msg.Layer,
             Identifier = msg.NewData.Identifier,
@@ -234,7 +234,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestrictions(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _hub.UserPushDataRestrictions(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push RestrictionData to server Reason: " + res);
     }
 
@@ -248,7 +248,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevRestraintData = msg.NewData;
         Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
 
-        var dto = new PushRestraintDataUpdateDto(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientRestraintUpdate(onlinePlayers, msg.UpdateType)
         {
             ActiveSetId = msg.NewData.Identifier,
             LayersBitfield = msg.NewData.LayersBitfield,
@@ -259,38 +259,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestraint(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _hub.UserPushDataRestraint(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push RestraintData to server Reason: " + res);
-    }
-
-    /// <summary> Pushes the new GagData to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, OrdersDataChangedMessage msg)
-    {
-        // Dummy To remove warning.
-        await Task.Delay(1);
-
-        if (true)
-            return;
-    }
-
-    /// <summary> Pushes the new GagData to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, ToyboxDataChangedMessage msg)
-    {
-        if (DataIsDifferent(_prevToyboxData, msg.NewData) is false)
-            return;
-
-        _prevToyboxData = msg.NewData;
-        Logger.LogDebug($"Pushing ToyboxData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
-
-        var dto = new PushToyboxDataUpdateDto(onlinePlayers, msg.NewData, msg.UpdateType)
-        {
-            AffectedIdentifier = msg.InteractionId,
-        };
-
-        if (await _hub.UserPushDataToybox(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push ToyboxData to server Reason: " + res);
     }
 
     /// <summary> Pushes the new Global AliasTrigger update to the server. </summary>
@@ -303,9 +273,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevGlobalAliasData = msg.NewData;
         Logger.LogDebug($"Pushing Updated Global AliasTrigger to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushAliasGlobalUpdateDto(onlinePlayers, msg.NewData);
-
-        if (await _hub.UserPushAliasGlobalUpdate(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        var dto = new PushClientAliasGlobalUpdate(onlinePlayers, msg.NewData);
+        if (await _hub.UserPushAliasGlobalUpdate(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push Global AliasTrigger to server Reason: " + res);
     }
 
@@ -319,9 +288,28 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevPairAliasData = msg.NewData;
         Logger.LogDebug($"Pushing AliasPairUpdate to {msg.IntendedUser.AliasOrUID}", LoggerType.OnlinePairs);
 
-        var dto = new PushAliasPairUpdateDto(msg.IntendedUser, msg.NewData);
-        if (await _hub.UserPushAliasPairUpdate(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        var dto = new PushClientAliasUniqueUpdate(msg.IntendedUser, msg.NewData);
+        if (await _hub.UserPushAliasUniqueUpdate(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push AliasPairUpdate to server Reason: " + res);
+    }
+
+    /// <summary> Pushes the new GagData to the server. </summary>
+    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
+    private async void DistributeData(List<UserData> onlinePlayers, ToyboxDataChangedMessage msg)
+    {
+        if (DataIsDifferent(_prevToyboxData, msg.NewData) is false)
+            return;
+
+        _prevToyboxData = msg.NewData;
+        Logger.LogDebug($"Pushing ToyboxData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
+
+        var dto = new PushClientToyboxUpdate(onlinePlayers, msg.NewData, msg.UpdateType)
+        {
+            AffectedIdentifier = msg.InteractionId,
+        };
+
+        if (await _hub.UserPushDataToybox(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError("Failed to push ToyboxData to server Reason: " + res);
     }
 
     /// <summary> Pushes the new LightStorage to the server. </summary>
@@ -334,9 +322,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _prevLightStorageData = msg.NewData;
         Logger.LogDebug($"Pushing LightStorage to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{DataUpdateType.StorageUpdated}]", LoggerType.OnlinePairs);
 
-        var dto = new PushLightStorageMessageDto(onlinePlayers, msg.NewData);
+        var dto = new PushClientLightStorageUpdate(onlinePlayers, msg.NewData);
 
-        if (await _hub.UserPushDataLightStorage(dto).ConfigureAwait(false) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _hub.UserPushDataLightStorage(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError("Failed to push LightStorage to server Reason: " + res);
     }
 }

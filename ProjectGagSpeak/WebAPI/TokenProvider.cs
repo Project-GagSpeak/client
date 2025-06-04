@@ -1,9 +1,8 @@
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.PlayerData.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Routes;
+using GagspeakAPI.Hub;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -251,7 +250,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             var secretKey = string.Empty;
             var expectingPrimary = false;
             // Attempt to get the secret key and isPrimary attributes as well.
-            if (_serverManager.TryGetAuthForCharacter(out Authentication auth))
+            if (_serverManager.TryGetAuthForCharacter(out var auth))
             {
                 secretKey = auth.SecretKey.Key;
                 expectingPrimary = auth.IsPrimary;

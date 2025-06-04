@@ -120,7 +120,7 @@ public class DrawRequests : IRequestsFolder
     {
         // I think this is all i need? Idk i guess we will find out or something lol.
         _allOutgoingRequests = _clientData.OutgoingRequests
-            .Select(request => _pairRequestFactory.CreateKinsterRequest("outgoing-" + request.RecipientUser.UID, request))
+            .Select(request => _pairRequestFactory.CreateKinsterRequest("outgoing-" + request.Target.UID, request))
             .ToHashSet();
         _allIncomingRequests = _clientData.IncomingRequests
             .Select(request => _pairRequestFactory.CreateKinsterRequest("incoming-" + request.User.UID, request))

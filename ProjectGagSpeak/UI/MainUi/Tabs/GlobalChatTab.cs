@@ -17,6 +17,7 @@ using OtterGui.Text;
 using System.Numerics;
 using GagSpeak.Services.Configs;
 using GagSpeak.CkCommons.Gui;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 
@@ -128,7 +129,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
             // Send message to the server
             Logger.LogTrace($"Sending Message: {NextChatMessage}");
-            _hub.SendGlobalChat(new GlobalChatMessage(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Config.PreferThreeCharaAnonName)).ConfigureAwait(false);
+            _hub.UserSendGlobalChat(new(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Config.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
             // Clear message and trigger achievement event
             NextChatMessage = string.Empty;

@@ -5,8 +5,9 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.PairActions;
@@ -64,14 +65,14 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         // construct the dto to send.
-        var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, updateType)
+        var dto = new PushKinksterRestraintUpdate(_pairRef.UserData, updateType)
         {
             ActiveSetId = Current.Id,
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserPushPairDataRestraint(dto);
-        if (result is not GagSpeakApiEc.Success)
+        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result}");
             return false;

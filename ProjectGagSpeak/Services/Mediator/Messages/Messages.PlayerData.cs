@@ -1,7 +1,6 @@
 using GagSpeak.PlayerData.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -22,10 +21,9 @@ public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewI
 public record GagDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
 public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
 public record RestraintDataChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
-public record OrdersDataChangedMessage(DataUpdateType UpdateType) : SameThreadMessage;
-public record ToyboxDataChangedMessage(DataUpdateType UpdateType, CharaToyboxData NewData, Guid InteractionId) : SameThreadMessage;
 public record AliasGlobalUpdateMessage(AliasTrigger NewData) : SameThreadMessage;
 public record AliasPairUpdateMessage(AliasTrigger NewData, UserData IntendedUser) : SameThreadMessage;
+public record ToyboxDataChangedMessage(DataUpdateType UpdateType, CharaToyboxData NewData, Guid InteractionId) : SameThreadMessage;
 public record LightStorageDataChangedMessage(CharaLightStorageData NewData) : SameThreadMessage;
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;

@@ -15,9 +15,9 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
-using ImPlotNET;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using GameObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
 
 namespace GagSpeak.PlayerState.Visual;
@@ -267,9 +267,10 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         // Apply the gag restriction to that player.
         Logger.LogInformation("Applying a cursed Gag Item (" + gag.GagType + ") to layer " + Idx, LoggerType.CursedLoot);
         var interactedItem = new LightCursedItem(item.Identifier, item.Label, gag.GagType, Guid.Empty, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, interactedItem);
-        
-        if (await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GagSpeakApiEc.Success)
+        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, interactedItem);
+
+        var result = await _hub.UserPushDataCursedLoot(newInfo);
+        if (result.ErrorCode is GagSpeakApiEc.Success)
         {
             Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedLoot);
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
@@ -286,7 +287,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogError("Failed to apply gag restriction to player. Error Code: " + res);
+            Logger.LogError("Failed to apply gag restriction to player. Error Code: " + result.ErrorCode);
             return false;
         }
     }
@@ -307,9 +308,10 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         // Apply the restriction to that player.
         Logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedLoot);
         var item = new LightCursedItem(cursedItem.Identifier, cursedItem.Label, GagType.None, restriction.Identifier, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushCursedLootDataUpdateDto(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, item);
+        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, item);
 
-        if(await _hub.UserPushDataCursedLoot(newInfo) is { } res && res is GagSpeakApiEc.Success)
+        var result = await _hub.UserPushDataCursedLoot(newInfo);
+        if (result.ErrorCode is GagSpeakApiEc.Success)
         {
             Mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
                 "forth, binding you in an inescapable restraint!").BuiltString, NotificationType.Error));
@@ -322,7 +324,7 @@ public class CursedLootMonitor : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogError("Failed to apply restriction to player. Error Code: " + res);
+            Logger.LogError("Failed to apply restriction to player. Error Code: " + result.ErrorCode);
             return false;
         }
     }

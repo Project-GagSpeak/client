@@ -16,7 +16,7 @@ public sealed class GlobalData : DisposableMediatorSubscriberBase
     }
 
     public bool GlobalsValid => GlobalPerms is not null;
-    public UserGlobalPermissions? GlobalPerms { get; set; } = null;
+    public GlobalPerms? GlobalPerms { get; set; } = null;
     public HashSet<KinksterRequest> CurrentRequests { get; set; } = new();
     public HashSet<KinksterRequest> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
     public HashSet<KinksterRequest> IncomingRequests => CurrentRequests.Where(x => x.Target.UID == MainHub.UID).ToHashSet();
@@ -81,7 +81,7 @@ public sealed class GlobalData : DisposableMediatorSubscriberBase
 
         var propertyName = changeDto.NewPerm.Key;
         var newValue = changeDto.NewPerm.Value;
-        var propertyInfo = typeof(UserGlobalPermissions).GetProperty(propertyName);
+        var propertyInfo = typeof(GlobalPerms).GetProperty(propertyName);
 
         if (propertyInfo is null || !propertyInfo.CanWrite)
         {

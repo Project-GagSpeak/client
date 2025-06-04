@@ -11,19 +11,17 @@ namespace GagSpeak.CkCommons.Gui.Components;
 
 internal class VerificationPopupHandler : IPopupHandler
 {
-
     private string _verificationCode = string.Empty;
 
     public VerificationPopupHandler()
-    {
-
-    }
+    { }
 
     public Vector2 PopupSize => new(600, 160);
     public bool ShowClosed => false;
     public bool CloseHovered { get; set; } = false;
     public Vector2? WindowPadding => null;
     public float? WindowRounding => null;
+
     public void DrawContent()
     {
         var width = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
@@ -61,9 +59,5 @@ internal class VerificationPopupHandler : IPopupHandler
 
     }
 
-    public void Open(VerificationPopupMessage msg)
-    {
-        // set the verification code after we open.
-        _verificationCode = msg.VerificationCode.VerificationCode;
-    }
+    public void Open(VerificationPopupMessage msg) => _verificationCode = msg.VerificationCode.Code;
 }

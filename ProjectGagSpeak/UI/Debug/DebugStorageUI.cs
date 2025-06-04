@@ -121,8 +121,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                     {
                         ImGui.TableNextRow();
                         ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.RecipientUser.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
+                        ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.Message.ToString());
                         ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
                     }
                 }
@@ -142,8 +142,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                     {
                         ImGui.TableNextRow();
                         ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.RecipientUser.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
+                        ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
+                        ImGuiUtil.DrawTableColumn(req.Message.ToString());
                         ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
                     }
                 }

@@ -1,12 +1,10 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.UserPair;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -147,14 +145,14 @@ public class DrawUserPair
         if (CkGui.IconButton(FAI.EllipsisV))
         {
             // open the permission setting window
-            _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairActionFunctions, false));
+            _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.PairActionFunctions, false));
         }
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Cog))
         {
-            if (Pair != null) _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.ClientPermsForPair, false));
+            if (Pair != null) _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.ClientPermsForPair, false));
         }
         CkGui.AttachToolTip("Set your Permissions for " + _pair.UserData.AliasOrUID);
 
@@ -163,7 +161,7 @@ public class DrawUserPair
         if (CkGui.IconButton(FAI.Search))
         {
             // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
-            _mediator.Publish(new OpenUserPairPermissions(_pair, StickyWindowType.PairPerms, false));
+            _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.PairPerms, false));
         }
         CkGui.AttachToolTip("Inspect " + _pair.UserData.AliasOrUID + "'s permissions");
 

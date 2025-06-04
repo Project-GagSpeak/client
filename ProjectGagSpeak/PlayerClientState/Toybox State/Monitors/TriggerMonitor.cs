@@ -145,7 +145,7 @@ public sealed class TriggerMonitor : DisposableMediatorSubscriberBase
         return;
     }
 
-    public async void ExecutePairTrigger(string trigger, SeString chatMessage, string enactor, UserPairPermissions perms)
+    public async void ExecutePairTrigger(string trigger, SeString chatMessage, string enactor, PairPerms perms)
     {
         Logger.LogTrace("Checking for trigger: " + trigger, LoggerType.Puppeteer);
         Logger.LogTrace("Message we are checking for the trigger in: " + chatMessage, LoggerType.Puppeteer);

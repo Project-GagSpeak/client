@@ -1,9 +1,7 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerData.Pairs;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;
@@ -32,7 +30,7 @@ public class PresetLogicDrawer
         var comboW = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
         using (var disabled = ImRaii.Disabled(disabledCondition))
         {
-            if(CkGuiUtils.EnumCombo("##Presets", comboW, SelectedPreset, out PresetName newVal))
+            if(CkGuiUtils.EnumCombo("##Presets", comboW, SelectedPreset, out var newVal))
                 SelectedPreset = newVal;
 
             ImUtf8.SameLineInner();
@@ -54,7 +52,7 @@ public class PresetLogicDrawer
         // get the correct preset we are applying, and execute the action. Afterwards, set the last executed time.
         try
         {
-            Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple;
+            Tuple<PairPerms, PairPermAccess> permissionTuple;
             switch (SelectedPreset)
             {
                 case PresetName.Dominant:
@@ -118,23 +116,23 @@ public class PresetLogicDrawer
         }
     }
 
-    private void PushCmdToServer(Pair pairToDrawListFor, Tuple<UserPairPermissions, UserEditAccessPermissions> permissionTuple, string presetName)
+    private void PushCmdToServer(Pair pairToDrawListFor, Tuple<PairPerms, PairPermAccess> permTuple, string presetName)
     {
-        _ = _hub.UserPushAllUniquePerms(new(pairToDrawListFor.UserData, MainHub.PlayerUserData, permissionTuple.Item1, permissionTuple.Item2, UpdateDir.Own));
+        _ = _hub.UserBulkChangeUnique(new(pairToDrawListFor.UserData, permTuple.Item1, permTuple.Item2));
         _logger.LogInformation("Applied {preset} preset to pair {pair}", presetName, pairToDrawListFor.UserData.UID);
         LastApplyTime = DateTime.UtcNow;
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetDominantSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetDominantSetup()
     {
-        var pairPerms = new UserPairPermissions();
-        var pairAccess = new UserEditAccessPermissions();
+        var pairPerms = new PairPerms();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetBratSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetBratSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             ApplyGags = true,
             LockGags = false,
@@ -142,13 +140,13 @@ public class PresetLogicDrawer
             UnlockGags = false,
             RemoveGags = true,
         };
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetRopeBunnySetup()
+    private Tuple<PairPerms, PairPermAccess> PresetRopeBunnySetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             ApplyGags = true,
             LockGags = true,
@@ -172,13 +170,13 @@ public class PresetLogicDrawer
             MaxMoodleTime = new TimeSpan(1, 0, 0),
         };
         // all is false by default.
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetSubmissiveSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetSubmissiveSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             PermanentLocks = true,
             OwnerLocks = false,
@@ -211,13 +209,13 @@ public class PresetLogicDrawer
             MaxMoodleTime = new TimeSpan(1, 30, 0),
         };
         // all is false by default.
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetSlutSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetSlutSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             IsPaused = false,
 
@@ -245,13 +243,13 @@ public class PresetLogicDrawer
             StopPatterns = true,
         };
         // all is false by default.
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetPetSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetPetSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             PermanentLocks = true,
             OwnerLocks = false,
@@ -291,13 +289,13 @@ public class PresetLogicDrawer
             ToggleTriggers = false,
         };
         // all is false by default.
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetSlaveSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetSlaveSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             PermanentLocks = true,
             OwnerLocks = false,
@@ -343,13 +341,13 @@ public class PresetLogicDrawer
             AllowForcedStay = true,
         };
         // all is false by default.
-        var pairAccess = new UserEditAccessPermissions();
+        var pairAccess = new PairPermAccess();
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetOwnersSlutSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetOwnersSlutSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             PermanentLocks = true,
             OwnerLocks = true,
@@ -388,7 +386,7 @@ public class PresetLogicDrawer
             ToggleAlarms = true,
             ToggleTriggers = false,
         };
-        var pairAccess = new UserEditAccessPermissions()
+        var pairAccess = new PairPermAccess()
         {
             ChatGarblerActiveAllowed = true,
 
@@ -432,9 +430,9 @@ public class PresetLogicDrawer
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetOwnersPetSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetOwnersPetSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             IsPaused = false,
 
@@ -485,7 +483,7 @@ public class PresetLogicDrawer
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false
         };
-        var pairAccess = new UserEditAccessPermissions()
+        var pairAccess = new PairPermAccess()
         {
             ChatGarblerActiveAllowed = true,
             ChatGarblerLockedAllowed = true,
@@ -534,9 +532,9 @@ public class PresetLogicDrawer
         return new(pairPerms, pairAccess);
     }
 
-    private Tuple<UserPairPermissions, UserEditAccessPermissions> PresetOwnersSlaveSetup()
+    private Tuple<PairPerms, PairPermAccess> PresetOwnersSlaveSetup()
     {
-        var pairPerms = new UserPairPermissions()
+        var pairPerms = new PairPerms()
         {
             IsPaused = false,
 
@@ -588,7 +586,7 @@ public class PresetLogicDrawer
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false
         };
-        var pairAccess = new UserEditAccessPermissions()
+        var pairAccess = new PairPermAccess()
         {
             ChatGarblerActiveAllowed = true,
             ChatGarblerLockedAllowed = true,

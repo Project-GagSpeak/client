@@ -1,20 +1,16 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Achievements;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
+using GagspeakAPI.Network;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
-using System.Numerics;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 
@@ -111,7 +107,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
-                    _ = _hub.UserSetKinkPlateContent(new KinkPlateContent(new UserData(MainHub.UID), profile.KinkPlateInfo));
+                    _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.KinkPlateInfo));
                 CkGui.AttachToolTip("Updates your stored profile with latest information");
                 
                 ImUtf8.SameLineInner();
@@ -147,13 +143,13 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             // Create a dropdown for all the different components of the KinkPlate
             CkGui.ColorText("Select Component", ImGuiColors.ParsedGold);
             CkGui.HelpText("Select the component of the KinkPlate you'd like to customize!");
-            if(CkGuiUtils.EnumCombo("##ProfileComponent", 200f, SelectedComponent, out ProfileComponent newComponent))
+            if(CkGuiUtils.EnumCombo("##ProfileComponent", 200f, SelectedComponent, out var newComponent))
                 SelectedComponent = newComponent;
 
             // Create a dropdown for all the different styles of the KinkPlate
             CkGui.ColorText("Select Style", ImGuiColors.ParsedGold);
             CkGui.HelpText("Select the Style Kind from the selected component you wish to change the customization of.");
-            if(CkGuiUtils.EnumCombo("##ProfileStyleKind", 200f, SelectedStyle, out StyleKind newStyle))
+            if(CkGuiUtils.EnumCombo("##ProfileStyleKind", 200f, SelectedStyle, out var newStyle))
                 SelectedStyle = newStyle;
 
             // grab the reference value for the selected component and style from the profile.kinkplateinfo based on the currently chosen options.
@@ -161,19 +157,19 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             if (SelectedStyle is StyleKind.Background)
             {
                 CkGui.HelpText("Select the background style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
-                if(CkGuiUtils.EnumCombo("##ProfileBackgroundStyle", 200f, profile.GetBackground(SelectedComponent), out ProfileStyleBG newBG, UnlockedBackgrounds()))
+                if(CkGuiUtils.EnumCombo("##ProfileBackgroundStyle", 200f, profile.GetBackground(SelectedComponent), out var newBG, UnlockedBackgrounds()))
                     profile.SetBackground(SelectedComponent, newBG);
             }
             else if (SelectedStyle is StyleKind.Border)
             {
                 CkGui.HelpText("Select the border style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
-                if(CkGuiUtils.EnumCombo("##ProfileBorderStyle", 200f, profile.GetBorder(SelectedComponent), out ProfileStyleBorder newBorder, UnlockedBorders()))
+                if(CkGuiUtils.EnumCombo("##ProfileBorderStyle", 200f, profile.GetBorder(SelectedComponent), out var newBorder, UnlockedBorders()))
                     profile.SetBorder(SelectedComponent, newBorder);
             }
             else if (SelectedStyle is StyleKind.Overlay)
             {
                 CkGui.HelpText("Select the overlay style for your KinkPlate!--SEP--You will only be able to see cosmetics you've unlocked from Achievements!");
-                if(CkGuiUtils.EnumCombo("##ProfileOverlayStyle", 200f, profile.GetOverlay(SelectedComponent), out ProfileStyleOverlay newOverlay, UnlockedOverlays()))
+                if(CkGuiUtils.EnumCombo("##ProfileOverlayStyle", 200f, profile.GetOverlay(SelectedComponent), out var newOverlay, UnlockedOverlays()))
                     profile.SetOverlay(SelectedComponent, newOverlay);
             }
         }

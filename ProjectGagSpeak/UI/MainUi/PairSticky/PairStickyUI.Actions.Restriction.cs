@@ -1,8 +1,8 @@
-     using Dalamud.Interface.Colors;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
@@ -22,13 +22,13 @@ public partial class PairStickyUI
 
         // register display texts for the buttons.
         var applyText = "Apply Restriction";
-        var applyTT = "Applies a Restriction to " + PermissionData.DispName + ". Click to select set.";
-        var lockText = curSlot.Padlock is Padlocks.None ? "Lock "+PermissionData.DispName+"'s Restriction" : "Locked with a " + curSlot.Padlock;
-        var lockTT = curSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + PermissionData.DispName+ ". Click to view options." : "This Restriction is locked with a " + curSlot.Padlock;
-        var unlockText = "Unlock " + PermissionData.DispName + "'s Restriction";
-        var unlockTT = "Unlock " + PermissionData.DispName + "'s Restriction. Click to view options.";
-        var removeText = "Remove " + PermissionData.DispName + "'s Restriction";
-        var removeTT = "Remove " + PermissionData.DispName + "'s Restriction. Click to view options.";
+        var applyTT = "Applies a Restriction to " + DisplayName + ". Click to select set.";
+        var lockText = curSlot.Padlock is Padlocks.None ? "Lock "+DisplayName+"'s Restriction" : "Locked with a " + curSlot.Padlock;
+        var lockTT = curSlot.Padlock is Padlocks.None ? "Locks the Restriction on " + DisplayName+ ". Click to view options." : "This Restriction is locked with a " + curSlot.Padlock;
+        var unlockText = "Unlock " + DisplayName + "'s Restriction";
+        var unlockTT = "Unlock " + DisplayName + "'s Restriction. Click to view options.";
+        var removeText = "Remove " + DisplayName + "'s Restriction";
+        var removeTT = "Remove " + DisplayName + "'s Restriction. Click to view options.";
 
 
         // Expander for ApplyRestriction
@@ -86,7 +86,7 @@ public partial class PairStickyUI
                 if (ImGui.Button("Remove Restriction", ImGui.GetContentRegionAvail()))
                 {
                     // construct the dto to send.
-                    var dto = new PushPairRestrictionDataUpdateDto(_permData.PairUserData, DataUpdateType.Removed)
+                    var dto = new PushKinksterRestrictionUpdate(SPair.UserData, DataUpdateType.Removed)
                     {
                         Layer = _restrictionLayer,
                         RestrictionId = Guid.Empty,
@@ -94,7 +94,7 @@ public partial class PairStickyUI
                     };
 
                     // push to server.
-                    _hub.UserPushPairDataRestrictions(dto).ConfigureAwait(false);
+                    _hub.UserChangeKinksterRestrictionState(dto).ConfigureAwait(false);
                     _logger.LogDebug("Removing Restriction From layer " + _restrictionLayer, LoggerType.Permissions);
                     CloseInteraction();
                 }

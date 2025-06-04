@@ -30,56 +30,56 @@ public partial class PairStickyUI
         if (OpenedInteraction is InteractionType.ApplyPairMoodle)
         {
             using (ImRaii.Child("ApplyPairMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairMoodleStatuses.DrawComboButton("##PairPermStatuses" + PermissionData.DispName, WindowMenuWidth, true, "Select a Status to Apply");
+                _pairMoodleStatuses.DrawComboButton("##PairPermStatuses" + DisplayName, WindowMenuWidth, true, "Select a Status to Apply");
             ImGui.Separator();
         }
 
         ////////// APPLY PRESETS FROM PAIR's LIST //////////
         if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))
             OpenOrClose(InteractionType.ApplyPairMoodlePreset);
-        CkGui.AttachToolTip("Applies a Preset from " + PermissionData.DispName + "'s Presets List to them.");
+        CkGui.AttachToolTip("Applies a Preset from " + DisplayName + "'s Presets List to them.");
         
         if (OpenedInteraction is InteractionType.ApplyPairMoodlePreset)
         {
             using (ImRaii.Child("ApplyPairPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _pairMoodlePresets.DrawComboButton("##PairPermPresets" + PermissionData.DispName, WindowMenuWidth, true, "Select a Preset to Apply");
+                _pairMoodlePresets.DrawComboButton("##PairPermPresets" + DisplayName, WindowMenuWidth, true, "Select a Preset to Apply");
             ImGui.Separator();
         }
 
         ////////// APPLY MOODLES FROM OWN LIST //////////
         if (CkGui.IconTextButton(FAI.UserPlus, "Apply a Moodle from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
             OpenOrClose(InteractionType.ApplyOwnMoodle);
-        CkGui.AttachToolTip("Applies a Moodle from your Moodles List to " + PermissionData.DispName + ".");
+        CkGui.AttachToolTip("Applies a Moodle from your Moodles List to " + DisplayName + ".");
 
         if (OpenedInteraction is InteractionType.ApplyOwnMoodle)
         {
             using (ImRaii.Child("ApplyOwnMoodlesChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _moodleStatuses.DrawComboButton("##OwnStatusesSticky" + PermissionData.DispName, WindowMenuWidth, true, "Select a Status to Apply");
+                _moodleStatuses.DrawComboButton("##OwnStatusesSticky" + DisplayName, WindowMenuWidth, true, "Select a Status to Apply");
             ImGui.Separator();
         }
 
         ////////// APPLY PRESETS FROM OWN LIST //////////
         if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from your list", WindowMenuWidth, true, ApplyOwnMoodleToPairDisabled))
             OpenOrClose(InteractionType.ApplyOwnMoodlePreset);
-        CkGui.AttachToolTip("Applies a Preset from your Presets List to " + PermissionData.DispName + ".");
+        CkGui.AttachToolTip("Applies a Preset from your Presets List to " + DisplayName + ".");
 
         if (OpenedInteraction is InteractionType.ApplyOwnMoodlePreset)
         {
             using (ImRaii.Child("ApplyOwnPresetsChildWindow", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _moodlePresets.DrawComboButton("##OwnPresetsSticky" + PermissionData.DispName, WindowMenuWidth, true, "Select a Preset to Apply");
+                _moodlePresets.DrawComboButton("##OwnPresetsSticky" + DisplayName, WindowMenuWidth, true, "Select a Preset to Apply");
             ImGui.Separator();
         }
 
 
         ////////// REMOVE MOODLES //////////
-        if (CkGui.IconTextButton(FAI.UserMinus, "Remove a Moodle from " + PermissionData.DispName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
+        if (CkGui.IconTextButton(FAI.UserMinus, "Remove a Moodle from " + DisplayName, WindowMenuWidth, true, RemovePairsMoodlesDisabled))
             OpenOrClose(InteractionType.RemoveMoodle);
-        CkGui.AttachToolTip("Removes a Moodle from " + PermissionData.DispName + "'s Statuses.");
+        CkGui.AttachToolTip("Removes a Moodle from " + DisplayName + "'s Statuses.");
 
         if (OpenedInteraction is InteractionType.RemoveMoodle)
         {
             using (ImRaii.Child("RemoveMoodles", new Vector2(WindowMenuWidth, ImGui.GetFrameHeight())))
-                _activePairStatusCombo.DrawComboButton("##ActivePairStatuses" + PermissionData.DispName, WindowMenuWidth, false, "Select a Status to remove.");
+                _activePairStatusCombo.DrawComboButton("##ActivePairStatuses" + DisplayName, WindowMenuWidth, false, "Select a Status to remove.");
             ImGui.Separator();
         }
     }

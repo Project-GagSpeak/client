@@ -219,10 +219,10 @@ public class UserPairListHandler
 
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)
         bool FilterOnlineOrPausedSelf(Pair u)
-            => u.IsOnline || !u.IsOnline && !_configService.Config.ShowOfflineUsersSeparately || u.UserPair.OwnPairPerms.IsPaused;
+            => u.IsOnline || !u.IsOnline && !_configService.Config.ShowOfflineUsersSeparately || u.UserPair.OwnPerms.IsPaused;
 
         bool FilterPairedOrPausedSelf(Pair u)
-             => u.IsOnline || !u.IsOnline || u.UserPair.OwnPairPerms.IsPaused;
+             => u.IsOnline || !u.IsOnline || u.UserPair.OwnPerms.IsPaused;
 
 
         // collect the sorted list
@@ -239,7 +239,7 @@ public class UserPairListHandler
 
         bool FilterOnlineUsers(Pair u) => u.IsOnline;
 
-        bool FilterOfflineUsers(Pair u) => !u.IsOnline && !u.UserPair.OwnPairPerms.IsPaused;
+        bool FilterOfflineUsers(Pair u) => !u.IsOnline && !u.UserPair.OwnPerms.IsPaused;
 
 
         // if we wish to display our visible users separately, then do so.

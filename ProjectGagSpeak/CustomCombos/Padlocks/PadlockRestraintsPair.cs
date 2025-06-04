@@ -1,8 +1,9 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.CustomCombos.Padlockable;
 
@@ -29,7 +30,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     {
         if (Items[0].CanLock() && _pairRef.PairPerms.LockRestraintSets)
         {
-            var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
+            var dto = new PushKinksterRestraintUpdate(_pairRef.UserData, DataUpdateType.Locked)
             {
                 Padlock = SelectedLock,
                 Password = Password,
@@ -37,8 +38,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataRestraint(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();
@@ -60,15 +61,15 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     {
         if (Items[0].CanUnlock() && _pairRef.PairPerms.UnlockRestraintSets)
         {
-            var dto = new PushPairRestraintDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
+            var dto = new PushKinksterRestraintUpdate(_pairRef.UserData, DataUpdateType.Unlocked)
             {
                 Padlock = Items[0].Padlock,
                 Password = Password,
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataRestraint(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
                 ResetSelection();

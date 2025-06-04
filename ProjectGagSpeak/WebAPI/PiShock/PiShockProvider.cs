@@ -2,7 +2,7 @@ using GagSpeak.PlayerData.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Routes;
+using GagspeakAPI.Hub;
 using System.Net;
 using System.Text.Json;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
@@ -93,8 +93,8 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
                 var jsonDocument = JsonDocument.Parse(content);
                 var root = jsonDocument.RootElement;
 
-                int maxIntensity = root.GetProperty("maxIntensity").GetInt32();
-                int maxShockDuration = root.GetProperty("maxDuration").GetInt32();
+                var maxIntensity = root.GetProperty("maxIntensity").GetInt32();
+                var maxShockDuration = root.GetProperty("maxDuration").GetInt32();
 
                 Logger.LogTrace("Obtaining boolean values by passing dummy requests to share code");
                 var result = await ConstructPermissionObject(shareCode, maxIntensity, maxShockDuration);
@@ -123,9 +123,9 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         // Shock, Vibrate, Beep. In that order
         int[] opCodes = { 0, 1, 2 };
-        bool shocks = false;
-        bool vibrations = false;
-        bool beeps = false;
+        var shocks = false;
+        var vibrations = false;
+        var beeps = false;
 
         try
         {

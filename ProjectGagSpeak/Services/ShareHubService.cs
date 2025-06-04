@@ -8,6 +8,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Sharehub;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using ImGuiNET;
 
 namespace GagSpeak.Services;
@@ -19,7 +21,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     private readonly IpcProvider _ipcProvider;
     private readonly PatternManager _patterns;
 
-    private Task? CurrentShareHubTask = null;
+    private Task? UiBlockingTask = null;
     public ShareHubService(ILogger<ShareHubService> logger, GagspeakMediator mediator,
         MainHub hub, IpcProvider ipcProvider, PatternManager patterns) : base(logger, mediator)
     {
@@ -35,7 +37,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             ClientPublishedMoodles = MainHub.ConnectionResponse.PublishedMoodles;
 
             // grab the tags.
-            FetchLatestTags().ConfigureAwait(false);
+            UiBlockingTask = FetchLatestTags();
         });
     }
 
@@ -58,25 +60,33 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public bool HasPatternResults => LatestPatternResults.Count > 0;
     public bool HasMoodleResults => LatestMoodleResults.Count > 0;
     public bool HasTags => FetchedTags.Count > 0;
-    public bool CanShareHubTask => MainHub.IsConnected && (CurrentShareHubTask is null || CurrentShareHubTask.IsCompleted);
+    public bool DisableUI => !MainHub.IsConnected || (UiBlockingTask is not null && !UiBlockingTask.IsCompleted);
 
     public void ToggleSortDirection() => SearchSort = SearchSort == SearchSort.Ascending ? SearchSort.Descending : SearchSort.Ascending;
 
     // Pattern Tasks
-    public void PerformPatternSearch() { if (CanShareHubTask) CurrentShareHubTask = FetchPatternsTask(); }
-    public void DownloadPattern(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = DownloadPatternTask(patternId); }
-    public void PerformPatternLikeAction(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = LikePatternActionTask(patternId); }
+    public void PerformPatternSearch() 
+        => UiBlockingTask = FetchPatternsTask();
+
+    public void DownloadPattern(Guid patternId)
+        => UiBlockingTask = DownloadPatternTask(patternId);
+    public void PerformPatternLikeAction(Guid patternId)
+        => UiBlockingTask = LikePatternActionTask(patternId);
     public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags)
-    { 
-        if (CanShareHubTask) CurrentShareHubTask = PatternUploadTask(pattern, authorName, tags); 
-    }
-    public void RemovePattern(Guid patternId) { if (CanShareHubTask) CurrentShareHubTask = PatternRemoveTask(patternId); }
+        => UiBlockingTask = PatternUploadTask(pattern, authorName, tags);
+    public void RemovePattern(Guid patternId)
+        => UiBlockingTask = PatternRemoveTask(patternId);
 
     // Moodles Tasks
-    public void PerformMoodleSearch() { if (CanShareHubTask) CurrentShareHubTask = FetchMoodleTask(); }
-    public void PerformMoodleLikeAction(Guid moodleId) { if (CanShareHubTask) CurrentShareHubTask = LikeMoodleActionTask(moodleId); }
-    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo) { if (CanShareHubTask) CurrentShareHubTask = UploadMoodleTask(authorName, tags, moodleInfo); }
-    public void RemoveMoodle(Guid idToRemove) { if (CanShareHubTask) CurrentShareHubTask = RemoveMoodleTask(idToRemove); }
+    public void PerformMoodleSearch()
+        => UiBlockingTask = FetchMoodleTask();
+    public void PerformMoodleLikeAction(Guid moodleId)
+        => UiBlockingTask = LikeMoodleActionTask(moodleId);
+    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
+        => UiBlockingTask = UploadMoodleTask(authorName, tags, moodleInfo);
+    public void RemoveMoodle(Guid idToRemove)
+        => UiBlockingTask = RemoveMoodleTask(idToRemove);
+
     public void TryOnMoodle(Guid moodleId)
     {
         // apply the moodle to yourself via moodleStatusInfo.
@@ -125,61 +135,57 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
     private async Task FetchLatestTags()
     {
-        try
+        var response = await _hub.FetchSearchTags();
+        if (response.ErrorCode is not GagSpeakApiEc.Success)
         {
-            var latestTags = await _hub.FetchSearchTags();
-            FetchedTags = latestTags.OrderBy(x => x).ToHashSet();
-            Logger.LogInformation("Retrieved tags from servers.");
+            Logger.LogError($"Failed to fetch tags from servers. Error: {response.ErrorCode}");
+            FetchedTags = new HashSet<string>();
+            return;
         }
-        catch (Exception e)
+
+        // make sure the response value is valid.
+        if (response.Value is not { } latestTags)
         {
-            Logger.LogError(e, "Failed to retrieve tags from servers.");
+            Logger.LogWarning("No tags returned, or tags were null.");
+            FetchedTags.Clear();
+            return;
         }
-        finally
-        {
-            CurrentShareHubTask = null;
-        }
+        
+        // set the fetched tags to the latest tags.
+        FetchedTags = latestTags.OrderBy(x => x).ToHashSet();
+        Logger.LogDebug("Retrieved tags from servers.");
     }
 
     #region PatternHub Tasks
     private async Task FetchPatternsTask()
     {
-        try
-        {
-            // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-            var tags = SearchTags.Split(',')
-                .Select(x => x.ToLower().Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToHashSet();
+        // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
+        var tags = SearchTags.Split(',')
+            .Select(x => x.ToLower().Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Where(x => x.Length > 0)
+            .ToHashSet();
 
-            // Firstly, we should compose the Dto for the search operation.
-            PatternSearchDto dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
+        // Firstly, we should compose the Dto for the search operation.
+        PatternSearch dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
+        var hubResponse = await _hub.SearchPatterns(dto);
+        var result = hubResponse.Value ?? [];
 
-            // perform the search operation.
-            var result = await _hub.SearchPatterns(dto);
+        // if the result contains an empty list, then we failed to retrieve patterns.
+        if (result.Count <= 0)
+        {
+            Logger.LogError("Failed to retrieve patterns from servers.");
+            LatestPatternResults.Clear();
+        }
+        else
+        {
+            Logger.LogInformation("Retrieved patterns from servers.", LoggerType.PatternHub);
+            LatestPatternResults = result;
+        }
 
-            // if the result contains an empty list, then we failed to retrieve patterns.
-            if (result.Count == 0)
-            {
-                Logger.LogError("Failed to retrieve patterns from servers.");
-                // clean up the search results
-                LatestPatternResults.Clear();
-            }
-            else
-            {
-                Logger.LogInformation("Retrieved patterns from servers.", LoggerType.PatternHub);
-                LatestPatternResults = result;
-            }
-            if(!InitialPatternsCall) InitialPatternsCall = true;
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Failed to retrieve patterns from servers.");
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
-        }
+        // if we have not called the initial patterns call, then we set it to true.
+        if (!InitialPatternsCall)
+            InitialPatternsCall = true;
     }
 
     private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
@@ -204,124 +210,102 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             };
             Logger.LogTrace("Uploading Pattern to server.", LoggerType.PatternHub);
             // construct the dto for the upload.
-            PatternUploadDto patternDto = new(patternInfo, base64Pattern);
+            PatternUpload patternDto = new(patternInfo, base64Pattern);
             // perform the api call for the upload.
             var result = await _hub.UploadPattern(patternDto);
-            if (result)
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+                throw new Exception($"Failed to upload pattern to servers. Error: {result.ErrorCode}");
+            
+            // Publish that the pattern was uploaded.
+            Mediator.Publish(new NotificationMessage("Pattern Upload", "uploaded successful!", NotificationType.Info));
+            ClientPublishedPatterns.Add(new PublishedPattern()
             {
-                Mediator.Publish(new NotificationMessage("Pattern Upload", "uploaded successful!", NotificationType.Info));
-                ClientPublishedPatterns.Add(new PublishedPattern()
-                {
-                    Identifier = pattern.Identifier,
-                    Label = pattern.Label,
-                    Description = pattern.Description,
-                    Author = authorName,
-                    Looping = pattern.ShouldLoop,
-                    Length = pattern.Duration,
-                    UploadedDate = DateTime.UtcNow
-                });
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
-            }
-            else
-            {
-                Logger.LogError("Failed to upload pattern to servers.");
-            }
+                Identifier = pattern.Identifier,
+                Label = pattern.Label,
+                Description = pattern.Description,
+                Author = authorName,
+                Looping = pattern.ShouldLoop,
+                Length = pattern.Duration,
+                UploadedDate = DateTime.UtcNow
+            });
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
         }
         catch (Exception e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
         }
-        finally
-        {
-            CurrentShareHubTask = null;
-        }
     }
 
     private async Task DownloadPatternTask(Guid patternId)
     {
-        try
+        HubResponse<string> res = await _hub.DownloadPattern(patternId);
+        // if the response is not successful, then we failed to download the pattern.
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
-            var downloadedData = await _hub.DownloadPattern(patternId);
-            if (downloadedData.IsNullOrWhitespace())
-            {
-                Logger.LogError("Failed to download pattern from servers.");
-            }
-            else
-            {
-                Logger.LogInformation("Downloaded pattern from servers.", LoggerType.PatternHub);
-                // add one download count to the pattern.
-                var matchedPattern = LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId);
-                if(matchedPattern is not null) matchedPattern.Downloads++;
-                // grab the result and deserialize to base64
-                var bytes = Convert.FromBase64String(downloadedData);
-                var version = bytes[0];
-                version = bytes.DecompressToString(out var decompressed);
-
-                // We need to account for version differences by checking for some key data. We can do this by parsing it to JObject.
-                var patternObject = JObject.Parse(decompressed);
-
-                // check if we should migrate from V0 to V1 (to account for old patterns.)
-                if (patternObject.ContainsKey("Author"))
-                {
-                    // Remove unnecessary fields
-                    patternObject.Remove("Author");
-                    patternObject.Remove("Tags");
-                    patternObject.Remove("CreatedByClient");
-                    patternObject.Remove("IsPublished");
-
-                    // Serialize the modified JObject back into a JSON string
-                    decompressed = patternObject.ToString();
-                }
-                // Deserialize the string back to pattern data
-                var pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
-
-                // Set the active pattern
-                _patterns.CreateClone(pattern, pattern.Label);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
-            }
+            Logger.LogWarning($"Failed to download pattern from servers. Error: {res.ErrorCode}");
+            return;
         }
-        catch (Exception e)
+        // if the response value is null or whitespace, then we failed to get the pattern data.
+        else if (res.Value.IsNullOrWhitespace())
         {
-            Logger.LogError(e, "Failed to download pattern from servers.");
+            Logger.LogWarning("Failed to download pattern from servers. No data returned.");
+            return;
         }
-        finally
+        else
         {
-            CurrentShareHubTask = null;
+            Logger.LogInformation("Downloaded pattern from servers.", LoggerType.PatternHub);
+            // add one download count to the pattern.
+            var matchedPattern = LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId);
+            if(matchedPattern is not null) matchedPattern.Downloads++;
+            // grab the result and deserialize to base64
+            var bytes = Convert.FromBase64String(res.Value);
+            var version = bytes[0];
+            version = bytes.DecompressToString(out var decompressed);
+
+            // We need to account for version differences by checking for some key data. We can do this by parsing it to JObject.
+            var patternObject = JObject.Parse(decompressed);
+
+            // check if we should migrate from V0 to V1 (to account for old patterns.)
+            if (patternObject.ContainsKey("Author"))
+            {
+                // Remove unnecessary fields
+                patternObject.Remove("Author");
+                patternObject.Remove("Tags");
+                patternObject.Remove("CreatedByClient");
+                patternObject.Remove("IsPublished");
+
+                // Serialize the modified JObject back into a JSON string
+                decompressed = patternObject.ToString();
+            }
+            // Deserialize the string back to pattern data
+            var pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
+
+            // Set the active pattern
+            _patterns.CreateClone(pattern, pattern.Label);
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
         }
     }
 
     private async Task LikePatternActionTask(Guid patternId)
     {
-        try
+        HubResponse res = await _hub.LikePattern(patternId);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
-            var result = await _hub.LikePattern(patternId);
-            if (result)
-            {
-                Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
-                // update the pattern stuff
-                var pattern = LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId);
-                if (pattern is not null)
-                {
-                    pattern.Likes += pattern.HasLiked ? -1 : 1;
-                    pattern.HasLiked = !pattern.HasLiked;
+            Logger.LogWarning($"Failed to like pattern from servers. Error: {res.ErrorCode}");
+            return;
+        }
+            
+        // otherwise, it worked.
+        Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
+        // update the pattern stuff
+        if (LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId) is { } pattern)
+        {
+            pattern.Likes += pattern.HasLiked ? -1 : 1;
+            pattern.HasLiked = !pattern.HasLiked;
 
-                    if (pattern.HasLiked)
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.Identifier, false);
-                }
-            }
-            else
-            {
-                Logger.LogError("Like interaction failed.");
-            }
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Failed to interact with pattern.");
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
+            if (pattern.HasLiked)
+                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.Identifier, false);
         }
     }
 
@@ -332,24 +316,20 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             if (IdToRemove == Guid.Empty || !ClientPublishedPatterns.Any(p => p.Identifier == IdToRemove))
                 return;
 
-            var result = await _hub.RemovePattern(IdToRemove);
-            if (result)
+            HubResponse res = await _hub.RemovePattern(IdToRemove);
+            if (res.ErrorCode is GagSpeakApiEc.Success)
             {
                 Logger.LogTrace("RemovePatternTask completed.", LoggerType.PatternHub);
                 // if successful. Notify the success.
                 ClientPublishedPatterns.RemoveAll(p => p.Identifier == IdToRemove);
                 Mediator.Publish(new NotificationMessage("Pattern Removal", "removed successful!", NotificationType.Info));
             }
-            else throw new Exception("Failed to remove pattern from servers.");
+            else throw new Exception($"Failed to remove pattern from servers: [{res.ErrorCode}]");
         }
         catch (Exception e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
         }
     }
     #endregion PatternHub Tasks
@@ -357,130 +337,91 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     #region MoodlesHub Tasks
     private async Task FetchMoodleTask()
     {
-        try
-        {
-            // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-            var tags = SearchTags.Split(',')
-                .Select(x => x.ToLower().Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToHashSet();
+        // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
+        var tags = SearchTags.Split(',')
+            .Select(x => x.ToLower().Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Where(x => x.Length > 0)
+            .ToHashSet();
 
-            // Firstly, we should compose the Dto for the search operation.
-            MoodleSearchDto dto = new(SearchString, tags, SearchFilter, SearchSort);
-
-            // perform the search operation.
-            var result = await _hub.SearchMoodles(dto);
-
-            // if the result contains an empty list, then we failed to retrieve Moodle.
-            if (result.Count == 0)
-            {
-                Logger.LogError("Failed to retrieve Moodle from servers.");
-                // clean up the search results
-                LatestMoodleResults.Clear();
-            }
-            else
-            {
-                Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.PatternHub);
-                LatestMoodleResults = result;
-            }
-            if(!InitialMoodlesCall) InitialMoodlesCall = true;
-        }
-        catch (Exception e)
+        // perform the search operation.
+        var res = await _hub.SearchMoodles(new(SearchString, tags, SearchFilter, SearchSort));
+        var serverMoodles = res.Value ?? [];
+        if (serverMoodles.Count <= 0)
+            LatestMoodleResults = new List<ServerMoodleInfo>();
+        else
         {
-            Logger.LogError(e, "Failed to retrieve Moodle from servers.");
+            Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.PatternHub);
+            LatestMoodleResults = serverMoodles;
         }
-        finally
-        {
-            CurrentShareHubTask = null;
-        }
+
+        if(!InitialMoodlesCall)
+            InitialMoodlesCall = true;
     }
     private async Task LikeMoodleActionTask(Guid moodleId)
     {
-        try
+        HubResponse res = await _hub.LikeMoodle(moodleId);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
-            var result = await _hub.LikeMoodle(moodleId);
-            if (result)
-            {
-                Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
-                // update the moodleId stuff
-                var pattern = LatestMoodleResults.FirstOrDefault(x => x.MoodleStatus.GUID == moodleId);
-                if (pattern is not null)
-                {
-                    pattern.Likes += pattern.HasLikedMoodle ? -1 : 1;
-                    pattern.HasLikedMoodle = !pattern.HasLikedMoodle;
+            Logger.LogWarning($"Failed to like moodle from servers. Error: {res.ErrorCode}");
+            return;
+        }
 
-                    if (pattern.HasLikedMoodle)
-                    {
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.MoodleStatus.GUID, false);
-                    }
-                }
-            }
-            else
-            {
-                Logger.LogError("Like interaction failed.");
-            }
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Failed to interact with pattern.");
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
-        }
+        // It did the worky, yippee
+        Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
+            
+        // fetch the appropriate Moodle
+        if (LatestMoodleResults.FirstOrDefault(x => x.MoodleStatus.GUID == moodleId) is not { } moodle)
+            return;
+
+        moodle.Likes += moodle.HasLikedMoodle ? -1 : 1;
+        moodle.HasLikedMoodle = !moodle.HasLikedMoodle;
+
+        if (moodle.HasLikedMoodle)
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, moodle.MoodleStatus.GUID, false);
     }
 
     private async Task UploadMoodleTask(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
     {
         try
         {
-            // construct the dto with the given information.
-            MoodleUploadDto dto = new(authorName, tags, moodleInfo);
             Logger.LogTrace("Uploading Moodle to server.", LoggerType.PatternHub);
-            // perform the api call for the upload.
-            var result = await _hub.UploadMoodle(dto);
-            if (result)
-            {
-                Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
-                ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
-            }
-            else throw new Exception("Failed to upload pattern to servers.");
+            HubResponse res = await _hub.UploadMoodle(new(authorName, tags, moodleInfo));
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+                throw new Exception($"Failed to upload moodle to servers. Error: {res.ErrorCode}");
+
+            // if the upload was successful, then we can notify the user.
+            Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
+            ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
+            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
         }
         catch (Exception e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
         }
     }
 
     private async Task RemoveMoodleTask(Guid moodleId)
     {
+        if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.MoodleStatus.GUID == moodleId))
+            return;
+
         try
         {
-            if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.MoodleStatus.GUID == moodleId))
-                return;
 
-            var result = await _hub.RemoveMoodle(moodleId);
-            if (result)
-            {
-                Logger.LogInformation("RemovePatternTask completed.", LoggerType.PatternHub);
-                ClientPublishedMoodles.RemoveAll(m => m.MoodleStatus.GUID == moodleId);
-            }
-            else throw new Exception("Failed to remove moodle from servers.");
+            HubResponse res = await _hub.RemoveMoodle(moodleId);
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+                throw new Exception($"Failed to remove moodle from servers: [{res.ErrorCode}]");
+
+            // if successful, notify the user.
+            Logger.LogInformation("RemovePatternTask completed.", LoggerType.PatternHub);
+            ClientPublishedMoodles.RemoveAll(m => m.MoodleStatus.GUID == moodleId);
         }
         catch (Exception e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
-        }
-        finally
-        {
-            CurrentShareHubTask = null;
         }
     }
     #endregion PatternHub Tasks

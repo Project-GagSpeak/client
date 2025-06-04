@@ -9,6 +9,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Util;
 using OtterGui;
 using OtterGui.Classes;
 
@@ -317,7 +318,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             foreach (var (gagName, gagData) in sortedListData)
             {
                 var gagType = gagName.ToGagType();
-                if (gagType == GagType.None)
+                if (gagType is GagType.None)
                 {
                     Logger.LogWarning("Invalid GagType: {0}", gagName);
                     continue;

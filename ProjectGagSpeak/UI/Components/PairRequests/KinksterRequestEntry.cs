@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.UserPair;
+using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -49,7 +49,7 @@ public class KinksterRequestEntry
                 ImGui.AlignTextToFramePadding();
 
                 var kinksterIdTag = _viewingMode is DrawRequestsType.Outgoing
-                    ? _requestEntry.RecipientUser.UID.Substring(_requestEntry.RecipientUser.UID.Length - 4)
+                    ? _requestEntry.Target.UID.Substring(_requestEntry.Target.UID.Length - 4)
                     : _requestEntry.User.UID.Substring(_requestEntry.User.UID.Length - 4);
 
                 using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("Kinkster-" + kinksterIdTag);
@@ -69,8 +69,8 @@ public class KinksterRequestEntry
     {
         ImGui.AlignTextToFramePadding();
         CkGui.IconText(FAI.QuestionCircle, ImGuiColors.DalamudYellow);
-        var displayText = "Request Expires in " + TimeLeft.Days + "d " + TimeLeft.Hours + "h " + TimeLeft.Minutes + "m.";
-        if(!_requestEntry.AttachedMessage.IsNullOrWhitespace()) displayText += "--SEP----COL--Message: --COL--" + _requestEntry.AttachedMessage;
+        var displayText = $"Expires in {TimeLeft.Days}d {TimeLeft.Hours}h {TimeLeft.Minutes}m." +
+            (!string.IsNullOrWhiteSpace(_requestEntry.Message) ? $" --SEP----COL--Message: --COL--{_requestEntry.Message}" : "");
         CkGui.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
         ImGui.SameLine();
     }
@@ -88,7 +88,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
         {
             if (CkGui.IconTextButton(FAI.PersonCircleCheck, "Accept", null, true))
-                _hub.UserAcceptIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+                _hub.UserAcceptKinksterRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Accept the Request");
 
@@ -98,7 +98,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
             if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Reject", null, true))
-                _hub.UserRejectIncPairRequest(new(_requestEntry.User)).ConfigureAwait(false);
+                _hub.UserRejectKinksterRequest(new(_requestEntry.User)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Reject the Request");
     }
@@ -115,7 +115,7 @@ public class KinksterRequestEntry
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
         {
             if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Cancel Request", null, true))
-                _hub.UserCancelPairRequest(new(_requestEntry.RecipientUser)).ConfigureAwait(false);
+                _hub.UserCancelKinksterRequest(new(_requestEntry.Target)).ConfigureAwait(false);
         }
         CkGui.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
     }

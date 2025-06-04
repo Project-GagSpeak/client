@@ -16,6 +16,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.Chat;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Extensions;
 using System.Reflection;
@@ -270,11 +271,10 @@ public class MovementMonitor : DisposableMediatorSubscriberBase
     {
         LastMovement.Stop();
         // assume true for safety.
-        if (_globals.GlobalPerms?.IsFollowing() ?? true)
+        if (_globals.GlobalPerms is not null && _globals.GlobalPerms.IsFollowing())
         {
             Logger.LogInformation("ForceFollow Disable was triggered manually before it naturally disabled. Forcibly shutting down.");
-            await _hub.UserUpdateOwnGlobalPerm(new(new(MainHub.UID), MainHub.PlayerUserData,
-                new KeyValuePair<string, object>("ForcedFollow", string.Empty), UpdateDir.Own));
+            await PermissionHelper.ChangeOwnGlobal(_hub, _globals.GlobalPerms, nameof(GlobalPerms.ForcedFollow), string.Empty);
         }
 
         // stop the movement mode.

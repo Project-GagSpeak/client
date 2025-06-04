@@ -121,7 +121,7 @@ public class IconDisplayer
     /// <param name="pairPerms"> The permissions of the pair. </param>
     /// <param name="statuses"> The statuses to apply. </param>
     /// <returns> True if the statuses can be applied.
-    public static bool CanApplyPairStatus(UserPairPermissions pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
+    public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
     {
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {

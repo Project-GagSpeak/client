@@ -249,7 +249,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (CkGui.IconTextButton(FAI.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
             {
                 // call the UserAddPair function on the server with the user data transfer object
-                _ = _hub.UserSendPairRequest(new(new(_pairToAdd), _pairToAddMessage));
+                _hub.UserSendKinksterRequest(new(new(_pairToAdd), _pairToAddMessage)).ConfigureAwait(false);
                 _pairToAdd = string.Empty;
                 _pairToAddMessage = string.Empty;
                 _addingNewUser = false;

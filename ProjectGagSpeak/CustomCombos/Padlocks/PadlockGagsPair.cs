@@ -1,8 +1,10 @@
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.User;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
+using GagspeakAPI.Util;
 
 namespace GagSpeak.CustomCombos.Padlockable;
 
@@ -29,7 +31,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     {
         if (Items[layerIdx].CanLock() && _pairRef.PairPerms.LockGags)
         {
-            var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Locked)
+            var dto = new PushKinksterGagSlotUpdate(_pairRef.UserData, DataUpdateType.Locked)
             {
                 Layer = layerIdx,
                 Padlock = SelectedLock,
@@ -38,8 +40,8 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataGags(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterGagState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
                 ResetSelection();
@@ -61,7 +63,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     {
         if (Items[layerIdx].CanUnlock() && _pairRef.PairPerms.UnlockGags)
         {
-            var dto = new PushPairGagDataUpdateDto(_pairRef.UserData, DataUpdateType.Unlocked)
+            var dto = new PushKinksterGagSlotUpdate(_pairRef.UserData, DataUpdateType.Unlocked)
             {
                 Layer = layerIdx,
                 Padlock = Items[layerIdx].Padlock,
@@ -69,8 +71,8 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
                 PadlockAssigner = MainHub.UID,
             };
 
-            var result = await _mainHub.UserPushPairDataGags(dto);
-            if (result is not GagSpeakApiEc.Success)
+            var result = await _mainHub.UserChangeKinksterGagState(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.Permissions);
                 ResetSelection();

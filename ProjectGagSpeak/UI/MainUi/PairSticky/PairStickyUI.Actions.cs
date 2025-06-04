@@ -1,15 +1,8 @@
-using Dalamud.Interface;
-using Dalamud.Utility;
-using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
-using GagspeakAPI.Data;
-using GagspeakAPI.Dto.Connection;
-using GagspeakAPI.Dto.Permissions;
-using GagspeakAPI.Enums;
+using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
@@ -92,25 +85,25 @@ public partial class PairStickyUI
 
         if (!SPair.IsPaused)
         {
-            if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report "+ PermissionData.DispName +"'s KinkPlate", WindowMenuWidth, true))
+            if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report "+ DisplayName +"'s KinkPlate", WindowMenuWidth, true))
             {
                 ImGui.CloseCurrentPopup();
                 Mediator.Publish(new ReportKinkPlateMessage(SPair.UserData));
             }
-            CkGui.AttachToolTip("Snapshot "+ PermissionData.DispName+"'s KinkPlate and send it as a reported profile.");
+            CkGui.AttachToolTip("Snapshot "+ DisplayName+"'s KinkPlate and send it as a reported profile.");
         }
 
         if (SPair.IsOnline)
         {
             var pauseIcon = SPair.OwnPerms.IsPaused ? FAI.Play : FAI.Pause;
-            var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + PermissionData.DispName : "Pause " + PermissionData.DispName;
+            var pauseText = SPair.OwnPerms.IsPaused ? "Unpause " + DisplayName : "Pause " + DisplayName;
             if (CkGui.IconTextButton(pauseIcon, pauseText, WindowMenuWidth, true))
             {
-                _hub.UserUpdateOwnPairPerm(new(SPair.UserData, MainHub.PlayerUserData,
-                    new KeyValuePair<string, object>("IsPaused", !SPair.OwnPerms.IsPaused), UpdateDir.Own)).ConfigureAwait(false);
+                _hub.UserChangeOwnPairPerm(new(SPair.UserData, new KeyValuePair<string, object>
+                    (nameof(PairPerms.IsPaused), !SPair.OwnPerms.IsPaused), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
             }
             CkGui.AttachToolTip(!SPair.OwnPerms.IsPaused
-                ? "Pause pairing with " + PermissionData.DispName : "Resume pairing with " + PermissionData.DispName);
+                ? "Pause pairing with " + DisplayName : "Resume pairing with " + DisplayName);
         }
         if (SPair.IsVisible)
         {
@@ -128,7 +121,7 @@ public partial class PairStickyUI
     private void DrawIndividualMenu()
     {
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", WindowMenuWidth, true, !KeyMonitor.CtrlPressed()))
-            _hub.UserRemovePair(new(SPair.UserData)).ConfigureAwait(false);
-        CkGui.AttachToolTip("Hold CTRL and click to unpair permanently from " + PermissionData.DispName);
+            _hub.UserRemoveKinkster(new(SPair.UserData)).ConfigureAwait(false);
+        CkGui.AttachToolTip("Hold CTRL and click to unpair permanently from " + DisplayName);
     }
 }
