@@ -7,7 +7,6 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.Localization;
 using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Enums;
@@ -16,6 +15,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using ProjectGagSpeak.Utils.Enums;
 using System.Security.Claims;
 
 namespace GagSpeak.CkCommons.Gui.Components;

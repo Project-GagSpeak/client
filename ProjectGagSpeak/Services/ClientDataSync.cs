@@ -84,16 +84,9 @@ public sealed class ClientDataSync : DisposableMediatorSubscriberBase
 
         // temp setup for permissions if they are null. They wont be in full release.
         _globals.GlobalPerms = connectionInfo.GlobalPerms;
-        _gags.LoadServerData(new CharaActiveGags());
-        _restrictions.LoadServerData(new CharaActiveRestrictions());
-        _restraints.LoadServerData(new CharaActiveRestraint());
-        _cursedLoot.LoadServerData();
+        await _visualState.SyncServerData(connectionInfo);
 
-        // 4. Apply all the actions through the listener by performing a bulk update now that all the caches are updated.
-        Logger.LogInformation("Applying Full Update to Visual State");
-        await _visualState.ApplyFullUpdate();
-
-        // 5. Update the achievement manager with the latest UID and the latest data.
+        // 4. Update the achievement manager with the latest UID and the latest data.
         Logger.LogInformation("Loading in Achievement Data for UID: " + MainHub.UID);
         _achievements.OnServerConnection(connectionInfo.UserAchievements);
     }

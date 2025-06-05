@@ -1,13 +1,11 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.PlayerData.Data;
+using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
@@ -45,12 +43,6 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     public CursedItem? ItemInEditor => _itemEditor.ItemInEditor;
     public IEnumerable<CursedItem> AppliedCursedItems => Storage.ActiveItems;
 
-    public void LoadServerData()
-    {
-        // we have no exact data to load in here, but will need to update the visual cache.
-        _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
-    }
-
     #region Generic Methods
     public CursedItem CreateNew(string lootName)
     {
@@ -63,7 +55,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Storage.Add(newItem);
         Logger.LogInformation("Created new cursed item: " + lootName, LoggerType.CursedLoot);
         _saver.Save(this);
-        Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Created, newItem, null));
+        Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
         return newItem;
     }
 
@@ -75,7 +67,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         _saver.Save(this);
 
         Logger.LogDebug("Created new cursed item: " + newName, LoggerType.CursedLoot);
-        Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Created, newItem, null));
+        Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
         return newItem;
     }
 
@@ -85,7 +77,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         if (Storage.Remove(lootItem))
         {
             Logger.LogDebug($"Deleted cursed item: {lootItem.Label}.", LoggerType.CursedLoot);
-            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Deleted, lootItem, null));
+            Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Deleted, lootItem, null));
             _saver.Save(this);
         }
     }
@@ -101,7 +93,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         lootItem.Label = newName;
         Logger.LogInformation("Renamed cursed item: " + oldName + " to " + newName, LoggerType.CursedLoot);
         _saver.Save(this);
-        Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Renamed, lootItem, oldName));
+        Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Renamed, lootItem, oldName));
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -120,7 +112,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             _saver.Save(this);
 
             Logger.LogTrace("Saved changes to Edited CursedItem.");
-            Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, sourceItem, null));
+            Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, sourceItem, null));
         }
     }
 
@@ -128,7 +120,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     {
         item.InPool = !item.InPool;
         _saver.Save(this);
-        Mediator.Publish(new ConfigCursedItemChanged(StorageItemChangeType.Modified, item, null));
+        Mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, item, null));
     }
 
     public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
@@ -219,7 +211,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         Logger.LogInformation("Loading in CursedLoot Config for file: " + file);
         Storage.Clear();
 
-        string jsonText = "";
+        var jsonText = "";
         JObject jObject = new();
 
         // if the main file does not exist, attempt to load the text from the backup.
@@ -261,7 +253,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         }
         // run a save after the load.
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.CursedLoot));
+        Mediator.Publish(new ReloadFileSystem(GagspeakModule.CursedLoot));
     }
 
     private void LoadV0(JToken? data)

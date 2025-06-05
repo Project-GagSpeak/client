@@ -24,7 +24,7 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Alarm) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Alarm) Reload(); });
         Changed += OnChange;
         Reload();
     }

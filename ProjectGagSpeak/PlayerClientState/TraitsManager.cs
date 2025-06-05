@@ -6,6 +6,9 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
+using GagSpeak.Utils;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -142,19 +145,19 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
         }
     }
 
-    public bool TrySetTraits(ModuleSection type, string enactor, Traits traitsToSet)
+    public bool TrySetTraits(GagspeakModule type, string enactor, Traits traitsToSet)
     {
         if (traitsToSet is 0)
             return false;
 
         var canApply = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints.Contains(enactor),
-            ModuleSection.Restriction => TraitAllowancesRestrictions.Contains(enactor),
-            ModuleSection.Gag => TraitAllowancesGags.Contains(enactor),
-            ModuleSection.Pattern => TraitAllowancesPatterns.Contains(enactor), // TBD
-            ModuleSection.Trigger => TraitAllowancesTriggers.Contains(enactor), // TBD
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints.Contains(enactor),
+            GagspeakModule.Restriction => TraitAllowancesRestrictions.Contains(enactor),
+            GagspeakModule.Gag => TraitAllowancesGags.Contains(enactor),
+            GagspeakModule.Pattern => TraitAllowancesPatterns.Contains(enactor), // TBD
+            GagspeakModule.Trigger => TraitAllowancesTriggers.Contains(enactor), // TBD
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
 
         if (!canApply)
@@ -177,91 +180,91 @@ public class TraitsManager : DisposableMediatorSubscriberBase, IHybridSavable
     public readonly HashSet<string> TraitAllowancesPatterns = []; // Unsure how yet.
     public readonly HashSet<string> TraitAllowancesTriggers = []; // Probably Not.
 
-    public Dictionary<ModuleSection, string[]> GetLightAllowances()
-        => new Dictionary<ModuleSection, string[]>
+    public Dictionary<GagspeakModule, string[]> GetLightAllowances()
+        => new Dictionary<GagspeakModule, string[]>
         {
-            { ModuleSection.Restraint, TraitAllowancesRestraints.ToArray() },
-            { ModuleSection.Restriction, TraitAllowancesRestrictions.ToArray() },
-            { ModuleSection.Gag, TraitAllowancesGags.ToArray() },
-            { ModuleSection.Pattern, TraitAllowancesPatterns.ToArray() },
-            { ModuleSection.Trigger, TraitAllowancesTriggers.ToArray() },
+            { GagspeakModule.Restraint, TraitAllowancesRestraints.ToArray() },
+            { GagspeakModule.Restriction, TraitAllowancesRestrictions.ToArray() },
+            { GagspeakModule.Gag, TraitAllowancesGags.ToArray() },
+            { GagspeakModule.Pattern, TraitAllowancesPatterns.ToArray() },
+            { GagspeakModule.Trigger, TraitAllowancesTriggers.ToArray() },
         };
 
     #region Allowance Sets.
-    public void AddAllowance(ModuleSection type, string kinksterUid)
+    public void AddAllowance(GagspeakModule type, string kinksterUid)
     {
         var allowances = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints,
-            ModuleSection.Restriction => TraitAllowancesRestrictions,
-            ModuleSection.Gag => TraitAllowancesGags,
-            ModuleSection.Pattern => TraitAllowancesPatterns,
-            ModuleSection.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints,
+            GagspeakModule.Restriction => TraitAllowancesRestrictions,
+            GagspeakModule.Gag => TraitAllowancesGags,
+            GagspeakModule.Pattern => TraitAllowancesPatterns,
+            GagspeakModule.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
 
         allowances.Add(kinksterUid);
         _saver.Save(this);
     }
 
-    public void AddAllowance(ModuleSection type, IEnumerable<string> allowances)
+    public void AddAllowance(GagspeakModule type, IEnumerable<string> allowances)
     {
         var set = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints,
-            ModuleSection.Restriction => TraitAllowancesRestrictions,
-            ModuleSection.Gag => TraitAllowancesGags,
-            ModuleSection.Pattern => TraitAllowancesPatterns,
-            ModuleSection.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints,
+            GagspeakModule.Restriction => TraitAllowancesRestrictions,
+            GagspeakModule.Gag => TraitAllowancesGags,
+            GagspeakModule.Pattern => TraitAllowancesPatterns,
+            GagspeakModule.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
         Logger.LogDebug("Adding Allowances: " + string.Join(", ", allowances));
         set.UnionWith(allowances);
         _saver.Save(this);
     }
 
-    public void RemoveAllowance(ModuleSection type, string kinksterUid)
+    public void RemoveAllowance(GagspeakModule type, string kinksterUid)
     {
         var allowances = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints,
-            ModuleSection.Restriction => TraitAllowancesRestrictions,
-            ModuleSection.Gag => TraitAllowancesGags,
-            ModuleSection.Pattern => TraitAllowancesPatterns,
-            ModuleSection.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints,
+            GagspeakModule.Restriction => TraitAllowancesRestrictions,
+            GagspeakModule.Gag => TraitAllowancesGags,
+            GagspeakModule.Pattern => TraitAllowancesPatterns,
+            GagspeakModule.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
 
         allowances.Remove(kinksterUid);
         _saver.Save(this);
     }
 
-    public void RemoveAllowance(ModuleSection type, IEnumerable<string> allowances)
+    public void RemoveAllowance(GagspeakModule type, IEnumerable<string> allowances)
     {
         var set = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints,
-            ModuleSection.Restriction => TraitAllowancesRestrictions,
-            ModuleSection.Gag => TraitAllowancesGags,
-            ModuleSection.Pattern => TraitAllowancesPatterns,
-            ModuleSection.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints,
+            GagspeakModule.Restriction => TraitAllowancesRestrictions,
+            GagspeakModule.Gag => TraitAllowancesGags,
+            GagspeakModule.Pattern => TraitAllowancesPatterns,
+            GagspeakModule.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
         
         set.ExceptWith(allowances);
         _saver.Save(this);
     }
 
-    public void ResetAllowances(ModuleSection type)
+    public void ResetAllowances(GagspeakModule type)
     {
         var set = type switch
         {
-            ModuleSection.Restraint => TraitAllowancesRestraints,
-            ModuleSection.Restriction => TraitAllowancesRestrictions,
-            ModuleSection.Gag => TraitAllowancesGags,
-            ModuleSection.Pattern => TraitAllowancesPatterns,
-            ModuleSection.Trigger => TraitAllowancesTriggers,
-            _ => throw new ArgumentException(nameof(type) + " Is not a valid ModuleSection!"),
+            GagspeakModule.Restraint => TraitAllowancesRestraints,
+            GagspeakModule.Restriction => TraitAllowancesRestrictions,
+            GagspeakModule.Gag => TraitAllowancesGags,
+            GagspeakModule.Pattern => TraitAllowancesPatterns,
+            GagspeakModule.Trigger => TraitAllowancesTriggers,
+            _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
 
         set.Clear();

@@ -1,6 +1,7 @@
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Components;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -245,7 +246,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, ITraitHolder
     /// <summary> Arranges the associated glamour slots for this restraint set through a helper function. </summary>
     /// <returns> A dictionary of glamour slots associated with this restraint set. </returns>
     /// <remarks> Prioritizes the base slots, then the restraint layers. </remarks>
-    public IEnumerable<GlamourSlot> GetGlamour()
+    public IReadOnlyDictionary<EquipSlot, GlamourSlot> GetGlamour()
     {
         var GlamourItems = new Dictionary<EquipSlot, GlamourSlot>();
         foreach (var glamourItem in RestraintSlots.Values.Where(x => x != null))
@@ -276,7 +277,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, ITraitHolder
             GlamourItems[layer.EquipSlot] = layer.Ref.Glamour;
         }
         // Append
-        return GlamourItems.Values;
+        return GlamourItems;
     }
 
     /// <summary> Arranges the associated mods for this restraint set through a helper function. </summary>

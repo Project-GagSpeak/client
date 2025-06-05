@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.CkCommons.Newtonsoft;
+using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
@@ -10,8 +10,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using OtterGui;
-using OtterGui.Classes;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -20,12 +19,12 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     private readonly GagGarbler _garbler;
     private readonly FavoritesManager _favorites;
     private readonly ModSettingPresetManager _modPresets;
+    private readonly CacheStateManager _cacheManager;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<GarblerRestriction> _itemEditor = new();
-    private VisualAdvancedRestrictionsCache _managerCache = new();
     private CharaActiveGags? _serverGagData = null;
 
     public GagRestrictionManager(
@@ -34,6 +33,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         GagGarbler garbler,
         FavoritesManager favorites,
         ModSettingPresetManager modPresets,
+        CacheStateManager cacheStateManager,
         ConfigFileProvider fileNames,
         ItemService items,
         HybridSaveService saver) : base(logger, mediator)
@@ -41,13 +41,13 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         _garbler = garbler;
         _favorites = favorites;
         _modPresets = modPresets;
+        _cacheManager = cacheStateManager;
         _fileNames = fileNames;
         _items = items;
         _modPresets = modPresets;
         _saver = saver;
     }
 
-    public VisualAdvancedRestrictionsCache VisualCache => _managerCache;
     public CharaActiveGags? ServerGagData => _serverGagData;
     public GagRestrictionStorage Storage { get; private set; } = new GagRestrictionStorage();
     public GarblerRestriction? ItemInEditor => _itemEditor.ItemInEditor;
@@ -59,19 +59,22 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     /// <remarks> MUST CALL AFTER LOADING PROFILE STORAGE. (Also updates cache and active restrictions. </remarks>
     public void LoadServerData(CharaActiveGags serverData)
     {
+        Logger.LogWarning("Loading in all Server-Releated Gag Data!");
         _serverGagData = serverData;
+        Logger.LogInformation("Processing active gags to apply the visuals of.");
         for (var slotIdx = 0; slotIdx < serverData.GagSlots.Length; slotIdx++)
         {
             var slot = serverData.GagSlots[slotIdx];
             if (slot.GagItem is not GagType.None)
             {
+                Logger.LogInformation($"GagSlot {slotIdx} has GagItem {slot.GagItem.GagName()}");
                 if (Storage.TryGetEnabledGag(slot.GagItem, out var item))
                 {
+                    Logger.LogInformation($"Found GagRestriction for {slot.GagItem.GagName()} in Storage, applying visuals.");
                     AppliedGags[slotIdx] = item;
                 }
             }
         }
-        _managerCache.UpdateCache(AppliedGags);
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -87,8 +90,8 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
             Logger.LogTrace("Saved changes to Edited GagRestriction.");
-            _managerCache.UpdateCache(AppliedGags);
-            Mediator.Publish(new ConfigGagRestrictionChanged(StorageItemChangeType.Modified, sourceItem));
+            // update the cache somehow here, idk how, my brain is fried.
+            Mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
     }
@@ -98,7 +101,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         if (Storage.TryGetGag(gagItem, out var item))
         {
             item.IsEnabled = !item.IsEnabled;
-            Mediator.Publish(new ConfigGagRestrictionChanged(StorageItemChangeType.Modified, item));
+            Mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, item));
             _saver.Save(this);
         }
     }
@@ -118,56 +121,32 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     #endregion Validators
 
     #region Performers
-    public VisualUpdateFlags ApplyGag(int layer, GagType newGag, string enactor, out GarblerRestriction? item)
+    /// <summary>
+    ///     Applies the gag to the spesified layer if possible, and updates the active items.
+    /// </summary>
+    /// <returns> true if it contained visual changes, false otherwise. </returns>
+    public bool ApplyGag(int layer, GagType newGag, string enactor, [NotNullWhen(true)] out GarblerRestriction? item)
     {
-        item = null; var flags = VisualUpdateFlags.None;
+        item = null;
 
         if (ServerGagData is not { } data)
-            return flags;
+            return false;
 
         // update values & Garbler, then fire achievement ping.
+        Logger.LogDebug($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
         data.GagSlots[layer].GagItem = newGag;
         data.GagSlots[layer].Enabler = enactor;
         _garbler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
 
         // Mark what parts of this item will end up having effective changes.
-        if (Storage.TryGetEnabledGag(newGag, out item))
+        if(Storage.TryGetEnabledGag(newGag, out item))
         {
-            // Begin by assuming everything changes.
-            flags = VisualUpdateFlags.AllGag;
-
-            // Look over this later but some logic may be flawed.
-            foreach (var (gagItem, idx) in AppliedGags.WithIndex())
-            {
-                // these properties should not be updated if an item with higher priority contains it.
-                if (idx > layer)
-                {
-                    if (item.Glamour is not null && gagItem.Glamour.Slot == item.Glamour.Slot)
-                        flags &= ~VisualUpdateFlags.Glamour;
-
-                    if (item.Mod.HasData && gagItem.Mod.Label == item.Mod.Label)
-                        flags &= ~VisualUpdateFlags.Mod;
-
-                    if(gagItem.HeadgearState != OptionalBool.Null)
-                        flags &= ~VisualUpdateFlags.Helmet;
-
-                    if(gagItem.VisorState != OptionalBool.Null)
-                        flags &= ~VisualUpdateFlags.Visor;
-                }
-
-                // these properties should not be updated if any item contains it.
-                if (gagItem.Moodle == item.Moodle)
-                    flags &= ~VisualUpdateFlags.Moodle;
-
-                if (gagItem.ProfileGuid == item.ProfileGuid && gagItem.ProfilePriority >= item.ProfilePriority)
-                    flags &= ~VisualUpdateFlags.CustomizeProfile;
-            }
-            // Update the activeVisualState, and the cache.
             AppliedGags[layer] = item;
-            _managerCache.UpdateCache(AppliedGags);
+            return true;
         }
-        return flags;
+
+        return false;
     }
 
     public void LockGag(int layer, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
@@ -200,37 +179,29 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, prevLock, enactor);
     }
 
-    public VisualUpdateFlags RemoveGag(int layer, string enactor, out GarblerRestriction? item)
+    public bool RemoveGag(int layer, string enactor, [NotNullWhen(true)] out GarblerRestriction? item)
     {
-        item = null; var flags = VisualUpdateFlags.None;
+        item = null;
 
         if (ServerGagData is not { } data)
-            return flags;
+            return false;
 
         // store what gag we are removing, then update data and fire achievement ping.
-        var removedGag = data.GagSlots[layer].GagItem;
+        var removedGagType = data.GagSlots[layer].GagItem;
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
         _garbler.UpdateGarblerLogic(data.CurrentGagNames());
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGag, enactor);
+        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGagType, enactor);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetEnabledGag(removedGag, out var matchedItem))
+        if (Storage.TryGetEnabledGag(removedGagType, out item))
         {
             // Reset this index to default values.
             AppliedGags[layer] = new GarblerRestriction(GagType.None);
-            _managerCache.UpdateCache(AppliedGags);
-
-            // begin by assuming all aspects are removed.
-            flags = VisualUpdateFlags.AllGag;
-            // Glamour Item will always be valid so don't worry about it.
-            if(!matchedItem.Mod.HasData) flags &= ~VisualUpdateFlags.Mod;
-            if(matchedItem.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
-            if(matchedItem.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
-            if(matchedItem.Moodle is null) flags &= ~VisualUpdateFlags.Moodle;
-            if(matchedItem.ProfileGuid == Guid.Empty) flags &= ~VisualUpdateFlags.CustomizeProfile;
+            return true;
         }
-        return flags;
+
+        return false;
     }
     #endregion Performers
 
@@ -304,7 +275,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Gag));
+        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Gag));
     }
 
     private void LoadV0(JToken? data)

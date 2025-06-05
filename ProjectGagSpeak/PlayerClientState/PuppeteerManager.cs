@@ -232,7 +232,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Puppeteer));
+        Mediator.Publish(new ReloadFileSystem(Module.Puppeteer));
     }
 
     private void LoadV0(JToken? data)

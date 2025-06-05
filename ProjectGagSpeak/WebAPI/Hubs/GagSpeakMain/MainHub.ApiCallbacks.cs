@@ -118,7 +118,7 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_AddPairRequest(KinksterRequest dto)
+    public Task Callback_AddPairRequest(KinksterRequestEntry dto)
     {
         Logger.LogDebug("Callback_AddPairRequest: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _globals.AddPairRequest(dto));
@@ -128,7 +128,7 @@ public partial class MainHub
     /// <summary>
     /// Only recieved as a callback from the server when a request has been rejected. Timeouts should be handled on their own.
     /// </summary>
-    public Task Callback_RemovePairRequest(KinksterRequest dto)
+    public Task Callback_RemovePairRequest(KinksterRequestEntry dto)
     {
         Logger.LogDebug("Callback_RemovePairRequest: "+dto, LoggerType.Callbacks);
         ExecuteSafely(() => _globals.RemovePairRequest(dto));
@@ -310,7 +310,7 @@ public partial class MainHub
         }
     }
 
-    public Task Callback_KinksterUpdateGags(KinksterUpdateGags dataDto)
+    public Task Callback_KinksterUpdateGagSlot(KinksterUpdateGagSlot dataDto)
     {
         if (dataDto.User.UID == MainHub.UID)
         {
@@ -659,13 +659,13 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Callback_RemoveClientPair), act);
     }
 
-    public void OnAddPairRequest(Action<KinksterRequest> act)
+    public void OnAddPairRequest(Action<KinksterRequestEntry> act)
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Callback_AddPairRequest), act);
     }
 
-    public void OnRemovePairRequest(Action<KinksterRequest> act)
+    public void OnRemovePairRequest(Action<KinksterRequestEntry> act)
     {
         if (Initialized) return;
         GagSpeakHubMain!.On(nameof(Callback_RemovePairRequest), act);
@@ -743,10 +743,10 @@ public partial class MainHub
         GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateIpc), act);
     }
 
-    public void OnKinksterUpdateGags(Action<KinksterUpdateGags> act)
+    public void OnKinksterUpdateGagSlot(Action<KinksterUpdateGagSlot> act)
     {
         if (Initialized) return;
-        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateGags), act);
+        GagSpeakHubMain!.On(nameof(Callback_KinksterUpdateGagSlot), act);
     }
 
     public void OnKinksterUpdateRestriction(Action<KinksterUpdateRestriction> act)

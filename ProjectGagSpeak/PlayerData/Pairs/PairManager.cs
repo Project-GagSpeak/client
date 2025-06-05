@@ -276,7 +276,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].UpdateVisibleData(dto);
     }
 
-    public void ReceiveGagData(KinksterUpdateGags dto)
+    public void ReceiveGagData(KinksterUpdateGagSlot dto)
     {
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
             throw new InvalidOperationException("No user found for " + dto.User);

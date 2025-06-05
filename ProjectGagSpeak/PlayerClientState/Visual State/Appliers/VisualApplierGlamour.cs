@@ -38,6 +38,8 @@ public class VisualApplierGlamour : IDisposable
 
     public bool StateChangeBlocked { get; set; } = false;
     public GlamourCache LastUnboundState { get; internal set; } = new();
+
+    // This feels redundant, maybe we can lighten the weight for it or something idk.
     public ConcurrentDictionary<EquipSlot, GlamourSlot> RestrictedSlots { get; internal set; } = new();
     public MetaDataStruct RestrictedMeta { get; internal set; } = new();
     public (JToken? Customize, JToken? Parameters) RestrictedCustomize = (null, null);

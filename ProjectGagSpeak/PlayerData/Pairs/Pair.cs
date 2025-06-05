@@ -207,7 +207,7 @@ public class Pair : IComparable<Pair>
             LastPairAliasData = match;
     }
 
-    public void UpdateGagData(KinksterUpdateGags data)
+    public void UpdateGagData(KinksterUpdateGagSlot data)
     {
         _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastGagData.GagSlots[data.AffectedLayer] = data.NewData;

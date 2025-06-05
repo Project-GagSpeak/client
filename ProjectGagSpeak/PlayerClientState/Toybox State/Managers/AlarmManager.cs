@@ -1,6 +1,7 @@
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
+using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
@@ -45,7 +46,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         Storage.Add(newAlarm);
         _saver.Save(this);
 
-        Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Created, newAlarm, null));
+        Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, newAlarm, null));
         return newAlarm;
     }
 
@@ -57,7 +58,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         _saver.Save(this);
 
         Logger.LogDebug($"Cloned alarm {other.Label} to {newName}.");
-        Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -71,7 +72,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
             alarm.Label = newName;
             _saver.Save(this);
 
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Renamed, alarm, prevName));
+            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Renamed, alarm, prevName));
         }
     }
 
@@ -80,7 +81,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         if (Storage.Remove(alarm))
         {
             Logger.LogDebug($"Deleted alarm {alarm.Label}.");
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Deleted, alarm, null));
+            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Deleted, alarm, null));
             _saver.Save(this);
         }
 
@@ -99,7 +100,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
             Logger.LogDebug($"Storage updated changes to alarm {sourceItem.Label}.");
-            Mediator.Publish(new ConfigAlarmChanged(StorageItemChangeType.Modified, sourceItem, null));
+            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }
@@ -200,7 +201,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Alarm));
+        Mediator.Publish(new ReloadFileSystem(Module.Alarm));
     }
 
     private void LoadV0(JToken? data)

@@ -133,7 +133,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnCursedItemChange(StorageItemChangeType type, CursedItem cursedItem, string? oldString)
+    private void OnCursedItemChange(StorageChangeType type, CursedItem cursedItem, string? oldString)
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>

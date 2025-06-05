@@ -1,6 +1,7 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
+using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
@@ -11,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerState.Visual;
 
@@ -84,7 +86,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         Storage.Add(restriction);
         _saver.Save(this);
         Logger.LogDebug($"Created new restriction {restriction.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Created, restriction, null));
+        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, restriction, null));
         return restriction;
     }
 
@@ -103,7 +105,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         _saver.Save(this);
 
         Logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -113,7 +115,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         if (Storage.Remove(restriction))
         {
             Logger.LogDebug($"Deleted restriction {restriction.Identifier}.");
-            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Deleted, restriction, null));
+            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Deleted, restriction, null));
             _saver.Save(this);
         }
     }
@@ -127,7 +129,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         restriction.Label = newName;
         _saver.Save(this);
         Logger.LogDebug($"Renamed restriction {restriction.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Renamed, restriction, oldName));
+        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Renamed, restriction, oldName));
     }
 
     public void UpdateThumbnail(RestrictionItem restriction, string newPath)
@@ -138,7 +140,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             Logger.LogDebug($"Thumbnail updated for {restriction.Label} to {restriction.ThumbnailPath}");
             restriction.ThumbnailPath = newPath;
             _saver.Save(this);
-            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, restriction, null));
+            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, restriction, null));
         }
     }
 
@@ -158,7 +160,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             _saver.Save(this);
 
             Logger.LogTrace("Saved changes to Edited RestrictionItem.");
-            Mediator.Publish(new ConfigRestrictionChanged(StorageItemChangeType.Modified, sourceItem, null));
+            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, sourceItem, null));
         }
     }
 
@@ -186,12 +188,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     public bool CanRemove(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanRemove();
 
     #region Active Restriction Updates
-    public VisualUpdateFlags ApplyRestriction(int layerIdx, Guid id, string enactor, out RestrictionItem? item)
+    public bool ApplyRestriction(int layerIdx, Guid id, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
     {
-        item = null; var flags = VisualUpdateFlags.None;
+        item = null;
 
         if (_serverRestrictionData is not { } data)
-            return flags;
+            return false;
 
         // update the values and fire achievement ping. ( None yet )
         data.Restrictions[layerIdx].Identifier = id;
@@ -201,31 +203,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // assign the information if present.
         if (Storage.TryGetRestriction(id, out item))
         {
-            // Assume everything is set.
-            flags = VisualUpdateFlags.AllRestriction;
-            // set the restriction item at the defined index.
-            foreach (var (appliedItem, idx) in AppliedRestrictions.WithIndex())
-            {
-                // these properties should not be updated if an item with higher priority contains it.
-                if (idx > layerIdx)
-                {
-                    if (item.Glamour is not null && appliedItem.Glamour.Slot == item.Glamour.Slot)
-                        flags &= ~VisualUpdateFlags.Glamour;
-
-                    if (item.Mod.HasData && appliedItem.Mod.Label == item.Mod.Label)
-                        flags &= ~VisualUpdateFlags.Mod;
-                }
-
-                // these properties should not be updated if any item contains it.
-                if (appliedItem.Moodle == item.Moodle)
-                    flags &= ~VisualUpdateFlags.Moodle;
-            }
-
             AppliedRestrictions[layerIdx] = item;
             AddOccupiedRestriction(item, ManagerPriority.Restrictions);
-            _managerCache.UpdateCache(AppliedRestrictions);
+            return true;
         }
-        return flags;
+
+        return false;
     }
 
     public void LockRestriction(int layerIdx, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
@@ -255,12 +238,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         UnlocksEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layerIdx, prevLock, enactor);
     }
 
-    public VisualUpdateFlags RemoveRestriction(int layerIdx, string enactor, out RestrictionItem? item)
+    public bool RemoveRestriction(int layerIdx, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
     {
-        item = null; var flags = VisualUpdateFlags.None;
+        item = null;
 
         if (_serverRestrictionData is not { } data)
-            return flags;
+            return false;
 
         // store the new data, then fire the achievement.
         var removedRestriction = data.Restrictions[layerIdx].Identifier;
@@ -271,18 +254,12 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestriction(removedRestriction, out var matchedItem))
         {
-            // Do recalculations first since it doesn't madder here.
             AppliedRestrictions[layerIdx] = new RestrictionItem();
             RemoveOccupiedRestriction(matchedItem, ManagerPriority.Restrictions);
-            _managerCache.UpdateCache(AppliedRestrictions);
-
-            // begin by assuming all aspects are removed.
-            flags = VisualUpdateFlags.AllGag;
-            // Glamour Item will always be valid so don't worry about it.
-            if (!matchedItem.Mod.HasData) flags &= ~VisualUpdateFlags.Mod;
-            if (matchedItem.Moodle is null) flags &= ~VisualUpdateFlags.Moodle;
+            return true;
         }
-        return flags;
+
+        return false;
     }
     #endregion Active Restriction Updates
 
@@ -340,7 +317,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Restriction));
+        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Restriction));
     }
 
     private void LoadV0(JToken? data)

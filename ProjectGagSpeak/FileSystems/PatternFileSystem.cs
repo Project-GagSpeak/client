@@ -24,7 +24,7 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Pattern) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Pattern) Reload(); });
         Changed += OnChange;
         Reload();
     }

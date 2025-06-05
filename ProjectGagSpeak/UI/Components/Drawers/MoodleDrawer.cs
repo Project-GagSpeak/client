@@ -14,6 +14,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using ProjectGagSpeak.Utils.Enums;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 public class MoodleDrawer

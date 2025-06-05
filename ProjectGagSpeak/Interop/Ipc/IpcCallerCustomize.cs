@@ -67,7 +67,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
         {
             Logger.LogTrace("IPC-Customize is fetching profile list.", LoggerType.IpcCustomize);
             var res = GetProfileList.InvokeFunc();
-            return res.Select(tuple => new CustomizeProfile(tuple.UniqueId, tuple.Name)).ToList();
+            return res.Select(tuple => new CustomizeProfile(tuple.UniqueId, tuple.Priority, tuple.Name)).ToList();
 
         }
         catch (Exception ex)
@@ -77,21 +77,21 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
         }
     }
 
-    public (int Priority, Guid ProfileId) CurrentActiveProfile()
+    public CustomizeProfile CurrentActiveProfile()
     {
-        if (!APIAvailable) return (0, Guid.Empty);
+        if (!APIAvailable) return CustomizeProfile.Empty;
         try
         {
             var result = GetActiveProfile.InvokeFunc(0);
             if (result.Item2 is null) 
-                return (0, Guid.Empty);
+                return CustomizeProfile.Empty;
             Logger.LogTrace($"IPC-Customize obtained active profile [{result.Item2}] with error code [{result.Item1}]", LoggerType.IpcCustomize);
-            return (result.Item1, result.Item2.Value);
+            return new(result.Item2.Value, result.Item1);
         }
         catch (Exception ex)
         {
             Logger.LogError("Error on fetching active profile" + ex, LoggerType.IpcCustomize);
-            return (0, Guid.Empty);
+            return CustomizeProfile.Empty;
         }
     }
 

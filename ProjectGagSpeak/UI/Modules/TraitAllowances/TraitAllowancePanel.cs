@@ -43,18 +43,18 @@ public class TraitAllowancePanel
         _guides = guides;
     }
 
-    private ModuleSection[] Options = new ModuleSection[5]
+    private Module[] Options = new Module[5]
     {
-        ModuleSection.Restraint,
-        ModuleSection.Restriction,
-        ModuleSection.Gag,
-        ModuleSection.Pattern,
-        ModuleSection.Trigger
+        Module.Restraint,
+        Module.Restriction,
+        Module.Gag,
+        Module.Pattern,
+        Module.Trigger
     };
 
-    private ModuleSection       _selectedModule = ModuleSection.None;
+    private Module       _selectedModule = Module.None;
     private ImmutableList<Pair> _allowedPairs = ImmutableList<Pair>.Empty;
-    public ModuleSection SelectedModule
+    public Module SelectedModule
     {
         get => _selectedModule;
         set
@@ -67,15 +67,15 @@ public class TraitAllowancePanel
         }
     }
 
-    private IEnumerable<string> GetAllowancesForModule(ModuleSection module)
+    private IEnumerable<string> GetAllowancesForModule(Module module)
     {
         return _selectedModule switch
         {
-            ModuleSection.Restraint     => _manager.TraitAllowancesRestraints,
-            ModuleSection.Restriction   => _manager.TraitAllowancesRestrictions,
-            ModuleSection.Gag           => _manager.TraitAllowancesGags,
-            ModuleSection.Pattern       => _manager.TraitAllowancesPatterns,
-            ModuleSection.Trigger       => _manager.TraitAllowancesTriggers,
+            Module.Restraint     => _manager.TraitAllowancesRestraints,
+            Module.Restriction   => _manager.TraitAllowancesRestrictions,
+            Module.Gag           => _manager.TraitAllowancesGags,
+            Module.Pattern       => _manager.TraitAllowancesPatterns,
+            Module.Trigger       => _manager.TraitAllowancesTriggers,
             _ => Enumerable.Empty<string>()
         };
     }
@@ -200,14 +200,14 @@ public class TraitAllowancePanel
 
 
 
-    private bool DrawModuleOption(ModuleSection option, Vector2 size, bool selected)
+    private bool DrawModuleOption(Module option, Vector2 size, bool selected)
     {
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
         var color = selected
             ? CkColor.ElementBG.Uint()
             : hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
-        using (CkRaii.FramedChild("ModuleSection-" + option, size, color))
+        using (CkRaii.FramedChild("Module-" + option, size, color))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             DrawModuleImage(option);
@@ -219,15 +219,15 @@ public class TraitAllowancePanel
         return false;
     }
 
-    private void DrawModuleImage(ModuleSection option)
+    private void DrawModuleImage(Module option)
     {
         var img = option switch
         {
-            ModuleSection.Restraint => _cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs],
-            ModuleSection.Restriction => _cosmetics.CoreTextures[CoreTexture.Restrained],
-            ModuleSection.Gag => _cosmetics.CoreTextures[CoreTexture.Gagged],
-            ModuleSection.Pattern => _cosmetics.CoreTextures[CoreTexture.Vibrator],
-            ModuleSection.Trigger => _cosmetics.CoreTextures[CoreTexture.ShockCollar],
+            Module.Restraint => _cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs],
+            Module.Restriction => _cosmetics.CoreTextures[CoreTexture.Restrained],
+            Module.Gag => _cosmetics.CoreTextures[CoreTexture.Gagged],
+            Module.Pattern => _cosmetics.CoreTextures[CoreTexture.Vibrator],
+            Module.Trigger => _cosmetics.CoreTextures[CoreTexture.ShockCollar],
             _ => null
         };
         if (img is { } wrap)

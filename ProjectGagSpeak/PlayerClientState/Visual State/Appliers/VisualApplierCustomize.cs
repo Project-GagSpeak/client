@@ -24,7 +24,7 @@ public class VisualApplierCPlus : DisposableMediatorSubscriberBase
 
     public static List<CustomizeProfile> LatestProfiles { get; private set; } = new List<CustomizeProfile>();
     // This is the profile that we must ensure stays restricted at all times.
-    private Tuple<Guid, int> RestrictedProfile = new Tuple<Guid, int>(Guid.Empty, 0);
+    private CustomizeProfile RestrictedProfile = CustomizeProfile.Empty;
 
     protected override void Dispose(bool disposing) => base.Dispose(disposing);
 
@@ -55,37 +55,37 @@ public class VisualApplierCPlus : DisposableMediatorSubscriberBase
             return;
 
         // if the sorted list does not contain any items, return.
-        if (RestrictedProfile.Item1.IsEmptyGuid())
+        if (RestrictedProfile.ProfileGuid.IsEmptyGuid())
             return;
 
         // Grab the current active profile.
         var activeProfile = _customize.CurrentActiveProfile();
 
-        if(activeProfile.ProfileId.IsEmptyGuid())
+        if(activeProfile.ProfileGuid.IsEmptyGuid())
             return;
 
         // Ensure the item is staying enabled.
-        if (activeProfile.ProfileId != RestrictedProfile.Item1)
+        if (activeProfile.ProfileGuid != RestrictedProfile.ProfileGuid)
         {
-            Logger.LogTrace("Enforcing Customize+ Profile " + RestrictedProfile.Item1 + " for your equipped Gag", LoggerType.IpcCustomize);
-            _customize.SetProfileEnable(RestrictedProfile.Item1);
+            Logger.LogTrace($"Enforcing C+ Profile {RestrictedProfile.ProfileGuid} for your Gag", LoggerType.IpcCustomize);
+            _customize.SetProfileEnable(RestrictedProfile.ProfileGuid);
         }
     }
 
-    public void SetOrUpdateProfile(Guid profileId, int priority)
+    public void SetOrUpdateProfile(CustomizeProfile profile)
     {
-        RestrictedProfile = new Tuple<Guid, int>(profileId, priority);
-        Logger.LogInformation("Setting or Updating Profile " + profileId + " with new priority " + priority, LoggerType.IpcCustomize);
+        RestrictedProfile = profile;
+        Logger.LogInformation($"Setting or Updating Profile {profile.ProfileGuid} with new priority {profile.Priority}", LoggerType.IpcCustomize);
         EnsureRestrictedProfile();
     }
 
     public void ClearRestrictedProfile()
     {
-        RestrictedProfile = new Tuple<Guid, int>(Guid.Empty, 0);
+        RestrictedProfile = CustomizeProfile.Empty;
         Logger.LogInformation("Cleared Restricted Profile", LoggerType.IpcCustomize);
         // if any profile is active at the time of the clear, disable it.
         var activeProfile = _customize.CurrentActiveProfile();
-        if (!activeProfile.ProfileId.IsEmptyGuid())
-            _customize.SetProfileDisable(activeProfile.ProfileId);
+        if (!activeProfile.ProfileGuid.IsEmptyGuid())
+            _customize.SetProfileDisable(activeProfile.ProfileGuid);
     }
 }

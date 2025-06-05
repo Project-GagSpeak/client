@@ -19,8 +19,8 @@ public partial class MainHub
     public async Task<List<KinksterPair>> UserGetPairedClients()
         => await GagSpeakHubMain!.InvokeAsync<List<KinksterPair>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
 
-    public async Task<List<KinksterRequest>> UserGetPairRequests()
-        => await GagSpeakHubMain!.InvokeAsync<List<KinksterRequest>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
+    public async Task<List<KinksterRequestEntry>> UserGetPairRequests()
+        => await GagSpeakHubMain!.InvokeAsync<List<KinksterRequestEntry>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
 
     public async Task<KinkPlateFull> UserGetKinkPlate(KinksterBase dto)
     {
@@ -108,7 +108,7 @@ public partial class MainHub
         // Achievement Syncronization without resets is a pain in the ass :)
         try
         {
-            return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserUpdateAchievementData), dto);
+            return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserUpdateAchievementData), dto).ConfigureAwait(false);
         }
         catch (OperationCanceledException ex)
         {

@@ -43,7 +43,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         _saver.Save(this);
 
         Logger.LogDebug($"Created new pattern {newPattern.Label}.");
-        Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Created, newPattern, null));
+        Mediator.Publish(new ConfigPatternChanged(StorageChangeType.Created, newPattern, null));
         return newPattern;
     }
 
@@ -55,7 +55,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         _saver.Save(this);
 
         Logger.LogDebug($"Cloned pattern {other.Label} to {newName}.");
-        Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigPatternChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -67,7 +67,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         _saver.Save(this);
 
         Logger.LogDebug($"Storage contained pattern, renaming {pattern.Label} to {newName}.");
-        Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Renamed, pattern, prevName));
+        Mediator.Publish(new ConfigPatternChanged(StorageChangeType.Renamed, pattern, prevName));
     }
 
     public void Delete(Pattern pattern)
@@ -75,7 +75,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         if (Storage.Remove(pattern))
         {
             Logger.LogDebug($"Deleted pattern {pattern.Label}.");
-            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Deleted, pattern, null));
+            Mediator.Publish(new ConfigPatternChanged(StorageChangeType.Deleted, pattern, null));
             _saver.Save(this);
         }
     }
@@ -94,7 +94,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
             Logger.LogDebug($"Saved changes to pattern {sourceItem.Identifier}.");
-            Mediator.Publish(new ConfigPatternChanged(StorageItemChangeType.Modified, sourceItem, null));
+            Mediator.Publish(new ConfigPatternChanged(StorageChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }
@@ -205,7 +205,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Pattern));
+        Mediator.Publish(new ReloadFileSystem(Module.Pattern));
     }
 
     private void LoadV0(JToken? data)

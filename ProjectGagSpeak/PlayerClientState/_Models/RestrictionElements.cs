@@ -26,7 +26,7 @@ public class GlamourBonusSlot
         };
 }
 
-public class GlamourSlot
+public class GlamourSlot : IEquatable<GlamourSlot>
 {
     public EquipSlot Slot { get; set; } = EquipSlot.Nothing;
     public EquipItem GameItem { get; set; } = ItemService.NothingItem(EquipSlot.Nothing);
@@ -48,5 +48,11 @@ public class GlamourSlot
             ["CustomItemId"] = GameItem.Id.ToString(),
             ["Stains"] = GameStain.ToString(),
         };
+
+    public bool Equals(GlamourSlot? other)
+        => other != null && Slot == other.Slot && Equals(other.GameItem);
+
+    public override bool Equals(object? obj)
+        => obj is GlamourSlot glamour && Equals(glamour);
 }
 

@@ -2,6 +2,7 @@ using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
+using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
@@ -25,7 +26,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestraintSet> _itemEditor = new();
-    private VisualAdvancedRestrictionsCache _managerCache = new();
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
@@ -43,7 +43,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => CheckLockedItems());
     }
 
-    public VisualAdvancedRestrictionsCache VisualCache => _managerCache;
     public CharaActiveRestraint? ServerRestraintData => _serverRestraintData;
     public RestraintStorage Storage { get; private set; } = new RestraintStorage();
     public RestraintSet? ItemInEditor => _itemEditor.ItemInEditor;
@@ -56,7 +55,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (Storage.TryGetRestraint(serverData.Identifier, out var item))
         {
             AppliedRestraint = item;
-            _managerCache.UpdateCache(AppliedRestraint);
         }
     }
 
@@ -68,7 +66,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Storage.Add(restraint);
         _saver.Save(this);
         Logger.LogDebug($"Created new restraint {restraint.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Created, restraint, null));
+        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, restraint, null));
         return restraint;
     }
 
@@ -80,7 +78,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Storage.Add(clonedItem);
         _saver.Save(this);
         Logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -91,7 +89,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (Storage.Remove(restraint))
         {
             Logger.LogDebug($"Deleted restraint {restraint.Identifier}.");
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Deleted, restraint, null));
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Deleted, restraint, null));
             _saver.Save(this);
         }
     }
@@ -105,7 +103,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         restraint.Label = newName;
         _saver.Save(this);
         Logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Renamed, restraint, oldName));
+        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Renamed, restraint, oldName));
     }
 
     public void UpdateThumbnail(RestraintSet restraint, string newPath)
@@ -116,7 +114,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             Logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
             restraint.ThumbnailPath = newPath;
             _saver.Save(this);
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, restraint, null));
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, restraint, null));
         }
     }
 
@@ -133,8 +131,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
             Logger.LogDebug($"Saved changes to restraint {sourceItem.Identifier}.");
-            _managerCache.UpdateCache(AppliedRestraint);
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageItemChangeType.Modified, sourceItem));
+            // _managerCache.UpdateCache(AppliedRestraint);
+            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
     }
@@ -148,12 +146,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public bool CanRemove(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanRemove());
 
     #region Active Set Updates
-    public VisualUpdateFlags ApplyRestraint(Guid restraintId, string enactor, out RestraintSet? set)
+    public bool ApplyRestraint(Guid restraintId, string enactor, [NotNullWhen(true)] out RestraintSet? set)
     {
-        set = null; var flags = VisualUpdateFlags.None;
+        set = null;
 
         if (_serverRestraintData is not { } data)
-            return flags;
+            return false;
 
         // update values & ping achievement.
         data.Identifier = restraintId;
@@ -163,19 +161,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // grab the collective data from the set to return.
         if (Storage.TryGetRestraint(restraintId, out set))
         {
-            flags = VisualUpdateFlags.AllRestriction;
-
-            if(!set.GetGlamour().Any()) flags &= ~VisualUpdateFlags.Glamour;
-            if(!set.GetMods().Any()) flags &= ~VisualUpdateFlags.Mod;
-            if(!set.GetMoodles().Any()) flags &= ~VisualUpdateFlags.Moodle;
-            if(set.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
-            if(set.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
-            if(set.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
-
             AppliedRestraint = set;
-            _managerCache.UpdateCache(AppliedRestraint);
+            return true;
         }
-        return flags;
+
+        return false;
     }
 
     public void LockRestraint(Guid restraintId, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
@@ -208,12 +198,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
-    public VisualUpdateFlags RemoveRestraint(string enactor, out RestraintSet? item)
+    public bool RemoveRestraint(string enactor, [NotNullWhen(true)] out RestraintSet? item)
     {
-        item = null; var flags = VisualUpdateFlags.None;
+        item = null;
 
         if (_serverRestraintData is not { } data)
-            return flags;
+            return false;
 
         // store the new data, then fire the achievement.
         var removedRestraint = data.Identifier;
@@ -227,21 +217,13 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             UnlocksEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetRestraint(removedRestraint, out var matchedItem))
+        if (Storage.TryGetRestraint(removedRestraint, out item))
         {
             AppliedRestraint = new RestraintSet();
-            _managerCache.UpdateCache(AppliedRestraint);
-
-            // begin by assuming all aspects are removed.
-            flags = VisualUpdateFlags.AllGag;
-            // Glamour Item will always be valid so don't worry about it.
-            if (!matchedItem.GetMods().Any()) flags &= ~VisualUpdateFlags.Mod;
-            if (!matchedItem.GetMoodles().Any()) flags &= ~VisualUpdateFlags.Moodle;
-            if (matchedItem.HeadgearState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Helmet;
-            if (matchedItem.VisorState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Visor;
-            if (matchedItem.WeaponState == OptionalBool.Null) flags &= ~VisualUpdateFlags.Weapon;
+            return true;
         }
-        return flags;
+
+        return false;
     }
     #endregion Active Set Updates
 
@@ -308,7 +290,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Restraint));
+        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Restraint));
     }
 
     private void LoadV0(JToken? data)

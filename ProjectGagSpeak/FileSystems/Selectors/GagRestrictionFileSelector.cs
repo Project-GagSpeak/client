@@ -99,7 +99,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnGagRestrictionChange(StorageItemChangeType type, GarblerRestriction gagRestriction, string? oldString)
+    private void OnGagRestrictionChange(StorageChangeType type, GarblerRestriction gagRestriction, string? oldString)
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>

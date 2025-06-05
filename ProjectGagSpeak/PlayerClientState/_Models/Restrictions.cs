@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Dto;
 using GagspeakAPI.Extensions;
 using OtterGui.Classes;
@@ -24,16 +25,6 @@ public interface ITraitHolder
 {
     Traits Traits { get; set; }
     Stimulation Stimulation { get; set; }
-}
-
-/// <summary> An Interface contract for Customize+ Integration. </summary>
-public interface ICustomizePlus
-{
-    /// <summary> Identifies which Customize+ profile should be used. </summary>
-    Guid ProfileGuid { get; set; }
-
-    /// <summary> Determines the priority that the application of this profile will have. </summary>
-    uint ProfilePriority { get; set; }
 }
 
 /// <summary> Basic Restriction Item Contract requirements. </summary>
@@ -62,7 +53,7 @@ public interface IRestrictionItem : IRestriction
 }
 
 // Used for Gags. | Ensure C+ Allowance & Meta Allowance. Uses shared functionality but is independent.
-public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRestriction, ICustomizePlus
+public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRestriction
 {
     public GagType GagType { get; init; }
     public bool IsEnabled { get; set; } = false;
@@ -73,8 +64,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     public Stimulation Stimulation { get; set; } = Stimulation.None;
     public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; set; } = OptionalBool.Null;
-    public Guid ProfileGuid { get; set; } = Guid.Empty;
-    public uint ProfilePriority { get; set; } = 0;
+    public CustomizeProfile CPlusProfile { get; set; } = CustomizeProfile.Empty;
     public bool DoRedraw { get; set; } = false;
 
     internal GarblerRestriction(GagType gagType) => GagType = gagType;
@@ -97,8 +87,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         Stimulation = other.Stimulation;
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
-        ProfileGuid = other.ProfileGuid;
-        ProfilePriority = other.ProfilePriority;
+        CPlusProfile = other.CPlusProfile;
         DoRedraw = other.DoRedraw;
     }
 
@@ -113,8 +102,8 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             ["Stimulation"] = Stimulation.ToString(),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
-            ["ProfileGuid"] = ProfileGuid.ToString(),
-            ["ProfilePriority"] = ProfilePriority,
+            ["ProfileGuid"] = CPlusProfile.ProfileGuid.ToString(),
+            ["ProfilePriority"] = CPlusProfile.Priority,
             ["DoRedraw"] = DoRedraw,
         };
 
@@ -127,8 +116,9 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             throw new ArgumentException("Invalid JObjectToken!");
 
         var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
-          var moodles = JParser.LoadMoodle(json["Moodle"]);
-
+        var moodles = JParser.LoadMoodle(json["Moodle"]);
+        var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
+        var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
         return new GarblerRestriction(gagType)
         {
             IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
@@ -139,8 +129,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None,
             HeadgearState = JParser.FromJObject(json["HeadgearState"]),
             VisorState = JParser.FromJObject(json["VisorState"]),
-            ProfileGuid = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid"),
-            ProfilePriority = json["ProfilePriority"]?.ToObject<uint>() ?? throw new ArgumentNullException("ProfilePriority"),
+            CPlusProfile = new CustomizeProfile(profileId, profilePrio),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
     }

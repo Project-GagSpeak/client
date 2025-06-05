@@ -1,6 +1,7 @@
 using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagspeakAPI.Data;
+using OtterGui;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 

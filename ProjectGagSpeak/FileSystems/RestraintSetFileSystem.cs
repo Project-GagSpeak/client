@@ -24,7 +24,7 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Restraint) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Restraint) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -58,11 +58,11 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
         return leaf != null;
     }
 
-    private void OnRestraintSetChange(StorageItemChangeType type, RestraintSet restraintSet, string? oldString)
+    private void OnRestraintSetChange(StorageChangeType type, RestraintSet restraintSet, string? oldString)
     {
         switch (type)
         {
-            case StorageItemChangeType.Created:
+            case StorageChangeType.Created:
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
@@ -70,14 +70,14 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
 
                 CreateDuplicateLeaf(parent, restraintSet.Label, restraintSet);
                 return;
-            case StorageItemChangeType.Deleted:
+            case StorageChangeType.Deleted:
                 if (FindLeaf(restraintSet, out var leaf1))
                     Delete(leaf1);
                 return;
-            case StorageItemChangeType.Modified:
+            case StorageChangeType.Modified:
                 Reload();
                 return;
-            case StorageItemChangeType.Renamed when oldString != null:
+            case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(restraintSet, out var leaf2))
                     return;
 

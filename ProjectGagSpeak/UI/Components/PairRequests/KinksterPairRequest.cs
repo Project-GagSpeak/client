@@ -13,15 +13,15 @@ namespace GagSpeak.CkCommons.Gui.Components;
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)
 /// </summary>
-public class KinksterRequestEntry
+public class KinksterPairRequest
 {
     private readonly string _id;
-    private KinksterRequest _requestEntry;
+    private KinksterRequestEntry _requestEntry;
     private readonly MainHub _hub;
     private readonly CosmeticService _cosmetics;
 
     private bool IsHovered = false;
-    public KinksterRequestEntry(string id, KinksterRequest requestEntry, MainHub hub, CosmeticService cosmetics)
+    public KinksterPairRequest(string id, KinksterRequestEntry requestEntry, MainHub hub, CosmeticService cosmetics)
     {
         _id = id;
         _requestEntry = requestEntry;
@@ -32,7 +32,7 @@ public class KinksterRequestEntry
     }
 
     private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
-    public KinksterRequest Request => _requestEntry;
+    public KinksterRequestEntry Request => _requestEntry;
     private TimeSpan TimeLeft => TimeSpan.FromDays(3) - (DateTime.UtcNow - _requestEntry.CreationTime);
     public void DrawRequestEntry()
     {

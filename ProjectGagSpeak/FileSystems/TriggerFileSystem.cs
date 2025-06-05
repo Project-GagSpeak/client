@@ -24,7 +24,7 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Trigger) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Trigger) Reload(); });
         Changed += OnChange;
         Reload();
     }

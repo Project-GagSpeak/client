@@ -26,8 +26,8 @@ public class DrawRequests : IRequestsFolder
     public string ID => "Kinkster_Requests";
 
     // The Kinkster Requests currently present.
-    private HashSet<KinksterRequestEntry> _allOutgoingRequests;
-    private HashSet<KinksterRequestEntry> _allIncomingRequests;
+    private HashSet<KinksterPairRequest> _allOutgoingRequests;
+    private HashSet<KinksterPairRequest> _allIncomingRequests;
 
     public bool HasRequests => _clientData.CurrentRequests.Any();
     public int TotalOutgoing => _clientData.OutgoingRequests.Count();

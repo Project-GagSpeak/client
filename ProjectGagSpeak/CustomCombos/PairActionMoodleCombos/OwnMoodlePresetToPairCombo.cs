@@ -7,6 +7,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
+using ProjectGagSpeak.Utils.Enums;
 
 namespace GagSpeak.CustomCombos.Moodles;
 

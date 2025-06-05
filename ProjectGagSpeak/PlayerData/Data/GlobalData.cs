@@ -17,18 +17,18 @@ public sealed class GlobalData : DisposableMediatorSubscriberBase
 
     public bool GlobalsValid => GlobalPerms is not null;
     public GlobalPerms? GlobalPerms { get; set; } = null;
-    public HashSet<KinksterRequest> CurrentRequests { get; set; } = new();
-    public HashSet<KinksterRequest> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
-    public HashSet<KinksterRequest> IncomingRequests => CurrentRequests.Where(x => x.Target.UID == MainHub.UID).ToHashSet();
+    public HashSet<KinksterRequestEntry> CurrentRequests { get; set; } = new();
+    public HashSet<KinksterRequestEntry> OutgoingRequests => CurrentRequests.Where(x => x.User.UID == MainHub.UID).ToHashSet();
+    public HashSet<KinksterRequestEntry> IncomingRequests => CurrentRequests.Where(x => x.Target.UID == MainHub.UID).ToHashSet();
 
-    public void AddPairRequest(KinksterRequest dto)
+    public void AddPairRequest(KinksterRequestEntry dto)
     {
         CurrentRequests.Add(dto);
         Logger.LogInformation("New pair request added!", LoggerType.PairManagement);
         Mediator.Publish(new RefreshUiMessage());
     }
 
-    public void RemovePairRequest(KinksterRequest dto)
+    public void RemovePairRequest(KinksterRequestEntry dto)
     {
         var res = CurrentRequests.RemoveWhere(x => x.User.UID == dto.User.UID && x.Target.UID == dto.Target.UID);
         Logger.LogInformation("Removed " + res + " pair requests.", LoggerType.PairManagement);

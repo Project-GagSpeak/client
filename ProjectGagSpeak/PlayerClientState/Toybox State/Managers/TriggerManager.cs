@@ -221,7 +221,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(ModuleSection.Trigger));
+        Mediator.Publish(new ReloadFileSystem(Module.Trigger));
     }
 
     private void LoadV0(JToken? data)

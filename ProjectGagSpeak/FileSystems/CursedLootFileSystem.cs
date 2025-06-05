@@ -24,7 +24,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.CursedLoot) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.CursedLoot) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -57,11 +57,11 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         return leaf != null;
     }
 
-    private void OnRestrictionChange(StorageItemChangeType type, CursedItem restriction, string? oldString)
+    private void OnRestrictionChange(StorageChangeType type, CursedItem restriction, string? oldString)
     {
         switch (type)
         {
-            case StorageItemChangeType.Created:
+            case StorageChangeType.Created:
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
@@ -69,14 +69,14 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
 
                 CreateDuplicateLeaf(parent, restriction.Label, restriction);
                 return;
-            case StorageItemChangeType.Deleted:
+            case StorageChangeType.Deleted:
                 if (FindLeaf(restriction, out var leaf1))
                     Delete(leaf1);
                 return;
-            case StorageItemChangeType.Modified:
+            case StorageChangeType.Modified:
                 Reload();
                 return;
-            case StorageItemChangeType.Renamed when oldString != null:
+            case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(restriction, out var leaf2))
                     return;
 

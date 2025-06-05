@@ -37,6 +37,6 @@ public class DrawEntityFactory
         => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + kinkster.UserData.UID,
             kinkster, _hub, _nameDisplay, _mediator, _cosmetics);
 
-    public KinksterRequestEntry CreateKinsterRequest(string id, KinksterRequest request)
-        => new KinksterRequestEntry(id, request, _hub, _cosmetics);
+    public KinksterPairRequest CreateKinsterRequest(string id, KinksterRequestEntry request)
+        => new KinksterPairRequest(id, request, _hub, _cosmetics);
 }

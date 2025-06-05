@@ -49,8 +49,9 @@ public interface IModSettingPreset
 
 }
 
-public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettingsPreset>
+public sealed class ModSettingsPreset : IModSettingPreset, IEquatable<ModSettingsPreset>, IComparable<ModSettingsPreset>
 {
+    public Guid                             Id          { get; } = Guid.NewGuid();
     public ModPresetContainer               Container   { get; }
     public string                           Label       { get; set; } = string.Empty;
     public Dictionary<string, List<string>> ModSettings { get; set; } = new();
@@ -60,8 +61,9 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         Container = container;
     }
 
-    public ModSettingsPreset(ModSettingsPreset other)
+    public ModSettingsPreset(ModSettingsPreset other, bool keepId = false)
     {
+        Id = keepId ? other.Id : Guid.NewGuid();
         Container = other.Container;
         Label = other.Label;
         ModSettings = new Dictionary<string, List<string>>(other.ModSettings);
@@ -77,6 +79,16 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
         return string.Compare(Container.ModName, other.Container.ModName, StringComparison.Ordinal);
     }
 
+    public bool Equals(ModSettingsPreset? other)
+    {
+        if (other is null)
+            return false;
+
+        // if the mod names match, since we should only ever have one preset on a mod at a time.
+        // Change this to ID's if we run into issues later but this should help for now.
+        return (Container.ModName == other.Container.ModName);
+    }
+
     public string SelectedOption(string group)
         => ModSettings.TryGetValue(group, out var selected) ? selected[0] : string.Empty;
 
@@ -89,6 +101,7 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
     {
         return new JObject
         {
+            ["Id"] = Id.ToString(),
             ["DirectoryPath"] = Container.DirectoryPath,
             ["Label"] = Label,
             ["ModSettings"] = new JObject(ModSettings.Select(kvp => new JProperty(kvp.Key, new JArray(kvp.Value)))),
@@ -99,6 +112,7 @@ public sealed class ModSettingsPreset : IModSettingPreset, IComparable<ModSettin
     {
         return new JObject
         {
+            ["Id"] = Id.ToString(),
             ["DirectoryPath"] = Container.DirectoryPath,
             ["Label"] = Label,
         };

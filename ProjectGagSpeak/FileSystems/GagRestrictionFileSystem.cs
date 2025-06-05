@@ -26,7 +26,7 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigGagRestrictionChanged>(this, (msg) => OnGagChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is ModuleSection.Gag) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Gag) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -59,9 +59,9 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
         return leaf != null;
     }
 
-    private void OnGagChange(StorageItemChangeType type, GarblerRestriction gag, string? oldString)
+    private void OnGagChange(StorageChangeType type, GarblerRestriction gag, string? oldString)
     {
-        if (type is StorageItemChangeType.Modified)
+        if (type is StorageChangeType.Modified)
             Reload();
     }
 

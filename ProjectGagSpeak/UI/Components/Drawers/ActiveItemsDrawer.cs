@@ -157,7 +157,7 @@ public class ActiveItemsDrawer
                 // return if we are not allow to do the application.
                 if (_gags.CanApply(slotIdx, combo.Current.GagType))
                 {
-                    var updateType = (combo.Current.GagType is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+                    var updateType = (data.GagItem is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveGagSlot()
                     {
                         GagItem = combo.Current.GagType,

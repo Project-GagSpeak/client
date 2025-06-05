@@ -119,7 +119,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnRestrictionChange(StorageItemChangeType type, RestrictionItem restriction, string? oldString)
+    private void OnRestrictionChange(StorageChangeType type, RestrictionItem restriction, string? oldString)
         => SetFilterDirty();
 
 

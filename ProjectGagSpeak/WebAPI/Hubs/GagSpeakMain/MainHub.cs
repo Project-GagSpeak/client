@@ -440,7 +440,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 
         OnKinksterUpdateComposite(dto => _ = Callback_KinksterUpdateComposite(dto));
         OnKinksterUpdateIpc(dto => _ = Callback_KinksterUpdateIpc(dto));
-        OnKinksterUpdateGags(dto => _ = Callback_KinksterUpdateGags(dto));
+        OnKinksterUpdateGagSlot(dto => _ = Callback_KinksterUpdateGagSlot(dto));
         OnKinksterUpdateRestriction(dto => _ = Callback_KinksterUpdateRestriction(dto));
         OnKinksterUpdateRestraint(dto => _ = Callback_KinksterUpdateRestraint(dto));
         OnKinksterUpdateCursedLoot(dto => _ = Callback_KinksterUpdateCursedLoot(dto));

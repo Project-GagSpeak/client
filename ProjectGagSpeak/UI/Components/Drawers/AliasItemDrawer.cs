@@ -17,6 +17,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using ProjectGagSpeak.Utils.Enums;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 

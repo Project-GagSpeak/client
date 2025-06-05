@@ -157,8 +157,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 ToyboxData = new CharaToyboxData()
                 {
                     ActivePattern = _patternManager.ActivePattern?.Identifier ?? Guid.Empty,
-                    ActiveAlarms = _alarmManager.ActiveAlarms.Where(a => a.Enabled).Select(x => x.Identifier),
-                    ActiveTriggers = _triggerManager.Storage.Where(a => a.Enabled).Select(x => x.Identifier),
+                    ActiveAlarms = _alarmManager.ActiveAlarms.Where(a => a.Enabled).Select(x => x.Identifier).ToList(),
+                    ActiveTriggers = _triggerManager.Storage.Where(a => a.Enabled).Select(x => x.Identifier).ToList(),
                 },
                 LightStorageData = newLightStorage,
             };

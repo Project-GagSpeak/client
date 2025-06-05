@@ -135,7 +135,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnRestraintSetChange(StorageItemChangeType type, RestraintSet restraintSet, string? oldString)
+    private void OnRestraintSetChange(StorageChangeType type, RestraintSet restraintSet, string? oldString)
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
