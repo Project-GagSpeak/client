@@ -11,8 +11,8 @@ namespace GagSpeak.CkCommons.Gui.Components;
 
 public class PlaybackDrawer
 {
-    private readonly PatternApplier _activePattern;
-    public PlaybackDrawer(PatternApplier activePattern)
+    private readonly PatternHandler _activePattern;
+    public PlaybackDrawer(PatternHandler activePattern)
     {
         _activePattern = activePattern;
     }

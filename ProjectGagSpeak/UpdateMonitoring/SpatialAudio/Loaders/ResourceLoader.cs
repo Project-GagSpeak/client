@@ -22,7 +22,7 @@ public unsafe partial class ResourceLoader : IDisposable
 {
     private readonly ILogger<ResourceLoader> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly AvfxManager _avfxManager;
     private readonly ScdManager _scdManager;
     private readonly IDataManager _dataManager;
@@ -54,7 +54,7 @@ public unsafe partial class ResourceLoader : IDisposable
     }
 
     public ResourceLoader(ILogger<ResourceLoader> logger,
-        GagspeakMediator mediator, GagspeakConfigService mainConfig, 
+        GagspeakMediator mediator, MainConfigService mainConfig, 
         AvfxManager avfxManager, ScdManager scdManager, 
         IDataManager dataManager, ISigScanner sigScanner, 
         IGameInteropProvider interopProvider)

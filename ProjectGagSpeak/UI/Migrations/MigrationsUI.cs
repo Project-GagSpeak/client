@@ -14,13 +14,13 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 {
     private readonly MigrationTabs _tabMenu = new MigrationTabs();
     private readonly AccountInfoExchanger _infoExchanger;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly CosmeticService _cosmetics;
     private bool ThemePushed = false;
 
     // Come back to this when we actually have everything working properly.
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        AccountInfoExchanger infoExchanger, GagspeakConfigService config,
+        AccountInfoExchanger infoExchanger, MainConfigService config,
         CosmeticService cosmetics) : base(logger, mediator, "GagSpeak Migrations")
     {
         _infoExchanger = infoExchanger;

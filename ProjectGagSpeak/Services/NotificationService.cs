@@ -21,14 +21,14 @@ public enum NotificationLocation
 /// <summary> Service responsible for displaying any sent notifications out to the user. </summary>
 public class NotificationService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly GagspeakConfigService _mainConfig;
-    private readonly GlobalData _playerData;
+    private readonly MainConfigService _mainConfig;
+    private readonly KinksterRequests _playerData;
     private readonly GagRestrictionManager _gags;
     private readonly INotificationManager _notifications;
     private readonly IChatGui _chat;
 
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, GlobalData playerData, GagRestrictionManager gags,
+        MainConfigService mainConfig, KinksterRequests playerData, GagRestrictionManager gags,
         IChatGui chat, INotificationManager notifications) : base(logger, mediator)
     {
         _mainConfig = mainConfig;

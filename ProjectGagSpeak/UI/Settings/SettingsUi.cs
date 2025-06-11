@@ -25,23 +25,23 @@ namespace GagSpeak.CkCommons.Gui;
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GlobalData _global;
+    private readonly KinksterRequests _global;
     private readonly SettingsHardcore _hardcoreSettingsUI;
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
 
     public SettingsUi(
         ILogger<SettingsUi> logger,
         GagspeakMediator mediator,
         MainHub hub,
-        GlobalData global,
+        KinksterRequests global,
         SettingsHardcore hardcoreTab,
         AccountManagerTab accounts,
         DebugTab debug,
         PiShockProvider shockProvider,
-        GagspeakConfigService config) : base(logger, mediator, "GagSpeak Settings")
+        MainConfigService config) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
         _global = global;

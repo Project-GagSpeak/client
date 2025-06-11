@@ -24,7 +24,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly PatternManager _patternManager;
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
-    private readonly TraitsManager _traitManager;
+    private readonly TraitAllowanceManager _traitManager;
 
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
@@ -43,7 +43,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         PatternManager patternManager,
         AlarmManager alarmManager,
         TriggerManager triggerManager,
-        TraitsManager traitManager) : base(logger, mediator)
+        TraitAllowanceManager traitManager) : base(logger, mediator)
     {
         _hub = hub;
         _clientMonitor = clientMonitor;

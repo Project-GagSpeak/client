@@ -204,14 +204,12 @@ public class RestraintEditorModsMoodles : IFancyTab
         using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge());
         
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
-        var presetLookup = VisualApplierMoodles.LatestIpcData.MoodlesPresets.ToDictionary(p => p.GUID, p => p.Title);
-        var statusLookup = VisualApplierMoodles.LatestIpcData.MoodlesStatuses.ToDictionary(s => s.GUID, s => s.Title);
 
         foreach (var moodle in _manager.ItemInEditor!.RestraintMoodles.ToList())
         {
-            var itemLabel = moodle is MoodlePreset
-                ? presetLookup.TryGetValue(moodle.Id, out var presetTitle) ? presetTitle : "INVALID PRESET"
-                : statusLookup.TryGetValue(moodle.Id, out var statusTitle) ? statusTitle : "INVALID STATUS";
+            var itemLabel = moodle is MoodlePreset p
+                ? MoodleHandler.IpcData.Presets.GetValueOrDefault(p.Id).Title.StripColorTags() ?? "<invalid preset>"
+                : MoodleHandler.IpcData.Statuses.GetValueOrDefault(moodle.Id).Title.StripColorTags() ?? "<invalid status>";
             var typeText = moodle is MoodlePreset ? "Moodle Preset Item" : "Moodle Status Item";
 
             using (CkRaii.FramedChildPaddedW(moodle.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))

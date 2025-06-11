@@ -30,7 +30,7 @@ public partial class ControllerUniquePanel : IDisposable
 
     public ControllerUniquePanel(
         ILogger<ControllerUniquePanel> logger,
-        GagspeakConfigService config,
+        MainConfigService config,
         PuppeteerHelper helper,
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,

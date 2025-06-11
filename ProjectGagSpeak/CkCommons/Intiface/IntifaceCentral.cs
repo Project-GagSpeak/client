@@ -37,7 +37,7 @@ public static class IntifaceCentral
         {
             if (pushToForeground)
             {
-                logger.LogDebug("Intiface Central found, bringing to foreground.", LoggerType.ToyboxDevices);
+                logger.LogDebug("Intiface Central found, bringing to foreground.", LoggerType.Toys);
                 User32.ShowWindow(windowHandle, User32.WindowShowStyle.SW_RESTORE);
                 User32.SetForegroundWindow(windowHandle);
             }
@@ -45,7 +45,7 @@ public static class IntifaceCentral
         // otherwise, start the process to open intiface central
         else if (!string.IsNullOrEmpty(AppPath) && File.Exists(AppPath))
         {
-            logger.LogInformation("Starting Intiface Central", LoggerType.ToyboxDevices);
+            logger.LogInformation("Starting Intiface Central", LoggerType.Toys);
             Process.Start(AppPath);
         }
         // or just open the installer if it doesnt exist.

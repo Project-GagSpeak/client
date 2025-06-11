@@ -6,6 +6,7 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
+using GagspeakAPI.Attributes;
 using Glamourer.Api.Enums;
 using Glamourer.Api.Helpers;
 using Glamourer.Api.IpcSubscribers;
@@ -18,7 +19,7 @@ namespace GagSpeak.Interop.Ipc;
 public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller, IGlamourer
 {
     /* ------------- Class Attributes ------------ */
-    private readonly GlobalData _clientData;
+    private readonly KinksterRequests _clientData;
     private readonly ClientMonitor _clientMonitor;
     private readonly OnFrameworkService _frameworkUtils;
 
@@ -34,7 +35,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private readonly SetMetaState SetMetaState; // Changes the metadata state(s) on the Client.
 
     public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator,
-        GlobalData clientData, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils,
+        KinksterRequests clientData, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils,
         IDalamudPluginInterface pi) : base(logger, mediator)
     {
         _clientData = clientData;

@@ -5,6 +5,8 @@ using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Textures;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -41,7 +43,7 @@ public class TraitsDrawer
     private const int TraitCount = 7;
     private static Vector2 TraitBoxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
 
-    public void DrawOneRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
+    public void DrawOneRowTraits(IAttributeItem traits, float width, Traits disabled, bool disableStim = true)
     {
         using (var child = CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight()), HeaderFlags.AddPaddingToHeight))
         {
@@ -49,13 +51,13 @@ public class TraitsDrawer
         }
     }
 
-    public void OneRowTraitsInner(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
+    public void OneRowTraitsInner(IAttributeItem traits, float width, Traits disabled, bool disableStim = true)
     {
         var offsetSpacing = (ImGui.GetContentRegionAvail().X - (TraitBoxSize.X * TraitCount)) / (TraitCount - 1);
 
-        TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.ArmsRestrained, HandsToolTip, disabled.HasAny(Traits.ArmsRestrained));
+        TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.BoundArms, HandsToolTip, disabled.HasAny(Traits.BoundArms));
         ImGui.SameLine(0, offsetSpacing);
-        TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.LegsRestrained, LegsToolTip, disabled.HasAny(Traits.LegsRestrained));
+        TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.BoundLegs, LegsToolTip, disabled.HasAny(Traits.BoundLegs));
         ImGui.SameLine(0, offsetSpacing);
         TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref traits, Traits.Gagged, GaggedToolTip, disabled.HasAny(Traits.Gagged));
         ImGui.SameLine(0, offsetSpacing);
@@ -69,7 +71,7 @@ public class TraitsDrawer
     }
 
 
-    public void DrawTwoRowTraits(ITraitHolder traits, float width, Traits disabled, bool disableStim = true)
+    public void DrawTwoRowTraits(IAttributeItem traits, float width, Traits disabled, bool disableStim = true)
     {
         using (CkRaii.HeaderChild("Hardcore Traits", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y), HeaderFlags.AddPaddingToHeight))
         {
@@ -77,9 +79,9 @@ public class TraitsDrawer
 
             using (ImRaii.Group())
             {
-                TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.ArmsRestrained, HandsToolTip, disabled.HasAny(Traits.ArmsRestrained));
+                TraitCheckbox("HandsTied", _textures.CoreTextures[CoreTexture.RestrainedArmsLegs], ref traits, Traits.BoundArms, HandsToolTip, disabled.HasAny(Traits.BoundArms));
                 ImGui.SameLine(0, offsetSpacing);
-                TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.LegsRestrained, LegsToolTip, disabled.HasAny(Traits.LegsRestrained));
+                TraitCheckbox("LegsTied", _textures.CoreTextures[CoreTexture.Restrained], ref traits, Traits.BoundLegs, LegsToolTip, disabled.HasAny(Traits.BoundLegs));
                 ImGui.SameLine(0, offsetSpacing);
                 TraitCheckbox("Gagged", _textures.CoreTextures[CoreTexture.Gagged], ref traits, Traits.Gagged, GaggedToolTip, disabled.HasAny(Traits.Gagged));
                 ImGui.SameLine(0, offsetSpacing);
@@ -107,13 +109,13 @@ public class TraitsDrawer
         var endX = ImGui.GetCursorPosX();
         var currentX = endX;
 
-        if (itemTraits.HasAny(Traits.LegsRestrained))
+        if (itemTraits.HasAny(Traits.BoundLegs))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Restrained].ImGuiHandle, iconSize);
         }
-        if (itemTraits.HasAny(Traits.ArmsRestrained))
+        if (itemTraits.HasAny(Traits.BoundArms))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
@@ -131,7 +133,7 @@ public class TraitsDrawer
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, iconSize);
         }
-        if (itemTraits.HasAny(Traits.ArmsRestrained))
+        if (itemTraits.HasAny(Traits.BoundArms))
         {
             currentX -= (iconSize.X + spacing);
             ImGui.SameLine(currentX);
@@ -159,7 +161,7 @@ public class TraitsDrawer
         }
     }
 
-    public bool TraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, Traits toggleTrait, string tt, bool disabled) where T : ITraitHolder
+    public bool TraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, Traits toggleTrait, string tt, bool disabled) where T : IAttributeItem
     {
         using var group = ImRaii.Group();
         var changed = false;
@@ -176,7 +178,7 @@ public class TraitsDrawer
         return changed;
     }
 
-    public bool StimTraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, string tt, bool disabled) where T : ITraitHolder
+    public bool StimTraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, string tt, bool disabled) where T : IAttributeItem
     {
         using var group = ImRaii.Group();
         var changed = false;

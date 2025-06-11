@@ -18,7 +18,7 @@ namespace GagSpeak.CkCommons.Gui;
 public class IntroUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GagspeakConfigService _configService;
+    private readonly MainConfigService _configService;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly ClientMonitor _clientMonitor;
     private readonly TutorialService _guides;
@@ -30,7 +30,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private string _secretKey = string.Empty;
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
-        GagspeakConfigService configService, ServerConfigurationManager serverConfigs,
+        MainConfigService configService, ServerConfigurationManager serverConfigs,
         ClientMonitor clientMonitor, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {

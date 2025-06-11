@@ -9,6 +9,7 @@ using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using GagSpeak.CkCommons.Raii;
 using Dalamud.Interface.Utility;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 

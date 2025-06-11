@@ -1,12 +1,10 @@
 using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Hardcore.ForcedStay;
-using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
 
 namespace GagSpeak.Services.Configs;
 
-public class GagspeakConfigService : IHybridSavable
+public class MainConfigService : IHybridSavable
 {
     private readonly HybridSaveService _saver;
     [JsonIgnore] public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
@@ -21,11 +19,11 @@ public class GagspeakConfigService : IHybridSavable
             ["Version"] = ConfigVersion,
             ["Config"] = JObject.FromObject(Config),
             ["LogLevel"] = LogLevel.ToString(),
-            ["LoggerFilters"] = JArray.FromObject(LoggerFilters)
+            ["LoggerFilters"] = JToken.FromObject(LoggerFilters)
         }.ToString(Formatting.Indented);
     }
 
-    public GagspeakConfigService(HybridSaveService saver)
+    public MainConfigService(HybridSaveService saver)
     {
         _saver = saver;
         Load();
@@ -36,7 +34,7 @@ public class GagspeakConfigService : IHybridSavable
     {
         var file = _saver.FileNames.MainConfig;
         GagSpeak.StaticLog.Information("Loading in Config for file: " + file);
-        string jsonText = "";
+        var jsonText = "";
         JObject jObject = new();
         try
         {
@@ -76,33 +74,47 @@ public class GagspeakConfigService : IHybridSavable
             else
                 LogLevel = LogLevel.Trace;  // Default fallback
 
-            LoggerFilters = jObject["LoggerFilters"]?.ToObject<HashSet<LoggerType>>() ?? new HashSet<LoggerType>();
+            // Handle outdated hashset format, and new format for log filters.
+            var token = jObject["LoggerFilters"];
+            if(token is JArray array)
+            {
+                var list = array.ToObject<List<LoggerType>>() ?? new List<LoggerType>();
+                LoggerFilters = list.Aggregate(LoggerType.None, (acc, val) => acc | val);
+            }
+            else
+            {
+                LoggerFilters = token?.ToObject<LoggerType>() ?? LoggerType.Recommended;
+            }
+
             GagSpeak.StaticLog.Information("Config loaded.");
             Save();
         }
         catch (Exception ex) { GagSpeak.StaticLog.Error("Failed to load config." + ex); }
     }
 
-    public GagspeakConfig Config { get; private set; } = new GagspeakConfig();
+    public GagspeakConfig Config { get; private set; } = new();
     public static LogLevel LogLevel = LogLevel.Trace;
-    public static HashSet<LoggerType> LoggerFilters = new HashSet<LoggerType>();
+    public static LoggerType LoggerFilters = LoggerType.Recommended;
+    [JsonConverter(typeof(ConcreteNodeConverter))]
+    public static TextFolderNode ForcedStayPromptList = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
+
 
     // Hardcore RUNTIME ONLY VARIABLE STORAGE.
-    [JsonIgnore] internal string LastSeenNodeName { get; set; } = string.Empty; // The Node Visible Name
-    [JsonIgnore] internal string LastSeenNodeLabel { get; set; } = string.Empty; // The Label of the nodes Prompt
-    [JsonIgnore] internal (int Index, string Text)[] LastSeenListEntries { get; set; } = []; // The nodes Options
-    [JsonIgnore] internal string LastSeenListSelection { get; set; } = string.Empty; // Option we last selected
-    [JsonIgnore] internal int LastSeenListIndex { get; set; } // Index in the list that was selected
-    [JsonIgnore] internal TextEntryNode LastSelectedListNode { get; set; } = new();
+    [JsonIgnore] internal static string LastSeenNodeName { get; set; } = string.Empty; // The Node Visible Name
+    [JsonIgnore] internal static string LastSeenNodeLabel { get; set; } = string.Empty; // The Label of the nodes Prompt
+    [JsonIgnore] internal static (int Index, string Text)[] LastSeenListEntries { get; set; } = []; // The nodes Options
+    [JsonIgnore] internal static string LastSeenListSelection { get; set; } = string.Empty; // Option we last selected
+    [JsonIgnore] internal static int LastSeenListIndex { get; set; } // Index in the list that was selected
+    [JsonIgnore] internal static TextEntryNode LastSelectedListNode { get; set; } = new();
 
-    #region Update Monitoring And Hardcore
-    public IEnumerable<ITextNode> GetAllNodes()
+    #region Hardcore & Helpers
+    public static IEnumerable<ITextNode> GetAllNodes()
     {
         return new ITextNode[] { Config.ForcedStayPromptList }
             .Concat(GetAllNodes(Config.ForcedStayPromptList.Children));
     }
 
-    public IEnumerable<ITextNode> GetAllNodes(IEnumerable<ITextNode> nodes)
+    public static IEnumerable<ITextNode> GetAllNodes(IEnumerable<ITextNode> nodes)
     {
         foreach (var node in nodes)
         {
@@ -177,7 +189,7 @@ public class GagspeakConfigService : IHybridSavable
         Save();
     }
 
-    #endregion Update Monitoring And Hardcore
+    #endregion Hardcore & Helpers
 }
 
 // The container for our main config.
@@ -238,8 +250,6 @@ public class GagspeakConfig
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
     public float BlindfoldMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
-    [JsonConverter(typeof(ConcreteNodeConverter))]
-    public TextFolderNode ForcedStayPromptList { get; set; } = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 }
 

@@ -26,7 +26,7 @@ public sealed class GagFileSystem : CkFileSystem<GarblerRestriction>, IMediatorS
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigGagRestrictionChanged>(this, (msg) => OnGagChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Gag) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Gag) Reload(); });
         Changed += OnChange;
         Reload();
     }

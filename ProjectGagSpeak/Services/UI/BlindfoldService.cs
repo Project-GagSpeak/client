@@ -10,7 +10,7 @@ namespace GagSpeak.CkCommons.Gui;
 /// <summary> Manages the rendering of a blindfold overlay onto your screen. </summary>
 public class BlindfoldService
 {
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     private readonly CosmeticService _renderService;
 
     // Overlay control.
@@ -26,7 +26,7 @@ public class BlindfoldService
     public bool IsBlindfolded => _appliedItem is not null;
     public bool AnimationFinished = false;
 
-    public BlindfoldService(GagspeakConfigService config, CosmeticService renderService)
+    public BlindfoldService(MainConfigService config, CosmeticService renderService)
     {
         _config = config;
         _renderService = renderService;

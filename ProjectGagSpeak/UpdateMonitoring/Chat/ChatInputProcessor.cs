@@ -27,9 +27,9 @@ namespace GagSpeak.UpdateMonitoring.Chat;
 public unsafe class ChatInputDetour : IDisposable
 {
     private readonly ILogger<ChatInputDetour> _logger;
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     private readonly GagspeakMediator _mediator;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly GagGarbler _garbler;
     private readonly EmoteService _emoteMonitor;
     private readonly GagRestrictionManager _gags;
@@ -40,7 +40,7 @@ public unsafe class ChatInputDetour : IDisposable
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     internal ChatInputDetour(ILogger<ChatInputDetour> logger, GagspeakMediator mediator,
-        GagspeakConfigService config, GlobalData clientData, GagGarbler garbler,
+        MainConfigService config, KinksterRequests clientData, GagGarbler garbler,
         EmoteService emoteMonitor, GagRestrictionManager gags, ISigScanner scanner, IGameInteropProvider interop)
     {
         // initialize the classes
@@ -74,7 +74,9 @@ public unsafe class ChatInputDetour : IDisposable
 
             // Debug the output (remove later)
             foreach (var payload in originalSeString.Payloads)
-                _logger.LogTrace($"Message Payload [{payload.Type}]: {payload.ToString()}", LoggerType.ChatDetours);
+                _logger.LogTrace($"Message Payload [{payload.Type}]: {payload.ToString()}");
+
+            _logger.LogTrace($"Message Payload Present", LoggerType.ChatDetours);
 
             if (string.IsNullOrWhiteSpace(messageDecoded))
             {

@@ -241,13 +241,16 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         if (!APIAvailable)
             return PenumbraApiEc.NothingChanged;
 
+        var readOnlyModSettings = modPreset.ModSettings
+            .ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value);
+
         // set, or update, the temporary mod settings for the mod.
         return SetOrUpdateTempMod.Invoke(PLAYER_OBJECT_IDX,
             modPreset.Container.DirectoryPath,
             false,
             true,
             modPreset.Container.Priority + 25,
-            (IReadOnlyDictionary<string, IReadOnlyList<string>>)modPreset.ModSettings,
+            readOnlyModSettings,
             GAGSPEAK_ID,
             GAGSPEAK_KEY,
             modPreset.Container.ModName);

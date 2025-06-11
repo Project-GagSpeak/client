@@ -41,14 +41,14 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             var result = await _mainHub.UserChangeKinksterRestraintState(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
                 ResetSelection();
                 ResetInputs();
                 return false;
             }
             else
             {
-                Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
                 ResetSelection();
                 ResetInputs();
                 return true;
@@ -71,14 +71,14 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             var result = await _mainHub.UserChangeKinksterRestraintState(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
                 ResetSelection();
                 ResetInputs();
                 return false;
             }
             else
             {
-                Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
                 ResetSelection();
                 ResetInputs();
                 return true;

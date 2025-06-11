@@ -16,7 +16,7 @@ namespace GagSpeak.CkCommons.Gui.Components;
 public class DrawRequests : IRequestsFolder
 {
     private readonly MainHub _hub;
-    private readonly GlobalData _clientData;
+    private readonly KinksterRequests _clientData;
     private readonly DrawEntityFactory _pairRequestFactory;
     private readonly CosmeticService _cosmetics;
 
@@ -33,7 +33,7 @@ public class DrawRequests : IRequestsFolder
     public int TotalOutgoing => _clientData.OutgoingRequests.Count();
     public int TotalIncoming => _clientData.IncomingRequests.Count();
 
-    public DrawRequests(MainHub mainHub, GlobalData clientData,
+    public DrawRequests(MainHub mainHub, KinksterRequests clientData,
         DrawEntityFactory pairRequestFactory, CosmeticService cosmetics)
     {
         _hub = mainHub;

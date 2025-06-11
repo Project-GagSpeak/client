@@ -12,13 +12,13 @@ namespace GagSpeak.Services;
 public sealed class SafewordService : MediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GlobalData _playerManager;
+    private readonly KinksterRequests _playerManager;
     private readonly PairManager _pairManager;
     private readonly VisualStateListener _visualListener; // can directly call upon all reversion operations.
     private readonly ToyboxStateListener _toyboxListener;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub hub, GlobalData playerManager, PairManager pairManager) : base(logger, mediator)
+        MainHub hub, KinksterRequests playerManager, PairManager pairManager) : base(logger, mediator)
     {
         _hub = hub;
         _playerManager = playerManager;

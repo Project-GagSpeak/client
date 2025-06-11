@@ -21,13 +21,13 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
     private readonly OnFrameworkService _frameworkUtils;
     private readonly ClientMonitor _clientMonitor;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
-        OnFrameworkService frameworkUtils, GagspeakConfigService mainConfig,
+        OnFrameworkService frameworkUtils, MainConfigService mainConfig,
         ServerConfigurationManager serverConfigs, ClientMonitor clientMonitor, 
         IServiceScopeFactory scopeFactory) : base(logger, mediator)
     {
@@ -161,7 +161,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ForcedStayCallback>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ActionMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementMonitor>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ActionEffectMonitor>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<Signatures>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<OnEmote>();
 
             // stuff that should probably be a hosted service but isn't yet.

@@ -56,14 +56,14 @@ public unsafe partial class ResourceLoader
 
         var gamePathString = gamePath.ToString();
 
-        _logger.LogDebug(gamePathString, LoggerType.SpatialAudioLogger);
+        _logger.LogDebug(gamePathString, LoggerType.SpatialAudio);
 
         var replacedPath = GetReplacePath(gamePathString, out var localPath) ? localPath : null;
 
         if (replacedPath == null || replacedPath.Length >= 260)
         {
             var unreplaced = CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, resParams, isUnknown);
-            if (DoDebug(gamePathString)) _logger.LogDebug($"ORIGINAL: {gamePathString} -> " + new IntPtr(unreplaced).ToString("X8"), LoggerType.SpatialAudioLogger);
+            if (DoDebug(gamePathString)) _logger.LogDebug($"ORIGINAL: {gamePathString} -> " + new IntPtr(unreplaced).ToString("X8"), LoggerType.SpatialAudio);
             return unreplaced;
         }
 
@@ -75,7 +75,7 @@ public unsafe partial class ResourceLoader
         path = resolvedPath.InternalName.Path;
 
         var replaced = CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, resParams, isUnknown);
-        _logger.LogDebug($"REPLACED: {gamePathString} -> {replacedPath} -> " + new IntPtr(replaced).ToString("X8"), LoggerType.SpatialAudioLogger);
+        _logger.LogDebug($"REPLACED: {gamePathString} -> {replacedPath} -> " + new IntPtr(replaced).ToString("X8"), LoggerType.SpatialAudio);
         return replaced;
     }
 
@@ -92,7 +92,7 @@ public unsafe partial class ResourceLoader
         // dont need this, but do need the output.
         var isPenumbra = ProcessPenumbraPath(originalPath, out var gameFsPath);
 
-        _logger.LogDebug(gameFsPath, LoggerType.SpatialAudioLogger);
+        _logger.LogDebug(gameFsPath, LoggerType.SpatialAudio);
 
         var isRooted = Path.IsPathRooted(gameFsPath);
 
@@ -111,11 +111,11 @@ public unsafe partial class ResourceLoader
         // call the original if it's a penumbra path that doesn't need replacement as well
         if (gameFsPath == null || gameFsPath.Length >= 260 || !isRooted || isPenumbra)
         {
-            _logger.LogDebug($"ORIGINAL: {originalPath}", LoggerType.SpatialAudioLogger);
+            _logger.LogDebug($"ORIGINAL: {originalPath}", LoggerType.SpatialAudio);
             return ReadSqpackHook.Original(fileHandler, fileDesc, priority, isSync);
         }
 
-        _logger.LogDebug($"REPLACED: {gameFsPath}", LoggerType.SpatialAudioLogger);
+        _logger.LogDebug($"REPLACED: {gameFsPath}", LoggerType.SpatialAudio);
 
         fileDesc->FileMode = FileMode.LoadUnpackedResource;
 

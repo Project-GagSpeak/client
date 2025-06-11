@@ -8,12 +8,14 @@ using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Data;
+using GagSpeak.PlayerData.Pairs;
 using GagSpeak.PlayerState.Listener;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
+using System.Text.RegularExpressions;
 
 namespace GagSpeak.UpdateMonitoring.Chat;
 
@@ -26,25 +28,35 @@ namespace GagSpeak.UpdateMonitoring.Chat;
 /// </summary>
 public class ChatMonitor : DisposableMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _mainConfig;
-    private readonly GlobalData _globals;
+    private readonly MainConfigService _config;
+    private readonly KinksterRequests _globals;
     private readonly ChatSender _chatSender;
+    private readonly PairManager _pairs;
+    private readonly GagRestrictionManager _gags;
     private readonly PuppeteerManager _manager;
-    private readonly TriggerMonitor _triggerMonitor;
+    private readonly TriggerHandler _triggerMonitor;
     private readonly ClientMonitor _clientMonitor;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
     private Stopwatch messageTimer;
 
     /// <summary> This is the constructor for the OnChatMsgManager class. </summary>
-    public ChatMonitor(ILogger<ChatMonitor> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, GlobalData globals, ChatSender chatSender,
-        PuppeteerManager manager, TriggerMonitor triggerMonitor, ClientMonitor client, 
+    public ChatMonitor(
+        ILogger<ChatMonitor> logger,
+        GagspeakMediator mediator,
+        MainConfigService config,
+        KinksterRequests globals,
+        ChatSender chatSender,
+        GagRestrictionManager gags,
+        PuppeteerManager manager,
+        TriggerHandler triggerMonitor,
+        ClientMonitor client, 
         DeathRollService deathRolls, IChatGui chat) : base(logger, mediator)
     {
-        _mainConfig = mainConfig;
+        _config = config;
         _globals = globals;
         _chatSender = chatSender;
+        _gags = gags;
         _manager = manager;
         _triggerMonitor = triggerMonitor;
         _clientMonitor = client;
@@ -105,7 +117,7 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
             else
             {
                 // Should check under our name if this isn't valid as someone elses player payload.
-                Logger.LogDebug("Message was from self.", LoggerType.ToyboxTriggers);
+                Logger.LogDebug("Message was from self.", LoggerType.ChatDetours);
                 _deathRolls.ProcessMessage(type, _clientMonitor.ClientPlayer.NameWithWorld(), message);
             }
         }
@@ -137,7 +149,7 @@ public class ChatMonitor : DisposableMediatorSubscriberBase
         }
 
         // return if the message type is not in our valid chat channels for puppeteer.
-        if (_globals.GlobalPerms is null || channel.Value.IsChannelEnabled(_mainConfig.Config.PuppeteerChannelsBitfield))
+        if (_globals.GlobalPerms is null || channel.Value.IsChannelEnabled(_config.Config.PuppeteerChannelsBitfield))
             return;
 
         // check for global puppeteer triggers

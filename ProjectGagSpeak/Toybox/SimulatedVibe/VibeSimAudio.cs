@@ -66,17 +66,17 @@ public class VibeSimAudio
         try
         {
             // if devicechange is false, assume we are initializing
-            _logger.LogInformation($"Detected Device Count: {WaveOut.DeviceCount}", LoggerType.VibeControl);
+            _logger.LogInformation($"Detected Device Count: {WaveOut.DeviceCount}", LoggerType.Toys);
             // see what device is currently selected
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
                 var capabilities = WaveOut.GetCapabilities(i);
-                _logger.LogInformation($"Device {i}: {capabilities.ProductName}", LoggerType.VibeControl);
+                _logger.LogInformation($"Device {i}: {capabilities.ProductName}", LoggerType.Toys);
                 PlaybackDevices.Add(capabilities.ProductName); // add the device name to the list
             }
 
             waveOutDevice.Init(waveProvider);
-            _logger.LogInformation("SoundPlayer sucessfully setup with NAudio", LoggerType.VibeControl);
+            _logger.LogInformation("SoundPlayer sucessfully setup with NAudio", LoggerType.Toys);
         }
         catch (NAudio.MmException ex)
         {
@@ -92,11 +92,11 @@ public class VibeSimAudio
                     {
                         var capabilities = WaveOut.GetCapabilities(i);
                         _logger.LogInformation($"Device {i}: {capabilities.ProductName}\n" +
-                        $" --- Supports Playback Control: {capabilities.SupportsPlaybackRateControl}", LoggerType.VibeControl);
+                        $" --- Supports Playback Control: {capabilities.SupportsPlaybackRateControl}", LoggerType.Toys);
 
                         waveOutDevice = new WaveOutEvent { DeviceNumber = i, DesiredLatency = 80, NumberOfBuffers = 3 };
                         waveOutDevice.Init(waveProvider);
-                        _logger.LogInformation("SoundPlayer successfully setup with NAudio for device " + i, LoggerType.VibeControl);
+                        _logger.LogInformation("SoundPlayer successfully setup with NAudio for device " + i, LoggerType.Toys);
                         // if we reach here, the device is valid and we can break the loop
                         ActivePlaybackDeviceId = i + 1;
                         break;
@@ -145,7 +145,7 @@ public class VibeSimAudio
 
         waveOutDevice = new WaveOutEvent { DeviceNumber = deviceId - 1, DesiredLatency = 80, NumberOfBuffers = 3 };
         waveOutDevice.Init(pitchShifter.ToWaveProvider16());
-        _logger.LogInformation($"Switched to device {deviceId}: {PlaybackDevices[deviceId]}", LoggerType.VibeControl);
+        _logger.LogInformation($"Switched to device {deviceId}: {PlaybackDevices[deviceId]}", LoggerType.Toys);
 
         if (wasActiveBeforeChange)
         {

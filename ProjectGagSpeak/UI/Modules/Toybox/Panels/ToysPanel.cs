@@ -25,18 +25,18 @@ public class ToysPanel
 {
     private readonly ILogger<ToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly SexToyManager _manager;
-    private readonly GagspeakConfigService _clientConfigs;
+    private readonly MainConfigService _clientConfigs;
     private readonly ServerConfigService _serverConfigs;
     private readonly TutorialService _guides;
 
     public ToysPanel(
         ILogger<ToysPanel> logger,
         GagspeakMediator mediator,
-        GlobalData playerData,
+        KinksterRequests playerData,
         SexToyManager toysManager,
-        GagspeakConfigService clientConfigs,
+        MainConfigService clientConfigs,
         ServerConfigService serverConfigs,
         TutorialService guides)
     {

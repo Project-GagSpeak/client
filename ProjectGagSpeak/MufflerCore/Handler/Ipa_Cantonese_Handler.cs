@@ -10,10 +10,10 @@ public class Ipa_Cantonese_Handler
 {
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Cantonese_Handler> _logger; // Logger
-    private readonly GagspeakConfigService _config; // The GagSpeak configuration
+    private readonly MainConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pluginInterface; // Plugin interface for file access
 
-    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
+    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;

@@ -68,12 +68,12 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Executing Pattern {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s Toy", LoggerType.Permissions);
+            Log.LogDebug($"Executing Pattern {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
             return true;
         }
     }

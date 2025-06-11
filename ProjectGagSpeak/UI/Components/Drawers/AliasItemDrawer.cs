@@ -17,7 +17,8 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using ProjectGagSpeak.Utils.Enums;
+using GagSpeak.Utils.Enums;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 
@@ -250,7 +251,7 @@ public sealed class AliasItemDrawer
                     aliasItem.InputCommand = inputText;
         }
 
-        var ipc = VisualApplierMoodles.LatestIpcData;
+        var ipc = MoodleHandler.IpcData;
         foreach (var triggerAction in aliasItem.Actions)
         {
             switch (triggerAction)
@@ -516,7 +517,7 @@ public sealed class AliasItemDrawer
         CkGui.FramedIconText(FAI.WandMagicSparkles);
         CkGui.AttachToolTip("Displays the Identity of the moodle status/preset applied.");
 
-        if (action.MoodleItem is MoodlePreset p && ipc.MoodlesPresets.FirstOrDefault(m => m.GUID == p.Id) is { } preset)
+        if (action.MoodleItem is MoodlePreset p && ipc.Presets.TryGetValue(p.Id, out var preset))
         {
             CkGui.TextFrameAlignedInline("The Moodle preset ");
             CkGui.ColorTextFrameAlignedInline(preset.Title.StripColorTags(), ImGuiColors.TankBlue);
@@ -524,19 +525,19 @@ public sealed class AliasItemDrawer
             {
                 CkGui.TextFrameAlignedInline("applies the moodles");
                 ImUtf8.SameLineInner();
-                var statuses = ipc.MoodlesStatuses.Where(m => preset.Statuses.Contains(m.GUID)).ToList();
-                _moodleDrawer.DrawMoodleStatuses(statuses, MoodleDrawer.IconSizeFramed);
+                var statuses = ipc.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
+                _moodleDrawer.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
             }
             else
                 CkGui.TextFrameAlignedInline("is applied.");
         }
-        else if (action.MoodleItem is Moodle s && ipc.MoodlesStatuses.FirstOrDefault(m => m.GUID == s.Id) is { } status)
+        else if (ipc.Statuses.TryGetValue(action.MoodleItem.Id, out var status))
         {
             CkGui.TextFrameAlignedInline("The Moodle ");
             CkGui.ColorTextFrameAlignedInline(status.Title.StripColorTags(), ImGuiColors.TankBlue);
             CkGui.TextFrameAlignedInline("is applied.");
             ImUtf8.SameLineInner();
-            _moodleDrawer.DrawMoodleStatuses([status], MoodleDrawer.IconSizeFramed);
+            _moodleDrawer.DrawStatusInfos([status], MoodleDrawer.IconSizeFramed);
         }
         else
         {
@@ -575,8 +576,8 @@ public sealed class AliasItemDrawer
             if (preset.StatusIds.Count() > 0)
             {
                 ImGui.SameLine();
-                _moodleDrawer.DrawMoodleStatuses([
-                    ..ipc.MoodlesStatuses.Where(m => preset.StatusIds.Contains(m.GUID)).ToList()
+                _moodleDrawer.DrawStatusInfos([
+                    ..ipc.StatusList.Where(m => preset.StatusIds.Contains(m.GUID)).ToList()
                 ], MoodleDrawer.IconSizeFramed);
             }
         }
@@ -589,10 +590,10 @@ public sealed class AliasItemDrawer
                 action.MoodleItem = new Moodle();
 
             // Verify a second time incase the item has changed.
-            if (ipc.MoodlesStatuses.FirstOrDefault(m => m.GUID == status.Id) is { } match)
+            if (ipc.Statuses.TryGetValue(status.Id, out var match))
             {
                 ImUtf8.SameLineInner();
-                _moodleDrawer.DrawMoodleStatuses([match], MoodleDrawer.IconSizeFramed);
+                _moodleDrawer.DrawStatusInfos([match], MoodleDrawer.IconSizeFramed);
             }
         }
     }

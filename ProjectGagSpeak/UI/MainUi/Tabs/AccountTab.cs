@@ -19,12 +19,12 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class AccountTab
 {
     private readonly GagspeakMediator _mediator;
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     private readonly KinkPlateService _profileManager;
     private readonly TutorialService _guides;
     public AccountTab(
         GagspeakMediator mediator,
-        GagspeakConfigService config,
+        MainConfigService config,
         KinkPlateService profiles,
         TutorialService guides)
     {

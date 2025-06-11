@@ -20,12 +20,12 @@ public readonly record struct ImageMetadataGS(ImageDataType Kind, Vector2 BaseSi
 public class ThumbnailUI : WindowMediatorSubscriberBase
 {
     private readonly ImageImportTool _imageImport;
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     public ThumbnailUI(
         ILogger<ThumbnailUI> logger,
         GagspeakMediator mediator,
         ImageImportTool imageImport,
-        GagspeakConfigService config, 
+        MainConfigService config, 
         CosmeticService cosmetics,
         ImageMetadataGS imageBase) : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
     {

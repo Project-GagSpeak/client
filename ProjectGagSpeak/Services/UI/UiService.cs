@@ -19,7 +19,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly MainMenuTabs _mainTabMenu;
 
     private readonly ILogger<UiService> _logger;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ServerConfigService _serverConfig;
     private readonly UiFactory _uiFactory;
     private readonly WindowSystem _windowSystem;
@@ -27,7 +27,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly IUiBuilder _uiBuilder;
 
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
-        GagspeakConfigService mainConfig, ServerConfigService serverConfig,
+        MainConfigService mainConfig, ServerConfigService serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
         UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog,
         IUiBuilder uiBuilder) : base(logger, mediator)
@@ -65,7 +65,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
             foreach (var window in pairPermissionWindows)
             {
-                _logger.LogTrace("Closing pair permission window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
+                _logger.LogTrace("Closing pair permission window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.StickyUI);
                 _windowSystem.RemoveWindow(window);
                 _createdWindows.Remove(window);
                 window.Dispose();
@@ -79,7 +79,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             if (_windowSystem.Windows.Contains(msg.Window))
                 _windowSystem.RemoveWindow(msg.Window);
             else
-                _logger.LogWarning("Attempted to remove a window that is not registered in the WindowSystem: " + msg.Window.WindowName, LoggerType.UiCore);
+                _logger.LogWarning("Attempted to remove a window that is not registered in the WindowSystem: " + msg.Window.WindowName, LoggerType.UI);
 
             _createdWindows.Remove(msg.Window);
             msg.Window.Dispose();
@@ -121,7 +121,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 if (_createdWindows.FirstOrDefault(p => p is MainUI) is not null)
                 {
 
-                    _logger.LogTrace("Forcing main UI to whitelist tab", LoggerType.Permissions);
+                    _logger.LogTrace("Forcing main UI to whitelist tab", LoggerType.StickyUI);
                     _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
                 }
                 else
@@ -147,7 +147,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             }
             else // We are attempting to open a stickyPairUi for another pair. Let's first destroy the current pairStickyUI's if they exist.
             {
-                _logger.LogDebug("Destroying other pair's sticky UI's and recreating UI for new pair.", LoggerType.UiCore);
+                _logger.LogDebug("Destroying other pair's sticky UI's and recreating UI for new pair.", LoggerType.UI);
                 foreach (var window in _createdWindows.OfType<PairStickyUI>())
                 {
                     _windowSystem.RemoveWindow(window);
@@ -156,7 +156,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 }
 
                 // Create a new sticky pair perms window for the pair
-                _logger.LogTrace("Creating new sticky window for pair "+msg.Pair?.UserData.AliasOrUID, LoggerType.Permissions);
+                _logger.LogTrace("Creating new sticky window for pair "+msg.Pair?.UserData.AliasOrUID, LoggerType.StickyUI);
                 var newWindow = _uiFactory.CreateStickyPairPerms(msg.Pair!, msg.PermsWindowType);
                 _createdWindows.Add(newWindow);
                 _windowSystem.AddWindow(newWindow);
@@ -167,13 +167,13 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         {
             if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.ImageBase.Kind == msg.MetaData.Kind) is ThumbnailUI match)
             {
-                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.MetaData.Kind, LoggerType.Permissions);
+                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.MetaData.Kind, LoggerType.StickyUI);
                 match.Toggle();
             }
             else
             {
                 // If other windows do exist, but do not match our current purpose, then we should close them, as only one should be worked on at a time.
-                _logger.LogDebug("Destroying other thumbnail browsers and recreating UI.", LoggerType.UiCore);
+                _logger.LogDebug("Destroying other thumbnail browsers and recreating UI.", LoggerType.UI);
                 foreach (var window in _createdWindows.OfType<ThumbnailUI>().ToList())
                 {
                     _windowSystem.RemoveWindow(window);
@@ -182,7 +182,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 }
 
                 // Create a new thumbnail browser for the type
-                _logger.LogTrace("Creating new thumbnail browser for type " + msg.MetaData.Kind, LoggerType.UiCore);
+                _logger.LogTrace("Creating new thumbnail browser for type " + msg.MetaData.Kind, LoggerType.UI);
                 var newWindow = _uiFactory.CreateThumbnailUi(msg.MetaData);
                 _createdWindows.Add(newWindow);
                 _windowSystem.AddWindow(newWindow);
@@ -202,7 +202,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
         foreach (var window in pairPermissionWindows)
         {
-            _logger.LogTrace("Closing pair permission window for pair " + ((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.Permissions);
+            _logger.LogTrace("Closing pair permission window for pair " + ((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.StickyUI);
             _windowSystem.RemoveWindow(window);
             _createdWindows.Remove(window);
             window.Dispose();
@@ -245,7 +245,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         // dispose of the base class
         base.Dispose(disposing);
 
-        _logger.LogTrace("Disposing "+GetType().Name, LoggerType.UiCore);
+        _logger.LogTrace("Disposing "+GetType().Name, LoggerType.UI);
         _windowSystem.RemoveAllWindows();
         foreach (var window in _createdWindows)
             window.Dispose();

@@ -17,7 +17,7 @@ namespace GagSpeak.CkCommons.Gui.Wardrobe;
 /// <remarks> You will need to add a mediator subscription to update things yourself! </remarks>
 public class KinksterSearchList
 {
-    protected readonly GagspeakConfigService _config;
+    protected readonly MainConfigService _config;
     protected readonly IdDisplayHandler _nameHandle;
     protected readonly PairManager _pairs;
     protected readonly CosmeticService _cosmetics;
@@ -26,7 +26,7 @@ public class KinksterSearchList
     protected string _searchValue = string.Empty;
 
     public KinksterSearchList(
-        GagspeakConfigService config,
+        MainConfigService config,
         IdDisplayHandler handler, 
         PairManager pairs, 
         CosmeticService cosmetics)

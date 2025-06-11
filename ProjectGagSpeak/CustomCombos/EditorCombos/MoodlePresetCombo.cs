@@ -12,12 +12,12 @@ namespace GagSpeak.CustomCombos.EditorCombos;
 
 public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
 {
-    private int longestPresetCount => VisualApplierMoodles.LatestIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
+    private int _maxPresetCount => MoodleHandler.IpcData.Presets.Values.Max(x => x.Statuses.Count);
     private Guid _currentItem;
-    private float MaxIconWidth => IconWithPadding * (longestPresetCount - 1);
+    private float MaxIconWidth => IconWithPadding * (_maxPresetCount - 1);
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public MoodlePresetCombo(float iconScale, IconDisplayer monitor, ILogger log)
-        : base(iconScale, monitor, log, () => [ .. VisualApplierMoodles.LatestIpcData.MoodlesPresets.OrderBy(x => x.Title)])
+        : base(iconScale, monitor, log, () => [ .. MoodleHandler.IpcData.Presets.Values.OrderBy(x => x.Title)])
     {
         SearchByParts = false;
     }
@@ -82,9 +82,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
         for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
         {
             var status = moodlePreset.Statuses[i];
-            var info = VisualApplierMoodles.LatestIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == status);
-
-            if (EqualityComparer<MoodlesStatusInfo>.Default.Equals(info, default))
+            if (!MoodleHandler.IpcData.Statuses.TryGetValue(status, out var info))
             {
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + IconWithPadding);
                 continue;

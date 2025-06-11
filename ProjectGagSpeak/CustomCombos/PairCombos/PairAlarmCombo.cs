@@ -66,12 +66,12 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+            Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Toggling Alarm on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Toggling Alarm on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
     }

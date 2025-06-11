@@ -1,4 +1,5 @@
 using GagSpeak.PlayerState.Models;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;

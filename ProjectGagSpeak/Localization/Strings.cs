@@ -591,7 +591,7 @@ namespace GagSpeak.Localization
 
         public readonly string ToyboxOverview = Loc.Localize("Tabs_ToyboxOverview", "Overview");
         public readonly string ToyboxVibeServer = Loc.Localize("Tabs_ToyboxVibeServer", "Vibe Server");
-        public readonly string ToyboxPatterns = Loc.Localize("Tabs_ToyboxPatterns", "Patterns");
+        public readonly string Patterns = Loc.Localize("Tabs_Patterns", "Patterns");
         public readonly string ToyboxTriggers = Loc.Localize("Tabs_ToyboxTriggers", "Triggers");
         public readonly string ToyboxAlarms = Loc.Localize("Tabs_ToyboxAlarms", "Alarms");
 

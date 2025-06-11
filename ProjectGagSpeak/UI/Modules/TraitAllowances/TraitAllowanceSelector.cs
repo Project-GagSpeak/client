@@ -18,16 +18,16 @@ using System.Collections.Immutable;
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     private readonly IdDisplayHandler _nameHandle;
-    private readonly TraitsManager _manager;
+    private readonly TraitAllowanceManager _manager;
     private readonly PairManager _pairs;
     private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
 
     public TraitAllowanceSelector(ILogger<TraitAllowanceSelector> logger,
-        GagspeakMediator mediator, GagspeakConfigService config,
-        IdDisplayHandler handler, TraitsManager manager, PairManager pairs,
+        GagspeakMediator mediator, MainConfigService config,
+        IdDisplayHandler handler, TraitAllowanceManager manager, PairManager pairs,
         FavoritesManager favorites, CosmeticService cosmetics) : base(logger, mediator)
     {
         _config = config;

@@ -22,6 +22,7 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
     public readonly string Favorites;
+    public readonly string GagDataJson;
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
@@ -59,6 +60,8 @@ public class ConfigFileProvider : IConfigFileProvider
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
+        GagDataJson = Path.Combine(GagSpeakDirectory, "MufflerCore", "GagData", "gag_data.json");
+
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");
         ServerTags = Path.Combine(GagSpeakDirectory, "servertags.json"); // this is depricated.

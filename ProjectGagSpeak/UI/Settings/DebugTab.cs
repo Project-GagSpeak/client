@@ -1,6 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Interop;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using OtterGui.Text;
@@ -11,22 +13,38 @@ namespace GagSpeak.CkCommons.Gui;
 public class DebugTab
 {
     /// <summary> Displays the Debug section within the settings, where we can set our debug level </summary>
-    private static readonly Dictionary<string, LoggerType[]> loggerSections = new Dictionary<string, LoggerType[]>
+    private static readonly (string Label, LoggerType[] Flags)[] FlagGroups =
     {
-        { "Foundation",     [ LoggerType.Achievements, LoggerType.AchievementEvents, LoggerType.AchievementInfo ] },
-        { "Interop",        [ LoggerType.IpcGagSpeak, LoggerType.IpcCustomize, LoggerType.IpcGlamourer, LoggerType.IpcMare, LoggerType.IpcMoodles, LoggerType.IpcPenumbra ] },
-        { "State Managers", [ LoggerType.AppearanceState, LoggerType.ToyboxState, LoggerType.Mediator, LoggerType.GarblerCore ] },
-        { "Update Monitors",[ LoggerType.ToyboxAlarms, LoggerType.ActionsNotifier, LoggerType.KinkPlateMonitor, LoggerType.EmoteMonitor, LoggerType.ChatDetours, LoggerType.ActionEffects, LoggerType.SpatialAudioLogger ] },
-        { "Hardcore",       [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt ] },
-        { "Data & Modules", [ LoggerType.ClientPlayerData, LoggerType.GagHandling, LoggerType.PadlockHandling, LoggerType.Restraints, LoggerType.Puppeteer, LoggerType.CursedLoot, LoggerType.ToyboxDevices, LoggerType.ToyboxPatterns, LoggerType.ToyboxTriggers, LoggerType.VibeControl ] },
-        { "Pair Data",      [ LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers, LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.VibeRooms, LoggerType.GameObjects ] },
-        { "Services",       [ LoggerType.Cosmetics, LoggerType.Textures, LoggerType.GlobalChat, LoggerType.ContextDtr, LoggerType.PatternHub, LoggerType.Safeword ] },
-        { "UI",             [ LoggerType.UiCore, LoggerType.UserPairDrawer, LoggerType.Permissions, LoggerType.Simulation ] },
-        { "WebAPI",         [ LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.Health, LoggerType.HubFactory, LoggerType.JwtTokens ] }
+        ("Achievements", [ LoggerType.Achievements, LoggerType.AchievementEvents, LoggerType.AchievementInfo ]),
+        ("Hardcore", [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt ]),
+        ("Interop / IPC", [ 
+            LoggerType.IpcGagSpeak, LoggerType.IpcMare, LoggerType.IpcPenumbra, 
+            LoggerType.IpcGlamourer, LoggerType.IpcCustomize, LoggerType.IpcMoodles
+            ]),
+        ("MufflerCore", [ LoggerType.GarblerCore, LoggerType.ChatDetours ]),
+        ("PlayerClientState", [ 
+            LoggerType.Listeners, LoggerType.VisualCache, LoggerType.Gags, LoggerType.Restrictions,
+            LoggerType.Restraints, LoggerType.CursedItems, LoggerType.Puppeteer, LoggerType.Toys,
+            LoggerType.VibeLobbies, LoggerType.Patterns, LoggerType.Alarms, LoggerType.Triggers
+            ]),
+        ("Kinkster Data", [
+            LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers,
+            LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.VibeRooms, LoggerType.GameObjects
+            ]),
+        ("Services", [
+            LoggerType.ActionsNotifier, LoggerType.Textures, LoggerType.ContextDtr, LoggerType.GlobalChat,
+            LoggerType.Kinkplates, LoggerType.Mediator, LoggerType.ShareHub
+            ]),
+        ("UI", [ LoggerType.UI, LoggerType.StickyUI, LoggerType.Combos, LoggerType.FileSystems ]),
+        ("Update Monitoring", [ LoggerType.ActionEffects, LoggerType.EmoteMonitor, LoggerType.SpatialAudio ]),
+        ("GagspeakHub", [ 
+            LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.HubFactory,
+            LoggerType.Health, LoggerType.JwtTokens
+            ])
     };
 
-    private readonly GagspeakConfigService _mainConfig;
-    public DebugTab(GagspeakConfigService config)
+    private readonly MainConfigService _mainConfig;
+    public DebugTab(MainConfigService config)
     {
         _mainConfig = config;
     }
@@ -36,13 +54,13 @@ public class DebugTab
         CkGui.GagspeakBigText("Debug Configuration");
 
         // display the combo box for setting the log level we wish to have for our plugin
-        if (CkGuiUtils.EnumCombo("Log Level", 400, GagspeakConfigService.LogLevel, out var newValue))
+        if (CkGuiUtils.EnumCombo("Log Level", 400, MainConfigService.LogLevel, out var newValue))
         {
-            GagspeakConfigService.LogLevel = newValue;
+            MainConfigService.LogLevel = newValue;
             _mainConfig.Save();
         }
 
-        var logFilters = GagspeakConfigService.LoggerFilters;
+        var logFilters = MainConfigService.LoggerFilters;
 
         // draw a collapsible tree node here to draw the logger settings:
         ImGui.Spacing();
@@ -55,90 +73,66 @@ public class DebugTab
 
     private void AdvancedLogger()
     {
-        var isFirstSection = true;
+        var flags = (ulong)MainConfigService.LoggerFilters;
+        bool isFirstSection = true;
 
-        // Iterate through each section in loggerSections
-        foreach (var section in loggerSections)
+        var drawList = ImGui.GetWindowDrawList();
+        foreach (var (label, flagGroup) in FlagGroups)
         {
-            // Begin a new group for the section
             using (ImRaii.Group())
             {
-                // Calculate the number of checkboxes in the current section
-                var checkboxes = section.Value;
-
-                // Draw a custom line above the table to simulate the upper border
-                var drawList = ImGui.GetWindowDrawList();
+                // Draw separator line on top of the group
                 var cursorPos = ImGui.GetCursorScreenPos();
-                drawList.AddLine(new Vector2(cursorPos.X, cursorPos.Y), new Vector2(cursorPos.X + ImGui.GetContentRegionAvail().X, cursorPos.Y), ImGui.GetColorU32(ImGuiCol.Border));
+                drawList.AddLine(
+                    new Vector2(cursorPos.X, cursorPos.Y),
+                    new Vector2(cursorPos.X + ImGui.GetContentRegionAvail().X, cursorPos.Y),
+                    ImGui.GetColorU32(ImGuiCol.Border)
+                );
+                ImGui.Dummy(new Vector2(0, 4));
 
-                // Add some vertical spacing to position the table correctly
-                ImGui.Dummy(new Vector2(0, 1));
-
-                // Begin a new table for the checkboxes without any borders
-                using (ImRaii.Table(section.Key, 4, ImGuiTableFlags.None))
+                // Begin table for 4 columns
+                using (var table = ImRaii.Table(label, 4, ImGuiTableFlags.None))
                 {
-                    // Iterate through the checkboxes, managing columns and rows
-                    for (var i = 0; i < checkboxes.Length; i++)
+                    for (int i = 0; i < flagGroup.Length; i++)
                     {
                         ImGui.TableNextColumn();
 
-                        var isEnabled = GagspeakConfigService.LoggerFilters.Contains(checkboxes[i]);
-
-                        if (ImGui.Checkbox(checkboxes[i].ToName(), ref isEnabled))
+                        var flag = flagGroup[i];
+                        bool flagState = (flags & (ulong)flag) != 0;
+                        if (ImGui.Checkbox(flag.ToString(), ref flagState))
                         {
-                            if (isEnabled)
-                            {
-                                GagspeakConfigService.LoggerFilters.Add(checkboxes[i]);
-                                LoggerFilter.AddAllowedCategory(checkboxes[i]);
-                            }
+                            if (flagState) 
+                                flags |= (ulong)flag;
                             else
-                            {
-                                GagspeakConfigService.LoggerFilters.Remove(checkboxes[i]);
-                                LoggerFilter.RemoveAllowedCategory(checkboxes[i]);
-                            }
+                                flags &= ~(ulong)flag;
+
+                            // update the loggerFilters.
+                            MainConfigService.LoggerFilters = (LoggerType)flags;
                             _mainConfig.Save();
                         }
                     }
 
-                    // Add "All On" and "All Off" buttons for the first section
+                    // In the first section, add "All On" / "All Off" buttons in the last column
                     if (isFirstSection)
                     {
                         ImGui.TableNextColumn();
                         if (ImGui.Button("All On"))
                         {
-                            GagspeakConfigService.LoggerFilters = LoggerFilter.GetAllRecommendedFilters();
+                            MainConfigService.LoggerFilters = LoggerType.Recommended;
                             _mainConfig.Save();
-                            LoggerFilter.AddAllowedCategories(GagspeakConfigService.LoggerFilters);
                         }
-                        ImUtf8.SameLineInner();
+                        ImGui.SameLine();
                         if (ImGui.Button("All Off"))
                         {
-                            GagspeakConfigService.LoggerFilters.Clear();
-                            GagspeakConfigService.LoggerFilters.Add(LoggerType.None);
+                            MainConfigService.LoggerFilters = LoggerType.None;
                             _mainConfig.Save();
-                            LoggerFilter.ClearAllowedCategories();
                         }
                     }
                 }
-
-                // Display a tooltip when hovering over any element in the group
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
-                {
-                    ImGui.BeginTooltip();
-                    CkGui.ColorText(section.Key, ImGuiColors.ParsedGold);
-                    ImGui.EndTooltip();
-                }
+                CkGui.AttachToolTip(label, color: new Vector4(1f, 0.85f, 0f, 1f));
             }
 
-            // Mark that the first section has been processed
             isFirstSection = false;
-        }
-
-        // Ensure LoggerType.None is always included in the filtered categories
-        if (!GagspeakConfigService.LoggerFilters.Contains(LoggerType.None))
-        {
-            GagspeakConfigService.LoggerFilters.Add(LoggerType.None);
-            LoggerFilter.AddAllowedCategory(LoggerType.None);
         }
     }
 }

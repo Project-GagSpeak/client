@@ -9,14 +9,14 @@ namespace GagSpeak.MufflerCore.Handler;
 public class Ipa_EN_FR_JP_SP_Handler
 {
     private readonly ILogger<Ipa_EN_FR_JP_SP_Handler> _logger;
-    private readonly GagspeakConfigService _config; // The GagSpeak configuration
+    private readonly MainConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // file accessor
     private Dictionary<string, string> obj;             // Dictionary to store the conversion rules in JSON
     public string uniqueSymbolsString = "";
 
     /* FOR DEBUGGING: If you ever need to aquire new unique symbols please reference the outdated private gagspeak repo. */
 
-    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
+    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;

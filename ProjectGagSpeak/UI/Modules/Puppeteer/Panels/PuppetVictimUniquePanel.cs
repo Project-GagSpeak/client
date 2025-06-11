@@ -41,7 +41,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
 
     public PuppetVictimUniquePanel(
         ILogger<PuppetVictimUniquePanel> logger,
-        GagspeakConfigService config,
+        MainConfigService config,
         MainHub hub,
         PuppeteerHelper helper,
         AliasItemDrawer aliasDrawer,
@@ -130,7 +130,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
                 _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, VisualApplierMoodles.LatestIpcData);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleHandler.IpcData);
         }
     }
 

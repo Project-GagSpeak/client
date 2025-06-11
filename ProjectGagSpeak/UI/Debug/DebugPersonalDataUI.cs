@@ -9,6 +9,7 @@ using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -21,7 +22,7 @@ namespace GagSpeak.CkCommons.Gui;
 
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -31,11 +32,11 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
-        GlobalData globals,
+        KinksterRequests globals,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
-        GagspeakConfigService config,
+        MainConfigService config,
         IdDisplayHandler nameDisplay,
         PairManager pairs,
         CosmeticService icon)

@@ -1,6 +1,7 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Helpers;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerData.Data;
 using GagSpeak.PlayerData.Storage;
@@ -8,8 +9,10 @@ using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Toybox;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Util;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
@@ -19,7 +22,8 @@ namespace GagSpeak.CkCommons.Gui;
 
 public class DebugStorageUI : WindowMediatorSubscriberBase
 {
-    private readonly GlobalData _playerData;
+    private readonly KinksterRequests _playerData;
+    private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly CursedLootManager _cursedLoot;
@@ -27,6 +31,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     private readonly TriggerManager _triggers;
     private readonly AlarmManager _alarms;
     private readonly PatternManager _patterns;
+    private readonly GagFileSystem _gagFS;
     private readonly RestrictionFileSystem _restrictionsFS;
     private readonly RestraintSetFileSystem _restraintsFS;
     private readonly MoodleDrawer _moodleDrawer;
@@ -34,7 +39,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     public DebugStorageUI(
         ILogger<DebugStorageUI> logger,
         GagspeakMediator mediator,
-        GlobalData playerData,
+        KinksterRequests playerData,
+        GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
         CursedLootManager cursedLoot,
@@ -42,6 +48,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         TriggerManager triggers,
         AlarmManager alarms,
         PatternManager patterns,
+        GagFileSystem gagFS,
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
         MoodleDrawer moodleDrawer,
@@ -49,6 +56,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Debugger for Storages")
     {
         _playerData = playerData;
+        _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
         _cursedLoot = cursedLoot;
@@ -56,6 +64,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         _triggers = triggers;
         _alarms = alarms;
         _patterns = patterns;
+        _gagFS = gagFS;
         _restrictionsFS = restrictionsFS;
         _restraintsFS = restraintsFS;
         _moodleDrawer = moodleDrawer;
@@ -77,6 +86,9 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         DrawGlobalData();
+
+        ImGui.Separator();
+        DrawGagStorage();
 
         ImGui.Separator();
         DrawRestrictionStorage();
@@ -246,6 +258,25 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                     ImGuiUtil.DrawTableColumn("CreationTime");
                 }
             }
+    }
+
+    public void DrawGagStorage()
+    {
+        if (!ImGui.CollapsingHeader("Gag Storage"))
+            return;
+        if (_gags.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Gag Storage is null or empty");
+            return;
+        }
+        foreach (var (type, gagRestriction) in _gags.Storage)
+        {
+            using var node = ImRaii.TreeNode($"{type.GagName()}");
+            if (!node)
+                continue;
+
+            DrawGag(gagRestriction);
+        }
     }
 
     public void DrawRestrictionStorage()
@@ -475,6 +506,75 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         }
     }
 
+    public void DrawGag(GarblerRestriction gag)
+    {
+        ImGui.TextUnformatted("Overview:");
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Gag Type");
+            ImGuiUtil.DrawTableColumn(gag.GagType.GagName());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Gag FS Path");
+            ImGuiUtil.DrawTableColumn(_gagFS.FindLeaf(gag, out var leaf) ? leaf.FullName() : "No Path Known");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Headgear State");
+            ImGuiUtil.DrawTableColumn(gag.HeadgearState.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Show Visor?");
+            ImGuiUtil.DrawTableColumn(gag.VisorState.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Do Redraw?");
+            ImGuiUtil.DrawTableColumn(gag.DoRedraw ? "Yes" : "No");
+            ImGui.TableNextRow();
+
+            // Glamour.
+            ImGuiUtil.DrawTableColumn("Glamour");
+            ImGuiUtil.DrawTableColumn(gag.Glamour.GameItem.Name);
+            ImGuiUtil.DrawTableColumn(gag.Glamour.GameItem.ItemId.ToString());
+            ImGuiUtil.DrawTableColumn(gag.Glamour.Slot.ToName());
+            ImGuiUtil.DrawTableColumn(gag.Glamour.GameStain.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Mod Association");
+            if(gag.Mod.HasData)
+            {
+                ImGuiUtil.DrawTableColumn(gag.Mod.Container.ModName);
+                ImGuiUtil.DrawTableColumn(gag.Mod.Label);
+            }
+            else
+            {
+                ImGuiUtil.DrawTableColumn("<No Assigned Data>");
+            }
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Moodle");
+            if (gag.Moodle is MoodlePreset preset)
+            {
+                ImGuiUtil.DrawTableColumn("[Preset Type]");
+                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Presets
+                    .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
+                ImGui.TableNextRow();
+            }
+            else
+            {
+                ImGuiUtil.DrawTableColumn("[Status Type]");
+                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Statuses
+                    .GetValueOrDefault(gag.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
+                ImGui.TableNextRow();
+            }
+
+            ImGuiUtil.DrawTableColumn("Hardcore Traits");
+            ImGuiUtil.DrawTableColumn(gag.Traits.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Hardcore Stimulation");
+            ImGuiUtil.DrawTableColumn(gag.Stimulation.ToString());
+        }
+    }
+
     public void DrawRestriction(RestrictionItem restriction)
     {
         ImGui.TextUnformatted("Overview:");
@@ -515,16 +615,20 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn(restriction.Mod.Label);
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Moodle Type");
-            ImGuiUtil.DrawTableColumn(restriction.Moodle is MoodlePreset ? "Moodle Preset" : "Moodle Status");
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Moodle Id");
-            ImGuiUtil.DrawTableColumn(restriction.Moodle.Id.ToString());
-            ImGui.TableNextRow();
             if (restriction.Moodle is MoodlePreset preset)
             {
-                ImGuiUtil.DrawTableColumn("Moodle Status Ids");
-                ImGuiUtil.DrawTableColumn(string.Join(", ", preset.StatusIds));
+                ImGuiUtil.DrawTableColumn("Moodle Type");
+                ImGuiUtil.DrawTableColumn("Moodle Preset");
+                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Presets
+                    .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
+                ImGui.TableNextRow();
+            }
+            else
+            {
+                ImGuiUtil.DrawTableColumn("Moodle Type");
+                ImGuiUtil.DrawTableColumn("Moodle Status");
+                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Statuses
+                    .GetValueOrDefault(restriction.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
 

@@ -18,9 +18,9 @@ public partial class PairStickyUI
         var lastIpcData = SPair.LastIpcData;
         var pairUniquePerms = SPair.PairPerms;
 
-        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou) || lastIpcData.MoodlesStatuses.Count <= 0;
-        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou) || VisualApplierMoodles.LatestIpcData is null || VisualApplierMoodles.LatestIpcData.MoodlesStatuses.Count <= 0;
-        var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.MoodlesDataStatuses.Count <= 0;
+        var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou) || lastIpcData.Statuses.Count <= 0;
+        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou) || MoodleHandler.IpcData is null || MoodleHandler.IpcData.Statuses.Count <= 0;
+        var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.Statuses.Count <= 0;
 
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
         if (CkGui.IconTextButton(FAI.PersonCirclePlus, "Apply a Moodle from their list", WindowMenuWidth, true, ApplyPairsMoodleToPairDisabled))

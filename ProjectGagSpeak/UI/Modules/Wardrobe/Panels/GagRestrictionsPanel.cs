@@ -11,6 +11,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;

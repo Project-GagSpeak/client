@@ -1,11 +1,9 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerState.Visual;
-using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 
@@ -15,7 +13,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 {
     private Guid _currentItem;
     public MoodleStatusCombo(float iconScale, IconDisplayer displayer, ILogger log)
-        : base(iconScale, displayer, log, () => [.. VisualApplierMoodles.LatestIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
+        : base(iconScale, displayer, log, () => [.. MoodleHandler.IpcData.StatusList.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
     }

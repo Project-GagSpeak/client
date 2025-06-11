@@ -30,7 +30,7 @@ namespace GagSpeak.CkCommons.Gui.Permissions;
 public partial class PairStickyUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly PresetLogicDrawer _presets;
     private readonly PairManager _pairs;
     private readonly ClientMonitor _monitor;
@@ -63,7 +63,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         Pair pair,
         StickyWindowType drawType,
         MainHub hub,
-        GlobalData globals,
+        KinksterRequests globals,
         PresetLogicDrawer presets,
         IconDisplayer iconDisplayer,
         PairManager pairs,
@@ -105,7 +105,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _moodlePresets = new OwnMoodlePresetToPairCombo(1.3f, iconDisplayer, pair, hub, logger);
 
         _activePairStatusCombo = new PairMoodleStatusCombo(1.3f, iconDisplayer, pair, hub, logger, () => [
-            .. pair.LastIpcData.MoodlesDataStatuses.OrderBy(x => x.Title)
+            .. pair.LastIpcData.DataInfo.Values.OrderBy(x => x.Title)
         ]);
 
         // Publish a mediator event to let us know a new pair was made for the stickyUI.

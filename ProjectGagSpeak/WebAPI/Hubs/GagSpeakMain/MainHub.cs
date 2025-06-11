@@ -22,14 +22,14 @@ namespace GagSpeak.WebAPI;
 /// </summary>
 public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHostedService
 {
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly HubFactory _hubFactory;
     private readonly VisualStateListener _visualListener;
     private readonly ToyboxStateListener _kinkListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly PairManager _pairs;
     private readonly ServerConfigurationManager _serverConfigs;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
 
     // Cancellation Token Sources
     private CancellationTokenSource HubConnectionCTS;
@@ -43,14 +43,14 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         TokenProvider tokenProvider,
         ClientMonitor clientMonitor,
         OnFrameworkService frameworkUtils,
-        GlobalData globals,
+        KinksterRequests globals,
         HubFactory hubFactory,
         VisualStateListener visualListener,
         ToyboxStateListener kinkListener,
         PuppeteerListener puppetListener,
         PairManager pairs,
         ServerConfigurationManager serverConfigs,
-        GagspeakConfigService mainConfig)
+        MainConfigService mainConfig)
         : base(logger, mediator, tokenProvider, clientMonitor, frameworkUtils)
     {
         _globals = globals;

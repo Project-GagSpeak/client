@@ -4,6 +4,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
+using System.Threading.Tasks;
 
 namespace GagSpeak.Interop.Ipc;
 
@@ -114,9 +115,9 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method gets the list of all our clients Moodles Info </summary>
-    public async Task<List<MoodlesStatusInfo>> GetStatusListDetails()
+    public async Task<IEnumerable<MoodlesStatusInfo>> GetStatusListDetails()
     {
-        return await ExecuteIpcOnThread(() => GetMoodlesInfo.InvokeFunc()) ?? new List<MoodlesStatusInfo>();
+        return await ExecuteIpcOnThread(GetMoodlesInfo.InvokeFunc) ?? Enumerable.Empty<MoodlesStatusInfo>();
     }
 
     /// <summary> This method gets the preset info for a provided GUID from the client. </summary>
@@ -126,27 +127,27 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method gets the list of all our clients Presets Info </summary>
-    public async Task<List<MoodlePresetInfo>> GetPresetListDetails()
+    public async Task<IEnumerable<MoodlePresetInfo>> GetPresetListDetails()
     {
-        return await ExecuteIpcOnThread(() => GetPresetsInfo.InvokeFunc()) ?? new List<MoodlePresetInfo>();
+        return await ExecuteIpcOnThread(GetPresetsInfo.InvokeFunc) ?? Enumerable.Empty<MoodlePresetInfo>();
     }
 
     /// <summary> This method gets the status information of our client player </summary>
-    public async Task<List<MoodlesStatusInfo>> GetStatusManagerDetails()
+    public async Task<IEnumerable<MoodlesStatusInfo>> GetStatusManagerDetails()
     {
-        return await ExecuteIpcOnThread(() => GetStatusManagerInfo.InvokeFunc()) ?? new List<MoodlesStatusInfo>();
+        return await ExecuteIpcOnThread(GetStatusManagerInfo.InvokeFunc) ?? Enumerable.Empty<MoodlesStatusInfo>();
     }
 
     /// <summary> Obtain the status information of a visible player </summary>
-    public async Task<List<MoodlesStatusInfo>> GetStatusManagerDetails(string playerNameWithWorld)
+    public async Task<IEnumerable<MoodlesStatusInfo>> GetStatusManagerDetails(string playerNameWithWorld)
     {
-        return await ExecuteIpcOnThread(() => GetStatusManagerInfoByName.InvokeFunc(playerNameWithWorld)) ?? new List<MoodlesStatusInfo>();
+        return await ExecuteIpcOnThread(() => GetStatusManagerInfoByName.InvokeFunc(playerNameWithWorld)) ?? Enumerable.Empty<MoodlesStatusInfo>();
     }
 
     /// <summary> Gets the ClientPlayer's StatusManager string. </summary>
     public async Task<string> GetStatusManagerString()
     {
-        return await ExecuteIpcOnThread(() => GetStatusManager.InvokeFunc()) ?? string.Empty;
+        return await ExecuteIpcOnThread(GetStatusManager.InvokeFunc) ?? string.Empty;
     }
 
 
@@ -156,85 +157,69 @@ public sealed class IpcCallerMoodles : IIpcCaller
         return await ExecuteIpcOnThread(() => GetStatusManagerByName.InvokeFunc(playerNameWithWorld)) ?? string.Empty;
     }
 
-    public void ApplyOwnStatusByGUID(Guid guid, string clientName)
+    public async Task ApplyOwnStatusByGUID(Guid guid, string clientName)
     {
-        ExecuteIpcOnThread(() => _applyPresetByGuid.InvokeAction(guid, clientName));
+        await ExecuteIpcOnThread(() => _applyStatusByGuid.InvokeAction(guid, clientName));
     }
 
-    public void ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
+    public async Task ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
     {
-        ExecuteIpcOnThread(() =>
+        await ExecuteIpcOnThread(() =>
         {
-            var name = _clientMonitor.ClientPlayer.NameWithWorld();
-            if (!name.IsNullOrEmpty())
-            {
-                Parallel.ForEach(guidsToAdd, guid => ApplyOwnStatusByGUID(guid, name));
-                _logger.LogTrace("Applied Moodles: " + string.Join(", ", guidsToAdd), LoggerType.IpcMoodles);
-            }
+            if(_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            Parallel.ForEach(guidsToAdd, guid => _applyStatusByGuid.InvokeAction(guid, name));
         });
     }
 
-    public void ApplyOwnPresetByGUID(Guid guid)
+    public async Task ApplyOwnPresetByGUID(Guid guid)
     {
-        ExecuteIpcOnThread(() =>
+        await ExecuteIpcOnThread(() =>
         {
-            var name = _clientMonitor.ClientPlayer.NameWithWorld();
-            if (!name.IsNullOrEmpty())
-                _applyPresetByGuid.InvokeAction(guid, name);
+            if (_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            _applyPresetByGuid.InvokeAction(guid, name);
         });
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
-    public void ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
+    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        ExecuteIpcOnThread(() =>
-        {
-            _logger.LogInformation("Applying Moodles Status: " + recipientNameWithWorld + " from " + applierNameWithWorld, LoggerType.IpcMoodles);
-            _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [ ..statuses ]);
-        });
+        await ExecuteIpcOnThread(() => _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [.. statuses]));
     }
 
     /// <summary> This method removes the moodles from the client </summary>
-    public void RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
+    public async Task RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
     {
-        ExecuteIpcOnThread(() =>
+        await ExecuteIpcOnThread(() =>
         {
-            _logger.LogTrace("Removing Moodles: " + string.Join(", ", guidsToRemove), LoggerType.IpcMoodles);
-            var name = _clientMonitor.ClientPlayer.NameWithWorld();
-            if (!name.IsNullOrEmpty())
-                _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), name);
+            if (_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), name);
         });
     }
 
     /// <summary> This method sets the status of the moodles for a game object specified by the pointer </summary>
-    public void SetStatus(string playerNameWithWorld, string statusBase64)
+    public async Task SetStatus(string playerNameWithWorld, string statusBase64)
     {
-        ExecuteIpcOnThread(() =>
-        {
-            _logger.LogDebug("Setting Moodles Status: " + playerNameWithWorld + " to " + statusBase64, LoggerType.IpcMoodles);
-            _setStatusManager.InvokeAction(playerNameWithWorld, statusBase64);
-        });
+        await ExecuteIpcOnThread(() => _setStatusManager.InvokeAction(playerNameWithWorld, statusBase64));
     }
 
-    public void ClearStatus()
+    public async Task ClearStatus()
     {
-        ExecuteIpcOnThread(() =>
+        await ExecuteIpcOnThread(() =>
         {
-            var name = _clientMonitor.ClientPlayer.NameWithWorld();
-            if (!name.IsNullOrEmpty())
-                ClearStatus(name);
+            if(_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            _clearStatusesFromManager.InvokeAction(name);
         });
     }
 
     /// <summary> Reverts the status of the moodles for a GameObject specified by the pointer</summary>
-    public void ClearStatus(string playerNameWithWorld)
+    public async Task ClearStatus(string playerNameWithWorld)
     {
-        ExecuteIpcOnThread(() => _clearStatusesFromManager.InvokeAction(playerNameWithWorld));
+        await ExecuteIpcOnThread(() => _clearStatusesFromManager.InvokeAction(playerNameWithWorld));
     }
 
     /// <summary> Executes a Moodles Ipc Action on the framework thread. </summary>
     /// <remarks> This action will not execute if APIAvailable is false. </remarks>
-    private async void ExecuteIpcOnThread(Action act)
+    private async Task ExecuteIpcOnThread(Action act)
     {
         if (!APIAvailable)
             return;

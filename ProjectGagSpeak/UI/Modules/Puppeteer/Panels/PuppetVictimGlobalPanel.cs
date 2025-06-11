@@ -21,7 +21,7 @@ public sealed partial class PuppetVictimGlobalPanel
 {
     private readonly ILogger<PuppetVictimGlobalPanel> _logger;
     private readonly MainHub _hub;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
     private readonly CosmeticService _cosmetics;
@@ -36,7 +36,7 @@ public sealed partial class PuppetVictimGlobalPanel
     public PuppetVictimGlobalPanel(
         ILogger<PuppetVictimGlobalPanel> logger,
         MainHub hub,
-        GlobalData globals,
+        KinksterRequests globals,
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,
         FavoritesManager favorites,
@@ -109,7 +109,7 @@ public sealed partial class PuppetVictimGlobalPanel
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
                 _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, VisualApplierMoodles.LatestIpcData);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleHandler.IpcData);
         }
     }
 

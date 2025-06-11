@@ -1,7 +1,9 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -12,7 +14,7 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
     public PairMoodleStatusCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log)
-        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesStatuses.OrderBy(x => x.Title)])
+        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.Statuses.Values.OrderBy(x => x.Title)])
     { }
 
     public PairMoodleStatusCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log,
@@ -52,12 +54,12 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         HubResponse res = await _mainHub.UserApplyMoodlesByGuid(dto);
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Applying moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
+            Log.LogDebug($"Failed to apply moodle status {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
             return false;
         }
     }
@@ -68,12 +70,12 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         HubResponse res = await _mainHub.UserRemoveMoodles(dto);
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Removing moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Removing moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to remove moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
+            Log.LogDebug($"Failed to remove moodle status {item.Title} from {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
             return false;
 
         }

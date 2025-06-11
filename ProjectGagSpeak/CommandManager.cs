@@ -23,7 +23,7 @@ public sealed class CommandManager : IDisposable
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
     private readonly PairManager _pairManager;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ServerConfigService _serverConfig;
     private readonly ChatMonitor _chatMessages;
     private readonly DeathRollService _deathRolls;
@@ -32,7 +32,7 @@ public sealed class CommandManager : IDisposable
     private readonly ICommandManager _commands;
 
     public CommandManager(GagspeakMediator mediator, PairManager pairManager,
-        GagspeakConfigService mainConfig, ServerConfigService server,
+        MainConfigService mainConfig, ServerConfigService server,
         ChatMonitor chatMessages, DeathRollService deathRolls, IChatGui chat,
         IClientState clientState, ICommandManager commandManager)
     {

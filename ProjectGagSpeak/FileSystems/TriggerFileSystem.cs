@@ -24,7 +24,7 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Trigger) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Trigger) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -58,11 +58,11 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
         return leaf != null;
     }
 
-    private void OnTriggerChange(StorageItemChangeType type, Trigger trigger, string? oldString)
+    private void OnTriggerChange(StorageChangeType type, Trigger trigger, string? oldString)
     {
         switch (type)
         {
-            case StorageItemChangeType.Created:
+            case StorageChangeType.Created:
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
@@ -70,14 +70,14 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
 
                 CreateDuplicateLeaf(parent, trigger.Label, trigger);
                 return;
-            case StorageItemChangeType.Deleted:
+            case StorageChangeType.Deleted:
                 if (FindLeaf(trigger, out var leaf1))
                     Delete(leaf1);
                 return;
-            case StorageItemChangeType.Modified:
+            case StorageChangeType.Modified:
                 Reload();
                 return;
-            case StorageItemChangeType.Renamed when oldString != null:
+            case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(trigger, out var leaf2))
                     return;
 

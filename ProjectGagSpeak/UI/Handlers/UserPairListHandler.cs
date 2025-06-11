@@ -26,14 +26,14 @@ public class UserPairListHandler
     private readonly PairManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
-    private readonly GagspeakConfigService _configService;
+    private readonly MainConfigService _configService;
 
     private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
         PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
-        GagspeakConfigService configService)
+        MainConfigService configService)
     {
         _logger = logger;
         _mediator = mediator;
@@ -262,7 +262,7 @@ public class UserPairListHandler
         var bidirectionalTaggedPairs = BasicSortedList(filteredPairs
             .Where(u => FilterOnlineUsers(u) && FilterPairedOrPausedSelf(u)));
 
-        _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomAllTag, LoggerType.UserPairDrawer);
+        _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomAllTag, LoggerType.UI);
         drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
 
 
@@ -270,7 +270,7 @@ public class UserPairListHandler
         if (_configService.Config.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
-            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UserPairDrawer);
+            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UI);
             drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
 
             // then do so.
@@ -280,7 +280,7 @@ public class UserPairListHandler
                 .Where(FilterOfflineUsers));
 
             // add the folder.
-            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOfflineTag, LoggerType.UserPairDrawer);
+            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOfflineTag, LoggerType.UI);
             drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOfflineTag, filteredOfflinePairs,
                 allOfflinePairs));
 

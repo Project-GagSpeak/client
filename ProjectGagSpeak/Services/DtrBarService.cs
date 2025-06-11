@@ -21,7 +21,7 @@ namespace GagSpeak.UpdateMonitoring;
 public sealed class DtrBarService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly EventAggregator _eventAggregator;
     private readonly PairManager _pairManager;
     private readonly ClientMonitor _clientMonitor;
@@ -29,7 +29,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
     private readonly IDataManager _gameData;
     private readonly IDtrBar _dtrBar;
     public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator, 
-        MainHub hub, GagspeakConfigService mainConfig,  EventAggregator eventAggregator, 
+        MainHub hub, MainConfigService mainConfig,  EventAggregator eventAggregator, 
         PairManager pairs, OnFrameworkService frameworkUtils, ClientMonitor clientMonitor,
         IDataManager gameData, IDtrBar dtrBar) : base(logger, mediator)
     {

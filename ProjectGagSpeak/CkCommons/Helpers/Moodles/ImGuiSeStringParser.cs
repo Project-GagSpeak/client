@@ -153,7 +153,7 @@ public static class ImGuiSeStringParser
                 }
 
                 // if the string contains the unique italics tag identifier...
-                else if (str.Equals("[i]", StringComparison.OrdinalIgnoreCase))
+                else if (str.Trim().Equals("[i]", StringComparison.OrdinalIgnoreCase))
                 {
                     // If we are trying to execute this while there is stored text, process the previous item chunk first.
                     if (!currentChunkText.Text.IsNullOrEmpty())
@@ -166,7 +166,7 @@ public static class ImGuiSeStringParser
                     currentChunkText.AddItalic();
                 }
                 // If the string contains the unique italics tag closing identifier, turn off the italics.
-                else if (str.Equals("[/i]", StringComparison.OrdinalIgnoreCase))
+                else if (str.Trim().Equals("[/i]", StringComparison.OrdinalIgnoreCase))
                 {
                     if ((currentChunkFlags & ParsedSeStringFlags.HasItalic) == 0)
                         throw new Exception("Error: Mismatched [i] closing tag.");
@@ -208,7 +208,6 @@ public static class ImGuiSeStringParser
                 currentChunkText = ParsedSeStringText.Empty;
                 currentChunkFlags = ParsedSeStringFlags.None;
             }
-
         }
         catch (Exception e)
         {

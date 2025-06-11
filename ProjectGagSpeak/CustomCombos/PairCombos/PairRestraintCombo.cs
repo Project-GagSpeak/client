@@ -79,7 +79,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         }
         else
         {
-            Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.Permissions);
+            Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.StickyUI);
             return true;
         }
     }

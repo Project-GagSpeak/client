@@ -95,7 +95,7 @@ public partial class PairStickyUI
 
                     // push to server.
                     _hub.UserChangeKinksterRestrictionState(dto).ConfigureAwait(false);
-                    _logger.LogDebug("Removing Restriction From layer " + _restrictionLayer, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Restriction From layer " + _restrictionLayer, LoggerType.StickyUI);
                     CloseInteraction();
                 }
             }

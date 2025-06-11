@@ -1,33 +1,19 @@
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.GoldSaucer;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.Localization;
-using Lumina.Excel.Sheets;
-using System.Windows.Forms;
 
 namespace GagSpeak.Utils;
 
-public static class AchievementHelpers
+public static class Content
 {
-
     #region Deep Dungeon Helpers
     public static unsafe InstanceContentDeepDungeon* GetDirector()
     {
         var eventFramework = EventFramework.Instance();
         return eventFramework == null ? null : eventFramework->GetInstanceContentDeepDungeon();
     }
-
-    // Bronzes are already categorized as "Treasure" and need no changes to function with cursed loot.
-    // Silver and gold chests across every deep dungeon and every language share all attributes aside from name.
-    public static unsafe bool IsDeepDungeonCoffer(GameObject* obj)
-        => obj->ObjectKind is ObjectKind.EventObj
-        && obj->SubKind is 0 
-        && obj->EventId.Id is 983600 
-        && obj->EventId.EntryId is 560
-        && obj->EventId.ContentId is EventHandlerContent.GimmickAccessor
-        && obj->Name.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
 
     public static unsafe bool InDeepDungeon() => GetDirector() != null;
 
@@ -87,7 +73,7 @@ public static class AchievementHelpers
         if (director == null) return false;
 
         // check if the gate type is one with KB
-        byte gate = director->GateType;
+        var gate = director->GateType;
         // ensure we are in the right gate
         if ((GateType)gate is GateType.CliffHanger || (GateType)gate is GateType.AnyWayTheWindBlows)
         {

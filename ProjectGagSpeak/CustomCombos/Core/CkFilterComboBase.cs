@@ -49,7 +49,7 @@ public abstract class CkFilterComboBase<T>
     /// <param name="label"> The label of the combo to clear the storage of.. </param>
     private void ClearStorage(string label)
     {
-        Log.LogTrace($"Cleaning up Filter Combo Cache for {label}");
+        // Log.LogTrace($"Cleaning up Filter Combo Cache for {label}");
         _filter = LowerString.Empty;
         _filterParts = [];
         _lastSelection = -1;
@@ -244,7 +244,6 @@ public abstract class CkFilterComboBase<T>
         if (!_filterDirty)
             return;
 
-        Log.LogDebug("Updating Filter Combo Cache");
         _filterDirty = false;
         _available.EnsureCapacity(Items.Count);
 

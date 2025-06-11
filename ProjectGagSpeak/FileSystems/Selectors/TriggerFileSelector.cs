@@ -116,7 +116,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnTriggerChange(StorageItemChangeType type, Trigger trigger, string? oldString)
+    private void OnTriggerChange(StorageChangeType type, Trigger trigger, string? oldString)
         => SetFilterDirty();
 
 

@@ -21,7 +21,7 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class MainUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GagspeakConfigService _configService;
+    private readonly MainConfigService _configService;
     private readonly PairManager _pairManager;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly MainMenuTabs _tabMenu;
@@ -42,7 +42,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
-        GagspeakConfigService config, PairManager pairManager, ServerConfigurationManager serverConfigs,
+        MainConfigService config, PairManager pairManager, ServerConfigurationManager serverConfigs,
         HomepageTab homepage, WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
         GlobalChatTab globalChat, AccountTab account, MainMenuTabs tabMenu, TutorialService tutorialService,
         IDalamudPluginInterface pi) : base(logger, mediator, "###GagSpeakMainUI")

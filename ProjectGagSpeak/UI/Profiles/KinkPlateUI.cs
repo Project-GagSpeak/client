@@ -501,7 +501,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // likely cache this somehow in internal calculations on updates from latest light storage.
         /*if (Pair.LastWardrobeData is not null && activeSetLight is not null && activeSetLight.HardcoreTraits.TryGetValue(Pair.LastWardrobeData.ActiveSetEnabledBy, out var traits))
         {
-            if (traits.ArmsRestrained || traits.ArmsRestrained)
+            if (traits.BoundArms || traits.BoundArms)
                 wdl.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Arms/Legs Restrained--SEP--Restricts Actions that require the use of arms/legs, whichever option is enabled.");
             else
                 wdl.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Arms/Legs Restrained");

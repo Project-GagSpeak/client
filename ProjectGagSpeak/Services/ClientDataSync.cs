@@ -16,7 +16,7 @@ namespace GagSpeak.PlayerData.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ClientDataSync : DisposableMediatorSubscriberBase
 {
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -30,7 +30,7 @@ public sealed class ClientDataSync : DisposableMediatorSubscriberBase
     private readonly AchievementManager _achievements;
 
     public ClientDataSync(ILogger<ClientDataSync> logger, GagspeakMediator mediator, 
-        GlobalData globals, GagRestrictionManager gags, RestrictionManager restrictions,
+        KinksterRequests globals, GagRestrictionManager gags, RestrictionManager restrictions,
         RestraintManager restraints, CursedLootManager cursedLoot, PuppeteerManager puppeteer,
         AlarmManager alarms, TriggerManager triggers, VisualStateListener visualListener,
         ConfigFileProvider fileNames, AchievementManager achievements)

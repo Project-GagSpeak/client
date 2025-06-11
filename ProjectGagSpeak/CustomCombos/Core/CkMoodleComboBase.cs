@@ -1,7 +1,6 @@
-using GagSpeak.PlayerState.Visual;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.PlayerState.Visual;
 using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.CustomCombos;
 
@@ -20,5 +19,5 @@ public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
     protected virtual Vector2 IconSize => MoodleDrawer.IconSize * _iconScale;
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => _displayer.DrawMoodleStatusTooltip(item, VisualApplierMoodles.LatestIpcData.MoodlesStatuses);
+        => _displayer.DrawMoodleStatusTooltip(item, MoodleHandler.IpcData.StatusList);
 }

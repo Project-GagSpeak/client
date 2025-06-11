@@ -21,7 +21,7 @@ public class UiFactory
     // Generic Classes
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
-    private readonly GagspeakConfigService _config;
+    private readonly MainConfigService _config;
     private readonly PiShockProvider _shockies;
     private readonly IconDisplayer _iconDisplayer;
     private readonly ImageImportTool _imageImport;
@@ -30,7 +30,7 @@ public class UiFactory
     private readonly ClientMonitor _clientMonitor;
     private readonly GagGarbler _garbler;
     private readonly PairManager _pairManager;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -50,7 +50,7 @@ public class UiFactory
     public UiFactory(
         ILoggerFactory loggerFactory,
         GagspeakMediator mediator,
-        GagspeakConfigService config,
+        MainConfigService config,
         PiShockProvider shockies,
         IconDisplayer iconDisplayer,
         ImageImportTool imageImport,
@@ -58,7 +58,7 @@ public class UiFactory
         ClientMonitor clientMonitor,
         GagGarbler garbler,
         PairManager pairManager,
-        GlobalData globals,
+        KinksterRequests globals,
         // Services
         CosmeticService cosmetics,
         IdDisplayHandler displayHandler,

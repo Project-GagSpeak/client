@@ -44,9 +44,9 @@ public class SaveDataCache
 public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _mainHub;
-    private readonly GlobalData _playerData;
+    private readonly KinksterRequests _playerData;
     private readonly PairManager _pairs;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ClientMonitor _clientMonitor;
     private readonly UnlocksEventManager _events;
     private readonly GagRestrictionManager _gags;
@@ -57,7 +57,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly SexToyManager _sexToys;
-    private readonly TraitsManager _traits;
+    private readonly TraitAllowanceManager _traits;
     private readonly ItemService _items;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly CosmeticService _cosmetics;
@@ -73,8 +73,8 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         ILogger<AchievementManager> logger,
         GagspeakMediator mediator, 
         MainHub mainHub,
-        GlobalData playerData,
-        GagspeakConfigService mainConfig,
+        KinksterRequests playerData,
+        MainConfigService mainConfig,
         PairManager pairs,
         ClientMonitor clientMonitor,
         UnlocksEventManager events,
@@ -86,7 +86,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         AlarmManager alarms,
         TriggerManager triggers,
         SexToyManager sexToys,
-        TraitsManager traits,
+        TraitAllowanceManager traits,
         ItemService items,
         OnFrameworkService frameworkUtils,
         CosmeticService cosmetics,
@@ -561,7 +561,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<JobChangeMessage>(this, (msg) => OnJobChange(msg.jobId));
 
-        ActionEffectMonitor.ActionEffectEntryEvent += OnActionEffectEvent;
+        Signatures.ActionEffectEntryEvent += OnActionEffectEvent;
         _dutyState.DutyStarted += OnDutyStart;
         _dutyState.DutyCompleted += OnDutyEnd;
     }
@@ -634,7 +634,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         Mediator.Unsubscribe<ZoneSwitchEndMessage>(this);
         Mediator.Unsubscribe<JobChangeMessage>(this);
 
-        ActionEffectMonitor.ActionEffectEntryEvent -= OnActionEffectEvent;
+        Signatures.ActionEffectEntryEvent -= OnActionEffectEvent;
         _dutyState.DutyStarted -= OnDutyStart;
         _dutyState.DutyCompleted -= OnDutyEnd;
     }

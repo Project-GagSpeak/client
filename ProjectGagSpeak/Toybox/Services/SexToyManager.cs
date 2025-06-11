@@ -9,12 +9,12 @@ namespace GagSpeak.Toybox.Services;
 // handles the management of the connected devices or simulated vibrator.
 public class SexToyManager : DisposableMediatorSubscriberBase
 {
-    private readonly GagspeakConfigService _clientConfigs;
+    private readonly MainConfigService _clientConfigs;
     private readonly IntifaceController _deviceHandler; // handles the actual connected devices.
     private readonly VibeSimAudio _vibeSimAudio; // handles the simulated vibrator
 
     public SexToyManager(ILogger<SexToyManager> logger, GagspeakMediator mediator,
-        GagspeakConfigService clientConfigs, IntifaceController deviceHandler,
+        MainConfigService clientConfigs, IntifaceController deviceHandler,
         VibeSimAudio vibeSimAudio) : base(logger, mediator)
     {
         _clientConfigs = clientConfigs;

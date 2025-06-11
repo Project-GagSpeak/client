@@ -90,7 +90,7 @@ public partial class PairStickyUI
                     };
                     _hub.UserChangeKinksterRestraintState(dto).ConfigureAwait(false);
                     OpenedInteraction = InteractionType.None;
-                    _logger.LogDebug("Removing Restraint from " + DisplayName, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Restraint from " + DisplayName, LoggerType.StickyUI);
                 }
             }
         }

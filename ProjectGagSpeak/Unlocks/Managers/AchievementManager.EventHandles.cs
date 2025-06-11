@@ -142,9 +142,9 @@ public partial class AchievementManager
     private void CheckDeepDungeonStatus()
     {
         // Detect Specific Dungeon Types
-        if (!AchievementHelpers.InDeepDungeon()) return;
+        if (!Content.InDeepDungeon()) return;
 
-        var floor = AchievementHelpers.GetFloor();
+        var floor = Content.GetFloor();
         if (floor is null) 
             return;
 
@@ -487,7 +487,7 @@ public partial class AchievementManager
     private void OnRestraintSetUpdated(RestraintSet set)
     {
         // check for dyes
-        if (set.GetGlamour().Any(x => x.GameStain != StainIds.None))
+        if (set.GetGlamour().Any(x => x.Value.GameStain != StainIds.None))
         {
             (LatestCache.SaveData.Achievements[Achievements.ToDyeFor.Id] as ProgressAchievement)?.IncrementProgress();
             (LatestCache.SaveData.Achievements[Achievements.DyeAnotherDay.Id] as ProgressAchievement)?.IncrementProgress();
@@ -550,7 +550,7 @@ public partial class AchievementManager
                 {
                     // attempt to retrieve the set from our sets.
                     if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
-                        if (match.GetGlamour().Any(glam => glam.Slot is EquipSlot.Hands))
+                        if (match.GetGlamour().Any(glam => glam.Key is EquipSlot.Hands))
                             (LatestCache.SaveData.Achievements[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
                 }
             }
@@ -1152,13 +1152,13 @@ public partial class AchievementManager
             return;
         }
 
-        Logger.LogInformation("Current State: [GateDirectorValid]: " + AchievementHelpers.GateDirectorIsValid 
-            + " [GateType]: " + AchievementHelpers.GetActiveGate()
-            + " [Flags]: " + AchievementHelpers.GetGateFlags()
-            + " [InGateWithKB] " + AchievementHelpers.IsInGateWithKnockback());
+        Logger.LogInformation("Current State: [GateDirectorValid]: " + Content.GateDirectorIsValid 
+            + " [GateType]: " + Content.GetActiveGate()
+            + " [Flags]: " + Content.GetGateFlags()
+            + " [InGateWithKB] " + Content.IsInGateWithKnockback());
 
         // Check if the player is in a gate with knockback
-        if (!AchievementHelpers.IsInGateWithKnockback())
+        if (!Content.IsInGateWithKnockback())
         {
             Logger.LogInformation("Player is not in a gate with knockback");
             return;

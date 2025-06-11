@@ -44,14 +44,14 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
                 ResetSelection();
                 ResetInputs();
                 return false;
             }
             else
             {
-                Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
                 ResetSelection();
                 ResetInputs();
                 return true;
@@ -75,14 +75,14 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+                Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
                 ResetSelection();
                 ResetInputs();
                 return false;
             }
             else
             {
-                Log.LogDebug($"Unlocking Restriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+                Log.LogDebug($"Unlocking Restriction with {Items[layerIdx].Padlock.ToName()} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
                 ResetSelection();
                 ResetInputs();
                 return true;

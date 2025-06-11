@@ -24,7 +24,7 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Restriction) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Restriction) Reload(); });
         Changed += OnChange;
         Reload();
     }

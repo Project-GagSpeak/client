@@ -10,6 +10,7 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
@@ -161,8 +162,8 @@ public partial class RestrictionsPanel
         // Determine the disabled traits based on the restriction type.
         Traits disabled = item switch
         {
-            BlindfoldRestriction => Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Gagged | Traits.Immobile | Traits.Weighty,
-            CollarRestriction => Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Gagged | Traits.Blindfolded | Traits.Immobile | Traits.Weighty,
+            BlindfoldRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Immobile | Traits.Weighty,
+            CollarRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Blindfolded | Traits.Immobile | Traits.Weighty,
             _ => Traits.Gagged
         };
         _traitsDrawer.DrawTwoRowTraits(item, width, disabled, false);

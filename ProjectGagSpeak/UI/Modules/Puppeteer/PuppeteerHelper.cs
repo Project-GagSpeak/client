@@ -24,7 +24,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
 
     public PuppeteerHelper(ILogger<PuppeteerHelper> logger, GagspeakMediator mediator,
         PairManager pairs, PuppeteerManager manager, FavoritesManager favorites, 
-        GagspeakConfigService config) : base(logger, mediator)
+        MainConfigService config) : base(logger, mediator)
     {
         _manager = manager;
 

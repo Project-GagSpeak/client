@@ -17,7 +17,7 @@ public class TraitAllowancePanel
 {
     private readonly ILogger<TraitAllowancePanel> _logger;
     private readonly TraitAllowanceSelector _selector;
-    private readonly TraitsManager _manager;
+    private readonly TraitAllowanceManager _manager;
     private readonly TraitsDrawer _drawer;
     private readonly PairManager _pairs;
     private readonly FavoritesManager _favorites;
@@ -26,7 +26,7 @@ public class TraitAllowancePanel
     public TraitAllowancePanel(
         ILogger<TraitAllowancePanel> logger,
         TraitAllowanceSelector selector,
-        TraitsManager manager,
+        TraitAllowanceManager manager,
         TraitsDrawer drawer,
         PairManager pairs,
         FavoritesManager favorites,
@@ -43,18 +43,17 @@ public class TraitAllowancePanel
         _guides = guides;
     }
 
-    private Module[] Options = new Module[5]
-    {
-        Module.Restraint,
-        Module.Restriction,
-        Module.Gag,
-        Module.Pattern,
-        Module.Trigger
-    };
+    private GagspeakModule[] Options = [
+        GagspeakModule.Restraint,
+        GagspeakModule.Restriction,
+        GagspeakModule.Gag,
+        GagspeakModule.Pattern,
+        GagspeakModule.Trigger
+        ];
 
-    private Module       _selectedModule = Module.None;
+    private GagspeakModule _selectedModule = GagspeakModule.None;
     private ImmutableList<Pair> _allowedPairs = ImmutableList<Pair>.Empty;
-    public Module SelectedModule
+    public GagspeakModule SelectedModule
     {
         get => _selectedModule;
         set
@@ -67,15 +66,15 @@ public class TraitAllowancePanel
         }
     }
 
-    private IEnumerable<string> GetAllowancesForModule(Module module)
+    private IEnumerable<string> GetAllowancesForModule(GagspeakModule module)
     {
         return _selectedModule switch
         {
-            Module.Restraint     => _manager.TraitAllowancesRestraints,
-            Module.Restriction   => _manager.TraitAllowancesRestrictions,
-            Module.Gag           => _manager.TraitAllowancesGags,
-            Module.Pattern       => _manager.TraitAllowancesPatterns,
-            Module.Trigger       => _manager.TraitAllowancesTriggers,
+            GagspeakModule.Restraint     => _manager.TraitAllowancesRestraints,
+            GagspeakModule.Restriction   => _manager.TraitAllowancesRestrictions,
+            GagspeakModule.Gag           => _manager.TraitAllowancesGags,
+            GagspeakModule.Pattern       => _manager.TraitAllowancesPatterns,
+            GagspeakModule.Trigger       => _manager.TraitAllowancesTriggers,
             _ => Enumerable.Empty<string>()
         };
     }
@@ -200,7 +199,7 @@ public class TraitAllowancePanel
 
 
 
-    private bool DrawModuleOption(Module option, Vector2 size, bool selected)
+    private bool DrawModuleOption(GagspeakModule option, Vector2 size, bool selected)
     {
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
@@ -219,15 +218,15 @@ public class TraitAllowancePanel
         return false;
     }
 
-    private void DrawModuleImage(Module option)
+    private void DrawModuleImage(GagspeakModule option)
     {
         var img = option switch
         {
-            Module.Restraint => _cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs],
-            Module.Restriction => _cosmetics.CoreTextures[CoreTexture.Restrained],
-            Module.Gag => _cosmetics.CoreTextures[CoreTexture.Gagged],
-            Module.Pattern => _cosmetics.CoreTextures[CoreTexture.Vibrator],
-            Module.Trigger => _cosmetics.CoreTextures[CoreTexture.ShockCollar],
+            GagspeakModule.Restraint => _cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs],
+            GagspeakModule.Restriction => _cosmetics.CoreTextures[CoreTexture.Restrained],
+            GagspeakModule.Gag => _cosmetics.CoreTextures[CoreTexture.Gagged],
+            GagspeakModule.Pattern => _cosmetics.CoreTextures[CoreTexture.Vibrator],
+            GagspeakModule.Trigger => _cosmetics.CoreTextures[CoreTexture.ShockCollar],
             _ => null
         };
         if (img is { } wrap)

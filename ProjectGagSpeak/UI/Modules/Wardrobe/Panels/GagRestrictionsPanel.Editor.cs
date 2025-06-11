@@ -7,6 +7,8 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.EditorCombos;
 using GagSpeak.PlayerState.Models;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
@@ -118,7 +120,7 @@ public partial class GagRestrictionsPanel
 
         _equipDrawer.DrawAssociatedGlamour("GagGlamour", gagItem.Glamour, width);
 
-        var disabledTraits = Traits.ArmsRestrained | Traits.LegsRestrained | Traits.Immobile | Traits.Weighty;
+        var disabledTraits = Traits.BoundArms | Traits.BoundLegs | Traits.Immobile | Traits.Weighty;
         _traitsDrawer.DrawTwoRowTraits(gagItem, width, disabledTraits);
 
         DrawCustomizeProfile(gagItem, width);
@@ -141,25 +143,25 @@ public partial class GagRestrictionsPanel
         var style = ImGui.GetStyle();
         using var child = CkRaii.HeaderChild("Customize+ Preset", new Vector2(width, ImGui.GetFrameHeight()), HeaderFlags.AddPaddingToHeight);
 
-        var change = _profileCombo.Draw("Customize Profile", gagItem.ProfileGuid, child.InnerRegion.X * .6f, child.InnerRegion.X * .8f);
-        if (change && !gagItem.ProfileGuid.Equals(_profileCombo.Current.ProfileGuid))
+        var change = _profileCombo.Draw("Customize Profile", gagItem.CPlusProfile.ProfileGuid, child.InnerRegion.X * .6f, child.InnerRegion.X * .8f);
+        if (change && !gagItem.CPlusProfile.Equals(_profileCombo.Current))
         {
             _logger.LogTrace($"Profile Guid changed to {_profileCombo.Current.ProfileGuid} " +
-                $"[{_profileCombo.Current.ProfileName}] from {gagItem.ProfileGuid}");
-            gagItem.ProfileGuid = _profileCombo.Current.ProfileGuid;
+                $"[{_profileCombo.Current.ProfileName}] from {gagItem.CPlusProfile.ProfileName}");
+            gagItem.CPlusProfile = _profileCombo.Current;
         }
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
         {
             _logger.LogTrace("Profile Guid item was cleared. and is now Guid.Empty");
-            gagItem.ProfileGuid = Guid.Empty;
+            gagItem.CPlusProfile = CustomizeProfile.Empty;
         }
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         // Get the length of a inputInt box.
-        var priority = (int)gagItem.ProfilePriority;
+        var priority = gagItem.CPlusProfile.Priority;
         if (ImGui.InputInt("##PriorityAdjuster", ref priority))
-            gagItem.ProfilePriority = (uint)priority;
+            gagItem.CPlusProfile.SetPriority(priority);
     }
 }

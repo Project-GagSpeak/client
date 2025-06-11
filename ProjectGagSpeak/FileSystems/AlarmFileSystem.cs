@@ -24,7 +24,7 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Alarm) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Alarm) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -57,11 +57,11 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         return leaf != null;
     }
 
-    private void OnAlarmChange(StorageItemChangeType type, Alarm alarm, string? oldString)
+    private void OnAlarmChange(StorageChangeType type, Alarm alarm, string? oldString)
     {
         switch (type)
         {
-            case StorageItemChangeType.Created:
+            case StorageChangeType.Created:
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
@@ -69,14 +69,14 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
 
                 CreateDuplicateLeaf(parent, alarm.Label, alarm);
                 return;
-            case StorageItemChangeType.Deleted:
+            case StorageChangeType.Deleted:
                 if (FindLeaf(alarm, out var leaf1))
                     Delete(leaf1);
                 return;
-            case StorageItemChangeType.Modified:
+            case StorageChangeType.Modified:
                 Reload();
                 return;
-            case StorageItemChangeType.Renamed when oldString != null:
+            case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(alarm, out var leaf2))
                     return;
 

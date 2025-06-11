@@ -56,12 +56,12 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform TriggerToggle on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.Permissions}");
+            Log.LogDebug($"Failed to perform TriggerToggle on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Toggling Trigger {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s TriggerList", LoggerType.Permissions);
+            Log.LogDebug($"Toggling Trigger {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
             return true;
         }
     }

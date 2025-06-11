@@ -62,11 +62,11 @@ public partial class PairStickyUI
                 var res = await _hub.UserChangeKinksterToyboxState(dto);
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
-                    _logger.LogError($"Failed to stop pattern on {DisplayName}'s toy: {res}", LoggerType.Permissions);
+                    _logger.LogError($"Failed to stop pattern on {DisplayName}'s toy: {res}", LoggerType.StickyUI);
                     return;
                 }
 
-                _logger.LogDebug($"Stopped active Pattern running on {DisplayName}'s toy: {res.ErrorCode}", LoggerType.Permissions);
+                _logger.LogDebug($"Stopped active Pattern running on {DisplayName}'s toy: {res.ErrorCode}", LoggerType.StickyUI);
                 CloseInteraction();
             });
         }

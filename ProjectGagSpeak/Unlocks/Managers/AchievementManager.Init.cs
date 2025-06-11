@@ -2,6 +2,7 @@ using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Runtime.InteropServices;
 
@@ -172,7 +173,7 @@ public partial class AchievementManager
         {
             if (_clientMonitor.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.ActiveTraits & Traits.ArmsRestrained | Traits.LegsRestrained) != 0) ? true : false;
+            return (_restraints.AppliedRestraint is not null && (_traits.ActiveTraits & Traits.BoundArms | Traits.BoundLegs) != 0) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>

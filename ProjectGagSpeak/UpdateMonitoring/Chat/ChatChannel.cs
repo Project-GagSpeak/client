@@ -101,18 +101,8 @@ public static class ChatChannel
 
 
     /// <summary> This method is used to get the current chat channel. </summary>
-    public static Channels GetChatChannel()
-    {
-        // this is the channel that we are going to return
-        Channels channel;
-        // this is unsafe code, so we need to use unsafe
-        unsafe
-        {
-            channel = (Channels)ChatlogAgent->CurrentChannel;
-        }
-        //return the channel now using
-        return channel;
-    }
+    public unsafe static Channels GetChatChannel()
+        => (Channels)ChatlogAgent->CurrentChannel;
 
     /// <summary> This method is used to get the ordered list of channels. </summary>
     public static IEnumerable<Channels> GetOrderedChannels()
@@ -120,7 +110,7 @@ public static class ChatChannel
         return Enum.GetValues(typeof(Channels))
                 .Cast<Channels>()
                 .Where(e => e != Channels.Tell_In && e != Channels.NoviceNetwork)
-                .OrderBy(e => GetOrder(e));
+                .OrderBy(GetOrder);
     }
 
     // Match Channel types with command aliases for them
@@ -234,9 +224,7 @@ public static class ChatChannel
 
     // static helper method to check the bitfield int of the ordered channels and see if it is enabled.
     public static bool IsChannelEnabled(this Channels channel, int associatedBitfield)
-    {
-        return (associatedBitfield & (1 << GetOrder(channel))) != 0;
-    }
+        => (associatedBitfield & (1 << GetOrder(channel))) != 0;
 
     /// <summary> Helper method to set the state of a bitfield at a defined channel.
     /// <remarks> This accounts for the ordered channels. </remarks>

@@ -13,7 +13,7 @@ public class Ipa_Mandarian_Handler
     private string data_file; // Path to the JSON file containing the conversion rules
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Mandarian_Handler> _logger; // Logger
-    private readonly GagspeakConfigService _config; // The GagSpeak configuration
+    private readonly MainConfigService _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
@@ -21,7 +21,7 @@ public class Ipa_Mandarian_Handler
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, GagspeakConfigService config, IDalamudPluginInterface pi)
+    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;

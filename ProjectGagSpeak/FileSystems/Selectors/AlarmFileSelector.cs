@@ -113,7 +113,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnAlarmChange(StorageItemChangeType type, Alarm alarm, string? oldString)
+    private void OnAlarmChange(StorageChangeType type, Alarm alarm, string? oldString)
         => SetFilterDirty();
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>

@@ -147,7 +147,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
-    private void OnPatternChange(StorageItemChangeType type, Pattern pattern, string? oldString)
+    private void OnPatternChange(StorageChangeType type, Pattern pattern, string? oldString)
         => SetFilterDirty();
 
 

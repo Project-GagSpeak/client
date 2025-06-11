@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace ProjectGagSpeak.Tests.GagspeakConfiguration.Services;
 
-public class GagspeakConfigService
+public class MainConfigService
 {
     [Fact]
     void GivenJson_WhenDeserializeJsonIsCalled_ThenItShouldParseForcdedStayPromptList()

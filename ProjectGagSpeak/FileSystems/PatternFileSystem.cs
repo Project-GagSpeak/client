@@ -24,7 +24,7 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Pattern) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Pattern) Reload(); });
         Changed += OnChange;
         Reload();
     }
@@ -57,11 +57,11 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
         return leaf != null;
     }
 
-    private void OnPatternChange(StorageItemChangeType type, Pattern pattern, string? oldString)
+    private void OnPatternChange(StorageChangeType type, Pattern pattern, string? oldString)
     {
         switch (type)
         {
-            case StorageItemChangeType.Created:
+            case StorageChangeType.Created:
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
@@ -69,14 +69,14 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
 
                 CreateDuplicateLeaf(parent, pattern.Label, pattern);
                 return;
-            case StorageItemChangeType.Deleted:
+            case StorageChangeType.Deleted:
                 if (FindLeaf(pattern, out var leaf1))
                     Delete(leaf1);
                 return;
-            case StorageItemChangeType.Modified:
+            case StorageChangeType.Modified:
                 Reload();
                 return;
-            case StorageItemChangeType.Renamed when oldString != null:
+            case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(pattern, out var leaf2))
                     return;
 

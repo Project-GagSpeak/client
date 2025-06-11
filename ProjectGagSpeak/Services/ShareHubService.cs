@@ -179,7 +179,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogInformation("Retrieved patterns from servers.", LoggerType.PatternHub);
+            Logger.LogInformation("Retrieved patterns from servers.", LoggerType.ShareHub);
             LatestPatternResults = result;
         }
 
@@ -208,7 +208,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 UsesVibrations = true,
                 UsesRotations = false,
             };
-            Logger.LogTrace("Uploading Pattern to server.", LoggerType.PatternHub);
+            Logger.LogTrace("Uploading Pattern to server.", LoggerType.ShareHub);
             // construct the dto for the upload.
             PatternUpload patternDto = new(patternInfo, base64Pattern);
             // perform the api call for the upload.
@@ -254,7 +254,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogInformation("Downloaded pattern from servers.", LoggerType.PatternHub);
+            Logger.LogInformation("Downloaded pattern from servers.", LoggerType.ShareHub);
             // add one download count to the pattern.
             var matchedPattern = LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId);
             if(matchedPattern is not null) matchedPattern.Downloads++;
@@ -297,7 +297,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
             
         // otherwise, it worked.
-        Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
+        Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
         // update the pattern stuff
         if (LatestPatternResults.FirstOrDefault(x => x.Identifier == patternId) is { } pattern)
         {
@@ -319,7 +319,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             HubResponse res = await _hub.RemovePattern(IdToRemove);
             if (res.ErrorCode is GagSpeakApiEc.Success)
             {
-                Logger.LogTrace("RemovePatternTask completed.", LoggerType.PatternHub);
+                Logger.LogTrace("RemovePatternTask completed.", LoggerType.ShareHub);
                 // if successful. Notify the success.
                 ClientPublishedPatterns.RemoveAll(p => p.Identifier == IdToRemove);
                 Mediator.Publish(new NotificationMessage("Pattern Removal", "removed successful!", NotificationType.Info));
@@ -351,7 +351,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             LatestMoodleResults = new List<ServerMoodleInfo>();
         else
         {
-            Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.PatternHub);
+            Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.ShareHub);
             LatestMoodleResults = serverMoodles;
         }
 
@@ -368,7 +368,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
 
         // It did the worky, yippee
-        Logger.LogInformation("Like interaction successful.", LoggerType.PatternHub);
+        Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
             
         // fetch the appropriate Moodle
         if (LatestMoodleResults.FirstOrDefault(x => x.MoodleStatus.GUID == moodleId) is not { } moodle)
@@ -385,7 +385,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            Logger.LogTrace("Uploading Moodle to server.", LoggerType.PatternHub);
+            Logger.LogTrace("Uploading Moodle to server.", LoggerType.ShareHub);
             HubResponse res = await _hub.UploadMoodle(new(authorName, tags, moodleInfo));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 throw new Exception($"Failed to upload moodle to servers. Error: {res.ErrorCode}");
@@ -415,7 +415,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 throw new Exception($"Failed to remove moodle from servers: [{res.ErrorCode}]");
 
             // if successful, notify the user.
-            Logger.LogInformation("RemovePatternTask completed.", LoggerType.PatternHub);
+            Logger.LogInformation("RemovePatternTask completed.", LoggerType.ShareHub);
             ClientPublishedMoodles.RemoveAll(m => m.MoodleStatus.GUID == moodleId);
         }
         catch (Exception e)

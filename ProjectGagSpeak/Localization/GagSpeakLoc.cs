@@ -13,12 +13,12 @@ public class GagSpeakLoc : IDisposable, IHostedService
 {
     private readonly ILogger<GagSpeakLoc> _logger;
     private readonly Dalamud.Localization _localization;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly TutorialService _tutorialService;
     private readonly IDalamudPluginInterface _pi;
 
     public GagSpeakLoc(ILogger<GagSpeakLoc> logger, Dalamud.Localization localization,
-        GagspeakConfigService configService, TutorialService tutorialService, IDalamudPluginInterface pi)
+        MainConfigService configService, TutorialService tutorialService, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _localization = localization;

@@ -10,7 +10,7 @@ namespace GagSpeak.CkCommons.Gui.Handlers;
 public class IdDisplayHandler
 {
     private readonly GagspeakMediator _mediator;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ServerConfigurationManager _serverConfig;
     private readonly Dictionary<string, bool> _showIdForEntry = new(StringComparer.Ordinal);
     private string _editComment = string.Empty;
@@ -18,7 +18,7 @@ public class IdDisplayHandler
     private string _lastMouseOverUid = string.Empty;
     private bool _popupShown = false;
     private DateTime? _popupTime;
-    public IdDisplayHandler(GagspeakMediator mediator, ServerConfigurationManager serverManager, GagspeakConfigService gagspeakConfigService)
+    public IdDisplayHandler(GagspeakMediator mediator, ServerConfigurationManager serverManager, MainConfigService gagspeakConfigService)
     {
         _mediator = mediator;
         _serverConfig = serverManager;

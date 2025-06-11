@@ -25,10 +25,10 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class GlobalChatTab : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly GlobalData _playerData;
+    private readonly KinksterRequests _playerData;
     private readonly GagGarbler _garbler;
     private readonly GagRestrictionManager _gagManager;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly KinkPlateService _plateManager;
     private readonly TutorialService _guides;
 
@@ -36,10 +36,10 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         ILogger<GlobalChatTab> logger,
         GagspeakMediator mediator,
         MainHub hub,
-        GlobalData playerData,
+        KinksterRequests playerData,
         GagGarbler garbler,
         GagRestrictionManager gagManager,
-        GagspeakConfigService mainConfig,
+        MainConfigService mainConfig,
         KinkPlateService plateManager,
         TutorialService guides) : base(logger, mediator)
     {

@@ -19,7 +19,7 @@ public class AccountManagerTab
     private readonly ILogger<AccountManagerTab> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
-    private readonly GagspeakConfigService _mainConfig;
+    private readonly MainConfigService _mainConfig;
     private readonly ServerConfigurationManager _serverConfigs;
     private readonly ConfigFileProvider _configFiles;
     private readonly ClientMonitor _clientMonitor;
@@ -28,7 +28,7 @@ public class AccountManagerTab
     private int ShowKeyIdx = -1;
     private int EditingIdx = -1;
     public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator,
-        MainHub hub, GagspeakConfigService mainConfig, ServerConfigurationManager serverConfigs,
+        MainHub hub, MainConfigService mainConfig, ServerConfigurationManager serverConfigs,
         ConfigFileProvider configDirectory, ClientMonitor clientMonitor)
     {
         _logger = logger;

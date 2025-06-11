@@ -24,7 +24,7 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is Module.Restraint) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Restraint) Reload(); });
         Changed += OnChange;
         Reload();
     }

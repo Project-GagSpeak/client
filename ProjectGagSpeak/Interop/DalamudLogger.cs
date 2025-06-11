@@ -27,7 +27,7 @@ internal sealed class DalamudLogger : ILogger
     /// <summary> Checks if the log level is enabled for the current log level we are inspecting. </summary>
     public bool IsEnabled(LogLevel logLevel)
     {
-        return (int)GagspeakConfigService.LogLevel <= (int)logLevel;
+        return (int)MainConfigService.LogLevel <= (int)logLevel;
     }
 
     /// <summary> This is the Log method that is called by the ILogger interface. </summary>

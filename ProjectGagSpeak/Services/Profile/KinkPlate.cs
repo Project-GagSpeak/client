@@ -10,7 +10,7 @@ namespace GagSpeak.Services;
 
 public class KinkPlate : DisposableMediatorSubscriberBase
 {
-    private readonly GlobalData _playerData;
+    private readonly KinksterRequests _playerData;
     private readonly CosmeticService _cosmetics;
 
     // KinkPlate Data for User.
@@ -19,7 +19,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap? _storedProfileImage;
 
     public KinkPlate(ILogger<KinkPlate> logger, GagspeakMediator mediator,
-        GlobalData playerData, CosmeticService cosmeticService, 
+        KinksterRequests playerData, CosmeticService cosmeticService, 
         KinkPlateContent plateContent, string base64ProfilePicture) : base(logger, mediator)
     {
         _playerData = playerData;
@@ -60,12 +60,12 @@ public class KinkPlate : DisposableMediatorSubscriberBase
             if (_base64ProfilePicture != value)
             {
                 _base64ProfilePicture = value;
-                Logger.LogDebug("Profile picture updated.", LoggerType.KinkPlateMonitor);
+                Logger.LogDebug("Profile picture updated.", LoggerType.Kinkplates);
                 if(!string.IsNullOrEmpty(_base64ProfilePicture))
                 {
-                    Logger.LogTrace("Refreshing profile image data!", LoggerType.KinkPlateMonitor);
+                    Logger.LogTrace("Refreshing profile image data!", LoggerType.Kinkplates);
                     _imageData = new Lazy<byte[]>(() => ConvertBase64ToByteArray(Base64ProfilePicture));
-                    Logger.LogTrace("Refreshed profile image data!", LoggerType.KinkPlateMonitor);
+                    Logger.LogTrace("Refreshed profile image data!", LoggerType.Kinkplates);
                 }
             }
         }

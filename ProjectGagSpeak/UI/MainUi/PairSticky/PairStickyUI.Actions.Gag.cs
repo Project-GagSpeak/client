@@ -103,7 +103,7 @@ public partial class PairStickyUI
                     // push to server.
                     _hub.UserChangeKinksterGagState(dto).ConfigureAwait(false);
                     OpenedInteraction = InteractionType.None;
-                    _logger.LogDebug("Removing Gag From layer " + _gagLayer, LoggerType.Permissions);
+                    _logger.LogDebug("Removing Gag From layer " + _gagLayer, LoggerType.StickyUI);
                 }
             }
         }

@@ -116,7 +116,7 @@ public class PublicationsManager
     public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (VisualApplierMoodles.LatestIpcData is null)
+        if (MoodleHandler.IpcData is null)
         {
             CkGui.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }

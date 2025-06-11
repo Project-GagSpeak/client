@@ -14,13 +14,13 @@ namespace GagSpeak.Services;
 public sealed class DeathRollService
 {
     private readonly ILogger<DeathRollService> _logger;
-    private readonly GlobalData _globals;
+    private readonly KinksterRequests _globals;
     private readonly ClientMonitor _clientMonitor;
     private readonly TriggerManager _triggers;
     private readonly TriggerApplier _applier;
     private readonly IChatGui _chatGui;
 
-    public DeathRollService(ILogger<DeathRollService> logger, GlobalData globals,
+    public DeathRollService(ILogger<DeathRollService> logger, KinksterRequests globals,
         ClientMonitor clientMonitor, TriggerManager triggers, TriggerApplier applier, 
         IChatGui chatGui)
     {
@@ -50,7 +50,7 @@ public sealed class DeathRollService
     {
         if (_clientMonitor.Address == nint.Zero || !message.Payloads.Exists(p => p.Type == PayloadType.Icon))
         {
-            _logger.LogDebug("Ignoring message due to not being in a world or not being a chat message.", LoggerType.ToyboxTriggers);
+            _logger.LogDebug("Ignoring message due to not being in a world or not being a chat message.", LoggerType.Triggers);
             return;
         }
 
@@ -59,20 +59,20 @@ public sealed class DeathRollService
         // if the roll value and cap are 0, its an invalid, so return.
         if (rollValue is -1 && rollCap is -1)
         {
-            _logger.LogDebug("Ignoring message due to invalid roll values.", LoggerType.ToyboxTriggers);
+            _logger.LogDebug("Ignoring message due to invalid roll values.", LoggerType.Triggers);
             return;
         }
 
-        _logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.ToyboxTriggers);
+        _logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.Triggers);
 
         if (rollValue is -1)
         {
-            _logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.ToyboxTriggers);
+            _logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.Triggers);
             StartNewSession(nameWithWorld, rollCap);
         }
         else
         {
-            _logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LoggerType.ToyboxTriggers);
+            _logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LoggerType.Triggers);
             ContinueSession(nameWithWorld, rollValue, rollCap);
         }
     }
@@ -95,13 +95,13 @@ public sealed class DeathRollService
             .FirstOrDefault(s => s.CurrentRollCap == rollCap && !s.IsComplete && s.LastRoller != playerName);
 
         if (session is null) {
-            _logger.LogDebug("No active session found to match roll.", LoggerType.ToyboxTriggers);
+            _logger.LogDebug("No active session found to match roll.", LoggerType.Triggers);
             return;
         }
 
         // do not join a session we are not a part of.
         if (!session.Opponent.IsNullOrEmpty() && (session.Opponent != playerName && session.Initializer != playerName)) {
-            _logger.LogTrace($"{playerName} is not part of the session, ignoring!", LoggerType.ToyboxTriggers);
+            _logger.LogTrace($"{playerName} is not part of the session, ignoring!", LoggerType.Triggers);
             return;
         }
 
@@ -109,13 +109,13 @@ public sealed class DeathRollService
         // and should clear all other instances with our name.
         if (session.Opponent.IsNullOrEmpty())
         {
-            _logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LoggerType.ToyboxTriggers);
+            _logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LoggerType.Triggers);
             RemovePlayerSessions(playerName);
         }
 
         if (session.TryProcessRoll(playerName, rollValue))
         {
-            _logger.LogDebug($"{playerName} rolled {rollValue} in session.", LoggerType.ToyboxTriggers);
+            _logger.LogDebug($"{playerName} rolled {rollValue} in session.", LoggerType.Triggers);
         }
         else
         {
@@ -131,7 +131,7 @@ public sealed class DeathRollService
         foreach (var session in MonitoredSessions.Values.Where(k => k.Initializer == playerName || k.Opponent == playerName).ToList())
         {
             _logger.LogDebug($"Removing session involving {playerName}, (Initializer: {session.Initializer} and Opponent {session.Opponent}" +
-                " due to them joining / creating another!", LoggerType.ToyboxTriggers);
+                " due to them joining / creating another!", LoggerType.Triggers);
             MonitoredSessions.Remove(session.Initializer);
         }
     }

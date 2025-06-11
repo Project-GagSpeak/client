@@ -69,7 +69,7 @@ public class CosmeticService : IHostedService, IDisposable
             if (TryRentImageFromFile(path, out var texture))
                 CoreEmoteTextures[key] = texture;
         }
-        _logger.LogInformation("GagSpeak Profile Emote Image Cache Fetched all NecessaryImages!", LoggerType.Cosmetics);
+        _logger.LogInformation("GagSpeak Profile Emote Image Cache Fetched all NecessaryImages!", LoggerType.Textures);
     }
 
     public void LoadAllCoreTextures()
@@ -88,7 +88,7 @@ public class CosmeticService : IHostedService, IDisposable
             if(TryRentImageFromFile(path, out var texture))
                 CoreTextures[key] = texture;
         }
-        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all NecessaryImages!", LoggerType.Cosmetics);
+        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all NecessaryImages!", LoggerType.Textures);
     }
 
     public void LoadAllCosmetics()
@@ -109,7 +109,7 @@ public class CosmeticService : IHostedService, IDisposable
             if (TryRentImageFromFile(path, out var texture))
                 InternalCosmeticCache[key] = texture;
         }
-        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LoggerType.Cosmetics);
+        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LoggerType.Textures);
     }
 
     public IDalamudTextureWrap? GagImageFromType(GagType gagType)

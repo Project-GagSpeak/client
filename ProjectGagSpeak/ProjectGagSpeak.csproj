@@ -94,6 +94,6 @@
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="UI\Services\" />
+      <Folder Include="Utils\PointerFuckery\" />
     </ItemGroup>
 </Project>

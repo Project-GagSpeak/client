@@ -1,7 +1,9 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.PlayerData.Pairs;
 using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -11,9 +13,9 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
-    private int longestPresetCount => _pairRef.LastIpcData.MoodlesPresets.Max(x => x.Statuses.Count);
+    private int MaxPresetCount => _pairRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
     public PairMoodlePresetCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log)
-        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.MoodlesPresets.OrderBy(x => x.Title)])
+        : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.Presets.Values.OrderBy(x => x.Title)])
     { }
 
     protected override bool DisableCondition()
@@ -34,9 +36,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
         {
             var status = moodlePreset.Statuses[i];
-            var info = _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == status);
-
-            if (EqualityComparer<MoodlesStatusInfo>.Default.Equals(info, default))
+            if (!_pairRef.LastIpcData.Statuses.TryGetValue(status, out var info))
             {
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + IconSize.X);
                 continue;
@@ -44,9 +44,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
 
             _statuses.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
             // get the dispelable moodle if any.
-            var title = info.StatusOnDispell.IsEmptyGuid()
-                ? "Unknown"
-                : _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(x => x.GUID == info.StatusOnDispell).Title ?? "Unknown";
+            var title = _pairRef.LastIpcData.Statuses.GetValueOrDefault(info.StatusOnDispell).Title ?? "Unknown";
             DrawItemTooltip(info, title);
 
             if (++iconsDrawn < moodlePreset.Statuses.Count)
@@ -57,25 +55,29 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
     }
 
     protected override bool CanDoAction(MoodlePresetInfo item)
-        => IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, item.Statuses.Select(
-            x => _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(y => y.GUID == x)).ToList());
+    {
+        var statusesToCheck = new List<MoodlesStatusInfo>(item.Statuses.Count);
+        foreach (var guid in item.Statuses)
+        {
+            if (_pairRef.LastIpcData.Statuses.TryGetValue(guid, out var info))
+                statusesToCheck.Add(info);
+        }
+
+        return IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, statusesToCheck);
+    }
 
     protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)
     {
-        var statusInfos = item.Statuses
-            .Select(x => _pairRef.LastIpcData.MoodlesStatuses.FirstOrDefault(y => y.GUID == x))
-            .ToArray();
-
-        var dto = new MoodlesApplierById(_pairRef.UserData, statusInfos.Select(x => x.GUID).ToArray(), MoodleType.Preset);
+        var dto = new MoodlesApplierById(_pairRef.UserData, item.Statuses, MoodleType.Preset);
         HubResponse res = await _mainHub.UserApplyMoodlesByGuid(dto);
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Applying moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.Permissions);
+            Log.LogDebug($"Applying moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
         else
         {
-            Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.Permissions);
+            Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_pairRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
             return false;
         }
     }

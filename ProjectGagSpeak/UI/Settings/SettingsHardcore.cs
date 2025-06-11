@@ -16,10 +16,10 @@ namespace GagSpeak.CkCommons.Gui;
 public class SettingsHardcore
 {
     private readonly ILogger<SettingsHardcore> _logger;
-    private readonly GagspeakConfigService _clientConfigs;
-    private readonly GlobalData _globals;
+    private readonly MainConfigService _clientConfigs;
+    private readonly KinksterRequests _globals;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger, GagspeakConfigService config, GlobalData globals)
+    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfigService config, KinksterRequests globals)
     {
         _logger = logger;
         _clientConfigs = config;

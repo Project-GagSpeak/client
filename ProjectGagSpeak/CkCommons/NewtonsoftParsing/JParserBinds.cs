@@ -2,8 +2,8 @@ using GagSpeak.PlayerData.Storage;
 using GagSpeak.PlayerState.Models;
 using GagSpeak.PlayerState.Visual;
 using GagSpeak.Services;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using ProjectGagSpeak.Utils.Enums;
 
 namespace GagSpeak.CkCommons.Newtonsoft;
 
