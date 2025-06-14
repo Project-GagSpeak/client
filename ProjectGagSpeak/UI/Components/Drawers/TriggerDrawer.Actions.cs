@@ -1,22 +1,16 @@
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.Localization;
-using GagSpeak.State;
+using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using GagSpeak.Utils.Enums;
-using System.Security.Claims;
 using GagspeakAPI.Attributes;
 
 namespace GagSpeak.CkCommons.Gui.Components;
@@ -359,7 +353,7 @@ public sealed partial class TriggerDrawer
             var width = ImGui.GetContentRegionAvail().X;
             if (mAct.MoodleItem is MoodlePreset preset)
             {
-                var label = _presetCombo.Current.GUID.IsEmptyGuid() ? "<No Preset Selected>" : _presetCombo.Current.Title.StripColorTags();
+                var label = _presetCombo.Current.GUID== Guid.Empty ? "<No Preset Selected>" : _presetCombo.Current.Title.StripColorTags();
                 CkGuiUtils.FramedEditDisplay("##MoodleItem", width, isEditorItem, label, _ =>
                 {
                     // update the preset if different.
@@ -373,7 +367,7 @@ public sealed partial class TriggerDrawer
             }
             else
             {
-                var label = _statusCombo.Current.GUID.IsEmptyGuid() ? "<No Status Selected>" : _statusCombo.Current.Title.StripColorTags();
+                var label = _statusCombo.Current.GUID== Guid.Empty ? "<No Status Selected>" : _statusCombo.Current.Title.StripColorTags();
                 CkGuiUtils.FramedEditDisplay("##MoodleItem", width, isEditorItem, label, _ =>
                 {
                     // update the status if different.
@@ -387,7 +381,7 @@ public sealed partial class TriggerDrawer
         }
 
         // Draw Framed Icons
-        _moodleDrawer.FramedMoodleIconDisplay("MoodleAct", [mAct.MoodleItem], ImGui.GetContentRegionAvail().X,
+        _moodleDrawer.ShowStatusIconsFramed("MoodleAct", [mAct.MoodleItem], ImGui.GetContentRegionAvail().X,
             CkStyle.ChildRounding(), MoodleDrawer.IconSize, 2);
     }
 

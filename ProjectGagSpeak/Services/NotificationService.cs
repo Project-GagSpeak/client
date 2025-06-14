@@ -1,9 +1,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
-using GagSpeak.Kinkster.Data;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;

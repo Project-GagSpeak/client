@@ -1,9 +1,7 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Utility;
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -14,6 +12,8 @@ using ImGuiNET;
 using OtterGui.Text;
 using System.Globalization;
 using System.Reflection;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 

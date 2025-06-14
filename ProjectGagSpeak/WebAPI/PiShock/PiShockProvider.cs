@@ -1,10 +1,10 @@
-using GagSpeak.Kinkster.Pairs;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Hub;
 using System.Net;
 using System.Text.Json;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace GagSpeak.WebAPI;

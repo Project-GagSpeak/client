@@ -1,17 +1,17 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.FileSystems;
+using GagSpeak.Kinksters;
 using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.Restrictions;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
@@ -66,13 +66,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             }
             else if (msg.MetaData.Kind is ImageDataType.Blindfolds && manager.ItemInEditor is BlindfoldRestriction blindfold)
             {
-                Logger.LogDebug($"Thumbnail updated for {blindfold.Label} to {blindfold.BlindfoldPath}");
-                blindfold.BlindfoldPath = msg.Name;
+                Logger.LogDebug($"Thumbnail updated for {blindfold.Label} to {blindfold.Properties.OverlayPath}");
+                blindfold.Properties.OverlayPath = msg.Name;
             }
             else if (msg.MetaData.Kind is ImageDataType.Hypnosis && manager.ItemInEditor is HypnoticRestriction hypnoItem)
             {
-                Logger.LogDebug($"Thumbnail updated for {hypnoItem.Label} to {hypnoItem.HypnotizePath}");
-                hypnoItem.HypnotizePath = msg.Name;
+                Logger.LogDebug($"Thumbnail updated for {hypnoItem.Label} to {hypnoItem.Properties.OverlayPath}");
+                hypnoItem.Properties.OverlayPath = msg.Name;
             }
         });
     }
@@ -197,16 +197,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             : "This Restriction Item has no associated Mod Preset.");
 
         // go right aligned for the trait previews.
-        _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits, _selector.Selected!.Stimulation);
+        _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         DrawMoodlePreview();
     }
 
     private void DrawMoodlePreview()
     {
-        if (_selector.Selected!.Moodle.Id.IsEmptyGuid())
-            return;
-
-        _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
+        _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 
     private void DrawActiveItemInfo(Vector2 region)
@@ -228,7 +225,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
             // Draw the framed Item.
-            if (restrictionData.Identifier.IsEmptyGuid())
+            if (restrictionData.Identifier== Guid.Empty)
             {
                 // Display empty showing.
                 _activeItemDrawer.ApplyItemGroup(groupH, index, restrictionData);
@@ -236,7 +233,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             else
             {
                 // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
-                if (_manager.AppliedRestrictions[index] is { } item && !item.Identifier.IsEmptyGuid())
+                if (_manager.AppliedRestrictions[index] is { } item && item.Identifier != Guid.Empty)
                 {
                     if (restrictionData.IsLocked())
                         _activeItemDrawer.UnlockItemGroup(height, index, restrictionData, item);

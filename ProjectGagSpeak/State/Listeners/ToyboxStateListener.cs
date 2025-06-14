@@ -1,9 +1,9 @@
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox.Services;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Toybox;
 
 namespace GagSpeak.State.Listeners;
 
@@ -14,7 +14,6 @@ public sealed class ToyboxStateListener
 {
     private readonly ILogger<ToyboxStateListener> _logger;
     private readonly GagspeakMediator   _mediator;
-    private readonly GlobalPermissions  _globals;
     private readonly PairManager        _pairs;
 
     // Managers:
@@ -31,7 +30,6 @@ public sealed class ToyboxStateListener
     // private readonly ShockCollarManager = _shockCollars;
     // private readonly SpatialAudioManager _spatialAudio;
 
-    private readonly PlayerData  _player;
     private readonly OnFrameworkService _frameworkUtils;
     public ToyboxStateListener(
         ILogger<ToyboxStateListener> logger,
@@ -41,7 +39,6 @@ public sealed class ToyboxStateListener
         AlarmManager alarmManager,
         TriggerManager triggers,
         SexToyManager toys,
-        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils)
     {
         _logger = logger;
@@ -52,7 +49,6 @@ public sealed class ToyboxStateListener
         _triggers = triggers;
         // _vibeLobbyManager = vibeLobbyManager;
         _toys = toys;
-        _player = clientMonitor;
         _frameworkUtils = frameworkUtils;
     }
 

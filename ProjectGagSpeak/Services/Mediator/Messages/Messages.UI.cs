@@ -1,6 +1,6 @@
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 

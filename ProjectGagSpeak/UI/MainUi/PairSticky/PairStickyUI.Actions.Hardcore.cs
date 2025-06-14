@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Achievements;
+using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
@@ -18,7 +18,7 @@ public partial class PairStickyUI
     private int _chosenCyclePose = 0;
     private void DrawHardcoreActions()
     {
-        if(_globals.GlobalPerms is null || MainHub.UID is null)
+        if(_globals.Current is null || MainHub.UID is null)
         {
             _logger.LogWarning("GlobalPerms or MainHub.UID is null, cannot draw hardcore actions.");
             return;
@@ -29,12 +29,12 @@ public partial class PairStickyUI
 
         var pairlockStateStr = SPair.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
 
-        var forceFollowIcon = SPair.PairGlobals.IsFollowing() ? FAI.StopCircle : FAI.PersonWalkingArrowRight;
-        var forceFollowText = SPair.PairGlobals.IsFollowing() ? $"Have {DisplayName} stop following you." : $"Make {DisplayName} follow you.";
-        var disableForceFollow = !inRange || !SPair.PairPerms.AllowForcedFollow || !SPair.IsVisible || !SPair.PairGlobals.CanToggleFollow(MainHub.UID);
+        var forceFollowIcon = SPair.PairGlobals.HcFollowState() ? FAI.StopCircle : FAI.PersonWalkingArrowRight;
+        var forceFollowText = SPair.PairGlobals.HcFollowState() ? $"Have {DisplayName} stop following you." : $"Make {DisplayName} follow you.";
+        var disableForceFollow = !inRange || !SPair.PairPerms.AllowForcedFollow || !SPair.IsVisible || !SPair.PairGlobals.CanChangeHcFollow(MainHub.UID);
         if (CkGui.IconTextButton(forceFollowIcon, forceFollowText, WindowMenuWidth, true, disableForceFollow))
         {
-            var newStr = SPair.PairGlobals.IsFollowing() ? string.Empty : MainHub.UID + pairlockStateStr;
+            var newStr = SPair.PairGlobals.HcFollowState() ? string.Empty : MainHub.UID + pairlockStateStr;
             UiTask = PermissionHelper.ChangeOtherGlobal(_hub, SPair.UserData, SPair.PairGlobals, nameof(GlobalPerms.ForcedFollow), newStr);
         }
         
@@ -42,42 +42,42 @@ public partial class PairStickyUI
         DrawForcedEmoteSection();
 
 
-        var forceToStayIcon = SPair.PairGlobals.IsStaying() ? FAI.StopCircle : FAI.HouseLock;
-        var forceToStayText = SPair.PairGlobals.IsStaying() ? $"Release {DisplayName}." : $"Lock away {DisplayName}.";
-        var disableForceToStay = !SPair.PairPerms.AllowForcedStay || !SPair.PairGlobals.CanToggleStay(MainHub.UID);
+        var forceToStayIcon = SPair.PairGlobals.HcStayState() ? FAI.StopCircle : FAI.HouseLock;
+        var forceToStayText = SPair.PairGlobals.HcStayState() ? $"Release {DisplayName}." : $"Lock away {DisplayName}.";
+        var disableForceToStay = !SPair.PairPerms.AllowForcedStay || !SPair.PairGlobals.CanChangeHcStay(MainHub.UID);
         if (CkGui.IconTextButton(forceToStayIcon, forceToStayText, WindowMenuWidth, true, disableForceToStay, "##ForcedToStayHCA"))
         {
-            var newStr = SPair.PairGlobals.IsStaying() ? string.Empty : MainHub.UID + pairlockStateStr;
+            var newStr = SPair.PairGlobals.HcStayState() ? string.Empty : MainHub.UID + pairlockStateStr;
             UiTask = PermissionHelper.ChangeOtherGlobal(_hub, SPair.UserData, SPair.PairGlobals, nameof(GlobalPerms.ForcedStay), newStr);
         }
 
         // Hiding chat message history window, but still allowing typing.
-        var toggleChatboxIcon = SPair.PairGlobals.IsChatHidden() ? FAI.StopCircle : FAI.CommentSlash;
-        var toggleChatboxText = SPair.PairGlobals.IsChatHidden() ? "Make " + DisplayName + "'s Chat Visible." : "Hide "+DisplayName+"'s Chat Window.";
-        var disableChatToggle = !SPair.PairPerms.AllowHidingChatBoxes || !SPair.PairGlobals.CanToggleChatHidden(MainHub.UID);
+        var toggleChatboxIcon = SPair.PairGlobals.HcChatVisState() ? FAI.StopCircle : FAI.CommentSlash;
+        var toggleChatboxText = SPair.PairGlobals.HcChatVisState() ? "Make " + DisplayName + "'s Chat Visible." : "Hide "+DisplayName+"'s Chat Window.";
+        var disableChatToggle = !SPair.PairPerms.AllowHidingChatBoxes || !SPair.PairGlobals.CanChangeHcChatVis(MainHub.UID);
         if (CkGui.IconTextButton(toggleChatboxIcon, toggleChatboxText, WindowMenuWidth, true, disableChatToggle, "##ForcedChatboxVisibilityHCA"))
         {
-            var newStr = SPair.PairGlobals.IsChatHidden() ? string.Empty : MainHub.UID + pairlockStateStr;
+            var newStr = SPair.PairGlobals.HcChatVisState() ? string.Empty : MainHub.UID + pairlockStateStr;
             UiTask = PermissionHelper.ChangeOtherGlobal(_hub, SPair.UserData, SPair.PairGlobals, nameof(GlobalPerms.ChatBoxesHidden), newStr);
         }
 
         // Hiding Chat input, but still allowing typing.
-        var toggleChatInputIcon = SPair.PairGlobals.IsChatInputHidden() ? FAI.StopCircle : FAI.CommentSlash;
-        var toggleChatInputText = SPair.PairGlobals.IsChatInputHidden() ? "Make " + DisplayName + "'s Chat Input Visible." : "Hide "+DisplayName+"'s Chat Input.";
-        var disableChatInputRenderToggle = !SPair.PairPerms.AllowHidingChatInput || !SPair.PairGlobals.CanToggleChatInputHidden(MainHub.UID);
+        var toggleChatInputIcon = SPair.PairGlobals.HcChatInputVisState() ? FAI.StopCircle : FAI.CommentSlash;
+        var toggleChatInputText = SPair.PairGlobals.HcChatInputVisState() ? "Make " + DisplayName + "'s Chat Input Visible." : "Hide "+DisplayName+"'s Chat Input.";
+        var disableChatInputRenderToggle = !SPair.PairPerms.AllowHidingChatInput || !SPair.PairGlobals.CanChangeHcChatInputVis(MainHub.UID);
         if (CkGui.IconTextButton(toggleChatInputIcon, toggleChatInputText, WindowMenuWidth, true, disableChatInputRenderToggle, "##ForcedChatInputVisibilityHCA"))
         {
-            var newStr = SPair.PairGlobals.IsChatInputHidden() ? string.Empty : MainHub.UID + pairlockStateStr;
+            var newStr = SPair.PairGlobals.HcChatInputVisState() ? string.Empty : MainHub.UID + pairlockStateStr;
             UiTask = PermissionHelper.ChangeOtherGlobal(_hub, SPair.UserData, SPair.PairGlobals, nameof(GlobalPerms.ChatInputHidden), newStr);
         }
 
         // Preventing Chat Input at all.
-        var toggleChatBlockingIcon = SPair.PairGlobals.IsChatInputBlocked() ? FAI.StopCircle : FAI.CommentDots;
-        var toggleChatBlockingText = SPair.PairGlobals.IsChatInputBlocked() ? "Reallow "+DisplayName+"'s Chat Input." : "Block "+DisplayName+"'s Chat Input.";
-        var disableChatInputBlockToggle = !SPair.PairPerms.AllowChatInputBlocking || !SPair.PairGlobals.CanToggleChatInputBlocked(MainHub.UID);
+        var toggleChatBlockingIcon = SPair.PairGlobals.HcBlockChatInputState() ? FAI.StopCircle : FAI.CommentDots;
+        var toggleChatBlockingText = SPair.PairGlobals.HcBlockChatInputState() ? "Reallow "+DisplayName+"'s Chat Input." : "Block "+DisplayName+"'s Chat Input.";
+        var disableChatInputBlockToggle = !SPair.PairPerms.AllowChatInputBlocking || !SPair.PairGlobals.CanChangeHcBlockChatInput(MainHub.UID);
         if (CkGui.IconTextButton(toggleChatBlockingIcon, toggleChatBlockingText, WindowMenuWidth, true, disableChatInputBlockToggle, "##BlockedChatInputHCA"))
         {
-            var newStr = SPair.PairGlobals.IsChatInputBlocked() ? string.Empty : MainHub.UID + pairlockStateStr;
+            var newStr = SPair.PairGlobals.HcBlockChatInputState() ? string.Empty : MainHub.UID + pairlockStateStr;
             UiTask = PermissionHelper.ChangeOtherGlobal(_hub, SPair.UserData, SPair.PairGlobals, nameof(GlobalPerms.ChatInputBlocked), newStr);
         }
         ImGui.Separator();
@@ -85,7 +85,7 @@ public partial class PairStickyUI
 
     private void DrawForcedEmoteSection()
     {
-        var canToggleEmoteState = SPair.PairGlobals.CanToggleEmoteState(MainHub.UID);
+        var canToggleEmoteState = SPair.PairGlobals.CanChangeHcEmote(MainHub.UID);
         var disableForceSit = !SPair.PairPerms.AllowForcedSit || !canToggleEmoteState;
         var disableForceEmoteState = !SPair.PairPerms.AllowForcedEmote || !canToggleEmoteState;
 

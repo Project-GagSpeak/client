@@ -5,12 +5,12 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using GagSpeak.PlayerClient;
-using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
-using GagSpeak.UpdateMonitoring;
 using System.Runtime.InteropServices;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Caches;
 
 // We can seperate these into their own classes down the line
 // if possible and have an overall manager. Once it needs more control.
@@ -29,7 +29,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly LootHandler _lootHandler;
     private readonly GlamourHandler _glamourHandler;
-    private readonly TraitsHandler _traitHandler;
+    private readonly TraitsCache _traitCache;
     private readonly TriggerHandler _triggerHandler;
     private readonly MufflerService _muffler;
     private readonly OnFrameworkService _frameworkUtils;
@@ -41,7 +41,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         GagRestrictionManager gags,
         GlamourHandler glamourHandler,
         LootHandler lootHandler,
-        TraitsHandler traitHandler,
+        TraitsCache traitCache,
         TriggerHandler triggerHandler,
         MufflerService muffler,
         OnFrameworkService frameworkUtils,
@@ -52,7 +52,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         _globals = globals;
         _gags = gags;
         _lootHandler = lootHandler;
-        _traitHandler = traitHandler;
+        _traitCache = traitCache;
         _glamourHandler = glamourHandler;
         _triggerHandler = triggerHandler;
         _muffler = muffler;

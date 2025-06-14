@@ -1,5 +1,4 @@
 using Dalamud.Hooking;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 using Penumbra.String;
 using Penumbra.String.Classes;

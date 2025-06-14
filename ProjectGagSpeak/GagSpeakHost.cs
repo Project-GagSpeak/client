@@ -1,18 +1,14 @@
-using GagSpeak.Achievements.Services;
-using GagSpeak.CkCommons;
-using GagSpeak.Kinkster.Pairs;
-using GagSpeak.Kinkster.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.StateManagers;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.Chat;
-using GagSpeak.UpdateMonitoring.Triggers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
+using GagSpeak.GameInternals;
+using GagSpeak.PlayerClient;
+using GagSpeak.Utils;
+using GagSpeak.GameInternals.Detours;
 
 namespace GagSpeak;
 
@@ -154,15 +150,8 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatSender>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatInputDetour>();
-
-            // boot up update monitoring services (this don't work as hosted services because they are unsafe)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ForcedStayCallback>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ActionMonitor>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementMonitor>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<Signatures>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<OnEmote>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
 
             // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();

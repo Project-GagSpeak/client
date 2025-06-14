@@ -2,7 +2,6 @@ using Dalamud.Game.Text;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.GameInternals.Agents;
 

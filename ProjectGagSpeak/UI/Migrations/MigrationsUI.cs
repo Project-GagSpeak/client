@@ -1,11 +1,11 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.State;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Models;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui;

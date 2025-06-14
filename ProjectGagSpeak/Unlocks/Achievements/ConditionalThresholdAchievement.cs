@@ -1,6 +1,4 @@
-using Dalamud.Plugin.Services;
 using GagSpeak.WebAPI;
-using System;
 
 namespace GagSpeak.Achievements;
 

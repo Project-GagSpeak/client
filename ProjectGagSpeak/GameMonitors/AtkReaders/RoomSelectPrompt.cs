@@ -4,8 +4,7 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
-using GagSpeak.Services.Configs;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
 
 namespace GagSpeak.Game.Readers;

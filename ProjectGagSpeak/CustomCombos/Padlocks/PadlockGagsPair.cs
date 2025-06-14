@@ -1,4 +1,4 @@
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;

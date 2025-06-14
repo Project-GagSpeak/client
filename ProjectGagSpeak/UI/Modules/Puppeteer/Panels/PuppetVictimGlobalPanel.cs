@@ -5,10 +5,10 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -21,7 +21,7 @@ public sealed partial class PuppetVictimGlobalPanel
 {
     private readonly ILogger<PuppetVictimGlobalPanel> _logger;
     private readonly MainHub _hub;
-    private readonly KinksterRequests _globals;
+    private readonly GlobalPermissions _globals;
     private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
     private readonly CosmeticService _cosmetics;
@@ -36,7 +36,7 @@ public sealed partial class PuppetVictimGlobalPanel
     public PuppetVictimGlobalPanel(
         ILogger<PuppetVictimGlobalPanel> logger,
         MainHub hub,
-        KinksterRequests globals,
+        GlobalPermissions globals,
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,
         FavoritesManager favorites,
@@ -169,8 +169,8 @@ public sealed partial class PuppetVictimGlobalPanel
         // extract the tabs by splitting the string by comma's
         using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
-            var globalPhrase = _globals.GlobalPerms?.TriggerPhrase ?? string.Empty;
-            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && _globals.GlobalPerms is { } globals)
+            var globalPhrase = _globals.Current?.TriggerPhrase ?? string.Empty;
+            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && _globals.Current is { } globals)
             {
                 _logger.LogTrace("The Tag Editor had an update!");
                 PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.TriggerPhrase), updatedString).ConfigureAwait(false);
@@ -191,11 +191,11 @@ public sealed partial class PuppetVictimGlobalPanel
         ImGui.SameLine(child.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         using (ImRaii.Group())
         {
-            var categoryFilter = (uint)(_globals.GlobalPerms?.PuppetPerms ?? PuppetPerms.None);
+            var categoryFilter = (uint)(_globals.Current?.PuppetPerms ?? PuppetPerms.None);
             foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
                 ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
 
-            if (_globals.GlobalPerms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
+            if (_globals.Current is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
                 PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter).ConfigureAwait(false);
         }
 

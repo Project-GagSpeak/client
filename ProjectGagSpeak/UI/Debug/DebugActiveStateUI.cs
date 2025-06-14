@@ -1,26 +1,15 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Localization;
-using GagSpeak.State.Listener;
-using GagSpeak.State.Models;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services;
+using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Handlers;
+using GagSpeak.State.Managers;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
-using OtterGui;
 using OtterGui.Text;
-using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
-using ProjectGagSpeak.State.Managers;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -40,9 +29,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly RestraintManager _restraints;
     private readonly CursedLootManager _cursedLoot;
     private readonly CacheStateManager _cacheManager;
-    private readonly GlamourHandler _glamourCache;
-    private readonly ModHandler _modCache;
-    private readonly MoodleHandler _moodleCache;
+    private readonly GlamourCache _glamourCache;
+    private readonly ModCache _modCache;
+    private readonly MoodleCache _moodleCache;
     private readonly TextureService _iconTextures;
 
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger, 
@@ -57,9 +46,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         RestraintManager restraints,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
-        GlamourHandler glamourCache,
-        ModHandler modCache,
-        MoodleHandler moodleCache,
+        GlamourCache glamourCache,
+        ModCache modCache,
+        MoodleCache moodleCache,
         TextureService iconTextures)
         : base(logger, mediator, "Active State Debugger")
     {

@@ -1,69 +1,27 @@
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.Hardcore.Movement;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
-using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
-using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
-using GagSpeak.Utils;
-using GagspeakAPI.Attributes;
-using GagSpeak.GameInternals;
-using Dalamud.Plugin.Services;
-using GagSpeak.GameInternals.Structs;
 
 namespace GagSpeak.PlayerClient;
 
-// Needs a rework ffs.
-public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSavable
+public class TraitAllowanceManager : IHybridSavable
 {
+    private readonly ILogger<TraitAllowanceManager> _logger;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
-    public unsafe GameCameraManager* cameraManager = GameCameraManager.Instance(); // for the camera manager object
-
     public TraitAllowanceManager(
         ILogger<TraitAllowanceManager> logger,
-        GagspeakMediator mediator,
         FavoritesManager favorites,
         ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        HybridSaveService saver)
     {
+        _logger = logger;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
         Load();
-
-        Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearTraits());
     }
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        // if we are forced to follow when the plugin disabled, we need to revert the controls.
-        if (CachedMovementMode is not MovementMode.NotSet)
-        {
-            // if we were using standard movement, but it is set to legacy at the time of closing, set it back to standard.
-            if (CachedMovementMode is MovementMode.Standard && GameConfig.UiControl.GetBool("MoveMode") is true)
-                GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Standard);
-        }
-    }
-
-    /// <summary> Cache the Movement Mode of our player during ForcedFollow </summary>
-    public MovementMode CachedMovementMode = MovementMode.NotSet;
-    public EmoteState CachedEmoteState = new EmoteState();
-
-
-    /// <summary> Lame overhead necessary to avoid mare conflicts with first person fuckery. </summary>
-    public bool InitialBlindfoldRedrawMade = false;
-
-    /// <summary> Is the player currently immobile? </summary>
-    public bool IsImmobile => ActiveTraits.HasAny(Traits.Immobile) || ActiveHcState.HasAny(HardcoreState.ForceEmote);
-    public bool ForceWalking => ActiveTraits.HasAny(Traits.Weighty) || ActiveHcState.HasAny(HardcoreState.ForceFollow);
-    public bool ShouldBlockKeys => ActiveHcState.HasAny(HardcoreState.ForceFollow) || IsImmobile;
 
     public readonly HashSet<string> TraitAllowancesRestraints = [];
     public readonly HashSet<string> TraitAllowancesRestrictions = [];
@@ -81,7 +39,6 @@ public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSa
             { GagspeakModule.Trigger, TraitAllowancesTriggers.ToArray() },
         };
 
-    #region Allowance Sets.
     public void AddAllowance(GagspeakModule type, string kinksterUid)
     {
         var allowances = type switch
@@ -109,7 +66,7 @@ public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSa
             GagspeakModule.Trigger => TraitAllowancesTriggers,
             _ => throw new ArgumentException(nameof(type) + " Is not a valid GagspeakModule!"),
         };
-        Logger.LogDebug("Adding Allowances: " + string.Join(", ", allowances));
+        _logger.LogDebug("Adding Allowances: " + string.Join(", ", allowances));
         set.UnionWith(allowances);
         _saver.Save(this);
     }
@@ -171,9 +128,7 @@ public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSa
         TraitAllowancesTriggers.Clear();
         _saver.Save(this);
     }
-    #endregion Allowance Sets.
 
-    #region Saver
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
@@ -182,11 +137,11 @@ public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSa
     public void Load()
     {
         var file = _saver.FileNames.TraitAllowances;
-        Logger.LogWarning("Loading in Config for file: " + file);
+        _logger.LogWarning("Loading in Config for file: " + file);
 
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Config File found for TraitsManager.");
+            _logger.LogWarning("No Config File found for TraitsManager.");
             // create a new file with default values.
             _saver.Save(this);
             return;
@@ -263,5 +218,4 @@ public class TraitAllowanceManager : DisposableMediatorSubscriberBase, IHybridSa
         public IEnumerable<string> Patterns = [];
         public IEnumerable<string> Triggers = [];
     }
-    #endregion Saver
 }

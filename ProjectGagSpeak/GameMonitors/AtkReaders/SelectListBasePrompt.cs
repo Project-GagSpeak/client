@@ -1,6 +1,6 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Game.Readers;
 public abstract class SetupSelectListPrompt : BasePrompt

@@ -1,21 +1,19 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
+using GagSpeak.Achievements;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Kinkster.Pairs;
-using GagSpeak.Services.Chat;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Controllers;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox.Services;
+using GagSpeak.Toybox;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
-using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 
 namespace GagSpeak.Services;
@@ -52,6 +50,7 @@ public class TriggerActionService
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
+        SexToyManager toys,
         MoodleHandler moodles)
     {
         _logger = logger;
@@ -60,8 +59,9 @@ public class TriggerActionService
         _globals = globals;
         _pairs = pairs;
         _gags = gags;
-        _restraints = restraints;
         _restrictions = restrictions;
+        _restraints = restraints;
+        _toys = toys;
         _moodles = moodles;
     }
 
@@ -263,7 +263,7 @@ public class TriggerActionService
             case NewState.Enabled:
                 // grab the right restriction first.
                 layerIdx = act.LayerIdx == -1
-                    ? restrictions.Restrictions.IndexOf(x => x.Identifier.IsEmptyGuid())
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier== Guid.Empty)
                     : act.LayerIdx;
 
                 if (layerIdx == -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
@@ -277,7 +277,7 @@ public class TriggerActionService
 
             case NewState.Locked:
                 layerIdx = act.LayerIdx == -1
-                    ? restrictions.Restrictions.IndexOf(x => !x.Identifier.IsEmptyGuid() && x.CanLock())
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier != Guid.Empty && x.CanLock())
                     : act.LayerIdx;
 
                 if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
@@ -298,7 +298,7 @@ public class TriggerActionService
                 break;
 
             case NewState.Disabled:
-                layerIdx = !act.RestrictionId.IsEmptyGuid()
+                layerIdx = act.RestrictionId != Guid.Empty
                     ? restrictions.FindOutermostActiveUnlocked()
                     : restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId);
 
@@ -382,7 +382,7 @@ public class TriggerActionService
 
     private async Task<bool> DoMoodleAction(MoodleAction act, string enactor)
     {
-        if(!IpcCallerMoodles.APIAvailable || act.MoodleItem.Id.IsEmptyGuid())
+        if(!IpcCallerMoodles.APIAvailable || act.MoodleItem.Id== Guid.Empty)
         {
             _logger.LogWarning("Moodles not available, cannot execute moodle trigger.");
             return false;

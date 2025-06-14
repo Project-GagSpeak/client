@@ -1,21 +1,21 @@
-using GagSpeak.CkCommons;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Caches;
+using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data.Struct;
 
-namespace GagSpeak.State.Handlers;
+namespace GagSpeak.Services;
 
 /// <summary> Handles GagSpeaks Arousal system. Stores a static and non-static arousal meter. </summary> 
 /// <remarks> The higher the meter, the more likely certain events are to occur </remarks>
-public sealed class ArousalManager : IDisposable
+public sealed class ArousalService : IDisposable
 {
-    private readonly ILogger<ArousalManager> _logger;
+    private readonly ILogger<ArousalService> _logger;
     private readonly MainConfig _config;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
 
-    public ArousalManager(ILogger<ArousalManager> logger, MainConfig config)
+    public ArousalService(ILogger<ArousalService> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
@@ -65,7 +65,7 @@ public sealed class ArousalManager : IDisposable
     // Exposed Properties
     public static float StaticArousal { get; private set; } = 0f;
     public static float Arousal { get; private set; } = 0f;
-    private static float ArousalPercent => Arousal / AROUSAL_CAP;
+    public static float ArousalPercent => Arousal / AROUSAL_CAP;
     public static bool DoScreenBlur => ArousalEffects.ShouldBlur(ArousalPercent);
     public static float BlurIntensity => ArousalEffects.BlurIntensity(ArousalPercent);
     public static bool DoBlush => ArousalEffects.ShouldBlush(ArousalPercent);
@@ -85,7 +85,7 @@ public sealed class ArousalManager : IDisposable
     public void AddAndUpdateArousal(CombinedCacheKey combinedKey, Arousal strength)
     {
         if (_arousals.TryAdd(combinedKey, strength))
-            _logger.LogDebug($"Added ([{combinedKey}] <-> [{strength.ToString()}]) to Cache.");
+            _logger.LogDebug($"Added ([{combinedKey}] <-> [{strength.ToString()}]) to Cache.", LoggerType.Arousal);
         else
             _logger.LogWarning($"KeyValuePair ([{combinedKey}]) already exists in the Cache!");
 
@@ -97,7 +97,7 @@ public sealed class ArousalManager : IDisposable
     public void RemoveAndUpdateArousal(CombinedCacheKey combinedKey)
     {
         if (_arousals.Remove(combinedKey, out var a))
-            _logger.LogDebug($"Removed Arousal of strength [{a.ToString()}] from cache at key [{combinedKey}].");
+            _logger.LogDebug($"Removed Arousal of strength [{a.ToString()}] from cache at key [{combinedKey}].", LoggerType.Arousal);
         else
             _logger.LogWarning($"ArousalCache key ([{combinedKey}]) not found!");
 
@@ -107,7 +107,7 @@ public sealed class ArousalManager : IDisposable
     public void ClearArousals()
     {
         _arousals.Clear();
-        _logger.LogDebug("Cleared all Arousals from cache.");
+        _logger.LogDebug("Cleared all Arousals from cache.", LoggerType.Arousal);
 
         RecalculateArousals();
     }
@@ -166,7 +166,7 @@ public sealed class ArousalManager : IDisposable
         // Clamp the new arousal value to the maximum cap.
         Arousal = Math.Clamp(newArousal, 0f, AROUSAL_CAP);
         // Log the current arousal state.
-        _logger.LogTrace($"Updated Arousal: {Arousal} (Static: {StaticArousal})", LoggerType.Toys);
+        _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LoggerType.Arousal);
     }
 
     /// <summary> Linearly interpolates between two values based on a factor t. </summary>

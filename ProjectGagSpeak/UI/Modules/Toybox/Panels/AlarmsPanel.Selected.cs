@@ -1,20 +1,13 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.State;
-using GagSpeak.Services;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Models;
 using ImGuiNET;
-using Lumina.Data;
-using Microsoft.VisualBasic;
 using OtterGui;
 using OtterGui.Text;
-using System.Windows.Forms;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 

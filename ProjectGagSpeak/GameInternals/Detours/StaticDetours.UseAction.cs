@@ -1,7 +1,8 @@
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using GagSpeak.PlayerClient;
-using GagSpeak.State.Listeners;
+using GagSpeak.Services;
+using GagSpeak.State.Handlers;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using static FFXIVClientStructs.FFXIV.Client.Game.ActionManager;
 
@@ -15,16 +16,20 @@ public unsafe partial class StaticDetours
     internal Hook<Delegates.UseAction> UseActionHook;
 
 
-    /// <summary> The Time that you used the last action from cooldown group 58. </summary>
+    /// <summary>
+    ///     The Time that you used the last action from cooldown group 58.
+    /// </summary>
     private DateTime _lastUsedActionTime = DateTime.MinValue;
 
 
-    /// <summary> Determines if the action should be used or not. </summary>
+    /// <summary>
+    ///     Determines if the action should be used or not.
+    /// </summary>
     /// <returns> True if the action should execute, false if it should not.</returns>
     private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
     {
         // Prevent actions if the player is immobile.
-        if (_traitHandler.Immobile) 
+        if (_traitCache.FinalTraits.HasAny(Traits.Immobile))
             return false;
 
         if (_globals.Current?.HcStayState() ?? false)
@@ -42,7 +47,7 @@ public unsafe partial class StaticDetours
             return UseActionHook.Original(am, type, acId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
 
         // If it is one we can, ensure we only check if the Arousal GCD Factor is set for it.
-        if (ArousalManager.GcdDelayFactor > 1)
+        if (ArousalService.GcdDelayFactor > 1)
         {
             // Obtain the recast group.
             var adjustedId = am->GetAdjustedActionId(acId);
@@ -53,7 +58,7 @@ public unsafe partial class StaticDetours
             {
                 // Multiply the base adjustedRecasttime by the GCD delay factor.
                 var baseRecast = GetAdjustedRecastTime(type, acId);
-                var expectedRecast = TimeSpan.FromMilliseconds((int)(baseRecast * ArousalManager.GcdDelayFactor));
+                var expectedRecast = TimeSpan.FromMilliseconds((int)(baseRecast * ArousalService.GcdDelayFactor));
 
                 if (DateTime.Now - _lastUsedActionTime < expectedRecast)
                 {

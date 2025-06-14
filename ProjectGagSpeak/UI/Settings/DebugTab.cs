@@ -1,12 +1,7 @@
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.Interop;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
 using ImGuiNET;
-using OtterGui.Text;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -29,14 +24,14 @@ public class DebugTab
             ]),
         ("Kinkster Data", [
             LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers,
-            LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.VibeRooms, LoggerType.GameObjects
+            LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.GameObjects
             ]),
         ("Services", [
             LoggerType.ActionsNotifier, LoggerType.Textures, LoggerType.ContextDtr, LoggerType.GlobalChat,
             LoggerType.Kinkplates, LoggerType.Mediator, LoggerType.ShareHub
             ]),
         ("UI", [ LoggerType.UI, LoggerType.StickyUI, LoggerType.Combos, LoggerType.FileSystems ]),
-        ("Update Monitoring", [ LoggerType.ActionEffects, LoggerType.EmoteMonitor, LoggerType.SpatialAudio ]),
+        ("Update Monitoring", [ LoggerType.ActionEffects, LoggerType.EmoteMonitor, LoggerType.SpatialAudio, LoggerType.Arousal ]),
         ("GagspeakHub", [ 
             LoggerType.PiShock, LoggerType.ApiCore, LoggerType.Callbacks, LoggerType.HubFactory,
             LoggerType.Health, LoggerType.JwtTokens

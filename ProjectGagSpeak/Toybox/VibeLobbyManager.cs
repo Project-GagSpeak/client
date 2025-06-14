@@ -1,9 +1,6 @@
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Toybox.Services;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.VibeRoom;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 
@@ -34,7 +31,7 @@ public class VibeRoomManager : DisposableMediatorSubscriberBase
         var result = await _hub.RoomCreate(new RoomCreateRequest(roomName, VibeRoomFlags.None) { Password = roomPassword });
         if (result.ErrorCode is GagSpeakApiEc.Success)
         {
-            Logger.LogInformation("Vibe Room created successfully.", LoggerType.VibeRooms);
+            Logger.LogInformation("Vibe Room created successfully.", LoggerType.VibeLobbies);
 
         }
 

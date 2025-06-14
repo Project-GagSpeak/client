@@ -1,11 +1,12 @@
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Hub;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Reflection;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 
 namespace GagSpeak.WebAPI;
 

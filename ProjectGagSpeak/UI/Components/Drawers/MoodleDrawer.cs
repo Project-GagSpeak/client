@@ -1,22 +1,15 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
-using GagSpeak.Utils.Enums;
-using GagspeakAPI.Attributes;
-using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 public class MoodleDrawer
@@ -167,7 +160,7 @@ public class MoodleDrawer
         int row = 0, col = 0;
         foreach (var id in statusIds)
         {
-            if (id.IsEmptyGuid())
+            if (id== Guid.Empty)
                 continue;
 
             if (!MoodleCache.IpcData.Statuses.TryGetValue(id, out var status))

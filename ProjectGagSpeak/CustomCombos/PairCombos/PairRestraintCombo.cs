@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -62,7 +62,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         if (Current is null)
             return false;
 
-        var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
+        var updateType = _pairRef.LastRestraintData.Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         // construct the dto to send.
         var dto = new PushKinksterRestraintUpdate(_pairRef.UserData, updateType)

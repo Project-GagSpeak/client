@@ -3,8 +3,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Structs;
-using GagSpeak.State;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -13,6 +11,9 @@ using GagspeakAPI.Util;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using System.Text.RegularExpressions;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Models;
+using GagSpeak.State;
 
 namespace GagSpeak.Achievements;
 public partial class AchievementManager
@@ -910,23 +911,23 @@ public partial class AchievementManager
     /// <param name="state"> If the hardcore action began or ended. </param>
     /// <param name="affectedPairUID"> who the target of the action is. </param>
     /// <param name="enactorUID"> Who Called the action. </param>
-    private void OnHardcoreAction(InteractionType actionKind, bool state, string enactorUID, string affectedPairUID)
+    private void OnHardcoreAction(HardcoreSetting actionKind, bool state, string enactorUID, string affectedPairUID)
     {
         Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementInfo);
         
         var affectedPairIsSelf = affectedPairUID == MainHub.UID;
 
-        if (actionKind is InteractionType.ForcedFollow)
+        if (actionKind is HardcoreSetting.ForcedFollow)
         {
             if (affectedPairIsSelf) ClientHardcoreFollowChanged(enactorUID, state);
             else PairHardcoreFollowChanged(enactorUID, affectedPairUID, state);
         }
-        else if (actionKind is InteractionType.ForcedEmoteState)
+        else if (actionKind is HardcoreSetting.ForcedEmote)
         {
             if (affectedPairIsSelf) ClientHardcoreEmoteStateChanged(enactorUID, state);
             else PairHardcoreEmoteChanged(enactorUID, affectedPairUID, state);
         }
-        else if (actionKind is InteractionType.ForcedStay)
+        else if (actionKind is HardcoreSetting.ForcedStay)
         {
             if (affectedPairIsSelf) ClientHardcoreStayChanged(enactorUID, state);
             else PairHardcoreStayChanged(enactorUID, affectedPairUID, state);

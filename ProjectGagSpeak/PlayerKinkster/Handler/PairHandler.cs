@@ -1,9 +1,9 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.CkCommons;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters.Factories;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;

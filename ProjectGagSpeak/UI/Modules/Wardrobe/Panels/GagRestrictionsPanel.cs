@@ -1,24 +1,20 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State.Listeners;
+using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
@@ -177,9 +173,9 @@ public partial class GagRestrictionsPanel
             : "This Restriction Item has no associated Mod Preset.");
         
         DrawTraitPreview();
-        DrawMoodlePreview();
+        _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
-    
+
     private void DrawTraitPreview()
     {
         if ((_selector.Selected!.Traits & (Traits.Gagged | Traits.Blindfolded)) == 0)
@@ -200,14 +196,6 @@ public partial class GagRestrictionsPanel
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
         }
-    }
-    
-    private void DrawMoodlePreview()
-    {
-        if (_selector.Selected!.Moodle.Id.IsEmptyGuid())
-            return;
-
-        _moodleDrawer.DrawMoodles(_selector.Selected!.Moodle, MoodleDrawer.IconSize);
     }
 
     private void DrawActiveItemInfo(Vector2 region)

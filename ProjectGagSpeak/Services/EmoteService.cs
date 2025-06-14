@@ -2,10 +2,10 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.UpdateMonitoring;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Immutable;
+using GagSpeak.Utils;
 using ClientStructFramework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace GagSpeak.Services;

@@ -1,7 +1,8 @@
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.Achievements;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 
 namespace GagSpeak.Services;
 
@@ -48,7 +49,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase
             // Check Chocobo Racing Achievement.
             if (_player.IsChocoboRacing)
             {
-                var resultMenu = (AtkUnitBase*)AtkFuckery.GetAddonByName("RaceChocoboResult");
+                var resultMenu = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
                 if (resultMenu != null)
                 {
                     if (resultMenu->RootNode->IsVisible())

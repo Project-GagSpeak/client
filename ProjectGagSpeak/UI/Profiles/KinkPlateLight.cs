@@ -4,8 +4,6 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -14,9 +12,8 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
-using static System.Net.Mime.MediaTypeNames;
+using GagSpeak.Kinksters;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 

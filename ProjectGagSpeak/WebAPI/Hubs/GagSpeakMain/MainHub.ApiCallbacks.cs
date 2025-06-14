@@ -1,7 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Utility;
+using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
@@ -195,7 +195,7 @@ public partial class MainHub
         if (dto.User.UID == MainHub.UID)
         {
             Logger.LogWarning("Called Back BulkChangeGlobal that was intended for yourself!: " + dto);
-            ExecuteSafely(() => _globalListener.BulkGlobalPermissionUpdate(dto.NewPerms, dto.User.UID));
+            ExecuteSafely(() => _globalPermManager.ApplyBulkChange(dto.NewPerms, dto.User.UID));
             return Task.CompletedTask;
         }
         else
@@ -226,18 +226,7 @@ public partial class MainHub
         // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
         {
-            // If we were the person who performed this, update the perm. If a pair did it, grab the pair.
-            if(dto.Enactor.UID == UID)
-            {
-                Logger.LogDebug("OWN Callback_SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
-                ExecuteSafely(() => _globals.ChangeGlobalPermission(dto));
-            }
-            else
-            {
-                Logger.LogDebug("OWN Callback_SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
-                if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
-                    ExecuteSafely(() => _globals.ChangeGlobalPermission(dto, pair));
-            }
+            ExecuteSafely(() => _globalPermManager.SingleGlobalPermissionChange(dto));
             return Task.CompletedTask;
         }
         // One of our added Kinkster's Global Permissions should be updated.
@@ -496,44 +485,8 @@ public partial class MainHub
     /// <summary> Receive a Shock Instruction from another Pair. </summary>
     public Task Callback_ShockInstruction(ShockCollarAction dto)
     {
-        ExecuteSafely(() =>
-        {
-            // figure out who sent the command, and see if we have a unique sharecode setup for them.
-            var pairMatch = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID);
-            if (pairMatch != null) 
-            {
-                var interactionType = dto.OpCode switch
-                {
-                    0 => "shocked",
-                    1 => "vibrated",
-                    2 => "beeped",
-                    _ => "unknown"
-                };
-                var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
-                Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+        ExecuteSafely(() => _globalPermManager.ExecutePiShockAction(dto));
 
-                if (!pairMatch.OwnPerms.PiShockShareCode.IsNullOrEmpty())
-                {
-                    Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
-                    Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                    Mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
-                    if(dto.OpCode is 0)
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-                }
-                else if (_globals.GlobalPerms is not null && !_globals.GlobalPerms.GlobalShockShareCode.IsNullOrEmpty())
-                {
-                    Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
-                    Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                    Mediator.Publish(new PiShockExecuteOperation(_globals.GlobalPerms.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
-                    if (dto.OpCode is 0)
-                        UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-                }
-                else
-                {
-                    Logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
-                }
-            }
-        });
         return Task.CompletedTask;
     }
 

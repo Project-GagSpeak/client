@@ -2,7 +2,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui;

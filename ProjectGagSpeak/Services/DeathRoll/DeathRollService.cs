@@ -2,11 +2,10 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.Kinksters.Data;
 using GagSpeak.State.Managers;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using System.Text.RegularExpressions;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services;
 

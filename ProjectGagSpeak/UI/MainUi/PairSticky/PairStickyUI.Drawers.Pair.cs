@@ -1,26 +1,8 @@
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.MainWindow;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.WebAPI;
 using ImGuiNET;
-using OtterGui;
-using GagSpeak.CustomCombos.Editor;
-using GagSpeak.CustomCombos.Padlock;
-using GagSpeak.CustomCombos.Pairs;
-using GagSpeak.CustomCombos.Moodles;
-using GagspeakAPI.Data;
-using GagspeakAPI.Hub;
 using GagSpeak.Utils;
 using GagspeakAPI.Extensions;
-using OtterGui.Text;
 using Dalamud.Utility;
-using GagspeakAPI.Enums;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
 

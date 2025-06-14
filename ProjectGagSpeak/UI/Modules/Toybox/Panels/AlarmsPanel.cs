@@ -5,10 +5,10 @@ using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
-using GagSpeak.State;
-using GagSpeak.State.Toybox;
-using GagSpeak.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
 

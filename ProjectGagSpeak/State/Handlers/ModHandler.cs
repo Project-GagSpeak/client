@@ -1,5 +1,7 @@
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Kinkster.Storage;
+using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
 using Penumbra.Api.Enums;
 
 namespace GagSpeak.State.Handlers;

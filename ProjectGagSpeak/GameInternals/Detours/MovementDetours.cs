@@ -54,28 +54,28 @@ public partial class MovementDetours : IDisposable
 
     public void EnableUnfollowHook()
     {
-        if (UnfollowHook?.IsEnabled ?? false)
+        if (UnfollowHookActive)
             return;
         UnfollowHook?.Enable();
     }
 
     public void DisableUnfollowHook()
     {
-        if (!(UnfollowHook?.IsEnabled ?? false))
+        if (!UnfollowHookActive)
             return;
         UnfollowHook?.Disable();
     }
 
     public void EnableMouseAutoMoveHook()
     {
-        if (MouseAutoMove2Hook?.IsEnabled ?? false)
+        if (MouseAutoMoveHookActive)
             return;
         MouseAutoMove2Hook?.Enable();
     }
 
     public void DisableMouseAutoMoveHook()
     {
-        if (!(MouseAutoMove2Hook?.IsEnabled ?? false))
+        if (!MouseAutoMoveHookActive)
             return;
         MouseAutoMove2Hook?.Disable();
     }

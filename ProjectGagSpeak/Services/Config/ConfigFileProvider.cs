@@ -10,19 +10,21 @@ public interface IHybridSavable : IHybridConfig<ConfigFileProvider> { }
 public class ConfigFileProvider : IConfigFileProvider
 {
     // Shared Config Directories
+    public static string AssemblyDirectory  { get; private set; } = string.Empty;
     public static string GagSpeakDirectory  { get; private set; } = string.Empty;
     public static string EventDirectory     { get; private set; } = string.Empty;
     public static string FileSysDirectory   { get; private set; } = string.Empty;
     public static string ThumbnailDirectory { get; private set; } = string.Empty;
 
     // Shared Client Configs
+    public readonly string GagDataJson;
+
     public readonly string MainConfig;
     public readonly string Patterns;
     public readonly string RecentGlobalChat;
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
     public readonly string Favorites;
-    public readonly string GagDataJson;
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
@@ -49,7 +51,11 @@ public class ConfigFileProvider : IConfigFileProvider
 
     public ConfigFileProvider(IDalamudPluginInterface pi)
     {
+        AssemblyDirectory = pi.AssemblyLocation.Directory?.FullName ?? string.Empty;
         GagSpeakDirectory = pi.ConfigDirectory.FullName;
+
+        GagDataJson = Path.Combine(AssemblyDirectory, "MufflerCore", "GagData", "gag_data.json");
+
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
         FileSysDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
         ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
@@ -60,11 +66,10 @@ public class ConfigFileProvider : IConfigFileProvider
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
-        GagDataJson = Path.Combine(GagSpeakDirectory, "MufflerCore", "GagData", "gag_data.json");
 
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");
-        ServerTags = Path.Combine(GagSpeakDirectory, "servertags.json"); // this is depricated.
+        ServerTags = Path.Combine(pi.AssemblyLocation.FullName, "servertags.json"); // this is depricated.
 
         // attempt to load in the UID if the config.json exists.
         if (File.Exists(MainConfig))

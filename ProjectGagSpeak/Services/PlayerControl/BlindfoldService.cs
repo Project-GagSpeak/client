@@ -1,11 +1,12 @@
 using GagSpeak.State.Models;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using System.Timers;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.PlayerClient;
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary> Manages the rendering of a blindfold overlay onto your screen. </summary>
 public class BlindfoldService

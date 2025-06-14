@@ -1,4 +1,3 @@
-using GagSpeak.GameInternals;
 using GagSpeak.Interop;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data.Struct;
@@ -19,7 +18,7 @@ public class CustomizePlusHandler
         _ipc = ipc;
     }
 
-    private CustomizeProfile FinalProfile => FinalProfile;
+    private CustomizeProfile FinalProfile => _cache.FinalProfile;
 
     public void EnsureRestrictedProfile()
     {

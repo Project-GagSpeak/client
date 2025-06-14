@@ -1,12 +1,9 @@
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Unsure how this will be used atm. Look into later.

@@ -3,19 +3,20 @@ using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using GagSpeak.Achievements;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Localization;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Kinkster.Pairs;
+using GagSpeak.Services;
 using GagSpeak.State.Models;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagSpeak.Localization;
 
 namespace GagSpeak.State.Handlers;
 

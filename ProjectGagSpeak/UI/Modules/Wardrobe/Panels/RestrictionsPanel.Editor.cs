@@ -1,25 +1,17 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.State;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
-using SixLabors.ImageSharp.Metadata;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel
 {
-    private static IconCheckboxStimulation StimulationIconCheckbox = new(FAI.VolumeUp, FAI.VolumeDown, FAI.VolumeOff, FAI.VolumeMute, CkGui.Color(ImGuiColors.DalamudGrey), CkColor.FancyHeaderContrast.Uint());
     private static OptionalBoolCheckbox HelmetCheckbox = new();
     private static OptionalBoolCheckbox VisorCheckbox = new();
 
@@ -160,7 +152,7 @@ public partial class RestrictionsPanel
             DrawCollarInfo(collarRestriction, width);
 
         // Determine the disabled traits based on the restriction type.
-        Traits disabled = item switch
+        var disabled = item switch
         {
             BlindfoldRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Immobile | Traits.Weighty,
             CollarRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Blindfolded | Traits.Immobile | Traits.Weighty,
@@ -192,9 +184,9 @@ public partial class RestrictionsPanel
             // We will want to group together the first few elements together for the blindfold type & 1st PoV option.
             using (ImRaii.Group())
             {
-                var isFirstPerson = blindfoldItem.ForceFirstPerson;
+                var isFirstPerson = blindfoldItem.Properties.ForceFirstPerson;
                 if (ImGui.Checkbox("Force 1st Person", ref isFirstPerson))
-                    blindfoldItem.ForceFirstPerson = isFirstPerson;
+                    blindfoldItem.Properties.ForceFirstPerson = isFirstPerson;
 
                 var rightSize = CkGui.IconTextButtonSize(FAI.PenSquare, "Edit Image");
 
@@ -208,7 +200,7 @@ public partial class RestrictionsPanel
             ImGui.SameLine(0, ImGui.GetFrameHeightWithSpacing());
             using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
             {
-                if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.BlindfoldPath) is { } validImage)
+                if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
                 {
                     // scale down the image to match the available widthInner.X.
                     var scaler = rightWidth / validImage.Width;

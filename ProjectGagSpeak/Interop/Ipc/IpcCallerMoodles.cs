@@ -1,10 +1,9 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using Dalamud.Utility;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using System.Threading.Tasks;
 
 namespace GagSpeak.Interop;
 

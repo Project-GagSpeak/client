@@ -1,7 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Network;

@@ -3,8 +3,8 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services;
+using GagSpeak.Kinksters;
+using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -130,7 +130,7 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
             ImGui.SameLine();
             ImGui.Text(item.Dispelable ? "Yes" : "No");
 
-            if (!item.StatusOnDispell.IsEmptyGuid())
+            if (item.StatusOnDispell != Guid.Empty)
             {
                 CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();

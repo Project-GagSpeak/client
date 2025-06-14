@@ -1,6 +1,5 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -37,7 +36,7 @@ public partial class PairStickyUI
         }
 
         // Expander for LockRestraint
-        var disableLockExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.LockRestraintSets;
+        var disableLockExpand = SPair.LastRestraintData.Identifier== Guid.Empty || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.LockRestraintSets;
         using (ImRaii.PushColor(ImGuiCol.Text, (SPair.LastRestraintData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
             if (CkGui.IconTextButton(FAI.Lock, lockText, WindowMenuWidth, true, disableLockExpand))
@@ -70,7 +69,7 @@ public partial class PairStickyUI
         }
 
         // Expander for removing.
-        var disableRemoveExpand = SPair.LastRestraintData.Identifier.IsEmptyGuid() || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveRestraintSets;
+        var disableRemoveExpand = SPair.LastRestraintData.Identifier== Guid.Empty || SPair.LastRestraintData.Padlock is not Padlocks.None || !SPair.PairPerms.RemoveRestraintSets;
         if (CkGui.IconTextButton(FAI.TimesCircle, removeText, WindowMenuWidth, true, disableRemoveExpand))
             OpenOrClose(InteractionType.RemoveRestraint);
         CkGui.AttachToolTip(removeTT);

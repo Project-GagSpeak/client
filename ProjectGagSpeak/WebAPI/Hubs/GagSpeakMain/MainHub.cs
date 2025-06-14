@@ -1,12 +1,13 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -24,7 +25,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 {
     private readonly HubFactory _hubFactory;
     private readonly KinksterRequests _requests;
-    private readonly OwnGlobalsManager _globalListener;
+    private readonly OwnGlobalsManager _globalPermManager;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _kinkListener;
@@ -46,7 +47,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         OnFrameworkService frameworkUtils,
         HubFactory hubFactory,
         KinksterRequests requests,
-        OwnGlobalsManager globalListener,
+        OwnGlobalsManager globalPermManager,
         VisualStateListener visualListener,
         ToyboxStateListener kinkListener,
         PuppeteerListener puppetListener,
@@ -57,7 +58,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     {
         _hubFactory = hubFactory;
         _requests = requests;
-        _globalListener = globalListener;
+        _globalPermManager = globalPermManager;
         _visualListener = visualListener;
         _puppetListener = puppetListener;
         _kinkListener = kinkListener;

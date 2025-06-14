@@ -3,7 +3,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State;
 
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Controls when the user is able to interact with the chatbox at all.

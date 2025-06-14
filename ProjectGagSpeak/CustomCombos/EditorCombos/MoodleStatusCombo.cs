@@ -2,8 +2,8 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
 using ImGuiNET;
 using OtterGui;
 

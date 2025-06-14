@@ -1,14 +1,13 @@
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services.Configs;
+using GagSpeak.Interop;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using ProjectGagSpeak.State.Managers;
 
 namespace GagSpeak.State.Listeners;
 
@@ -154,7 +153,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     public async Task SwapOrApplyRestriction(KinksterUpdateRestriction itemData)
     {
-        if (itemData.PreviousRestriction.IsEmptyGuid())
+        if (itemData.PreviousRestriction== Guid.Empty)
             await ApplyRestriction(itemData);
         else
             await SwapRestriction(itemData);
@@ -226,7 +225,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #region RestraintSet Manipulation
     public async Task SwapOrApplyRestraint(KinksterUpdateRestraint itemData)
     {
-        if (itemData.PreviousRestraint.IsEmptyGuid())
+        if (itemData.PreviousRestraint== Guid.Empty)
             await ApplyRestraint(itemData);
         else
             await SwapRestraint(itemData);

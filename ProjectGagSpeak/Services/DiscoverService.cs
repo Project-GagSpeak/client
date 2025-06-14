@@ -1,8 +1,8 @@
 using GagSpeak.CkCommons;
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Kinksters;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
 using GagSpeak.Services.Configs;
@@ -15,27 +15,23 @@ namespace GagSpeak.Services;
 /// </summary>
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
-    private readonly CosmeticService _cosmetics;
-    private string ChatFilePath => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
+    private static string ChatFilePath => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
     public DiscoverService(ILogger<DiscoverService> logger, GagspeakMediator mediator, 
-        MainHub mainHub, MainMenuTabs tabMenu, PairManager pairManager,
+        MainHub hub, MainMenuTabs tabMenu, PairManager pairManager,
         CosmeticService cosmetics) : base(logger, mediator)
     {
-        _hub = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
-        _cosmetics = cosmetics;
 
         // Create a new chat log
-        GlobalChat = new InternalChatlog(_hub, Mediator, _cosmetics);
+        GlobalChat = new InternalChatlog(hub, Mediator, cosmetics);
 
         // Load the chat log
         LoadChatLog(GlobalChat);
 
-        Mediator.Subscribe<GlobalChatMessage>(pairManager, (msg) => AddChatMessage(msg));
+        Mediator.Subscribe<GlobalChatMessage>(pairManager, AddChatMessage);
         Mediator.Subscribe<MainWindowTabChangeMessage>(this, (msg) => 
         {
             if (msg.NewTab is MainMenuTabs.SelectedTab.GlobalChat)

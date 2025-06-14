@@ -5,7 +5,6 @@ using Dalamud.Plugin.Services;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.Numerics;
 
 // pulled from glamourer pretty much 1:1... optimize later.
 // This is actually a fairly smart way to handle texture caching for internal gamedata.
@@ -42,15 +41,6 @@ public sealed class TextureService(IUiBuilder uiBuilder, IDataManager dataManage
             ? (_slotIcons[idx]!.ImGuiHandle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
             : (nint.Zero, Vector2.Zero, true);
     }
-
-    public IDalamudTextureWrap? GetGameIconOrDefault(uint iconId)
-        => TextureProvider.GetFromGameIcon(iconId).GetWrapOrDefault();
-
-    public IDalamudTextureWrap GetGameIconOrEmpty(uint iconId)
-        => TextureProvider.GetFromGameIcon(iconId).GetWrapOrEmpty();
-
-    public IDalamudTextureWrap? GetGameIconOrDefault(int iconId, int stacks)
-        => TextureProvider.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault();
 
     public void Dispose()
     {

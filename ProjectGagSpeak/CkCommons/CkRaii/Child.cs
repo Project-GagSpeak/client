@@ -1,20 +1,20 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
-using OtterGui.Text;
+using OtterGui.Text.EndObjects;
 
 namespace GagSpeak.CkCommons.Raii;
 public static partial class CkRaii
 {
-    /// <inheritdoc cref="Child(string, Vector2, uint, float ImDrawFlags, WFlags)"/>"
+    /// <inheritdoc cref="OtterGui.Text.EndObjects.Child"/>"
     public static ImRaii.IEndObject Child(string id)
         => new EndUnconditionally(() => ImGui.EndChild(), ImGui.BeginChild(id));
 
-    /// <inheritdoc cref="Child(string, Vector2, uint, float ImDrawFlags, WFlags)"/>"
+    /// <inheritdoc cref="OtterGui.Text.EndObjects.Child"/>"
     public static IEOContainer Child(string id, Vector2 size, WFlags flags = WFlags.None)
         => Child(id, size, 0,  CkStyle.ChildRounding(), ImDrawFlags.None, flags);
 
-    /// <inheritdoc cref="Child(string, Vector2, uint, float ImDrawFlags, WFlags)"/>"
+    /// <inheritdoc cref="OtterGui.Text.EndObjects.Child"/>"
     public static IEOContainer Child(string id, Vector2 size, uint bgCol, WFlags flags = WFlags.None)
         => Child(id, size, bgCol,  CkStyle.ChildRounding(), ImDrawFlags.None, flags);
 

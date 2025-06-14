@@ -1,8 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.CkCommons.Gui.Components;
@@ -12,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using GagSpeak.CkCommons.Widgets;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.CkCommons.Gui;
 

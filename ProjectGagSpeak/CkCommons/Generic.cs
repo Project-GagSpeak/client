@@ -1,6 +1,3 @@
-using Dalamud.Game.ClientState.Objects.Types;
-using GagSpeak.Interop.IpcHelpers.GameData;
-
 namespace GagSpeak.CkCommons;
 
 public static class Generic

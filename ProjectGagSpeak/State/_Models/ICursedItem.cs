@@ -1,4 +1,3 @@
-using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 

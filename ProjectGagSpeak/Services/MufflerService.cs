@@ -1,6 +1,7 @@
 using GagSpeak.CkCommons.GarblerCore;
+using GagSpeak.MufflerCore;
 using GagSpeak.MufflerCore.Handler;
-using GagSpeak.Kinkster.Data;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Util;

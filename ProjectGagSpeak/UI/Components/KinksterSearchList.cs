@@ -5,11 +5,11 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Clip;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
 using System.Collections.Immutable;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 

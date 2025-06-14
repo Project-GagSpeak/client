@@ -1,6 +1,9 @@
 using Dalamud.Plugin;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Handlers;
+using GagSpeak.State.Managers;
 using Penumbra.Api.IpcSubscribers;
 
 namespace GagSpeak.State.Listeners;

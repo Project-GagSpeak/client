@@ -1,9 +1,7 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.State;
-using GagSpeak.Services;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;

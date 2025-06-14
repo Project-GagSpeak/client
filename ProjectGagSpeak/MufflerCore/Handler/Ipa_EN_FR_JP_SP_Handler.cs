@@ -1,7 +1,7 @@
 using Dalamud.Plugin;
 using GagSpeak.CkCommons.GarblerCore;
-using GagSpeak.Services.Configs;
 using System.Text.RegularExpressions;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.MufflerCore.Handler;
 

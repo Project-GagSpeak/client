@@ -4,12 +4,11 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.Achievements;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
-using GagSpeak.Services.Configs;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
-using static FFXIVClientStructs.FFXIV.Component.GUI.AtkUnitBase.Delegates;
 
 namespace GagSpeak.Game.Readers;
 public class SelectStringPrompt : SetupSelectListPrompt

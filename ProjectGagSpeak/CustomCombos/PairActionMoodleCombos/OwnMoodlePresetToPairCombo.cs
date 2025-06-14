@@ -1,17 +1,13 @@
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services;
+using GagSpeak.Kinksters;
+using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
-using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
-using OtterGui;
 
 namespace GagSpeak.CustomCombos.Moodles;
 

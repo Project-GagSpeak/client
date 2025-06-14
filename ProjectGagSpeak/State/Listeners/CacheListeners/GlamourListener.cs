@@ -1,12 +1,11 @@
-using Dalamud.Hooking;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Handlers;
 using Glamourer.Api.Enums;
 using Glamourer.Api.IpcSubscribers;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Listeners;
 

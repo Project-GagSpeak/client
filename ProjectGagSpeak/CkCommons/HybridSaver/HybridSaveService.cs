@@ -52,7 +52,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
     {
         _saveLock.Wait();
         _dirtyConfigs.Add(config);
-        _logger.LogDebug($"Config {config.GetType().Name} marked as dirty.");
+        //_logger.LogDebug($"Config {config.GetType().Name} marked as dirty.");
         _saveLock.Release();
     }
 
@@ -61,7 +61,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
         if (_dirtyConfigs.Count == 0)
             return;
 
-        _logger.LogDebug("Checking for dirty configs.");
+        // _logger.LogDebug("Checking for dirty configs.");
         // await for the current semaphore to be released.
         await _saveLock.WaitAsync().ConfigureAwait(false);
         var configs = _dirtyConfigs.ToList();

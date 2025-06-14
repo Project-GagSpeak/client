@@ -1,7 +1,7 @@
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Kinksters;
+using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -33,7 +33,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
             _statuses.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
             // get the dispelable moodle if any.
-            var status = moodleStatus.StatusOnDispell.IsEmptyGuid()
+            var status = moodleStatus.StatusOnDispell== Guid.Empty
                 ? "Unknown"
                 : Items.FirstOrDefault(x => x.GUID == moodleStatus.StatusOnDispell).Title ?? "Unknown";
 
@@ -43,7 +43,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
         return ret;
     }
     protected override bool CanDoAction(MoodlesStatusInfo item)
-        => MoodleIcons.CanApplyPairStatus(_pairRef.PairPerms, new[] { item });
+        => PermissionHelper.CanApplyPairStatus(_pairRef.PairPerms, new[] { item });
 
     protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {

@@ -4,7 +4,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.State;
+using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
 

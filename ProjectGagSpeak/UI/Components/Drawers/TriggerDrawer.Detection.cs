@@ -1,24 +1,18 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.Localization;
-using GagSpeak.State;
-using GagSpeak.State.Toybox;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils.Enums;
-using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
+using GagSpeak.Services.Textures;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
-using Penumbra.GameData.Structs;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 

@@ -1,13 +1,12 @@
-using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using System.Timers;
+using GagSpeak.CkCommons.Gui;
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary> Manages the rendering of a hypnosis overlay onto your screen. </summary>
 public class HypnoService

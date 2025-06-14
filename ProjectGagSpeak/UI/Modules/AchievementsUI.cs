@@ -11,8 +11,6 @@ using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
-using System.Numerics;
-using System.Reflection.Metadata;
 
 namespace GagSpeak.CkCommons.Gui;
 

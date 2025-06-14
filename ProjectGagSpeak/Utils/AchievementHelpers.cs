@@ -1,8 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.GoldSaucer;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using GagSpeak.Localization;
 
 namespace GagSpeak.Utils;
 

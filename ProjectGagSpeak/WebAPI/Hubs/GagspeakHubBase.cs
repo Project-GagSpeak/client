@@ -1,8 +1,9 @@
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using System.Reflection;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 
 namespace GagSpeak.WebAPI;
 

@@ -1,11 +1,12 @@
+using GagSpeak.Achievements;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
-
 namespace GagSpeak.State.Managers;
 
 public sealed class OwnGlobalsManager
@@ -60,6 +61,45 @@ public sealed class OwnGlobalsManager
         else
         {
             _logger.LogWarning("Change was not from self or a pair, not setting!");
+        }
+    }
+
+    public void ExecutePiShockAction(ShockCollarAction dto)
+    {
+        // figure out who sent the command, and see if we have a unique sharecode setup for them.
+        var pairMatch = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID);
+        if (pairMatch != null)
+        {
+            var interactionType = dto.OpCode switch
+            {
+                0 => "shocked",
+                1 => "vibrated",
+                2 => "beeped",
+                _ => "unknown"
+            };
+            var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
+            _logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+
+            if (!pairMatch.OwnPerms.PiShockShareCode.IsNullOrEmpty())
+            {
+                _logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
+                _mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                _mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
+                if (dto.OpCode is 0)
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+            }
+            else if (_globals.Current is not null && !_globals.Current.GlobalShockShareCode.IsNullOrEmpty())
+            {
+                _logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
+                _mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                _mediator.Publish(new PiShockExecuteOperation(_globals.Current.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
+                if (dto.OpCode is 0)
+                    UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+            }
+            else
+            {
+                _logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
+            }
         }
     }
 

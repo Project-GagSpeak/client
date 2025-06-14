@@ -1,13 +1,10 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
@@ -16,6 +13,7 @@ using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Services.Textures;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 

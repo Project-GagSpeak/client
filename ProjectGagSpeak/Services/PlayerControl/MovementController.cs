@@ -4,12 +4,11 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
 using GagSpeak.State.Caches;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Permissions;
 using System.Runtime.InteropServices;
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Controls how player movement is modified, based on <see cref="PlayerControlSource"/>'s values.
@@ -52,10 +51,8 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     public PlayerControlSource Sources => _sources;
     public bool BanUnfollowing => _sources.HasAny(PlayerControlSource.ForcedFollow);
     public bool BanAnyMovement => _sources.HasAny(PlayerControlSource.ForcedEmote);
-    public bool BanMouseAutoMove => !_forceRunDuringTask
-        && (_sources & (PlayerControlSource.ForcedEmote | PlayerControlSource.Immobile)) != 0;
-    public bool BanRunning => !_forceRunDuringTask 
-        && (_sources & (PlayerControlSource.ForcedFollow | PlayerControlSource.Weighty)) != 0;
+    public bool BanMouseAutoMove => !_forceRunDuringTask && (_sources & (PlayerControlSource.ForcedEmote | PlayerControlSource.Immobile)) != 0;
+    public bool BanRunning => !_forceRunDuringTask && (_sources & (PlayerControlSource.ForcedFollow | PlayerControlSource.Weighty)) != 0;
 
     private unsafe void FrameworkUpdate()
     {

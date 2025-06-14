@@ -1,7 +1,6 @@
+using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Handlers;
-using GagSpeak.Kinksters.Pairs;
 using GagspeakAPI.Data;
-using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
 

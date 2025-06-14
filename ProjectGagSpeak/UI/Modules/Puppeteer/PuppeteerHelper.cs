@@ -1,17 +1,11 @@
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services;
-using GagSpeak.Services.Configs;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
 

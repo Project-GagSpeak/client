@@ -1,8 +1,9 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using GagSpeak.UpdateMonitoring;
 using Glamourer.Api.Enums;
 using Penumbra.GameData.Enums;
 

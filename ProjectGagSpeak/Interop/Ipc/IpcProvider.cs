@@ -1,9 +1,9 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.Kinkster.Handlers;
-using GagSpeak.Kinkster.Pairs;
+using GagSpeak.Kinksters;
+using GagSpeak.Kinksters.Handlers;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;

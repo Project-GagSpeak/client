@@ -2,7 +2,6 @@ using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
-using GagspeakAPI.Data.Struct;
 
 namespace GagSpeak.State.Listeners;
 

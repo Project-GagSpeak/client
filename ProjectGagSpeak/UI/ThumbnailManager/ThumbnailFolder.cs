@@ -1,7 +1,5 @@
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
-using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.MeshPCB;
-using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Resource.Delegates;
 
 namespace GagSpeak.CkCommons.Gui;
 

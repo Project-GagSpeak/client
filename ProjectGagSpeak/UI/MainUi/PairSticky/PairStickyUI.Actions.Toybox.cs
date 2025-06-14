@@ -50,7 +50,7 @@ public partial class PairStickyUI
         }
 
         // Stop a Pattern
-        var disablePatternStop = !SPair.PairPerms.StopPatterns || !SPair.PairGlobals.ToysAreConnected || lastToyboxData.ActivePattern.IsEmptyGuid();
+        var disablePatternStop = !SPair.PairPerms.StopPatterns || !SPair.PairGlobals.ToysAreConnected || lastToyboxData.ActivePattern== Guid.Empty;
         if (CkGui.IconTextButton(FAI.StopCircle, stopPatternText, WindowMenuWidth, true, disablePatternStop))
         {
             var idToStop = SPair.LastToyboxData.ActivePattern;

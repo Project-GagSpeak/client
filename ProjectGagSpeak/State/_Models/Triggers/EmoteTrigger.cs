@@ -1,5 +1,3 @@
-using GagSpeak.Localization;
-
 namespace GagSpeak.State.Models;
 
 [Serializable]

@@ -1,9 +1,8 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Runtime.InteropServices;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Utils;
 public static class GsExtensions

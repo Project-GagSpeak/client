@@ -69,14 +69,15 @@ public enum LoggerType : ulong
     ActionEffects        = 1L << 44,
     EmoteMonitor         = 1L << 45,
     SpatialAudio         = 1L << 46,
+    Arousal              = 1L << 47,
 
     // WebAPI (GagspeakHub)
-    PiShock              = 1L << 47,
-    ApiCore              = 1L << 48,
-    Callbacks            = 1L << 49,
-    HubFactory           = 1L << 50,
-    Health               = 1L << 51,
-    JwtTokens            = 1L << 52,
+    PiShock              = 1L << 48,
+    ApiCore              = 1L << 49,
+    Callbacks            = 1L << 50,
+    HubFactory           = 1L << 51,
+    Health               = 1L << 52,
+    JwtTokens            = 1L << 53,
 
     // All Recommended types.
     Recommended =

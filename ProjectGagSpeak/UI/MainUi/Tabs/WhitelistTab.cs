@@ -1,5 +1,3 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Handlers;
 using ImGuiNET;

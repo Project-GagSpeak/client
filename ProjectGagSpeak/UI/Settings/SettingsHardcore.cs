@@ -1,11 +1,8 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.GameInternals.Addons;
+using GagSpeak.Game;
 using GagSpeak.Localization;
-using GagSpeak.Kinkster.Data;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Classes;
@@ -17,9 +14,9 @@ public class SettingsHardcore
 {
     private readonly ILogger<SettingsHardcore> _logger;
     private readonly MainConfig _clientConfigs;
-    private readonly KinksterRequests _globals;
+    private readonly GlobalPermissions _globals;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfig config, KinksterRequests globals)
+    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfig config, GlobalPermissions globals)
     {
         _logger = logger;
         _clientConfigs = config;
@@ -30,118 +27,13 @@ public class SettingsHardcore
     {
         DisplayTextButtons();
         ImGui.Spacing();
-        foreach (var node in _clientConfigs.Current.ForcedStayPromptList.Children.ToArray())
+        foreach (var node in MainConfig.ForcedStayPromptList.Children.ToArray())
             DisplayTextEntryNode(node);
     }
-/*
-    private void DrawBlindfoldItem()
-    {
-        // define icon size and combo length
-        IconSize = new Vector2(3 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y * 2);
-        ComboLength = ComboWidth * ImGuiHelpers.GlobalScale;
 
-        // on the new line, lets draw out a group, containing the image, and the slot, item, and stain listings.
-        var BlindfoldDrawData = _wardrobeHandler.GetBlindfoldDrawData();
-
-        // go to first column.
-        CkGui.GagspeakBigText("Blindfold Item");
-        using (ImRaii.Group())
-        {
-            BlindfoldDrawData.GameItem.DrawIcon(_itemStainHandler.IconData, IconSize, BlindfoldDrawData.Slot);
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            {
-                _logger.LogTrace($"Blindfold changed to {ItemService.NothingItem(BlindfoldDrawData.Slot)} [{ItemService.NothingItem(BlindfoldDrawData.Slot).ItemId}] " +
-                    $"from {BlindfoldDrawData.GameItem} [{BlindfoldDrawData.GameItem.ItemId}]");
-                BlindfoldDrawData.GameItem = ItemService.NothingItem(BlindfoldDrawData.Slot);
-                // update the draw data.
-                _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
-            }
-
-            // right beside it, draw a secondary group of 3
-            ImGui.SameLine(0, 6);
-            using (var group = ImRaii.Group())
-            {
-                // display the wardrobe slot for this gag
-                var refValue = Array.IndexOf(EquipSlotExtensions.EqdpSlots.ToArray(), BlindfoldDrawData.Slot);
-                ImGui.SetNextItemWidth(ComboLength);
-                if (ImGui.Combo(' ' + GSLoc.Settings.Hardcore.BlindfoldSlot + "##WardrobeEquipSlot", ref refValue, EquipSlotExtensions.EqdpSlots.Select(slot => slot.ToName()).ToArray(), EquipSlotExtensions.EqdpSlots.Count))
-                {
-                    // Update the selected slot when the combo box selection changes
-                    BlindfoldDrawData.Slot = EquipSlotExtensions.EqdpSlots[refValue];
-                    BlindfoldDrawData.GameItem = ItemService.NothingItem(BlindfoldDrawData.Slot);
-                    // update it.
-                    _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
-                }
-
-                // if data changed, update it.
-                if (DrawEquip(BlindfoldDrawData, GameItemCombo, StainCombo, ComboLength))
-                    _wardrobeHandler.SetBlindfoldDrawData(BlindfoldDrawData);
-            }
-        }
-        ImGui.SameLine(0,50);
-        using (ImRaii.Group())
-        { 
-            var forceLockFirstPerson = _clientConfigs.Current.ForceLockFirstPerson;
-            var blindfoldOpacityPercentage = (int)(_clientConfigs.Current.BlindfoldMaxOpacity * 100);
-
-            // Draw the first person selection.
-            if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
-            {
-                _clientConfigs.Current.ForceLockFirstPerson = forceLockFirstPerson;
-                _clientConfigs.Save();
-            }
-            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
-
-            using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
-            {
-                // draw the lace type selection
-                var selectedBlindfoldType = _clientConfigs.Current.BlindfoldStyle;
-                CkGui.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
-                (i) =>
-                {
-                    _clientConfigs.Current.BlindfoldStyle = i;
-                    _clientConfigs.Save();
-                    _logger.LogTrace($"Blindfold Style changed to {i}");
-                }, selectedBlindfoldType);
-            }
-            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldTypeTT);
-
-            using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
-            {
-                // draw the transparency slider, this displays on the slider a % symbol and translates to a float between 0 and 1 for the opacity.
-                ImGui.SetNextItemWidth(150f);
-                if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldMaxOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
-                {
-                    _clientConfigs.Current.BlindfoldMaxOpacity = blindfoldOpacityPercentage / 100.0f;
-                    _clientConfigs.Save();
-                }
-            }
-            CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldMaxOpacityTT);
-        }
-        ImGui.Separator();
-        var filePath = _clientConfigs.Current.BlindfoldStyle switch
-        {
-            BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
-            BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
-            _ => "INVALID_FILE",
-        };
-
-        var previewImage = CkGui.GetImageFromAssetsFolder(filePath);
-        if (previewImage is { } wrap)
-        {
-            // calculate the height of the available region and compare it to the ImGuiHandles Y height, to get how long we should display the X.
-            // we need to do this to scale down the imagesize in the imguihandle to fit within the content region.
-            var scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
-            var finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
-            // display the image.
-            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Current.BlindfoldMaxOpacity));
-            CkGui.AttachToolTip("Preview of the Blindfold Style");
-        }
-    }
-*/
     private void DisplayTextButtons()
     {
-        if (_globals.GlobalPerms is not { } globals)
+        if (_globals.Current is not { } globals)
             return;
 
         // replace disabled with ForcedStay == true
@@ -207,7 +99,7 @@ public class SettingsHardcore
         }
 
         // If the node is one we should disable
-        var disableElement = _clientConfigs.Current.ForcedStayPromptList.Children.Take(10).Contains(node);
+        var disableElement = MainConfig.ForcedStayPromptList.Children.Take(10).Contains(node);
         TextNodePopup(node, disableElement);
     }
 

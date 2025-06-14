@@ -4,15 +4,14 @@ using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
-using GagSpeak.UpdateMonitoring;
 
 namespace GagSpeak.Services;
 

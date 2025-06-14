@@ -1,5 +1,4 @@
 using GagSpeak.CkCommons.GarblerCore;
-using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.Resource.Delegates;
 
 namespace GagSpeak.Services.Configs;
 

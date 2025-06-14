@@ -6,8 +6,6 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Utils;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
@@ -30,6 +28,15 @@ public class MoodleIcons
         _data = data;
         _textures = textures;
     }
+
+    public IDalamudTextureWrap? GetGameIconOrDefault(uint iconId)
+        => _textures.GetFromGameIcon(iconId).GetWrapOrDefault();
+
+    public IDalamudTextureWrap GetGameIconOrEmpty(uint iconId)
+        => _textures.GetFromGameIcon(iconId).GetWrapOrEmpty();
+
+    public IDalamudTextureWrap? GetGameIconOrDefault(int iconId, int stacks)
+        => _textures.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault();
 
 
     /// <summary>
@@ -87,7 +94,7 @@ public class MoodleIcons
             ImGui.SameLine();
             ImGui.Text(item.Dispelable ? "Yes" : "No");
 
-            if (!item.StatusOnDispell.IsEmptyGuid())
+            if (item.StatusOnDispell != Guid.Empty)
             {
                 CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();

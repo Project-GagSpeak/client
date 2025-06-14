@@ -1,4 +1,4 @@
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
 

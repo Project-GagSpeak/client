@@ -1,16 +1,12 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
 using OtterGui.Widgets;
@@ -152,7 +148,7 @@ public sealed class ModPresetDrawer
 
         foreach (var (groupName, groupInfo) in allSettings)
         {
-            if (groupName.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(groupName))
                 continue;
 
             var optionType = groupInfo.GroupType;
@@ -191,7 +187,7 @@ public sealed class ModPresetDrawer
 
             foreach (var (groupName, groupInfo) in allSettings)
             {
-                if (groupName.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(groupName))
                     continue;
 
                 var optionType = groupInfo.GroupType;

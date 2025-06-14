@@ -1,8 +1,5 @@
 using Dalamud.Interface.Utility;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Interop;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;

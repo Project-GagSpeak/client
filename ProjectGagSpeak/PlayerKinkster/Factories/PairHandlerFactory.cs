@@ -1,7 +1,7 @@
-using GagSpeak.Interop.Ipc;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters.Handlers;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 

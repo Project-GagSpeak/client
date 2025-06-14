@@ -1,16 +1,11 @@
-using GagSpeak.Kinkster.Data;
-using GagSpeak.Kinkster.Pairs;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox.Services;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Gui.Permissions;
 using GagSpeak.CkCommons.Gui.Profile;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 
@@ -29,7 +24,7 @@ public class UiFactory
     // Managers
     private readonly PlayerData _player;
     private readonly PairManager _pairManager;
-    private readonly KinksterRequests _globals;
+    private readonly GlobalPermissions _globals;
 
     // Services
     private readonly CosmeticService _cosmetics;
@@ -51,7 +46,7 @@ public class UiFactory
         // Managers
         PlayerData clientMonitor,
         PairManager pairManager,
-        KinksterRequests globals,
+        GlobalPermissions globals,
         // Services
         CosmeticService cosmetics,
         KinkPlateLight kinkPlateLight,

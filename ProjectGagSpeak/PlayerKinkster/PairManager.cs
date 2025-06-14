@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
-using GagSpeak.Kinkster.Factories;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -9,6 +8,9 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
+using GagSpeak.Achievements;
+using GagSpeak.Kinksters.Factories;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Kinksters;
 

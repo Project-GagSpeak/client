@@ -1,13 +1,14 @@
+using GagSpeak.Achievements;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.FileSystems;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -458,7 +459,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
         var stains = JParser.ParseCompactStainIds(slotJson["CustomStains"]);
 
-        if (refId.IsEmptyGuid())
+        if (refId== Guid.Empty)
         {
             Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
             return new RestraintSlotAdvanced()
@@ -502,7 +503,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var customStains = JParser.ParseCompactStainIds(layerJson["CustomStains"]);
 
         var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (refId.IsEmptyGuid())
+        if (refId== Guid.Empty)
         {
             Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
             return new RestrictionLayer()

@@ -1,6 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Kinkster.Pairs;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;

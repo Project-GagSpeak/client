@@ -3,13 +3,12 @@ using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using System.Reflection;
 using System.Windows.Forms;
 
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Controls how <see cref="IKeyState"/> handles interacted keys, overriding them with a reference

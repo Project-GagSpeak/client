@@ -1,17 +1,14 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
-using System.Numerics;
+using GagSpeak.Kinksters;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase

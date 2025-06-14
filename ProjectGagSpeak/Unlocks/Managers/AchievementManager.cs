@@ -2,20 +2,18 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.ChatMessages;
 using GagSpeak.CkCommons;
 using GagSpeak.GameInternals;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State;
-using GagSpeak.State.Toybox;
-using GagSpeak.State.Listeners;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Toybox.Services;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
+using GagSpeak.Toybox;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
@@ -45,7 +43,7 @@ public class SaveDataCache
 public partial class AchievementManager : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _mainHub;
-    private readonly KinksterRequests _playerData;
+    private readonly GlobalPermissions _globals;
     private readonly PairManager _pairs;
     private readonly MainConfig _mainConfig;
     private readonly PlayerData _player;
@@ -58,7 +56,8 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly SexToyManager _sexToys;
-    private readonly TraitAllowanceManager _traits;
+    private readonly TraitsCache _traits;
+    private readonly ArousalService _arousal;
     private readonly ItemService _items;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly CosmeticService _cosmetics;
@@ -74,7 +73,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         ILogger<AchievementManager> logger,
         GagspeakMediator mediator, 
         MainHub mainHub,
-        KinksterRequests playerData,
+        GlobalPermissions globals,
         MainConfig mainConfig,
         PairManager pairs,
         PlayerData clientMonitor,
@@ -87,7 +86,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         AlarmManager alarms,
         TriggerManager triggers,
         SexToyManager sexToys,
-        TraitAllowanceManager traits,
+        TraitsCache traits,
         ItemService items,
         OnFrameworkService frameworkUtils,
         CosmeticService cosmetics,
@@ -96,7 +95,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         IDutyState dutyState) : base(logger, mediator)
     {
         _mainHub = mainHub;
-        _playerData = playerData;
+        _globals = globals;
         _pairs = pairs;
         _mainConfig = mainConfig;
         _player = clientMonitor;
@@ -525,7 +524,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Subscribe<InteractionType, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Subscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Subscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
@@ -603,7 +602,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Unsubscribe<InteractionType, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Unsubscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());

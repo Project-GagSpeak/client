@@ -1,7 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
-using System.Numerics;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 public class VersionEntry

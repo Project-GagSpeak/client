@@ -1,7 +1,7 @@
+using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using Microsoft.Extensions.Hosting;
 using GagSpeak.Utils;
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.Services.Events;

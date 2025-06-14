@@ -1,7 +1,6 @@
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;

@@ -1,7 +1,8 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using GagSpeak.CkCommons;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 
 namespace GagSpeak.Kinksters.Handlers;
 

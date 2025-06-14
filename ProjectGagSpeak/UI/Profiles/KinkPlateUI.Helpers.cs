@@ -1,11 +1,5 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
-using System.Numerics;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 

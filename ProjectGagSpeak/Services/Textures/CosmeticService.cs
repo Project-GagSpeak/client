@@ -1,17 +1,11 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.Kinksters.Data;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
-using Penumbra.String.Classes;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.Services.Textures;

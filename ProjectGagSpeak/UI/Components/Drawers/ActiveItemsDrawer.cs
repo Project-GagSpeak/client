@@ -4,21 +4,16 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using System.Drawing;
-using static Penumbra.GameData.Data.GamePaths;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 
@@ -198,7 +193,7 @@ public class ActiveItemsDrawer
                 // return if we are not allow to do the application.
                 if (_restrictions.CanApply(slotIdx))
                 {
-                    var updateType = combo.Current.Identifier.IsEmptyGuid() ? DataUpdateType.Applied : DataUpdateType.Swapped;
+                    var updateType = combo.Current.Identifier == Guid.Empty ? DataUpdateType.Applied : DataUpdateType.Swapped;
                     var newSlotData = new ActiveRestriction()
                     {
                         Identifier = combo.Current.Identifier,

@@ -1,7 +1,7 @@
 using Dalamud.Plugin;
 using GagSpeak.CkCommons.GarblerCore;
-using GagSpeak.Services.Configs;
 using System.Text.RegularExpressions;
+using GagSpeak.PlayerClient;
 
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
 

@@ -1,5 +1,5 @@
 using Dalamud.Interface.Textures.TextureWraps;
-using GagSpeak.Kinkster.Data;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
@@ -10,7 +10,7 @@ namespace GagSpeak.Services;
 
 public class KinkPlate : DisposableMediatorSubscriberBase
 {
-    private readonly KinksterRequests _playerData;
+    private readonly KinksterRequests _globals;
     private readonly CosmeticService _cosmetics;
 
     // KinkPlate Data for User.
@@ -22,7 +22,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         KinksterRequests playerData, CosmeticService cosmeticService, 
         KinkPlateContent plateContent, string base64ProfilePicture) : base(logger, mediator)
     {
-        _playerData = playerData;
+        _globals = playerData;
         _cosmetics = cosmeticService;
 
         // Set the KinkPlate Data

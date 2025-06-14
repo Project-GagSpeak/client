@@ -1,17 +1,13 @@
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
+using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.CkCommons.Raii;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.State.Managers;
 using ImGuiNET;
-using GagSpeak.CkCommons.Raii;
-using Dalamud.Interface.Utility;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 

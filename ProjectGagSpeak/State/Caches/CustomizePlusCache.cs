@@ -13,12 +13,12 @@ public sealed class CustomizePlusCache
         _logger = logger;
     }
 
-    private List<CustomizeProfile> _cPlusProfileList = new();
+    private static List<CustomizeProfile> _cPlusProfileList = new();
 
     private SortedList<CombinedCacheKey, CustomizeProfile> _profiles = new();
     private CustomizeProfile _finalProfile = CustomizeProfile.Empty;
 
-    public IReadOnlyList<CustomizeProfile> CPlusProfileList => _cPlusProfileList;
+    public static IReadOnlyList<CustomizeProfile> CPlusProfileList => _cPlusProfileList;
     public CustomizeProfile FinalProfile => _finalProfile;
 
     /// <summary>

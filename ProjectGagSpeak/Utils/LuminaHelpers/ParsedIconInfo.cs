@@ -1,5 +1,4 @@
 using Dalamud.Utility;
-using GagSpeak.Utils;
 using Lumina.Excel.Sheets;
 
 namespace GagSpeak.Utils;

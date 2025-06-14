@@ -1,9 +1,8 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.Kinkster.Storage;
-using GagSpeak.State.Models;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using Penumbra.Api.Enums;
 using Penumbra.Api.Helpers;
 using Penumbra.Api.IpcSubscribers;
@@ -24,7 +23,7 @@ public record ModInfo(string DirPath, string Name, int Priority, Dictionary<stri
     {
         if (other is null) return 1;
 
-        int nameComparison = string.Compare(Name, other.Name, StringComparison.Ordinal);
+        var nameComparison = string.Compare(Name, other.Name, StringComparison.Ordinal);
         return nameComparison != 0
             ? nameComparison
             : string.Compare(DirPath, other.DirPath, StringComparison.Ordinal);

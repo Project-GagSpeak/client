@@ -1,19 +1,16 @@
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.State.Listeners;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.State.Caches;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
-using Penumbra.GameData.Structs;
 
 namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
 {
     private Guid _currentItem;
-    public CustomizeProfileCombo(ILogger log) : base(() => VisualApplierCPlus.LatestProfiles, log)
+    public CustomizeProfileCombo(ILogger log) : base(() => CustomizePlusCache.CPlusProfileList, log)
     {
         _currentItem = Guid.Empty;
         SearchByParts = false;

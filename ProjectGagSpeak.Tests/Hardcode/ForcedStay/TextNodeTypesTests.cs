@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using GagSpeak.Game;
 using GagSpeak.GameInternals.Addons;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

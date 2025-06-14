@@ -1,8 +1,7 @@
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.MainWindow;
+using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
 using ImGuiNET;
 

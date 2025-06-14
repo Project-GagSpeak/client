@@ -1,18 +1,15 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.Kinkster.Data;
-using GagSpeak.Kinkster.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Attributes;
 using Glamourer.Api.Enums;
 using Glamourer.Api.Helpers;
 using Glamourer.Api.IpcSubscribers;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Interop;
 

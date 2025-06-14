@@ -1,13 +1,6 @@
-using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using Dalamud.Plugin.Services;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Kinkster.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Data.Struct;
 
 namespace GagSpeak.Interop;

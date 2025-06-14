@@ -1,4 +1,3 @@
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;

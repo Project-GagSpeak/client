@@ -1,8 +1,8 @@
 using Dalamud.Plugin.Services;
-using GagSpeak.Utils.Enums;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Immutable;
+using GagSpeak.Utils;
 using GameAction = Lumina.Excel.Sheets.Action;
 
 namespace GagSpeak.Services;

@@ -1,6 +1,6 @@
 using GagSpeak.Services.Mediator;
 using GagSpeak.Kinksters.Handlers;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services;
 
 namespace GagSpeak.Kinksters.Factories;
 /// <summary>

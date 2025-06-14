@@ -1,10 +1,8 @@
 using Dalamud.Interface;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
-using OtterGui.Raii;
 using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.FileSystem.Selector;

@@ -1,14 +1,12 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Gui.Wardrobe;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.State.Listeners;
-using GagSpeak.Services.Configs;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
@@ -16,13 +14,12 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CkCommons.Gui;
 
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
-    private readonly KinksterRequests _globals;
+    private readonly GlobalPermissions _globals;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -32,7 +29,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
-        KinksterRequests globals,
+        GlobalPermissions globals,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -111,7 +108,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPlayerCharacterDebug()
     {
-        DrawGlobalPermissions("Player", _globals.GlobalPerms ?? new GlobalPerms());
+        DrawGlobalPermissions("Player", _globals.Current ?? new GlobalPerms());
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerRestraintData ?? new CharaActiveRestraint());

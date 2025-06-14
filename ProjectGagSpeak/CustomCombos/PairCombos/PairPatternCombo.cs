@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -59,7 +59,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         if (Current is null || _pairRef.LastToyboxData.ActivePattern == Current.Id)
             return false;
 
-        var updateType = _pairRef.LastRestraintData.Identifier.IsEmptyGuid()
+        var updateType = _pairRef.LastRestraintData.Identifier== Guid.Empty
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
         // construct the dto to send.

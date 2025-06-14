@@ -6,11 +6,11 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils.Enums;
+using GagSpeak.Utils;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
-using GameAction = Lumina.Excel.Sheets.Action;
 using StructsPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace GagSpeak.PlayerClient;

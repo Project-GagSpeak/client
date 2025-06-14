@@ -1,7 +1,5 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.State.Toybox;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -11,6 +9,8 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
+using GagSpeak.Achievements;
+using GagSpeak.State.Managers;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class PatternHubTab : DisposableMediatorSubscriberBase

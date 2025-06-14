@@ -1,15 +1,13 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.CkCommons.Gui.Handlers;
 

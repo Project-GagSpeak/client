@@ -1,5 +1,4 @@
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using System.Collections.Immutable;
 
 namespace GagSpeak.State.Caches;

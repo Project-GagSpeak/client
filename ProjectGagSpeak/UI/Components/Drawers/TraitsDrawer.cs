@@ -3,8 +3,8 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.State;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -23,7 +23,6 @@ public class TraitsDrawer
         _textures = textures;
     }
 
-    private static IconCheckboxStimulation StimulationIconCheckbox = new(FAI.VolumeUp, FAI.VolumeDown, FAI.VolumeOff, FAI.VolumeMute, CkGui.Color(ImGuiColors.DalamudGrey), CkColor.FancyHeaderContrast.Uint());
     private const string HandsToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
         "--SEP--Blocks all Actions dependent on the use of hands.";
     private const string LegsToolTip = "--COL--WARNING: This actually affects what you can execute!--COL--" +
@@ -36,11 +35,8 @@ public class TraitsDrawer
         "--SEP--Blocks all movement (outside of turning)";
     private const string WeightyToolTip = "--COL--WARNING: Completely forces RP walk! Be careful using in public instances!--COL--" +
         "--SEP--Prevents running, sprinting, and forces RP walk.";
-    private const string StimulationTooltip = "--COL--WARNING: This affects your GCD/oGCD cooldown usages!--COL--" +
-        "--SEP--The higher the Stimulation, the longer the GCD/oGCD increase." +
-        "--SEP--Values: [Off: 1x] [Low: 1.125] [Medium: 1.375] [High: 1.875]";
 
-    private const int TraitCount = 7;
+    private const int TraitCount = 6;
     private static Vector2 TraitBoxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
 
     public void DrawOneRowTraits(IAttributeItem traits, float width, Traits disabled, bool disableStim = true)
@@ -66,8 +62,6 @@ public class TraitsDrawer
         TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref traits, Traits.Immobile, ImmobileToolTip, disabled.HasAny(Traits.Immobile));
         ImGui.SameLine(0, offsetSpacing);
         TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref traits, Traits.Weighty, WeightyToolTip, disabled.HasAny(Traits.Weighty));
-        ImGui.SameLine(0, offsetSpacing);
-        StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref traits, StimulationTooltip, disableStim);
     }
 
 
@@ -92,16 +86,14 @@ public class TraitsDrawer
                 TraitCheckbox("Immobile", _textures.CoreTextures[CoreTexture.ShockCollar], ref traits, Traits.Immobile, ImmobileToolTip, disabled.HasAny(Traits.Immobile));
                 ImGui.SameLine(0, offsetSpacing);
                 TraitCheckbox("Weighty", _textures.CoreTextures[CoreTexture.Weighty], ref traits, Traits.Weighty, WeightyToolTip, disabled.HasAny(Traits.Weighty));
-                ImGui.SameLine(0, offsetSpacing);
-                StimTraitCheckbox("Stimulated", _textures.CoreTextures[CoreTexture.Vibrator], ref traits, StimulationTooltip, disableStim);
             }
         }
     }
 
     // Rare sighting of cancerous if else spam.
-    public void DrawTraitPreview(Traits itemTraits, Stimulation stimulation)
+    public void DrawTraitPreview(Traits itemTraits)
     {
-        if (itemTraits is Traits.None && stimulation is Stimulation.None)
+        if (itemTraits is Traits.None)
             return;
 
         var iconSize = new Vector2(ImGui.GetFrameHeight());
@@ -151,14 +143,6 @@ public class TraitsDrawer
             ImGui.SameLine(currentX);
             ImGui.Image(_textures.CoreTextures[CoreTexture.Weighty].ImGuiHandle, iconSize);
         }
-
-        // Stimulation stuff.
-        if (stimulation.HasAny(Stimulation.Any))
-        {
-            currentX -= (iconSize.X + spacing);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Vibrator].ImGuiHandle, iconSize);
-        }
     }
 
     public bool TraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, Traits toggleTrait, string tt, bool disabled) where T : IAttributeItem
@@ -177,24 +161,4 @@ public class TraitsDrawer
 
         return changed;
     }
-
-    public bool StimTraitCheckbox<T>(string id, IDalamudTextureWrap image, ref T traitHost, string tt, bool disabled) where T : IAttributeItem
-    {
-        using var group = ImRaii.Group();
-        var changed = false;
-        var current = traitHost.Stimulation;
-        using (ImRaii.Disabled(disabled)) changed = StimulationIconCheckbox.Draw("##" + id, ref current);
-
-        if (changed)
-            traitHost.Stimulation = current;
-
-        ImUtf8.SameLineInner();
-        if (image is { } wrap)
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
-        CkGui.AttachToolTip(tt, color: ImGuiColors.DalamudYellow);
-
-        return changed;
-    }
-
-
 }

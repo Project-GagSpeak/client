@@ -1,11 +1,10 @@
 using Dalamud.Game.ClientState.Objects;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services;
-using GagSpeak.Services.Chat;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services.Controller;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Struct;
 

@@ -1,7 +1,4 @@
-using GagSpeak.Utils.Enums;
 using Lumina.Excel.Sheets;
-using Penumbra.GameData.Structs;
-using System.Runtime.Intrinsics.Arm;
 using GameAction = Lumina.Excel.Sheets.Action;
 
 namespace GagSpeak.Utils;

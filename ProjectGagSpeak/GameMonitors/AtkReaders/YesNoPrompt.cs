@@ -4,8 +4,9 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Services.Configs;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Detours;
+using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
 
 namespace GagSpeak.Game.Readers;
@@ -53,17 +54,17 @@ public class YesNoPrompt : BasePrompt
         // get the name
         var target = _targets.Target;
         var targetName = target != null ? target.Name.ExtractText() : string.Empty;
-        _config.LastSeenNodeName = targetName;
+        MainConfig.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
 
         // store the label of the node
-        var yesNoNodeLabelText = _config.LastSeenNodeLabel = AddonBaseYesNo.GetTextLegacy(addon);
+        var yesNoNodeLabelText = MainConfig.LastSeenNodeLabel = AddonBaseYesNo.GetTextLegacy(addon);
         _logger.LogDebug("Node Label Text: " + yesNoNodeLabelText, LoggerType.HardcorePrompt);
 
         _logger.LogDebug($"AddonSelectYesNo: text={yesNoNodeLabelText}", LoggerType.HardcorePrompt);
 
         // grab the nodes from our storage to see if we have a match.
-        var nodes = _config.GetAllNodes().OfType<TextEntryNode>();
+        var nodes = MainConfig.GetAllNodes().OfType<TextEntryNode>();
         foreach (var node in nodes)
         {
             // if the node is not enabled or has no text, skip it.
@@ -82,18 +83,18 @@ public class YesNoPrompt : BasePrompt
             _logger.LogDebug($"AddonSelectYesNo: Node ["+node.TargetNodeName+"] Matched on ["+node.SelectedOptionText+"] for target ["+node.TargetNodeLabel+"]");
             if (node.SelectedOptionText is "Yes")
             {
-                ForcedStayCallback.Fire((AtkUnitBase*)addon, true, 0);
-                _config.LastSelectedListNode = node;
-                _config.LastSeenListSelection = "Yes";
-                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_config.LastSeenListSelection}, LastSeenListTarget={_config.LastSeenNodeLabel}");
+                StaticDetours.CallbackFuncFire((AtkUnitBase*)addon, true, 0);
+                MainConfig.LastSelectedListNode = node;
+                MainConfig.LastSeenListSelection = "Yes";
+                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={MainConfig.LastSeenListSelection}, LastSeenListTarget={MainConfig.LastSeenNodeLabel}");
 
             }
             else
             {
-                ForcedStayCallback.Fire((AtkUnitBase*)addon, true, 1);
-                _config.LastSelectedListNode = node;
-                _config.LastSeenListSelection = "No";
-                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={_config.LastSeenListSelection}, LastSeenListTarget={_config.LastSeenNodeLabel}");
+                StaticDetours.CallbackFuncFire((AtkUnitBase*)addon, true, 1);
+                MainConfig.LastSelectedListNode = node;
+                MainConfig.LastSeenListSelection = "No";
+                _logger.LogTrace($"YesNoPrompt: LastSeenListSelection={MainConfig.LastSeenListSelection}, LastSeenListTarget={MainConfig.LastSeenNodeLabel}");
             }
             return;
         }

@@ -1,3 +1,4 @@
+using GagSpeak.Localization;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.Game;

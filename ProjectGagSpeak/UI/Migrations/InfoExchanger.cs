@@ -1,5 +1,6 @@
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.CkCommons.Gui.Components;
@@ -9,7 +10,7 @@ namespace GagSpeak.CkCommons.Gui.Components;
 /// </summary>
 public class AccountInfoExchanger
 {
-    public string ConfigDirectory { get; init; }
+    public string ConfigDirectory => ConfigFileProvider.GagSpeakDirectory;
     public string CurrentUID => MainHub.UID;
 
     // the config directory files for each account
@@ -19,10 +20,8 @@ public class AccountInfoExchanger
     private const string TriggersFile = "triggers.json";
     private const string AlarmsFile = "alarms.json";
 
-    public AccountInfoExchanger(string configDirectory)
-    {
-        ConfigDirectory = configDirectory;
-    }
+    public AccountInfoExchanger()
+    { }
 
 
     // a helper function that can fetch all the folder names in our config directory

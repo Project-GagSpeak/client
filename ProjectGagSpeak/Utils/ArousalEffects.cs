@@ -1,8 +1,3 @@
-using GagSpeak.CkCommons;
-using GagSpeak.Services.Configs;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Data.Struct;
-
 namespace GagSpeak.Utils;
 
 public static class ArousalEffects

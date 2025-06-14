@@ -3,12 +3,11 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
-using GagSpeak.Utils.Enums;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Collections.Immutable;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.State.Handlers;
 
@@ -27,12 +26,20 @@ public class TraitsHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<JobChangeMessage>(this, msg => OnJobChange(msg.jobId));
     }
 
+    // Currently there is no way to know what traits get added on each calculation, so it is a bit difficult
+    // to know when certain traits should be applied.
+    // we must know when they change so we know which banned actions to make, and also when to lock the hotbar state.
+    // (because it currently doesnt do that)
+    public Traits FinalTraits => _cache.FinalTraits;
+
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
         // just incase.
         RestoreSavedSlots();
     }
+
+    // Handle the reapplication of various trait attributes here.
 
     /// <summary> Updates the slots on the visible hotbars based on <see cref="_finalTraits"/></summary>
     private unsafe void UpdateSlots()

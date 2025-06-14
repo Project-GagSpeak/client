@@ -3,11 +3,11 @@ using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.RestraintSets;
+using GagSpeak.FileSystems;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
@@ -224,11 +224,11 @@ public class RestraintEditorLayers : IFancyTab
             {
                 // Draw moodles, if present.
                 if (layer.Ref?.Moodle is { } refMoodle)
-                    _moodleDrawer.DrawMoodles(refMoodle, MoodleDrawer.IconSizeFramed);
+                    _moodleDrawer.ShowStatusIcons(refMoodle, ImGui.GetContentRegionAvail().X, MoodleDrawer.IconSizeFramed);
 
                 // Draw hardcore Traits, if present.
                 var refTraits = layer.Ref?.Traits ?? Traits.None;
-                _traitDrawer.DrawTraitPreview(refTraits, Stimulation.None);
+                _traitDrawer.DrawTraitPreview(refTraits);
             }
         }
     }

@@ -1,12 +1,9 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox.Services;
+using GagSpeak.Toybox;
 using ImGuiNET;
 using OtterGui;
 using System.Timers;
@@ -17,7 +14,7 @@ public class RemotePatternMaker : RemoteBase
 {
     // the class includes are shared however (i think), so dont worry about that.
     private readonly CosmeticService _cosmetics;
-    private readonly SexToyManager _vibeService; // these SHOULD all be shared. but if not put into Service.
+    private readonly SexToyManager _vibeService;
     private readonly string _windowName;
     public RemotePatternMaker(ILogger<RemotePatternMaker> logger, GagspeakMediator mediator,
         CosmeticService cosmetics, SexToyManager vibeService, TutorialService guides, string windowName = "Pattern Creator") 

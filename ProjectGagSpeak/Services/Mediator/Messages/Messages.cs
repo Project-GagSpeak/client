@@ -1,9 +1,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.ChatMessages;
-using GagSpeak.GameInternals.Agents;
 using GagSpeak.Services.Events;
-using GagspeakAPI.Dto;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;

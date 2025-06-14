@@ -1,9 +1,11 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.State;
-using GagSpeak.State.Toybox;
+using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.State.Listeners;
@@ -15,18 +17,18 @@ namespace GagSpeak.State.Listeners;
 public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 {
     private readonly TriggerManager _manager;
-    private readonly TriggerHandler _handler;
+    private readonly TriggerActionService _actionService;
     private readonly OnFrameworkService _frameworkUtils;
     public PlayerHpListener(
         ILogger<PlayerHpListener> logger,
         GagspeakMediator mediator,
         TriggerManager manager,
-        TriggerHandler handler,
+        TriggerActionService actionService,
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         _manager = manager;
-        _handler = handler;
+        _actionService = actionService;
         _frameworkUtils = frameworkUtils;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateTriggerMonitors());
@@ -123,7 +125,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
         Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
             + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
-        if (await _handler.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
+        if (await _actionService.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
             UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

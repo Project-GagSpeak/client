@@ -2,17 +2,13 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.ChatMessages;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.CkCommons.GarblerCore;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Interop.Ipc;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Agents;
 using GagSpeak.Localization;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
@@ -25,7 +21,7 @@ namespace GagSpeak.CkCommons.Gui;
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly KinksterRequests _global;
+    private readonly GlobalPermissions _global;
     private readonly SettingsHardcore _hardcoreSettingsUI;
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
@@ -36,7 +32,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ILogger<SettingsUi> logger,
         GagspeakMediator mediator,
         MainHub hub,
-        KinksterRequests global,
+        GlobalPermissions global,
         SettingsHardcore hardcoreTab,
         AccountManagerTab accounts,
         DebugTab debug,
@@ -162,7 +158,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private DateTime _lastRefresh = DateTime.MinValue;
     private void DrawGlobalSettings()
     {
-        if(_global.GlobalPerms is not { } globals)
+        if(_global.Current is not { } globals)
         {
             ImGui.Text("Global Perms is null! Safely returning early");
             return;
@@ -395,14 +391,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
 
         ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-        if (ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxGlobalVibrateDuration, 0, 30))
-        {
-            globals.ShockVibrateDuration = TimeSpan.FromSeconds(maxGlobalVibrateDuration);
-        }
+        ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxGlobalVibrateDuration, 0, 30);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             // Convert TimeSpan to ticks and send as UInt64
-            var ticks = (ulong)globals.ShockVibrateDuration.Ticks;
+            var ticks = (ulong)TimeSpan.FromSeconds(maxGlobalVibrateDuration).Ticks;
             PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ShockVibrateDuration), ticks).ConfigureAwait(false);
         }
         CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
@@ -432,7 +425,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawChannelPreferences()
     {
         // do not draw the preferences if the globalpermissions are null.
-        if(_global.GlobalPerms is not { } globals)
+        if(_global.Current is not { } globals)
         {
             ImGui.Text("Globals is null! Returning early");
             return;
@@ -445,21 +438,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.GagspeakBigText("Live Chat Garbler");
         using (ImRaii.Group())
         {
-            var i = 0;
-            foreach (var e in ChatChannel.GetOrderedChannels())
+            foreach (var (label, channels) in ChatLogAgent.SortedChannels)
             {
-                var enabled = e.IsChannelEnabled(globals.ChatGarblerChannelsBitfield);
-                if (i != 0 && (i == 4 || i == 7 || i == 11 || i == 15 || i == 19))
-                    ImGui.NewLine();
+                ImGui.Text(label); // Show the group label
 
-                if (ImGui.Checkbox($"{e}", ref enabled))
+                for (int i = 0; i < channels.Length; i++)
                 {
-                    var newBitfield = e.SetChannelState(globals.ChatGarblerChannelsBitfield, enabled);
-                    PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerChannelsBitfield), newBitfield).ConfigureAwait(false);
+                    var channel = channels[i];
+                    var enabled = channel.IsChannelEnabled(globals.ChatGarblerChannelsBitfield);
+                    string checkboxLabel = channel.ToString();
+
+                    if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                    {
+                        var newBitfield = channel.SetChannelState(globals.ChatGarblerChannelsBitfield, enabled);
+                        PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerChannelsBitfield), newBitfield)
+                            .ConfigureAwait(false);
+                    }
+
+                    // Only SameLine if not the third column
+                    if ((i + 1) % 3 != 0 && (i + 1) != channels.Length)
+                        ImGui.SameLine();
                 }
 
-                ImGui.SameLine();
-                i++;
+                ImGui.NewLine();
             }
 
             ImGui.NewLine();
@@ -496,22 +497,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderPuppet);
         using (ImRaii.Group())
         {
-            var j = 0;
-            foreach (var e in ChatChannel.GetOrderedChannels())
+            foreach (var (label, channels) in ChatLogAgent.SortedChannels)
             {
-                var enabled = e.IsChannelEnabled(_mainConfig.Current.PuppeteerChannelsBitfield);
-                if (j != 0 && (j == 4 || j == 7 || j == 11 || j == 15 || j == 19))
-                    ImGui.NewLine();
+                ImGui.Text(label); // Show the group label
 
-                if (ImGui.Checkbox($"{e}##{e}puppeteer", ref enabled))
+                for (int i = 0; i < channels.Length; i++)
                 {
-                    var newBitfield = e.SetChannelState(_mainConfig.Current.PuppeteerChannelsBitfield, enabled);
-                    _mainConfig.Current.PuppeteerChannelsBitfield = newBitfield;
-                    _mainConfig.Save();
+                    var channel = channels[i];
+                    var enabled = channel.IsChannelEnabled(_mainConfig.Current.PuppeteerChannelsBitfield);
+                    string checkboxLabel = channel.ToString();
+
+                    if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                    {
+                        var newBitfield = channel.SetChannelState(_mainConfig.Current.PuppeteerChannelsBitfield, enabled);
+                        _mainConfig.Current.PuppeteerChannelsBitfield = newBitfield;
+                        _mainConfig.Save();
+                    }
+
+                    // Only SameLine if not the third column
+                    if ((i + 1) % 3 != 0 && (i + 1) != channels.Length)
+                        ImGui.SameLine();
                 }
 
-                ImGui.SameLine();
-                j++;
+                ImGui.NewLine();
             }
         }
         ImGui.Columns(1);

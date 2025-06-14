@@ -1,17 +1,10 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
-using GagSpeak.Services;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.Globalization;
-using System.Numerics;
 using OtterGui.Text;
 using OtterGui;
-using GagSpeak.CkCommons.Gui;
 
 namespace GagSpeak.CkCommons.Gui;
 

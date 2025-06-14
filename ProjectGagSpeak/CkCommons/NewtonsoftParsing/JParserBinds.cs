@@ -1,9 +1,8 @@
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.CkCommons.Newtonsoft;
 
@@ -30,8 +29,7 @@ public static class JParserBinds
 
         newItem.HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         newItem.VisorState = JParser.FromJObject(json["VisorState"]);
-        newItem.ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
-        newItem.BlindfoldPath = json["BlindfoldPath"]?.ToObject<string>() ?? string.Empty;
+        newItem.Properties = json["Properties"]?.ToObject<BlindfoldOverlay>() ?? new BlindfoldOverlay();
         return newItem;
     }
 
@@ -45,9 +43,7 @@ public static class JParserBinds
 
         newItem.HeadgearState = JParser.FromJObject(json["HeadgearState"]);
         newItem.VisorState = JParser.FromJObject(json["VisorState"]);
-        newItem.ForceFirstPerson = json["ForceFirstPerson"]?.ToObject<bool>() ?? false;
-        newItem.HypnotizePath = json["HypnoticPath"]?.ToObject<string>() ?? string.Empty;
-        newItem.Effect = json["Effect"]?.ToObject<HypnoticEffect>() ?? new HypnoticEffect();
+        newItem.Properties = json["Properties"]?.ToObject<HypnoticOverlay>() ?? new HypnoticOverlay();
         return newItem;
     }
 
@@ -78,7 +74,7 @@ public static class JParserBinds
         item.Mod = modAttachment;
         item.Moodle = moodles;
         item.Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None;
-        item.Stimulation = Enum.TryParse<Stimulation>(json["Stimulation"]?.ToObject<string>(), out var stim) ? stim : Stimulation.None;
+        item.Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None;
         item.DoRedraw = json["Redraw"]?.ToObject<bool>() ?? false;
     }
 }

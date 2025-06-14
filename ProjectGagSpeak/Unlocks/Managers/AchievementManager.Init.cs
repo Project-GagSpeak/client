@@ -1,10 +1,9 @@
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Utils;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using System.Runtime.InteropServices;
 
 namespace GagSpeak.Achievements;
 
@@ -160,27 +159,27 @@ public partial class AchievementManager
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.EurekaWhorethos, 1, () 
             => _restraints.AppliedRestraint is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.MyKinkRunsDeep, 1, () 
-            => _restraints.AppliedRestraint is not null && _traits.ActiveTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+            => _restraints.AppliedRestraint is not null && _traits.FinalTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.MyKinksRunDeeper, 1, ()
-            => _restraints.AppliedRestraint is not null && _traits.ActiveTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
+            => _restraints.AppliedRestraint is not null && _traits.FinalTraits != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "FloorSets Cleared");
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe,Achievements.TrialOfFocus, 1, () =>
         {
             if (_player.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.ActiveStim != Stimulation.None)) ? true : false;
+            return (_restraints.AppliedRestraint is not null && ArousalService.ArousalPercent > 0.5f) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
         {
             if (_player.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.ActiveTraits & Traits.BoundArms | Traits.BoundLegs) != 0) ? true : false;
+            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.BoundArms | Traits.BoundLegs) != 0) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
         {
             if (_player.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.ActiveTraits & Traits.Blindfolded) != 0) ? true : false;
+            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0) ? true : false;
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         // While actively moving, incorrectly guess a restraint lock while gagged (Secret)
@@ -278,7 +277,7 @@ public partial class AchievementManager
         LatestCache.SaveData.AddDuration(AchievementModuleKind.Toybox,Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
         LatestCache.SaveData.AddConditional(AchievementModuleKind.Toybox,Achievements.CollectorOfSinfulTreasures, () =>
-        { return (_playerData.GlobalPerms?.HasValidShareCode() ?? false) || _sexToys.DeviceHandler.AnyDeviceConnected; }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Devices Connected");
+        { return (_globals.Current?.HasValidShareCode() ?? false) || _sexToys.DeviceHandler.AnyDeviceConnected; }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Devices Connected");
 
         LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox,Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
             () => _patterns.ActivePattern is not null, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
@@ -299,27 +298,28 @@ public partial class AchievementManager
         LatestCache.SaveData.AddProgress(AchievementModuleKind.Hardcore,Achievements.AllTheCollarsOfTheRainbow, 20, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Forced", suffix: "Pairs To Follow You");
 
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Hardcore,Achievements.UCanTieThis, 1,
-            () => _playerData.GlobalPerms?.IsFollowing() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
+            () => _globals.Current?.HcFollowState() ?? false, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
 
         // Forced follow achievements
         LatestCache.SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedFollow, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
         LatestCache.SaveData.AddDuration(AchievementModuleKind.Hardcore,Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
 
         // Time for Walkies achievements
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _globals.Current?.HcFollowState() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _globals.Current?.HcFollowState() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _playerData.GlobalPerms?.IsFollowing() ?? false, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _globals.Current?.HcFollowState() ?? false, 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Leashed", "Spent");
 
         //Part of the Furniture - Be forced to sit for 1 hour or more
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _playerData.GlobalPerms?.IsSitting() ?? false, DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _globals.Current?.HcEmoteIsAnySitting() ?? false,
+            DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
 
         LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
             () =>
             {
-                if (_restraints.AppliedRestraint is not null && (_traits.ActiveTraits & Traits.Blindfolded) != 0 && (_playerData.GlobalPerms?.IsFollowing() ?? false))
+                if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && (_globals.Current?.HcFollowState() ?? false))
                     if (_player.InMainCity)
                         return true;
                 return false;
@@ -329,22 +329,22 @@ public partial class AchievementManager
             () =>
             {
                 // This is temporarily impossible until i can make fetching active traits from pairs less cancer to handle.
-/*                if ((_traits.ActiveTraits & Traits.Blindfolded) != 0)
+/*                if ((_traits.FinalTraits & Traits.Blindfolded) != 0)
                     if (_pairs.DirectPairs.Any(x => x.PairGlobals.IsFollowing() && x.LastLightStorage.IsBlindfolded()))
                         return true;*/
                 return false;
             }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Pairs Led");
 
-        LatestCache.SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.WhatAView, () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
+        LatestCache.SaveData.AddConditional(AchievementModuleKind.Hardcore,Achievements.WhatAView, () => (_traits.FinalTraits & Traits.Blindfolded) != 0, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
 
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.ActiveTraits & Traits.Blindfolded) != 0, 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.FinalTraits & Traits.Blindfolded) != 0, 
             DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_globals.Current?.HcStayState() ?? false), 
             DurationTimeUnit.Minutes, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_globals.Current?.HcStayState() ?? false), 
             DurationTimeUnit.Hours, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_playerData.GlobalPerms?.IsStaying() ?? false), 
+        LatestCache.SaveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore,Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_globals.Current?.HcStayState() ?? false), 
             DurationTimeUnit.Days, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Locked away for");
 
         // Shock-related achievements - Give out shocks
@@ -460,14 +460,14 @@ public partial class AchievementManager
         LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
         {
             return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _sexToys.ConnectedToyActive && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
-            && _playerData.GlobalPerms is { } globals && (!globals.ForcedFollow.IsNullOrWhitespace() || !globals.ForcedEmoteState.IsNullOrWhitespace());
+            && _globals.Current is { } globals && (!globals.ForcedFollow.IsNullOrWhitespace() || !globals.ForcedEmoteState.IsNullOrWhitespace());
         }, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Hardcore Conditions", isSecret: true);
 
         LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _sexToys.ConnectedToyActive && _gags.ServerGagData is { } gags && gags.IsGagged(), (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
         LatestCache.SaveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
         LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.AppliedRestraint is not null && _player.IsDead, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
         LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.AppliedRestraint is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
-        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ServerGagData is { } gags && gags.IsGagged() && _playerData.GlobalPerms is { } globals && globals.ChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
+        LatestCache.SaveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ServerGagData is { } gags && gags.IsGagged() && _globals.Current is { } globals && globals.ChatGarblerActive, (id, name) => WasCompleted(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
         // The above is currently non functional as i dont have the data to know which chat message type contains these request tasks.
 
         LatestCache.SaveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _restraints.AppliedRestraint is not null, (id, name) => WasCompleted(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);
@@ -480,7 +480,7 @@ public partial class AchievementManager
             var raceEndVisible = false;
             unsafe
             {
-                var raceEnded = (AtkUnitBase*)AtkFuckery.GetAddonByName("RaceChocoboResult");
+                var raceEnded = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
                 if (raceEnded != null)
                     raceEndVisible = raceEnded->RootNode->IsVisible();
             };

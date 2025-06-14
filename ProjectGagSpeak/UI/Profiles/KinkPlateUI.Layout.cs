@@ -1,6 +1,5 @@
 using Dalamud.Interface.Utility;
 using GagSpeak.Services.Mediator;
-using System.Numerics;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 

@@ -2,14 +2,13 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.Kinksters.Storage;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.MainWindow;
-using GagSpeak.UpdateMonitoring.Chat;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
+using GagSpeak.Utils;
 using OtterGui.Classes;
 
 namespace GagSpeak;
@@ -22,28 +21,24 @@ public sealed class CommandManager : IDisposable
     private const string SafewordHardcoreCommand = "/safewordhardcore";
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
-    private readonly PairManager _pairManager;
+    private readonly PlayerData _player;
     private readonly MainConfig _mainConfig;
+    private readonly PairManager _pairManager;
     private readonly ServerConfigService _serverConfig;
-    private readonly ChatService _chatMessages;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
-    private readonly IClientState _clientState;
     private readonly ICommandManager _commands;
 
-    public CommandManager(GagspeakMediator mediator, PairManager pairManager,
-        MainConfig mainConfig, ServerConfigService server,
-        ChatService chatMessages, DeathRollService deathRolls, IChatGui chat,
-        IClientState clientState, ICommandManager commandManager)
+    public CommandManager(GagspeakMediator mediator, PlayerData player, MainConfig config,
+        PairManager pairManager, ServerConfigService server, DeathRollService dr,
+        IChatGui chat, ICommandManager commandManager)
     {
         _mediator = mediator;
+        _player = player;
+        _mainConfig = config;
         _pairManager = pairManager;
-        _mainConfig = mainConfig;
         _serverConfig = server;
-        _chatMessages = chatMessages;
-        _deathRolls = deathRolls;
         _chat = chat;
-        _clientState = clientState;
         _commands = commandManager;
 
         // Add handlers to the main commands
@@ -180,27 +175,27 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0)
         {
             // we initialized a DeathRoll.
-            _chatMessages.SendRealMessage("/random");
+            ChatService.SendCommand("random");
             return;
         }
 
         // if the argument is s, start it just like above.
         if (string.Equals(splitArgs[0], "s", StringComparison.OrdinalIgnoreCase))
         {
-            _chatMessages.SendRealMessage("/random");
+            ChatService.SendCommand("random");
             return;
         }
 
         if (string.Equals(splitArgs[0], "r", StringComparison.OrdinalIgnoreCase))
         {
-            if (_clientState.LocalPlayer is null) 
+            if (_player.ClientPlayer is null) 
                 return;
 
             // get the last interacted with DeathRoll session.
             var lastRollCap = _deathRolls.GetLastRollCap();
             if (lastRollCap is not null)
             {
-                _chatMessages.SendRealMessage($"/random "+ lastRollCap);
+                ChatService.SendCommand($"random {lastRollCap}");
                 return;
             }
             _chat.Print(new SeStringBuilder().AddItalics("No DeathRolls active to reply to.").BuiltString);

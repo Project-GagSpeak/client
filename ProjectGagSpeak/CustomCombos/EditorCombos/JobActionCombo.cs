@@ -1,15 +1,11 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils.Enums;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui;
 using OtterGui.Raii;
-using OtterGui.Text;
 using GagSpeak.CkCommons;
+using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 
 namespace GagSpeak.CustomCombos.Editor;
 

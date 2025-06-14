@@ -1,6 +1,5 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
 

@@ -1,16 +1,9 @@
-using Dalamud.Plugin;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.Interop.Ipc;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
-using GagSpeak.Services;
+using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
-using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Components;
-using Penumbra.Api.IpcSubscribers;
 
 namespace GagSpeak.State.Managers;
 

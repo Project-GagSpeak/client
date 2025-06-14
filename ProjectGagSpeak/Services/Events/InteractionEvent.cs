@@ -1,5 +1,3 @@
-using GagspeakAPI.Data;
-
 namespace GagSpeak.Services.Events;
 
 /// <summary>

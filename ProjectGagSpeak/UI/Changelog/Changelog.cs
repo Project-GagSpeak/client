@@ -1,5 +1,3 @@
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-
 namespace GagSpeak.CkCommons.Gui.Components;
 public class Changelog
 {

@@ -3,8 +3,9 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI.Utils;
 using Microsoft.Extensions.Hosting;
@@ -28,8 +29,8 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     private DateTime _delayedFrameworkUpdateCheck = DateTime.Now;
     private ushort _lastZone = 0;
     private bool _sentBetweenAreas = false;
-    private bool IsInGpose = false;
-    private bool IsInCutscene = false;
+    private bool _isInGpose = false;
+    private bool _isInCutscene = false;
 
     public bool Zoning => _player.IsZoning;
     public static short LastCommendationsCount = 0;
@@ -229,10 +230,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <summary> the unsafe internal framework update method </summary>
     private unsafe void FrameworkOnUpdateInternal()
     {
-        // Always check for this nomadder what.
-        if (KeyMonitor.CtrlPressed() && KeyMonitor.AltPressed() && KeyMonitor.BackPressed())
-            Mediator.Publish(new SafewordHardcoreUsedMessage());
-
         // If the local player is dead or null, return after setting the hasDied flag to true
         if (!_player.IsPresent)
             return;
@@ -261,29 +258,29 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // check if we are in the middle of a delayed framework update
         var isNormalFrameworkUpdate = DateTime.Now < _delayedFrameworkUpdateCheck.AddSeconds(1);
 
-        if (_player.InCutscene && !IsInCutscene)
+        if (_player.InCutscene && !_isInCutscene)
         {
             Logger.LogDebug("Cutscene start");
-            IsInCutscene = true;
+            _isInCutscene = true;
             Mediator.Publish(new CutsceneBeginMessage());
         }
-        else if (!_player.InCutscene && IsInCutscene)
+        else if (!_player.InCutscene && _isInCutscene)
         {
             Logger.LogDebug("Cutscene end");
-            IsInCutscene = false;
+            _isInCutscene = false;
             Mediator.Publish(new CutsceneEndMessage());
         }
 
-        if (_player.InGPose && !IsInGpose)
+        if (_player.InGPose && !_isInGpose)
         {
             Logger.LogDebug("Gpose start");
-            IsInGpose = true;
+            _isInGpose = true;
             Mediator.Publish(new GPoseStartMessage());
         }
-        else if (!_player.InGPose && IsInGpose)
+        else if (!_player.InGPose && _isInGpose)
         {
             Logger.LogDebug("Gpose end");
-            IsInGpose = false;
+            _isInGpose = false;
             Mediator.Publish(new GPoseEndMessage());
         }
 

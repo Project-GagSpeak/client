@@ -1,18 +1,17 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
-using GagspeakAPI.Util;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
 using System.Globalization;
+using GagSpeak.Kinksters;
+using GagspeakAPI.Extensions;
+using GagspeakAPI.Util;
+using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.CkCommons.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
@@ -218,7 +217,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         wdl.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var chatManipulated = Pair.PairGlobals.IsChatHidden() || Pair.PairGlobals.IsChatInputHidden() || Pair.PairGlobals.IsChatInputBlocked();
+        var chatManipulated = Pair.PairGlobals.HcChatVisState() || Pair.PairGlobals.HcChatInputVisState() || Pair.PairGlobals.HcBlockChatInputState();
         var chatBlockedColor = chatManipulated ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var chatBlockedTT = chatManipulated
             ? DisplayName + " is having their chat access restricted by another pair while in Hardcore Mode."
@@ -394,8 +393,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
         // draw out the blocked causes icon row.
         var blockedAffecterPos = LockAffectersRowPos;
-        var restrainedColor = Pair.LastRestraintData.Identifier.IsEmptyGuid() ? ImGuiColors.DalamudGrey3 : Gold;
-        var restrainedTT = Pair.LastRestraintData.Identifier.IsEmptyGuid() ? DisplayName + " is not wearing a restraint set." : DisplayName + " has an active restraint set.";
+        var restrainedColor = Pair.LastRestraintData.Identifier== Guid.Empty ? ImGuiColors.DalamudGrey3 : Gold;
+        var restrainedTT = Pair.LastRestraintData.Identifier== Guid.Empty ? DisplayName + " is not wearing a restraint set." : DisplayName + " has an active restraint set.";
         wdl.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, restrainedColor, restrainedTT);
         blockedAffecterPos.X += LockAffecterIconSize.X + LockAffecterSpacing.X;
 

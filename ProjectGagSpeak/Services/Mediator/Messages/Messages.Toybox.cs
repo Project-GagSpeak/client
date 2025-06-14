@@ -1,6 +1,5 @@
 using Buttplug.Client;
-using GagSpeak.State;
-using GagspeakAPI.Data;
+using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;

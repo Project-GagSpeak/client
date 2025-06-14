@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Achievements;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
@@ -9,7 +9,7 @@ using GagSpeak.CkCommons.Gui.Publications;
 using GagSpeak.CkCommons.Gui.Toybox;
 using GagSpeak.CkCommons.Gui.UiRemote;
 using GagSpeak.CkCommons.Gui.Wardrobe;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.PlayerClient;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;

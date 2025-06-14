@@ -1,21 +1,19 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
-using GagSpeak.RestraintSets;
+using GagSpeak.FileSystems;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 
@@ -74,7 +72,7 @@ public class RestraintEditorModsMoodles : IFancyTab
             DrawMoodleSelector();
             DrawMoodlesList();
             // Draw out the moodle icon row.
-            _moodleDrawer.FramedMoodleIconDisplay("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles, 
+            _moodleDrawer.ShowStatusIconsFramed("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles, 
                 ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
         }
     }
@@ -154,7 +152,7 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        _moodleDrawer.DrawMoodleCombo("AssociatedMoodleSelector", _selectedMoodle, comboWidth, ImGuiComboFlags.NoArrowButton);
+        _moodleDrawer.DrawMoodleCombo(_selectedMoodle, comboWidth, ImGuiComboFlags.NoArrowButton);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus))

@@ -1,6 +1,4 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio.Structs;

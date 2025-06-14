@@ -1,7 +1,8 @@
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Achievements;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;

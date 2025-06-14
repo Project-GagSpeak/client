@@ -4,15 +4,12 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.Game.Readers;
-using GagSpeak.GameInternals.Addons;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
-using GagSpeak.UpdateMonitoring;
 
-namespace GagSpeak.Services.Control;
+namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Handles automatically opening and responding to prompts for the player.
@@ -36,7 +33,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     // Dictates controlling the player's AutoPrompt selecting.
     private PlayerControlSource _sources = PlayerControlSource.None;
 
-    public AutoPromptController(ILogger<OverlayController> logger, GagspeakMediator mediator,
+    public AutoPromptController(ILogger<AutoPromptController> logger, GagspeakMediator mediator,
         MainConfig mainConfig, GlobalPermissions globals, PlayerData player,
         SelectStringPrompt strPrompts, YesNoPrompt ynPrompts, RoomSelectPrompt roomPrompts,
         KeystateController keyCtrl, MovementController moveCtrl, IObjectTable ot,

@@ -1,6 +1,5 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
-using OtterGuiInternal.Structs;
 
 namespace GagSpeak.CkCommons.Gui;
 

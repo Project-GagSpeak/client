@@ -1,4 +1,5 @@
 /// Global Usings
+global using Dalamud.Utility;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
 global using Microsoft.Extensions.Logging;

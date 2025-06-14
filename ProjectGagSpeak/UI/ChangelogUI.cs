@@ -1,9 +1,9 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.PlayerClient;
 using ImGuiNET;
 namespace GagSpeak.CkCommons.Gui;
 

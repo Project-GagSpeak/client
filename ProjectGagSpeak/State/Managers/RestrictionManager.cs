@@ -2,9 +2,6 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.FileSystems;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -13,6 +10,9 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using System.Diagnostics.CodeAnalysis;
+using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.State.Managers;
 
@@ -62,7 +62,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         _serverRestrictionData = serverData;
         foreach (var (slot, idx) in AppliedRestrictions.WithIndex())
         {
-            if (!slot.Identifier.IsEmptyGuid() && Storage.TryGetRestriction(slot.Identifier, out var item))
+            if (slot.Identifier != Guid.Empty && Storage.TryGetRestriction(slot.Identifier, out var item))
             {
                 AppliedRestrictions[idx] = item;
                 AddOccupiedRestriction(item, ManagerPriority.Restrictions);

@@ -1,12 +1,12 @@
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Handlers;
-using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Network;
 using System.Collections.Immutable;
+using GagSpeak.Kinksters;
 
 namespace GagSpeak.CkCommons.Gui;
 

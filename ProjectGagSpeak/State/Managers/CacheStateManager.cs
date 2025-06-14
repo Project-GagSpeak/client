@@ -1,9 +1,10 @@
-using GagSpeak;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State.Components;
-using GagSpeak.State;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Handlers;
+using GagSpeak.State.Listeners;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
@@ -19,29 +20,47 @@ namespace GagSpeak.State.Managers;
 /// <remarks> Helps with code readability, and optimal sorting of storage caches. </remarks>
 public class CacheStateManager : DisposableMediatorSubscriberBase
 {
-    private readonly GlamourHandler _glamourCache;
-    private readonly ModHandler _modsCache;
-    private readonly MoodleHandler _moodlesCache;
-    private readonly CPlusHandler _cplusCache;
-    private readonly ArousalManager _arousalHandler;
-    private readonly TraitAllowanceManager _traitsManager;
+    private readonly CustomizePlusCache _cplusCache;
+    private readonly CustomizePlusHandler _cplusHandler;
+    private readonly GlamourCache _glamourCache;
+    private readonly GlamourHandler _glamourHandler;
+    private readonly ModCache _modsCache;
+    private readonly ModHandler _modHandler;
+    private readonly MoodleCache _moodlesCache;
+    private readonly MoodleHandler _moodleHandler;
+    private readonly TraitsCache _traitsCache;
+    private readonly TraitsHandler _traitsHandler;
+    private readonly ArousalService _arousalHandler;
 
     public CacheStateManager(ILogger<CacheStateManager> logger,
         GagspeakMediator mediator,
-        GlamourHandler glamourCache,
-        ModHandler modsCache,
-        MoodleHandler moodlesCache,
-        CPlusHandler cplusCache,
-        ArousalManager arousalHandler,
-        TraitAllowanceManager traitsManager)
+        CustomizePlusCache cplusCache,
+        CustomizePlusHandler cplusHandler,
+        GlamourCache glamourCache,
+        GlamourHandler glamourHandler,
+        ModCache modsCache,
+        ModHandler modHandler,
+        MoodleCache moodlesCache,
+        MoodleHandler moodleHandler,
+        TraitsCache traitsCache,
+        TraitsHandler traitsHandler,
+        ArousalService arousalHandler) 
         : base(logger, mediator)
     {
-        _glamourCache = glamourCache;
-        _modsCache = modsCache;
-        _moodlesCache = moodlesCache;
         _cplusCache = cplusCache;
+        _cplusHandler = cplusHandler;
+        _glamourCache = glamourCache;
+        _glamourHandler = glamourHandler;
+        _modsCache = modsCache;
+        _modHandler = modHandler;
+        _moodlesCache = moodlesCache;
+        _moodleHandler = moodleHandler;
+        _traitsCache = traitsCache;
+        _traitsHandler = traitsHandler;
         _arousalHandler = arousalHandler;
-        _traitsManager = traitsManager;
+
+        // Subscribe to the logout message to clear the caches.
+        // Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearCaches());
     }
 
     /// <summary> Adds a <see cref="GarblerRestriction"/>'s visuals to the caches for a <paramref name="layerIdx"/>. </summary>
@@ -174,37 +193,33 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     private async Task SetAndApplyGlamour(CombinedCacheKey key, GlamourSlot glamSlot, MetaDataStruct meta)
     {
         Logger.LogDebug("Updating Glamour & Meta Cache with new GlamourSlot.");
-        var applyFlags = CacheType.None;
-        if (_glamourCache.AddAndUpdateGlamour(key, glamSlot)) applyFlags |= CacheType.Glamour;
-        if (_glamourCache.AddAndUpdateMeta(key, meta)) applyFlags |= CacheType.Meta;
+        bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlot);
+        bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
 
         Logger.LogDebug("Applying Glamour Cache.");
-        await _glamourCache.ApplySemaphore(applyFlags);
-        Logger.LogDebug($"Glamour Cache Updated for key [{key}] with flags [{applyFlags}].");
+        await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
+        Logger.LogDebug($"Glamour Cache Updated for key [{key}]!");
     }
 
     private async Task SetAndApplyGlamour(CombinedCacheKey key, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
     {
         Logger.LogDebug("Updating Glamour & Meta Cache with new GlamourSlots.");
-        var applyFlags = CacheType.None;
-        if (_glamourCache.AddAndUpdateGlamour(key, glamSlots)) applyFlags |= CacheType.Glamour;
-        if (_glamourCache.AddAndUpdateMeta(key, meta)) applyFlags |= CacheType.Meta;
+        bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlots);
+        bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
 
         Logger.LogDebug("Applying Glamour Cache.");
-        await _glamourCache.ApplySemaphore(applyFlags);
-        Logger.LogDebug($"Glamour Cache applied for key [{key}] with flags [{applyFlags}].");
+        await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
+        Logger.LogDebug($"Glamour Cache applied for key [{key}]!");
     }
 
     private async Task RemoveGlamourWithKey(CombinedCacheKey key)
     {
         Logger.LogDebug("Updating Glamour & Meta Cache with Removal.");
-        var applyFlags = CacheType.None;
-        if (_glamourCache.RemoveAndUpdateGlamour(key, out var removedSlots)) applyFlags |= CacheType.Glamour;
-        if (_glamourCache.RemoveAndUpdateMeta(key)) applyFlags |= CacheType.Meta;
-
+        bool remGlam = _glamourCache.RemoveAndUpdateGlamour(key, out var removedSlots);
+        bool remMeta = _glamourCache.RemoveAndUpdateMeta(key);
         Logger.LogDebug("Restoring Removed Slots and Reapplying Glamour Cache.");
-        await _glamourCache.RemoveSemaphore(applyFlags, removedSlots);
-        Logger.LogDebug($"Glamour Cache Updated for key [{key}] with flags [{applyFlags}].");
+        await _glamourHandler.RemoveSemaphore(remGlam, remMeta, false, removedSlots);
+        Logger.LogDebug($"Glamour Cache Updated for key [{key}]!");
     }
 
     private async Task SetAndApplyMod(CombinedCacheKey key, ModSettingsPreset preset)
@@ -213,7 +228,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _modsCache.AddAndUpdateMod(key, preset);
 
         Logger.LogDebug("Applying Mod Cache.");
-        await _modsCache.ApplyModCache();
+        await _modHandler.ApplyModCache();
         Logger.LogDebug($"Mod Cache applied for key [{key}].");
     }
 
@@ -223,7 +238,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _modsCache.AddAndUpdateMod(key, presets);
 
         Logger.LogDebug("Applying Mod Cache.");
-        await _modsCache.ApplyModCache();
+        await _modHandler.ApplyModCache();
         Logger.LogDebug($"Mod Cache applied for key [{key}].");
     }
 
@@ -233,7 +248,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _modsCache.RemoveAndUpdateMod(key, out var removed);
 
         Logger.LogDebug("Restoring And Reapplying Mod Cache.");
-        await _modsCache.RestoreAndReapplyCache(removed);
+        await _modHandler.RestoreAndReapplyCache(removed);
         Logger.LogDebug($"Mod Cache removed all entries for [{key}] and reapplied Cache.");
     }
 
@@ -243,7 +258,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _moodlesCache.AddAndUpdateMoodle(key, moodle);
 
         Logger.LogDebug("Applying Moodles Cache.");
-        await _modsCache.ApplyModCache();
+        await _moodleHandler.ApplyMoodleCache();
         Logger.LogDebug($"Moodles Cache applied for key [{key}].");
     }
 
@@ -253,7 +268,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _moodlesCache.AddAndUpdateMoodle(key, moodles);
 
         Logger.LogDebug("Applying Moodles Cache.");
-        await _modsCache.ApplyModCache();
+        await _moodleHandler.ApplyMoodleCache();
         Logger.LogDebug($"Moodles Cache applied for key [{key}].");
     }
 
@@ -263,7 +278,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _moodlesCache.RemoveAndUpdateMoodle(key, out var removed);
 
         Logger.LogDebug("Restoring And Reapplying Moodle Cache.");
-        await _moodlesCache.RestoreAndReapplyCache(removed);
+        await _moodleHandler.RestoreAndReapplyCache(removed);
         Logger.LogDebug($"Moodle Cache removed entries for [{key}] and reapplied Cache.");
     }
 
@@ -273,7 +288,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _cplusCache.AddAndUpdateprofile(key, profile);
 
         Logger.LogDebug("Applying CPlusProfile Cache.");
-        await _modsCache.ApplyModCache();
+        await _cplusHandler.ApplyProfileCache();
         Logger.LogDebug($"CPlusProfile Cache applied for key [{key}].");
     }
 
@@ -283,9 +298,32 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _cplusCache.RemoveAndUpdateprofile(key, out var removed);
 
         Logger.LogDebug("Restoring And Reapplying CPlusProfile Cache.");
-        await _cplusCache.ApplyProfileCache();
+        await _cplusHandler.ApplyProfileCache();
         Logger.LogDebug($"CPlusProfile Cache removed entries for [{key}] and reapplied Cache.");
     }
+
+    private async Task SetAndApplyTraits(CombinedCacheKey key, Traits traits)
+    {
+        Logger.LogDebug("Calculating Caches in parallel.");
+        _traitsCache.AddAndUpdatetraits(key, traits);
+
+        Logger.LogDebug("Applying Traits Cache Changes.");
+        // For now, dont do anything. We need to set this up later but im too eepy girl rn.
+        // await _traitsHandler.ApplyProfileCache();
+        Logger.LogDebug($"Traits Cache applied for key [{key}].");
+    }
+
+    private async Task RemoveTraitsWithKey(CombinedCacheKey key)
+    {
+        Logger.LogDebug("Updating Traits Cache with a Removal.");
+        _cplusCache.RemoveAndUpdateprofile(key, out var removed);
+
+        Logger.LogDebug("Restoring And Reapplying Traits Cache.");
+        // For now, dont do anything. We need to set this up later but im too eepy girl rn.
+        // await _traitsHandler.ApplyProfileCache();
+        Logger.LogDebug($"Traits Cache removed entries for [{key}] and reapplied Cache.");
+    }
+
 
     private Task SetAndApplyArousal(CombinedCacheKey key, Arousal strength)
     {

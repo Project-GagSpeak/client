@@ -1,9 +1,10 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
+using GagSpeak.Achievements;
 using GagSpeak.CkCommons;
-using GagSpeak.Kinkster.Factories;
-using GagSpeak.Kinkster.Handlers;
+using GagSpeak.Kinksters.Factories;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;

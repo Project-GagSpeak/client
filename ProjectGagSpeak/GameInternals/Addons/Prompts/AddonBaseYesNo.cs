@@ -3,7 +3,6 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.GameInternals.Addons;
 
 namespace GagSpeak.GameInternals.Addons;
 public static unsafe class AddonBaseYesNo

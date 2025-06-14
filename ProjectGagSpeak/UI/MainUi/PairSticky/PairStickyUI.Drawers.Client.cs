@@ -1,7 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -97,7 +96,7 @@ public partial class PairStickyUI
                     => PermissionHelper.ChangeOwnUnique(_hub, SPair.UserData, SPair.OwnPerms, res.name, newState),
                 _ => Task.Run(async () =>
                 {
-                    if (_globals.GlobalPerms is not { } perms) return;
+                    if (_globals.Current is not { } perms) return;
                     await PermissionHelper.ChangeOwnGlobal(_hub, perms, res.name, newState);
                 })
             };
@@ -148,7 +147,7 @@ public partial class PairStickyUI
                     PermissionType.UniquePairPermEditAccess => PermissionHelper.ChangeOwnAccess(_hub, SPair.UserData, SPair.OwnPermAccess, res.name, !permAllowed),
                     PermissionType.UniquePairPerm => PermissionHelper.ChangeOwnUnique(_hub, SPair.UserData, SPair.OwnPerms, res.name, !permAllowed),
                     _ => Task.Run(async () => {
-                        if (_globals.GlobalPerms is not { } perms) return;
+                        if (_globals.Current is not { } perms) return;
                         await PermissionHelper.ChangeOwnGlobal(_hub, perms, res.name, !permAllowed);
                     })
                 };

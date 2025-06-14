@@ -1,12 +1,7 @@
 using Dalamud.Interface.Colors;
-using FFXIVClientStructs.FFXIV.Component.Text;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.State;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui.Raii;
-using OtterGui.Text.Widget.Editors;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GagSpeak.CkCommons.Gui.Utility;

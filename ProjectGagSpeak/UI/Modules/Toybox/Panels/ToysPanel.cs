@@ -2,22 +2,18 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.UiRemote;
-using GagSpeak.CkCommons;
-using GagSpeak.Kinksters.Data;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State.Controllers;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox;
-using GagSpeak.Toybox.Services;
 using ImGuiNET;
 using OtterGui.Text;
 using GagSpeak.CkCommons.Intiface;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CkCommons.Gui.Components;
-using System.Drawing;
+using GagSpeak.PlayerClient;
+using GagSpeak.State;
+using GagSpeak.State.Models;
+using GagSpeak.Toybox;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -25,7 +21,7 @@ public class ToysPanel
 {
     private readonly ILogger<ToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly KinksterRequests _globals;
+    private readonly GlobalPermissions _globals;
     private readonly SexToyManager _manager;
     private readonly MainConfig _clientConfigs;
     private readonly ServerConfigService _serverConfigs;
@@ -34,7 +30,7 @@ public class ToysPanel
     public ToysPanel(
         ILogger<ToysPanel> logger,
         GagspeakMediator mediator,
-        KinksterRequests playerData,
+        GlobalPermissions globals,
         SexToyManager toysManager,
         MainConfig clientConfigs,
         ServerConfigService serverConfigs,
@@ -42,7 +38,7 @@ public class ToysPanel
     {
         _logger = logger;
         _mediator = mediator;
-        _globals = playerData;
+        _globals = globals;
         _manager = toysManager;
         _clientConfigs = clientConfigs;
         _serverConfigs = serverConfigs;
@@ -109,8 +105,8 @@ public class ToysPanel
         ImUtf8.SameLineInner();
         ImGui.Text("Open Personal Remote");
 
-        if (_globals.GlobalPerms is not null)
-            ImGui.Text("Active Toys State: " + (_globals.GlobalPerms.ToysAreConnected ? "Active" : "Inactive"));
+        if (_globals.Current is { } globals)
+            ImGui.Text("Active Toys State: " + (globals.ToysAreConnected ? "Active" : "Inactive"));
 
         ImGui.Text("ConnectedToyActive: " + _manager.ConnectedToyActive);
 

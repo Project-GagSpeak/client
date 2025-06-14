@@ -1,8 +1,7 @@
-using GagSpeak.Kinksters.Storage;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services.Configs;
 

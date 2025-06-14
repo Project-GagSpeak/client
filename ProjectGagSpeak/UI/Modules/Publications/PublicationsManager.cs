@@ -1,26 +1,20 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.State.Toybox;
-using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
-using GagSpeak.State;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -29,19 +23,19 @@ using GagSpeak.State.Caches;
 namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
 {
-    private readonly TextureService _textures;
+    private readonly MoodleIcons _icons;
     private readonly ShareHubService _shareHub;
-    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleIcons monitor,
+    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleIcons icons,
         FavoritesManager favorites, PatternManager patterns, TextureService textures, ShareHubService shareHub)
     {
-        _textures = textures;
+        _icons = icons;
         _shareHub = shareHub;
 
         _patternCombo = new PatternCombo(logger, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _statusCombo = new MoodleStatusCombo(1.5f, monitor, logger);
+        _statusCombo = new MoodleStatusCombo(1.5f, icons, logger);
     }
 
     private string _authorName = string.Empty;
@@ -99,7 +93,7 @@ public class PublicationsManager
         });
 
         if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
-            false, _authorName.IsNullOrEmpty() || _selectedPattern.Identifier.IsEmptyGuid()))
+            false, _authorName.IsNullOrEmpty() || _selectedPattern.Identifier== Guid.Empty))
         {
             // upload itttt
             _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
@@ -174,9 +168,9 @@ public class PublicationsManager
             CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Moodles!");
 
             if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
-                false, _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID.IsEmptyGuid()))
+                false, _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID== Guid.Empty))
             {
-                if (_statusCombo.Current.GUID.IsEmptyGuid())
+                if (_statusCombo.Current.GUID== Guid.Empty)
                     return;
 
                 _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.Current);
@@ -355,7 +349,7 @@ public class PublicationsManager
             }
 
             if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                _monitor.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+                _icons.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
         }
     }
 

@@ -1,13 +1,13 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.State;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Services;
+using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
-using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 

@@ -1,10 +1,9 @@
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Kinksters.Pairs;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Kinksters;
+using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -63,7 +62,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                 statusesToCheck.Add(info);
         }
 
-        return MoodleIcons.CanApplyPairStatus(_pairRef.PairPerms, statusesToCheck);
+        return PermissionHelper.CanApplyPairStatus(_pairRef.PairPerms, statusesToCheck);
     }
 
     protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)

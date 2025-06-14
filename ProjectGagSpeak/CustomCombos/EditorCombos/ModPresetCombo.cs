@@ -1,9 +1,8 @@
 using Dalamud.Interface.Utility;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
+using GagSpeak.State.Managers;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -84,7 +83,7 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
 
             foreach (var (groupName, groupInfo) in allSettings)
             {
-                if (groupName.IsNullOrEmpty())
+                if (string.IsNullOrEmpty(groupName))
                     continue;
 
                 var optionType = groupInfo.GroupType;

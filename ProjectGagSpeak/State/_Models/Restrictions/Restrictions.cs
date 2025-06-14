@@ -1,13 +1,12 @@
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.Kinksters.Storage;
-using GagSpeak.State.Listeners;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
-using GagSpeak.State.Managers;
 
 namespace GagSpeak.State.Models;
 

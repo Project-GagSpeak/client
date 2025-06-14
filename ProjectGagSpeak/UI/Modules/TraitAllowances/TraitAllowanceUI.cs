@@ -1,12 +1,8 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
 using ImGuiNET;
-using OtterGuiInternal.Structs;
 using GagSpeak.CkCommons.Widgets;
 
 namespace GagSpeak.CkCommons.Gui.Wardrobe;

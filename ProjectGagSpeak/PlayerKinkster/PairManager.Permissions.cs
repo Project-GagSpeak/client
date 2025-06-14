@@ -1,6 +1,6 @@
+using GagSpeak.Achievements;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.Kinksters;
@@ -95,9 +95,6 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
 
-        // Get the Hardcore Change Type before updating the property (if it is not valid it wont return anything but none anyways)
-        var changeType = pair.PairGlobals.PermChangeType(NewPerm, ChangedValue?.ToString() ?? string.Empty);
-
         // Special conversions
         var convertedValue = propertyInfo.PropertyType switch
         {
@@ -118,14 +115,14 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         RecreateLazy(false);
 
-        // Handle hardcore changes here.
-        if (changeType is InteractionType.None || changeType is InteractionType.ForcedPermChange)
-            return;
+        // Handle hardcore changes here. (DO THIS LATER)
+        //if (changeType is InteractionType.None || changeType is InteractionType.ForcedPermChange)
+        //    return;
 
-        // log the new state, the hardcore change, and the new value.
-        var newState = string.IsNullOrEmpty(ChangedValue?.ToString()) ? NewState.Disabled : NewState.Enabled;
-        Logger.LogDebug(changeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
+        //// log the new state, the hardcore change, and the new value.
+        //var newState = string.IsNullOrEmpty(ChangedValue?.ToString()) ? NewState.Disabled : NewState.Enabled;
+        //Logger.LogDebug(changeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
+        //UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
     /// <summary>
