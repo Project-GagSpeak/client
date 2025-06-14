@@ -1,8 +1,8 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -10,11 +10,11 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Managers;
 
 public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly FavoritesManager _favorites;
@@ -24,7 +24,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     private StorageItemEditor<CursedItem> _itemEditor = new();
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
-        MainConfigService config, GagRestrictionManager gags, RestrictionManager restrictions,
+        MainConfig config, GagRestrictionManager gags, RestrictionManager restrictions,
         FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver)
         : base(logger, mediator)
     {
@@ -107,7 +107,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+            // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
             _saver.Save(this);
 
             Logger.LogTrace("Saved changes to Edited CursedItem.");
@@ -137,7 +137,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             _restrictions.AddOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
 
         // Update the cache regardless.
-        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
     }
 
     // Scan by id so we dont spam deactivation.
@@ -154,7 +154,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
             _restrictions.RemoveOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
 
-        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Config.CursedItemsApplyTraits);
+        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
     }
 
     public void SetLowerLimit(TimeSpan time)

@@ -218,26 +218,42 @@ public static class PermissionHelper
         return true;
     }
 
-    // Idk if this is a good idea.. :P
-    public static async Task<bool> BulkChangeOwnGlobal(MainHub hub, GlobalPerms curPerms, GlobalPerms newPerms)
+    /// <summary> Validates if the pair can apply the status to the user. </summary>
+    /// <param name="pairPerms"> The permissions of the pair. </param>
+    /// <param name="statuses"> The statuses to apply. </param>
+    /// <returns> True if the statuses can be applied.
+    public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        // Make the initial assumption that the change will succeed, and apply the changes.
-        var permsBackup = curPerms;
-
-        // Update the permissions to the new values.
-        curPerms = newPerms;
-
-        // Attempt to bulk update on the server now.
-        HubResponse res = await hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newPerms));
-        if (res.ErrorCode is not GagSpeakApiEc.Success)
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
-            // If the response was not successful, revert the changes.
-            GagSpeak.StaticLog.Warning($"Failed to bulk change GlobalPerms for self. Reason: {res.ErrorCode}. Reverting to previous values.");
-            curPerms = permsBackup;
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
+            return false;
+        }
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
+        {
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
+            return false;
+        }
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Special))
+        {
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
-        // If we reach here, the bulk change was successful.
+        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles) && statuses.Any(statuses => statuses.NoExpire))
+        {
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
+            return false;
+        }
+
+        // check the max moodle time exceeding
+        if (statuses.Any(status => status.NoExpire == false && // if the status is not permanent, and the time its set for is longer than max allowed time.
+            new TimeSpan(status.Days, status.Hours, status.Minutes, status.Seconds) > pairPerms.MaxMoodleTime))
+        {
+            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
+            return false;
+        }
+        // return true if reached here.
         return true;
     }
 }

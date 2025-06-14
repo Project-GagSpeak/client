@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Localization;
-using GagSpeak.PlayerData.Storage;
+using GagSpeak.Kinksters.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -19,17 +19,17 @@ public class AccountManagerTab
     private readonly ILogger<AccountManagerTab> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
-    private readonly MainConfigService _mainConfig;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly MainConfig _mainConfig;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly ConfigFileProvider _configFiles;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
 
     private bool DeleteAccountConfirmation = false;
     private int ShowKeyIdx = -1;
     private int EditingIdx = -1;
     public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator,
-        MainHub hub, MainConfigService mainConfig, ServerConfigurationManager serverConfigs,
-        ConfigFileProvider configDirectory, ClientMonitor clientMonitor)
+        MainHub hub, MainConfig mainConfig, ServerConfigManager serverConfigs,
+        ConfigFileProvider configDirectory, PlayerData clientMonitor)
     {
         _logger = logger;
         _mediator = mediator;
@@ -37,14 +37,14 @@ public class AccountManagerTab
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _configFiles = configDirectory;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _configFiles = configDirectory;
     }
 
     public void DrawManager()
     {
         CkGui.GagspeakBigText(GSLoc.Settings.Accounts.PrimaryLabel);
-        var localContentId = _clientMonitor.ContentId;
+        var localContentId = _player.ContentId;
 
         // obtain the primary account auth.
         var primaryAuth = _serverConfigs.ServerStorage.Authentications.FirstOrDefault(c => c.IsPrimary);
@@ -246,9 +246,9 @@ public class AccountManagerTab
             if (isPrimary)
             {
                 _serverConfigs.ServerStorage.Authentications.Clear();
-                _mainConfig.Config.AcknowledgementUnderstood = false;
+                _mainConfig.Current.AcknowledgementUnderstood = false;
             }
-            _mainConfig.Config.LastUidLoggedIn = "";
+            _mainConfig.Current.LastUidLoggedIn = "";
             _mainConfig.Save();
             _logger.LogInformation("Deleting Account from Server.");
             await _hub.UserDelete();           

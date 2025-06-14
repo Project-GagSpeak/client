@@ -1,8 +1,8 @@
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerData.Storage;
+namespace GagSpeak.PlayerClient;
 
 public class PatternStorage : List<Pattern>, IEditableStorage<Pattern>
 {

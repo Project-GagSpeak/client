@@ -1,11 +1,11 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Listener;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -22,14 +22,15 @@ namespace GagSpeak.WebAPI;
 /// </summary>
 public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHostedService
 {
-    private readonly KinksterRequests _globals;
     private readonly HubFactory _hubFactory;
+    private readonly KinksterRequests _requests;
+    private readonly OwnGlobalsManager _globalListener;
     private readonly VisualStateListener _visualListener;
-    private readonly ToyboxStateListener _kinkListener;
     private readonly PuppeteerListener _puppetListener;
+    private readonly ToyboxStateListener _kinkListener;
     private readonly PairManager _pairs;
-    private readonly ServerConfigurationManager _serverConfigs;
-    private readonly MainConfigService _mainConfig;
+    private readonly ServerConfigManager _serverConfigs;
+    private readonly MainConfig _mainConfig;
 
     // Cancellation Token Sources
     private CancellationTokenSource HubConnectionCTS;
@@ -41,26 +42,28 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         ILogger<MainHub> logger,
         GagspeakMediator mediator,
         TokenProvider tokenProvider,
-        ClientMonitor clientMonitor,
+        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils,
-        KinksterRequests globals,
         HubFactory hubFactory,
+        KinksterRequests requests,
+        OwnGlobalsManager globalListener,
         VisualStateListener visualListener,
         ToyboxStateListener kinkListener,
         PuppeteerListener puppetListener,
         PairManager pairs,
-        ServerConfigurationManager serverConfigs,
-        MainConfigService mainConfig)
+        ServerConfigManager serverConfigs,
+        MainConfig mainConfig)
         : base(logger, mediator, tokenProvider, clientMonitor, frameworkUtils)
     {
-        _globals = globals;
         _hubFactory = hubFactory;
+        _requests = requests;
+        _globalListener = globalListener;
+        _visualListener = visualListener;
+        _puppetListener = puppetListener;
+        _kinkListener = kinkListener;
         _pairs = pairs;
         _serverConfigs = serverConfigs;
         _mainConfig = mainConfig;
-        _visualListener = visualListener;
-        _kinkListener = kinkListener;
-        _puppetListener = puppetListener;
 
         // Create our CTS for the hub connection
         HubConnectionCTS = new CancellationTokenSource();
@@ -357,7 +360,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         fetchedSecretKey = string.Empty;
 
         // if we are not logged in, we should not be able to connect.
-        if (_clientMonitor.IsLoggedIn is false)
+        if (_player.IsLoggedIn is false)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;
@@ -605,7 +608,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetPairRequests().ConfigureAwait(false);
-        _globals.CurrentRequests = requests.ToHashSet();
+        _requests.CurrentRequests = requests.ToHashSet();
         Logger.LogDebug("Kinkster Requests Recieved. Found [" + requests.Count + "]", LoggerType.ApiCore);
         Mediator.Publish(new RefreshUiMessage());
     }

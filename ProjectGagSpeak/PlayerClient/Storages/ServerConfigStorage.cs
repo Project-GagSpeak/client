@@ -2,7 +2,7 @@ using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.Services.Configs;
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.PlayerData.Storage;
+namespace GagSpeak.PlayerClient;
 
 public class NicknamesConfigService : IHybridSavable
 {

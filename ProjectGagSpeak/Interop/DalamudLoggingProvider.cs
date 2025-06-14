@@ -2,7 +2,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.Services.Configs;
 using Serilog.Events;
 
-namespace GagSpeak.Interop;
+namespace GagSpeak;
 
 /// <summary>
 /// A provider for Dalamud loggers, where we can construct our customized logger output message string

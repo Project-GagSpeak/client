@@ -93,7 +93,4 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Utils\PointerFuckery\" />
-    </ItemGroup>
 </Project>

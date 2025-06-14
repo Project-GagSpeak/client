@@ -2,14 +2,14 @@ using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State.Listeners;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
 {

@@ -8,7 +8,7 @@ using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Attributes;
 using ImGuiNET;

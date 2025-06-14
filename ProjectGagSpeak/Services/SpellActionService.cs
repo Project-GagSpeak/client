@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using System.Collections.Immutable;
 using GameAction = Lumina.Excel.Sheets.Action;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Services;
 
 // Hosted service responsible for allocating a cache of valid SpellAction data,
 // and holding it for future references.

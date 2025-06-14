@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerData.Data;
+namespace GagSpeak.MufflerCore;
 
 public class GagData
 {

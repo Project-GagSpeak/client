@@ -2,8 +2,8 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Storage;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Kinksters.Storage;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -12,7 +12,7 @@ using GagSpeak.CkCommons.Gui.MainWindow;
 using GagSpeak.UpdateMonitoring.Chat;
 using OtterGui.Classes;
 
-namespace GagSpeak.StateManagers;
+namespace GagSpeak;
 
 /// <summary> Handles all of the commands that are used in the plugin. </summary>
 public sealed class CommandManager : IDisposable
@@ -23,17 +23,17 @@ public sealed class CommandManager : IDisposable
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
     private readonly PairManager _pairManager;
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly ServerConfigService _serverConfig;
-    private readonly ChatMonitor _chatMessages;
+    private readonly ChatService _chatMessages;
     private readonly DeathRollService _deathRolls;
     private readonly IChatGui _chat;
     private readonly IClientState _clientState;
     private readonly ICommandManager _commands;
 
     public CommandManager(GagspeakMediator mediator, PairManager pairManager,
-        MainConfigService mainConfig, ServerConfigService server,
-        ChatMonitor chatMessages, DeathRollService deathRolls, IChatGui chat,
+        MainConfig mainConfig, ServerConfigService server,
+        ChatService chatMessages, DeathRollService deathRolls, IChatGui chat,
         IClientState clientState, ICommandManager commandManager)
     {
         _mediator = mediator;
@@ -85,7 +85,7 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0)
         {
             // Interpret this as toggling the UI
-            if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+            if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(MainUI)));
             else
                 _mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
@@ -94,7 +94,7 @@ public sealed class CommandManager : IDisposable
 
         else if (string.Equals(splitArgs[0], "settings", StringComparison.OrdinalIgnoreCase))
         {
-            if (_mainConfig.Config.HasValidSetup())
+            if (_mainConfig.Current.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
 
@@ -122,7 +122,7 @@ public sealed class CommandManager : IDisposable
         }
 
         // If safeword matches, invoke the safeword mediator
-        if (string.Equals(_mainConfig.Config.Safeword, splitArgs[0], StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_mainConfig.Current.Safeword, splitArgs[0], StringComparison.OrdinalIgnoreCase))
         {
             if (splitArgs.Length > 1)
             {

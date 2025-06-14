@@ -8,8 +8,8 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -17,7 +17,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.Restrictions;
+namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionItem, RestrictionFileSelector.RestrictionState>, IMediatorSubscriber, IDisposable

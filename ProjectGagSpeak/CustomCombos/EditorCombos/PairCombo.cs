@@ -1,13 +1,13 @@
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class PairCombo : CkFilterComboCache<Pair>
 {

@@ -6,8 +6,8 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinkster.Pairs;
+using GagSpeak.State.Models;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -17,7 +17,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Handlers;
 
 /// <summary> 
 ///     Handles what happens to cursed loot when found, and provides helpers for object interaction.
@@ -26,13 +26,14 @@ public sealed class LootHandler
 {
     private readonly ILogger<LootHandler> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly GlobalPermissions _globals;
     private readonly MainHub _hub;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly CursedLootManager _manager;
-    private readonly ClientMonitor _clientMonitor;
-    private readonly MainConfigService _config;
+    private readonly PlayerData _player;
+    private readonly MainConfig _config;
     private readonly OnFrameworkService _frameworkUtils;
 
     /// <summary> Stores last interacted chestId so we dont keep spam opening the same chest. </summary>
@@ -43,23 +44,25 @@ public sealed class LootHandler
     public LootHandler(
         ILogger<LootHandler> logger,
         GagspeakMediator mediator,
+        GlobalPermissions globals,
         MainHub hub,
         PairManager pairs,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         CursedLootManager manager,
-        ClientMonitor clientMonitor,
-        MainConfigService config,
+        PlayerData clientMonitor,
+        MainConfig config,
         OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
+        _globals = globals;
         _hub = hub;
         _pairs = pairs;
         _gags = gags;
         _restrictions = restrictions;
         _manager = manager;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _config = config;
         _frameworkUtils = frameworkUtils;
     }
@@ -68,7 +71,7 @@ public sealed class LootHandler
 
     /// <summary> If any cursed loot can even be applied at the moment. </summary>
     public bool CanApplyAnyLoot 
-        => _config.Config.CursedLootPanel && MainHub.IsServerAlive && _manager.Storage.InactiveItemsInPool.Any();
+        => _config.Current.CursedLootPanel && MainHub.IsServerAlive && _manager.Storage.InactiveItemsInPool.Any();
 
     /// <summary> If the GameObject is a deep dungeon coffer or a treasure chest. </summary>
     public unsafe bool IsAnyTreasure(GameObject* obj)
@@ -78,7 +81,7 @@ public sealed class LootHandler
         => obj->GetGameObjectId().ObjectId == _prevOpenedLootObjectId;
 
     public unsafe bool ObjectInLootInstance(uint gameObjId)
-        => _clientMonitor.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
+        => _player.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
 
 
     /// <summary>
@@ -108,7 +111,7 @@ public sealed class LootHandler
         else
         {
             // If in a party with other players, make sure we are the first to open it.
-            if (_clientMonitor.PartySize is not 1)
+            if (_player.PartySize is not 1)
             {
                 foreach (var item in Loot.Instance()->Items)
                     if (item.ChestObjectId == obj->GetGameObjectId().ObjectId)
@@ -227,7 +230,7 @@ public sealed class LootHandler
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
             _mediator.Publish(new NotifyChatMessage(message, NotificationType.Error));
 
-            if (GlobalPermissions.Globals != null && GlobalPermissions.Globals.ChatGarblerActive)
+            if (_globals.Current?.ChatGarblerActive ?? false)
                 _mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! Be cautious of chatting around strangers!", NotificationType.Warning));
 
             // Update the cursed items offset time.

@@ -2,7 +2,7 @@ using Dalamud.Utility;
 using GagSpeak.Utils;
 using Lumina.Excel.Sheets;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Utils;
 
 /// <summary> helps out with locating and parsing moodles icons. </summary>
 public struct ParsedIconInfo

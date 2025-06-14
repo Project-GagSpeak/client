@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -14,7 +14,7 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private int MaxPresetCount => _pairRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
-    public PairMoodlePresetCombo(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub, ILogger log)
+    public PairMoodlePresetCombo(float iconScale, MoodleIcons monitor, Pair pair, MainHub hub, ILogger log)
         : base(iconScale, monitor, pair, hub, log, () => [ ..pair.LastIpcData.Presets.Values.OrderBy(x => x.Title)])
     { }
 
@@ -63,7 +63,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                 statusesToCheck.Add(info);
         }
 
-        return IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, statusesToCheck);
+        return MoodleIcons.CanApplyPairStatus(_pairRef.PairPerms, statusesToCheck);
     }
 
     protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)

@@ -5,8 +5,8 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -18,7 +18,7 @@ using System.Collections.Immutable;
 namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 {
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     private readonly IdDisplayHandler _nameHandle;
     private readonly TraitAllowanceManager _manager;
     private readonly PairManager _pairs;
@@ -26,7 +26,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
     private readonly CosmeticService _cosmetics;
 
     public TraitAllowanceSelector(ILogger<TraitAllowanceSelector> logger,
-        GagspeakMediator mediator, MainConfigService config,
+        GagspeakMediator mediator, MainConfig config,
         IdDisplayHandler handler, TraitAllowanceManager manager, PairManager pairs,
         FavoritesManager favorites, CosmeticService cosmetics) : base(logger, mediator)
     {
@@ -114,7 +114,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
             .OrderByDescending(u => u.IsVisible)
             .ThenByDescending(u => u.IsOnline)
             .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                ? (_config.Config.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
+                ? (_config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
                 : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
             .ToImmutableList();
 

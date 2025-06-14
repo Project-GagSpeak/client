@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -11,7 +11,7 @@ using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.PairActions;
+namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
 {

@@ -1,11 +1,23 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using GagSpeak.PlayerData.Storage;
+using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Runtime.InteropServices;
 
 namespace GagSpeak.Utils;
-public static class UtilsExtensions
+public static class GsExtensions
 {
+    public static bool HasValidSetup(this GagspeakConfig configuration)
+    {
+        return configuration.AcknowledgementUnderstood;
+    }
+
+    public static bool HasValidSetup(this ServerStorage configuration)
+    {
+        return configuration.Authentications.Count > 0;
+    }
+
     public static string ExtractText(this SeString seStr, bool onlyFirst = false)
     {
         StringBuilder sb = new();

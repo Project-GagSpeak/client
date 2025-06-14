@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -10,7 +10,7 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
 
-namespace GagSpeak.CustomCombos.PairActions;
+namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 {

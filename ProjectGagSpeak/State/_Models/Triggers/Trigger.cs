@@ -1,7 +1,7 @@
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 public abstract class Trigger : IEditableStorageItem<Trigger>
 {

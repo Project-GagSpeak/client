@@ -1,6 +1,6 @@
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;

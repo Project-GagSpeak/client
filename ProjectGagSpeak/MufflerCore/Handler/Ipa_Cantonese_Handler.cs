@@ -1,19 +1,21 @@
 using Dalamud.Plugin;
 using GagSpeak.Services.Configs;
 using System.Text.RegularExpressions;
-
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
 
 namespace GagSpeak.MufflerCore.Handler;
-// Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
+
+/// <summary>
+///     Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
+/// </summary>
 public class Ipa_Cantonese_Handler
 {
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Cantonese_Handler> _logger; // Logger
-    private readonly MainConfigService _config; // The GagSpeak configuration
+    private readonly MainConfig _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pluginInterface; // Plugin interface for file access
 
-    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
+    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;
@@ -97,9 +99,9 @@ public class Ipa_Cantonese_Handler
     {
         var f_str = t_str;
 
-        if (_config.Config.LanguageDialect == "IPA_nei5") f_str = FormatIPANum(t_str);         // nei13
-        else if (_config.Config.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);     // nei˩˧
-        else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);  // nei5
+        if (_config.Current.LanguageDialect == "IPA_nei5") f_str = FormatIPANum(t_str);         // nei13
+        else if (_config.Current.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);     // nei˩˧
+        else if (_config.Current.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);  // nei5
 
         return f_str;
     }*/

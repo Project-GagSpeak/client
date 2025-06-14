@@ -3,7 +3,7 @@ using GagSpeak.Services.Configs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace GagSpeak.Interop;
+namespace GagSpeak;
 
 public static class DalamudLoggingProviderExtensions
 {

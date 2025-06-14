@@ -1,7 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
-using GagSpeak.PlayerData.Factories;
+using GagSpeak.Kinkster.Factories;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -10,7 +10,7 @@ using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerData.Pairs;
+namespace GagSpeak.Kinksters;
 
 /// <summary>
 /// General note to self, pairs used to have "own permissions" and "other permissions" but they were removed.
@@ -19,8 +19,8 @@ namespace GagSpeak.PlayerData.Pairs;
 public sealed partial class PairManager : DisposableMediatorSubscriberBase
 {
     private readonly ConcurrentDictionary<UserData, Pair> _allClientPairs;  // concurrent dictionary of all paired paired to the client.
-    private readonly MainConfigService _mainConfig;                     // main gagspeak config
-    private readonly ServerConfigurationManager _serverConfigs;             // for nick handling.
+    private readonly MainConfig _mainConfig;                     // main gagspeak config
+    private readonly ServerConfigManager _serverConfigs;             // for nick handling.
     private readonly PairFactory _pairFactory;                              // the pair factory for creating new pair objects
     private readonly IContextMenu _contextMenu;                             // adds GagSpeak options when right clicking players.
     
@@ -28,8 +28,8 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     public List<Pair> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
 
     public PairManager(ILogger<PairManager> logger, GagspeakMediator mediator,
-        PairFactory pairFactory, MainConfigService mainConfig, 
-        ServerConfigurationManager serverConfigs, IContextMenu contextMenu) : base(logger, mediator)
+        PairFactory pairFactory, MainConfig mainConfig, 
+        ServerConfigManager serverConfigs, IContextMenu contextMenu) : base(logger, mediator)
     {
         _allClientPairs = new(UserDataComparer.Instance);
         _pairFactory = pairFactory;
@@ -52,7 +52,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         if (args.MenuType is ContextMenuType.Inventory) return;
         
         // don't open if we don't want to show context menus
-        if (!_mainConfig.Config.ShowContextMenus) return;
+        if (!_mainConfig.Current.ShowContextMenus) return;
 
         // otherwise, locate the pair and add the context menu args to the visible pairs.
         foreach (var pair in _allClientPairs.Where((p => p.Value.IsVisible)))
@@ -241,7 +241,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         }
 
         // if send notification is on, then we should send the online notification to the client.
-        if (sendNotification && _mainConfig.Config.NotifyForOnlinePairs && (_mainConfig.Config.NotifyLimitToNickedPairs && !string.IsNullOrEmpty(pair.GetNickname())))
+        if (sendNotification && _mainConfig.Current.NotifyForOnlinePairs && (_mainConfig.Current.NotifyLimitToNickedPairs && !string.IsNullOrEmpty(pair.GetNickname())))
         {
             // get the nickname from the pair, if it is not null, set the nickname to the pair's nickname.
             var nickname = pair.GetNickname();

@@ -1,7 +1,7 @@
 using Dalamud.Plugin.Services;
 using GagSpeak.Services.Configs;
 
-namespace GagSpeak.Interop;
+namespace GagSpeak;
 
 /// <summary>
 /// An internally sealed glass for the dalamud logger, that helps us
@@ -27,7 +27,7 @@ internal sealed class DalamudLogger : ILogger
     /// <summary> Checks if the log level is enabled for the current log level we are inspecting. </summary>
     public bool IsEnabled(LogLevel logLevel)
     {
-        return (int)MainConfigService.LogLevel <= (int)logLevel;
+        return (int)MainConfig.LogLevel <= (int)logLevel;
     }
 
     /// <summary> This is the Log method that is called by the ILogger interface. </summary>

@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.Permissions;
@@ -19,7 +19,7 @@ public partial class PairStickyUI
         var pairUniquePerms = SPair.PairPerms;
 
         var ApplyPairsMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou) || lastIpcData.Statuses.Count <= 0;
-        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou) || MoodleHandler.IpcData is null || MoodleHandler.IpcData.Statuses.Count <= 0;
+        var ApplyOwnMoodleToPairDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou) || MoodleCache.IpcData is null || MoodleCache.IpcData.Statuses.Count <= 0;
         var RemovePairsMoodlesDisabled = !pairUniquePerms.MoodlePerms.HasFlag(MoodlePerms.RemovingMoodles) || lastIpcData.Statuses.Count <= 0;
 
         ////////// APPLY MOODLES FROM PAIR's LIST //////////

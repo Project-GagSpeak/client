@@ -2,7 +2,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Network;
 
-namespace GagSpeak.PlayerData.Data;
+namespace GagSpeak.PlayerClient;
 
 /// <summary> 
 ///     The ClientPlayer's Kinkster Requests.

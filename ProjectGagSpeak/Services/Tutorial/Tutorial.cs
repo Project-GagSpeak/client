@@ -1,15 +1,10 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Graphics;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using static OtterGui.Raii.ImRaii;
 

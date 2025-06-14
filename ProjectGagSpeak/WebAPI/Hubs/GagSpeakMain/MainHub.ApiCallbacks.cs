@@ -121,7 +121,7 @@ public partial class MainHub
     public Task Callback_AddPairRequest(KinksterRequestEntry dto)
     {
         Logger.LogDebug("Callback_AddPairRequest: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _globals.AddPairRequest(dto));
+        ExecuteSafely(() => _requests.AddPairRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -131,7 +131,7 @@ public partial class MainHub
     public Task Callback_RemovePairRequest(KinksterRequestEntry dto)
     {
         Logger.LogDebug("Callback_RemovePairRequest: "+dto, LoggerType.Callbacks);
-        ExecuteSafely(() => _globals.RemovePairRequest(dto));
+        ExecuteSafely(() => _requests.RemovePairRequest(dto));
 
         return Task.CompletedTask;
     }
@@ -150,7 +150,7 @@ public partial class MainHub
     {
         Logger.LogDebug("Callback_ApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
         // obtain the local player name and world
-        var NameWithWorld = _clientMonitor.ClientPlayer.NameWithWorld();
+        var NameWithWorld = _player.ClientPlayer.NameWithWorld();
         _visualListener.ApplyStatusesToSelf(dto, NameWithWorld);
         return Task.CompletedTask;
     }
@@ -195,7 +195,7 @@ public partial class MainHub
         if (dto.User.UID == MainHub.UID)
         {
             Logger.LogWarning("Called Back BulkChangeGlobal that was intended for yourself!: " + dto);
-            _globals.GlobalPerms = dto.NewPerms;
+            ExecuteSafely(() => _globalListener.BulkGlobalPermissionUpdate(dto.NewPerms, dto.User.UID));
             return Task.CompletedTask;
         }
         else

@@ -4,7 +4,7 @@ namespace GagSpeak;
 
 public static class LoggerFilter
 {
-    public static LoggerType FilteredLogTypes => MainConfigService.LoggerFilters;
+    public static LoggerType FilteredLogTypes => MainConfig.LoggerFilters;
 
     /// <summary> Perform a bitwise check for validation, extremely fast. </summary>
     public static bool ShouldLog(LoggerType category)

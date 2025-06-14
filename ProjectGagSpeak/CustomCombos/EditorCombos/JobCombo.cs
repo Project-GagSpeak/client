@@ -7,15 +7,15 @@ using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class JobCombo : CkFilterComboCache<LightJob>
 {
-    private readonly IconDisplayer _iconDrawer;
+    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     public JobType _currentJob { get; private set; }
-    public JobCombo(float iconScale, IconDisplayer disp, ILogger log)
+    public JobCombo(float iconScale, MoodleIcons disp, ILogger log)
         : base([ ..SpellActionService.BattleClassJobs ], log)
     {
         _iconScale = iconScale;

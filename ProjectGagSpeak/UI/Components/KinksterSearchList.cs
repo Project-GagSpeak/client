@@ -5,7 +5,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Clip;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
@@ -17,7 +17,7 @@ namespace GagSpeak.CkCommons.Gui.Wardrobe;
 /// <remarks> You will need to add a mediator subscription to update things yourself! </remarks>
 public class KinksterSearchList
 {
-    protected readonly MainConfigService _config;
+    protected readonly MainConfig _config;
     protected readonly IdDisplayHandler _nameHandle;
     protected readonly PairManager _pairs;
     protected readonly CosmeticService _cosmetics;
@@ -26,7 +26,7 @@ public class KinksterSearchList
     protected string _searchValue = string.Empty;
 
     public KinksterSearchList(
-        MainConfigService config,
+        MainConfig config,
         IdDisplayHandler handler, 
         PairManager pairs, 
         CosmeticService cosmetics)
@@ -77,7 +77,7 @@ public class KinksterSearchList
             .OrderByDescending(u => u.IsVisible)
             .ThenByDescending(u => u.IsOnline)
             .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                ? (_config.Config.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
+                ? (_config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
                 : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
             .ToImmutableList();
     }

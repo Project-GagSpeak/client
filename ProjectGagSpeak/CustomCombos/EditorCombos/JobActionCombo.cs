@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Storage;
+using GagSpeak.Kinksters.Storage;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils.Enums;
 using ImGuiNET;
@@ -11,17 +11,17 @@ using OtterGui.Raii;
 using OtterGui.Text;
 using GagSpeak.CkCommons;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
 {
-    private readonly IconDisplayer _iconDrawer;
+    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     private uint _currentActionId;
 
     // Need a generator to make sure it reflects the selected job and stuffies.
-    public JobActionCombo(float iconScale, IconDisplayer disp, ILogger log, 
+    public JobActionCombo(float iconScale, MoodleIcons disp, ILogger log, 
         Func<IReadOnlyList<ParsedActionRow>> gen) : base(gen, log)
     {
         _iconScale = iconScale;

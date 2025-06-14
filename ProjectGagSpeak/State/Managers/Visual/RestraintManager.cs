@@ -3,8 +3,8 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -15,7 +15,7 @@ using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Managers;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly RestrictionManager _restrictions;

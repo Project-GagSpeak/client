@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;

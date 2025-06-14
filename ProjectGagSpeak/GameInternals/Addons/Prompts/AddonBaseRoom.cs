@@ -4,7 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
 
-namespace GagSpeak.Hardcore.ForcedStay;
+namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonBaseRoom
 {
     public static SeString SeString(AtkUnitBase* addon, uint idx)

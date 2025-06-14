@@ -1,14 +1,14 @@
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Handlers;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 /// <summary>
 /// The IPC Provider for GagSpeak to interact with other plugins by sharing information about visible players.

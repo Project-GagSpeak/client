@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
 using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Extensions;
@@ -8,7 +8,7 @@ using OtterGui;
 using OtterGui.Raii;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
 {

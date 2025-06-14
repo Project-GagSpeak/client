@@ -1,10 +1,10 @@
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 
-namespace GagSpeak.CustomCombos.Padlockable;
+namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {

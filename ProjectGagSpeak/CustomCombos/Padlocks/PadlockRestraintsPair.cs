@@ -1,11 +1,11 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 
-namespace GagSpeak.CustomCombos.Padlockable;
+namespace GagSpeak.CustomCombos.Padlock;
 
 public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint>
 {

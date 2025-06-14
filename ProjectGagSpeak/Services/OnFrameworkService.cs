@@ -4,18 +4,20 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services.Mediator;
+using GagSpeak.UpdateMonitoring;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI.Utils;
 using Microsoft.Extensions.Hosting;
 using StructsPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Services;
 
 /// <summary>
-/// The service responsible for handling framework updates and other Dalamud related services.
+///     The service responsible for handling framework updates and other Dalamud related services.
 /// </summary>
 public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly IFramework _framework;
     private readonly IObjectTable _objectTable;
 
@@ -29,16 +31,16 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     private bool IsInGpose = false;
     private bool IsInCutscene = false;
 
-    public bool Zoning => _clientMonitor.IsZoning;
+    public bool Zoning => _player.IsZoning;
     public static short LastCommendationsCount = 0;
     public static Lazy<Dictionary<ushort, string>> WorldData { get; private set; }
     public bool IsFrameworkUnloading => _framework.IsFrameworkUnloading;
 
     public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator,
-        ClientMonitor clientMonitor, IDataManager gameData, IFramework framework,
+        PlayerData clientMonitor, IDataManager gameData, IFramework framework,
         IObjectTable objectTable, ITargetManager targets) : base(logger, mediator)
     {
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _framework = framework;
         _objectTable = objectTable;
 
@@ -56,7 +58,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // stores added pairs character name and addresses when added.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>
         {
-            if (_clientMonitor.InPvP) return;
+            if (_player.InPvP) return;
             var name = msg.Pair.PlayerName;
             if (string.IsNullOrEmpty(name)) return;
             var addr = _playerCharas.FirstOrDefault(f => string.Equals(f.Value.Name, name, StringComparison.Ordinal)).Value.Address;
@@ -137,7 +139,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <returns> The local player character's name hashed </returns>
     public async Task<string> GetPlayerNameHashedAsync()
     {
-        return await RunOnFrameworkThread(() => (_clientMonitor.Name, (ushort)_clientMonitor.ClientPlayer.HomeWorldId()).GetHash256()).ConfigureAwait(false);
+        return await RunOnFrameworkThread(() => (_player.Name, (ushort)_player.ClientPlayer.HomeWorldId()).GetHash256()).ConfigureAwait(false);
     }
 
     /// <summary> Gets the player characters ID of the world they are currently in.</summary>
@@ -227,8 +229,12 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <summary> the unsafe internal framework update method </summary>
     private unsafe void FrameworkOnUpdateInternal()
     {
+        // Always check for this nomadder what.
+        if (KeyMonitor.CtrlPressed() && KeyMonitor.AltPressed() && KeyMonitor.BackPressed())
+            Mediator.Publish(new SafewordHardcoreUsedMessage());
+
         // If the local player is dead or null, return after setting the hasDied flag to true
-        if (!_clientMonitor.IsPresent)
+        if (!_player.IsPresent)
             return;
 
         // we need to update our stored player characters to know if they are still valid, and to update our pair handlers
@@ -255,26 +261,26 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // check if we are in the middle of a delayed framework update
         var isNormalFrameworkUpdate = DateTime.Now < _delayedFrameworkUpdateCheck.AddSeconds(1);
 
-        if (_clientMonitor.InCutscene && !IsInCutscene)
+        if (_player.InCutscene && !IsInCutscene)
         {
             Logger.LogDebug("Cutscene start");
             IsInCutscene = true;
             Mediator.Publish(new CutsceneBeginMessage());
         }
-        else if (!_clientMonitor.InCutscene && IsInCutscene)
+        else if (!_player.InCutscene && IsInCutscene)
         {
             Logger.LogDebug("Cutscene end");
             IsInCutscene = false;
             Mediator.Publish(new CutsceneEndMessage());
         }
 
-        if (_clientMonitor.InGPose && !IsInGpose)
+        if (_player.InGPose && !IsInGpose)
         {
             Logger.LogDebug("Gpose start");
             IsInGpose = true;
             Mediator.Publish(new GPoseStartMessage());
         }
-        else if (!_clientMonitor.InGPose && IsInGpose)
+        else if (!_player.InGPose && IsInGpose)
         {
             Logger.LogDebug("Gpose end");
             IsInGpose = false;
@@ -282,10 +288,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         }
 
         // if we are zoning, 
-        if (_clientMonitor.IsZoning)
+        if (_player.IsZoning)
         {
             // get the zone
-            var zone = _clientMonitor.TerritoryId;
+            var zone = _player.TerritoryId;
             // if the zone is different from the last zone
             if (_lastZone != zone)
             {
@@ -316,7 +322,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             {
                 Logger.LogDebug("Our Previous Commendation Count was: " + LastCommendationsCount + " and our new commendation count is: " + newCommendations);
                 // publish to mediator if we are logged in
-                if (_clientMonitor.IsLoggedIn)
+                if (_player.IsLoggedIn)
                     Mediator.Publish(new CommendationsIncreasedMessage(newCommendations - LastCommendationsCount));
                 // update the count
                 LastCommendationsCount = newCommendations;
@@ -331,7 +337,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         if (isNormalFrameworkUpdate)
             return;
 
-        var localPlayer = _clientMonitor.ClientPlayer!;
+        var localPlayer = _player.ClientPlayer!;
 
         // check if we are at 1 hp, if so, grant the boundgee jumping achievement.
         if (localPlayer.CurrentHp is 1)

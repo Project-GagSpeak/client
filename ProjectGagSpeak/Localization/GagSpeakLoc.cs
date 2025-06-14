@@ -4,7 +4,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Tutorial;
 using Microsoft.Extensions.Hosting;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak;
 
 /// <summary>
 /// The service responsible for handling framework updates and other Dalamud related services.
@@ -13,12 +13,12 @@ public class GagSpeakLoc : IDisposable, IHostedService
 {
     private readonly ILogger<GagSpeakLoc> _logger;
     private readonly Dalamud.Localization _localization;
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly TutorialService _tutorialService;
     private readonly IDalamudPluginInterface _pi;
 
     public GagSpeakLoc(ILogger<GagSpeakLoc> logger, Dalamud.Localization localization,
-        MainConfigService configService, TutorialService tutorialService, IDalamudPluginInterface pi)
+        MainConfig configService, TutorialService tutorialService, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _localization = localization;
@@ -30,8 +30,8 @@ public class GagSpeakLoc : IDisposable, IHostedService
         GSLoc.ReInitialize();
 
         // Update our forced stay entries as well.
-        _mainConfig.Config.ForcedStayPromptList.CheckAndInsertRequired();
-        _mainConfig.Config.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
+        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
         _mainConfig.Save();
 
         // load tutorial strings.
@@ -53,8 +53,8 @@ public class GagSpeakLoc : IDisposable, IHostedService
         GSLoc.ReInitialize();
 
         // Update our forced stay entries as well.
-        _mainConfig.Config.ForcedStayPromptList.CheckAndInsertRequired();
-        _mainConfig.Config.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Current.ForcedStayPromptList.CheckAndInsertRequired();
+        _mainConfig.Current.ForcedStayPromptList.PruneEmpty();
         _mainConfig.Save();
         // re-initialize tutorial strings.
         _tutorialService.InitializeTutorialStrings();

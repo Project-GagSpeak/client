@@ -1,16 +1,15 @@
 using Dalamud.Interface.Colors;
 using GagSpeak.Localization;
-using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
-using OtterGui.Services;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 // A Modified take on OtterGui.Widgets.Tutorial.
 // This iteration removes redundant buttons, adds detailed text, and sections.
 namespace GagSpeak.Services.Tutorial;
 
-/// <summary> Service for the in-game tutorial. </summary>
+/// <summary>
+///     Service for the in-game tutorial.
+/// </summary>
 public class TutorialService
 {
     private readonly Dictionary<TutorialType, Tutorial> _tutorials = new();

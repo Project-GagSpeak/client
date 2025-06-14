@@ -3,7 +3,7 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 
-namespace GagSpeak.PlayerData.Pairs;
+namespace GagSpeak.Kinksters;
 
 /// <summary>
 /// General note to self, pairs used to have "own permissions" and "other permissions" but they were removed.

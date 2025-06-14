@@ -1,4 +1,4 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;

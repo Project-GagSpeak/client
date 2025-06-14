@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using OtterGui.Text;
@@ -14,7 +14,7 @@ public abstract class DrawFolderBase : IDrawFolder
     public IImmutableList<DrawUserPair> DrawPairs { get; init; }
     protected readonly string _id;
     protected readonly IImmutableList<Pair> _allPairs;
-    protected readonly ServerConfigurationManager _serverConfigs;
+    protected readonly ServerConfigManager _serverConfigs;
 
     private float _menuWidth = -1;
     private bool _wasHovered = false;
@@ -24,7 +24,7 @@ public abstract class DrawFolderBase : IDrawFolder
     public string ID => _id;
 
     protected DrawFolderBase(string id, IImmutableList<DrawUserPair> drawPairs,
-        IImmutableList<Pair> allPairs, ServerConfigurationManager serverConfigs)
+        IImmutableList<Pair> allPairs, ServerConfigManager serverConfigs)
     {
         _id = id;
         DrawPairs = drawPairs;

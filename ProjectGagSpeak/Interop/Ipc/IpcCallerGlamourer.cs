@@ -1,8 +1,8 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Services;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinkster.Data;
+using GagSpeak.Kinkster.Services;
+using GagSpeak.State.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -14,13 +14,13 @@ using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller, IGlamourer
 {
     /* ------------- Class Attributes ------------ */
     private readonly KinksterRequests _clientData;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtils;
 
     private bool _shownGlamourerUnavailable = false;
@@ -35,12 +35,12 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private readonly SetMetaState SetMetaState; // Changes the metadata state(s) on the Client.
 
     public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator,
-        KinksterRequests clientData, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils,
+        KinksterRequests clientData, PlayerData clientMonitor, OnFrameworkService frameworkUtils,
         IDalamudPluginInterface pi) : base(logger, mediator)
     {
         _clientData = clientData;
         _frameworkUtils = frameworkUtils;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
 
         ApiVersion = new ApiVersion(pi);
         GetState = new GetState(pi);
@@ -93,7 +93,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
-        if (!APIAvailable || _clientMonitor.IsZoning) return;
+        if (!APIAvailable || _player.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, 1337)).ConfigureAwait(true);
@@ -107,7 +107,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
-        if (!APIAvailable || _clientMonitor.IsZoning) return;
+        if (!APIAvailable || _player.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, 1337)).ConfigureAwait(false);
@@ -121,7 +121,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     public async Task SetCustomize(JToken customizations, JToken parameters)
     {
         // if the glamourerApi is not active, then return an empty string for the customization
-        if (!APIAvailable || _clientMonitor.IsZoning) return;
+        if (!APIAvailable || _player.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() =>

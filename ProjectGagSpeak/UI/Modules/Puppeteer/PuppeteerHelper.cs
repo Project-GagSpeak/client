@@ -2,10 +2,10 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.CustomCombos.Editor;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -24,7 +24,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
 
     public PuppeteerHelper(ILogger<PuppeteerHelper> logger, GagspeakMediator mediator,
         PairManager pairs, PuppeteerManager manager, FavoritesManager favorites, 
-        MainConfigService config) : base(logger, mediator)
+        MainConfig config) : base(logger, mediator)
     {
         _manager = manager;
 
@@ -35,7 +35,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
                 .ThenByDescending(u => u.IsVisible)
                 .ThenByDescending(u => u.IsOnline)
                 .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                    ? (config.Config.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
+                    ? (config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
                     : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
         ]);
 

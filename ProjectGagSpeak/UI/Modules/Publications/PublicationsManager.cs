@@ -5,9 +5,9 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.CustomCombos.Editor;
+using GagSpeak.State.Toybox;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.UpdateMonitoring;
@@ -20,17 +20,21 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
+using GagSpeak.Services.Textures;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
+using GagSpeak.State.Caches;
 
 namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
 {
-    private readonly IconDisplayer _monitor;
+    private readonly TextureService _textures;
     private readonly ShareHubService _shareHub;
-    public PublicationsManager(ILogger<PublicationsManager> logger, IconDisplayer monitor, FavoritesManager favorites,
-        PatternManager patterns, ShareHubService shareHub, CkGui uiShared)
+    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleIcons monitor,
+        FavoritesManager favorites, PatternManager patterns, TextureService textures, ShareHubService shareHub)
     {
-        _monitor = monitor;
+        _textures = textures;
         _shareHub = shareHub;
 
         _patternCombo = new PatternCombo(logger, favorites, () => [
@@ -116,7 +120,7 @@ public class PublicationsManager
     public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (MoodleHandler.IpcData is null)
+        if (MoodleCache.IpcData is null)
         {
             CkGui.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }

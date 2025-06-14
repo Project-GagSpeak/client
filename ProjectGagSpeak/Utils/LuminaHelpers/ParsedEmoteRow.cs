@@ -1,7 +1,7 @@
 using Lumina.Excel.Sheets;
 using System.Collections.Immutable;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Utils;
 
 /// <summary>
 /// An internal struct that extracts only the information we care about

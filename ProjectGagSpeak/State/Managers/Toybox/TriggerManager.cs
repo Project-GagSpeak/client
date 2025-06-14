@@ -3,16 +3,16 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.Localization;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State.Components;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 
-namespace GagSpeak.PlayerState.Toybox;
+namespace GagSpeak.State.Managers;
 
 public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {

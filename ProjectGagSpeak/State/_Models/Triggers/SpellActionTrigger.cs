@@ -2,7 +2,7 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils.Enums;
 using GagspeakAPI.Data;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class SpellActionTrigger : Trigger, IThresholdContainer
@@ -51,6 +51,7 @@ public class SpellActionTrigger : Trigger, IThresholdContainer
 
     public override SpellActionTrigger Clone(bool keepId) => new SpellActionTrigger(this, keepId);
 
+    // This can either get very optimial or very cancerous with no inbetween, try to find a better approach to this.
     public IEnumerable<uint> GetStoredIds() => StoredActions.Values.SelectMany(_ => _);
 
     public void ApplyChanges(SpellActionTrigger other)

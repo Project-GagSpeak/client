@@ -4,8 +4,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Toybox;
 using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data.Interfaces;
+using GagSpeak.State.Models;
 
-namespace GagSpeak.PlayerState.Controllers;
+namespace GagSpeak.State;
 
 /// <summary> Controls the connection to Intiface and its connected devices. </summary>
 public class IntifaceController : DisposableMediatorSubscriberBase
@@ -16,10 +17,10 @@ public class IntifaceController : DisposableMediatorSubscriberBase
     public ButtplugWebsocketConnector WebsocketConnector;
     private CancellationTokenSource? BatteryCheckCTS = new();
 
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     private readonly ToyboxFactory _deviceFactory;
     public IntifaceController(ILogger<IntifaceController> log, GagspeakMediator mediator,
-        MainConfigService config, ToyboxFactory deviceFactory) : base(log, mediator)
+        MainConfig config, ToyboxFactory deviceFactory) : base(log, mediator)
     {
         _config = config;
         _deviceFactory = deviceFactory;
@@ -64,8 +65,8 @@ public class IntifaceController : DisposableMediatorSubscriberBase
 
     private ButtplugWebsocketConnector NewWebsocketConnection()
     {
-        return _config.Config.IntifaceConnectionSocket != null
-            ? new ButtplugWebsocketConnector(new Uri($"{_config.Config.IntifaceConnectionSocket}"))
+        return _config.Current.IntifaceConnectionSocket != null
+            ? new ButtplugWebsocketConnector(new Uri($"{_config.Current.IntifaceConnectionSocket}"))
             : new ButtplugWebsocketConnector(new Uri("ws://localhost:12345"));
     }
 

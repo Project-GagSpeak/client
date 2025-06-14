@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace ProjectGagSpeak.Tests.GagspeakConfiguration.Services;
 
-public class MainConfigService
+public class MainConfig
 {
     [Fact]
     void GivenJson_WhenDeserializeJsonIsCalled_ThenItShouldParseForcdedStayPromptList()
@@ -63,14 +63,14 @@ public class MainConfigService
                                  "ForceLockFirstPerson": false,
                                  "BlindfoldMaxOpacity": 1.0,
                                  "ForcedStayPromptList": {
-                                     "$type": "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak",
+                                     "$type": "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak",
                                      "Enabled": true,
                                      "FriendlyName": "ForcedDeclineList",
                                      "TargetRestricted": false,
                                      "TargetNodeName": "",
                                      "Children": [
                                          {
-                                         "$type": "GagSpeak.Hardcore.ForcedStay.TextEntryNode, ProjectGagSpeak",
+                                         "$type": "GagSpeak.GameInternals.Addons.TextEntryNode, ProjectGagSpeak",
                                          "Enabled": true,
                                          "FriendlyName": "[ForcedStay] Prevent Apartment Leaving",
                                          "TargetRestricted": true,

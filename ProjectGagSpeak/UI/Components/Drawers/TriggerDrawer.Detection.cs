@@ -4,11 +4,11 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Localization;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils.Enums;
@@ -31,7 +31,7 @@ public sealed partial class TriggerDrawer
     private readonly ILogger<TriggerDrawer> _logger;
     private readonly TriggerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly IconDisplayer _iconDisplayer;
+    private readonly MoodleIcons _iconDisplayer;
 
     private RestraintCombo _restraintCombo;
     private RestrictionCombo _restrictionCombo;
@@ -45,7 +45,7 @@ public sealed partial class TriggerDrawer
     public TriggerDrawer(
         ILogger<TriggerDrawer> logger,
         MoodleDrawer moodleDrawer,
-        IconDisplayer iconDisplayer,
+        MoodleIcons iconDisplayer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,

@@ -1,6 +1,6 @@
 using Glamourer.Api.Enums;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 public interface IGlamourer
 {
     /// <summary> May not need to be static, but determines if any incoming StateChanges are accepted or not.</summary>

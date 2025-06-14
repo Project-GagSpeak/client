@@ -5,8 +5,8 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
@@ -109,7 +109,7 @@ public sealed partial class PuppetVictimGlobalPanel
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
                 _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleHandler.IpcData);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
         }
     }
 

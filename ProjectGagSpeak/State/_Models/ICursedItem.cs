@@ -1,8 +1,8 @@
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
-namespace GagSpeak.PlayerState.Components;
+namespace GagSpeak.State.Models;
 
 public interface ICursedItem
 {

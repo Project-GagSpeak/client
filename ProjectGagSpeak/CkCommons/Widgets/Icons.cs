@@ -1,14 +1,10 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -78,7 +74,7 @@ public static class Icons
         }
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, FavoriteIdContainer type, Guid id)
+    public static bool DrawFavoriteStar(FavoritesManager favorites, FavoriteIdContainer type, Guid id, bool framed = true)
     {
         var isFavorite = type switch
         {
@@ -94,57 +90,57 @@ public static class Icons
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.FramedIconText(FAI.Star, col);
+        
+        if (framed) CkGui.FramedIconText(FAI.Star, col);
+        else CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite)
-                favorites.RemoveRestriction(type, id);
-            else
-                favorites.TryAddRestriction(type, id);
-            
+            if (isFavorite) favorites.RemoveRestriction(type, id);
+            else favorites.TryAddRestriction(type, id);
             return true;
         }
         return false;
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, GagType gag)
+    public static bool DrawFavoriteStar(FavoritesManager favorites, GagType gag, bool framed = true)
     {
         var isFavorite = favorites._favoriteGags.Contains(gag);
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FAI.Star, col);
+        
+        if (framed) CkGui.FramedIconText(FAI.Star, col);
+        else CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite)
-                favorites.RemoveGag(gag);
-            else
-                favorites.TryAddGag(gag);
-
+            if (isFavorite) favorites.RemoveGag(gag);
+            else favorites.TryAddGag(gag);
             return true;
         }
         return false;
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, string kinksterUid)
+    public static bool DrawFavoriteStar(FavoritesManager favorites, string kinksterUid, bool framed = true)
     {
         var isFavorite = favorites._favoriteKinksters.Contains(kinksterUid);
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
-        CkGui.IconText(FAI.Star, col);
+        
+        if (framed) CkGui.FramedIconText(FAI.Star, col);
+        else CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
+        
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite)
-                favorites.RemoveKinkster(kinksterUid);
-            else
-                favorites.TryAddKinkster(kinksterUid);
-
+            if (isFavorite) favorites.RemoveKinkster(kinksterUid);
+            else favorites.TryAddKinkster(kinksterUid);
             return true;
         }
         return false;

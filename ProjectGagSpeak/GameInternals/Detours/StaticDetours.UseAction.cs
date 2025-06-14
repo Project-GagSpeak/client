@@ -1,7 +1,8 @@
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
+using GagspeakAPI.Extensions;
 using static FFXIVClientStructs.FFXIV.Client.Game.ActionManager;
 
 namespace GagSpeak.GameInternals.Detours;
@@ -26,7 +27,7 @@ public unsafe partial class StaticDetours
         if (_traitHandler.Immobile) 
             return false;
 
-        if (GlobalPermissions.ForcedToStay)
+        if (_globals.Current?.HcStayState() ?? false)
         {
             // check if we are trying to hit teleport or return from hotbars /  menus
             if (type is ActionType.GeneralAction && acId is 7 or 8)
@@ -41,7 +42,7 @@ public unsafe partial class StaticDetours
             return UseActionHook.Original(am, type, acId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
 
         // If it is one we can, ensure we only check if the Arousal GCD Factor is set for it.
-        if (ArousalHandler.GcdDelayFactor > 1)
+        if (ArousalManager.GcdDelayFactor > 1)
         {
             // Obtain the recast group.
             var adjustedId = am->GetAdjustedActionId(acId);
@@ -52,7 +53,7 @@ public unsafe partial class StaticDetours
             {
                 // Multiply the base adjustedRecasttime by the GCD delay factor.
                 var baseRecast = GetAdjustedRecastTime(type, acId);
-                var expectedRecast = TimeSpan.FromMilliseconds((int)(baseRecast * ArousalHandler.GcdDelayFactor));
+                var expectedRecast = TimeSpan.FromMilliseconds((int)(baseRecast * ArousalManager.GcdDelayFactor));
 
                 if (DateTime.Now - _lastUsedActionTime < expectedRecast)
                 {

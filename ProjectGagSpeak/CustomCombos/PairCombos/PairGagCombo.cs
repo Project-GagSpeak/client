@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -9,7 +9,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using Penumbra.GameData.Enums;
 
-namespace GagSpeak.CustomCombos.PairActions;
+namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairGagCombo : CkFilterComboButton<GagType>
 {
     private readonly MainHub _mainHub;

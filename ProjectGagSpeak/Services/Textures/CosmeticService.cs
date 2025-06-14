@@ -1,7 +1,7 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.PlayerData.Data;
+using GagSpeak.Kinksters.Data;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;

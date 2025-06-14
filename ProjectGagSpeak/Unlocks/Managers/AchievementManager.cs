@@ -4,11 +4,12 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.ChatMessages;
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.GameInternals;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -46,8 +47,8 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
     private readonly MainHub _mainHub;
     private readonly KinksterRequests _playerData;
     private readonly PairManager _pairs;
-    private readonly MainConfigService _mainConfig;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly MainConfig _mainConfig;
+    private readonly PlayerData _player;
     private readonly UnlocksEventManager _events;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -74,9 +75,9 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         GagspeakMediator mediator, 
         MainHub mainHub,
         KinksterRequests playerData,
-        MainConfigService mainConfig,
+        MainConfig mainConfig,
         PairManager pairs,
-        ClientMonitor clientMonitor,
+        PlayerData clientMonitor,
         UnlocksEventManager events,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
@@ -98,7 +99,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _playerData = playerData;
         _pairs = pairs;
         _mainConfig = mainConfig;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _events = events;
         _gags = gags;
         _restrictions = restrictions;
@@ -520,20 +521,20 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Subscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
         _events.Subscribe(UnlocksEvent.DeathRollCompleted, () => (LatestCache.SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<bool>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Subscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Subscribe<InteractionType, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Subscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe<NewState>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+        _events.Subscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
 
         _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Subscribe(UnlocksEvent.ClientSlain, () => (LatestCache.SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe(UnlocksEvent.ClientOneHp, () => (LatestCache.SaveData.Achievements[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Subscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _events.Subscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _events.Subscribe(UnlocksEvent.TutorialCompleted, () => (LatestCache.SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.PairAdded, OnPairAdded);
@@ -561,7 +562,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<JobChangeMessage>(this, (msg) => OnJobChange(msg.jobId));
 
-        Signatures.ActionEffectEntryEvent += OnActionEffectEvent;
+        //Signatures.ActionEffectEntryEvent += OnActionEffectEvent;
         _dutyState.DutyStarted += OnDutyStart;
         _dutyState.DutyCompleted += OnDutyEnd;
     }
@@ -598,19 +599,19 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Unsubscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
         _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (LatestCache.SaveData.Achievements[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Unsubscribe<NewState>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<bool>(UnlocksEvent.AlarmToggled, _ => (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Unsubscribe<InteractionType, NewState, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Unsubscribe<InteractionType, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (LatestCache.SaveData.Achievements[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (LatestCache.SaveData.Achievements[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());
-        _events.Unsubscribe<NewState>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+        _events.Unsubscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
 
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (LatestCache.SaveData.Achievements[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Unsubscribe<ChatChannel.Channels>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Unsubscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
         _events.Unsubscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (LatestCache.SaveData.Achievements[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
@@ -634,7 +635,7 @@ public partial class AchievementManager : DisposableMediatorSubscriberBase
         Mediator.Unsubscribe<ZoneSwitchEndMessage>(this);
         Mediator.Unsubscribe<JobChangeMessage>(this);
 
-        Signatures.ActionEffectEntryEvent -= OnActionEffectEvent;
+        //Signatures.ActionEffectEntryEvent -= OnActionEffectEvent;
         _dutyState.DutyStarted -= OnDutyStart;
         _dutyState.DutyCompleted -= OnDutyEnd;
     }

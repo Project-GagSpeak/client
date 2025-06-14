@@ -1,8 +1,8 @@
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Mediator;
 
-namespace GagSpeak.PlayerState.Listener;
+namespace GagSpeak.State.Listeners;
 
 /// <summary> Listeners for components that are not in the toybox compartment nor are visual components. </summary>
 /// <remarks> May be catagorized later, but are filtered into here for now. </remarks>

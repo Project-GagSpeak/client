@@ -2,17 +2,17 @@ using Dalamud.Plugin;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.CustomCombos.EditorCombos;
+using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
 using Penumbra.Api.IpcSubscribers;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Managers;
 
 /// <summary> Responsible for tracking the custom settings we have configured for a mod. </summary>
 public class ModSettingPresetManager : IHybridSavable

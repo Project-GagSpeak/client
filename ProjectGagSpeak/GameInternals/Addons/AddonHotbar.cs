@@ -6,7 +6,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 // - Control Hotbar Lock Visibility.
 //   https://github.com/Caraxi/SimpleTweaksPlugin/blob/15a3ac835ece1f54e41af24d133aba9fef476e30/Tweaks/Chat/HideChat.cs#L73
 
-namespace GagSpeak.GameInternals.Addons;
+ namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonHotbar
 {
     private static AddonActionBarBase* _hotbar => (AddonActionBarBase*)(AtkUnitBase*)AtkHelper.GetAddonByName("_ActionBar");

@@ -1,14 +1,9 @@
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerState.Visual;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.Utils;
 
 namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours

@@ -5,8 +5,8 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagspeakAPI.Data;
 using ImGuiNET;
@@ -14,7 +14,7 @@ using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
 {

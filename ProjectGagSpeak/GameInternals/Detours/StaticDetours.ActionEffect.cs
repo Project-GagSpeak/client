@@ -9,7 +9,7 @@ namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class StaticDetours
 {
     public delegate void ProcessActionEffect(uint sourceId, Character* sourceCharacter, Vector3* pos, ActionEffectHandler.Header* effectHeader, EffectEntry* effectArray, ulong* effectTail);
-    internal static Hook<ProcessActionEffect> ProcessActionEffectHook = null!;
+    internal static Hook<ProcessActionEffect> ActionEffectHook = null!;
 
     private void ActionEffectDetour(uint sourceID, Character* sourceCharacter, Vector3* pos, ActionEffectHandler.Header* effectHeader, EffectEntry* effectArray, ulong* effectTail)
     {
@@ -49,6 +49,6 @@ public unsafe partial class StaticDetours
             Logger.LogError($"An error has occurred in Action Effect hook.\n{e}");
         }
 
-        ProcessActionEffectHook.Original(sourceID, sourceCharacter, pos, effectHeader, effectArray, effectTail);
+        ActionEffectHook.Original(sourceID, sourceCharacter, pos, effectHeader, effectArray, effectTail);
     }
 }

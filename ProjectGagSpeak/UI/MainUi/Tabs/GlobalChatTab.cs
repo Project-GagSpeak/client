@@ -1,8 +1,8 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -28,7 +28,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     private readonly KinksterRequests _playerData;
     private readonly GagGarbler _garbler;
     private readonly GagRestrictionManager _gagManager;
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly KinkPlateService _plateManager;
     private readonly TutorialService _guides;
 
@@ -39,7 +39,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         KinksterRequests playerData,
         GagGarbler garbler,
         GagRestrictionManager gagManager,
-        MainConfigService mainConfig,
+        MainConfig mainConfig,
         KinkPlateService plateManager,
         TutorialService guides) : base(logger, mediator)
     {
@@ -129,7 +129,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
             // Send message to the server
             Logger.LogTrace($"Sending Message: {NextChatMessage}");
-            _hub.UserSendGlobalChat(new(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Config.PreferThreeCharaAnonName)).ConfigureAwait(false);
+            _hub.UserSendGlobalChat(new(MainHub.PlayerUserData, NextChatMessage, _mainConfig.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
             // Clear message and trigger achievement event
             NextChatMessage = string.Empty;

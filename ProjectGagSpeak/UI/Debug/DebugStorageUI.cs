@@ -3,11 +3,11 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
@@ -500,7 +500,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         {
             foreach (var moodleItem in rs.RestraintMoodles)
             {
-                _moodleDrawer.DrawMoodles(moodleItem, MoodleDrawer.IconSize);
+                _moodleDrawer.ShowIcons(moodleItem, MoodleDrawer.IconSize);
                 ImGui.TableNextRow();
             }
         }
@@ -555,14 +555,14 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             if (gag.Moodle is MoodlePreset preset)
             {
                 ImGuiUtil.DrawTableColumn("[Preset Type]");
-                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Presets
+                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Presets
                     .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
             else
             {
                 ImGuiUtil.DrawTableColumn("[Status Type]");
-                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Statuses
+                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Statuses
                     .GetValueOrDefault(gag.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
@@ -570,8 +570,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("Hardcore Traits");
             ImGuiUtil.DrawTableColumn(gag.Traits.ToString());
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Hardcore Stimulation");
-            ImGuiUtil.DrawTableColumn(gag.Stimulation.ToString());
+            ImGuiUtil.DrawTableColumn("Arousal Strength");
+            ImGuiUtil.DrawTableColumn(gag.Arousal.ToString());
         }
     }
 
@@ -619,7 +619,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             {
                 ImGuiUtil.DrawTableColumn("Moodle Type");
                 ImGuiUtil.DrawTableColumn("Moodle Preset");
-                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Presets
+                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Presets
                     .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
@@ -627,7 +627,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             {
                 ImGuiUtil.DrawTableColumn("Moodle Type");
                 ImGuiUtil.DrawTableColumn("Moodle Status");
-                ImGuiUtil.DrawTableColumn(MoodleHandler.IpcData.Statuses
+                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Statuses
                     .GetValueOrDefault(restriction.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
@@ -635,8 +635,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("Hardcore Traits");
             ImGuiUtil.DrawTableColumn(restriction.Traits.ToString());
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Hardcore Stimulation");
-            ImGuiUtil.DrawTableColumn(restriction.Stimulation.ToString());
+            ImGuiUtil.DrawTableColumn("Arousal Strength");
+            ImGuiUtil.DrawTableColumn(restriction.Arousal.ToString());
         }
     }
 
@@ -712,7 +712,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                         DrawRestriction(bindLayer.Ref);
                         ImGui.EndTooltip();
                     }
-                    ImGuiUtil.DrawTableColumn(bindLayer.ApplyFlags.ToSplitFlagString());
+                    ImGuiUtil.DrawTableColumn(bindLayer.ApplyFlags.ToString());
                     ImGui.TableNextRow();
 
                     ImGuiUtil.DrawTableColumn("Custom Stains");

@@ -28,14 +28,14 @@ public partial class CkGui
     public const string ColorToggleSeparator = "--COL--";
 
     private readonly ILogger<CkGui> _logger;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly IDalamudPluginInterface _pi;
     private readonly ITextureProvider _textureProvider;
 
     public static Dictionary<string, object> _selectedComboItems;    // the selected combo items
     public static Dictionary<string, string> SearchStrings;
 
-    public CkGui(ILogger<CkGui> logger, ServerConfigurationManager serverConfigs,
+    public CkGui(ILogger<CkGui> logger, ServerConfigManager serverConfigs,
         IDalamudPluginInterface pi, ITextureProvider tp)
     {
         _logger = logger;
@@ -123,7 +123,7 @@ public partial class CkGui
         // calculate the difference in height between the button and the image
         var heightDiff = buttonSize.Y - imageSize.Y;
         // draw out the button centered
-        if (UtilsExtensions.CenteredLineWidths.TryGetValue(ID, out var dims))
+        if (GsExtensions.CenteredLineWidths.TryGetValue(ID, out var dims))
         {
             ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
         }
@@ -131,11 +131,11 @@ public partial class CkGui
         var result = ImGui.Button(string.Empty, buttonSize);
         //_logger.LogTrace("Result of button: {result}", result);
         ImGui.SameLine(0, 0);
-        UtilsExtensions.CenteredLineWidths[ID] = ImGui.GetCursorPosX() - oldCur;
+        GsExtensions.CenteredLineWidths[ID] = ImGui.GetCursorPosX() - oldCur;
         ImGui.Dummy(Vector2.Zero);
         // now go back up to the initial position, then step down by the height difference/2
         ImGui.SetCursorPosY(InitialPos.Y + heightDiff / 2);
-        UtilsExtensions.ImGuiLineCentered($"###CenterImage{ID}", () =>
+        GsExtensions.ImGuiLineCentered($"###CenterImage{ID}", () =>
         {
             ImGui.Image(image.ImGuiHandle, imageSize, Vector2.Zero, Vector2.One, buttonColor);
         });

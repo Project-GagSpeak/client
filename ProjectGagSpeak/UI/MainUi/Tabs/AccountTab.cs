@@ -19,12 +19,12 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class AccountTab
 {
     private readonly GagspeakMediator _mediator;
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     private readonly KinkPlateService _profileManager;
     private readonly TutorialService _guides;
     public AccountTab(
         GagspeakMediator mediator,
-        MainConfigService config,
+        MainConfig config,
         KinkPlateService profiles,
         TutorialService guides)
     {
@@ -214,15 +214,15 @@ public class AccountTab
 
             ImGui.SameLine(iconSize.X + ImGui.GetStyle().ItemSpacing.X);
             ImGui.SetCursorPosX(ImGui.GetCursorPosX());
-            var safewordText = _config.Config.Safeword == "" ? "No Safeword Set" : _config.Config.Safeword;
+            var safewordText = _config.Current.Safeword == "" ? "No Safeword Set" : _config.Current.Safeword;
             if (EditingSafeword)
             {
                 ImGui.SetCursorPosY(childStartYpos + ((height - 23) / 2) + 0.5f); // 23 is the input text box height
                 ImGui.SetNextItemWidth(225 * ImGuiHelpers.GlobalScale);
-                var safeword = _config.Config.Safeword;
+                var safeword = _config.Current.Safeword;
                 if (ImGui.InputTextWithHint("##Your Safeword", "Enter Safeword", ref safeword, 30))
                 {
-                    _config.Config.Safeword = safeword;
+                    _config.Current.Safeword = safeword;
                     _config.Save();
                     EditingSafeword = false;
                 }

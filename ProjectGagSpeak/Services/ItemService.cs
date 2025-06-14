@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State.Models;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;

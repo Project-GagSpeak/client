@@ -12,18 +12,18 @@ namespace GagSpeak.WebAPI;
 public sealed class TokenProvider : DisposableMediatorSubscriberBase
 {
     private readonly HttpClient _httpClient;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtil;
-    private readonly ServerConfigurationManager _serverManager;
+    private readonly ServerConfigManager _serverManager;
     private readonly ConcurrentDictionary<JwtIdentifier, string> _tokenCache;
 
     private JwtIdentifier? _lastJwtIdentifier;
 
     public TokenProvider(ILogger<TokenProvider> logger, GagspeakMediator mediator,
-        ClientMonitor clientMonitor, ServerConfigurationManager serverManager,
+        PlayerData clientMonitor, ServerConfigManager serverManager,
         OnFrameworkService frameworkUtils) : base(logger, mediator)
     {
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _serverManager = serverManager;
         _frameworkUtil = frameworkUtils;
         _httpClient = new HttpClient();
@@ -87,7 +87,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // If for some god awful reason we have horrible timing and our character happens to be zoning during this 6 hourly interval, wait.
         try
         {
-            while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+            while (!await _player.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
@@ -244,7 +244,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     /// <returns>the JWT identifier object for the token</returns>
     private JwtIdentifier? GetIdentifier()
     {
-        var tempLocalContentID = _clientMonitor.ContentIdAsync().GetAwaiter().GetResult();
+        var tempLocalContentID = _player.ContentIdAsync().GetAwaiter().GetResult();
         try
         {
             var secretKey = string.Empty;
@@ -326,7 +326,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // await for the player to be present to get the JWT token
         try
         {
-            while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false) && !linkedCTS.Token.IsCancellationRequested)
+            while (!await _player.IsPresentAsync().ConfigureAwait(false) && !linkedCTS.Token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), linkedCTS.Token).ConfigureAwait(false);

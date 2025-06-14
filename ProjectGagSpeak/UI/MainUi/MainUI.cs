@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Utility;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -21,9 +21,9 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class MainUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly MainConfigService _configService;
+    private readonly MainConfig _configService;
     private readonly PairManager _pairManager;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly MainMenuTabs _tabMenu;
     private readonly HomepageTab _homepage;
     private readonly WhitelistTab _whitelist;
@@ -42,7 +42,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
-        MainConfigService config, PairManager pairManager, ServerConfigurationManager serverConfigs,
+        MainConfig config, PairManager pairManager, ServerConfigManager serverConfigs,
         HomepageTab homepage, WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
         GlobalChatTab globalChat, AccountTab account, MainMenuTabs tabMenu, TutorialService tutorialService,
         IDalamudPluginInterface pi) : base(logger, mediator, "###GagSpeakMainUI")
@@ -121,7 +121,7 @@ public class MainUI : WindowMediatorSubscriberBase
         WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
 
         // Default to open if the user desires for it to be open.
-        if(_configService.Config.OpenMainUiOnStartup) Toggle();
+        if(_configService.Current.OpenMainUiOnStartup) Toggle();
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);

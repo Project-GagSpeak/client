@@ -7,9 +7,9 @@ using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Interop.Ipc;
 using GagSpeak.Localization;
-using GagSpeak.PlayerState.Listener;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listener;
+using GagSpeak.State.Models;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -20,6 +20,7 @@ using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using ProjectGagSpeak.State.Managers;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -121,12 +122,12 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Text("Moodles IPC Status:");
         CkGui.ColorTextInline(IpcCallerMoodles.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
 
-        ImUtf8.TextFrameAligned($"Active Moodles: {MoodleHandler.IpcData.DataInfo.Count()}");
+        ImUtf8.TextFrameAligned($"Active Moodles: {MoodleCache.IpcData.DataInfo.Count()}");
         ImGui.SameLine();
-        _moodleDrawer.DrawStatusInfos(MoodleHandler.IpcData.DataInfoList, MoodleDrawer.IconSizeFramed);
+        _moodleDrawer.DrawStatusInfos(MoodleCache.IpcData.DataInfoList, MoodleDrawer.IconSizeFramed);
 
-        ImGui.Text($"Total Moodles: {MoodleHandler.IpcData.StatusList.Count()}");
-        ImGui.Text($"Total Presets: {MoodleHandler.IpcData.PresetList.Count()}");
+        ImGui.Text($"Total Moodles: {MoodleCache.IpcData.StatusList.Count()}");
+        ImGui.Text($"Total Presets: {MoodleCache.IpcData.PresetList.Count()}");
     }
 }
 

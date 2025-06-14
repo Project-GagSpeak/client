@@ -6,7 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;

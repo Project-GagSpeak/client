@@ -1,6 +1,6 @@
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Handlers;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -15,12 +15,12 @@ public class DrawEntityFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
-    private readonly ServerConfigurationManager _configs;
+    private readonly ServerConfigManager _configs;
     private readonly IdDisplayHandler _nameDisplay;
     private readonly CosmeticService _cosmetics;
 
     public DrawEntityFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, MainHub hub,
-        ServerConfigurationManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics)
+        ServerConfigManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;

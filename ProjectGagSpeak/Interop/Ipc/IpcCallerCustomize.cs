@@ -4,7 +4,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Services;
+using GagSpeak.Kinkster.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Enums;

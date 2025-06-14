@@ -1,7 +1,7 @@
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Listener;
+using GagSpeak.Kinkster.Data;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.Services;

@@ -1,8 +1,8 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;

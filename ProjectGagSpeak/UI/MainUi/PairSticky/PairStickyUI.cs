@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
@@ -10,9 +10,9 @@ using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
-using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.CustomCombos.Padlockable;
-using GagSpeak.CustomCombos.PairActions;
+using GagSpeak.CustomCombos.Editor;
+using GagSpeak.CustomCombos.Padlock;
+using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.CustomCombos.Moodles;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -33,7 +33,7 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly KinksterRequests _globals;
     private readonly PresetLogicDrawer _presets;
     private readonly PairManager _pairs;
-    private readonly ClientMonitor _monitor;
+    private readonly PlayerData _monitor;
     private readonly PiShockProvider _shockies;
 
     // Private variables for the sticky UI and its respective combos.
@@ -65,9 +65,9 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         MainHub hub,
         KinksterRequests globals,
         PresetLogicDrawer presets,
-        IconDisplayer iconDisplayer,
+        MoodleIcons iconDisplayer,
         PairManager pairs,
-        ClientMonitor monitor,
+        PlayerData monitor,
         PiShockProvider shocks)
         : base(logger, mediator, $"PairStickyUI-{pair.UserData.UID}")
     {

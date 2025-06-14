@@ -1,11 +1,11 @@
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 
-namespace GagSpeak.CustomCombos.Padlockable;
+namespace GagSpeak.CustomCombos.Padlock;
 
 // These are displayed seperately so dont use a layer updater.
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>

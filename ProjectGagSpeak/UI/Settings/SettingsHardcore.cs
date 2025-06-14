@@ -2,9 +2,9 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.Hardcore.ForcedStay;
+using GagSpeak.GameInternals.Addons;
 using GagSpeak.Localization;
-using GagSpeak.PlayerData.Data;
+using GagSpeak.Kinkster.Data;
 using GagSpeak.Services.Configs;
 using GagSpeak.Utils;
 using ImGuiNET;
@@ -16,10 +16,10 @@ namespace GagSpeak.CkCommons.Gui;
 public class SettingsHardcore
 {
     private readonly ILogger<SettingsHardcore> _logger;
-    private readonly MainConfigService _clientConfigs;
+    private readonly MainConfig _clientConfigs;
     private readonly KinksterRequests _globals;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfigService config, KinksterRequests globals)
+    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfig config, KinksterRequests globals)
     {
         _logger = logger;
         _clientConfigs = config;
@@ -30,7 +30,7 @@ public class SettingsHardcore
     {
         DisplayTextButtons();
         ImGui.Spacing();
-        foreach (var node in _clientConfigs.Config.ForcedStayPromptList.Children.ToArray())
+        foreach (var node in _clientConfigs.Current.ForcedStayPromptList.Children.ToArray())
             DisplayTextEntryNode(node);
     }
 /*
@@ -81,13 +81,13 @@ public class SettingsHardcore
         ImGui.SameLine(0,50);
         using (ImRaii.Group())
         { 
-            var forceLockFirstPerson = _clientConfigs.Config.ForceLockFirstPerson;
-            var blindfoldOpacityPercentage = (int)(_clientConfigs.Config.BlindfoldMaxOpacity * 100);
+            var forceLockFirstPerson = _clientConfigs.Current.ForceLockFirstPerson;
+            var blindfoldOpacityPercentage = (int)(_clientConfigs.Current.BlindfoldMaxOpacity * 100);
 
             // Draw the first person selection.
             if (ImGui.Checkbox(GSLoc.Settings.Hardcore.BlindfoldFirstPerson, ref forceLockFirstPerson))
             {
-                _clientConfigs.Config.ForceLockFirstPerson = forceLockFirstPerson;
+                _clientConfigs.Current.ForceLockFirstPerson = forceLockFirstPerson;
                 _clientConfigs.Save();
             }
             CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldFirstPersonTT);
@@ -95,11 +95,11 @@ public class SettingsHardcore
             using (ImRaii.Disabled(_hardcoreHandler.IsBlindfolded))
             {
                 // draw the lace type selection
-                var selectedBlindfoldType = _clientConfigs.Config.BlindfoldStyle;
+                var selectedBlindfoldType = _clientConfigs.Current.BlindfoldStyle;
                 CkGui.DrawCombo(GSLoc.Settings.Hardcore.BlindfoldType, 150f, Enum.GetValues<BlindfoldType>(), (type) => type.ToString(),
                 (i) =>
                 {
-                    _clientConfigs.Config.BlindfoldStyle = i;
+                    _clientConfigs.Current.BlindfoldStyle = i;
                     _clientConfigs.Save();
                     _logger.LogTrace($"Blindfold Style changed to {i}");
                 }, selectedBlindfoldType);
@@ -112,14 +112,14 @@ public class SettingsHardcore
                 ImGui.SetNextItemWidth(150f);
                 if (ImGui.SliderInt(GSLoc.Settings.Hardcore.BlindfoldMaxOpacity, ref blindfoldOpacityPercentage, 50, 100, "%d%% Opacity", ImGuiSliderFlags.None))
                 {
-                    _clientConfigs.Config.BlindfoldMaxOpacity = blindfoldOpacityPercentage / 100.0f;
+                    _clientConfigs.Current.BlindfoldMaxOpacity = blindfoldOpacityPercentage / 100.0f;
                     _clientConfigs.Save();
                 }
             }
             CkGui.HelpText(GSLoc.Settings.Hardcore.BlindfoldMaxOpacityTT);
         }
         ImGui.Separator();
-        var filePath = _clientConfigs.Config.BlindfoldStyle switch
+        var filePath = _clientConfigs.Current.BlindfoldStyle switch
         {
             BlindfoldType.Light => "RequiredImages\\Blindfold_Light.png",
             BlindfoldType.Sensual => "RequiredImages\\Blindfold_Sensual.png",
@@ -134,7 +134,7 @@ public class SettingsHardcore
             var scale = Math.Min(ImGui.GetContentRegionAvail().X / wrap.Width, ImGui.GetContentRegionAvail().Y / wrap.Height);
             var finalSize = new Vector2(wrap.Width * scale, wrap.Height * scale);
             // display the image.
-            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Config.BlindfoldMaxOpacity));
+            ImGui.Image(wrap.ImGuiHandle, finalSize, Vector2.Zero, Vector2.One, new(1.0f, 1.0f, 1.0f, _clientConfigs.Current.BlindfoldMaxOpacity));
             CkGui.AttachToolTip("Preview of the Blindfold Style");
         }
     }
@@ -168,10 +168,10 @@ public class SettingsHardcore
         ImGui.SameLine();
         using (ImRaii.Disabled(globals.ForcedStay.IsNullOrEmpty()))
         {
-            var enterChambersRef = _clientConfigs.Config.MoveToChambersInEstates;
+            var enterChambersRef = _clientConfigs.Current.MoveToChambersInEstates;
             if (ImGui.Checkbox("Auto-Move to Chambers", ref enterChambersRef))
             {
-                _clientConfigs.Config.MoveToChambersInEstates = enterChambersRef;
+                _clientConfigs.Current.MoveToChambersInEstates = enterChambersRef;
                 _clientConfigs.Save();
             }
         }
@@ -207,7 +207,7 @@ public class SettingsHardcore
         }
 
         // If the node is one we should disable
-        var disableElement = _clientConfigs.Config.ForcedStayPromptList.Children.Take(10).Contains(node);
+        var disableElement = _clientConfigs.Current.ForcedStayPromptList.Children.Take(10).Contains(node);
         TextNodePopup(node, disableElement);
     }
 

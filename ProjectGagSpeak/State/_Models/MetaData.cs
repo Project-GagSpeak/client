@@ -1,7 +1,7 @@
 using Glamourer.Api.Enums;
 using OtterGui.Classes;
 
-namespace GagSpeak.PlayerState.Components;
+namespace GagSpeak.State.Models;
 
 public enum MetaIndex : byte
 {

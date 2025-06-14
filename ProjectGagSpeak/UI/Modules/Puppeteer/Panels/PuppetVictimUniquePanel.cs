@@ -7,8 +7,8 @@ using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
@@ -41,7 +41,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
 
     public PuppetVictimUniquePanel(
         ILogger<PuppetVictimUniquePanel> logger,
-        MainConfigService config,
+        MainConfig config,
         MainHub hub,
         PuppeteerHelper helper,
         AliasItemDrawer aliasDrawer,
@@ -130,7 +130,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
                 _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleHandler.IpcData);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
         }
     }
 

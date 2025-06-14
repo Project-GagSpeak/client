@@ -1,6 +1,6 @@
 using GagSpeak.Localization;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class EmoteTrigger : Trigger

@@ -1,6 +1,6 @@
 using CheapLoc;
 
-namespace GagSpeak.Localization
+namespace GagSpeak
 {
     internal static class GSLoc
     {

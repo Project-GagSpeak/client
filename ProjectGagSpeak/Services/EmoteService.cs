@@ -2,13 +2,13 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.GameInternals.Detours;
+using GagSpeak.UpdateMonitoring;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Immutable;
 using ClientStructFramework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Services;
 
 // Hosted service responsible for allocating a cache of valid emote data during startup, and holding it for future references.
 public sealed class EmoteService : IHostedService
@@ -52,7 +52,7 @@ public sealed class EmoteService : IHostedService
     /// <summary> If the game object at this address is currently performing an emote. </summary>
     public static unsafe bool InPositionLoop(IntPtr address) => ((Character*)address)->Mode is CharacterModes.InPositionLoop;
 
-    /// <summary> Determines if we have the emote unlocked or not. </summary>
+    /// <summary> If we are able to execute an emote or not. </summary>
     /// <remarks> Emotes that return false cannot be executed by the player. </remarks>
     public static unsafe bool CanUseEmote(ushort emoteID) => Agent->CanUseEmote(emoteID);
 
@@ -85,7 +85,7 @@ public sealed class EmoteService : IHostedService
     public static bool IsCyclePoseTaskRunning => EnforceCyclePoseTask is not null && !EnforceCyclePoseTask.IsCompleted;
     private static Task? EnforceCyclePoseTask;
 
-    public void ForceCyclePose(IntPtr playerAddr, byte expectedCyclePose)
+    public static void ForceCyclePose(IntPtr playerAddr, byte expectedCyclePose)
     {
         if (IsCyclePoseTaskRunning)
             return;
@@ -95,7 +95,7 @@ public sealed class EmoteService : IHostedService
     }
 
     /// <summary> Force player into a certain CyclePose. Will not fire if Task is currently running. </summary>
-    private async Task ForceCyclePoseInternal(IntPtr playerAddr, byte expectedCyclePose)
+    private static async Task ForceCyclePoseInternal(IntPtr playerAddr, byte expectedCyclePose)
     {
         try
         {
@@ -126,7 +126,7 @@ public sealed class EmoteService : IHostedService
 
     /// <summary> Await for emote execution to be allowed again </summary>
     /// <returns>true when the condition was fulfilled, false if timed out or cancelled</returns>
-    public async Task<bool> WaitForCondition(Func<bool> condition, int timeoutSeconds = 5, CancellationToken token = default)
+    public static async Task<bool> WaitForCondition(Func<bool> condition, int timeoutSeconds = 5, CancellationToken token = default)
     {
         // Create a cancellation token source with the specified timeout
         using var timeout = new CancellationTokenSource(timeoutSeconds * 1000);

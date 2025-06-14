@@ -1,12 +1,14 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinkster.Data;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
+using GagSpeak.State.Managers;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services;
 
@@ -21,18 +23,18 @@ public enum NotificationLocation
 /// <summary> Service responsible for displaying any sent notifications out to the user. </summary>
 public class NotificationService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly MainConfigService _mainConfig;
-    private readonly KinksterRequests _playerData;
+    private readonly MainConfig _mainConfig;
+    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
     private readonly INotificationManager _notifications;
     private readonly IChatGui _chat;
 
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        MainConfigService mainConfig, KinksterRequests playerData, GagRestrictionManager gags,
+        MainConfig mainConfig, GlobalPermissions globals, GagRestrictionManager gags,
         IChatGui chat, INotificationManager notifications) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
-        _playerData = playerData;
+        _globals = globals;
         _gags = gags;
         _chat = chat;
         _notifications = notifications;
@@ -43,10 +45,10 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         // notify about live chat garbler on zone switch.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
         {
-            if(_gags.ServerGagData is not { } gags || _playerData.GlobalPerms is not { } perms)
+            if(_gags.ServerGagData is not { } gags || _globals.Current is not { } perms)
                 return;
 
-            if (_mainConfig.Config.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)
+            if (_mainConfig.Current.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)
                 ShowNotification(new NotificationMessage("Zone Switch", "Live Chat Garbler is still Active!", NotificationType.Warning));
         });
     }
@@ -125,15 +127,15 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
             case NotificationType.Info:
             case NotificationType.Success:
             case NotificationType.None:
-                ShowNotificationLocationBased(msg, _mainConfig.Config.InfoNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Current.InfoNotification);
                 break;
 
             case NotificationType.Warning:
-                ShowNotificationLocationBased(msg, _mainConfig.Config.WarningNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Current.WarningNotification);
                 break;
 
             case NotificationType.Error:
-                ShowNotificationLocationBased(msg, _mainConfig.Config.ErrorNotification);
+                ShowNotificationLocationBased(msg, _mainConfig.Current.ErrorNotification);
                 break;
         }
     }

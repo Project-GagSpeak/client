@@ -5,9 +5,9 @@ using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.CustomCombos.Editor;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
@@ -22,10 +22,10 @@ namespace GagSpeak.CkCommons.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
-    private readonly IconDisplayer _statusMonitor;
+    private readonly MoodleIcons _statusMonitor;
     private MoodleStatusCombo _statusCombo { get; init; }
     private MoodlePresetCombo _presetCombo { get; init; }
-    public MoodleDrawer(ILogger<MoodleDrawer> logger, IconDisplayer statusMonitor)
+    public MoodleDrawer(ILogger<MoodleDrawer> logger, MoodleIcons statusMonitor)
     {
         _logger = logger;
         _statusMonitor = statusMonitor;
@@ -114,10 +114,10 @@ public class MoodleDrawer
         }
     }
 
-    public void ShowStatusIcons(string id, Moodle moodle, float width, float rounding, Vector2? iconSize = null, int rows = 1)
-        => ShowStatusIcons(id, (moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]), width, rounding, false, iconSize, rows: rows);
+    public void ShowStatusIcons(Moodle moodle, float width, Vector2? iconSize = null, int rows = 1)
+        => DrawIconsOrEmpty(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id], width, iconSize, rows);
 
-    public void ShowStatusIcons(string id, IEnumerable<Moodle> moodles, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+    public void ShowStatusIcons(IEnumerable<Moodle> moodles, float width, Vector2? iconSize = null, int rows = 1)
     {
         var ids = new List<Guid>();
         foreach (var moodle in moodles)
@@ -126,11 +126,11 @@ public class MoodleDrawer
             if (moodle is MoodlePreset p) ids.AddRange(p.StatusIds);
             else ids.Add(moodle.Id);
         }
-        ShowStatusIcons(id, ids, width, rounding, false, iconSize, rows);
+        DrawIconsOrEmpty(ids, width, iconSize, rows);
     }
 
     public void ShowStatusIconsFramed(string id, Moodle moodle, float width, float rounding, Vector2? iconSize = null, int rows = 1)
-        => ShowStatusIcons(id, (moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]), width, rounding, true, iconSize, rows);
+        => ShowStatusIconsFramed(id, [moodle], width, rounding, iconSize, rows);
 
     public void ShowStatusIconsFramed(string id, IEnumerable<Moodle> moodles, float width, float rounding, Vector2? iconSize = null, int rows = 1)
     {
@@ -141,17 +141,10 @@ public class MoodleDrawer
             if (moodle is MoodlePreset p) ids.AddRange(p.StatusIds);
             else ids.Add(moodle.Id);
         }
-        ShowStatusIcons(id, ids, width, rounding, true, iconSize, rows);
-    }
 
-    public void ShowStatusIcons(string id, IEnumerable<Guid> statusIds, float width, float rounding, bool framed, Vector2? iconSize = null, int rows = 1)
-    {
         var size = iconSize ?? IconSize;
-        if (framed)
-            using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), CkColor.FancyHeaderContrast.Uint(), rounding))
-                DrawIconsOrEmpty(statusIds, width, size, rows);
-        else
-            DrawIconsOrEmpty(statusIds, width, size, rows);
+        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), CkColor.FancyHeaderContrast.Uint(), rounding))
+            DrawIconsOrEmpty(ids, width, size, rows);
     }
 
     public void DrawIconsOrEmpty(IEnumerable<Guid> statusIds, float width, Vector2? iconSize = null, int rows = 1)
@@ -177,14 +170,14 @@ public class MoodleDrawer
             if (id.IsEmptyGuid())
                 continue;
 
-            if (!MoodleHandler.IpcData.Statuses.TryGetValue(id, out var status))
+            if (!MoodleCache.IpcData.Statuses.TryGetValue(id, out var status))
                 continue;
 
             if (status.IconID is 0)
                 continue;
 
             _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
-            _statusMonitor.DrawMoodleStatusTooltip(status, MoodleHandler.IpcData.StatusList);
+            _statusMonitor.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
             {
@@ -211,7 +204,7 @@ public class MoodleDrawer
 
             _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
-                _statusMonitor.DrawMoodleStatusTooltip(status, MoodleHandler.IpcData.StatusList);
+                _statusMonitor.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
             ImGui.SameLine();
         }
 

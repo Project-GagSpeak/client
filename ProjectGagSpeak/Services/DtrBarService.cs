@@ -4,7 +4,7 @@ using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
@@ -12,35 +12,31 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
+using GagSpeak.UpdateMonitoring;
 
-namespace GagSpeak.UpdateMonitoring;
+namespace GagSpeak.Services;
 
 /// <summary>
 /// The service responsible for handling framework updates and other Dalamud related services.
 /// </summary>
 public sealed class DtrBarService : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _hub;
-    private readonly MainConfigService _mainConfig;
-    private readonly EventAggregator _eventAggregator;
+    private readonly MainConfig _mainConfig;
     private readonly PairManager _pairManager;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtils;
     private readonly IDataManager _gameData;
     private readonly IDtrBar _dtrBar;
-    public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator, 
-        MainHub hub, MainConfigService mainConfig,  EventAggregator eventAggregator, 
-        PairManager pairs, OnFrameworkService frameworkUtils, ClientMonitor clientMonitor,
-        IDataManager gameData, IDtrBar dtrBar) : base(logger, mediator)
+    public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator,
+        MainConfig mainConfig, PairManager pairs, OnFrameworkService frameworkUtils,
+        PlayerData player, IDataManager gd, IDtrBar bar) : base(logger, mediator)
     {
-        _hub = hub;
         _mainConfig = mainConfig;
-        _eventAggregator = eventAggregator;
         _pairManager = pairs;
         _frameworkUtils = frameworkUtils;
-        _clientMonitor = clientMonitor;
-        _gameData = gameData;
-        _dtrBar = dtrBar;
+        _player = player;
+        _gameData = gd;
+        _dtrBar = bar;
 
         PrivacyEntry = _dtrBar.Get("GagSpeakPrivacy");
         PrivacyEntry.OnClick += () => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
@@ -86,9 +82,9 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         if (!MainHub.IsServerAlive)
             return;
 
-        PrivacyEntry.Shown = _mainConfig.Config.ShowPrivacyRadar;
-        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Config.ShowActionNotifs;
-        VibratorEntry.Shown = _mainConfig.Config.ShowVibeStatus;
+        PrivacyEntry.Shown = _mainConfig.Current.ShowPrivacyRadar;
+        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Current.ShowActionNotifs;
+        VibratorEntry.Shown = _mainConfig.Current.ShowVibeStatus;
 
         if (PrivacyEntry.Shown)
         {
@@ -96,7 +92,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             var visiblePairGameObjects = _pairManager.GetVisiblePairGameObjects();
             // get players not included in our gagspeak pairs.
             var playersNotInPairs = _frameworkUtils.GetObjectTablePlayers()
-                .Where(player => player != _clientMonitor.ClientPlayer && !visiblePairGameObjects.Contains(player))
+                .Where(player => player != _player.ClientPlayer && !visiblePairGameObjects.Contains(player))
                 .Where(o => o.ObjectIndex < 200)
                 .ToList();
 
@@ -128,20 +124,20 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
 
     public void LocatePlayer(IPlayerCharacter player)
     {
-        if (!_clientMonitor.IsPresent) 
+        if (!_player.IsPresent) 
             return;
 
         try
         {
-            if(!_gameData.GetExcelSheet<TerritoryType>().TryGetRow(_clientMonitor.TerritoryId, out var row))
+            if(!_gameData.GetExcelSheet<TerritoryType>().TryGetRow(_player.TerritoryId, out var row))
             {
                 Logger.LogError("Failed to get map data.");
                 return;
             }
             var coords = GenerateMapLinkMessageForObject(player);
             Logger.LogTrace($"{player.Name} at {coords}", LoggerType.ContextDtr);
-            var mapLink = new MapLinkPayload(_clientMonitor.TerritoryId, row.Map.RowId, coords.Item1, coords.Item2);
-            _clientMonitor.OpenMapWithMapLink(mapLink);
+            var mapLink = new MapLinkPayload(_player.TerritoryId, row.Map.RowId, coords.Item1, coords.Item2);
+            _player.OpenMapWithMapLink(mapLink);
         }
         catch (Exception ex)
         {
@@ -152,8 +148,8 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
     private (float, float) GenerateMapLinkMessageForObject(IGameObject playerObject)
     {
         var place = _gameData
-            .GetExcelSheet<Map>(_clientMonitor.ClientLanguage)?
-            .FirstOrDefault(m => m.TerritoryType.RowId == _clientMonitor.TerritoryId);
+            .GetExcelSheet<Map>(_player.ClientLanguage)?
+            .FirstOrDefault(m => m.TerritoryType.RowId == _player.TerritoryId);
         var placeName = place?.PlaceName.RowId;
         var scale = place?.SizeFactor ?? 100f;
 

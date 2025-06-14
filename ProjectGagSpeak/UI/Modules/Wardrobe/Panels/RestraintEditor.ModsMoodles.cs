@@ -5,9 +5,9 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.RestraintSets;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -208,8 +208,8 @@ public class RestraintEditorModsMoodles : IFancyTab
         foreach (var moodle in _manager.ItemInEditor!.RestraintMoodles.ToList())
         {
             var itemLabel = moodle is MoodlePreset p
-                ? MoodleHandler.IpcData.Presets.GetValueOrDefault(p.Id).Title.StripColorTags() ?? "<invalid preset>"
-                : MoodleHandler.IpcData.Statuses.GetValueOrDefault(moodle.Id).Title.StripColorTags() ?? "<invalid status>";
+                ? MoodleCache.IpcData.Presets.GetValueOrDefault(p.Id).Title.StripColorTags() ?? "<invalid preset>"
+                : MoodleCache.IpcData.Statuses.GetValueOrDefault(moodle.Id).Title.StripColorTags() ?? "<invalid status>";
             var typeText = moodle is MoodlePreset ? "Moodle Preset Item" : "Moodle Status Item";
 
             using (CkRaii.FramedChildPaddedW(moodle.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))

@@ -1,5 +1,5 @@
 /*using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.Utils;

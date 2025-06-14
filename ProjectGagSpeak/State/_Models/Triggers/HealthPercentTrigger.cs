@@ -1,6 +1,6 @@
 using GagspeakAPI.Data;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class HealthPercentTrigger : Trigger, IThresholdContainer

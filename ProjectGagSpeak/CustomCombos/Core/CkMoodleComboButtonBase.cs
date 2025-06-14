@@ -3,8 +3,8 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.UpdateMonitoring;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -14,16 +14,15 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
 {
-    protected readonly IconDisplayer _statuses;
+    protected readonly MoodleIcons _statuses;
     protected readonly MainHub _mainHub;
     protected readonly Pair _pairRef;
     protected float _iconScale;
 
-    protected CkMoodleComboButtonBase(float iconScale, IconDisplayer monitor, Pair pair, MainHub hub,
+    protected CkMoodleComboButtonBase(float iconScale, MoodleIcons monitor, Pair pair, MainHub hub,
         ILogger log, Func<IReadOnlyList<T>> itemSource)
         : base(itemSource, log)
     {
-        _statuses = monitor;
         _mainHub = hub;
         _iconScale = iconScale;
         Current = default;

@@ -5,7 +5,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Achievements;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -28,12 +28,12 @@ public class KinkPlateLight
     private readonly ILogger<KinkPlateLight> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly PairManager _pairManager;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
     public KinkPlateLight(ILogger<KinkPlateLight> logger, GagspeakMediator mediator,
-        PairManager pairManager, ServerConfigurationManager serverConfigs,
+        PairManager pairManager, ServerConfigManager serverConfigs,
         KinkPlateService profiles, CosmeticService cosmetics, TextureService textures)
     {
         _logger = logger;

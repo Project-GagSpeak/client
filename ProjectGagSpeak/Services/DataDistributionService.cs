@@ -1,7 +1,7 @@
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
+using GagSpeak.State.Managers;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -14,7 +14,7 @@ namespace GagSpeak.Services;
 public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
@@ -33,7 +33,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         ILogger<DataDistributionService> logger,
         GagspeakMediator mediator,
         MainHub hub,
-        ClientMonitor clientMonitor,
+        PlayerData player,
         PairManager pairManager,
         GagRestrictionManager gagManager,
         RestrictionManager restrictionManager,
@@ -43,10 +43,11 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         PatternManager patternManager,
         AlarmManager alarmManager,
         TriggerManager triggerManager,
-        TraitAllowanceManager traitManager) : base(logger, mediator)
+        TraitAllowanceManager traitManager)
+        : base(logger, mediator)
     {
         _hub = hub;
-        _clientMonitor = clientMonitor;
+        _player = player;
         _pairs = pairManager;
         _gagManager = gagManager;
         _restrictionManager = restrictionManager;
@@ -60,22 +61,26 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _     => PushCompositeData(_pairs.GetOnlineUserDatas()));
+        Mediator.Subscribe<MainHubConnectedMessage>(this, _     => PushCompositeData(_pairs.GetOnlineUserDatas()).ConfigureAwait(false));
         Mediator.Subscribe<PairWentOnlineMessage>(this, arg     => _newOnlineKinksters.Add(arg.UserData));
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
-        
+
+        // Generic Updaters
+        Mediator.Subscribe<PushGlobalPermChange>(this, arg      => _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>
+            (arg.PermName, arg.NewValue), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false));
+
         // Visible Data Updaters
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg  => _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false));
-        Mediator.Subscribe<IpcDataChangedMessage>(this, msg     => DistributeVisibleData(_pairs.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType));
+        Mediator.Subscribe<IpcDataChangedMessage>(this, msg     => DistributeDataVisible(_pairs.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType).ConfigureAwait(false));
 
         // Online Data Updaters
-        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<AliasPairUpdateMessage>(this,               DistributeData);
-        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeData(_pairs.GetOnlineUserDatas(), arg));
-        Mediator.Subscribe<LightStorageDataChangedMessage>(this, arg=> DistributeData(_pairs.GetOnlineUserDatas(), arg));
+        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGag(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeDataRestriction(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeDataRestraint(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeDataGlobalAlias(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<AliasPairUpdateMessage>(this, arg        => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
+        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeDataToybox(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<LightStorageDataChangedMessage>(this, arg=> DistributeDataStorage(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
     }
 
     // Storage of previously sent data, to avoid excessive calls when nothing changes.
@@ -98,15 +103,15 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         {
             var newOnlinePairs = _newOnlineKinksters.ToList();
             _newOnlineKinksters.Clear();
-            PushCompositeData(newOnlinePairs);
+            PushCompositeData(newOnlinePairs).ConfigureAwait(false);
         }
 
         // Handle Visible Players.
-        if (_clientMonitor.IsPresent && _newVisibleKinksters.Count > 0)
+        if (_player.IsPresent && _newVisibleKinksters.Count > 0)
         {
             var newVisiblePlayers = _newVisibleKinksters.ToList();
             _newVisibleKinksters.Clear();
-            DistributeVisibleData(newVisiblePlayers, _prevIpcData, DataUpdateType.UpdateVisible);
+            DistributeDataVisible(newVisiblePlayers, _prevIpcData, DataUpdateType.UpdateVisible).ConfigureAwait(false);
         }
     }
 
@@ -137,7 +142,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Pushes all our Player Data to all online pairs once connected. </summary>
-    private async void PushCompositeData(List<UserData> newOnlinePairs)
+    private async Task PushCompositeData(List<UserData> newOnlinePairs)
     {
         if (newOnlinePairs.Count <= 0)
             return;
@@ -176,24 +181,32 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         }
     }
 
-    private async void DistributeVisibleData(List<UserData> visiblePlayers, CharaIPCData newData, DataUpdateType updateKind)
+    private async Task DistributeDataVisible(List<UserData> visChara, CharaIPCData newData, DataUpdateType kind)
     {
         if (DataIsDifferent(_prevIpcData, newData) is false)
             return;
 
         _prevIpcData = newData;
-        Logger.LogDebug($"Pushing IPCData to {string.Join(", ", visiblePlayers.Select(v => v.AliasOrUID))} [{updateKind}]", LoggerType.VisiblePairs);
-        
-        await _hub.UserPushDataIpc(new(visiblePlayers, newData, updateKind)).ConfigureAwait(false);
+
+        Logger.LogDebug($"Pushing IPCData to {string.Join(", ", visChara.Select(v => v.AliasOrUID))} [{kind}]", LoggerType.VisiblePairs);
+        if (await _hub.UserPushDataIpc(new(visChara, newData, kind)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError("Failed to push Gag Data to server Reason: " + res);
     }
 
+    /// <summary>
+    ///     A publically accessible variant that is not mediator dependant.
+    /// </summary>
+    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
+    /// <returns> True if the operation returned successfully, false if it failed. </returns>
+    public async Task<bool> PushGagTriggerAction(int layerIdx, ActiveGagSlot newData, DataUpdateType type)
+        => await DistributeDataGag(_pairs.GetOnlineUserDatas(), new(type, layerIdx, newData));
 
     /// <summary> Pushes the new GagData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, GagDataChangedMessage msg)
+    private async Task<bool> DistributeDataGag(List<UserData> onlinePlayers, GagDataChangedMessage msg)
     {
         if (DataIsDifferent(_prevGagData, msg.NewData) is false)
-            return;
+            return false;
 
         _prevGagData = msg.NewData;
         Logger.LogDebug($"Pushing GagChange [{msg.UpdateType}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
@@ -209,16 +222,29 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataGags(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push Gag Data to server Reason: " + res);
+        if (await _hub.UserPushDataGags(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Logger.LogError($"Failed to push GagData to server [{res}]");
+            return false;
+        }
+
+        return true;
     }
+
+    /// <summary>
+    ///     A publically accessible variant that is not mediator dependant.
+    /// </summary>
+    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
+    /// <returns> True if the operation returned successfully, false if it failed. </returns>
+    public async Task<bool> PushRestrictionTriggerAction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
+        => await DistributeDataRestriction(_pairs.GetOnlineUserDatas(), new(type, layerIdx, newData));
 
     /// <summary> Pushes the new RestrictionData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, RestrictionDataChangedMessage msg)
+    private async Task<bool> DistributeDataRestriction(List<UserData> onlinePlayers, RestrictionDataChangedMessage msg)
     {
         if (DataIsDifferent(_prevRestrictionData, msg.NewData) is false)
-            return;
+            return false;
 
         _prevRestrictionData = msg.NewData;
         Logger.LogDebug($"Pushing RestrictionChange [{msg.UpdateType}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
@@ -234,16 +260,29 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestrictions(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push RestrictionData to server Reason: " + res);
+        if (await _hub.UserPushDataRestrictions(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Logger.LogError($"Failed to push RestrictionData to server [{res}]");
+            return false;
+        }
+
+        return true;
     }
+
+    /// <summary>
+    ///     A publically accessible variant that is not mediator dependant.
+    /// </summary>
+    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
+    /// <returns> True if the operation returned successfully, false if it failed. </returns>
+    public async Task<bool> PushRestraintTriggerAction(CharaActiveRestraint newData, DataUpdateType type)
+        => await DistributeDataRestraint(_pairs.GetOnlineUserDatas(), new(type, newData));
 
     /// <summary> Pushes the new RestraintData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, RestraintDataChangedMessage msg)
+    private async Task<bool> DistributeDataRestraint(List<UserData> onlinePlayers, RestraintDataChangedMessage msg)
     {
         if (DataIsDifferent(_prevRestraintData, msg.NewData) is false)
-            return;
+            return false;
 
         _prevRestraintData = msg.NewData;
         Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
@@ -259,13 +298,18 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Assigner = msg.NewData.PadlockAssigner
         };
 
-        if (await _hub.UserPushDataRestraint(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push RestraintData to server Reason: " + res);
+        if (await _hub.UserPushDataRestraint(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Logger.LogError($"Failed to push RestraintData to server [{res}]");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary> Pushes the new Global AliasTrigger update to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, AliasGlobalUpdateMessage msg)
+    private async Task DistributeDataGlobalAlias(List<UserData> onlinePlayers, AliasGlobalUpdateMessage msg)
     {
         if (DataIsDifferent(_prevGlobalAliasData, msg.NewData) is false)
             return;
@@ -280,7 +324,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
     /// <summary> Pushes the new AliasTrigger specific to a Kinkster to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(AliasPairUpdateMessage msg)
+    private async Task DistributeDataUniqueAlias(AliasPairUpdateMessage msg)
     {
         if (DataIsDifferent(_prevPairAliasData, msg.NewData) is false)
             return;
@@ -293,9 +337,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError("Failed to push AliasPairUpdate to server Reason: " + res);
     }
 
-    /// <summary> Pushes the new GagData to the server. </summary>
+    /// <summary> Pushes the new ToyboxData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, ToyboxDataChangedMessage msg)
+    private async Task DistributeDataToybox(List<UserData> onlinePlayers, ToyboxDataChangedMessage msg)
     {
         if (DataIsDifferent(_prevToyboxData, msg.NewData) is false)
             return;
@@ -314,7 +358,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
     /// <summary> Pushes the new LightStorage to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async void DistributeData(List<UserData> onlinePlayers, LightStorageDataChangedMessage msg)
+    private async Task DistributeDataStorage(List<UserData> onlinePlayers, LightStorageDataChangedMessage msg)
     {
         if (DataIsDifferent(_prevLightStorageData, msg.NewData) is false)
             return;

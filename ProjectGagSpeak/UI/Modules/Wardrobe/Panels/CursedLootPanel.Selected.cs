@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagspeakAPI.Extensions;

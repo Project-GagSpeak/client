@@ -9,8 +9,8 @@ namespace GagSpeak.CkCommons.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
 {
-    private readonly MainConfigService _config;
-    public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator, MainConfigService config) 
+    private readonly MainConfig _config;
+    public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator, MainConfig config) 
         : base(logger, mediator, "GagSpeak ChangeLog")
     {
         _config = config;

@@ -1,8 +1,8 @@
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -10,9 +10,10 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
+using ProjectGagSpeak.State.Managers;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Managers;
 
 public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
@@ -21,7 +22,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     private readonly CacheStateManager _cacheManager;
     private readonly ConfigFileProvider _fileNames;
     private readonly ItemService _items;
-    private readonly GagMuffleService _muffler;
+    private readonly MufflerService _muffler;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<GarblerRestriction> _itemEditor = new();
@@ -35,7 +36,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         CacheStateManager cacheManager,
         ConfigFileProvider fileNames,
         ItemService items,
-        GagMuffleService muffler,
+        MufflerService muffler,
         HybridSaveService saver) : base(logger, mediator)
     {
         _favorites = favorites;

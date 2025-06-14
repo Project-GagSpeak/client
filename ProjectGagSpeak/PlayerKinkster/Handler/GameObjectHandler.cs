@@ -3,7 +3,7 @@ using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 
-namespace GagSpeak.PlayerData.Handlers;
+namespace GagSpeak.Kinksters.Handlers;
 
 /// <summary>
 /// Handles the state of the visible game objects. Can refer to player character or another visible pair.

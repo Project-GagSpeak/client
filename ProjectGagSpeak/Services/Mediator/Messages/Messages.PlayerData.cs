@@ -1,6 +1,7 @@
-using GagSpeak.PlayerData.Handlers;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Handlers;
+using GagSpeak.Kinksters.Pairs;
 using GagspeakAPI.Data;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -12,11 +13,12 @@ public record TargetPairMessage(Pair Pair) : MessageBase; // called when publish
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
 public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
-public record HardcoreActionMessage(InteractionType type, NewState State) : MessageBase;
+public record GlobalHardcorePermChange(InteractionType Type, bool State) : MessageBase;
 public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensity, int Duration) : MessageBase;
 
 
 // Kinkster Data Changes
+public record PushGlobalPermChange(string PermName, object NewValue) : MessageBase;
 public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewIpcData) : SameThreadMessage;
 public record GagDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
 public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;

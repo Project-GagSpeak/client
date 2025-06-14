@@ -2,8 +2,8 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Factories;
-using GagSpeak.PlayerData.Handlers;
+using GagSpeak.Kinkster.Factories;
+using GagSpeak.Kinkster.Handlers;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -13,7 +13,7 @@ using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.PlayerData.Pairs;
+namespace GagSpeak.Kinksters;
 
 /// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
 /// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
@@ -23,14 +23,14 @@ public class Pair : IComparable<Pair>
     private readonly GagspeakMediator _mediator;
     private readonly PairHandlerFactory _cachedPlayerFactory;
     private readonly SemaphoreSlim _creationSemaphore = new(1);
-    private readonly ServerConfigurationManager _nickConfig;
+    private readonly ServerConfigManager _nickConfig;
     private readonly CosmeticService _cosmetics;
 
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
     public Pair(KinksterPair pair, ILogger<Pair> logger, GagspeakMediator mediator,
-        PairHandlerFactory factory, ServerConfigurationManager nicks, CosmeticService cosmetics)
+        PairHandlerFactory factory, ServerConfigManager nicks, CosmeticService cosmetics)
     {
         _logger = logger;
         _mediator = mediator;

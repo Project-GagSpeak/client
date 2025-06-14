@@ -6,7 +6,7 @@ using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.Localization;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Enums;

@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State;
 
 /// <summary>
 ///     Represents the type of restriction that is being applied.

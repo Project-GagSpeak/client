@@ -1,5 +1,5 @@
-using GagSpeak;
-using GagSpeak.Achievements;
+namespace GagSpeak.Achievements;
+
 #nullable disable
 public class UnlocksEventManager
 {

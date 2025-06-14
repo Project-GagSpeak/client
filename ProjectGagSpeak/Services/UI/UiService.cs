@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
-using GagSpeak.PlayerData.Storage;
+using GagSpeak.Kinkster.Storage;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;
@@ -19,7 +19,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly MainMenuTabs _mainTabMenu;
 
     private readonly ILogger<UiService> _logger;
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly ServerConfigService _serverConfig;
     private readonly UiFactory _uiFactory;
     private readonly WindowSystem _windowSystem;
@@ -27,7 +27,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly IUiBuilder _uiBuilder;
 
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
-        MainConfigService mainConfig, ServerConfigService serverConfig,
+        MainConfig mainConfig, ServerConfigService serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
         UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog,
         IUiBuilder uiBuilder) : base(logger, mediator)
@@ -213,7 +213,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// <remarks> Checks if user has valid setup, and opens introUI or MainUI </remarks>
     public void ToggleMainUi()
     {
-        if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
         {
             Mediator.Publish(new UiToggleMessage(typeof(MainUI)));
         }
@@ -233,7 +233,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// </summary>
     public void ToggleUi()
     {
-        if (_mainConfig.Config.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
             Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         else
             Mediator.Publish(new UiToggleMessage(typeof(IntroUi)));

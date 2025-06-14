@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.Hardcore.ForcedStay;
+using GagSpeak.GameInternals.Addons;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -67,9 +67,9 @@ public class ConcreteNodeConverterTests
 
     public class WriteJsonTests
     {
-        const string TextEntryNodeSimpleName = "GagSpeak.Hardcore.ForcedStay.TextEntryNode, ProjectGagSpeak";
-        const string ChambersTextNodeSimpleName = "GagSpeak.Hardcore.ForcedStay.ChambersTextNode, ProjectGagSpeak";
-        const string TextFolderNodeSimpleName = "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak";
+        const string TextEntryNodeSimpleName = "GagSpeak.GameInternals.Addons.TextEntryNode, ProjectGagSpeak";
+        const string ChambersTextNodeSimpleName = "GagSpeak.GameInternals.Addons.ChambersTextNode, ProjectGagSpeak";
+        const string TextFolderNodeSimpleName = "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak";
 
         [Fact]
         void GivenATextEntryNode_WhenObjectIsSerialized_ThenItShouldIncludeATypeProperty() =>
@@ -180,7 +180,7 @@ public class ConcreteNodeConverterTests
             // Arrange
             var json = """
                        {
-                           "$type": "GagSpeak.Hardcore.ForcedStay.TextEntryNode, ProjectGagSpeak",
+                           "$type": "GagSpeak.GameInternals.Addons.TextEntryNode, ProjectGagSpeak",
                            "Enabled": false,
                            "FriendlyName": "(Friendly Name)",
                            "TargetRestricted": true,
@@ -207,7 +207,7 @@ public class ConcreteNodeConverterTests
             // Arrange
             var json = """
                        {
-                           "$type": "GagSpeak.Hardcore.ForcedStay.ChambersTextNode, ProjectGagSpeak",
+                           "$type": "GagSpeak.GameInternals.Addons.ChambersTextNode, ProjectGagSpeak",
                            "Enabled": true,
                            "FriendlyName": "[ForcedStay] Select FC Chamber Room (2/3)",
                            "TargetRestricted": true,
@@ -233,14 +233,14 @@ public class ConcreteNodeConverterTests
             // Arrange
             var json = """
                        {
-                           "$type": "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak",
+                           "$type": "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak",
                            "Enabled": true,
                            "FriendlyName": "ForcedDeclineList",
                            "TargetRestricted": false,
                            "TargetNodeName": "",
                            "Children": [
                                {
-                                   "$type": "GagSpeak.Hardcore.ForcedStay.TextEntryNode, ProjectGagSpeak",
+                                   "$type": "GagSpeak.GameInternals.Addons.TextEntryNode, ProjectGagSpeak",
                                    "Enabled": true,
                                    "FriendlyName": "[ForcedStay] Prevent Apartment Leaving",
                                    "TargetRestricted": true,
@@ -272,21 +272,21 @@ public class ConcreteNodeConverterTests
             // Arrange
             var json = """
                        {
-                           "$type": "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak",
+                           "$type": "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak",
                            "Enabled": true,
                            "FriendlyName": "ForcedDeclineList",
                            "TargetRestricted": false,
                            "TargetNodeName": "",
                            "Children": [
                                {
-                                   "$type": "GagSpeak.Hardcore.ForcedStay.TextFolderNode, ProjectGagSpeak",
+                                   "$type": "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak",
                                    "Enabled": true,
                                    "FriendlyName": "ForcedDeclineList",
                                    "TargetRestricted": false,
                                    "TargetNodeName": "",
                                    "Children": [
                                        {
-                                           "$type": "GagSpeak.Hardcore.ForcedStay.TextEntryNode, ProjectGagSpeak",
+                                           "$type": "GagSpeak.GameInternals.Addons.TextEntryNode, ProjectGagSpeak",
                                            "Enabled": true,
                                            "FriendlyName": "[ForcedStay] Prevent Apartment Leaving",
                                            "TargetRestricted": true,

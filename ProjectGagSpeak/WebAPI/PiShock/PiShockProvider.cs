@@ -1,4 +1,4 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
@@ -11,13 +11,13 @@ namespace GagSpeak.WebAPI;
 
 public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly PairManager _pairManager;
     private readonly MainHub _mainHub;
     private readonly HttpClient _httpClient;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator,
-        MainConfigService mainConfig, PairManager pairManager, MainHub mainHub) : base(logger, mediator)
+        MainConfig mainConfig, PairManager pairManager, MainHub mainHub) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _pairManager = pairManager;
@@ -38,9 +38,9 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            UserName = _mainConfig.Config.PiShockUsername,
+            UserName = _mainConfig.Current.PiShockUsername,
             Code = shareCode,
-            Apikey = _mainConfig.Config.PiShockApiKey,
+            Apikey = _mainConfig.Current.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }
@@ -50,13 +50,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            Username = _mainConfig.Config.PiShockUsername,
+            Username = _mainConfig.Current.PiShockUsername,
             Name = "GagSpeakProvider",
             Op = opCode,
             Intensity = 0,
             Duration = 0,
             Code = shareCode,
-            Apikey = _mainConfig.Config.PiShockApiKey,
+            Apikey = _mainConfig.Current.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }
@@ -66,13 +66,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     {
         StringContent content = new(SysJsonSerializer.Serialize(new
         {
-            Username = _mainConfig.Config.PiShockUsername,
+            Username = _mainConfig.Current.PiShockUsername,
             Name = "GagSpeakProvider",
             Op = opCode,
             Intensity = intensity,
             Duration = duration,
             Code = shareCode,
-            Apikey = _mainConfig.Config.PiShockApiKey,
+            Apikey = _mainConfig.Current.PiShockApiKey,
         }), Encoding.UTF8, "application/json");
         return content;
     }

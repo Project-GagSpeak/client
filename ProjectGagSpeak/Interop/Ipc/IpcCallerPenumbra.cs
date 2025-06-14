@@ -1,7 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinkster.Storage;
+using GagSpeak.State.Models;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using Penumbra.Api.Enums;
@@ -9,7 +9,7 @@ using Penumbra.Api.Helpers;
 using Penumbra.Api.IpcSubscribers;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 /// <summary> Contains all information about a mod. </summary>
 /// <remarks> This should be used as a way to synchronize with storage, but not intertwined with it. </remarks>

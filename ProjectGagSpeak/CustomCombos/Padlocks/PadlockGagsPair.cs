@@ -1,4 +1,4 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -6,7 +6,7 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 
-namespace GagSpeak.CustomCombos.Padlockable;
+namespace GagSpeak.CustomCombos.Padlock;
 
 public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {

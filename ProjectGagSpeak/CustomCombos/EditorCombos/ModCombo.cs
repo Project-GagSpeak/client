@@ -9,7 +9,7 @@ using OtterGui.Classes;
 using OtterGui.Raii;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class ModCombo : CkFilterComboCache<ModInfo>
 {

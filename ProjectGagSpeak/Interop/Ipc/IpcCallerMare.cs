@@ -5,7 +5,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Enums;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 public sealed class IpcCallerMare : IIpcCaller
 {

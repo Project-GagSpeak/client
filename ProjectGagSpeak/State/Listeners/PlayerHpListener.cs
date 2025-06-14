@@ -1,11 +1,12 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Handlers;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.PlayerState.Listener;
+namespace GagSpeak.State.Listeners;
 
 /// <summary>
 ///     Tracks the player health of the characters we want to modify, 
@@ -13,19 +14,19 @@ namespace GagSpeak.PlayerState.Listener;
 /// </summary>
 public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 {
-    private readonly TriggerManager _triggerManager;
-    private readonly TriggerApplier _triggerApplier;
+    private readonly TriggerManager _manager;
+    private readonly TriggerHandler _handler;
     private readonly OnFrameworkService _frameworkUtils;
     public PlayerHpListener(
         ILogger<PlayerHpListener> logger,
         GagspeakMediator mediator,
-        TriggerManager triggerManager,
-        TriggerApplier triggerApplier,
+        TriggerManager manager,
+        TriggerHandler handler,
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
-        _triggerManager = triggerManager;
-        _triggerApplier = triggerApplier;
+        _manager = manager;
+        _handler = handler;
         _frameworkUtils = frameworkUtils;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateTriggerMonitors());
@@ -41,14 +42,14 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 
     private void UpdateTriggerMonitors()
     {
-        if (!_triggerManager.Storage.HealthPercent.Any())
+        if (_manager.Storage.HealthPercent.Any())
         {
             MonitoredPlayers.Clear();
             return;
         }
 
         // Group triggers by the player being monitored.
-        var playerTriggers = _triggerManager.Storage.HealthPercent
+        var playerTriggers = _manager.Storage.HealthPercent
             .GroupBy(trigger => trigger.PlayerNameWorld)
             .ToDictionary(group => group.Key, group => new PlayerHealth(group.AsEnumerable()));
 
@@ -122,7 +123,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
         Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
             + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
-        if (await _triggerApplier.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
+        if (await _handler.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
             UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

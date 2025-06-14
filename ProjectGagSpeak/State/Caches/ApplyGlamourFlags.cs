@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State;
 
 [Flags]
 public enum CacheType

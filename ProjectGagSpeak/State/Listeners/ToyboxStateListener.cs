@@ -1,25 +1,21 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.GameInternals.Structs;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
-using GagSpeak.Services.Configs;
+using GagSpeak.PlayerClient;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
+using GagSpeak.State.Managers;
 using GagSpeak.Toybox.Services;
 using GagSpeak.UpdateMonitoring;
-using GagSpeak.VibeLobby;
-using GagSpeak.WebAPI;
 
-namespace GagSpeak.PlayerState.Listener;
+namespace GagSpeak.State.Listeners;
 
-/// <summary> Listens for incoming changes to Alarms, Patterns, Triggers, and WIP, Vibe Server Lobby System. </summary>
-/// <remarks> May or may not have future integration weaved into this listener for the vibe server lobby system. </remarks>
+/// <summary>
+///     Listens for callback changes related to Alarms, Patterns, Triggers, and future Vibe Server Lobby System.
+/// </summary>
 public sealed class ToyboxStateListener
 {
     private readonly ILogger<ToyboxStateListener> _logger;
-    private readonly GagspeakMediator _mediator;
-    private readonly PairManager      _pairs;
+    private readonly GagspeakMediator   _mediator;
+    private readonly GlobalPermissions  _globals;
+    private readonly PairManager        _pairs;
 
     // Managers:
     // - SexToyManager (Manages what kind of toy is connected (actual vs simulated), and handles various reactions.
@@ -27,39 +23,36 @@ public sealed class ToyboxStateListener
     // - VibeControlLobbyManager (Future WIP Section)
     // - SpatialAudioManager (Huge WIP, highly dependant on if SCD's data can be properly parsed out or whatever.
     //      I've tried to get it working for so long ive lost hope.)
-    private readonly PatternManager _patternManager;
-    private readonly AlarmManager   _alarmManager;
-    private readonly TriggerManager _triggerManager;
+    private readonly PatternManager _patterns;
+    private readonly AlarmManager   _alarms;
+    private readonly TriggerManager _triggers;
 /*    private readonly VibeRoomManager _vibeLobbyManager;*/    // Currently Caused circular dependancy with the mainhub, see how to fix later.
-    private readonly SexToyManager _toyManager;
-    // private readonly ShockCollarManager = _shockCollarManager;
-    // private readonly SpatialAudioManager _spatialAudioManager;
+    private readonly SexToyManager _toys;
+    // private readonly ShockCollarManager = _shockCollars;
+    // private readonly SpatialAudioManager _spatialAudio;
 
-    private readonly TriggerHandler _triggerHandler;
-
-    private readonly ClientMonitor  _clientMonitor;
+    private readonly PlayerData  _player;
     private readonly OnFrameworkService _frameworkUtils;
     public ToyboxStateListener(
         ILogger<ToyboxStateListener> logger,
         GagspeakMediator mediator,
         PairManager pairs,
-        PatternManager patternManager,
+        PatternManager patterns,
         AlarmManager alarmManager,
-        TriggerManager triggerManager,
-        SexToyManager toyManager,
-/*        VibeRoomManager vibeLobbyManager,*/
-        ClientMonitor clientMonitor,
+        TriggerManager triggers,
+        SexToyManager toys,
+        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
         _pairs = pairs;
-        _patternManager = patternManager;
-        _alarmManager = alarmManager;
-        _triggerManager = triggerManager;
-/*        _vibeLobbyManager = vibeLobbyManager;*/
-        _toyManager = toyManager;
-        _clientMonitor = clientMonitor;
+        _patterns = patterns;
+        _alarms = alarmManager;
+        _triggers = triggers;
+        // _vibeLobbyManager = vibeLobbyManager;
+        _toys = toys;
+        _player = clientMonitor;
         _frameworkUtils = frameworkUtils;
     }
 
@@ -71,32 +64,31 @@ public sealed class ToyboxStateListener
 
     public void PatternSwitched(Guid newPattern, string enactor)
     {
-        _patternManager.SwitchPattern(newPattern, enactor);
+        _patterns.SwitchPattern(newPattern, enactor);
         PostActionMsg(enactor, InteractionType.SwitchPattern, "Pattern Switched");
-
     }
 
     public void PatternStarted(Guid patternId, string enactor)
     {
-        _patternManager.EnablePattern(patternId, enactor);
+        _patterns.EnablePattern(patternId, enactor);
         PostActionMsg(enactor, InteractionType.StartPattern, "Pattern Enabled");
     }
 
     public void PatternStopped(Guid patternId, string enactor)
     {
-        _patternManager.DisablePattern(patternId, enactor);
+        _patterns.DisablePattern(patternId, enactor);
         PostActionMsg(enactor, InteractionType.StopPattern, "Pattern Disabled");
     }
 
     public void AlarmToggled(Guid alarmId, string enactor)
     {
-        _alarmManager.ToggleAlarm(alarmId, enactor);
+        _alarms.ToggleAlarm(alarmId, enactor);
         PostActionMsg(enactor, InteractionType.ToggleAlarm, "Alarm Toggled");
     }
 
     public void TriggerToggled(Guid triggerId, string enactor)
     {
-        _triggerManager.ToggleTrigger(triggerId, enactor);
+        _triggers.ToggleTrigger(triggerId, enactor);
         PostActionMsg(enactor, InteractionType.ToggleTrigger, "Trigger Toggled");
     }
 }

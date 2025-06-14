@@ -47,13 +47,13 @@ public unsafe partial class StaticDetours
             //_logger.LogDebug($"Callback triggered on {atkUnitBase->NameString} with values: {string.Join(", ", atkValueList.Select(value => value.ToString()))}");
             if(atkUnitBase->NameString == "SelectString")
             {
-                MainConfigService.LastSeenListIndex = atkValues[0].Int;
+                MainConfig.LastSeenListIndex = atkValues[0].Int;
                 //_logger.LogDebug("Last Seen List Index: " + _mainConfig.LastSeenListIndex);
             }
             if(atkUnitBase->NameString == "SelectYesno")
             {
                 var selection = atkValues[0].Int == 1 ? "No" : "Yes";
-                MainConfigService.LastSeenListSelection = selection;
+                MainConfig.LastSeenListSelection = selection;
                 //_logger.LogDebug("Last Seen List Selection: " + _mainConfig.LastSeenListSelection);
             }
         }

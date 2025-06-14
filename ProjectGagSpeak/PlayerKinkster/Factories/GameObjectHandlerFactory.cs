@@ -1,8 +1,8 @@
 using GagSpeak.Services.Mediator;
-using GagSpeak.PlayerData.Handlers;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.UpdateMonitoring;
 
-namespace GagSpeak.PlayerData.Factories;
+namespace GagSpeak.Kinksters.Factories;
 /// <summary>
 /// Class to help with the creation of game object handlers. Helps make the pair handler creation more modular.
 /// </summary>

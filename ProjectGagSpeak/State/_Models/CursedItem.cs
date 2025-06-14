@@ -1,8 +1,8 @@
-using GagSpeak.PlayerState.Components;
+using GagSpeak.State.Components;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class CursedItem : IEditableStorageItem<CursedItem>, ICursedItem

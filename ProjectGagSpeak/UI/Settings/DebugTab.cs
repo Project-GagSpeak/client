@@ -43,8 +43,8 @@ public class DebugTab
             ])
     };
 
-    private readonly MainConfigService _mainConfig;
-    public DebugTab(MainConfigService config)
+    private readonly MainConfig _mainConfig;
+    public DebugTab(MainConfig config)
     {
         _mainConfig = config;
     }
@@ -54,13 +54,13 @@ public class DebugTab
         CkGui.GagspeakBigText("Debug Configuration");
 
         // display the combo box for setting the log level we wish to have for our plugin
-        if (CkGuiUtils.EnumCombo("Log Level", 400, MainConfigService.LogLevel, out var newValue))
+        if (CkGuiUtils.EnumCombo("Log Level", 400, MainConfig.LogLevel, out var newValue))
         {
-            MainConfigService.LogLevel = newValue;
+            MainConfig.LogLevel = newValue;
             _mainConfig.Save();
         }
 
-        var logFilters = MainConfigService.LoggerFilters;
+        var logFilters = MainConfig.LoggerFilters;
 
         // draw a collapsible tree node here to draw the logger settings:
         ImGui.Spacing();
@@ -73,7 +73,7 @@ public class DebugTab
 
     private void AdvancedLogger()
     {
-        var flags = (ulong)MainConfigService.LoggerFilters;
+        var flags = (ulong)MainConfig.LoggerFilters;
         bool isFirstSection = true;
 
         var drawList = ImGui.GetWindowDrawList();
@@ -107,7 +107,7 @@ public class DebugTab
                                 flags &= ~(ulong)flag;
 
                             // update the loggerFilters.
-                            MainConfigService.LoggerFilters = (LoggerType)flags;
+                            MainConfig.LoggerFilters = (LoggerType)flags;
                             _mainConfig.Save();
                         }
                     }
@@ -118,13 +118,13 @@ public class DebugTab
                         ImGui.TableNextColumn();
                         if (ImGui.Button("All On"))
                         {
-                            MainConfigService.LoggerFilters = LoggerType.Recommended;
+                            MainConfig.LoggerFilters = LoggerType.Recommended;
                             _mainConfig.Save();
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("All Off"))
                         {
-                            MainConfigService.LoggerFilters = LoggerType.None;
+                            MainConfig.LoggerFilters = LoggerType.None;
                             _mainConfig.Save();
                         }
                     }

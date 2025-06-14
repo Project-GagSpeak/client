@@ -1,14 +1,16 @@
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State.Models;
 using GagSpeak.Services.Configs;
 using GagSpeak.Toybox.Services;
 
-namespace GagSpeak.PlayerState.Toybox;
+namespace GagSpeak.State.Handlers;
 
-// Funny haha class that does the magic voodoo with playback and makes the kinky toys go brrr.
+/// <summary>
+///     Funny haha class that does the magic voodoo with playback and makes the kinky toys go brrr.
+/// </summary>
 public class PatternHandler : IDisposable
 {
     private readonly ILogger<PatternHandler> _logger;
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     private readonly SexToyManager _vibeService;
 
     private CancellationTokenSource? _playbackCTS;
@@ -21,7 +23,7 @@ public class PatternHandler : IDisposable
     public Pattern? ActivePatternInfo { get; private set; }
     private List<float> SimulatedVolumes = new();
 
-    public PatternHandler(ILogger<PatternHandler> logger, MainConfigService config,
+    public PatternHandler(ILogger<PatternHandler> logger, MainConfig config,
         SexToyManager vibeService)
     {
         _logger = logger;
@@ -55,7 +57,7 @@ public class PatternHandler : IDisposable
         PlaybackData = TrimDataToPlayableRegion(patternToPlay.PatternData, customStartPoint, customDuration);
         ActivePatternInfo = patternToPlay;
 
-        if (_config.Config.VibratorMode is VibratorEnums.Simulated)
+        if (_config.Current.VibratorMode is VibratorEnums.Simulated)
             InitializeVolumeLevels(PlaybackData);
 
         // Start the cancelation token, and begin playback task.

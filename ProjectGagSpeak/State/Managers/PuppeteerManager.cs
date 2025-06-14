@@ -1,14 +1,14 @@
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Managers;
 
 public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {

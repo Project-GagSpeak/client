@@ -2,16 +2,16 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Linq;
 
-namespace GagSpeak.PlayerState.Toybox;
+namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly PatternHandler _applier;

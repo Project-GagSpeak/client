@@ -1,4 +1,4 @@
-namespace GagSpeak.Utils.Enums;
+namespace GagSpeak.Utils;
 
 // https://github.com/NightmareXIV/ECommons/blob/cad229e33d3a14f9e9d06c726c8297394563fbf1/ECommons/ExcelServices/Job.cs#L6
 // Job list

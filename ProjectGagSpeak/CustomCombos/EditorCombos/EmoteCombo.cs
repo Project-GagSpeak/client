@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.UpdateMonitoring;
 using ImGuiNET;
 using OtterGui;
@@ -9,16 +9,16 @@ using OtterGui.Classes;
 using OtterGui.Raii;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
 {
-    private readonly IconDisplayer _iconDrawer;
+    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     private uint _currentEmoteId;
     
-    public EmoteCombo(float scale, IconDisplayer disp, ILogger log)
+    public EmoteCombo(float scale, MoodleIcons disp, ILogger log)
         : base(() => [ ..EmoteService.ValidLightEmoteCache.OrderBy(e => e.RowId) ], log)
     {
         _iconScale = scale;
@@ -27,7 +27,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
         _currentEmoteId = Items.FirstOrDefault().RowId;
     }
 
-    public EmoteCombo(float scale, IconDisplayer disp, ILogger log, Func<IReadOnlyList<ParsedEmoteRow>> gen)
+    public EmoteCombo(float scale, MoodleIcons disp, ILogger log, Func<IReadOnlyList<ParsedEmoteRow>> gen)
         : base(gen, log)
     {
         _iconDrawer = disp;

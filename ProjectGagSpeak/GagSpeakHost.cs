@@ -1,7 +1,7 @@
 using GagSpeak.Achievements.Services;
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerData.Services;
+using GagSpeak.Kinkster.Pairs;
+using GagSpeak.Kinkster.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -20,20 +20,20 @@ namespace GagSpeak;
 public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly ClientMonitor _clientMonitor;
-    private readonly MainConfigService _mainConfig;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly PlayerData _player;
+    private readonly MainConfig _mainConfig;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
-        OnFrameworkService frameworkUtils, MainConfigService mainConfig,
-        ServerConfigurationManager serverConfigs, ClientMonitor clientMonitor, 
+        OnFrameworkService frameworkUtils, MainConfig mainConfig,
+        ServerConfigManager serverConfigs, PlayerData clientMonitor, 
         IServiceScopeFactory scopeFactory) : base(logger, mediator)
     {
         // set the services
         _frameworkUtils = frameworkUtils;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _serviceScopeFactory = scopeFactory;
@@ -112,7 +112,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private async Task WaitForPlayerAndLaunchCharacterManager()
     {
         // wait for the player to be present
-        while (!await _clientMonitor.IsPresentAsync().ConfigureAwait(false))
+        while (!await _player.IsPresentAsync().ConfigureAwait(false))
         {
             await Task.Delay(100).ConfigureAwait(false);
         }
@@ -129,31 +129,31 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
 
             // display changelog if we should.
-            if (_mainConfig.Config.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
+            if (_mainConfig.Current.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
             {
                 // update the version and toggle the UI.
                 Logger?.LogInformation("Version was different, displaying UI");
-                _mainConfig.Config.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
+                _mainConfig.Current.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
                 _mainConfig.Save();
                 Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
             }
 
             // if the client does not have a valid setup or config, switch to the intro ui
-            if (!_mainConfig.Config.HasValidSetup() || !_serverConfigs.ServerStorage.HasValidSetup())
+            if (!_mainConfig.Current.HasValidSetup() || !_serverConfigs.ServerStorage.HasValidSetup())
             {
-                Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _mainConfig.Config.HasValidSetup(), _serverConfigs.HasValidConfig());
+                Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _mainConfig.Current.HasValidSetup(), _serverConfigs.HasValidConfig());
                 // publish the switch to intro ui message to the mediator
-                _mainConfig.Config.ButtonUsed = false;
+                _mainConfig.Current.ButtonUsed = false;
 
                 Mediator.Publish(new SwitchToIntroUiMessage());
             }
 
             // get the required service for the online player manager (and notification service if we add it)
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DataDistributionService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ClientDataSync>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatMonitor>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatSender>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatInputDetour>();
 

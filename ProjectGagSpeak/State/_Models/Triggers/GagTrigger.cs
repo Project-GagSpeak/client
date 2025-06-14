@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class GagTrigger : Trigger

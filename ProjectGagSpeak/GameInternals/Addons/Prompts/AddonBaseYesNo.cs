@@ -3,9 +3,9 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Utils;
+using GagSpeak.GameInternals.Addons;
 
-namespace GagSpeak.Hardcore.ForcedStay;
+namespace GagSpeak.GameInternals.Addons;
 public static unsafe class AddonBaseYesNo
 {
     public static SeString SeStringNullTerminated(AddonSelectYesno* addon)

@@ -1,4 +1,4 @@
-namespace GagSpeak.Utils.Enums;
+namespace GagSpeak.Utils;
 
 /// <summary>
 ///     The various Modules throughout GagSpeak

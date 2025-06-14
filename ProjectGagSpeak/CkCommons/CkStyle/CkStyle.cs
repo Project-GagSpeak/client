@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Raii;
+namespace GagSpeak.CkCommons;
 public static partial class CkStyle
 {
     // Flag Style Helpers

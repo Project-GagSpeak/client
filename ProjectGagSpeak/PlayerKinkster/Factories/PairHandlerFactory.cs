@@ -1,11 +1,11 @@
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Handlers;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
-namespace GagSpeak.PlayerData.Factories;
+namespace GagSpeak.Kinksters.Factories;
 
 public class PairHandlerFactory
 {

@@ -20,12 +20,12 @@ public readonly record struct ImageMetadataGS(ImageDataType Kind, Vector2 BaseSi
 public class ThumbnailUI : WindowMediatorSubscriberBase
 {
     private readonly ImageImportTool _imageImport;
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     public ThumbnailUI(
         ILogger<ThumbnailUI> logger,
         GagspeakMediator mediator,
         ImageImportTool imageImport,
-        MainConfigService config, 
+        MainConfig config, 
         CosmeticService cosmetics,
         ImageMetadataGS imageBase) : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
     {
@@ -58,7 +58,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         _ => new Vector2(100),
     };
 
-    private Vector2 ItemSize => ImageBase.BaseSize * _config.Config.FileIconScale;
+    private Vector2 ItemSize => ImageBase.BaseSize * _config.Current.FileIconScale;
     private float ItemHeightFooter => ImGui.GetTextLineHeight() * 3;
 
     protected override void PreDrawInternal() { }
@@ -102,9 +102,9 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - clipboardImportW - fileImportW - ImGui.GetStyle().ItemInnerSpacing.X * 3);
 
         // Let the user control the size of the displayed icons.
-        var size = _config.Config.FileIconScale;
+        var size = _config.Current.FileIconScale;
         if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
-            _config.Config.FileIconScale = size;
+            _config.Current.FileIconScale = size;
         CkGui.AttachToolTip($"Scalar: {size}x (Size: {ItemSize.X}px)");
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())

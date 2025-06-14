@@ -2,14 +2,14 @@ using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.EditorCombos;
+namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
 {

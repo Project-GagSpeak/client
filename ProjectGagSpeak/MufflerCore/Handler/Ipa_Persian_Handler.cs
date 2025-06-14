@@ -6,13 +6,16 @@ using System.Text.RegularExpressions;
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
 
 namespace GagSpeak.MufflerCore.Handler;
-// Class to convert Persian text to International Phonetic Alphabet (IPA) notation
+
+/// <summary>
+///     Class to convert Persian text to International Phonetic Alphabet (IPA) notation
+/// </summary>
 public class Ipa_Persian_Handler
 {
     private string data_file; // Path to the JSON file containing the conversion rules
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Persian_Handler> _logger; // Logger
-    private readonly MainConfigService _config; // The GagSpeak configuration
+    private readonly MainConfig _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
@@ -20,7 +23,7 @@ public class Ipa_Persian_Handler
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
+    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;

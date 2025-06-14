@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State;
 
 /// <summary>
 ///     The Priority order of all Managers for the visual state.

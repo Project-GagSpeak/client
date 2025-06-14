@@ -5,8 +5,8 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
@@ -30,7 +30,7 @@ public partial class ControllerUniquePanel : IDisposable
 
     public ControllerUniquePanel(
         ILogger<ControllerUniquePanel> logger,
-        MainConfigService config,
+        MainConfig config,
         PuppeteerHelper helper,
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,

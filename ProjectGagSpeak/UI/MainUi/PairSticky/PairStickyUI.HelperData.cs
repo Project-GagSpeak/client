@@ -1,4 +1,4 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using System.Collections.Immutable;

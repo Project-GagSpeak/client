@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.PlayerData.Storage;
+using GagSpeak.Kinkster.Storage;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -18,9 +18,9 @@ namespace GagSpeak.CkCommons.Gui;
 public class IntroUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly MainConfigService _configService;
-    private readonly ServerConfigurationManager _serverConfigs;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly MainConfig _configService;
+    private readonly ServerConfigManager _serverConfigs;
+    private readonly PlayerData _player;
     private readonly TutorialService _guides;
 
     private bool ThemePushed = false;
@@ -30,14 +30,14 @@ public class IntroUi : WindowMediatorSubscriberBase
     private string _secretKey = string.Empty;
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
-        MainConfigService configService, ServerConfigurationManager serverConfigs,
-        ClientMonitor clientMonitor, TutorialService guides)
+        MainConfig configService, ServerConfigManager serverConfigs,
+        PlayerData clientMonitor, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {
         _hub = mainHub;
         _configService = configService;
         _serverConfigs = serverConfigs;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
 
         _guides = guides;
 
@@ -86,12 +86,12 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         // if the user has not accepted the agreement and they have not read the first page,
         // Then show the first page (everything in this if statement)
-        if (!_configService.Config.AcknowledgementUnderstood && !_readFirstPage)
+        if (!_configService.Current.AcknowledgementUnderstood && !_readFirstPage)
         {
             DrawWelcomePage();
         }
         // if they have read the first page but not yet created an account, we will need to present the account setup page for them.
-        else if (!_configService.Config.AcknowledgementUnderstood && _readFirstPage)
+        else if (!_configService.Current.AcknowledgementUnderstood && _readFirstPage)
         {
             DrawAcknowledgement();
         }
@@ -224,7 +224,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         CkGui.ColorTextCentered("Click this Button below once you have read and understood the above.", ImGuiColors.DalamudRed);
         if(ImGui.Button("Proceed To Account Creation.", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeightWithSpacing())))
         {
-            _configService.Config.AcknowledgementUnderstood = true;
+            _configService.Current.AcknowledgementUnderstood = true;
             _configService.Save();
         }
         ImGui.Spacing();
@@ -252,9 +252,9 @@ public class IntroUi : WindowMediatorSubscriberBase
         if (_secretKey.IsNullOrWhitespace())
         {
             // generate a secret key for the user and attempt initial connection when pressed.
-            if (CkGui.IconTextButton(FAI.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Config.ButtonUsed))
+            if (CkGui.IconTextButton(FAI.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Current.ButtonUsed))
             {
-                _configService.Config.ButtonUsed = true;
+                _configService.Current.ButtonUsed = true;
                 _configService.Save();
                 _fetchAccountDetailsTask = FetchAccountDetailsAsync();
             }
@@ -305,7 +305,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                     };
 
                     // set the secret key for the character
-                    _serverConfigs.SetSecretKeyForCharacter(_clientMonitor.ContentId, newKey);
+                    _serverConfigs.SetSecretKeyForCharacter(_player.ContentId, newKey);
 
                     // run the create connections and set our account created to true
                     _initialAccountCreationTask = PerformFirstLoginAsync();
@@ -378,7 +378,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             };
 
             // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(_clientMonitor.ContentId, newKey);
+            _serverConfigs.SetSecretKeyForCharacter(_player.ContentId, newKey);
             _configService.Save();
             // Log the details.
             _logger.LogInformation("UID: " + accountDetails.Item1);
@@ -390,7 +390,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             // Log the error
             _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
-            _configService.Config.ButtonUsed = false;
+            _configService.Current.ButtonUsed = false;
             _configService.Save();
 
             // set the task back to null and return.

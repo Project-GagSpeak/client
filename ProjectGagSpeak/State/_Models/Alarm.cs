@@ -1,7 +1,7 @@
-using GagSpeak.PlayerState.Toybox;
+using GagSpeak.State.Toybox;
 using GagspeakAPI.Data;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 [Serializable]
 public class Alarm : IEditableStorageItem<Alarm>

@@ -1,14 +1,14 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Factories;
+using GagSpeak.Kinksters.Factories;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
-namespace GagSpeak.PlayerData.Handlers;
+namespace GagSpeak.Kinksters.Handlers;
 
 /// <summary> The handler for a client pair. </summary>
 public sealed class PairHandler : DisposableMediatorSubscriberBase

@@ -1,7 +1,7 @@
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;

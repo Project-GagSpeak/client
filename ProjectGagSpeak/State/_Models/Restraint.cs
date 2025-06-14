@@ -1,7 +1,5 @@
 using GagSpeak.CkCommons.Newtonsoft;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Components;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Storage;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -9,10 +7,9 @@ using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.ComponentModel;
 using System.Data;
 
-namespace GagSpeak.PlayerState.Models;
+namespace GagSpeak.State.Models;
 
 public interface IRestrictionRef
 {

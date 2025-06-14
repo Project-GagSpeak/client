@@ -3,17 +3,18 @@ using GagSpeak.CkCommons.GarblerCore;
 using GagSpeak.Services.Configs;
 using System.Text.RegularExpressions;
 
-
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
 
 namespace GagSpeak.MufflerCore.Handler;
-// Class to convert Mandarian text to International Phonetic Alphabet (IPA) notation
+/// <summary>
+///     Class to convert Mandarian text to International Phonetic Alphabet (IPA) notation
+/// </summary>
 public class Ipa_Mandarian_Handler
 {
     private string data_file; // Path to the JSON file containing the conversion rules
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Mandarian_Handler> _logger; // Logger
-    private readonly MainConfigService _config; // The GagSpeak configuration
+    private readonly MainConfig _config; // The GagSpeak configuration
     private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
@@ -21,12 +22,12 @@ public class Ipa_Mandarian_Handler
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, MainConfigService config, IDalamudPluginInterface pi)
+    public Ipa_Mandarian_Handler(ILogger<Ipa_Mandarian_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
     {
         _logger = logger;
         _config = config;
         _pi = pi;
-        data_file = DetermineDataFilePath(_config.Config.LanguageDialect);
+        data_file = DetermineDataFilePath(_config.Current.LanguageDialect);
         LoadConversionRules();
     }
 
@@ -128,10 +129,10 @@ public class Ipa_Mandarian_Handler
     {
         var f_str = t_str;
 
-        if (_config.Config.LanguageDialect == "IPA_num") f_str = FormatIPANum(t_str);               // kuɔ35
-        else if (_config.Config.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);          // kuɔ˧˥
-        else if (_config.Config.LanguageDialect == "Jyutping_num") f_str = FormatJyutpingNum(t_str);// kuɔ2
-        else if (_config.Config.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);       // kuɔˊ
+        if (_config.Current.LanguageDialect == "IPA_num") f_str = FormatIPANum(t_str);               // kuɔ35
+        else if (_config.Current.LanguageDialect == "IPA_org") f_str = FormatIPAOrg(t_str);          // kuɔ˧˥
+        else if (_config.Current.LanguageDialect == "Jyutping_num") f_str = FormatJyutpingNum(t_str);// kuɔ2
+        else if (_config.Current.LanguageDialect == "Jyutping") f_str = FormatJyutping(t_str);       // kuɔˊ
 
         return f_str;
     }*/

@@ -6,7 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
 using System.Threading.Tasks;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 public sealed class IpcCallerMoodles : IIpcCaller
 {
@@ -44,15 +44,15 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly ClientMonitor _clientMonitor;
+    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtils;
 
     public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, IDalamudPluginInterface pi,
-        GagspeakMediator mediator, ClientMonitor clientMonitor, OnFrameworkService frameworkUtils)
+        GagspeakMediator mediator, PlayerData clientMonitor, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
-        _clientMonitor = clientMonitor;
+        _player = clientMonitor;
         _frameworkUtils = frameworkUtils;
 
         _moodlesApiVersion = pi.GetIpcSubscriber<int>("Moodles.Version");
@@ -166,7 +166,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if(_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            if(_player.ClientPlayer.NameWithWorld() is not { } name) return;
             Parallel.ForEach(guidsToAdd, guid => _applyStatusByGuid.InvokeAction(guid, name));
         });
     }
@@ -175,7 +175,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if (_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            if (_player.ClientPlayer.NameWithWorld() is not { } name) return;
             _applyPresetByGuid.InvokeAction(guid, name);
         });
     }
@@ -191,7 +191,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if (_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            if (_player.ClientPlayer.NameWithWorld() is not { } name) return;
             _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), name);
         });
     }
@@ -206,7 +206,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if(_clientMonitor.ClientPlayer.NameWithWorld() is not { } name) return;
+            if(_player.ClientPlayer.NameWithWorld() is not { } name) return;
             _clearStatusesFromManager.InvokeAction(name);
         });
     }

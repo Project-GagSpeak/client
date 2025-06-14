@@ -18,13 +18,13 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class HomepageTab
 {
     private readonly GagspeakMediator _mediator;
-    private readonly ClientMonitor _client;
+    private readonly PlayerData _client;
     private readonly OnFrameworkService _framework;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
-    public HomepageTab(GagspeakMediator mediator, ClientMonitor client, 
+    public HomepageTab(GagspeakMediator mediator, PlayerData client, 
         OnFrameworkService framework)
     {
         _mediator = mediator;

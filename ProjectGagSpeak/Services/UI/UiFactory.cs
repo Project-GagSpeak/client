@@ -1,5 +1,5 @@
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Data;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -21,28 +21,22 @@ public class UiFactory
     // Generic Classes
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
-    private readonly MainConfigService _config;
+    private readonly MainConfig _config;
     private readonly PiShockProvider _shockies;
-    private readonly IconDisplayer _iconDisplayer;
+    private readonly MoodleIcons _iconDisplayer;
     private readonly ImageImportTool _imageImport;
 
     // Managers
-    private readonly ClientMonitor _clientMonitor;
-    private readonly GagGarbler _garbler;
+    private readonly PlayerData _player;
     private readonly PairManager _pairManager;
     private readonly KinksterRequests _globals;
 
     // Services
     private readonly CosmeticService _cosmetics;
-    private readonly IdDisplayHandler _displayHandler;
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
-    private readonly OnFrameworkService _frameworkUtils;
     private readonly PresetLogicDrawer _presetService;
     private readonly TextureService _textures;
-
-    private readonly SexToyManager _vibeService;
-    private readonly TutorialService _guides;
 
     // API Hubs
     private readonly MainHub _hub;
@@ -50,21 +44,18 @@ public class UiFactory
     public UiFactory(
         ILoggerFactory loggerFactory,
         GagspeakMediator mediator,
-        MainConfigService config,
+        MainConfig config,
         PiShockProvider shockies,
-        IconDisplayer iconDisplayer,
+        MoodleIcons iconDisplayer,
         ImageImportTool imageImport,
         // Managers
-        ClientMonitor clientMonitor,
-        GagGarbler garbler,
+        PlayerData clientMonitor,
         PairManager pairManager,
         KinksterRequests globals,
         // Services
         CosmeticService cosmetics,
-        IdDisplayHandler displayHandler,
         KinkPlateLight kinkPlateLight,
         KinkPlateService kinkPlates,
-        OnFrameworkService frameworkUtils,
         PresetLogicDrawer presetService,
         TextureService textures,
         // API Hubs
@@ -77,16 +68,13 @@ public class UiFactory
         _iconDisplayer = iconDisplayer;
         _imageImport = imageImport;
         
-        _clientMonitor = clientMonitor;
-        _garbler = garbler;
+        _player = clientMonitor;
         _pairManager = pairManager;
         _globals = globals;
         
         _cosmetics = cosmetics;
-        _displayHandler = displayHandler;
         _kinkPlateLight = kinkPlateLight;
         _kinkPlates = kinkPlates;
-        _frameworkUtils = frameworkUtils;
         _presetService = presetService;
         _textures = textures;
         
@@ -109,7 +97,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
-            _hub, _globals, _presetService, _iconDisplayer, _pairManager, _clientMonitor, _shockies);
+            _hub, _globals, _presetService, _iconDisplayer, _pairManager, _player, _shockies);
     }
 
     public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)

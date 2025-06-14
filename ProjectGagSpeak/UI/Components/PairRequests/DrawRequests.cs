@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Data;
+using GagSpeak.Kinksters.Data;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using ImGuiNET;

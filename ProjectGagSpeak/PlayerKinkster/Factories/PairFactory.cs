@@ -1,21 +1,21 @@
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Network;
 
-namespace GagSpeak.PlayerData.Factories;
+namespace GagSpeak.Kinksters.Factories;
 
 public class PairFactory
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
     private readonly PairHandlerFactory _cachedPlayerFactory;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly CosmeticService _cosmetics;
 
     public PairFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
-        PairHandlerFactory cachedPlayerFactory, ServerConfigurationManager serverConfigs, 
+        PairHandlerFactory cachedPlayerFactory, ServerConfigManager serverConfigs, 
         CosmeticService cosmetics)
     {
         _loggerFactory = loggerFactory;

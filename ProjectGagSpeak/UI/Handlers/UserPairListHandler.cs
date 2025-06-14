@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Components;
@@ -26,14 +26,14 @@ public class UserPairListHandler
     private readonly PairManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
-    private readonly MainConfigService _configService;
+    private readonly MainConfig _configService;
 
     private Pair? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
         PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
-        MainConfigService configService)
+        MainConfig configService)
     {
         _logger = logger;
         _mediator = mediator;
@@ -99,7 +99,7 @@ public class UserPairListHandler
             foreach (var item in _drawFolders)
             {
                 // draw the content
-                if (item is DrawFolderBase folderBase && folderBase.ID == Constants.CustomAllTag && _configService.Config.ShowOfflineUsersSeparately) 
+                if (item is DrawFolderBase folderBase && folderBase.ID == Constants.CustomAllTag && _configService.Current.ShowOfflineUsersSeparately) 
                     continue;
                 // draw folder if not all tag.
                 item.Draw();
@@ -214,12 +214,12 @@ public class UserPairListHandler
         // the alphabetical sort function of the pairs.
         string? AlphabeticalSort(Pair u)
             => !string.IsNullOrEmpty(u.PlayerName)
-                    ? (_configService.Config.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
+                    ? (_configService.Current.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
                     : u.GetNickname() ?? u.UserData.AliasOrUID;
 
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)
         bool FilterOnlineOrPausedSelf(Pair u)
-            => u.IsOnline || !u.IsOnline && !_configService.Config.ShowOfflineUsersSeparately || u.UserPair.OwnPerms.IsPaused;
+            => u.IsOnline || !u.IsOnline && !_configService.Current.ShowOfflineUsersSeparately || u.UserPair.OwnPerms.IsPaused;
 
         bool FilterPairedOrPausedSelf(Pair u)
              => u.IsOnline || !u.IsOnline || u.UserPair.OwnPerms.IsPaused;
@@ -243,7 +243,7 @@ public class UserPairListHandler
 
 
         // if we wish to display our visible users separately, then do so.
-        if (_configService.Config.ShowVisibleUsersSeparately)
+        if (_configService.Current.ShowVisibleUsersSeparately)
         {
             // display all visible pairs, without filter
             var allVisiblePairs = ImmutablePairList(allPairs
@@ -267,7 +267,7 @@ public class UserPairListHandler
 
 
         // if we want to show offline users seperately,
-        if (_configService.Config.ShowOfflineUsersSeparately)
+        if (_configService.Current.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
             _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UI);

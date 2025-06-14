@@ -2,6 +2,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.Utils.Enums;
@@ -9,15 +10,18 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Collections.Immutable;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Handlers;
 
-public sealed partial class TraitsHandler : DisposableMediatorSubscriberBase
+// what is in here is service behavior...
+public class TraitsHandler : DisposableMediatorSubscriberBase
 {
-    private readonly ClientMonitor _player;
+    private readonly TraitsCache _cache;
+    private readonly PlayerData _player;
 
-    public TraitsHandler(ILogger<HardcoreHandler> logger, GagspeakMediator mediator,
-        ClientMonitor monitor) : base(logger, mediator)
+    public TraitsHandler(ILogger<TraitsHandler> logger, GagspeakMediator mediator,
+        TraitsCache cache, PlayerData monitor) : base(logger, mediator)
     {
+        _cache = cache;
         _player = monitor;
 
         Mediator.Subscribe<JobChangeMessage>(this, msg => OnJobChange(msg.jobId));
@@ -69,7 +73,7 @@ public sealed partial class TraitsHandler : DisposableMediatorSubscriberBase
                     continue;
 
                 // if unable to find the properties for this item, ignore it.
-                if (!BannedActions.TryGetValue(slot->CommandId, out var props))
+                if (!_cache.BannedActions.TryGetValue(slot->CommandId, out var props))
                     continue;
 
                 // Apply the first matching trait override
@@ -105,7 +109,7 @@ public sealed partial class TraitsHandler : DisposableMediatorSubscriberBase
     private void OnJobChange(uint jobId)
     {
         Logger.LogInformation($"Job Changed to [{((JobType)jobId)}], recalculating Banned Actions.");
-        BannedActions = (JobType)jobId switch
+        _cache.UpdateBannedActions((JobType)jobId switch
         {
             JobType.ADV => RestrictedActions.Adventurer,
             JobType.GLA => RestrictedActions.Gladiator,
@@ -151,6 +155,8 @@ public sealed partial class TraitsHandler : DisposableMediatorSubscriberBase
             JobType.VPR => RestrictedActions.Viper,
             JobType.PCT => RestrictedActions.Pictomancer,
             _ => ImmutableDictionary<uint, Traits>.Empty,
-        };
+        });
+        // Update the slots based on the new job.
+        UpdateSlots();
     }
 }

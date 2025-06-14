@@ -6,8 +6,8 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.CustomCombos.EditorCombos;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.CustomCombos.Editor;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services;
 using GagSpeak.UpdateMonitoring;
 using GagspeakAPI.Data;
@@ -43,7 +43,7 @@ public sealed class AliasItemDrawer
     public AliasItemDrawer(
         ILogger<AliasItemDrawer> logger,
         MoodleDrawer moodleDrawer,
-        IconDisplayer moodleDisplayer,
+        MoodleIcons moodleDisplayer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -251,7 +251,7 @@ public sealed class AliasItemDrawer
                     aliasItem.InputCommand = inputText;
         }
 
-        var ipc = MoodleHandler.IpcData;
+        var ipc = MoodleCache.IpcData;
         foreach (var triggerAction in aliasItem.Actions)
         {
             switch (triggerAction)

@@ -1,10 +1,10 @@
 using Dalamud.Utility;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State;
+using GagSpeak.State.Listeners;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GagSpeak.PlayerData.Storage;
+namespace GagSpeak.Kinksters.Storage;
 
 public class ModPresetStorage : List<ModPresetContainer>
 {

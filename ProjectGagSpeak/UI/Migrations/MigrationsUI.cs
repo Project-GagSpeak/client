@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -14,13 +14,13 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 {
     private readonly MigrationTabs _tabMenu = new MigrationTabs();
     private readonly AccountInfoExchanger _infoExchanger;
-    private readonly MainConfigService _mainConfig;
+    private readonly MainConfig _mainConfig;
     private readonly CosmeticService _cosmetics;
     private bool ThemePushed = false;
 
     // Come back to this when we actually have everything working properly.
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
-        AccountInfoExchanger infoExchanger, MainConfigService config,
+        AccountInfoExchanger infoExchanger, MainConfig config,
         CosmeticService cosmetics) : base(logger, mediator, "GagSpeak Migrations")
     {
         _infoExchanger = infoExchanger;

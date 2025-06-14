@@ -1,6 +1,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.ChatMessages;
+using GagSpeak.GameInternals.Agents;
 using GagSpeak.Services.Events;
 using GagspeakAPI.Dto;
 using GagspeakAPI.Network;
@@ -43,12 +44,6 @@ public record OnlinePairsLoadedMessage : MessageBase;
 
 /// <summary> Contains the message content of a Global Chat message. </summary>
 public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : MessageBase;
-
-/// <summary> Informs other places in GagSpeak about each important chat message fired. </summary>
-/// <param name="Channel"> The channel the message was sent to. </param>
-/// <param name="Message"> The message that was sent. </param>
-/// <remarks> This is mostly for death-roll detection. </remarks>
-public record ClientSentChat(ChatChannel.Channels Channel, string Message) : MessageBase;
 
 /// <summary> Fires once we trigger the safeword command. </summary>
 /// <param name="UID"> The UID of the user we want to safeword for. </param>

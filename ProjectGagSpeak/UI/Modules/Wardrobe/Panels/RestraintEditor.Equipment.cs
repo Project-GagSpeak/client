@@ -1,6 +1,6 @@
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.State.Listeners;
 using GagSpeak.RestraintSets;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;

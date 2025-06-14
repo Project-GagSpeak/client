@@ -4,7 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
 
-namespace GagSpeak.Hardcore.ForcedStay;
+namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonBaseString
 {
     public static SeString SeString(AddonSelectString* addon)

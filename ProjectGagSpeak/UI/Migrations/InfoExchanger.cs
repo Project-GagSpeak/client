@@ -1,5 +1,5 @@
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.CkCommons.Gui.Components;

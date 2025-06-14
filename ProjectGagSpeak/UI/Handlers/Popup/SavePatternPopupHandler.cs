@@ -1,8 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.CkCommons.Gui;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;

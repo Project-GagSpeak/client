@@ -1,6 +1,6 @@
 using GagSpeak.Services.Mediator;
 
-namespace GagSpeak.Interop.Ipc;
+namespace GagSpeak.Interop;
 
 /// <summary>
 /// The primary manager for all IPC calls.

@@ -1,5 +1,5 @@
 using Buttplug.Client;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data;
 

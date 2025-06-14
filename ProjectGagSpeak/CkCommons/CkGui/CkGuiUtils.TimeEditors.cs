@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using FFXIVClientStructs.FFXIV.Component.Text;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services;
 using ImGuiNET;
 using OtterGui.Raii;

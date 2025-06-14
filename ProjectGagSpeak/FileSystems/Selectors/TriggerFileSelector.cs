@@ -7,8 +7,8 @@ using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerState.Models;
-using GagSpeak.PlayerState.Toybox;
+using GagSpeak.State;
+using GagSpeak.State.Toybox;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui;
@@ -22,7 +22,7 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Drawers;
 using GagSpeak.CkCommons.Widgets;
 
-namespace GagSpeak.Triggers;
+namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerFileSelector.TriggerState>, IMediatorSubscriber, IDisposable

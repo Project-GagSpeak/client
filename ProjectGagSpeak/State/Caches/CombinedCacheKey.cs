@@ -1,4 +1,4 @@
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Caches;
 
 /// <summary>
 ///     A struct that combines the key attribute of a Manager, with the layerIdx of an item.

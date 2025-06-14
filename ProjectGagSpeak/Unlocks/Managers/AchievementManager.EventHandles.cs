@@ -1,13 +1,12 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.ChatMessages;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.GameInternals;
+using GagSpeak.GameInternals.Structs;
+using GagSpeak.State;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
@@ -97,14 +96,14 @@ public partial class AchievementManager
 
     private void CheckOnZoneSwitchEnd()
     {
-        Logger.LogTrace("Current Territory Id: " + _clientMonitor.TerritoryId, LoggerType.AchievementEvents);
-        if(_clientMonitor.InMainCity)
+        Logger.LogTrace("Current Territory Id: " + _player.TerritoryId, LoggerType.AchievementEvents);
+        if(_player.InMainCity)
             (LatestCache.SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
-        var territory = _clientMonitor.TerritoryId;
+        var territory = _player.TerritoryId;
 
         // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
-        if (territory is 939 && !_clientMonitor.InPvP)
+        if (territory is 939 && !_player.InPvP)
             (LatestCache.SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         else
             (LatestCache.SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -148,11 +147,11 @@ public partial class AchievementManager
         if (floor is null) 
             return;
 
-        var deepDungeonType = _clientMonitor.GetDeepDungeonType();
+        var deepDungeonType = _player.GetDeepDungeonType();
         if (deepDungeonType is null) 
             return;
 
-        if (_clientMonitor.PartySize is 1)
+        if (_player.PartySize is 1)
             (LatestCache.SaveData.Achievements[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         // start this under any condition.
         (LatestCache.SaveData.Achievements[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -205,7 +204,7 @@ public partial class AchievementManager
     private void OnDutyStart(object? sender, ushort e)
     {
         Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
-        if (_clientMonitor.InPvP)
+        if (_player.InPvP)
             return;
 
         (LatestCache.SaveData.Achievements[Achievements.KinkyExplorer.Id] as ConditionalAchievement)?.CheckCompletion();
@@ -213,11 +212,11 @@ public partial class AchievementManager
         (LatestCache.SaveData.Achievements[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         (LatestCache.SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.BeginConditionalTask(25); // 10s delay.
 
-        if (_clientMonitor.ClientPlayer.ClassJobRole() is ActionRoles.Healer)
+        if (_player.ClientPlayer.ClassJobRole() is ActionRoles.Healer)
             (LatestCache.SaveData.Achievements[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
 
         // If the party size is 8, let's check for the trials.
-        if(_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
+        if(_player.PartySize is 8 && _player.Level >= 90)
         {
             (LatestCache.SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
             (LatestCache.SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -230,7 +229,7 @@ public partial class AchievementManager
 
     private void OnDutyEnd(object? sender, ushort e)
     {
-        if (_clientMonitor.InPvP)
+        if (_player.InPvP)
             return;
         Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
         if ((LatestCache.SaveData.Achievements[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
@@ -245,7 +244,7 @@ public partial class AchievementManager
         // Trial has ended, check for completion.
         if ((LatestCache.SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
+            if (_player.PartySize is 8 && _player.Level >= 90)
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -253,7 +252,7 @@ public partial class AchievementManager
         
         if ((LatestCache.SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
+            if (_player.PartySize is 8 && _player.Level >= 90)
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -261,7 +260,7 @@ public partial class AchievementManager
         
         if ((LatestCache.SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_clientMonitor.PartySize is 8 && _clientMonitor.Level >= 90)
+            if (_player.PartySize is 8 && _player.Level >= 90)
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (LatestCache.SaveData.Achievements[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -503,7 +502,7 @@ public partial class AchievementManager
         // Set is being enabled.
         if (isEnabling)
         {
-            var territory = _clientMonitor.TerritoryId;
+            var territory = _player.TerritoryId;
             // Check to see if we qualify for starting any world tour conditions.
             if (LatestCache.SaveData.VisitedWorldTour.ContainsKey(territory) && LatestCache.SaveData.VisitedWorldTour[territory] is false)
             {
@@ -568,7 +567,7 @@ public partial class AchievementManager
             (LatestCache.SaveData.Achievements[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(0);
 
             // Validate the world tour achievement.
-            var territory = _clientMonitor.TerritoryId;
+            var territory = _player.TerritoryId;
             // Ensure it has been longer than 2 minutes since the recorded time. (in UTC)
             if (LatestCache.SaveData.VisitedWorldTour.ContainsKey(territory) && LatestCache.SaveData.VisitedWorldTour[territory] is false)
             {
@@ -725,7 +724,7 @@ public partial class AchievementManager
                     (LatestCache.SaveData.Achievements[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
 
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
-                    if(_clientMonitor.TerritoryId is 939 && (LatestCache.SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
+                    if(_player.TerritoryId is 939 && (LatestCache.SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (LatestCache.SaveData.Achievements[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
@@ -761,14 +760,14 @@ public partial class AchievementManager
         (LatestCache.SaveData.Achievements[Achievements.TriggerHappy.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
-    private void ClientHardcoreFollowChanged(string enactorUID, NewState newState)
+    private void ClientHardcoreFollowChanged(string enactorUID, bool newState)
     {
         Logger.LogDebug("We just had another pair set our ForceFollow to " + newState, LoggerType.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
         // if the new state is enabled, we need to begin tracking on the relevant achievements.
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             // begin tracking for the world tour. (if we dont meet all conditions it wont start anyways so dont worry about it.
             (LatestCache.SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
@@ -778,9 +777,8 @@ public partial class AchievementManager
             (LatestCache.SaveData.Achievements[Achievements.GettingStepsIn.Id] as TimeRequiredConditionalAchievement)?.StartTask();
             (LatestCache.SaveData.Achievements[Achievements.WalkiesLover.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         }
-
         // if anyone is disabling us, run a completion check. Failure to meet required time will result in resetting the task.
-        if (newState is NewState.Disabled)
+        else
         {
             // halt tracking for walk of shame if any requirements are no longer met.
             (LatestCache.SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -795,14 +793,14 @@ public partial class AchievementManager
         }
     }
 
-    private void PairHardcoreFollowChanged(string enactorUID, string affectedUID, NewState newState)
+    private void PairHardcoreFollowChanged(string enactorUID, string affectedUID, bool newState)
     {
         Logger.LogDebug("You have set a pairs forcedFollow to " + newState, LoggerType.AchievementInfo);
         // Check to see if we are the one toggling this or if it was someone else.
         var enactorWasSelf = enactorUID == MainHub.UID;
 
         // if the new state is enabled but we are not the enactor, we should ignore startTracking period.
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             // dont allow tracking for the enabled state by any pairs that are not us.
             if (!enactorWasSelf)
@@ -819,9 +817,7 @@ public partial class AchievementManager
             (LatestCache.SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
             (LatestCache.SaveData.Achievements[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
         }
-
-        // if the new state is disabled
-        if (newState is NewState.Disabled)
+        else
         {
             // it doesn't madder who the enactor was, we should halt tracking for any progress made once that pair is disabled.
             (LatestCache.SaveData.Achievements[Achievements.ForcedFollow.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
@@ -829,42 +825,41 @@ public partial class AchievementManager
         }
     }
 
-    private void ClientHardcoreEmoteStateChanged(string enactorUID, NewState newState)
+    private void ClientHardcoreEmoteStateChanged(string enactorUID, bool newState)
     {
         Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LoggerType.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             (LatestCache.SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         }
-
-        if (newState is NewState.Disabled)
+        else
         {
             (LatestCache.SaveData.Achievements[Achievements.LivingFurniture.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
         }
     }
 
-    private void PairHardcoreEmoteChanged(string enactorUID, string affectedUID, NewState newState)
+    private void PairHardcoreEmoteChanged(string enactorUID, string affectedUID, bool newState)
     {
         // Nothing here currently.
     }
 
-    private void ClientHardcoreStayChanged(string enactorUID, NewState newState)
+    private void ClientHardcoreStayChanged(string enactorUID, bool newState)
     {
         Logger.LogDebug("We just had another pair set our ForceStay to " + newState, LoggerType.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
         // and we have been ordered to start being forced to stay:
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             (LatestCache.SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.StartTask();
             (LatestCache.SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.StartTask();
             (LatestCache.SaveData.Achievements[Achievements.PerfectHousePet.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         }
-        else if(newState is NewState.Disabled)
+        else
         {
             (LatestCache.SaveData.Achievements[Achievements.OfDomesticDiscipline.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
             (LatestCache.SaveData.Achievements[Achievements.HomeboundSubmission.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -872,18 +867,18 @@ public partial class AchievementManager
         }
     }
 
-    private void PairHardcoreStayChanged(string enactorUID, string affectedUID, NewState newState)
+    private void PairHardcoreStayChanged(string enactorUID, string affectedUID, bool newState)
     {
         // Nothing currently.
     }
 
-    private void ClientHardcoreBlindfoldChanged(string enactorUID, NewState newState)
+    private void ClientHardcoreBlindfoldChanged(string enactorUID, bool newState)
     {
         Logger.LogDebug("We just had another pair set our ForceBlindfold to " + newState, LoggerType.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             // always check if walk of shame can be started.
             (LatestCache.SaveData.Achievements[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
@@ -894,8 +889,7 @@ public partial class AchievementManager
             // Startup timed ones.
             (LatestCache.SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         }
-
-        if (newState is NewState.Disabled)
+        else
         {
             (LatestCache.SaveData.Achievements[Achievements.WhoNeedsToSee.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
 
@@ -916,7 +910,7 @@ public partial class AchievementManager
     /// <param name="state"> If the hardcore action began or ended. </param>
     /// <param name="affectedPairUID"> who the target of the action is. </param>
     /// <param name="enactorUID"> Who Called the action. </param>
-    private void OnHardcoreAction(InteractionType actionKind, NewState state, string enactorUID, string affectedPairUID)
+    private void OnHardcoreAction(InteractionType actionKind, bool state, string enactorUID, string affectedPairUID)
     {
         Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementInfo);
         
@@ -959,11 +953,11 @@ public partial class AchievementManager
     }
 
 
-    private void OnChatMessage(ChatChannel.Channels channel)
+    private void OnChatMessage(InputChannel channel)
     {
         (LatestCache.SaveData.Achievements[Achievements.HelplessDamsel.Id] as ConditionalAchievement)?.CheckCompletion();
 
-        if (channel is ChatChannel.Channels.Say)
+        if (channel is InputChannel.Say)
         {
             (LatestCache.SaveData.Achievements[Achievements.OfVoicelessPleas.Id] as ProgressAchievement)?.IncrementProgress();
             (LatestCache.SaveData.Achievements[Achievements.DefianceInSilence.Id] as ProgressAchievement)?.IncrementProgress();
@@ -971,11 +965,11 @@ public partial class AchievementManager
             (LatestCache.SaveData.Achievements[Achievements.TrainedInSubSpeech.Id] as ProgressAchievement)?.IncrementProgress();
 
         }
-        else if (channel is ChatChannel.Channels.Yell)
+        else if (channel is InputChannel.Yell)
         {
             (LatestCache.SaveData.Achievements[Achievements.PublicSpeaker.Id] as ProgressAchievement)?.IncrementProgress();
         }
-        else if (channel is ChatChannel.Channels.Shout)
+        else if (channel is InputChannel.Shout)
         {
             (LatestCache.SaveData.Achievements[Achievements.FromCriesOfHumility.Id] as ProgressAchievement)?.IncrementProgress();
         }
@@ -1106,9 +1100,9 @@ public partial class AchievementManager
         (LatestCache.SaveData.Achievements[Achievements.EscapingIsNotEasy.Id] as ConditionalAchievement)?.CheckCompletion();
     }
 
-    private void OnVibratorToggled(NewState newState)
+    private void OnVibratorToggled(bool newState)
     {
-        if (newState is NewState.Enabled)
+        if (newState)
         {
             (LatestCache.SaveData.Achievements[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
             (LatestCache.SaveData.Achievements[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
@@ -1137,11 +1131,11 @@ public partial class AchievementManager
     {
 
         // Check if client player is null
-        if (!_clientMonitor.IsPresent)
+        if (!_player.IsPresent)
             return;
 
         // Return if not in the gold saucer
-        if (_clientMonitor.TerritoryId is not 144)
+        if (_player.TerritoryId is not 144)
             return;
 
         // Check if the GagReflex achievement is already completed
@@ -1165,7 +1159,7 @@ public partial class AchievementManager
         }
 
         // Check if any effects were a knockback effect targeting the local player
-        if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == _clientMonitor.ObjectId))
+        if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == _player.ObjectId))
         {
             // Increment progress if the achievement is not yet completed
             gagReflexAchievement.IncrementProgress();

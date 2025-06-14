@@ -3,7 +3,7 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Raii;
-using GagSpeak.PlayerState.Models;
+using GagSpeak.State;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;

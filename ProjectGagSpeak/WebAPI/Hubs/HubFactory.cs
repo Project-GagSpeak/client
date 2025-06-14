@@ -13,13 +13,13 @@ namespace GagSpeak.WebAPI;
 public class HubFactory : MediatorSubscriberBase
 {
     private readonly ILoggerProvider _loggingProvider;
-    private readonly ServerConfigurationManager _serverConfigs;
+    private readonly ServerConfigManager _serverConfigs;
     private readonly TokenProvider _tokenProvider;
     private HubConnection? _instance;
     private bool _isDisposed = false;
 
     public HubFactory(ILogger<HubFactory> logger, GagspeakMediator gagspeakMediator,
-        ServerConfigurationManager serverConfigManager, TokenProvider tokenProvider, 
+        ServerConfigManager serverConfigManager, TokenProvider tokenProvider, 
         ILoggerProvider pluginLog) : base(logger, gagspeakMediator)
     {
         _serverConfigs = serverConfigManager;

@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.PlayerState.Toybox;
+using GagSpeak.State.Toybox;
 using ImGuiNET;
 using ImPlotNET;
 

@@ -1,6 +1,8 @@
 namespace GagSpeak.GameInternals;
 
-public enum CameraControlMode {
+public enum CameraControlMode : int
+{
+    Unknown = -1,
     FirstPerson = 0,
     ThirdPerson = 1
 }

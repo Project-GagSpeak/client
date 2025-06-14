@@ -1,35 +1,36 @@
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinkster.Pairs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.Services;
 
-// handles the global chat and pattern discovery social features.
+/// <summary>
+///     This class isnt really a 'service' that much. Should probably have other handlers for which chat is displayed.
+///     Polish this up more when we integrate the vibe rooms and stuff i guess.
+/// </summary>
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
     private readonly PairManager _pairManager;
     private readonly CosmeticService _cosmetics;
-    private readonly string _configDirectory;
-    private const string _chatlogFile = "global-chat-recent.log";
-    private string ChatLogFilePath => Path.Combine(_configDirectory, _chatlogFile);
-    public DiscoverService(string configDirectory, ILogger<DiscoverService> logger,
-        GagspeakMediator mediator, MainHub mainHub, MainMenuTabs tabMenu,
-        PairManager pairManager, CosmeticService cosmetics) : base(logger, mediator)
+    private string ChatFilePath => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
+    public DiscoverService(ILogger<DiscoverService> logger, GagspeakMediator mediator, 
+        MainHub mainHub, MainMenuTabs tabMenu, PairManager pairManager,
+        CosmeticService cosmetics) : base(logger, mediator)
     {
-        _configDirectory = configDirectory;
         _hub = mainHub;
         _tabMenu = tabMenu;
         _pairManager = pairManager;
         _cosmetics = cosmetics;
 
         // Create a new chat log
-        GlobalChat = new ChatLog(_hub, Mediator, _cosmetics);
+        GlobalChat = new InternalChatlog(_hub, Mediator, _cosmetics);
 
         // Load the chat log
         LoadChatLog(GlobalChat);
@@ -44,7 +45,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             }
         });
     }
-    public static ChatLog GlobalChat { get; private set; }
+    public static InternalChatlog GlobalChat { get; private set; }
     public static bool CreatedSameDay => DateTime.UtcNow.DayOfYear == GlobalChat.TimeCreated.DayOfYear;
     public static int NewMessages { get; private set; } = 0;
 
@@ -57,7 +58,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
 
     private void AddWelcomeMessage()
     {
-        GlobalChat.AddMessage(new ChatMessage(new("System"), "System", "Welcome to the GagSpeak Global Chat!. " +
+        GlobalChat.AddMessage(new InternalChatMessage(new("System"), "System", "Welcome to the GagSpeak Global Chat!. " +
             "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi!"));
     }
 
@@ -87,7 +88,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
             SenderName = $"Mistress Cordy";
 
         // construct the chat message struct to add.
-        var msgToAdd = new ChatMessage(userData, SenderName, msg.Message.Message);
+        var msgToAdd = new InternalChatMessage(userData, SenderName, msg.Message.Message);
 
         GlobalChat.AddMessage(msgToAdd);
     }
@@ -107,13 +108,13 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         // Encode the compressed string to base64
         var base64ChatLogData = Convert.ToBase64String(compressed);
         // Take this base64data and write it out to the json file.
-        File.WriteAllText(ChatLogFilePath, base64ChatLogData);
+        File.WriteAllText(ChatFilePath, base64ChatLogData);
     }
 
-    public void LoadChatLog(ChatLog chatLog)
+    public void LoadChatLog(InternalChatlog chatLog)
     {
         // if the file does not exist, return
-        if (!File.Exists(ChatLogFilePath))
+        if (!File.Exists(ChatFilePath))
         {
             // Add the basic welcome message and return.
             Logger.LogInformation("Chat log file does not exist. Adding welcome message.", LoggerType.GlobalChat);
@@ -126,7 +127,7 @@ public class DiscoverService : DisposableMediatorSubscriberBase
         try
         {
             // The file was valid, so attempt to load in the data.
-            var base64logFile = File.ReadAllText(ChatLogFilePath);
+            var base64logFile = File.ReadAllText(ChatFilePath);
             // Decompress the log data
             var bytes = Convert.FromBase64String(base64logFile);
             // decompress it from string into the format we want.
@@ -163,9 +164,9 @@ public class DiscoverService : DisposableMediatorSubscriberBase
 public struct SerializableChatLog
 {
     public DateTime DateStarted { get; set; }
-    public List<ChatMessage> Messages { get; set; }
+    public List<InternalChatMessage> Messages { get; set; }
 
-    public SerializableChatLog(DateTime dateStarted, List<ChatMessage> messages)
+    public SerializableChatLog(DateTime dateStarted, List<InternalChatMessage> messages)
     {
         DateStarted = dateStarted;
         Messages = messages;

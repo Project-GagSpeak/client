@@ -3,19 +3,19 @@ using GagSpeak.Services.Configs;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Struct;
 
-namespace GagSpeak.PlayerState.Visual;
+namespace GagSpeak.State.Handlers;
 
 /// <summary> Handles GagSpeaks Arousal system. Stores a static and non-static arousal meter. </summary> 
 /// <remarks> The higher the meter, the more likely certain events are to occur </remarks>
-public sealed class ArousalHandler : IDisposable
+public sealed class ArousalManager : IDisposable
 {
-    private readonly ILogger<ArousalHandler> _logger;
-    private readonly MainConfigService _config;
+    private readonly ILogger<ArousalManager> _logger;
+    private readonly MainConfig _config;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
 
-    public ArousalHandler(ILogger<ArousalHandler> logger, MainConfigService config)
+    public ArousalManager(ILogger<ArousalManager> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;

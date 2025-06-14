@@ -1,6 +1,6 @@
 using GagSpeak.Interop.Ipc;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring;
@@ -8,8 +8,9 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
+using ProjectGagSpeak.State.Managers;
 
-namespace GagSpeak.PlayerState.Listener;
+namespace GagSpeak.State.Listeners;
 
 /// <summary>
 ///     Handles all incoming events from the GagSpeakHub, and potentially other sources
@@ -28,7 +29,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     public VisualStateListener(
         ILogger<VisualStateListener> logger,
         GagspeakMediator mediator,
-        MainConfigService config,
+        MainConfig config,
         IpcManager interop,
         PairManager pairs,
         RestraintManager restraints,
@@ -36,7 +37,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         GagRestrictionManager gags,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
-        ClientMonitor clientMonitor,
+        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {

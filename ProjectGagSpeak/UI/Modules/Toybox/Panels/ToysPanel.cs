@@ -3,9 +3,9 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Gui.UiRemote;
 using GagSpeak.CkCommons;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Storage;
-using GagSpeak.PlayerState.Controllers;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Storage;
+using GagSpeak.State.Controllers;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -27,7 +27,7 @@ public class ToysPanel
     private readonly GagspeakMediator _mediator;
     private readonly KinksterRequests _globals;
     private readonly SexToyManager _manager;
-    private readonly MainConfigService _clientConfigs;
+    private readonly MainConfig _clientConfigs;
     private readonly ServerConfigService _serverConfigs;
     private readonly TutorialService _guides;
 
@@ -36,7 +36,7 @@ public class ToysPanel
         GagspeakMediator mediator,
         KinksterRequests playerData,
         SexToyManager toysManager,
-        MainConfigService clientConfigs,
+        MainConfig clientConfigs,
         ServerConfigService serverConfigs,
         TutorialService guides)
     {
@@ -87,13 +87,13 @@ public class ToysPanel
     {
         // display a dropdown for the type of vibrator to use
         ImGui.SetNextItemWidth(125f);
-        if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.Config.VibratorMode.ToString()))
+        if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.Current.VibratorMode.ToString()))
         {
             foreach (VibratorEnums mode in Enum.GetValues(typeof(VibratorEnums)))
             {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Config.VibratorMode))
+                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Current.VibratorMode))
                 {
-                    _clientConfigs.Config.VibratorMode = mode;
+                    _clientConfigs.Current.VibratorMode = mode;
                     _clientConfigs.Save();
                 }
             }
@@ -117,7 +117,7 @@ public class ToysPanel
         // draw out the list of devices
         ImGui.Separator();
         CkGui.BigText("Connected Device(s)");
-        if (_clientConfigs.Config.VibratorMode == VibratorEnums.Simulated)
+        if (_clientConfigs.Current.VibratorMode == VibratorEnums.Simulated)
         {
             DrawSimulatedVibeInfo();
         }
@@ -131,12 +131,12 @@ public class ToysPanel
     private void DrawSimulatedVibeInfo()
     {
         ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        var vibeType = _clientConfigs.Config.VibeSimAudio;
-        if (ImGui.BeginCombo("Vibe Sim Audio##SimVibeAudioType", _clientConfigs.Config.VibeSimAudio.ToString()))
+        var vibeType = _clientConfigs.Current.VibeSimAudio;
+        if (ImGui.BeginCombo("Vibe Sim Audio##SimVibeAudioType", _clientConfigs.Current.VibeSimAudio.ToString()))
         {
             foreach (VibeSimType mode in Enum.GetValues(typeof(VibeSimType)))
             {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Config.VibeSimAudio))
+                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Current.VibeSimAudio))
                 {
                     _manager.UpdateVibeSimAudioType(mode);
                 }

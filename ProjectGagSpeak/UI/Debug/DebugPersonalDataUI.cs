@@ -3,9 +3,9 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Handlers;
 using GagSpeak.CkCommons.Gui.Wardrobe;
-using GagSpeak.PlayerData.Data;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Data;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.State.Listeners;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -36,7 +36,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
-        MainConfigService config,
+        MainConfig config,
         IdDisplayHandler nameDisplay,
         PairManager pairs,
         CosmeticService icon)

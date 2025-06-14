@@ -1,6 +1,8 @@
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.PlayerData.Pairs;
-using GagSpeak.PlayerState.Visual;
+using GagSpeak.Kinksters.Pairs;
+using GagSpeak.Services;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Listeners;
 using GagSpeak.UpdateMonitoring;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -16,8 +18,8 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private int _maxPresetCount => _pairRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
-    public OwnMoodlePresetToPairCombo(float scale, IconDisplayer disp, Pair pair, MainHub hub, ILogger log)
-        : base(scale, disp, pair, hub, log, () => [ ..MoodleHandler.IpcData.Presets.Values.OrderBy(x => x.Title) ])
+    public OwnMoodlePresetToPairCombo(float scale, MoodleIcons disp, Pair pair, MainHub hub, ILogger log)
+        : base(scale, disp, pair, hub, log, () => [ ..MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title) ])
     { }
 
     protected override bool DisableCondition()
@@ -38,7 +40,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
         for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
         {
             var status = moodlePreset.Statuses[i];
-            if (!MoodleHandler.IpcData.Statuses.TryGetValue(status, out var info))
+            if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
             {
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + IconSize.X);
                 continue;
@@ -46,7 +48,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
 
             _statuses.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
             // get the dispelable moodle if any.
-            var title = MoodleHandler.IpcData.Statuses.GetValueOrDefault(info.StatusOnDispell).Title ?? "Unknown";
+            var title = MoodleCache.IpcData.Statuses.GetValueOrDefault(info.StatusOnDispell).Title ?? "Unknown";
             DrawItemTooltip(info, title);
 
             if (++iconsDrawn < moodlePreset.Statuses.Count)
@@ -61,11 +63,11 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
         var statuses = new List<MoodlesStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
         {
-            if (MoodleHandler.IpcData.Statuses.TryGetValue(guid, out var s))
+            if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
                 statuses.Add(s);
         }
         // Check application.
-        return IconDisplayer.CanApplyPairStatus(_pairRef.PairPerms, statuses);
+        return PermissionHelper.CanApplyPairStatus(_pairRef.PairPerms, statuses);
     }
 
     protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)

@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerData.Pairs;
+using GagSpeak.Kinksters.Pairs;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Collections.Immutable;
@@ -14,7 +14,7 @@ public class DrawFolderTag : DrawFolderBase
         string id,
         IImmutableList<DrawUserPair> drawPairs, 
         IImmutableList<Pair> allPairs,
-        ServerConfigurationManager configs) : base(id, drawPairs, allPairs, configs)
+        ServerConfigManager configs) : base(id, drawPairs, allPairs, configs)
     { }
 
     protected override bool RenderIfEmpty => _id switch
