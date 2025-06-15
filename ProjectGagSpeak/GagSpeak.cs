@@ -152,13 +152,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new GagSpeakLoc(s.GetRequiredService<ILogger<GagSpeakLoc>>(), s.GetRequiredService<Dalamud.Localization>(),
             s.GetRequiredService<MainConfig>(), s.GetRequiredService<TutorialService>(), pi))
 
-
-        // CkCommons
-
-
-        // CustomCombos
-
-
         // File System
         .AddSingleton((s) => new GagRestrictionFileSelector(s.GetRequiredService<ILogger<GagRestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<GagFileSystem>(), ks))
@@ -215,16 +208,15 @@ public static class GagSpeakServiceExtensions
         .AddSingleton((s) => new PairManager(s.GetRequiredService<ILogger<PairManager>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<PairFactory>(), s.GetRequiredService<MainConfig>(), s.GetRequiredService<ServerConfigManager>(), cm))
 
-        // Services
-        /// ---- Likely skip over the config section since we define it below.
+        // Services (Deathroll)
         .AddSingleton((s) => new DeathRollService(s.GetRequiredService<ILogger<DeathRollService>>(), s.GetRequiredService<KinksterRequests>(),
             s.GetRequiredService<PlayerData>(), s.GetRequiredService<TriggerManager>(), s.GetRequiredService<TriggerActionService>(), cg))
-
+        // Services (Mediator)
         .AddSingleton<GagspeakMediator>()
-
+        // Services (KinkPlates)
         .AddSingleton<KinkPlateFactory>()
         .AddSingleton<KinkPlateService>()
-
+        // Services (Player Control)
         .AddSingleton((s) => new AutoPromptController(s.GetRequiredService<ILogger<AutoPromptController>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<MainConfig>(), s.GetRequiredService<GlobalPermissions>(), s.GetRequiredService<PlayerData>(), s.GetRequiredService<SelectStringPrompt>(), 
             s.GetRequiredService<YesNoPrompt>(), s.GetRequiredService<RoomSelectPrompt>(), s.GetRequiredService<KeystateController>(), s.GetRequiredService<MovementController>(), ot, tm))
@@ -235,15 +227,15 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<MovementController>(), ks))
         .AddSingleton<MovementController>()
         .AddSingleton<OverlayController>()
-
+        // Services (Textures)
         .AddSingleton((s) => new CosmeticService(s.GetRequiredService<ILogger<CosmeticService>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<OnFrameworkService>(), pi, tp))
         .AddSingleton((s) => new MoodleIcons(s.GetRequiredService<ILogger<MoodleIcons>>(), dm, tp))
-
+        // Services (Tutorial)
         .AddSingleton<TutorialService>()
-
+        // Services (UI)
         .AddSingleton((s) => new UiFontService(pi))
-
+        // Services [Other]
         .AddSingleton<AchievementsService>()
         .AddSingleton<ArousalService>()
         .AddSingleton((s) => new ChatService(s.GetRequiredService<ILogger<ChatService>>(), s.GetRequiredService<GagspeakMediator>(),
@@ -302,8 +294,11 @@ public static class GagSpeakServiceExtensions
 
         // State (Listeners)
         .AddSingleton<CustomizePlusListener>()
-        .AddSingleton<GlamourListener>()
-        .AddSingleton<ModListener>()
+        .AddSingleton((s) => new GlamourListener(s.GetRequiredService<ILogger<GlamourListener>>(), s.GetRequiredService<IpcCallerGlamourer>(),
+            s.GetRequiredService<GlamourCache>(), s.GetRequiredService<GlamourHandler>(), s.GetRequiredService<PlayerData>(), pi))
+        .AddSingleton((s) => new ModListener(s.GetRequiredService<ILogger<ModListener>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<IpcCallerPenumbra>(), s.GetRequiredService<ModCache>(), s.GetRequiredService<ModHandler>(),
+            s.GetRequiredService<ModSettingPresetManager>(), pi))
         .AddSingleton<MoodleListener>()
         .AddSingleton<PlayerHpListener>()
         .AddSingleton<PuppeteerListener>()
@@ -405,7 +400,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped((s) => new EquipmentDrawer(s.GetRequiredService<ILogger<EquipmentDrawer>>(), s.GetRequiredService<IpcCallerGlamourer>(),
             s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<FavoritesManager>(), s.GetRequiredService<ItemService>(),
             s.GetRequiredService<TextureService>(), s.GetRequiredService<CosmeticService>(), dm))
-        .AddScoped<TraitsDrawer>()
+        .AddScoped<AttributeDrawer>()
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<PlaybackDrawer>()
@@ -414,6 +409,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PuppeteerHelper>()
         .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
+        // Data distribution should be scoped here, ONLY if no other sources are using it.
 
         // Scoped Factories
         .AddScoped<DrawEntityFactory>()
@@ -471,34 +467,23 @@ public static class GagSpeakServiceExtensions
         // Scoped UI (Publications)
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
         .AddScoped<PublicationsManager>()
-
         // Scoped UI (Achievements)
         .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), pi))
         .AddScoped<AchievementTabs>()
-
-
         // StickyWindow
         .AddScoped<PresetLogicDrawer>()
-
-
         // Scoped Migrations
         .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()
-
-
         // Scoped Profiles
         .AddScoped<WindowMediatorSubscriberBase, KinkPlatePreviewUI>()
         .AddScoped<WindowMediatorSubscriberBase, PopoutKinkPlateUi>()
         .AddScoped<WindowMediatorSubscriberBase, ProfilePictureEditor>()
         .AddScoped<WindowMediatorSubscriberBase, KinkPlateEditorUI>()
         .AddScoped<KinkPlateLight>()
-
-
         // Scoped Remotes
         .AddScoped<WindowMediatorSubscriberBase, RemotePersonal>()
         .AddScoped<WindowMediatorSubscriberBase, RemotePatternMaker>()
-
-
         // Scoped Settings
         .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
         .AddScoped<SettingsHardcore>()
@@ -506,7 +491,6 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<MainHub>(), s.GetRequiredService<MainConfig>(), s.GetRequiredService<ServerConfigManager>(),
             s.GetRequiredService<ConfigFileProvider>(), s.GetRequiredService<PlayerData>()))
         .AddScoped<DebugTab>()
-
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
@@ -515,11 +499,9 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, DebugStorageUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugPersonalDataUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugActiveStateUI>()
-
         // Scoped Services
         .AddScoped((s) => new CommandManager(s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PlayerData>(), s.GetRequiredService<MainConfig>(),
             s.GetRequiredService<PairManager>(), s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<DeathRollService>(), cg, cm))
-        .AddScoped<DataDistributionService>()
         .AddScoped((s) => new TextureService(pi.UiBuilder, dm, tp))
         .AddScoped((s) => new UiService(s.GetRequiredService<ILogger<UiService>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainConfig>(),
             s.GetRequiredService<ServerConfigService>(), s.GetRequiredService<WindowSystem>(), s.GetServices<WindowMediatorSubscriberBase>(), s.GetRequiredService<UiFactory>(),

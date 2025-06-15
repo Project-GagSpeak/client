@@ -1,6 +1,5 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
@@ -9,7 +8,7 @@ using GagSpeak.FileSystems;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagspeakAPI.Data.Interfaces;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -288,7 +287,7 @@ public partial class TriggersPanel
 
     private void DrawLabelWithToggle(Vector2 region, Trigger trigger, bool isEditingItem)
     {
-        bool isHovered = false;
+        var isHovered = false;
         var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Trigger."
             + "--SEP-- Right Click to cancel and exit Editor.";
 

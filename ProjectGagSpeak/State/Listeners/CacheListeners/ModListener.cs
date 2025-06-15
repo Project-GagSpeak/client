@@ -15,7 +15,7 @@ public class ModListener : DisposableMediatorSubscriberBase
     private readonly ModSettingPresetManager _manager;
 
     public ModListener(
-        ILogger<ModHandler> logger,
+        ILogger<ModListener> logger,
         GagspeakMediator mediator,
         IpcCallerPenumbra ipc,
         ModCache cache,

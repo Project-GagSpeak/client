@@ -98,7 +98,7 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         void ModCombo()
         {
-            var change = _modPresets.ModCombo.Draw("##ModSelector", _selectedPreset.Container.DirectoryPath, comboWidth, 1.4f, ImGuiComboFlags.NoArrowButton);
+            var change = _modPresets.ModCombo.Draw("##ModSelector", _selectedPreset.Container.DirectoryPath, comboWidth, 1.4f, CFlags.NoArrowButton);
             if (change && !_selectedPreset.Container.DirectoryPath.Equals(_modPresets.ModCombo.Current?.DirPath))
             {
                 if (_modPresets.ModPresetStorage.FirstOrDefault(mps => mps.DirectoryPath == _modPresets.ModCombo.Current!.DirPath) is { } match)
@@ -116,7 +116,7 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         void PresetCombo()
         {
-            var presetChange = _modPresets.PresetCombo.Draw("##ModPresetSelector", _selectedPreset.Label, comboWidth, 1f, ImGuiComboFlags.NoArrowButton);
+            var presetChange = _modPresets.PresetCombo.Draw("##ModPresetSelector", _selectedPreset.Label, comboWidth, 1f, CFlags.NoArrowButton);
             if (presetChange && !_selectedPreset.Label.Equals(_modPresets.PresetCombo.Current?.Label))
             {
                 if (_selectedPreset.Container.ModPresets.FirstOrDefault(mp => mp.Label == _modPresets.PresetCombo.Current!.Label) is { } match)
@@ -152,7 +152,7 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        _moodleDrawer.DrawMoodleCombo(_selectedMoodle, comboWidth, ImGuiComboFlags.NoArrowButton);
+        _moodleDrawer.DrawMoodleCombo(_selectedMoodle, comboWidth, CFlags.NoArrowButton);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus))

@@ -3,12 +3,15 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.Interop;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
+using GagspeakAPI.Attributes;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui;
@@ -22,7 +25,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly TraitsDrawer _traitsDrawer;
+    private readonly AttributeDrawer _attributeDrawer;
     private readonly IpcCallerMoodles _moodlesIpc;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -32,6 +35,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly GlamourCache _glamourCache;
     private readonly ModCache _modCache;
     private readonly MoodleCache _moodleCache;
+    private readonly TraitsCache _traitsCache;
+    private readonly ArousalService _arousal;
     private readonly TextureService _iconTextures;
 
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger, 
@@ -39,7 +44,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        TraitsDrawer traitsDrawer,
+        AttributeDrawer traitsDrawer,
         IpcCallerMoodles moodlesIpc,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
@@ -49,13 +54,15 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         GlamourCache glamourCache,
         ModCache modCache,
         MoodleCache moodleCache,
+        TraitsCache traitsCache,
+        ArousalService arousal,
         TextureService iconTextures)
         : base(logger, mediator, "Active State Debugger")
     {
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
-        _traitsDrawer = traitsDrawer;
+        _attributeDrawer = traitsDrawer;
         _moodlesIpc = moodlesIpc;
         _gags = gags;
         _restrictions = restrictions;
@@ -65,6 +72,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _glamourCache = glamourCache;
         _modCache = modCache;
         _moodleCache = moodleCache;
+        _traitsCache = traitsCache;
+        _arousal = arousal;
         _iconTextures = iconTextures;
 
         SizeConstraints = new WindowSizeConstraints()
@@ -97,11 +106,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Traits/Attributes Cache"))
-            ImGui.Text("Coming Soon!");
+            _traitsCache.DrawCacheTable();
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Stimulation Cache"))
-            ImGui.Text("Coming Soon!");
+            _arousal.DrawCacheTable();
     }
 
     // Draws the current state of the moodles IPC data.
@@ -119,4 +128,3 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Text($"Total Presets: {MoodleCache.IpcData.PresetList.Count()}");
     }
 }
-

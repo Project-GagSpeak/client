@@ -8,7 +8,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;

@@ -68,7 +68,7 @@ public class GlamourCache
         foreach (var item in glamours)
         {
             _logger.LogDebug($"Adding GlamourCache key ([{combinedKey}] - [{item.Slot}]) with vaue [{item.GameItem.Name}]");
-            _glamours.Add((combinedKey, item.Slot), item);
+            _glamours.TryAdd((combinedKey, item.Slot), item);
         }
     }
 

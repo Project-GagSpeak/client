@@ -114,9 +114,7 @@ public partial class GagRestrictionsPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
 
         _equipDrawer.DrawAssociatedGlamour("GagGlamour", gagItem.Glamour, width);
-
-        var disabledTraits = Traits.BoundArms | Traits.BoundLegs | Traits.Immobile | Traits.Weighty;
-        _traitsDrawer.DrawTwoRowTraits(gagItem, width, disabledTraits);
+        _attributeDrawer.DrawAttributesChild(gagItem, width, 4, Traits.Gagged | Traits.Blindfolded);
 
         DrawCustomizeProfile(gagItem, width);
         

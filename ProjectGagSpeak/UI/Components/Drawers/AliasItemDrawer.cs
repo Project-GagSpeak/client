@@ -2,7 +2,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
@@ -11,13 +10,12 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
-using GagspeakAPI.Attributes;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 
@@ -220,7 +218,7 @@ public sealed class AliasItemDrawer
             ImUtf8.SameLineInner();
             using (ImRaii.Disabled(comboOptions.Count() <= 0))
             {
-                if (CkGuiUtils.EnumCombo("##Types", 100f, selected, out var newVal, selectableTypes.Except(currentTypes), i => i.ToName(), "All In Use", ImGuiComboFlags.NoArrowButton))
+                if (CkGuiUtils.EnumCombo("##Types", 100f, selected, out var newVal, selectableTypes.Except(currentTypes), i => i.ToName(), "All In Use", CFlags.NoArrowButton))
                     selected = newVal;
             }
             CkGui.AttachToolTip("Selects a new output action kind to add to this Alias Item.");
@@ -332,7 +330,7 @@ public sealed class AliasItemDrawer
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##GagState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted gag.");
 
@@ -342,7 +340,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: CFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
@@ -354,7 +352,7 @@ public sealed class AliasItemDrawer
         else
         {
             ImUtf8.SameLineInner();
-            if (CkGuiUtils.EnumCombo("##GagType", 100f, action.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##GagType", 100f, action.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: CFlags.NoArrowButton))
                 action.GagType = newVal;
         }
 
@@ -404,7 +402,7 @@ public sealed class AliasItemDrawer
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##RestrictionState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted restriction item.");
 
@@ -413,7 +411,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: CFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
@@ -425,7 +423,7 @@ public sealed class AliasItemDrawer
         else
         {
             ImUtf8.SameLineInner();
-            if (_restrictionCombo.Draw("##RestrictSel", action.RestrictionId, 120f, ImGuiComboFlags.NoArrowButton))
+            if (_restrictionCombo.Draw("##RestrictSel", action.RestrictionId, 120f, CFlags.NoArrowButton))
             {
                 if (!action.RestrictionId.Equals(_restrictionCombo.Current?.Identifier))
                     action.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
@@ -477,7 +475,7 @@ public sealed class AliasItemDrawer
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##RestraintState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
-            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: ImGuiComboFlags.NoArrowButton))
+            i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             action.NewState = newState;
         CkGui.AttachToolTip("The new state set on the chosen restraint set.");
 
@@ -487,7 +485,7 @@ public sealed class AliasItemDrawer
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: CFlags.NoArrowButton))
                 action.Padlock = newVal;
 
             if (action.Padlock.IsTimerLock())
@@ -499,7 +497,7 @@ public sealed class AliasItemDrawer
         else
         {
             ImUtf8.SameLineInner();
-            if (_restraintCombo.Draw("##RestraintSelector", action.RestrictionId, 120f, ImGuiComboFlags.NoArrowButton))
+            if (_restraintCombo.Draw("##RestraintSelector", action.RestrictionId, 120f, CFlags.NoArrowButton))
             {
                 if (!action.RestrictionId.Equals(_restrictionCombo.Current?.Identifier))
                     action.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
@@ -566,7 +564,7 @@ public sealed class AliasItemDrawer
         if (action.MoodleItem is MoodlePreset preset)
         {
             ImUtf8.SameLineInner();
-            if (_presetCombo.Draw("##M_Preset", preset.Id, 100f, ImGuiComboFlags.NoArrowButton))
+            if (_presetCombo.Draw("##M_Preset", preset.Id, 100f, CFlags.NoArrowButton))
                 preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 action.MoodleItem = new MoodlePreset();
@@ -583,7 +581,7 @@ public sealed class AliasItemDrawer
         else if (action.MoodleItem is Moodle status)
         {
             ImUtf8.SameLineInner();
-            if (_statusCombo.Draw("##M_Status", status.Id, 100f, ImGuiComboFlags.NoArrowButton))
+            if (_statusCombo.Draw("##M_Status", status.Id, 100f, CFlags.NoArrowButton))
                 status.UpdateId(_statusCombo.Current.GUID);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 action.MoodleItem = new Moodle();

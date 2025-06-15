@@ -58,7 +58,7 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
     /// <summary> The main Draw function that should be used for any parenting client side FilterCombo's of all types. </summary>
     /// <remarks> Any selection, or any change, will be stored into the CurrentSelectionIdx. </remarks>
     public bool Draw(string label, string preview, string tooltip, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags = ImGuiComboFlags.None, uint? customSearchBg = null)
+        CFlags flags = CFlags.None, uint? customSearchBg = null)
     {
         return Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags, customSearchBg);
     }

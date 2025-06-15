@@ -25,7 +25,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly TraitsDrawer _traitsDrawer;
+    private readonly AttributeDrawer _attributeDrawer;
     private readonly RestrictionManager _manager;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
@@ -38,14 +38,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        TraitsDrawer traitsDrawer,
+        AttributeDrawer traitsDrawer,
         RestrictionManager manager,
         PairManager pairs,
         CosmeticService textures,
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
-        _traitsDrawer = traitsDrawer;
+        _attributeDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
@@ -196,13 +196,9 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
             : "This Restriction Item has no associated Mod Preset.");
 
-        // go right aligned for the trait previews.
-        _traitsDrawer.DrawTraitPreview(_selector.Selected!.Traits);
-        DrawMoodlePreview();
-    }
+        ImUtf8.SameLineInner();
+        _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
 
-    private void DrawMoodlePreview()
-    {
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 

@@ -495,7 +495,7 @@ public sealed partial class TriggerDrawer
             var width = ImGui.GetContentRegionAvail().X * .7f;
             CkGuiUtils.FramedEditDisplay("##EmoteSelect", width, isEditorItem, label, _ =>
             {
-                var change = _emoteCombo.Draw("##EmoteSelectCombo", emote.EmoteID, width, 1.25f, ImGuiComboFlags.None, searchBg);
+                var change = _emoteCombo.Draw("##EmoteSelectCombo", emote.EmoteID, width, 1.25f, CFlags.None, searchBg);
                 if (change && emote.EmoteID != _emoteCombo.Current.RowId)
                     emote.EmoteID = _emoteCombo.Current.RowId;
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))

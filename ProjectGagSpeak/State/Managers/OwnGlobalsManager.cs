@@ -4,7 +4,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 namespace GagSpeak.State.Managers;
@@ -106,7 +105,7 @@ public sealed class OwnGlobalsManager
     private void PerformPermissionChange(SingleChangeGlobal dto, Pair? pair = null)
     {
         // retrieve the previous value, in the case it is a hardcore change.
-        string? prevValue = dto.NewPerm.Key switch
+        var prevValue = dto.NewPerm.Key switch
         {
             nameof(GlobalPerms.ForcedFollow) => _globals.Current?.ForcedFollow,
             nameof(GlobalPerms.ForcedEmoteState) => _globals.Current?.ForcedEmoteState,
@@ -160,8 +159,8 @@ public sealed class OwnGlobalsManager
     private void OnForcedFollowChange(string newPermVal, string? prevVal, string enactor, Pair? pair = null)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ForcedFollow), newPermVal) && (prevState != newState))
         {
@@ -174,8 +173,8 @@ public sealed class OwnGlobalsManager
     private void OnForcedEmoteChange(string newPermVal, string? prevVal, string enactor)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ForcedEmoteState), newPermVal) && (prevState != newState))
         {
@@ -188,8 +187,8 @@ public sealed class OwnGlobalsManager
     private void OnForcedStayChange(string newPermVal, string? prevVal, string enactor)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ForcedStay), newPermVal) && (prevState != newState))
         {
@@ -202,8 +201,8 @@ public sealed class OwnGlobalsManager
     private void OnHiddenChatBoxesChange(string newPermVal, string? prevVal, string enactor)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ChatBoxesHidden), newPermVal) && (prevState != newState))
         {
@@ -216,8 +215,8 @@ public sealed class OwnGlobalsManager
     private void OnHiddenChatInputChange(string newPermVal, string? prevVal, string enactor)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ChatInputHidden), newPermVal) && (prevState != newState))
         {
@@ -230,8 +229,8 @@ public sealed class OwnGlobalsManager
     private void OnBlockedChatInputChange(string newPermVal, string? prevVal, string enactor)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
-        bool prevState = string.IsNullOrEmpty(prevVal);
-        bool newState = string.IsNullOrEmpty(newPermVal);
+        var prevState = string.IsNullOrEmpty(prevVal);
+        var newState = string.IsNullOrEmpty(newPermVal);
         // Attempt to apply the change, enabling/disabling the respective handler if the states are different.
         if (_globals.TryApplyChange(nameof(GlobalPerms.ChatInputBlocked), newPermVal) && (prevState != newState))
         {

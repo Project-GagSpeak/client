@@ -12,4 +12,16 @@ public static class FlagEx
     public static bool HasAny(this MoodlePerms flags, MoodlePerms check) => (flags & check) != 0;
     public static bool HasAny(this HypnoAttributes flags, HypnoAttributes check) => (flags & check) != 0;
     public static bool HasAny(this DaysOfWeek flags, DaysOfWeek check) => (flags & check) != 0;
+
+    public static int ActiveCount<TEnum>(this TEnum value) where TEnum : Enum
+    {
+        int v = Convert.ToInt32(value);
+        int count = 0;
+        while (v != 0)
+        {
+            count += (int)(v & 1);
+            v >>= 1;
+        }
+        return count;
+    }
 }

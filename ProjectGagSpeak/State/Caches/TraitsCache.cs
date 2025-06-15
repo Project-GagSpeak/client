@@ -1,4 +1,9 @@
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
+using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Attributes;
+using ImGuiNET;
+using OtterGui;
 using System.Collections.Immutable;
 
 namespace GagSpeak.State.Caches;
@@ -100,6 +105,36 @@ public class TraitsCache
 
     #region DebugHelper
     public void DrawCacheTable()
-    { }
+    {
+        using var display = ImRaii.Group();
+
+        var iconSize = new Vector2(ImGui.GetFrameHeight());
+        using (var node = ImRaii.TreeNode("IndividualTraitsRows"))
+        {
+            if (node)
+            {
+                using (var table = ImRaii.Table("TraitsCache", 2, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+                {
+                    if (!table)
+                        return;
+
+                    ImGui.TableSetupColumn("Combined Key");
+                    ImGui.TableSetupColumn("Traits Included");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var group in _traits)
+                    {
+                        ImGuiUtil.DrawFrameColumn($"{group.Key.Manager} / {group.Key.LayerIndex}");
+                        ImGui.TableNextColumn();
+                        CkGui.ColorText(group.Value.ToString(), CkColor.LushPinkButton.Uint());
+                    }
+                }
+            }
+        }
+
+        ImGui.Separator();
+        ImGui.Text("Final State");
+        CkGui.ColorTextInline(_finalTraits.ToString(), CkColor.LushPinkButton.Uint());
+    }
     #endregion Debug Helper
 }

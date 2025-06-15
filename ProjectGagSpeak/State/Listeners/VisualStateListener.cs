@@ -105,9 +105,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (_gags.ApplyGag(gagData.AffectedLayer, gagData.NewData.GagItem, gagData.Enactor.UID, out var gagItem))
         {
             Logger.LogWarning("The Gag Had it's Visuals enabled, applying visuals to cache manager.");
+            // BEGIN
             if (_gags.ServerGagData?.GagSlots[gagData.AffectedLayer] is { } gagSlot)
                 await _cacheManager.AddGagToCache(gagItem, gagSlot, gagData.AffectedLayer);
-            Logger.LogInformation($"Gag Visuals Applied to Layer {gagData.AffectedLayer}", LoggerType.Gags);
+            // END
+            Logger.LogWarning($"Gag Visuals Applied to Layer {gagData.AffectedLayer}", LoggerType.Gags);
         }
 
         PostActionMsg(gagData.Enactor.UID, InteractionType.ApplyGag, gagData.NewData.GagItem + " was applied on layer " + gagData.AffectedLayer);

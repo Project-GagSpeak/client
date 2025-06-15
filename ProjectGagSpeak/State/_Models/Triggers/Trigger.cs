@@ -1,5 +1,4 @@
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 
 namespace GagSpeak.State.Models;
 

@@ -9,6 +9,7 @@ using GagSpeak.GameInternals;
 using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
 using GagSpeak.GameInternals.Detours;
+using GagSpeak.State.Listeners;
 
 namespace GagSpeak;
 
@@ -152,6 +153,13 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
+
+            // Init our listeners for IPC.
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<MoodleListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<PlayerHpListener>();
 
             // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();

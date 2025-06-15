@@ -136,10 +136,10 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     }
 
     public void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
-        => DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip, ImGuiComboFlags.None);
+        => DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip, CFlags.None);
 
     public virtual void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, 
-        ImGuiComboFlags flags = ImGuiComboFlags.None)
+        CFlags flags = CFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
         using var group = ImRaii.Group();

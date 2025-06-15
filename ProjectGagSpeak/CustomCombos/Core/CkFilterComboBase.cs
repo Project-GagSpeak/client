@@ -94,11 +94,11 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Called by the filter combo base Draw() call. Handles updates and changed items. </summary>
     private void DrawCombo(string label, string preview, string tooltip, int currentSelected, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags, uint? customSearchBg = null)
+        CFlags flags, uint? customSearchBg = null)
     {
         var id = ImGui.GetID(label);
         ImGui.SetNextItemWidth(previewWidth);
-        using var combo = ImRaii.Combo(label, preview, flags | ImGuiComboFlags.HeightLarge);
+        using var combo = ImRaii.Combo(label, preview, flags | CFlags.HeightLarge);
         PostCombo(previewWidth);
         using (var dis = ImRaii.Enabled())
         {
@@ -226,7 +226,7 @@ public abstract class CkFilterComboBase<T>
     /// <returns> True if anything was selected, false otherwise. </returns>
     /// <remarks> This will return the index of the `ref` currentSelection, meaning Filter Combo Cache handles the selected item. </remarks>
     public virtual bool Draw(string label, string preview, string tooltip, ref int currentSelection, float previewWidth, float itemHeight,
-        ImGuiComboFlags flags = ImGuiComboFlags.None, uint? customSearchBg = null)
+        CFlags flags = CFlags.None, uint? customSearchBg = null)
     {
         DrawCombo(label, preview, tooltip, currentSelection, previewWidth, itemHeight, flags, customSearchBg);
         if (NewSelection is null)

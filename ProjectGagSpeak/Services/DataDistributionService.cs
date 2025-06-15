@@ -189,7 +189,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"Pushing IPCData to {string.Join(", ", visChara.Select(v => v.AliasOrUID))} [{kind}]", LoggerType.VisiblePairs);
         if (await _hub.UserPushDataIpc(new(visChara, newData, kind)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push Gag Data to server Reason: " + res);
+            Logger.LogError("Failed to push IpcData to server Reason: " + res);
     }
 
     /// <summary>

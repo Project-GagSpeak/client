@@ -17,7 +17,7 @@ public class TraitAllowancePanel
     private readonly ILogger<TraitAllowancePanel> _logger;
     private readonly TraitAllowanceSelector _selector;
     private readonly TraitAllowanceManager _manager;
-    private readonly TraitsDrawer _drawer;
+    private readonly AttributeDrawer _drawer;
     private readonly PairManager _pairs;
     private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
@@ -26,7 +26,7 @@ public class TraitAllowancePanel
         ILogger<TraitAllowancePanel> logger,
         TraitAllowanceSelector selector,
         TraitAllowanceManager manager,
-        TraitsDrawer drawer,
+        AttributeDrawer drawer,
         PairManager pairs,
         FavoritesManager favorites,
         CosmeticService cosmetics,

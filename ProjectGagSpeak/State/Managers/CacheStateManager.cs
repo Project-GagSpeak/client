@@ -67,10 +67,10 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
     public async Task AddGagToCache(GarblerRestriction gag, ActiveGagSlot serverData, int layerIdx)
     {
-        Logger.LogInformation($"Adding {gag.GagType.GagName()} to cache at layer {layerIdx} with enabler {serverData.Enabler}");
+        Logger.LogDebug($"Adding {gag.GagType.GagName()} to cache at layer {layerIdx} with enabler {serverData.Enabler}");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx);
 
-        Logger.LogInformation("Running tasks in parallel for GarblerRestriction");
+        Logger.LogWarning("Running tasks in parallel for GarblerRestriction");
         var sw = Stopwatch.StartNew();
 
         await Task.WhenAll(
@@ -78,21 +78,22 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             SetAndApplyMod(combinedKey, gag.Mod),
             SetAndApplyMoodle(combinedKey, gag.Moodle),
             SetAndApplyCPlusProfile(combinedKey, gag.CPlusProfile),
+            SetAndApplyTraits(combinedKey, gag.Traits),
             SetAndApplyArousal(combinedKey, gag.Arousal)
         );
 
         sw.Stop();
-        Logger.LogDebug($"[{combinedKey}]'s Visual Attributes added to caches in {sw.ElapsedMilliseconds}ms.");
+        Logger.LogWarning($"[{combinedKey}]'s Visual Attributes added to caches in {sw.ElapsedMilliseconds}ms.");
     }
 
     /// <summary> Removes the visuals of a <see cref="GarblerRestriction"/> stored in the caches at a <paramref name="layerIdx"/></summary>
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
     public async Task RemoveGagFromCache(GarblerRestriction item, int layerIdx)
     {
-        Logger.LogInformation($"Removing {item.GagType.GagName()} from cache at layer {layerIdx}");
+        Logger.LogDebug($"Removing {item.GagType.GagName()} from cache at layer {layerIdx}");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx);
 
-        Logger.LogInformation("Running tasks in parallel for GarblerRestriction");
+        Logger.LogDebug("Running tasks in parallel for GarblerRestriction");
         var sw = Stopwatch.StartNew();
         
         await Task.WhenAll(
@@ -100,10 +101,12 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             RemoveModWithKey(combinedKey),
             RemoveMoodleWithKey(combinedKey),
             RemoveCPlusProfileWithKey(combinedKey),
+            RemoveTraitsWithKey(combinedKey),
             RemoveArousalWithKey(combinedKey)
         );
 
-        Logger.LogDebug($"[{combinedKey}] removed from cache and base states restored.");
+        sw.Stop();
+        Logger.LogDebug($"[{combinedKey}]'s Visual Attributes removed from caches in {sw.ElapsedMilliseconds}ms.");
     }
 
     public async Task AddRestrictionToCache(RestrictionItem item, ActiveRestriction serverData, int layerIdx)
@@ -192,142 +195,104 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     #region Cache Update Helpers
     private async Task SetAndApplyGlamour(CombinedCacheKey key, GlamourSlot glamSlot, MetaDataStruct meta)
     {
-        Logger.LogDebug("Updating Glamour & Meta Cache with new GlamourSlot.");
         bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlot);
         bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
 
-        Logger.LogDebug("Applying Glamour Cache.");
         await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
-        Logger.LogDebug($"Glamour Cache Updated for key [{key}]!");
+        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
     }
 
     private async Task SetAndApplyGlamour(CombinedCacheKey key, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
     {
-        Logger.LogDebug("Updating Glamour & Meta Cache with new GlamourSlots.");
         bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlots);
         bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
-
-        Logger.LogDebug("Applying Glamour Cache.");
         await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
-        Logger.LogDebug($"Glamour Cache applied for key [{key}]!");
+        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
     }
 
     private async Task RemoveGlamourWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Updating Glamour & Meta Cache with Removal.");
         bool remGlam = _glamourCache.RemoveAndUpdateGlamour(key, out var removedSlots);
         bool remMeta = _glamourCache.RemoveAndUpdateMeta(key);
-        Logger.LogDebug("Restoring Removed Slots and Reapplying Glamour Cache.");
-        await _glamourHandler.RemoveSemaphore(remGlam, remMeta, false, removedSlots);
-        Logger.LogDebug($"Glamour Cache Updated for key [{key}]!");
+        await _glamourHandler  .RemoveSemaphore(remGlam, remMeta, false, removedSlots);
+        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
     }
 
     private async Task SetAndApplyMod(CombinedCacheKey key, ModSettingsPreset preset)
     {
-        Logger.LogDebug("Updating Mod Cache with new Mod.");
         _modsCache.AddAndUpdateMod(key, preset);
-
-        Logger.LogDebug("Applying Mod Cache.");
         await _modHandler.ApplyModCache();
-        Logger.LogDebug($"Mod Cache applied for key [{key}].");
+        Logger.LogDebug($"Mod Cache updated for key [{key}].");
     }
 
     private async Task SetAndApplyMod(CombinedCacheKey key, IEnumerable<ModSettingsPreset> presets)
     {
-        Logger.LogDebug("Updating Mod Cache with new Mods.");
         _modsCache.AddAndUpdateMod(key, presets);
-
-        Logger.LogDebug("Applying Mod Cache.");
         await _modHandler.ApplyModCache();
-        Logger.LogDebug($"Mod Cache applied for key [{key}].");
+        Logger.LogDebug($"Mod Cache updated for key [{key}].");
     }
 
     private async Task RemoveModWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Updating Mod Cache with Removal.");
         _modsCache.RemoveAndUpdateMod(key, out var removed);
-
-        Logger.LogDebug("Restoring And Reapplying Mod Cache.");
         await _modHandler.RestoreAndReapplyCache(removed);
-        Logger.LogDebug($"Mod Cache removed all entries for [{key}] and reapplied Cache.");
+        Logger.LogDebug($"Mod Cache updated for key [{key}].");
     }
 
     private async Task SetAndApplyMoodle(CombinedCacheKey key, Moodle moodle)
     {
-        Logger.LogDebug("Updating Moodle Cache with new Moodle.");
         _moodlesCache.AddAndUpdateMoodle(key, moodle);
-
-        Logger.LogDebug("Applying Moodles Cache.");
         await _moodleHandler.ApplyMoodleCache();
-        Logger.LogDebug($"Moodles Cache applied for key [{key}].");
+        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
     }
 
     private async Task SetAndApplyMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
     {
-        Logger.LogDebug("Updating Moodle Cache with new Moodles.");
         _moodlesCache.AddAndUpdateMoodle(key, moodles);
-
-        Logger.LogDebug("Applying Moodles Cache.");
         await _moodleHandler.ApplyMoodleCache();
-        Logger.LogDebug($"Moodles Cache applied for key [{key}].");
+        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
     }
 
     private async Task RemoveMoodleWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Updating Moodle Cache with a Removal.");
         _moodlesCache.RemoveAndUpdateMoodle(key, out var removed);
-
-        Logger.LogDebug("Restoring And Reapplying Moodle Cache.");
         await _moodleHandler.RestoreAndReapplyCache(removed);
-        Logger.LogDebug($"Moodle Cache removed entries for [{key}] and reapplied Cache.");
+        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
     }
 
     private async Task SetAndApplyCPlusProfile(CombinedCacheKey key, CustomizeProfile profile)
     {
-        Logger.LogDebug("Calculating Caches in parallel.");
         _cplusCache.AddAndUpdateprofile(key, profile);
-
-        Logger.LogDebug("Applying CPlusProfile Cache.");
         await _cplusHandler.ApplyProfileCache();
-        Logger.LogDebug($"CPlusProfile Cache applied for key [{key}].");
+        Logger.LogDebug($"CPlus Cache updated for key [{key}].");
     }
 
     private async Task RemoveCPlusProfileWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Updating CPlusProfile Cache with a Removal.");
         _cplusCache.RemoveAndUpdateprofile(key, out var removed);
-
-        Logger.LogDebug("Restoring And Reapplying CPlusProfile Cache.");
         await _cplusHandler.ApplyProfileCache();
-        Logger.LogDebug($"CPlusProfile Cache removed entries for [{key}] and reapplied Cache.");
+        Logger.LogDebug($"CPlus Cache updated for key [{key}].");
     }
 
     private async Task SetAndApplyTraits(CombinedCacheKey key, Traits traits)
     {
-        Logger.LogDebug("Calculating Caches in parallel.");
         _traitsCache.AddAndUpdatetraits(key, traits);
-
-        Logger.LogDebug("Applying Traits Cache Changes.");
         // For now, dont do anything. We need to set this up later but im too eepy girl rn.
         // await _traitsHandler.ApplyProfileCache();
-        Logger.LogDebug($"Traits Cache applied for key [{key}].");
+        Logger.LogDebug($"Traits Cache updated for key [{key}].");
     }
 
     private async Task RemoveTraitsWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Updating Traits Cache with a Removal.");
         _cplusCache.RemoveAndUpdateprofile(key, out var removed);
-
-        Logger.LogDebug("Restoring And Reapplying Traits Cache.");
         // For now, dont do anything. We need to set this up later but im too eepy girl rn.
         // await _traitsHandler.ApplyProfileCache();
-        Logger.LogDebug($"Traits Cache removed entries for [{key}] and reapplied Cache.");
+        Logger.LogDebug($"Traits Cache updated for key [{key}].");
     }
 
 
     private Task SetAndApplyArousal(CombinedCacheKey key, Arousal strength)
     {
-        Logger.LogDebug("Appending and updating Arousal Cache!");
         _arousalHandler.AddAndUpdateArousal(key, strength);
         Logger.LogDebug($"Arousal strength applied key [{key}] to the Cache!");
         return Task.CompletedTask;
@@ -335,11 +300,9 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
 
     private Task RemoveArousalWithKey(CombinedCacheKey key)
     {
-        Logger.LogDebug("Removing Arousal State!");
         _arousalHandler.RemoveAndUpdateArousal(key);
         Logger.LogDebug($"Arousal Cache removed entry [{key}], and reapplied Cache.");
         return Task.CompletedTask;
     }
-
     #endregion Cache Update Helpers
 }

@@ -14,11 +14,11 @@ namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public class RestraintEditorInfo : IFancyTab
 {
     private readonly RestraintManager _manager;
-    private readonly TraitsDrawer _traitsDrawer;
+    private readonly AttributeDrawer _attributeDrawer;
     private readonly TutorialService _guides;
-    public RestraintEditorInfo(RestraintManager manager, TraitsDrawer traitsDrawer, TutorialService guides)
+    public RestraintEditorInfo(RestraintManager manager, AttributeDrawer traitsDrawer, TutorialService guides)
     {
-        _traitsDrawer = traitsDrawer;
+        _attributeDrawer = traitsDrawer;
         _manager = manager;
         _guides = guides;
     }
@@ -34,8 +34,7 @@ public class RestraintEditorInfo : IFancyTab
             return;
 
         DrawDescription();
-
-        _traitsDrawer.DrawOneRowTraits(item, ImGui.GetContentRegionAvail().X, Traits.None, false);
+        _attributeDrawer.DrawAttributesChild(item, width, 8, Traits.All);
     }
 
     private void DrawDescription()

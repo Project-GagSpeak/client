@@ -98,7 +98,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         {
             // Draw out the tab bar, and the items respective contents.
             using (CkRaii.TabBarChild("AllowanceTabBars", WFlags.AlwaysUseWindowPadding, out var selected, EditorTabs))
-                selected?.DrawContents(botRegion.SizeX);
+                selected?.DrawContents(ImGui.GetContentRegionAvail().X);
         }
     }
 

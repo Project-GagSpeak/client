@@ -546,7 +546,7 @@ public partial class CkGui
 
     public void DrawCombo<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
         Action<T?>? onSelected = null, T? initialSelectedItem = default, bool shouldShowLabel = true,
-        ImGuiComboFlags flags = ImGuiComboFlags.None, string defaultPreviewText = "Nothing Selected..")
+        CFlags flags = CFlags.None, string defaultPreviewText = "Nothing Selected..")
     {
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         var comboLabel = shouldShowLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
@@ -606,7 +606,7 @@ public partial class CkGui
 
     public static void DrawComboSearchable<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
         bool showLabel = true, Action<T?>? onSelected = null, T? initialSelectedItem = default,
-        string defaultPreviewText = "No Items Available...", ImGuiComboFlags flags = ImGuiComboFlags.None)
+        string defaultPreviewText = "No Items Available...", CFlags flags = CFlags.None)
     {
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         try

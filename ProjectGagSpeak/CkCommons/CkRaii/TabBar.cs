@@ -4,7 +4,9 @@ using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Raii;
 
-// Improve this to have better compatibility with other CkRaii objecta later.
+// Improve this to have better compatibility with other CkRaii objects later.
+// (as in better conditional return structs that provide inner regions.)
+
 public static partial class CkRaii
 {
     public static ImRaii.IEndObject TabBarChild(string id, out IFancyTab? selected, params IFancyTab[] tabs)

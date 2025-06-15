@@ -303,7 +303,7 @@ public partial class MainHub
     {
         if (dataDto.User.UID == MainHub.UID)
         {
-            Logger.LogDebug("OWN Callback_ReceiveDataGags:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug($"OWN Callback_ReceiveDataGags: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:

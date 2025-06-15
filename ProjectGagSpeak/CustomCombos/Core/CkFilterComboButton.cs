@@ -35,7 +35,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
         // if we have a new item selected we need to update some conditionals.
 
         var previewLabel = Current?.ToString() ?? "Select an Item...";
-        var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), ImGuiComboFlags.None);
+        var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), CFlags.None);
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
 

@@ -152,13 +152,14 @@ public partial class RestrictionsPanel
             DrawCollarInfo(collarRestriction, width);
 
         // Determine the disabled traits based on the restriction type.
-        var disabled = item switch
+        var shownTraits = item switch
         {
-            BlindfoldRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Immobile | Traits.Weighty,
-            CollarRestriction => Traits.BoundArms | Traits.BoundLegs | Traits.Gagged | Traits.Blindfolded | Traits.Immobile | Traits.Weighty,
-            _ => Traits.Gagged
+            CollarRestriction => Traits.None,
+            BlindfoldRestriction => Traits.Blindfolded,
+            HypnoticRestriction => Traits.Blindfolded,
+            _ => Traits.All
         };
-        _traitsDrawer.DrawTwoRowTraits(item, width, disabled, false);
+        _attributeDrawer.DrawAttributesChild(item, width, 4, shownTraits);
 
         _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width, MoodleDrawer.IconSizeFramed);
     }

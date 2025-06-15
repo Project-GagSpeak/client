@@ -12,7 +12,6 @@ using GagSpeak.Toybox;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using OtterGui;
 

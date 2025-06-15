@@ -136,19 +136,19 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             return false;
 
         // update values & Garbler, then fire achievement ping.
-        Logger.LogWarning($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
+        Logger.LogTrace($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
         data.GagSlots[layer].GagItem = newGag;
         data.GagSlots[layer].Enabler = enactor;
 
-        Logger.LogWarning($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
+        Logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
         UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
 
         // Mark what parts of this item will end up having effective changes.
-        Logger.LogWarning($"Attempting to fetch gag from storage if visuals are enabled.");
+        Logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
         if (Storage.TryGetEnabledGag(newGag, out item))
         {
-            Logger.LogWarning($"Found GagRestriction for {newGag.GagName()} in Storage, applying visuals.");
+            Logger.LogTrace($"Found GagRestriction for {newGag.GagName()} in Storage, applying visuals.");
             AppliedGags[layer] = item;
             return true;
         }

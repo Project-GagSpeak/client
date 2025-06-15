@@ -63,9 +63,9 @@ public class MoodleCache
         foreach (var item in moodles)
         {
             if (_moodles.TryAdd((combinedKey, item.Id), item))
-                _logger.LogWarning($"KeyValuePair ([{combinedKey}] - [{item.Id}]) already exists in the Cache!");
-            else
                 _logger.LogDebug($"Added KeyValuePair ([{combinedKey}] - [{item.Id}]) to Cache.");
+            else
+                _logger.LogWarning($"KeyValuePair ([{combinedKey}] - [{item.Id}]) already exists in the Cache!");
         }
     }
 
@@ -86,7 +86,7 @@ public class MoodleCache
     {
         if (_moodles.Keys.Any(keys => keys.Item1.Equals(combinedKey)))
         {
-            _logger.LogWarning($"Cannot add GlamourSlot to cache at key [{combinedKey}], it already exists!");
+            _logger.LogWarning($"Cannot add Modle to cache at key [{combinedKey}], it already exists!");
             return false;
         }
 
@@ -215,10 +215,9 @@ public class MoodleCache
                 }
             }
         }
-
-        // Draw the final State.
-        ImGuiUtil.DrawFrameColumn("Final State");
-        ImGui.TableNextColumn();
+        ImGui.Separator();
+        ImGui.Text("Final State");
+        ImGui.SameLine();
         drawer.DrawIconsOrEmpty(_finalStatusIds, ImGui.GetContentRegionAvail().X, rows: 2);
     }
     

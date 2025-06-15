@@ -1,17 +1,15 @@
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Interfaces;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using GagspeakAPI.Attributes;
 
 namespace GagSpeak.CkCommons.Gui.Components;
 
@@ -144,7 +142,7 @@ public sealed partial class TriggerDrawer
                 {
                     var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
                     if (CkGuiUtils.EnumCombo("##Padlock", width, gagAct.Padlock, out var newPadlock,
-                        options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+                        options, i => i.ToName(), flags: CFlags.NoArrowButton))
                     {
                         gagAct.Padlock = newPadlock;
                     }
@@ -229,7 +227,7 @@ public sealed partial class TriggerDrawer
                 {
                     var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
                     if (CkGuiUtils.EnumCombo("##Padlock", width, rsAct.Padlock, out var newPadlock,
-                        options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+                        options, i => i.ToName(), flags: CFlags.NoArrowButton))
                     {
                         rsAct.Padlock = newPadlock;
                     }
@@ -304,7 +302,7 @@ public sealed partial class TriggerDrawer
                 {
                     var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
                     if (CkGuiUtils.EnumCombo("##Padlock", width, rsAct.Padlock, out var newPadlock,
-                        options, i => i.ToName(), flags: ImGuiComboFlags.NoArrowButton))
+                        options, i => i.ToName(), flags: CFlags.NoArrowButton))
                     {
                         rsAct.Padlock = newPadlock;
                     }

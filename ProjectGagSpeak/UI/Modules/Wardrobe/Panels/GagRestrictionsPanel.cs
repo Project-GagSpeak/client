@@ -25,7 +25,7 @@ public partial class GagRestrictionsPanel
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly TraitsDrawer _traitsDrawer;
+    private readonly AttributeDrawer _attributeDrawer;
     private readonly GagRestrictionManager _manager;
     private readonly PairManager _pairs;
     private readonly CosmeticService _textures;
@@ -38,7 +38,7 @@ public partial class GagRestrictionsPanel
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        TraitsDrawer traitsDrawer,
+        AttributeDrawer attributeDrawer,
         GagRestrictionManager manager,
         PairManager pairs,
         CosmeticService textures,
@@ -50,7 +50,7 @@ public partial class GagRestrictionsPanel
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
-        _traitsDrawer = traitsDrawer;
+        _attributeDrawer = attributeDrawer;
         _manager = manager;
         _pairs = pairs;
         _textures = textures;
@@ -171,31 +171,11 @@ public partial class GagRestrictionsPanel
         CkGui.AttachToolTip(hasMod
             ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
             : "This Restriction Item has no associated Mod Preset.");
-        
-        DrawTraitPreview();
+
+        ImUtf8.SameLineInner();
+        _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
-    }
-
-    private void DrawTraitPreview()
-    {
-        if ((_selector.Selected!.Traits & (Traits.Gagged | Traits.Blindfolded)) == 0)
-            return;
-
-        // Draw them out.
-        var endX = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
-        var currentX = endX;
-
-        if ((_selector.Selected!.Traits & Traits.Gagged) != 0)
-        {
-            currentX -= ImGui.GetFrameHeight();
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Gagged].ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
-        }
-        else if ((_selector.Selected!.Traits & Traits.Blindfolded) != 0)
-        {
-            currentX -= (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X);
-            ImGui.SameLine(currentX);
-            ImGui.Image(_textures.CoreTextures[CoreTexture.Blindfolded].ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
-        }
     }
 
     private void DrawActiveItemInfo(Vector2 region)

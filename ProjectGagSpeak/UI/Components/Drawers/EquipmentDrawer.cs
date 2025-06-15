@@ -112,8 +112,7 @@ public class EquipmentDrawer
                 // Begin by drawing out the slot enum dropdown that spans the remaining content region.
                 var barWidth = c.InnerRegion.X - height - ImGui.GetStyle().ItemInnerSpacing.X;
 
-                if (CkGuiUtils.EnumCombo("##" + id + "slot itemCombo", barWidth, item.Slot, out var newSlot,
-                    EquipSlotExtensions.EqdpSlots, (slot) => slot.ToName(), "Select Slot..."))
+                if (CkGuiUtils.EnumCombo($"##{id}-slot", barWidth, item.Slot, out var newSlot, EquipSlotExtensions.EqdpSlots, slot => slot.ToName()))
                 {
                     item.Slot = newSlot;
                     item.GameItem = ItemService.NothingItem(item.Slot);
@@ -220,7 +219,7 @@ public class EquipmentDrawer
         var comboWidth = width - GetRestraintItemH() - ImGui.GetStyle().ItemInnerSpacing.X;
         using (ImRaii.Group())
         {
-            var change = _restrictionCombo.Draw($"##AdvSelector{id}", restriction.Ref.Identifier, comboWidth, flags: ImGuiComboFlags.NoArrowButton);
+            var change = _restrictionCombo.Draw($"##AdvSelector{id}", restriction.Ref.Identifier, comboWidth, flags: CFlags.NoArrowButton);
             if (change && !restriction.Ref.Identifier.Equals(_restrictionCombo.Current?.Identifier))
             {
                 _logger.LogTrace($"Item changed to {_restrictionCombo.Current?.Identifier} " +

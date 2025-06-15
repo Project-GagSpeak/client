@@ -49,11 +49,11 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, string currentPreset, float width, float innerWidthScaler)
-        => Draw(label, currentPreset, width, innerWidthScaler, ImGuiComboFlags.None);
+        => Draw(label, currentPreset, width, innerWidthScaler, CFlags.None);
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, string currentPreset, float width, float innerWidthScaler, ImGuiComboFlags flags)
+    public bool Draw(string label, string currentPreset, float width, float innerWidthScaler, CFlags flags)
     {
         InnerWidth = width * innerWidthScaler;
         _currentItem = currentPreset;

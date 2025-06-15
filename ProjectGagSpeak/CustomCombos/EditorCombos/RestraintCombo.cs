@@ -39,9 +39,9 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, Guid current, float width, uint? customSearchBg = null)
-        => Draw(label, current, width, ImGuiComboFlags.None, customSearchBg);
+        => Draw(label, current, width, CFlags.None, customSearchBg);
 
-    public bool Draw(string label, Guid current, float width, ImGuiComboFlags flags, uint? customSearchBg = null)
+    public bool Draw(string label, Guid current, float width, CFlags flags, uint? customSearchBg = null)
     {
         InnerWidth = width * 1.25f;
         _currentRestraint = current;

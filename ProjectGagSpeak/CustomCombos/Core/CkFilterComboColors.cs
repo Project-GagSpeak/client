@@ -85,7 +85,7 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
         _color.Push(ImGuiCol.FrameBg, color, found && color != 0)
             .Push(ImGuiCol.Text, ImGuiUtil.ContrastColorBw(color), preview.Length > 0);
 
-        var change = Draw(label, preview, found ? name : string.Empty, previewWidth, ImGui.GetFrameHeight(), ImGuiComboFlags.NoArrowButton);
+        var change = Draw(label, preview, found ? name : string.Empty, previewWidth, ImGui.GetFrameHeight(), CFlags.NoArrowButton);
         return change;
     }
 

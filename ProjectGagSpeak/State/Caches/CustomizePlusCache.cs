@@ -63,7 +63,7 @@ public sealed class CustomizePlusCache
         if (_profiles.Remove(combinedKey, out var profile))
             _logger.LogDebug($"Removed C+Profile [{profile.ProfileName}] from cache at key [{combinedKey}].");
         else
-            _logger.LogWarning($"GlamourCache key ([{combinedKey}]) not found in the profileCache!");
+            _logger.LogWarning($"ProfileCache key ([{combinedKey}]) not found in the profileCache!");
     }
 
     /// <summary> Removes the <paramref name="combinedKey"/> from the main cache, then updates the <see cref="_finalProfile"/></summary>

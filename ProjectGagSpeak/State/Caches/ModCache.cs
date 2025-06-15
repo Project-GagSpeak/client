@@ -45,12 +45,13 @@ public class ModCache
 
         foreach (var item in mods)
         {
-            if (!item.HasData) continue;
+            if (!item.HasData)
+                continue;
 
             if (_mods.TryAdd((combinedKey, item.Id), item))
-                Logger.LogWarning($"KeyValuePair ([{combinedKey}]-[{item.Id}]) already exists in the Cache!");
-            else
                 Logger.LogDebug($"Added KeyValuePair ([{combinedKey}]-[{item.Id}]) -> ([{item.Label}]-[{item.Container.ModName}]) to Cache.");
+            else
+                Logger.LogWarning($"KeyValuePair ([{combinedKey}]-[{item.Id}]) already exists in the Cache!");
         }
     }
 

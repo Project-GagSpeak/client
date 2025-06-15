@@ -1,7 +1,13 @@
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
+using ImGuiNET;
+using OtterGui;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Interface.Colors;
 
 namespace GagSpeak.Services;
 
@@ -177,11 +183,66 @@ public sealed class ArousalService : IDisposable
     /// <returns> the interpolated value between a and b </returns>
     private float Lerp(float a, float b, float t) => a + (b - a) * t;
 
-
-
-
     #region DebugHelper
     public void DrawCacheTable()
-    { }
+    {
+        using var _ = ImRaii.Group();
+
+        using (var n = ImRaii.TreeNode("Arousal Cache"))
+        {
+            if (n)
+            {
+                using (var t = ImRaii.Table("ArousalCache", 2, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+                {
+                    if (!t)
+                        return;
+
+                    ImGui.TableSetupColumn("Combined Key");
+                    ImGui.TableSetupColumn("Arousal Strength");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var (combinedKey, strength) in _arousals)
+                    {
+                        ImGuiUtil.DrawFrameColumn($"{combinedKey.Manager} / {combinedKey.LayerIndex}");
+                        ImGui.TableNextColumn();
+                        CkGui.ColorText(strength.ToString(), CkColor.LushPinkButton.Uint());
+                    }
+                }
+            }
+        }
+        ImGui.Separator();
+        ImGui.TextUnformatted($"Static Arousal: {StaticArousal}");
+        ImGui.TextUnformatted($"Current Arousal: {Arousal}");
+        ImGui.TextUnformatted($"Arousal Percent: {ArousalPercent:P2}");
+        ImGui.TextUnformatted($"Generation Rate: {_generationRate}");
+        ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency}");
+        ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate}");
+        ImGui.Separator();
+        ImGui.TextUnformatted("Arousal Effects:");
+        
+        ImGui.Text("Blur:");
+        CkGui.ColorTextInline(DoScreenBlur.ToString(), DoScreenBlur ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"| Intensity: {BlurIntensity:P2}");
+        
+        ImGui.Text("Blush:");
+        CkGui.ColorTextInline(DoBlush.ToString(), DoBlush ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"| Opacity: {BlushOpacity:P2}");
+        
+        ImGui.Text("Stutter:");
+        CkGui.ColorTextInline(DoStutter.ToString(), DoStutter ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"| Frequency: {StutterFrequency:P2}");
+        
+        ImGui.Text("Pulse:");
+        CkGui.ColorTextInline(DoPulse.ToString(), DoPulse ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"| Rate: {PulseRate:P2}");
+
+        ImGui.Text("Limited Words:");
+        CkGui.ColorTextInline(DoLimitedWords.ToString(), DoLimitedWords ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"| {WordLimitMultiplier:P2} of the 500 character limit can be typed.");
+
+        ImGui.Text("GCD Delay:");
+        CkGui.ColorTextInline(DoGcdDelay.ToString(), DoGcdDelay ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
+        CkGui.TextInline($"GCD Speed: {GcdDelayFactor:P2}");
+    }
     #endregion Debug Helper
 }

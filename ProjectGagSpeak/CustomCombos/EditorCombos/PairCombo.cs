@@ -51,9 +51,9 @@ public sealed class PairCombo : CkFilterComboCache<Pair>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(float width, float innerScalar = 1.25f)
-        => Draw(width, innerScalar, ImGuiComboFlags.None);
+        => Draw(width, innerScalar, CFlags.None);
 
-    public bool Draw(float width, float innerScalar, ImGuiComboFlags flags)
+    public bool Draw(float width, float innerScalar, CFlags flags)
     {
         InnerWidth = width * innerScalar;
         var preview = Current?.GetNickAliasOrUid() ?? "Select Pair...";

@@ -2,9 +2,9 @@ using Buttplug.Client;
 using GagSpeak.Achievements;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data.Interfaces;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.State;
 

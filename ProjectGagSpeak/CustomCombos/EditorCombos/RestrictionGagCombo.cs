@@ -38,11 +38,11 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
     public bool Draw(string label, GagType current, float width, uint? searchBg = null)
-        => Draw(label, current, width, ImGuiComboFlags.None, searchBg);
+        => Draw(label, current, width, CFlags.None, searchBg);
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(string label, GagType current, float width, ImGuiComboFlags flags, uint? searchBg = null)
+    public bool Draw(string label, GagType current, float width, CFlags flags, uint? searchBg = null)
     {
         InnerWidth = width * 1.25f;
         _currentGag = current;

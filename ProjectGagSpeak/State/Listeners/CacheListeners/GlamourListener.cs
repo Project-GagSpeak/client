@@ -1,5 +1,4 @@
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
@@ -9,29 +8,30 @@ using Glamourer.Api.IpcSubscribers;
 
 namespace GagSpeak.State.Listeners;
 
-// Must be partial to avoid circular dependancy. The time it would take to make this
-// not have circular dependancy is not worth looking into how to split it.
 public class GlamourListener : IDisposable
 {
-    private readonly ILogger<GlamourHandler> _logger;
+    private readonly ILogger<GlamourListener> _logger;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
     private readonly GlamourHandler _handler;
     private readonly PlayerData _player;
 
     public GlamourListener(
-        ILogger<GlamourHandler> logger,
+        ILogger<GlamourListener> logger,
         IpcCallerGlamourer ipc,
-        PlayerData clientMonitor,
-        IDalamudPluginInterface pi,
-        IGameInteropProvider gip)
+        GlamourCache cache,
+        GlamourHandler handler,
+        PlayerData player,
+        IDalamudPluginInterface pi)
     {
         _logger = logger;
         _ipc = ipc;
-        _player = clientMonitor;
+        _cache = cache;
+        _handler = handler;
+        _player = player;
 
-        _ipc.StateWasChanged = StateChangedWithType.Subscriber(pi, (addr, type) => _ = OnStateChanged(addr, type));
-        _ipc.StateWasFinalized = StateFinalized.Subscriber(pi, (addr, type) => _ = OnStateFinalized(addr, type));
+        _ipc.StateWasChanged = StateChangedWithType.Subscriber(pi, OnStateChanged);
+        _ipc.StateWasFinalized = StateFinalized.Subscriber(pi, OnStateFinalized);
         _ipc.StateWasChanged.Enable();
         _ipc.StateWasFinalized.Enable();
     }
@@ -50,7 +50,7 @@ public class GlamourListener : IDisposable
     /// <param name="address">The address of the actor that was changed.</param>
     /// <param name="changeType">The type of change that occurred.</param>
     /// <remarks> This is primarily used to cache the state of the Client. Discarded for other players. </remarks>
-    private async Task OnStateChanged(nint address, StateChangeType changeType)
+    private async void OnStateChanged(nint address, StateChangeType changeType)
     {
         if (address != _player.Address)
             return;
@@ -60,7 +60,7 @@ public class GlamourListener : IDisposable
 
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
-            _logger.LogWarning($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            _logger.LogError($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
             return;
         }
 
@@ -91,12 +91,26 @@ public class GlamourListener : IDisposable
     /// <param name="address"> The address of the actor that was finalized. </param>
     /// <param name="finalizationType"> The type of finalization that occurred. </param>
     /// <remarks> This is primarily used to cache the state of the player after a glamour operation has completed. </remarks>
-    private async Task OnStateFinalized(nint address, StateFinalizationType finalizationType)
+    private async void OnStateFinalized(nint address, StateFinalizationType finalizationType)
     {
         if (address != _player.Address)
             return;
 
-        _logger.LogDebug($"[OnStateFinalized] FinalizationType: [{finalizationType}] accepted, Caching & Applying!", LoggerType.IpcGlamourer);
+        // if the finalization type was a gearset finalized, remove the gearset from the ipc blocker filter.
+        if (finalizationType is StateFinalizationType.Gearset)
+        {
+            _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
+            _handler.OnEquipGearsetFinalized();
+        }
+
+        // we can always remove this if it ends up becoming an issue, and isntead making the conditional of storing the cache based if the ipc blockers == 0
+        if (_handler.BlockIpcCalls is not IpcBlockReason.None)
+        {
+            _logger.LogError($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            return;
+        }
+
+        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LoggerType.IpcGlamourer);
         await _handler.ApplySemaphore(true, true, true);
     }
 }
