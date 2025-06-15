@@ -155,9 +155,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 Gags = _gagManager.ServerGagData ?? throw new Exception("ActiveGagData was null!"),
                 Restrictions = _restrictionManager.ServerRestrictionData ?? throw new Exception("ActiveRestrictionsData was null!"),
                 Restraint = _restraintManager.ServerRestraintData ?? throw new Exception("ActiveRestraintData was null!"),
-                ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier),
+                ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier).ToList(),
                 GlobalAliasData = _puppetManager.GlobalAliasStorage,
-                PairAliasData = _puppetManager.PairAliasStorage,
+                PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
                 ToyboxData = new CharaToyboxData()
                 {
                     ActivePattern = _patternManager.ActivePattern?.Identifier ?? Guid.Empty,
