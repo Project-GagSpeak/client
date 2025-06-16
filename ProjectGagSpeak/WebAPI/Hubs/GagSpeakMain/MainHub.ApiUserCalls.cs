@@ -151,27 +151,8 @@ public partial class MainHub
     public async Task<HubResponse> UserPushData(PushClientCompositeUpdate dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        try
-        {
-            // Attempt to send the push data update.
-            return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushData), dto).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Handle the operation canceled exception
-            Logger.LogError($"OperationCanceledException: {ex.Source}");
-        }
-        catch (HubException ex)
-        {
-            // Handle SignalR hub exceptions
-            Logger.LogError($"HubException: {ex.Source}");
-        }
-        catch (Exception ex)
-        {
-            // Handle any other exceptions
-            Logger.LogError($"Exception: {ex.Source}");
-        }
-        return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NullData);
+        return await GagSpeakHubMain!.InvokeAsync<HubResponse>(nameof(UserPushData), dto).ConfigureAwait(false);
+
     }
 
     public async Task<HubResponse> UserPushDataIpc(PushClientIpcUpdate dto)
