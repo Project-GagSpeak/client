@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
@@ -57,7 +57,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         pair.UserPair.OwnAccess = dto.NewAccess;
 
         if (newlyEnabledPermissions is not PuppetPerms.None)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newlyEnabledPermissions);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newlyEnabledPermissions);
 
         Logger.LogDebug($"Updated own unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
@@ -122,7 +122,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         //// log the new state, the hardcore change, and the new value.
         //var newState = string.IsNullOrEmpty(ChangedValue?.ToString()) ? NewState.Disabled : NewState.Enabled;
         //Logger.LogDebug(changeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
-        //UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
+        //GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
     /// <summary>
@@ -245,7 +245,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
 
         var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);
         if (newEnabledPuppetPerms is not PuppetPerms.None)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newEnabledPuppetPerms);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newEnabledPuppetPerms);
 
         RecreateLazy(false);
 

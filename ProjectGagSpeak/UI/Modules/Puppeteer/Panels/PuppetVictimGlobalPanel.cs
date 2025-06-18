@@ -49,7 +49,7 @@ public sealed partial class PuppetVictimGlobalPanel
         _aliasDrawer = aliasDrawer;
         _cosmetics = cosmetics;
 
-        _filteredItems = _manager.GlobalAliasStorage;
+        _filteredItems = _manager.GlobalAliasStorage.Items;
     }
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, PuppeteerTabs tabMenu)
@@ -80,8 +80,8 @@ public sealed partial class PuppetVictimGlobalPanel
         {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
             _filteredItems = _searchStr.IsNullOrEmpty()
-                ? _manager.GlobalAliasStorage
-                : _manager.GlobalAliasStorage
+                ? _manager.GlobalAliasStorage.Items
+                : _manager.GlobalAliasStorage.Items
                 .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }

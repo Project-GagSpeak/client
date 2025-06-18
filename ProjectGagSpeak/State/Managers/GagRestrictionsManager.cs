@@ -8,7 +8,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 
@@ -142,7 +142,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
 
         Logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
 
         // Mark what parts of this item will end up having effective changes.
         Logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
@@ -167,7 +167,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         data.GagSlots[layer].Timer = timer;
         data.GagSlots[layer].PadlockAssigner = enactor;
         // Fire that the gag was locked for this layer.
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, padlock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, padlock, enactor);
     }
 
     public void UnlockGag(int layer, string enactor)
@@ -183,7 +183,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         data.GagSlots[layer].Timer = DateTimeOffset.MinValue;
         data.GagSlots[layer].PadlockAssigner = string.Empty;
         // Fire that the gag was unlocked for this layer.
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, prevLock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, prevLock, enactor);
     }
 
     public bool RemoveGag(int layer, string enactor, [NotNullWhen(true)] out GarblerRestriction? item)
@@ -198,7 +198,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGagType, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGagType, enactor);
 
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetEnabledGag(removedGagType, out item))

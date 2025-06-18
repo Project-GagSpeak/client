@@ -4,7 +4,7 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerClient;
@@ -41,7 +41,7 @@ public class SelectStringPrompt : SetupSelectListPrompt
              && MainConfig.LastSeenListSelection.Contains("Yes", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LoggerType.Achievements);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
             }
 
             _logger.LogTrace($"SelectString: LastSeenListSelection={MainConfig.LastSeenListSelection}, LastSeenListTarget={MainConfig.LastSeenNodeLabel}");

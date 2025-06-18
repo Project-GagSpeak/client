@@ -1,3 +1,4 @@
+using Dalamud.Interface;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -13,6 +14,7 @@ namespace GagSpeak.Services;
 public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
+    private readonly ClientAchievements _achievements;
     private readonly PlayerData _player;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gagManager;
@@ -25,6 +27,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly TriggerManager _triggerManager;
     private readonly TraitAllowanceManager _traitManager;
 
+    private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
@@ -32,6 +35,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         ILogger<DataDistributionService> logger,
         GagspeakMediator mediator,
         MainHub hub,
+        ClientAchievements achievements,
         PlayerData player,
         PairManager pairManager,
         GagRestrictionManager gagManager,
@@ -46,6 +50,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         : base(logger, mediator)
     {
         _hub = hub;
+        _achievements = achievements;
         _player = player;
         _pairs = pairManager;
         _gagManager = gagManager;
@@ -58,9 +63,15 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _triggerManager = triggerManager;
         _traitManager = traitManager;
 
+
+        // Achievement Handling
+        Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
+        Mediator.Subscribe<UpdateCompletedAchievements>(this, (_) => UpdateTotalEarned().ConfigureAwait(false));
+
+        // Updates.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _     => PushCompositeData(_pairs.GetOnlineUserDatas()).ConfigureAwait(false));
+        // Kinkster Pair management.
         Mediator.Subscribe<PairWentOnlineMessage>(this, arg     => _newOnlineKinksters.Add(arg.UserData));
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
 
@@ -73,6 +84,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<IpcDataChangedMessage>(this, msg     => DistributeDataVisible(_pairs.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType).ConfigureAwait(false));
 
         // Online Data Updaters
+        Mediator.Subscribe<MainHubConnectedMessage>(this, _         => PushCompositeData(_pairs.GetOnlineUserDatas()).ConfigureAwait(false));
         Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGag(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeDataRestriction(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeDataRestraint(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
@@ -94,7 +106,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
     private void DelayedFrameworkOnUpdate()
     {
-        if (!MainHub.IsConnected) 
+        // Do not process if not data synced.
+        if (!MainHub.IsConnectionDataSynced) 
             return;
 
         // Handle Online Players.
@@ -140,9 +153,85 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         };
     }
 
-    /// <summary> Pushes all our Player Data to all online pairs once connected. </summary>
+    private async Task UpdateAchievementData()
+    {
+        // Prevent uploads if CanUpload() is false.
+        if (ClientAchievements.HadUnhandledDC)
+        {
+            Logger.LogWarning("Will not update savedata while still recovering from an unhandled Disconnect!");
+            return;
+        }
+
+        // Ensure data is valid.
+        if (!ClientAchievements.HasValidData)
+        {
+            Logger.LogWarning("Cannot update achievement data, save data is invalid!");
+            return;
+        }
+
+        // obtain the data to upload.
+        Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
+        var dataString = _achievements.SerializeData();
+        Logger.LogInformation("Connected with AchievementData String:\n" + dataString);
+        var result = await _hub.UserUpdateAchievementData(new(MainHub.PlayerUserData, dataString)).ConfigureAwait(false);
+        if (result.ErrorCode is GagSpeakApiEc.Success)
+        {
+            Logger.LogDebug("Successfully pushed latest Achievement Data to server", LoggerType.Achievements);
+        }
+        else
+        {
+            Logger.LogError($"Failed to push Achievement Data to server. [{result.ErrorCode}]");
+            return;
+        }
+    }
+
+    // An updater slim is nessisary for this.
+    private async Task UpdateTotalEarned()
+    {
+        await _updateSlim.WaitAsync();
+        try
+        {
+            KinkPlateContent currentContent;
+            if (KinkPlateService.KinkPlates.TryGetValue(MainHub.PlayerUserData, out var existing))
+                currentContent = existing.KinkPlateInfo;
+            else
+            {
+                var response = await _hub.UserGetKinkPlate(new KinksterBase(MainHub.PlayerUserData));
+                currentContent = response.Info;
+            }
+
+            Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LoggerType.Achievements);
+            currentContent.CompletedAchievementsTotal = ClientAchievements.Completed;
+            await _hub.UserSetKinkPlateContent(new(MainHub.PlayerUserData, currentContent));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Failed to update KinkPlate™ with latest achievement count: {ex}", LoggerType.Achievements);
+        }
+        finally
+        {
+            _updateSlim.Release();
+        }
+    }
+
+
+
+    /// <summary> 
+    ///     Pushes all our Player Data to all online pairs once connected, or to any new pairs that go online.
+    /// </summary>
+    /// <remarks>
+    ///     TODO: Make this be more optimized so that the composite data is calculated less if possible? Idk.
+    /// </remarks>
     private async Task PushCompositeData(List<UserData> newOnlinePairs)
     {
+        // if not connected and data synced just add the pairs to the list. (Extra safety net)
+        if (!MainHub.IsConnectionDataSynced)
+        {
+            Logger.LogDebug("Not pushing Composite Data, not connected to server or data not synced.", LoggerType.ApiCore);
+            _newOnlineKinksters.UnionWith(newOnlinePairs);
+            return;
+        }
+
         if (newOnlinePairs.Count <= 0)
             return;
 
@@ -167,11 +256,18 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 LightStorageData = newLightStorage,
             };
             
-            Logger.LogDebug("new Online Pairs Identified, pushing latest Composite data", LoggerType.OnlinePairs);
-            if (await _hub.UserPushData(new(newOnlinePairs, data, false)) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-                Logger.LogError("Failed to push Gag Data to server Reason: " + res.ErrorCode);
-
-            _prevLightStorageData = newLightStorage;
+            Logger.LogDebug($"Pushing CharaCompositeData to: {string.Join(", ", newOnlinePairs.Select(v => v.UID))}", LoggerType.ApiCore);
+            var result = await _hub.UserPushData(new(newOnlinePairs, data, true)).ConfigureAwait(false);
+            if(result.ErrorCode is GagSpeakApiEc.Success)
+            {
+                Logger.LogDebug("Successfully pushed Composite Data to server", LoggerType.ApiCore);
+                _prevLightStorageData = newLightStorage;
+            }
+            else
+            {
+                Logger.LogError($"Failed to push Composite Data to server. [{result.ErrorCode}]");
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -182,6 +278,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
     private async Task DistributeDataVisible(List<UserData> visChara, CharaIPCData newData, DataUpdateType kind)
     {
+
         if (DataIsDifferent(_prevIpcData, newData) is false)
             return;
 

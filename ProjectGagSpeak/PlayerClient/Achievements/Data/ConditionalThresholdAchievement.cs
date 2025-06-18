@@ -1,6 +1,6 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public class ConditionalThresholdAchievement : AchievementBase
 {
@@ -37,7 +37,7 @@ public class ConditionalThresholdAchievement : AchievementBase
         if(Condition())
         {
             LastRecordedThreshold = newestThreshold;
-            UnlocksEventManager.AchievementLogger.LogTrace($"Updating Threshold for {Title}. Current Threshold: {LastRecordedThreshold}" +
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Updating Threshold for {Title}. Current Threshold: {LastRecordedThreshold}" +
                 $" -- Total Required: {MilestoneGoal}", LoggerType.AchievementInfo);
             CheckCompletion();
         }

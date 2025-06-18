@@ -356,12 +356,12 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     {
         if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
             return;
-        if (_puppeteer.GlobalAliasStorage.IsNullOrEmpty())
+        if (_puppeteer.GlobalAliasStorage.Items.IsNullOrEmpty())
         {
             ImGui.TextUnformatted("Puppeteer Storage is null or empty");
             return;
         }
-        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.WithIndex())
+        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.Items.WithIndex())
         {
             using var node = ImRaii.TreeNode($"{alias.Label}##{idx}");
             if (!node)
@@ -387,7 +387,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 continue;
             var world = alias.Value.StoredNameWorld;
             var listener = alias.Value.ExtractedListenerName;
-            foreach (var aliasTrigger in alias.Value.Storage)
+            foreach (var aliasTrigger in alias.Value.Storage.Items)
             {
                 using var aliasNode = ImRaii.TreeNode($"{aliasTrigger.Label}##{idx}");
                 if (!aliasNode)

@@ -1,6 +1,6 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public class ConditionalAchievement : AchievementBase
 {
@@ -27,7 +27,7 @@ public class ConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Checking if {Title} satisfies conditional", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Checking if {Title} satisfies conditional", LoggerType.AchievementInfo);
 
         if (Condition())
         {

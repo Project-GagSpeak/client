@@ -1,6 +1,6 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public class ProgressAchievement : AchievementBase
 {
@@ -28,7 +28,7 @@ public class ProgressAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected) 
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Incrementing Progress by 1 for {Title}. Total Required: {MilestoneGoal}", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Incrementing Progress by 1 for {Title}. Total Required: {MilestoneGoal}", LoggerType.AchievementInfo);
         Progress += amount;
         // check for completion after incrementing progress
         CheckCompletion();

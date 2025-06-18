@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -128,7 +128,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
             // Clear message and trigger achievement event
             NextChatMessage = string.Empty;
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.GlobalSent);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.GlobalSent);
         }
 
         // Update preview display based on input field activity

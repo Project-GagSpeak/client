@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -182,7 +182,7 @@ public partial class PairStickyUI
 
                     _logger.LogDebug("Sending Shock to Shock Collar with duration: " + newMaxDuration + "(milliseconds)");
                     _ = _hub.UserShockKinkster(new ShockCollarAction(SPair.UserData, 0, Intensity, newMaxDuration));
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockSent);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockSent);
                     CloseInteraction();
                 }
             }

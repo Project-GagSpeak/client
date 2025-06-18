@@ -2,7 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagspeakAPI.Extensions;
@@ -39,7 +39,7 @@ public partial class StaticDetours
                 var targetName = (targetObj as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Target";
                 Logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
 
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);
             });
         }
         catch (Exception e)

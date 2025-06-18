@@ -4,7 +4,7 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Handlers;
@@ -151,6 +151,8 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<PairManager>()))
         .AddSingleton((s) => new GagSpeakLoc(s.GetRequiredService<ILogger<GagSpeakLoc>>(), s.GetRequiredService<Dalamud.Localization>(),
             s.GetRequiredService<MainConfig>(), s.GetRequiredService<TutorialService>(), pi))
+        .AddSingleton<GagspeakEventManager>()
+
 
         // File System
         .AddSingleton((s) => new GagRestrictionFileSelector(s.GetRequiredService<ILogger<GagRestrictionFileSelector>>(), s.GetRequiredService<GagspeakMediator>(),
@@ -195,6 +197,11 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MufflerService>()
 
         // Player Client
+        .AddSingleton<ClientAchievements>()
+        .AddSingleton((s) => new AchievementListener(s.GetRequiredService<ILogger<AchievementListener>>(), s.GetRequiredService<GagspeakMediator>(),
+            s.GetRequiredService<ClientAchievements>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<PlayerData>(), s.GetRequiredService<GagspeakEventManager>(),
+            s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<RestraintManager>(), s.GetRequiredService<OnFrameworkService>(), ds))
+
         .AddSingleton<FavoritesManager>()
         .AddSingleton<GlobalPermissions>()
         .AddSingleton<KinksterRequests>()
@@ -328,15 +335,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
 
-        // Unlocks
-        .AddSingleton((s) => new AchievementManager(s.GetRequiredService<ILogger<AchievementManager>>(), s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<MainHub>(),
-            s.GetRequiredService<GlobalPermissions>(), s.GetRequiredService<MainConfig>(), s.GetRequiredService<PairManager>(), s.GetRequiredService<PlayerData>(),
-            s.GetRequiredService<UnlocksEventManager>(), s.GetRequiredService<GagRestrictionManager>(), s.GetRequiredService<RestrictionManager>(), s.GetRequiredService<RestraintManager>(),
-            s.GetRequiredService<CursedLootManager>(), s.GetRequiredService<PatternManager>(), s.GetRequiredService<AlarmManager>(), s.GetRequiredService<TriggerManager>(),
-            s.GetRequiredService<SexToyManager>(), s.GetRequiredService<TraitsCache>(), s.GetRequiredService<ItemService>(), s.GetRequiredService<OnFrameworkService>(),
-            s.GetRequiredService<CosmeticService>(), s.GetRequiredService<KinkPlateService>(), nm, ds))
-        .AddSingleton<UnlocksEventManager>()
-
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()
         .AddSingleton<HubFactory>()
@@ -468,8 +466,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
         .AddScoped<PublicationsManager>()
         // Scoped UI (Achievements)
-        .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>((s) => new AchievementsUI(s.GetRequiredService<ILogger<AchievementsUI>>(), s.GetRequiredService<GagspeakMediator>(),
-            s.GetRequiredService<AchievementManager>(), s.GetRequiredService<AchievementTabs>(), s.GetRequiredService<CosmeticService>(), pi))
+        .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>()
         .AddScoped<AchievementTabs>()
         // StickyWindow
         .AddScoped<PresetLogicDrawer>()
@@ -526,6 +523,7 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())
         .AddHostedService(p => p.GetRequiredService<MainHub>())
         .AddHostedService(p => p.GetRequiredService<SafewordService>())
+        .AddHostedService(p => p.GetRequiredService<AchievementsService>())
 
         // add our main Plugin.cs file as a hosted ;
         .AddHostedService<GagSpeakHost>();

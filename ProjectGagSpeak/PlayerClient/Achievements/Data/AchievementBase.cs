@@ -1,4 +1,4 @@
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 public abstract class AchievementBase : IAchievementItem
 {
     private AchievementInfo BaseInfo { get; init; }

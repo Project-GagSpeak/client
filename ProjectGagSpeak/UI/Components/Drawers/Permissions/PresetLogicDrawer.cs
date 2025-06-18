@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
@@ -38,7 +38,7 @@ public class PresetLogicDrawer
             if (CkGui.IconTextButton(FAI.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
             {
                 ApplySelectedPreset(pairToDrawListFor);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PresetApplied);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PresetApplied);
             }
         }
         CkGui.AttachToolTip(pairToDrawListFor.OwnPerms.InHardcore

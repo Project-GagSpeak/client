@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
@@ -157,7 +157,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // update values & ping achievement.
         data.Identifier = restraintId;
         data.Enabler = enactor;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, restraintId, true, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, restraintId, true, enactor);
 
         // grab the collective data from the set to return.
         if (Storage.TryGetRestraint(restraintId, out set))
@@ -178,7 +178,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         data.Password = pass;
         data.Timer = timer;
         data.PadlockAssigner = enactor;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
     }
 
     public void UnlockRestraint(Guid restraintId, string enactor)
@@ -193,10 +193,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         data.Password = string.Empty;
         data.Timer = DateTimeOffset.MinValue;
         data.PadlockAssigner = string.Empty;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevLock, false, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevLock, false, enactor);
 
         if ((prevAssigner != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prevAssigner))
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
     public bool RemoveRestraint(string enactor, [NotNullWhen(true)] out RestraintSet? item)
@@ -211,11 +211,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var setEnabler = data.Enabler;
         data.Identifier = Guid.Empty;
         data.Enabler = string.Empty;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, removedRestraint, false, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, removedRestraint, false, enactor);
 
         // set was applied by one person and removed by another where neither was the client.
         if ((setEnabler != MainHub.UID) && (enactor != MainHub.UID) && (enactor != setEnabler))
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
 
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestraint(removedRestraint, out item))

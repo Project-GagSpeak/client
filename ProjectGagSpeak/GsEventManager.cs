@@ -1,16 +1,16 @@
-namespace GagSpeak.Achievements;
+namespace GagSpeak;
 
 #nullable disable
-public class UnlocksEventManager
+public class GagspeakEventManager
 {
     private readonly ILoggerFactory _loggerFactory;
-    public static ILogger AchievementLogger { get; set; }
+    public static ILogger UnlocksLogger { get; set; }
 
-    public UnlocksEventManager(ILoggerFactory loggerFactory)
+    public GagspeakEventManager(ILoggerFactory loggerFactory)
     {
         _loggerFactory = loggerFactory;
         // assign the logger.
-        AchievementLogger = _loggerFactory.CreateLogger("Achievements");
+        UnlocksLogger = _loggerFactory.CreateLogger("Achievements");
     }
 
     private static Dictionary<UnlocksEvent, Delegate> EventDictionary = new Dictionary<UnlocksEvent, Delegate>();
@@ -190,19 +190,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action eventHandler)
                 {
                     eventHandler.Invoke();
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -214,19 +214,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action<T> eventHandler)
                 {
                     eventHandler.Invoke(param);
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -238,19 +238,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action<T1, T2> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2);
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -262,19 +262,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3);
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -286,19 +286,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4);
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -310,19 +310,19 @@ public class UnlocksEventManager
         {
             try
             {
-                AchievementLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4, T5> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4, param5);
                 }
                 else
                 {
-                    AchievementLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
             catch (Exception ex)
             {
-                AchievementLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
         }
     }

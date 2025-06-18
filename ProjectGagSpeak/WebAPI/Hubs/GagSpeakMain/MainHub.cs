@@ -1,6 +1,6 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -14,6 +14,8 @@ using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
+using System.Net.WebSockets;
+using GagSpeak.CkCommons;
 
 namespace GagSpeak.WebAPI;
 #pragma warning disable MA0040 
@@ -24,18 +26,20 @@ namespace GagSpeak.WebAPI;
 public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHostedService
 {
     private readonly HubFactory _hubFactory;
+    private readonly ClientAchievements _achievements;
     private readonly KinksterRequests _requests;
     private readonly OwnGlobalsManager _globalPermManager;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _kinkListener;
+    private readonly ConnectionSyncService _dataSyncronizer;
     private readonly PairManager _pairs;
     private readonly ServerConfigManager _serverConfigs;
     private readonly MainConfig _mainConfig;
 
     // Cancellation Token Sources
-    private CancellationTokenSource HubConnectionCTS;
-    private CancellationTokenSource? HubHealthCTS = new();
+    private CancellationTokenSource _hubConnectionCTS = new();
+    private CancellationTokenSource? _hubHealthCTS = new();
     public const string MainServer = "GagSpeak Main";
     public const string MainServiceUri = "wss://gagspeak.kinkporium.studio";
 
@@ -46,11 +50,13 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         PlayerData clientMonitor,
         OnFrameworkService frameworkUtils,
         HubFactory hubFactory,
+        ClientAchievements achievements,
         KinksterRequests requests,
         OwnGlobalsManager globalPermManager,
         VisualStateListener visualListener,
-        ToyboxStateListener kinkListener,
         PuppeteerListener puppetListener,
+        ToyboxStateListener kinkListener,
+        ConnectionSyncService dataSyncronizer,
         PairManager pairs,
         ServerConfigManager serverConfigs,
         MainConfig mainConfig)
@@ -58,16 +64,15 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     {
         _hubFactory = hubFactory;
         _requests = requests;
+        _achievements = achievements;
         _globalPermManager = globalPermManager;
         _visualListener = visualListener;
         _puppetListener = puppetListener;
         _kinkListener = kinkListener;
+        _dataSyncronizer = dataSyncronizer;
         _pairs = pairs;
         _serverConfigs = serverConfigs;
         _mainConfig = mainConfig;
-
-        // Create our CTS for the hub connection
-        HubConnectionCTS = new CancellationTokenSource();
 
         // main hub connection subscribers
         Mediator.Subscribe<MainHubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
@@ -96,9 +101,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         }
     }
 
-    public static bool IsConnected => ServerStatus is ServerState.Connected;
+    public static bool IsConnectionDataSynced => ServerStatus is ServerState.ConnectedDataSynced;
+    public static bool IsConnected => ServerStatus is ServerState.Connected or ServerState.ConnectedDataSynced;
     public static bool IsOnUnregistered => ServerStatus is ServerState.NoSecretKey;
-    public static bool IsServerAlive => ServerStatus is ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
+    public static bool IsServerAlive => ServerStatus is ServerState.ConnectedDataSynced or ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
     public bool ClientHasConnectionPaused => _serverConfigs.ServerStorage.FullPause;
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -110,9 +116,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         Logger.LogInformation("MainHub is stopping. Closing down GagSpeakHub-Main!", LoggerType.ApiCore);
-        HubHealthCTS?.Cancel();
+        _hubHealthCTS?.Cancel();
         await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
-        HubConnectionCTS?.Cancel();
+        _hubConnectionCTS?.Cancel();
         return;
     }
 
@@ -122,7 +128,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         if (!ShouldClientConnect(out var secretKey))
         {
             Logger.LogInformation("Client was not in a valid state to connect to the server.", LoggerType.ApiCore);
-            HubConnectionCTS?.Cancel();
+            _hubConnectionCTS?.Cancel();
             return;
         }
 
@@ -134,13 +140,11 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         // Debug the current state here encase shit hits the fan.
         Logger.LogDebug("Current ServerState during this Connection Attempt: " + ServerStatus, LoggerType.ApiCore);
         // Recreate the ConnectionCTS.
-        HubConnectionCTS?.Cancel();
-        HubConnectionCTS?.Dispose();
-        HubConnectionCTS = new CancellationTokenSource();
-        var connectionToken = HubConnectionCTS.Token;
+        _hubConnectionCTS = _hubConnectionCTS.CancelRecreate();
+        var connectionToken = _hubConnectionCTS.Token;
 
         // While we are still waiting to connect to the server, do the following:
-        while (ServerStatus is not ServerState.Connected && !connectionToken.IsCancellationRequested)
+        while (!IsConnected && !connectionToken.IsCancellationRequested)
         {
             AuthFailureMessage = string.Empty;
 
@@ -182,12 +186,15 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
                 // if we reach here it means we are officially connected to the server
                 Logger.LogInformation("Successfully Connected to GagSpeakHub-Main", LoggerType.ApiCore);
                 ServerStatus = ServerState.Connected;
-                Mediator.Publish(new MainHubConnectedMessage());
 
                 // Load in our initial pairs, then the online ones.
                 await LoadInitialPairs().ConfigureAwait(false);
-                await LoadOnlinePairs().ConfigureAwait(false); // Fires OnlinePairsLoaded.
+                await LoadOnlinePairs().ConfigureAwait(false);
                 await LoadKinksterRequests().ConfigureAwait(false);
+                await _dataSyncronizer.SetClientDataForProfile().ConfigureAwait(false);
+                // once data is syncronized, update the serverStatus.
+                ServerStatus = ServerState.ConnectedDataSynced;
+                Mediator.Publish(new MainHubConnectedMessage());
 
                 // Update our current authentication to reflect the information provided.
                 _serverConfigs.UpdateAuthentication(secretKey, ConnectionResponse!);
@@ -248,13 +255,13 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     public override async Task Disconnect(ServerState disconnectionReason, bool saveAchievements = true)
     {
         // If our current state was Connected, be sure to fire, or at least attempt to fire, a final achievement save prior to disconnection.
-        if (ServerStatus is ServerState.Connected && saveAchievements)
+        if (IsConnected && saveAchievements)
         {
             // only perform the following if SaveData is in a valid state for uploading on Disconnect.
-            if(AchievementManager.LatestCache.CanUpload())
+            if(ClientAchievements.HasValidData && !ClientAchievements.HadUnhandledDC)
             {
                 Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
-                await UserUpdateAchievementData(new(new(UID), AchievementManager.GetSaveDataDtoString()));
+                await UserUpdateAchievementData(new(PlayerUserData, _achievements.SerializeData()));
             }
             else
             {
@@ -277,7 +284,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
                 "clearing all other variables for [" + _serverConfigs.ServerStorage.ServerName + "]", LoggerType.ApiCore);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             Initialized = false;
-            HubHealthCTS?.Cancel();
+            _hubHealthCTS?.Cancel();
             Mediator.Publish(new MainHubDisconnectedMessage());
             // set the ConnectionResponse and hub to null.
             GagSpeakHubMain = null;
@@ -384,7 +391,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         // If the client wishes to not be connected to the server, return.
         if (ClientHasConnectionPaused)
         {
-            Logger.LogDebug("You Have your connection to server paused. Stopping any attempt to connect!", LoggerType.ApiCore);
+            Logger.LogDebug("You have your connection to server paused. Stopping any attempt to connect!", LoggerType.ApiCore);
             return false;
         }
 
@@ -404,7 +411,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 
             // Set our new ServerState to NoSecretKey and reject connection.
             ServerStatus = ServerState.NoSecretKey;
-            HubConnectionCTS?.Cancel();
+            _hubConnectionCTS?.Cancel();
             return false;
         }
         else // Log the successful fetch.
@@ -470,11 +477,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         OnRoomChatMessage((dto, message) => _ = Callback_RoomChatMessage(dto, message));
 
         // create a new health check token
-        HubHealthCTS?.Cancel();
-        HubHealthCTS?.Dispose();
-        HubHealthCTS = new CancellationTokenSource();
+        _hubHealthCTS = _hubHealthCTS?.CancelRecreate();
         // Start up our health check loop.
-        _ = ClientHealthCheckLoop(HubHealthCTS!.Token);
+        _ = ClientHealthCheckLoop(_hubHealthCTS!.Token);
         // set us to initialized (yippee!!!)
         Initialized = true;
     }
@@ -521,7 +526,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
             return;
         }
 
-        // Initialize this while loop with our HubHealthCTS token.
+        // Initialize this while loop with our _hubHealthCTS token.
         while (!ct.IsCancellationRequested && GagSpeakHubMain is not null)
         {
             try
@@ -602,7 +607,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
             _pairs.MarkPairOnline(entry, sendNotification: false);
 
         Logger.LogDebug("Online Pairs: [" + string.Join(", ", onlinePairs.Select(x => x.User.AliasOrUID)) + "]", LoggerType.ApiCore);
-        Mediator.Publish(new OnlinePairsLoadedMessage());
     }
 
     private async Task LoadKinksterRequests()
@@ -619,7 +623,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     {
         // Log the closure, cancel the health token, and publish that we have been disconnected.
         Logger.LogWarning("GagSpeakHub-Main was Closed by its Hub-Instance");
-        HubHealthCTS?.Cancel();
+        _hubHealthCTS?.Cancel();
         Mediator.Publish(new MainHubDisconnectedMessage());
         ServerStatus = ServerState.Offline;
         // if an argument for this was passed in, we should provide the reason.
@@ -629,16 +633,16 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 
     protected override void HubInstanceOnReconnecting(Exception? arg)
     {
-        // Cancel our HubHealthCTS, set status to reconnecting, and suppress the next sent notification.
+        // Cancel our _hubHealthCTS, set status to reconnecting, and suppress the next sent notification.
         SuppressNextNotification = true;
-        HubHealthCTS?.Cancel();
+        _hubHealthCTS?.Cancel();
         ServerStatus = ServerState.Reconnecting;
 
         // Flag the achievement Manager to not apply SaveData obtained on reconnection if it was caused by an exception.
-        if (arg is System.Net.WebSockets.WebSocketException)
+        if (arg is WebSocketException webException)
         {
             Logger.LogInformation("System closed unexpectedly, flagging Achievement Manager to not set data on reconnection.");
-            AchievementManager.LatestCache.LastUnhandledDisconnect = DateTime.UtcNow;
+            _achievements.HadUnhandledDisconnect(webException);
         }
 
         Logger.LogWarning("Connection to " + _serverConfigs.ServerStorage.ServerName + " Closed... Reconnecting. (Reason: " + arg);
@@ -658,6 +662,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
                 ServerStatus = ServerState.Connected;
                 await LoadInitialPairs().ConfigureAwait(false);
                 await LoadOnlinePairs().ConfigureAwait(false);
+                await _dataSyncronizer.SetClientDataForProfile().ConfigureAwait(false);
+                // once data is syncronized, update the serverStatus.
+                ServerStatus = ServerState.ConnectedDataSynced;
                 Mediator.Publish(new MainHubConnectedMessage());
             }
         }
@@ -665,7 +672,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         {
             Logger.LogError("Failure to obtain Data after reconnection to GagSpeakHub-Main. Reason: " + ex);
             // disconnect if a non-websocket related issue, otherwise, reconnect.
-            if (ex is not System.Net.WebSockets.WebSocketException || ex is not TimeoutException)
+            if (ex is not WebSocketException || ex is not TimeoutException)
                 {
                 Logger.LogWarning("Disconnecting from GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
                 await Disconnect(ServerState.Disconnected).ConfigureAwait(false);

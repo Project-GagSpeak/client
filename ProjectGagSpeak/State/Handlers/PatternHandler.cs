@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;
@@ -66,7 +66,7 @@ public class PatternHandler : IDisposable
         DisplayTime.Start();
         _playbackTask = Task.Run(() => PlaybackLoop(_playbackCTS.Token), _playbackCTS.Token);
 
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Started, patternToPlay.Identifier, false);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Started, patternToPlay.Identifier, false);
         return true;
     }
 
@@ -88,7 +88,7 @@ public class PatternHandler : IDisposable
         _playbackCTS?.Dispose();
         _playbackCTS = null;
 
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Stopped, ActivePatternInfo.Identifier, false);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Stopped, ActivePatternInfo.Identifier, false);
         ActivePatternInfo = null;
     }
 

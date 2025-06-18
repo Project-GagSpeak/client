@@ -1,6 +1,6 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
@@ -160,7 +160,7 @@ public class TriggerActionService
         }
 
         _logger.LogInformation("Text Action is being executed.", LoggerType.Puppeteer);
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
         ChatService.EnqueueMessage("/" + remainingMessage.TextValue);
         return true;
     }

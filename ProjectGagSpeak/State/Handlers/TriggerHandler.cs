@@ -1,7 +1,7 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
@@ -150,7 +150,7 @@ public class TriggerHandler
 
         // If it was for an alias, and not a text insstruction, handle the alias and return early.
         if (perms.HasAny(PuppetPerms.Alias))
-            if (await ConvertAliasCommandsIfAny(finalMsg, storage, enactorUid, ActionSource.PairAlias))
+            if (await ConvertAliasCommandsIfAny(finalMsg, storage.Items, enactorUid, ActionSource.PairAlias))
                 return;
 
         // Otherwise, handle the final message accordingly.
@@ -165,7 +165,7 @@ public class TriggerHandler
         {
             var enclosedText = (enactorUid == MainHub.UID) ? "A GlobalTrigger" : enactorUid;
             _logger.LogInformation($"[{enclosedText}] made you execute a message!", LoggerType.Puppeteer);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
             ChatService.EnqueueMessage("/" + finalMsg.TextValue);
             return;
         }
@@ -222,13 +222,13 @@ public class TriggerHandler
             if (sitEmote.RowId is 50 or 52)
             {
                 _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, sitEmote.RowId);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, sitEmote.RowId);
                 return true;
             }
             if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId is 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
             {
                 _logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, 90);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, 90);
                 return true;
             }
         }
@@ -243,7 +243,7 @@ public class TriggerHandler
 
             if (!string.IsNullOrEmpty(emote.Name))
             {
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, emote.RowId);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, emote.RowId);
                 return true;
             }
             return false;
@@ -293,7 +293,7 @@ public class TriggerHandler
                 + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
             if (await _triggerService.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
         };
     }
 

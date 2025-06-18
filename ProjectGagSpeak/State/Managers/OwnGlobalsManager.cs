@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -85,7 +85,7 @@ public sealed class OwnGlobalsManager
                 _mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
                 _mediator.Publish(new PiShockExecuteOperation(pairMatch.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
                 if (dto.OpCode is 0)
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
             }
             else if (_globals.Current is not null && !_globals.Current.GlobalShockShareCode.IsNullOrEmpty())
             {
@@ -93,7 +93,7 @@ public sealed class OwnGlobalsManager
                 _mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
                 _mediator.Publish(new PiShockExecuteOperation(_globals.Current.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration));
                 if (dto.OpCode is 0)
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
             }
             else
             {
@@ -166,7 +166,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableForcedFollow(pair);
             else _hcHandler.DisableForcedFollow(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedFollow, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedFollow, newState, enactor, MainHub.UID);
         }
     }
 
@@ -180,7 +180,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableForcedEmote(enactor);
             else _hcHandler.DisableForcedEmote(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedEmote, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedEmote, newState, enactor, MainHub.UID);
         }
     }
 
@@ -194,7 +194,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableForcedStay(enactor);
             else _hcHandler.DisableForcedStay(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedStay, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedStay, newState, enactor, MainHub.UID);
         }
     }
 
@@ -208,7 +208,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableHiddenChatBoxes(enactor);
             else _hcHandler.DisableHiddenChatBoxes(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatBoxesHidden, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatBoxesHidden, newState, enactor, MainHub.UID);
         }
     }
 
@@ -222,7 +222,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableHiddenChatInput(enactor);
             else _hcHandler.DisableHiddenChatInput(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputHidden, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputHidden, newState, enactor, MainHub.UID);
         }
     }
 
@@ -236,7 +236,7 @@ public sealed class OwnGlobalsManager
         {
             if (newState) _hcHandler.EnableBlockedChatInput(enactor);
             else _hcHandler.DisableBlockedChatInput(enactor);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputBlocked, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputBlocked, newState, enactor, MainHub.UID);
         }
     }
 }

@@ -1,6 +1,6 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public class TimedProgressAchievement : AchievementBase
 {
@@ -39,7 +39,7 @@ public class TimedProgressAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected) 
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Checking Timer for {Title} to update our time restricted progress.", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Checking Timer for {Title} to update our time restricted progress.", LoggerType.AchievementInfo);
 
         // Clear out any timestamps that are older than the time to complete.
         ProgressTimestamps.RemoveAll(x => ((DateTime.UtcNow - x) + TimeSpan.FromSeconds(10)) >= TimeToComplete);

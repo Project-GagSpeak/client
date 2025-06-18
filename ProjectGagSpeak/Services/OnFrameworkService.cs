@@ -3,7 +3,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -338,7 +338,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
 
         // check if we are at 1 hp, if so, grant the boundgee jumping achievement.
         if (localPlayer.CurrentHp is 1)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.ClientOneHp);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientOneHp);
 
         // push the delayed framework update message to the mediator for things like the UI and the online player manager
         Mediator.Publish(new DelayedFrameworkUpdateMessage());

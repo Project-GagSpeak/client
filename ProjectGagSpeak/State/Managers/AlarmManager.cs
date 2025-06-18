@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
@@ -117,7 +117,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         {
             alarm.Enabled = !alarm.Enabled;
             _saver.Save(this);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.AlarmToggled,
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmToggled,
                 alarm.Enabled ? NewState.Enabled : NewState.Disabled);
         }
     }
@@ -129,7 +129,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         {
             alarm.Enabled = true;
             _saver.Save(this);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, NewState.Enabled);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, NewState.Enabled);
         }
     }
 
@@ -143,7 +143,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
             // set the data and save.
             alarm.Enabled = false;
             _saver.Save(this);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, NewState.Disabled);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, NewState.Disabled);
         }
     }
 

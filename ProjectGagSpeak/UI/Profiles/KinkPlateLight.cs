@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -76,7 +76,7 @@ public class KinkPlateLight
         // Now let's draw out the chosen achievement Name..
         using (UiFontService.GagspeakLabelFont.Push())
         {
-            var titleName = AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
+            var titleName = ClientAchievements.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
             ImGui.SetCursorScreenPos(new Vector2(TitleLineStartPos.X + TitleLineSize.X / 2 - chosenTitleSize.X / 2, TitleLineStartPos.Y - chosenTitleSize.Y));
             // display it, it should be green if connected and red when not.
@@ -256,7 +256,7 @@ public class KinkPlateLight
         var formattedDate = userData.CreatedOn ?? DateTime.MinValue;
         string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
         var dateWidth = ImGui.CalcTextSize(createdDate).X;
-        var achievementWidth = ImGui.CalcTextSize(info.CompletedAchievementsTotal + "/" + AchievementManager.Total).X;
+        var achievementWidth = ImGui.CalcTextSize(info.CompletedAchievementsTotal + "/" + ClientAchievements.Total).X;
         var totalWidth = dateWidth + achievementWidth + StatIconSize.X * 3 + spacing * 3;
 
         statsPos.X += (PlateSize.X - totalWidth) / 2;
@@ -273,7 +273,7 @@ public class KinkPlateLight
 
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
-        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
+        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + ClientAchievements.Total, ImGuiColors.ParsedGold);
         CkGui.AttachToolTip("The total achievements " + displayName + " has earned.");
 
         statsPos.X += achievementWidth + spacing;

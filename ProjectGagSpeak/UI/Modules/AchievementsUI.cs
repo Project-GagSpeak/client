@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -17,19 +17,16 @@ namespace GagSpeak.CkCommons.Gui;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class AchievementsUI : WindowMediatorSubscriberBase
 {
-    private readonly AchievementManager _achievementManager;
     private readonly AchievementTabs _tabMenu;
-    private readonly CosmeticService _cosmeticTextures;
+    private readonly CosmeticService _textures;
     public bool ThemePushed = false;
 
     public AchievementsUI(ILogger<AchievementsUI> logger, GagspeakMediator mediator,
-        AchievementManager achievementManager, AchievementTabs tabMenu,
-        CosmeticService cosmeticTextures, IDalamudPluginInterface pi)
-        : base(logger, mediator, "###GagSpeakAchievementsUI")
+        AchievementTabs tabMenu, CosmeticService textures)
+        : base(logger, mediator, "###AchievementsUI")
     {
-        _achievementManager = achievementManager;
         _tabMenu = tabMenu;
-        _cosmeticTextures = cosmeticTextures;
+        _textures = textures;
 
         AllowPinning = false;
         AllowClickthrough = false;
@@ -87,9 +84,6 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                 case AchievementTabs.SelectedTab.Generic:
                     using (ImRaii.PushId("UnlocksComponentGeneric")) DrawAchievementList(AchievementModuleKind.Generic);
                     break;
-                case AchievementTabs.SelectedTab.Orders:
-                    using (ImRaii.PushId("UnlocksComponentOrders")) DrawAchievementList(AchievementModuleKind.Orders);
-                    break;
                 case AchievementTabs.SelectedTab.Gags:
                     using (ImRaii.PushId("UnlocksComponentGags")) DrawAchievementList(AchievementModuleKind.Gags);
                     break;
@@ -102,11 +96,14 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                 case AchievementTabs.SelectedTab.Toybox:
                     using (ImRaii.PushId("UnlocksComponentToybox")) DrawAchievementList(AchievementModuleKind.Toybox);
                     break;
-                case AchievementTabs.SelectedTab.Hardcore:
-                    using (ImRaii.PushId("UnlocksComponentHardcore")) DrawAchievementList(AchievementModuleKind.Hardcore);
-                    break;
                 case AchievementTabs.SelectedTab.Remotes:
                     using (ImRaii.PushId("UnlocksComponentRemotes")) DrawAchievementList(AchievementModuleKind.Remotes);
+                    break;
+                case AchievementTabs.SelectedTab.Arousal:
+                    using (ImRaii.PushId("UnlocksComponentArousal")) DrawAchievementList(AchievementModuleKind.Arousal);
+                    break;
+                case AchievementTabs.SelectedTab.Hardcore:
+                    using (ImRaii.PushId("UnlocksComponentHardcore")) DrawAchievementList(AchievementModuleKind.Hardcore);
                     break;
                 case AchievementTabs.SelectedTab.Secrets:
                     using (ImRaii.PushId("UnlocksComponentSecrets")) DrawAchievementList(AchievementModuleKind.Secrets);
@@ -117,7 +114,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     private void CenteredHeader()
     {
-        var text = "GagSpeak Achievements (" + AchievementManager.Completed + "/" + AchievementManager.Total + ")";
+        var text = "GagSpeak Achievements (" + ClientAchievements.Completed + "/" + ClientAchievements.Total + ")";
         using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(text);
@@ -132,7 +129,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     {
         // We likely want to avoid pushing the style theme here if we are swapping the colors based on the state of an achievement.
         // If that is not the case. move them here.
-        var unlocks = AchievementManager.GetAchievementsForModule(type);
+        var unlocks = ClientAchievements.GetByModule(type);
         if (!unlocks.Any())
             return;
 
@@ -159,18 +156,12 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var clearButtonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
         var resetButtonSize = CkGui.IconTextButtonSize(FAI.SyncAlt, "Reset");
 
-#if DEBUG 
-        if (CkGui.IconTextButton(FAI.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
-        {
-            // fire and forget.
-            _ = _achievementManager.ResetAchievementData();
-        }
-        CkGui.AttachToolTip("Reset all Achievement Progress and Data.--SEP--Must hold CTRL+SHIFT to execute.--SEP--THIS ACTION IS NOT REVERSABLE.");
-        ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(availableWidth - clearButtonSize - resetButtonSize - spacingX * 2);
-#else
+        //if (CkGui.IconTextButton(FAI.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
+        //{
+        //    // fire and forget.
+        //    _ = _ClientAchievements.ResetAchievementData();
+        //}
         ImGui.SetNextItemWidth(availableWidth - clearButtonSize - spacingX);
-#endif
         string filter = AchievementSearchString;
         if (ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref filter, 255))
         {
@@ -253,7 +244,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     // draw the text in the second column.
                     ImGui.TableNextColumn();
                     // we should fetch the cached image from our texture cache service
-                    var achievementCosmetic = _cosmeticTextures.CoreTextures[CoreTexture.Icon256Bg];
+                    var achievementCosmetic = _textures.CoreTextures[CoreTexture.Icon256Bg];
                     // Ensure its a valid texture wrap
                     if (!(achievementCosmetic is { } wrap))
                     {

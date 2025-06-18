@@ -8,7 +8,6 @@ namespace GagSpeak.Localization
         public static Tutorials Tutorials { get; set; } = new();
         public static CoreUi CoreUi { get; set; } = new();
         public static Settings Settings { get; set; } = new();
-        public static Orders Orders { get; set; } = new();
         public static Gags Gags { get; set; } = new();
         public static Wardrobe Wardrobe { get; set; } = new();
         public static Puppet Puppet { get; set; } = new();
@@ -20,7 +19,6 @@ namespace GagSpeak.Localization
             Tutorials = new Tutorials();
             CoreUi = new CoreUi();
             Settings = new Settings();
-            Orders = new Orders();
             Gags = new Gags();
             Wardrobe = new Wardrobe();
             Puppet = new Puppet();
@@ -438,6 +436,43 @@ namespace GagSpeak.Localization
         public readonly string Step18Desc = Loc.Localize("HelpRemote_Step18Desc", "Updates any changes you made to your edit.");
     }
 
+    public class HelpAlarms
+    {
+        public readonly string Step1Title = Loc.Localize("HelpAlarms_Step1Title", "Creating a New Alarm");
+        public readonly string Step1Desc = Loc.Localize("HelpAlarms_Step1Desc", "To create a new alarm, you must first press this button.");
+
+        public readonly string Step2Title = Loc.Localize("HelpAlarms_Step2Title", "Setting The Alarm Name");
+        public readonly string Step2Desc = Loc.Localize("HelpAlarms_Step2Desc", "Begin by defining a name for your alarm.");
+
+        public readonly string Step3Title = Loc.Localize("HelpAlarms_Step3Title", "The localized TimeZone");
+        public readonly string Step3Desc = Loc.Localize("HelpAlarms_Step3Desc", "Your current local time. This means you dont need to worry " +
+            "about timezones when setting these, just make it your own time.");
+
+        public readonly string Step4Title = Loc.Localize("HelpAlarms_Step4Title", "Setting the Alarm Time");
+        public readonly string Step4Desc = Loc.Localize("HelpAlarms_Step4Desc", "You can set your time by using the mouse scrollwheel over the hour and minute numbers.");
+
+        public readonly string Step5Title = Loc.Localize("HelpAlarms_Step5Title", "The Pattern to Play");
+        public readonly string Step5Desc = Loc.Localize("HelpAlarms_Step5Desc", "Select which stored pattern you wish for the alarm to play when it goes off.");
+
+        public readonly string Step6Title = Loc.Localize("HelpAlarms_Step6Title", "Alarm Pattern Start-Point");
+        public readonly string Step6Desc = Loc.Localize("HelpAlarms_Step6Desc", "Identify at which point in the pattern the alarm should start to play at.");
+
+        public readonly string Step7Title = Loc.Localize("HelpAlarms_Step7Title", "Alarm Pattern Duration");
+        public readonly string Step7Desc = Loc.Localize("HelpAlarms_Step7Desc", "Identify for how long the patterns alarm should play for before stopping.");
+
+        public readonly string Step8Title = Loc.Localize("HelpAlarms_Step8Title", "Alarm Frequency");
+        public readonly string Step8Desc = Loc.Localize("HelpAlarms_Step8Desc", "Set the days of the week this alarm go off");
+
+        public readonly string Step9Title = Loc.Localize("HelpAlarms_Step9Title", "Saving the Alarm");
+        public readonly string Step9Desc = Loc.Localize("HelpAlarms_Step9Desc", "Save/Apply changes and append the new alarm.");
+
+        public readonly string Step10Title = Loc.Localize("HelpAlarms_Step10Title", "The Alarm List");
+        public readonly string Step10Desc = Loc.Localize("HelpAlarms_Step10Desc", "This is where all created alarms are stored.");
+
+        public readonly string Step11Title = Loc.Localize("HelpAlarms_Step11Title", "Toggling Alarms");
+        public readonly string Step11Desc = Loc.Localize("HelpAlarms_Step11Desc", "The button you need to press to toggle the alarm state.");
+    }
+
     public class HelpTriggers
     {
         public readonly string Step1Title = Loc.Localize("HelpTriggers_Step1Title", "Creating a New Trigger");
@@ -489,43 +524,6 @@ namespace GagSpeak.Localization
         public readonly string Step15Desc = Loc.Localize("HelpTriggers_Step15Desc", "Clicking this button switches the triggers between off and on.");
     }
 
-    public class HelpAlarms
-    {
-        public readonly string Step1Title = Loc.Localize("HelpAlarms_Step1Title", "Creating a New Alarm");
-        public readonly string Step1Desc = Loc.Localize("HelpAlarms_Step1Desc", "To create a new alarm, you must first press this button.");
-
-        public readonly string Step2Title = Loc.Localize("HelpAlarms_Step2Title", "Setting The Alarm Name");
-        public readonly string Step2Desc = Loc.Localize("HelpAlarms_Step2Desc", "Begin by defining a name for your alarm.");
-
-        public readonly string Step3Title = Loc.Localize("HelpAlarms_Step3Title", "The localized TimeZone");
-        public readonly string Step3Desc = Loc.Localize("HelpAlarms_Step3Desc", "Your current local time. This means you dont need to worry " +
-            "about timezones when setting these, just make it your own time.");
-
-        public readonly string Step4Title = Loc.Localize("HelpAlarms_Step4Title", "Setting the Alarm Time");
-        public readonly string Step4Desc = Loc.Localize("HelpAlarms_Step4Desc", "You can set your time by using the mouse scrollwheel over the hour and minute numbers.");
-
-        public readonly string Step5Title = Loc.Localize("HelpAlarms_Step5Title", "The Pattern to Play");
-        public readonly string Step5Desc = Loc.Localize("HelpAlarms_Step5Desc", "Select which stored pattern you wish for the alarm to play when it goes off.");
-
-        public readonly string Step6Title = Loc.Localize("HelpAlarms_Step6Title", "Alarm Pattern Start-Point");
-        public readonly string Step6Desc = Loc.Localize("HelpAlarms_Step6Desc", "Identify at which point in the pattern the alarm should start to play at.");
-
-        public readonly string Step7Title = Loc.Localize("HelpAlarms_Step7Title", "Alarm Pattern Duration");
-        public readonly string Step7Desc = Loc.Localize("HelpAlarms_Step7Desc", "Identify for how long the patterns alarm should play for before stopping.");
-
-        public readonly string Step8Title = Loc.Localize("HelpAlarms_Step8Title", "Alarm Frequency");
-        public readonly string Step8Desc = Loc.Localize("HelpAlarms_Step8Desc", "Set the days of the week this alarm go off");
-
-        public readonly string Step9Title = Loc.Localize("HelpAlarms_Step9Title", "Saving the Alarm");
-        public readonly string Step9Desc = Loc.Localize("HelpAlarms_Step9Desc", "Save/Apply changes and append the new alarm.");
-
-        public readonly string Step10Title = Loc.Localize("HelpAlarms_Step10Title", "The Alarm List");
-        public readonly string Step10Desc = Loc.Localize("HelpAlarms_Step10Desc", "This is where all created alarms are stored.");
-
-        public readonly string Step11Title = Loc.Localize("HelpAlarms_Step11Title", "Toggling Alarms");
-        public readonly string Step11Desc = Loc.Localize("HelpAlarms_Step11Desc", "The button you need to press to toggle the alarm state.");
-    }
-
     public class HelpAchievements
     {
         public readonly string Step1Title = Loc.Localize("HelpAchievements_Step1Title", "Your Overall Progress");
@@ -575,19 +573,6 @@ namespace GagSpeak.Localization
         public readonly string MenuTabDiscover = Loc.Localize("Tabs_MenuTabDiscover", "Pattern Hub");
         public readonly string MenuTabGlobalChat = Loc.Localize("Tabs_MenuTabGlobalChat", "Global Cross-Region Chat");
         public readonly string MenuTabAccount = Loc.Localize("Tabs_MenuTabAccount", "Account Settings");
-
-        public readonly string OrdersActive = Loc.Localize("Tabs_OrdersActive", "Active Orders");
-        public readonly string OrdersCreate = Loc.Localize("Tabs_OrdersCreate", "Create Order");
-        public readonly string OrdersAssign = Loc.Localize("Tabs_OrdersAssign", "Assign Order");
-
-        public readonly string GagsActive = Loc.Localize("Tabs_GagsActive", "Active Gags");
-        public readonly string GagsLockPick = Loc.Localize("Tabs_GagsLockPick", "Lock Picker");
-        public readonly string GagsStroage = Loc.Localize("Tabs_GagsStroage", "Gag Storage");
-
-        public readonly string WardrobeRestraints = Loc.Localize("Tabs_WardrobeRestraints", "Restraint Sets");
-        public readonly string WardrobeStruggle = Loc.Localize("Tabs_WardrobeStruggle", "Struggle Sim");
-        public readonly string WardrobeCursedLoot = Loc.Localize("Tabs_WardrobeCursedLoot", "Cursed Loot");
-        public readonly string WardrobeMoodles = Loc.Localize("Tabs_WardrobeMoodles", "Moodles");
 
         public readonly string ToyboxOverview = Loc.Localize("Tabs_ToyboxOverview", "Overview");
         public readonly string ToyboxVibeServer = Loc.Localize("Tabs_ToyboxVibeServer", "Vibe Server");
@@ -920,13 +905,6 @@ namespace GagSpeak.Localization
     }
     #endregion Settings
 
-    #region Orders
-    public class Orders
-    {
-        // Nothing here atm.
-    }
-    #endregion Orders
-
     #region Gags
     public class Gags
     {
@@ -948,9 +926,14 @@ namespace GagSpeak.Localization
     #region Wardrobe
     public class Wardrobe
     {
+        public Restrictions Restrictions { get; set; } = new();
         public Restraints Restraints { get; set; } = new();
         public CursedLoot CursedLoot { get; set; } = new();
-        public Moodles Moodles { get; set; } = new();
+    }
+
+    public class Restrictions
+    {
+        // Add more here if people actually care for it.
     }
 
     public class Restraints
@@ -965,10 +948,6 @@ namespace GagSpeak.Localization
 
     }
 
-    public class Moodles
-    {
-        // Add more here if people actually care for it.
-    }
     #endregion Wardrobe
 
     #region Puppet

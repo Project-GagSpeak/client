@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -63,19 +63,19 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         };
 
     private IEnumerable<ProfileStyleBG> UnlockedBackgrounds() 
-        => AchievementManager.CompletedAchievements
+        => ClientAchievements.CompletedAchievements
             .Where(x => x.RewardComponent == SelectedComponent && x.RewardStyleType == SelectedStyle)
             .Select(x => (ProfileStyleBG)x.RewardStyleIndex)
             .Distinct();
 
     private IEnumerable<ProfileStyleBorder> UnlockedBorders()
-        => AchievementManager.CompletedAchievements
+        => ClientAchievements.CompletedAchievements
             .Where(x => x.RewardComponent == SelectedComponent && x.RewardStyleType == SelectedStyle)
             .Select(x => (ProfileStyleBorder)x.RewardStyleIndex)
             .Distinct();
 
     private IEnumerable<ProfileStyleOverlay> UnlockedOverlays()
-        => AchievementManager.CompletedAchievements
+        => ClientAchievements.CompletedAchievements
             .Where(x => x.RewardComponent == SelectedComponent && x.RewardStyleType == SelectedStyle)
             .Select(x => (ProfileStyleOverlay)x.RewardStyleIndex)
             .Distinct();
@@ -128,14 +128,14 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
         using (ImRaii.Group())
         {
-            List<(int, string)> items = AchievementManager.CompletedAchievements.Select(x => (x.AchievementId, x.Title)).ToList();
+            List<(int, string)> items = ClientAchievements.CompletedAchievements.Select(x => (x.AchievementId, x.Title)).ToList();
             items.Insert(0, (0, "None"));
 
             CkGui.ColorText("Select Title", ImGuiColors.ParsedGold);
             CkGui.HelpText("Select a title to display on your KinkPlate!--SEP--Can only select Achievement Titles you've completed!");
             CkGui.DrawComboSearchable("##ProfileSelectTitle", 200f, items, (achievement) => achievement.Item2, true,
                 (i) => profile.KinkPlateInfo.ChosenTitleId = i.Item1,
-                initialSelectedItem: (profile.KinkPlateInfo.ChosenTitleId, AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId)));
+                initialSelectedItem: (profile.KinkPlateInfo.ChosenTitleId, ClientAchievements.GetTitleById(profile.KinkPlateInfo.ChosenTitleId)));
         }
 
         using (ImRaii.Group())

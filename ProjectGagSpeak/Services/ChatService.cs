@@ -14,7 +14,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Kinksters;
 
 
@@ -139,7 +139,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (!_player.IsDead)
         {
             Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
         }
     }
 
@@ -242,11 +242,11 @@ public class ChatService : DisposableMediatorSubscriberBase
 
                 // If the string contains the word "grovel", fire the grovel achievement.
                 if (remainingMessage.TextValue.Contains("grovel"))
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
                 else if (remainingMessage.TextValue.Contains("dance"))
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
                 else
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
                 return;
             }
         }
@@ -257,7 +257,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         // if our message is longer than 5 words, fire our on-chat-message achievement.
         if (gagData.IsGagged() && globalPerms.ChatGarblerActive && msg.Split(' ').Length > 5)
             if (channel.IsChannelEnabled(globalPerms.ChatGarblerChannelsBitfield))
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.ChatMessageSent, channel);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.ChatMessageSent, channel);
     }
 
     /// <summary> 

@@ -450,6 +450,7 @@ public partial class CkGui
             ServerState.Connecting => ImGuiColors.DalamudYellow,
             ServerState.Reconnecting => ImGuiColors.DalamudRed,
             ServerState.Connected => ImGuiColors.ParsedPink,
+            ServerState.ConnectedDataSynced => ImGuiColors.ParsedPink,
             ServerState.Disconnected => ImGuiColors.DalamudYellow,
             ServerState.Disconnecting => ImGuiColors.DalamudYellow,
             ServerState.Unauthorized => ImGuiColors.DalamudRed,
@@ -467,6 +468,7 @@ public partial class CkGui
             ServerState.Connecting => ImGuiColors.DalamudYellow,
             ServerState.Reconnecting => ImGuiColors.DalamudYellow,
             ServerState.Connected => ImGuiColors.HealerGreen,
+            ServerState.ConnectedDataSynced => ImGuiColors.HealerGreen,
             ServerState.Disconnected => ImGuiColors.DalamudRed,
             ServerState.Disconnecting => ImGuiColors.DalamudYellow,
             ServerState.Unauthorized => ImGuiColors.ParsedOrange,
@@ -484,6 +486,7 @@ public partial class CkGui
             ServerState.Connecting => FAI.SatelliteDish,
             ServerState.Reconnecting => FAI.SatelliteDish,
             ServerState.Connected => FAI.Link,
+            ServerState.ConnectedDataSynced => FAI.Link,
             ServerState.Disconnected => FAI.Unlink,
             ServerState.Disconnecting => FAI.SatelliteDish,
             ServerState.Unauthorized => FAI.Shield,
@@ -508,7 +511,8 @@ public partial class CkGui
             ServerState.VersionMisMatch => "Version mismatch",
             ServerState.Offline => "Unavailable",
             ServerState.NoSecretKey => "No Secret Key",
-            ServerState.Connected => MainHub.DisplayName, // displays when connected, your UID
+            ServerState.Connected => MainHub.DisplayName,
+            ServerState.ConnectedDataSynced => MainHub.DisplayName,
             _ => string.Empty
         };
     }

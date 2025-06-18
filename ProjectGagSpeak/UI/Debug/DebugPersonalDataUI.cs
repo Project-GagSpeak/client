@@ -456,7 +456,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     }
 
-    private void DrawAlias(string uid, AliasStorage alias)
+    private void DrawAlias(string uid, AliasStorage storage)
     {
         using var nodeMain = ImRaii.TreeNode("Alias Data");
         if (!nodeMain) return;
@@ -466,7 +466,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableSetupColumn("Alias Input");
             ImGui.TableSetupColumn("Alias Output");
             ImGui.TableHeadersRow();
-            foreach (var aliasData in alias)
+            foreach (var aliasData in storage.Items)
             {
                 ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
                 ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");

@@ -1,4 +1,4 @@
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public struct UnlockReward
 {
@@ -23,6 +23,10 @@ public struct AchievementInfo
 {
     /// <summary> Unique Achievement ID </summary>
     public int Id { get; init; }
+
+    /// <summary> The Idx order to sort by within the component. </summary>
+    public int ModuleIdx { get; init; }
+
     /// <summary> Achievement Title </summary>
     public string Title { get; init; }
     /// <summary> Achievement Description </summary>
@@ -42,19 +46,6 @@ public struct AchievementInfo
 
 public static class Achievements
 {
-    // Orders
-    public static readonly AchievementInfo JustAVolunteer = new AchievementInfo(1, "Just a Volunteer", "Finish 1 Order");
-    public static readonly AchievementInfo AsYouCommand = new AchievementInfo(2, "As You Command", "Finish 10 Orders");
-    public static readonly AchievementInfo AnythingForMyOwner = new AchievementInfo(3, "Perfect Programming", "Finish 100 Orders");
-    public static readonly AchievementInfo GoodDrone = new AchievementInfo(4, "The Perfect Drone", "Finish 1000 Orders");
-    public static readonly AchievementInfo BadSlut = new AchievementInfo(5, "Bad Slut", "Fail 1 Order");
-    public static readonly AchievementInfo NeedsTraining = new AchievementInfo(6, "In Need of Training", "Fail 10 Orders");
-    public static readonly AchievementInfo UsefulInOtherWays = new AchievementInfo(7, "Useful In Other Ways", "Fail 100 Orders");
-    public static readonly AchievementInfo NewSlaveOwner = new AchievementInfo(8, "New Slave Owner", "Create 1 Order");
-    public static readonly AchievementInfo TaskManager = new AchievementInfo(9, "Task Manager", "Create 10 Orders");
-    public static readonly AchievementInfo MaidMaster = new AchievementInfo(10, "Maid Master", "Create 100 Orders");
-    public static readonly AchievementInfo QueenOfDrones = new AchievementInfo(11, "Queen of Drones", "Create 1000 Orders");
-
     // Gags
     public static readonly AchievementInfo SelfApplied = new AchievementInfo(12, "The Right Fit", "Apply a Gag to Yourself");
     public static readonly AchievementInfo SilenceSlut = new AchievementInfo(13, "A Perfect Fit", "Apply a Gag to another Kinkster");
@@ -344,17 +335,7 @@ public static class Achievements
     // Full mapping to quickly go from Uint to AchievementInfo
     public static readonly Dictionary<int, AchievementInfo> AchievementMap = new Dictionary<int, AchievementInfo>
     {
-        { 1, JustAVolunteer },
-        { 2, AsYouCommand },
-        { 3, AnythingForMyOwner },
-        { 4, GoodDrone },
-        { 5, BadSlut },
-        { 6, NeedsTraining },
-        { 7, UsefulInOtherWays },
-        { 8, NewSlaveOwner },
-        { 9, TaskManager },
-        { 10, MaidMaster },
-        { 11, QueenOfDrones },
+        /* 1 to 11 were from the orders module, now discontinued. */
         { 12, SelfApplied },
         { 13, SilenceSlut },
         { 14, WatchYourTongue },

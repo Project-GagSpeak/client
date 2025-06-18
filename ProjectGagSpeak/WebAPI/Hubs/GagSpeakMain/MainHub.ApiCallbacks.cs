@@ -1,5 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
@@ -67,7 +67,7 @@ public partial class MainHub
                 break;
         }
         // we need to update the api server state to be stopped if connected
-        if (ServerStatus is ServerState.Connected)
+        if (MainHub.IsConnected)
         {
             _ = Task.Run(async () =>
             {

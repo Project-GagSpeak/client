@@ -1,6 +1,6 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop;
 using GagSpeak.State.Models;
@@ -229,7 +229,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 Length = pattern.Duration,
                 UploadedDate = DateTime.UtcNow
             });
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
         }
         catch (Exception e)
         {
@@ -284,7 +284,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
             // Set the active pattern
             _patterns.CreateClone(pattern, pattern.Label);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
         }
     }
 
@@ -306,7 +306,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             pattern.HasLiked = !pattern.HasLiked;
 
             if (pattern.HasLiked)
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.Identifier, false);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.Identifier, false);
         }
     }
 
@@ -379,7 +379,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         moodle.HasLikedMoodle = !moodle.HasLikedMoodle;
 
         if (moodle.HasLikedMoodle)
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, moodle.MoodleStatus.GUID, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, moodle.MoodleStatus.GUID, false);
     }
 
     private async Task UploadMoodleTask(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
@@ -394,7 +394,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             // if the upload was successful, then we can notify the user.
             Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
             ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
         }
         catch (Exception e)
         {

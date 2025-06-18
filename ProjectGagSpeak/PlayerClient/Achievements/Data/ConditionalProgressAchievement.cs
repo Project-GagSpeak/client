@@ -1,6 +1,6 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public class ConditionalProgressAchievement : AchievementBase
 {
@@ -71,7 +71,7 @@ public class ConditionalProgressAchievement : AchievementBase
         if (!RequiredCondition()) 
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Beginning Conditional Task for {Title}", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Beginning Conditional Task for {Title}", LoggerType.AchievementInfo);
         ConditionalTaskBegun = true;
     }
 
@@ -80,7 +80,7 @@ public class ConditionalProgressAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Finishing Conditional Task for {Title}", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Finishing Conditional Task for {Title}", LoggerType.AchievementInfo);
         ConditionalTaskFinished = true;
         CheckTaskProgress();
     }
@@ -92,7 +92,7 @@ public class ConditionalProgressAchievement : AchievementBase
 
         if(RequireTaskBeginAndFinish is true && ConditionalTaskBegun is true)
         {
-            UnlocksEventManager.AchievementLogger.LogTrace($"Achievement {Title} Requires conditional Begin & End, but we inturrupted before reaching end. Starting Over!", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Achievement {Title} Requires conditional Begin & End, but we inturrupted before reaching end. Starting Over!", LoggerType.AchievementInfo);
             ConditionalTaskBegun = false;
             ConditionalTaskFinished = false;
         }
@@ -109,7 +109,7 @@ public class ConditionalProgressAchievement : AchievementBase
         // if we have failed the required condition, reset taskBegun to false.
         if (RequireTaskBeginAndFinish && ConditionalTaskBegun && !RequiredCondition())
         {
-            UnlocksEventManager.AchievementLogger.LogTrace($"Achievement {Title} Requires a conditional task, "
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Achievement {Title} Requires a conditional task, "
                 + "and we failed conditional after it begun. Restarting!", LoggerType.AchievementInfo);
             ConditionalTaskBegun = false;
             return;
@@ -117,7 +117,7 @@ public class ConditionalProgressAchievement : AchievementBase
         // if we have finished the task, increment the progress
         if ((!RequireTaskBeginAndFinish || (ConditionalTaskBegun && ConditionalTaskFinished)) && RequiredCondition())
         {
-            UnlocksEventManager.AchievementLogger.LogInformation($"Achievement {Title} Had its Conditional Met from start to finish! Incrementing Progress!", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} Had its Conditional Met from start to finish! Incrementing Progress!", LoggerType.AchievementInfo);
             IncrementProgress(amountToIncOnSuccess);
             // reset the task progress.
             ConditionalTaskBegun = false;

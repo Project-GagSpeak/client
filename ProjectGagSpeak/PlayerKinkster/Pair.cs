@@ -1,7 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.Kinksters.Handlers;
@@ -216,22 +216,22 @@ public class Pair : IComparable<Pair>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
                 return;
             case DataUpdateType.Unlocked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
                 return;
             case DataUpdateType.Removed:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -245,22 +245,22 @@ public class Pair : IComparable<Pair>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
                 return;
             case DataUpdateType.Unlocked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
                 return;
             case DataUpdateType.Removed:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -274,22 +274,22 @@ public class Pair : IComparable<Pair>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
                 return;
             case DataUpdateType.Unlocked:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
                 return;
             case DataUpdateType.Removed:
-                UnlocksEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -310,7 +310,7 @@ public class Pair : IComparable<Pair>
 
     public void UpdateGlobalAlias(AliasTrigger newData)
     {
-        if (LastGlobalAliasData.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        if (LastGlobalAliasData.Items.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
         {
             _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
             match = newData;
@@ -320,7 +320,7 @@ public class Pair : IComparable<Pair>
 
     public void UpdateUniqueAlias(AliasTrigger newData)
     {
-        if (LastPairAliasData.Storage.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        if (LastPairAliasData.Storage.Items.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
         {
             _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
             match = newData;
@@ -416,7 +416,7 @@ public class Pair : IComparable<Pair>
     }
 
     /// <summary> Marks the pair as offline. </summary>
-    public void MarkOffline()
+    public void MarkOffline(bool showLog = true)
     {
         try
         {
@@ -427,7 +427,9 @@ public class Pair : IComparable<Pair>
             var player = CachedPlayer;
             CachedPlayer = null;
             player?.Dispose();
-            _logger.LogTrace("Marked " + UserData.UID + " as offline", LoggerType.PairManagement);
+
+            if(showLog)
+                _logger.LogTrace($"Marked {UserData.UID} as offline", LoggerType.PairManagement);
         }
         finally
         {

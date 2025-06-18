@@ -1,5 +1,5 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -126,6 +126,6 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
             + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
         if (await _actionService.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

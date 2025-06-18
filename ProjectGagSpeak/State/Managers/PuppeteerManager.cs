@@ -42,7 +42,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
         // Create a new AliasTrigger with a unique name
         var newItem = new AliasTrigger();
-        storage.Add(newItem);
+        storage.Items.Add(newItem);
         _saver.Save(this);
 
         Logger.LogDebug("Added new Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
@@ -59,9 +59,9 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         if (storage is null) 
             return null;
 
-        var cloneName = RegexEx.EnsureUniqueName(clone.Label, storage, at => at.Label);
+        var cloneName = RegexEx.EnsureUniqueName(clone.Label, storage.Items, at => at.Label);
         var newItem = new AliasTrigger(clone, false) { Label = cloneName };
-        storage.Add(newItem);
+        storage.Items.Add(newItem);
         _saver.Save(this);
 
         Logger.LogDebug("Cloned Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
@@ -77,7 +77,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         if (storage is null)
             return;
         
-        if (storage.Remove(trigger))
+        if (storage.Items.Remove(trigger))
         {
             Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
             _saver.Save(this);
@@ -184,7 +184,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         {
             ["Version"] = ConfigVersion,
             // Serialize GlobalAliasStorage (AliasStorage contains a List<AliasTrigger>)
-            ["GlobalStorage"] = JArray.FromObject(GlobalAliasStorage),
+            ["GlobalStorage"] = JArray.FromObject(GlobalAliasStorage.Items),
             // Serialize PairAliasStorage (a dictionary of string -> NamedAliasStorage)
             ["PairStorage"] = JObject.FromObject(
                 PairAliasStorage.ToDictionary(
@@ -192,7 +192,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                     pair => new JObject
                     {
                         ["StoredNameWorld"] = pair.Value.StoredNameWorld,
-                        ["Storage"] = JArray.FromObject(pair.Value.Storage),
+                        ["Storage"] = JArray.FromObject(pair.Value.Storage.Items),
                     })
                 )
         };
@@ -205,7 +205,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var file = _fileNames.Puppeteer;
         Logger.LogInformation("Loading in Puppeteer Config for file: " + file);
 
-        GlobalAliasStorage.Clear();
+        GlobalAliasStorage.Items.Clear();
         PairAliasStorage.Clear();
         if (!File.Exists(file))
         {
@@ -250,7 +250,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                     if (item is JObject aliasObject)
                     {
                         var aliasTrigger = ParseAliasTrigger(aliasObject);
-                        GlobalAliasStorage.Add(aliasTrigger);
+                        GlobalAliasStorage.Items.Add(aliasTrigger);
                     }
                 }
                 catch (Exception ex)
@@ -292,7 +292,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             if (item is JObject aliasObject)
             {
                 var aliasTrigger = ParseAliasTrigger(aliasObject);
-                aliasStorage.Storage.Add(aliasTrigger);
+                aliasStorage.Storage.Items.Add(aliasTrigger);
             }
 
         return aliasStorage;

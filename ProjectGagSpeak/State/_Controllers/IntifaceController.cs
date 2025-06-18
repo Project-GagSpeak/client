@@ -1,5 +1,5 @@
 using Buttplug.Client;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
@@ -81,7 +81,7 @@ public class IntifaceController : DisposableMediatorSubscriberBase
             // set that it is successfully connected and append it
             newDevice.IsConnected = true;
             _devices.Add(newDevice);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.DeviceConnected);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.DeviceConnected);
         }
         catch (Exception ex)
         {

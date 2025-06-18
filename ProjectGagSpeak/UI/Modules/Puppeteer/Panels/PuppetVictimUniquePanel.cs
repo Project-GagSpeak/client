@@ -64,9 +64,9 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
     private void UpdateFilteredItems()
     {
         if (_searchStr.IsNullOrEmpty())
-            _filteredItems = _helper.Storage ?? new AliasStorage();
+            _filteredItems = _helper.Storage?.Items ?? new List<AliasTrigger>();
         else
-            _filteredItems = _helper.Storage?
+            _filteredItems = _helper.Storage?.Items
                 .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
                 .ToList() ?? new List<AliasTrigger>();
     }

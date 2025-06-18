@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -93,7 +93,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // Now let's draw out the chosen achievement Name..
         using (UiFontService.GagspeakTitleFont.Push())
         {
-            var titleName = AchievementManager.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
+            var titleName = ClientAchievements.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
             // calculate the Y height it should be drawn on by taking the gap height and dividing it by 2 and subtracting the text height.
@@ -373,7 +373,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
-        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + AchievementManager.Total, ImGuiColors.ParsedGold);
+        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + ClientAchievements.Total, ImGuiColors.ParsedGold);
         CkGui.AttachToolTip("The total achievements " + DisplayName + " has earned.");
     }
 

@@ -8,7 +8,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.PlayerClient;
 
@@ -132,7 +132,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
         _allClientPairs[dto.User].ApplyLastIpcData();
         RecreateLazy();
         // we just added a pair, so ping the achievement manager that a pair was added!
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.PairAdded);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.PairAdded);
     }
 
     /// <summary> Clears all pairs from the client's pair list.</summary>
@@ -372,7 +372,9 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     private void DisposePairs()
     {
         Logger.LogDebug("Disposing all Pairs", LoggerType.PairManagement);
-        Parallel.ForEach(_allClientPairs, item => { item.Value.MarkOffline(); });
+        var pairCount = _allClientPairs.Count;
+        Parallel.ForEach(_allClientPairs, item => { item.Value.MarkOffline(false); });
+        Logger.LogDebug($"Marked {pairCount} kinksters as offline", LoggerType.PairManagement);
         RecreateLazy();
     }
 

@@ -10,7 +10,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 
@@ -196,7 +196,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // update the values and fire achievement ping. ( None yet )
         data.Restrictions[layerIdx].Identifier = id;
         data.Restrictions[layerIdx].Enabler = enactor;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, true, layerIdx, id, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, true, layerIdx, id, enactor);
 
         // assign the information if present.
         if (Storage.TryGetRestriction(id, out item))
@@ -219,7 +219,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         data.Restrictions[layerIdx].Timer = timer;
         data.Restrictions[layerIdx].PadlockAssigner = enactor;
         // Fire that the gag was locked for this layer.
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, true, layerIdx, padlock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, true, layerIdx, padlock, enactor);
     }
 
     public void UnlockRestriction(int layerIdx, string enactor)
@@ -233,7 +233,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         data.Restrictions[layerIdx].Password = string.Empty;
         data.Restrictions[layerIdx].Timer = DateTimeOffset.MinValue;
         data.Restrictions[layerIdx].PadlockAssigner = string.Empty;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layerIdx, prevLock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layerIdx, prevLock, enactor);
     }
 
     public bool RemoveRestriction(int layerIdx, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
@@ -247,7 +247,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         var removedRestriction = data.Restrictions[layerIdx].Identifier;
         data.Restrictions[layerIdx].Identifier = Guid.Empty;
         data.Restrictions[layerIdx].Enabler = string.Empty;
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layerIdx, removedRestriction, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layerIdx, removedRestriction, enactor);
 
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestriction(removedRestriction, out var matchedItem))

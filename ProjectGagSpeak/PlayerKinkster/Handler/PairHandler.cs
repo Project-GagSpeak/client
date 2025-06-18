@@ -115,7 +115,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
                 if (!IsMareUser(address))
                 {
                     Logger.LogDebug(name + " is not a Mare user. Clearing Moodles for " + OnlineUser.User.AliasOrUID, LoggerType.PairHandlers);
-                    _ipcManager.Moodles.ClearStatus(name);
+                    _ipcManager.Moodles.ClearStatus(name).ConfigureAwait(false);
                 }
                 cts.CancelDispose();
             }
@@ -145,7 +145,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
         Logger.LogDebug("Applying Character IPC Data for (" + PlayerName + ")", LoggerType.PairHandlers);
         if (_charaHandler is not null && _charaHandler.Address != nint.Zero)
-            _ipcManager.Moodles.SetStatus(_charaHandler.NameWithWorld, characterData.DataString);
+            _ipcManager.Moodles.SetStatus(_charaHandler.NameWithWorld, characterData.DataString).ConfigureAwait(false);
 
         // Update the cachedData
         _cachedIpcData = characterData;

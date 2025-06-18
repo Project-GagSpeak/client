@@ -55,9 +55,9 @@ public partial class ControllerUniquePanel : IDisposable
     private void UpdateFilteredItems()
     {
         if (_searchStr.IsNullOrEmpty())
-            _filteredItems = _helper.PairAliasStorage ?? new AliasStorage();
+            _filteredItems = _helper.PairAliasStorage?.Items ?? new List<AliasTrigger>();
         else
-            _filteredItems = _helper.PairAliasStorage?
+            _filteredItems = _helper.PairAliasStorage?.Items
                 .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
                 .ToList() ?? new List<AliasTrigger>();
     }

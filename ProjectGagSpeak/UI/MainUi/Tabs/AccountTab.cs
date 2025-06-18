@@ -170,7 +170,7 @@ public class AccountTab
         }
 
         // if we are connected
-        if (MainHub.ServerStatus is ServerState.Connected)
+        if (MainHub.IsConnected)
         {
             CkGui.CopyableDisplayText(MainHub.DisplayName);
 

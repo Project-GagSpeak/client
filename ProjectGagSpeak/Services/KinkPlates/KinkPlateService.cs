@@ -10,17 +10,20 @@ namespace GagSpeak.Services;
 public class KinkPlateService : MediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly KinkPlateFactory _profileFactory;
+    private readonly KinkPlateFactory _factory;
 
     // concurrent dictionary of cached profile data.
-    private readonly ConcurrentDictionary<UserData, KinkPlate> _kinkPlates= new(UserDataComparer.Instance);
+    private static ConcurrentDictionary<UserData, KinkPlate> _kinkPlates= new(UserDataComparer.Instance);
 
-    public KinkPlateService(ILogger<KinkPlateService> logger,
-        GagspeakMediator mediator, MainHub hub, 
-        KinkPlateFactory profileFactory) : base(logger, mediator)
+    public KinkPlateService(
+        ILogger<KinkPlateService> logger,
+        GagspeakMediator mediator,
+        MainHub hub, 
+        KinkPlateFactory factory)
+        : base(logger, mediator)
     {
         _hub = hub;
-        _profileFactory = profileFactory;
+        _factory = factory;
 
         // Clear profiles when called.
         Mediator.Subscribe<ClearProfileDataMessage>(this, (msg) =>
@@ -39,6 +42,8 @@ public class KinkPlateService : MediatorSubscriberBase
         // Clear all profiles on disconnect
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearAllKinkPlates());
     }
+
+    public static IReadOnlyDictionary<UserData, KinkPlate> KinkPlates => _kinkPlates;
 
     // Obtain the clients kink plate information if valid.
     public bool TryGetClientKinkPlateContent([NotNullWhen(true)] out KinkPlateContent? clientPlateContent)
@@ -75,7 +80,7 @@ public class KinkPlateService : MediatorSubscriberBase
     private void AssignLoadingProfile(UserData data)
     {
         // add the user & profile data to the concurrent dictionary.
-        _kinkPlates[data] = _profileFactory.CreateProfileData(new KinkPlateContent(), string.Empty);
+        _kinkPlates[data] = _factory.CreateProfileData(new KinkPlateContent(), string.Empty);
         Logger.LogTrace("Assigned new KinkPlate™ for " + data.UID, LoggerType.Kinkplates);
     }
 

@@ -1,23 +1,22 @@
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
-public class TimeLimitConditionalAchievement : AchievementBase
+public class TimeRequiredConditionalAchievement : AchievementBase
 {
     private readonly TimeSpan MilestoneDuration;
     public DateTime StartPoint { get; set; } = DateTime.MinValue;
     public Func<bool> RequiredCondition;
     public DurationTimeUnit TimeUnit { get; init; }
     private CancellationTokenSource _cancellationTokenSource;
-    private bool TaskStarted = false;
+    public bool TaskStarted => StartPoint != DateTime.MinValue;
 
-
-    public TimeLimitConditionalAchievement(AchievementModuleKind module, AchievementInfo infoBase, TimeSpan duration, Func<bool> condition, 
+    public TimeRequiredConditionalAchievement(AchievementModuleKind module, AchievementInfo infoBase, TimeSpan dur, Func<bool> cond, 
         Action<int, string> onCompleted, DurationTimeUnit unit, string prefix = "", string suffix = "", bool isSecret = false) 
-        : base(module, infoBase, ConvertToUnit(duration, unit), prefix, suffix, onCompleted, isSecret)
+        : base(module, infoBase, ConvertToUnit(dur, unit), prefix, suffix, onCompleted, isSecret)
     {
-        MilestoneDuration = duration;
-        RequiredCondition = condition;
+        MilestoneDuration = dur;
+        RequiredCondition = cond;
         TimeUnit = unit;
     }
 
@@ -52,12 +51,8 @@ public class TimeLimitConditionalAchievement : AchievementBase
     public override float CurrentProgressPercentage()
     {
         if (IsCompleted) return 1.0f;
-        if (StartPoint == DateTime.MinValue) return 0.0f;
 
-        // Calculate elapsed time
-        var elapsed = DateTime.UtcNow - StartPoint;
-
-        // Calculate percentage of milestone duration elapsed
+        var elapsed = StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero;
         float percentage = (float)(elapsed.TotalMilliseconds / MilestoneDuration.TotalMilliseconds);
         return Math.Clamp(percentage, 0f, 1f);
     }
@@ -65,28 +60,26 @@ public class TimeLimitConditionalAchievement : AchievementBase
     public override string ProgressString()
     {
         if (IsCompleted) 
-            return "Completed Within " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
+            return PrefixText + " " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
 
-        // If not completed and the StartPoint is DateTime.MinValue, display that that the state is not yet begun.
         if(StartPoint == DateTime.MinValue)
-            return PrefixText + " Within " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
+            return PrefixText + " 0s / " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
 
-        // Grab our remaining time.
-        var remaining = MilestoneDuration - (StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero);
+        var elapsed = StartPoint != DateTime.MinValue ? DateTime.UtcNow - StartPoint : TimeSpan.Zero;
         string outputStr = "";
-        if (remaining == TimeSpan.Zero)
+        if (elapsed == TimeSpan.Zero)
         {
             outputStr = "0s";
         }
         else
         {
-            if (remaining.Days > 0) outputStr += remaining.Days + "d ";
-            if (remaining.Hours > 0) outputStr += remaining.Hours + "h ";
-            if (remaining.Minutes > 0) outputStr += remaining.Minutes + "m ";
-            if (remaining.Seconds >= 0) outputStr += remaining.Seconds + "s ";
-            outputStr += " Remaining";
+            if (elapsed.Days > 0) outputStr += elapsed.Days + "d ";
+            if (elapsed.Hours > 0) outputStr += elapsed.Hours + "h ";
+            if (elapsed.Minutes > 0) outputStr += elapsed.Minutes + "m ";
+            if (elapsed.Seconds >= 0) outputStr += elapsed.Seconds + "s ";
         }
-        return outputStr;
+        // Add the Ratio
+        return PrefixText + " " + outputStr + " / " + MilestoneGoal + " " + TimeUnit + " " + SuffixText;
     }
 
     public override void CheckCompletion()
@@ -96,12 +89,12 @@ public class TimeLimitConditionalAchievement : AchievementBase
 
         if (RequiredCondition())
         {
-            if (StartPoint != DateTime.MinValue && DateTime.UtcNow - StartPoint < MilestoneDuration)
+            if (TaskStarted && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
                 CompleteTask();
         }
         else
         {
-            UnlocksEventManager.AchievementLogger.LogTrace($"Condition for {Title} not met. Resetting the timer.", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} not met. Resetting the timer.", LoggerType.AchievementInfo);
             ResetTask();
         }
     }
@@ -109,14 +102,13 @@ public class TimeLimitConditionalAchievement : AchievementBase
     // Method to Start the Task/Timer
     public void StartTask()
     {
-        if (IsCompleted || !MainHub.IsConnected || TaskStarted)
+        if (IsCompleted || TaskStarted || !MainHub.IsConnected)
             return;
 
         if (RequiredCondition())
         {
-            UnlocksEventManager.AchievementLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LoggerType.AchievementInfo);
             StartPoint = DateTime.UtcNow;
-            TaskStarted = true;
             StartTimer();
         }
     }
@@ -127,18 +119,17 @@ public class TimeLimitConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        UnlocksEventManager.AchievementLogger.LogTrace($"Interrupting task for {Title}.", LoggerType.AchievementInfo);
-        TaskStarted = false;
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Interrupting task for {Title}.", LoggerType.AchievementInfo);
         ResetTask();
     }
 
     // Method to Complete the Task when time and condition are met
     private void CompleteTask()
     {
-        UnlocksEventManager.AchievementLogger.LogTrace($"Time and condition met for {Title}. Marking as completed.", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Time and condition met for {Title}. Marking as completed.", LoggerType.AchievementInfo);
         MarkCompleted();
         _cancellationTokenSource?.Cancel();
-        TaskStarted = false;
+        StartPoint = DateTime.MinValue;
     }
 
     // Starts the timer task
@@ -153,11 +144,11 @@ public class TimeLimitConditionalAchievement : AchievementBase
             {
                 await Task.Delay(MilestoneDuration, token);
                 if (!token.IsCancellationRequested && RequiredCondition())
-                    ResetTask(); // reset if we take longer than the requirement.
+                    CompleteTask(); // reset if we take longer than the requirement.
             }
             catch (TaskCanceledException)
             {
-                UnlocksEventManager.AchievementLogger.LogDebug($"Timer for {Title} was canceled.", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogDebug($"Timer for {Title} was canceled.", LoggerType.AchievementInfo);
             }
         }, token);
     }
@@ -165,13 +156,12 @@ public class TimeLimitConditionalAchievement : AchievementBase
     // Resets the task if condition fails or is interrupted
     private void ResetTask()
     {
-        UnlocksEventManager.AchievementLogger.LogTrace($"Failed to complete {Title} in time, resetting task..", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Did not keep active for the required time for {Title}. Resetting task.", LoggerType.AchievementInfo);
         StartPoint = DateTime.MinValue;
         _cancellationTokenSource?.Cancel();
-        TaskStarted = false;
     }
 
-    public override AchievementType GetAchievementType() => AchievementType.TimeLimitConditional;
+    public override AchievementType GetAchievementType() => AchievementType.RequiredTimeConditional;
 }
 
 

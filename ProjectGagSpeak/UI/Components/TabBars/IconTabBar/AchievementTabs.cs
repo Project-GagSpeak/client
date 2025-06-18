@@ -10,26 +10,26 @@ public class AchievementTabs : IconTabBar<AchievementTabs.SelectedTab>
     public enum SelectedTab
     {
         Generic,
-        Orders,
         Gags,
         Wardrobe,
         Puppeteer,
         Toybox,
-        Hardcore,
         Remotes,
+        Arousal,
+        Hardcore,
         Secrets
     }
 
     public AchievementTabs()
     {
         AddDrawButton(FontAwesomeIcon.Book, SelectedTab.Generic, "Generic");
-        AddDrawButton(FontAwesomeIcon.ClipboardList, SelectedTab.Orders, "Orders");
         AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Gags, "Gags");
         AddDrawButton(FontAwesomeIcon.ToiletPortable, SelectedTab.Wardrobe, "Wardrobe");
         AddDrawButton(FontAwesomeIcon.PersonHarassing, SelectedTab.Puppeteer, "Puppeteer");
         AddDrawButton(FontAwesomeIcon.BoxOpen, SelectedTab.Toybox, "Toybox");
-        AddDrawButton(FontAwesomeIcon.Lock, SelectedTab.Hardcore, "Hardcore");
         AddDrawButton(FontAwesomeIcon.Mobile, SelectedTab.Remotes, "Remotes");
+        AddDrawButton(FontAwesomeIcon.HeartCircleBolt, SelectedTab.Arousal, "Arousal");
+        AddDrawButton(FontAwesomeIcon.Lock, SelectedTab.Hardcore, "Hardcore");
         AddDrawButton(FontAwesomeIcon.Vault, SelectedTab.Secrets, "Secrets");
     }
 

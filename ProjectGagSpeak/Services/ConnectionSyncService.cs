@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -22,19 +22,28 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     private readonly PuppeteerManager _puppeteer;
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
-    private readonly VisualStateListener _visualState;
-
+    private readonly VisualStateListener _visuals;
     private readonly ConfigFileProvider _fileNames;
-    private readonly AchievementManager _achievements;
+    private readonly AchievementListener _achievements;
 
-    public ConnectionSyncService(ILogger<ConnectionSyncService> logger, GagspeakMediator mediator,
-        GlobalPermissions globals, GagRestrictionManager gags, RestrictionManager restrictions,
-        RestraintManager restraints, CursedLootManager cursedLoot, PuppeteerManager puppeteer,
-        AlarmManager alarms, TriggerManager triggers, VisualStateListener visualListener,
-        ConfigFileProvider fileNames, AchievementManager achievements)
+    public ConnectionSyncService(
+        ILogger<ConnectionSyncService> logger,
+        GagspeakMediator mediator,
+        GlobalPermissions globals,
+        ConfigFileProvider fileNames,
+        GagRestrictionManager gags,
+        RestrictionManager restrictions,
+        RestraintManager restraints,
+        CursedLootManager cursedLoot,
+        PuppeteerManager puppeteer,
+        AlarmManager alarms,
+        TriggerManager triggers,
+        VisualStateListener visuals,
+        AchievementListener achievements)
         : base(logger, mediator)
     {
         _globals = globals;
+        _fileNames = fileNames;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -42,11 +51,9 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _puppeteer = puppeteer;
         _alarms = alarms;
         _triggers = triggers;
-        _visualState = visualListener;
-        _fileNames = fileNames;
+        _visuals = visuals;
         _achievements = achievements;
 
-        Mediator.Subscribe<OnlinePairsLoadedMessage>(this, _ => SetClientDataForProfile());
         Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearClientDataForProfile());
     }
 
@@ -56,36 +63,43 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _fileNames.ClearUidConfigs();
     }
 
-
-    private async void SetClientDataForProfile()
+    /// <summary>
+    ///     By awaiting this, we know it will be distribute data once complete.
+    /// </summary>
+    public async Task SetClientDataForProfile()
     {
         // if the ConnectionResponse for whatever reason was null, dont process any of this.
+        // (this theoretically should never happen, but just in case)
         if (MainHub.ConnectionResponse is not { } connectionInfo)
             return;
 
-        // 1. Update the Config File Provider with the current UID.
-        Logger.LogInformation("Updating Configs for UID: " + MainHub.UID);
-        _fileNames.UpdateConfigs(MainHub.UID);
+        // 1. See if this was a simple reconnect, or a change in user profiles.
+        if (_fileNames.CurrentUserUID != MainHub.UID)
+        {
+            Logger.LogInformation($"Connected with different UID than previous! Updating UID to [{_fileNames.CurrentUserUID}]");
+            _fileNames.UpdateConfigs(MainHub.UID);
 
-        // 2. Load in the updated config storages for the profile.
-        Logger.LogInformation("Loading in Configs for UID: " + MainHub.UID);
-        _gags.Load();
-        _restrictions.Load();
-        _restraints.Load();
-        _cursedLoot.Load();
-        _puppeteer.Load();
-        _alarms.Load();
-        _triggers.Load();
+            // 1b. Load in the updated config storages for the profile.
+            Logger.LogInformation($"Loading Configs for [{MainHub.UID}]'s Profile!");
+            _gags.Load();
+            _restrictions.Load();
+            _restraints.Load();
+            _cursedLoot.Load();
+            _puppeteer.Load();
+            _alarms.Load();
+            _triggers.Load();
+            // Maybe favorites and trait allowances here but idk.
+        }
 
-        // 3. Load in the data from the server into our storages.
+        // 2. Load in the data from the server into our storages.
         Logger.LogInformation("Syncing Data with Connection DTO");
-
-        // temp setup for permissions if they are null. They wont be in full release.
         _globals.ApplyFullDataChange(connectionInfo.GlobalPerms);
-        await _visualState.SyncServerData(connectionInfo);
+        await _visuals.SyncServerData(connectionInfo);
 
-        // 4. Update the achievement manager with the latest UID and the latest data.
-        Logger.LogInformation("Loading in Achievement Data for UID: " + MainHub.UID);
+        // 3. Update the achievement manager with the latest UID and the latest data.
+        Logger.LogInformation($"Loading Achievement Data for [{MainHub.UID}]");
         _achievements.OnServerConnection(connectionInfo.UserAchievements);
+
+        Logger.LogInformation(">>> All Data is now Syncronized. <<<");
     }
 }

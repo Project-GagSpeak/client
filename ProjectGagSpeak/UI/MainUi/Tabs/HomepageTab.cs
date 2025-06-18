@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
@@ -66,7 +66,7 @@ public class HomepageTab
             {
                 _mediator.Publish(new UiToggleMessage(module.ToggleType));
                 if (module.ToggleType == typeof(RemotePersonal))
-                    UnlocksEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
             }
 
             if (ImGui.IsItemHovered())

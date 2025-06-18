@@ -1,4 +1,4 @@
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Intiface;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -108,7 +108,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
             VibeSimAudioPlaying = true;
             _vibeSimAudio.Play();
         }
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.VibratorsToggled, NewState.Enabled);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.VibratorsToggled, NewState.Enabled);
     }
 
 
@@ -124,7 +124,7 @@ public class SexToyManager : DisposableMediatorSubscriberBase
             VibeSimAudioPlaying = false;
             _vibeSimAudio.Stop();
         }
-        UnlocksEventManager.AchievementEvent(UnlocksEvent.VibratorsToggled, NewState.Disabled);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.VibratorsToggled, NewState.Disabled);
     }
 
     public void SendNextIntensity(byte intensity)

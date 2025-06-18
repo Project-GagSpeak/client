@@ -9,7 +9,7 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
@@ -186,7 +186,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
                 _shareHub.ToggleSortDirection();
             CkGui.AttachToolTip("Sort Direction" +
                 "--SEP--Current: " + _shareHub.SearchSort + "");
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => UnlocksEventManager.AchievementEvent(UnlocksEvent.TutorialCompleted));
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => GagspeakEventManager.AchievementEvent(UnlocksEvent.TutorialCompleted));
         }
 
         using (ImRaii.Group())

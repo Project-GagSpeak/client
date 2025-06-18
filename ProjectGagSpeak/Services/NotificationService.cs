@@ -50,6 +50,9 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         });
     }
 
+    public void ShowCustomNotification(Notification customNotif)
+        => _notifications.AddNotification(customNotif);
+
     private void PrintErrorChat(string? message)
     {
         var se = new SeStringBuilder().AddText("[Gagspeak] Error: " + message);

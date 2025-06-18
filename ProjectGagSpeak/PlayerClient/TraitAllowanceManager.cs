@@ -6,19 +6,11 @@ namespace GagSpeak.PlayerClient;
 public class TraitAllowanceManager : IHybridSavable
 {
     private readonly ILogger<TraitAllowanceManager> _logger;
-    private readonly FavoritesManager _favorites;
-    private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
-    public TraitAllowanceManager(
-        ILogger<TraitAllowanceManager> logger,
-        FavoritesManager favorites,
-        ConfigFileProvider fileNames,
-        HybridSaveService saver)
+    public TraitAllowanceManager(ILogger<TraitAllowanceManager> logger, HybridSaveService saver)
     {
         _logger = logger;
-        _favorites = favorites;
-        _fileNames = fileNames;
         _saver = saver;
         Load();
     }

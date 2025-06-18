@@ -36,8 +36,11 @@ public record MainHubClosedMessage(Exception? Exception) : SameThreadMessage;
 /// <summary> Fires whenever the client has connected to the GagSpeak Hub. </summary>
 public record MainHubConnectedMessage : MessageBase;
 
-/// <summary> Fires once all of our paired Kinkster Data have been loaded into our PairManager. </summary>
-public record OnlinePairsLoadedMessage : MessageBase;
+/// <summary> When we want to send off our current Achievement Data. </summary>
+public record SendAchievementData : MessageBase;
+
+/// <summary> When we want to update the total achievement count. </summary>
+public record UpdateCompletedAchievements: MessageBase;
 
 /// <summary> Contains the message content of a Global Chat message. </summary>
 public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : MessageBase;

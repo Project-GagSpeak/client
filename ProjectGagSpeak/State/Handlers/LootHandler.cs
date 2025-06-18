@@ -3,7 +3,7 @@ using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using GagSpeak.Achievements;
+using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -183,7 +183,7 @@ public sealed class LootHandler
         {
             _manager.ActivateCursedItem(chosenItem, DateTimeOffset.UtcNow.Add(lockTimeGag));
             _logger.LogInformation("Cursed Loot Applied!", LoggerType.CursedItems);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
             return;
         }
 
@@ -205,7 +205,7 @@ public sealed class LootHandler
         {
             _manager.ActivateCursedItem(chosenItem, DateTimeOffset.UtcNow.Add(lockTimeGag));
             _logger.LogInformation("Cursed Loot Applied!", LoggerType.CursedItems);
-            UnlocksEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
             return;
         }
     }

@@ -1,4 +1,4 @@
-namespace GagSpeak.Achievements;
+namespace GagSpeak.PlayerClient;
 
 public interface IAchievementItem
 {

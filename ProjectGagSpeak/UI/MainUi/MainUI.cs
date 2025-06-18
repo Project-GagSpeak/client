@@ -196,7 +196,7 @@ public class MainUI : WindowMediatorSubscriberBase
         var menuComponentEnd = ImGui.GetCursorPosY();
 
         // if we are connected, draw out our menus based on the tab selection.
-        if (MainHub.ServerStatus is ServerState.Connected)
+        if (MainHub.IsConnected)
         {
             if (_addingNewUser)
             {
@@ -273,7 +273,7 @@ public class MainUI : WindowMediatorSubscriberBase
         }
 
         // if we are connected
-        if (MainHub.ServerStatus is ServerState.Connected)
+        if (MainHub.IsConnected)
         {
             CkGui.CopyableDisplayText(MainHub.DisplayName);
             if (!string.Equals(MainHub.DisplayName, MainHub.UID, StringComparison.Ordinal))
@@ -362,7 +362,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     if (CkGui.IconButton(connectedIcon))
                     {
                         // If its true, make sure our ServerStatus is Connected, or if its false, make sure our ServerStatus is Disconnected or offline.
-                        if (MainHub.ServerStatus is ServerState.Connected)
+                        if (MainHub.IsConnected)
                         {
                             // If we are connected, we want to disconnect.
                             _serverConfigs.ServerStorage.FullPause = true;
@@ -400,6 +400,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ServerState.Disconnecting => "Disconnecting from server",
             ServerState.Offline => "The GagSpeak server is currently offline.",
             ServerState.Connected => string.Empty,
+            ServerState.ConnectedDataSynced => string.Empty,
             ServerState.NoSecretKey => "No secret key is set for this current character. " +
             "\nTo create UID's for your alt characters, be sure to claim your account in the CK discord." +
             "\n\nOnce you have inserted a secret key, reload the plugin to be registered with the servers.",
