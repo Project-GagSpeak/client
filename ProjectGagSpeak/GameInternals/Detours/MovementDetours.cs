@@ -4,13 +4,10 @@ namespace GagSpeak.GameInternals.Detours;
 public partial class MovementDetours : IDisposable
 {
     private readonly ILogger<MovementDetours> _logger;
-    private readonly IObjectTable _objectTable;
-    public unsafe MovementDetours(ILogger<MovementDetours> logger,
-        IGameInteropProvider interopProvider, IObjectTable objectTable)
+    public unsafe MovementDetours(ILogger<MovementDetours> logger)
     {
         _logger = logger;
-        _objectTable = objectTable;
-        interopProvider.InitializeFromAttributes(this);
+        Svc.Hook.InitializeFromAttributes(this);
         _logger.LogInformation("MovementDetours initialized successfully.");
     }
 

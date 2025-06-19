@@ -23,26 +23,26 @@ public class DeathRollSession
     {
         if (IsComplete || DateTime.UtcNow - LastRollTime > TimeSpan.FromMinutes(5))
         {
-            GagSpeak.StaticLog.Debug("[DeathRoll] Session is complete or expired.");
+            Svc.Logger.Debug("[DeathRoll] Session is complete or expired.");
             return false;
         }
 
         // Validate roll and assign opponent if necessary
         if (Opponent.IsNullOrEmpty() && playerName != Initializer)
         {
-            GagSpeak.StaticLog.Debug("[DeathRoll] Opponent was empty, assign it.");
+            Svc.Logger.Debug("[DeathRoll] Opponent was empty, assign it.");
             Opponent = playerName; // Opponent was empty, assign it
         }
         else if (Opponent != playerName && Initializer != playerName)
         {
-            GagSpeak.StaticLog.Debug("[DeathRoll] Invalid roll by a non-participant.");
+            Svc.Logger.Debug("[DeathRoll] Invalid roll by a non-participant.");
             return false; // Invalid roll by a non-participant
         }
 
         // Enforce turn order (Return false if not the players turn)
         if (string.Equals(LastRoller, playerName, StringComparison.OrdinalIgnoreCase))
         {
-            GagSpeak.StaticLog.Debug("[DeathRoll] Invalid roll by the same player twice.");
+            Svc.Logger.Debug("[DeathRoll] Invalid roll by the same player twice.");
             return false;
         }
 

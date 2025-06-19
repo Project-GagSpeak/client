@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.CkCommons;
 using GagSpeak.GameInternals;
@@ -21,12 +20,10 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
 {
     private readonly ClientAchievements _saveData;
     private readonly PairManager _pairs;
-    private readonly PlayerData _player;
     private readonly GagspeakEventManager _events;
     private readonly GagRestrictionManager _gags;
     private readonly RestraintManager _restraints;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly IDutyState _dutyState;
 
     private DateTime _lastCheck = DateTime.MinValue;
     private DateTime _lastPlayerCheck = DateTime.MinValue;
@@ -36,33 +33,23 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
     private Task? _updateLoopTask = null;
     private CancellationTokenSource? _updateLoopCTS = new();
 
-    public AchievementListener(
-        ILogger<AchievementListener> logger,
-        GagspeakMediator mediator,
-        ClientAchievements saveData,
-        PairManager pairs,
-        PlayerData player,
-        GagspeakEventManager events,
-        GagRestrictionManager gags,
-        RestraintManager restraints,
-        OnFrameworkService frameworkUtils,
-        IDutyState dutyState)
+    public AchievementListener(ILogger<AchievementListener> logger, GagspeakMediator mediator,
+        ClientAchievements saveData, PairManager pairs, GagspeakEventManager events,
+        GagRestrictionManager gags, RestraintManager restraints, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         _saveData = saveData;
         _pairs = pairs;
-        _player = player;
         _events = events;
         _gags = gags;
         _restraints = restraints;
         _frameworkUtils = frameworkUtils;
-        _dutyState = dutyState;
 
         SubscribeToEvents();
         BeginSaveCycle();
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => OnFrameworkCheck());
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ => _updateLoopCTS?.CancelDispose());
+        Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ => _updateLoopCTS?.Cancel());
     }
 
     protected override void Dispose(bool disposing)
@@ -70,7 +57,6 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
         UnsubscribeFromEvents();
         _updateLoopCTS?.CancelDispose();
-        _updateLoopTask?.Dispose();
     }
 
     private void BeginSaveCycle()
@@ -106,7 +92,7 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
 
         _lastCheck = now;
 
-        var isCurrentlyDead = _player.Health == 0;
+        var isCurrentlyDead = PlayerData.Health is 0;
 
         if (isCurrentlyDead && !_clientWasDead)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
@@ -115,10 +101,10 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
 
 
         // check if in gold saucer (maybe do something better for this later.
-        if (_player.TerritoryId is 144)
+        if (PlayerContent.TerritoryID is 144)
         {
             // Check Chocobo Racing Achievement.
-            if (_player.IsChocoboRacing)
+            if (PlayerData.IsChocoboRacing)
             {
                 var resultMenu = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
                 if (resultMenu != null)
@@ -138,8 +124,7 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
 
         // we should get the current player object count that is within the range required for crowd pleaser.
         var playersInRange = _frameworkUtils.GetObjectTablePlayers()
-            .Where(player => player != _player.ClientPlayer
-            && Vector3.Distance(_player.ClientPlayer?.Position ?? default, player.Position) < 30f)
+            .Where(player => PlayerData.DistanceTo(player.Position) < 30f)
             .Count();
 
         if (playersInRange != _lastPlayerCount)
@@ -158,7 +143,7 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
         var random = new Random();
         while (!ct.IsCancellationRequested)
         {
-            int minutesToNextCheck = 60;
+            var minutesToNextCheck = 60;
             try
             {
                 Logger.LogDebug("Achievement SaveData Update processing...", LoggerType.Achievements);
@@ -268,10 +253,9 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => CheckOnZoneSwitchStart(msg.prevZone));
         Mediator.Subscribe<ZoneSwitchEndMessage>(this, _ => CheckOnZoneSwitchEnd());
 
-        Mediator.Subscribe<JobChangeMessage>(this, (msg) => OnJobChange(msg.jobId));
-
-        _dutyState.DutyStarted += OnDutyStart;
-        _dutyState.DutyCompleted += OnDutyEnd;
+        Svc.ClientState.ClassJobChanged += OnJobChange;
+        Svc.DutyState.DutyStarted += OnDutyStart;
+        Svc.DutyState.DutyCompleted += OnDutyEnd;
     }
 
     private void UnsubscribeFromEvents()
@@ -328,7 +312,8 @@ public partial class AchievementListener : DisposableMediatorSubscriberBase
         _events.Unsubscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (ClientAchievements.SaveData[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
         _events.Unsubscribe(UnlocksEvent.CutsceneInturrupted, () => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
 
-        _dutyState.DutyStarted -= OnDutyStart;
-        _dutyState.DutyCompleted -= OnDutyEnd;
+        Svc.ClientState.ClassJobChanged -= OnJobChange;
+        Svc.DutyState.DutyStarted -= OnDutyStart;
+        Svc.DutyState.DutyCompleted -= OnDutyEnd;
     }
 }

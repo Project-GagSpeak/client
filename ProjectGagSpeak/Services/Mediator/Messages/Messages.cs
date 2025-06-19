@@ -12,11 +12,6 @@ namespace GagSpeak.Services.Mediator;
 /// <param name="TimeShownOnScreen"> How long it is displayed for. </param>
 public record NotificationMessage(string Title, string Message, NotificationType Type, TimeSpan? TimeShownOnScreen = null) : MessageBase;
 
-/// <summary> Used to tell the Notification Manager to print out a chat message. </summary>
-/// <param name="Message"> The message to be displayed. </param>
-/// <param name="Type"> INFO, WARNING, or ERROR? </param>
-public record NotifyChatMessage(SeString Message, NotificationType Type) : MessageBase;
-
 /// <summary> Sends to the ActionNotifier that an interaction event occurred. </summary>
 /// <param name="Event"> The event that was triggered. </param>
 public record EventMessage(InteractionEvent Event) : MessageBase;

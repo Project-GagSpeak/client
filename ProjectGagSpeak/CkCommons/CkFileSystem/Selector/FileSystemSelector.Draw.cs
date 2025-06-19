@@ -256,7 +256,7 @@ public partial class CkFileSystemSelector<T, TStateStorage>
         catch (Exception e)
         {
             // This should be an exception in final version
-            GagSpeak.StaticLog.Error("Exception during CkFileSystemSelector rendering:\n"
+            Svc.Logger.Error("Exception during CkFileSystemSelector rendering:\n"
               + $"{_currentIndex} Current Index\n"
               + $"{_currentDepth} Current Depth\n"
               + $"{_currentEnd} Current End\n"

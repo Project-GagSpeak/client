@@ -3,6 +3,7 @@ using GagSpeak.Services.Mediator;
 using Microsoft.Extensions.Hosting;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.Services.Events;
 
@@ -13,19 +14,17 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
 {
     private readonly ILogger<EventAggregator> _logger;
     private readonly PairManager _pairs;
-    private readonly string _configDirectory;
 
     private readonly RollingList<InteractionEvent> _events = new(500);
     private readonly SemaphoreSlim _lock = new(1);
     private string CurrentLogName => $"{DateTime.Now:yyyy-MM-dd}-events.log";
     private DateTime _currentTime;
 
-    public EventAggregator(string configDirectory, ILogger<EventAggregator> logger, 
-        GagspeakMediator mediator, PairManager pairs) : base(logger, mediator)
+    public EventAggregator(ILogger<EventAggregator> logger, GagspeakMediator mediator, PairManager pairs) 
+        : base(logger, mediator)
     {
         _logger = logger;
         _pairs = pairs;
-        _configDirectory = configDirectory;
         // Collect any events sent out.
         Mediator.Subscribe<EventMessage>(this, (msg) =>
         {
@@ -67,7 +66,6 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
     /// </summary>
     public Lazy<List<InteractionEvent>> EventList { get; private set; }
     public bool NewEventsAvailable => !EventList.IsValueCreated;
-    public string EventLogFolder => Path.Combine(_configDirectory, "eventlog");
     public static int UnreadInteractionsCount = 0;
 
     /// <summary>
@@ -111,7 +109,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             try
             {
                 _currentTime = DateTime.Now;
-                var filesInDirectory = Directory.EnumerateFiles(EventLogFolder, "*.log");
+                var filesInDirectory = Directory.EnumerateFiles(ConfigFileProvider.EventDirectory, "*.log");
                 if (filesInDirectory.Skip(10).Any())
                 {
                     File.Delete(filesInDirectory.OrderBy(f => new FileInfo(f).LastWriteTimeUtc).First());
@@ -123,10 +121,10 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             }
         }
 
-        var eventLogFile = Path.Combine(EventLogFolder, CurrentLogName);
+        var eventLogFile = Path.Combine(ConfigFileProvider.EventDirectory, CurrentLogName);
         try
         {
-            if (!Directory.Exists(EventLogFolder)) Directory.CreateDirectory(EventLogFolder);
+            if (!Directory.Exists(ConfigFileProvider.EventDirectory)) Directory.CreateDirectory(ConfigFileProvider.EventDirectory);
             File.AppendAllLines(eventLogFile, [receivedEvent.ToString()]);
         }
         catch (Exception ex)

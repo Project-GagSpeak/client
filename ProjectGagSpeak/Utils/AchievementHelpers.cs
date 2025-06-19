@@ -75,15 +75,15 @@ public static class Content
         // ensure we are in the right gate
         if ((GateType)gate is GateType.CliffHanger || (GateType)gate is GateType.AnyWayTheWindBlows)
         {
-            GagSpeak.StaticLog.Verbose("In a gate with knockback");
+            Svc.Logger.Verbose("In a gate with knockback");
 
             // ensure we have joined, but not yet completed.
             if (HasJoinedGate(director->Flags))
             {
-                GagSpeak.StaticLog.Verbose("Has joined the gate");
+                Svc.Logger.Verbose("Has joined the gate");
                 if (!HasFinishedGate(director->Flags))
                 {
-                    GagSpeak.StaticLog.Verbose("Has not finished the gate");
+                    Svc.Logger.Verbose("Has not finished the gate");
                     return true;
                 }
             }

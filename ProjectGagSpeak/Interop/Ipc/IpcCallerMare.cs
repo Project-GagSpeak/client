@@ -1,7 +1,4 @@
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Interop;
 
@@ -11,19 +8,10 @@ public sealed class IpcCallerMare : IIpcCaller
     private readonly ICallGateSubscriber<List<nint>> _handledGameAddresses;
 
     private readonly ILogger<IpcCallerMare> _logger;
-    private readonly OnFrameworkService _frameworkUtil;
-    private readonly GagspeakMediator _gagspeakMediator;
-    private readonly IDalamudPluginInterface _pi;
-    public IpcCallerMare(ILogger<IpcCallerMare> logger, IDalamudPluginInterface pi,
-        OnFrameworkService frameworkUtil, GagspeakMediator gagspeakMediator)
+    public IpcCallerMare(ILogger<IpcCallerMare> logger)
     {
         _logger = logger;
-        _frameworkUtil = frameworkUtil;
-        _gagspeakMediator = gagspeakMediator;
-        _pi = pi;
-
-        _handledGameAddresses = pi.GetIpcSubscriber<List<nint>>("MareSynchronos.GetHandledAddresses");
-
+        _handledGameAddresses = Svc.PluginInterface.GetIpcSubscriber<List<nint>>("MareSynchronos.GetHandledAddresses");
         CheckAPI(); // check to see if we have a valid API
     }
 
@@ -35,7 +23,8 @@ public sealed class IpcCallerMare : IIpcCaller
     public static bool APIAvailable { get; private set; } = false;
     public void CheckAPI()
     {
-        var marePlugin = _pi.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "mareSynchronos", StringComparison.OrdinalIgnoreCase));
+        var marePlugin = Svc.PluginInterface.InstalledPlugins
+            .FirstOrDefault(p => string.Equals(p.InternalName, "mareSynchronos", StringComparison.OrdinalIgnoreCase));
         if (marePlugin == null)
         {
             APIAvailable = false;

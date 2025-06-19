@@ -1,4 +1,6 @@
 using Dalamud.Plugin;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 /*
@@ -14,7 +16,6 @@ namespace GagSpeak.Toybox;
 public class VibeSimAudio
 {
     private readonly ILogger<VibeSimAudio> _logger;
-    private readonly IDalamudPluginInterface _pi;
     private IWavePlayer waveOutDevice;
     private AudioFileReader audioFileReader;
     private VibeSimLooper loopStream;
@@ -33,18 +34,16 @@ public class VibeSimAudio
     public int ActivePlaybackDeviceId { get; set; } = 0;
 
 
-    public VibeSimAudio(ILogger<VibeSimAudio> logger, IDalamudPluginInterface pluginInterface)
+    public VibeSimAudio(ILogger<VibeSimAudio> logger)
     {
         _logger = logger;
-        _pi = pluginInterface;
-        // get the audio file
         StartupNAudioProvider("vibratorQuiet.wav");
     }
 
     protected void StartupNAudioProvider(string audioPathInput, bool isDeviceChange = false)
     {
         // get the audio file
-        string audioPath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, "Assets", audioPathInput);
+        string audioPath = Path.Combine(ConfigFileProvider.AssemblyDirectory, "Assets", audioPathInput);
         audioFileReader = new AudioFileReader(audioPath);
         loopStream = new VibeSimLooper(audioFileReader);
         pitchShifter = new SmbPitchShiftingSampleProvider(loopStream.ToSampleProvider());

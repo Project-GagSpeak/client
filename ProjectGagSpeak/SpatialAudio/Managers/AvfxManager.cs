@@ -1,20 +1,17 @@
 using Dalamud.Plugin.Services;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 
 public class AvfxManager
 {
     private readonly ILogger<AvfxManager> _logger;
-    private readonly IDataManager _dataManager;
-    private string _configDirectory;
-    public string AvfxFilesFolder => Path.Combine(_configDirectory, "audiofiles");
+    public string AvfxFilesFolder => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "audiofiles");
     public string Extension { get; } = "avfx";
 
-    public AvfxManager(ILogger<AvfxManager> logger, IDataManager dataManager, string configDirectory)
+    public AvfxManager(ILogger<AvfxManager> logger)
     {
         _logger = logger;
-        _dataManager = dataManager;
-        _configDirectory = configDirectory;
     }
 
     public List<string> GetAvfxFiles()
@@ -27,7 +24,7 @@ public class AvfxManager
         return files;
     }
 
-    public bool FileExists(string path) => _dataManager.FileExists(path) || GetReplacePath(path, out var _);
+    public bool FileExists(string path) => Svc.Data.FileExists(path) || GetReplacePath(path, out var _);
     public bool GetReplacePath(string path, out string replacePath)
     {
         // Assume not found

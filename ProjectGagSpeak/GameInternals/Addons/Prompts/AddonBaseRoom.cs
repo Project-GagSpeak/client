@@ -14,7 +14,7 @@ public unsafe static class AddonBaseRoom
     {
         var textList = new List<string>();
         var sizeCounter = 0;
-        GagSpeak.StaticLog.Debug("Rooms Menu has " + baseUnit->UldManager.NodeListCount + " text nodes");
+        Svc.Logger.Debug("Rooms Menu has " + baseUnit->UldManager.NodeListCount + " text nodes");
         for (var i = 0; i < baseUnit->UldManager.NodeListCount; i++)
         {
             var node = baseUnit->UldManager.NodeList[i];

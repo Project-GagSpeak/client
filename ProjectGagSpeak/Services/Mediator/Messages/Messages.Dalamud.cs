@@ -28,13 +28,10 @@ public record CutsceneEndMessage : MessageBase;
 
 /// <summary> Once the Client Player begins changing Zones. </summary>
 /// <param name="prevZone"> the ID of the zone we are leaving. </param>
-public record ZoneSwitchStartMessage(ushort prevZone) : MessageBase;
+public record ZoneSwitchStartMessage(uint prevZone) : MessageBase;
 
 /// <summary> Once the Client Player has finished changing Zones. </summary>
 public record ZoneSwitchEndMessage : MessageBase;
-
-/// <summary> Once the Client Player has changed jobs. </summary>
-public record JobChangeMessage(uint jobId) : MessageBase;
 
 /// <summary> Fires whenever the Client Player's Commendation count increases by any amount after swapping zones. </summary>
 public record CommendationsIncreasedMessage(int amount) : MessageBase;

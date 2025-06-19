@@ -41,7 +41,7 @@ public static class ImageDataHandling
         }
         catch (ExternalException ex)
         {
-            GagSpeak.StaticLog.Error("Error: " + ex);
+            Svc.Logger.Error("Error: " + ex);
             byteArr = Array.Empty<byte>();
             context = null;
             return false;

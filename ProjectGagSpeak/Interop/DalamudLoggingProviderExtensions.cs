@@ -6,10 +6,11 @@ namespace GagSpeak;
 
 public static class DalamudLoggingProviderExtensions
 {
-    public static ILoggingBuilder AddDalamudLogging(this ILoggingBuilder builder, IPluginLog pluginLog)
+    public static ILoggingBuilder AddDalamudLogging(this ILoggingBuilder builder)
     {
         builder.ClearProviders();
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DalamudLoggingProvider>(b => new DalamudLoggingProvider(pluginLog)));
+        builder.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ILoggerProvider, DalamudLoggingProvider>(b => new DalamudLoggingProvider()));
         return builder;
     }
 }

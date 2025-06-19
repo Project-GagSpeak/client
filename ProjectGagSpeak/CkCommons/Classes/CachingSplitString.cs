@@ -38,7 +38,7 @@ public class LazyCSVCache : LazyList<string>
     {
         if (0 <= index && index < Count)
         {
-            GagSpeak.StaticLog.Debug($"Renaming '{this[index]}' to '{newValue}' in LazySplitString");
+            Svc.Logger.Debug($"Renaming '{this[index]}' to '{newValue}' in LazySplitString");
             var trimmed = newValue.Trim();
             if (this[index] != trimmed)
             {
@@ -57,7 +57,7 @@ public class LazyCSVCache : LazyList<string>
     {
         if (0 <= index && index < Count)
         {
-            GagSpeak.StaticLog.Debug($"Removing '{this[index]}' from LazySplitString");
+            Svc.Logger.Debug($"Removing '{this[index]}' from LazySplitString");
             var output = this.ToList();
             output.RemoveAt(index);
             output.Sort();
@@ -74,7 +74,7 @@ public class LazyCSVCache : LazyList<string>
         if (trimmed.Length == 0)
             return;
 
-        GagSpeak.StaticLog.Debug($"Adding '{trimmed}' to LazySplitString");
+        Svc.Logger.Debug($"Adding '{trimmed}' to LazySplitString");
         var output = this.ToList();
         output.Add(trimmed);
         output.Sort();

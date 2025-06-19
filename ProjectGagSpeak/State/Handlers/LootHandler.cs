@@ -33,7 +33,6 @@ public sealed class LootHandler
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly CursedLootManager _manager;
-    private readonly PlayerData _player;
     private readonly MainConfig _config;
     private readonly OnFrameworkService _frameworkUtils;
 
@@ -42,18 +41,10 @@ public sealed class LootHandler
     private uint _prevOpenedLootObjectId = 0;
     private Task? _openLootTask = null;
 
-    public LootHandler(
-        ILogger<LootHandler> logger,
-        GagspeakMediator mediator,
-        GlobalPermissions globals,
-        MainHub hub,
-        PairManager pairs,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
-        CursedLootManager manager,
-        PlayerData clientMonitor,
-        MainConfig config,
-        OnFrameworkService frameworkUtils)
+    public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator,
+        GlobalPermissions globals, MainHub hub, PairManager pairs,
+        GagRestrictionManager gags, RestrictionManager restrictions,
+        CursedLootManager manager, MainConfig config, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
@@ -63,7 +54,6 @@ public sealed class LootHandler
         _gags = gags;
         _restrictions = restrictions;
         _manager = manager;
-        _player = clientMonitor;
         _config = config;
         _frameworkUtils = frameworkUtils;
     }
@@ -82,7 +72,7 @@ public sealed class LootHandler
         => obj->GetGameObjectId().ObjectId == _prevOpenedLootObjectId;
 
     public unsafe bool ObjectInLootInstance(uint gameObjId)
-        => _player.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
+        => PlayerData.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
 
 
     /// <summary>
@@ -112,7 +102,7 @@ public sealed class LootHandler
         else
         {
             // If in a party with other players, make sure we are the first to open it.
-            if (_player.PartySize is not 1)
+            if (PlayerData.PartySize is not 1)
             {
                 foreach (var item in Loot.Instance()->Items)
                     if (item.ChestObjectId == obj->GetGameObjectId().ObjectId)
@@ -229,7 +219,7 @@ public sealed class LootHandler
         {
             _logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
-            _mediator.Publish(new NotifyChatMessage(message, NotificationType.Error));
+            Svc.Chat.PrintError(message);
 
             if (_globals.Current?.ChatGarblerActive ?? false)
                 _mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! Be cautious of chatting around strangers!", NotificationType.Warning));
@@ -268,8 +258,9 @@ public sealed class LootHandler
         var result = await _hub.UserPushDataCursedLoot(newInfo);
         if (result.ErrorCode is GagSpeakApiEc.Success)
         {
-            _mediator.Publish(new NotifyChatMessage(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills " +
-                "forth, binding you in an inescapable restraint!").BuiltString, NotificationType.Error));
+            Svc.Chat.PrintError(new SeStringBuilder()
+                .AddItalics("As the coffer opens, cursed loot spills forth, binding you in an inescapable restraint!")
+                .BuiltString);
 
             // Update the items release time if successful.
             if (_manager.Storage.TryGetLoot(cursedItem.Identifier, out var loot))

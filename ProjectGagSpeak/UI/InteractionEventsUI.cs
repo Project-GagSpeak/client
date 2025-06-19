@@ -5,6 +5,7 @@ using GagSpeak.Services.Mediator;
 using System.Globalization;
 using OtterGui.Text;
 using OtterGui;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.CkCommons.Gui;
 
@@ -114,7 +115,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             {
                 ProcessStartInfo ps = new()
                 {
-                    FileName = _eventAggregator.EventLogFolder,
+                    FileName = ConfigFileProvider.EventDirectory,
                     UseShellExecute = true,
                     WindowStyle = ProcessWindowStyle.Normal
                 };

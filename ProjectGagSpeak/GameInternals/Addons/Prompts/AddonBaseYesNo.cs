@@ -19,7 +19,7 @@ public static unsafe class AddonBaseYesNo
     {
         if (addon->YesButton != null && !addon->YesButton->IsEnabled)
         {
-            GagSpeak.StaticLog.Verbose($"{nameof(AddonSelectYesno)}: Force enabling yes button");
+            Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling yes button");
             var flagsPtr = (ushort*)&addon->YesButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
             *flagsPtr ^= 1 << 5;
         }
@@ -29,7 +29,7 @@ public static unsafe class AddonBaseYesNo
     public static void No(AddonSelectYesno* addon)
     {
         ClickButtonIfEnabled(addon->NoButton);
-        GagSpeak.StaticLog.Verbose($"{nameof(AddonSelectYesno)}: Force enabling no button");
+        Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling no button");
     }
 
     public static bool ClickButtonIfEnabled(AtkComponentButton* button)

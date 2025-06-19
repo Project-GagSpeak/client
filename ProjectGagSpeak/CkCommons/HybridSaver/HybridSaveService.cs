@@ -111,7 +111,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
         }
         catch (Exception ex)
         {
-            GagSpeak.StaticLog.Error($"Failed to save {configPath}: {ex}");
+            Svc.Logger.Error($"Failed to save {configPath}: {ex}");
         }
     }
 }

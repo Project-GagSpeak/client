@@ -1,15 +1,14 @@
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.GameInternals.Detours;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.State.Listeners;
+using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
-using GagSpeak.GameInternals;
-using GagSpeak.PlayerClient;
-using GagSpeak.Utils;
-using GagSpeak.GameInternals.Detours;
-using GagSpeak.State.Listeners;
 
 namespace GagSpeak;
 
@@ -17,7 +16,6 @@ namespace GagSpeak;
 public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly PlayerData _player;
     private readonly MainConfig _mainConfig;
     private readonly ServerConfigManager _serverConfigs;
     private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -25,16 +23,19 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
         OnFrameworkService frameworkUtils, MainConfig mainConfig,
-        ServerConfigManager serverConfigs, PlayerData clientMonitor, 
-        IServiceScopeFactory scopeFactory) : base(logger, mediator)
+        ServerConfigManager serverConfigs, IServiceScopeFactory scopeFactory)
+        : base(logger, mediator)
     {
         // set the services
         _frameworkUtils = frameworkUtils;
-        _player = clientMonitor;
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _serviceScopeFactory = scopeFactory;
         _serverConfigs.Init();
+
+        // If already logged in, begin.
+        if (PlayerData.IsLoggedIn)
+            DalamudUtilOnLogIn();
     }
     /// <summary> 
     /// The task to run after all services have been properly constructed.
@@ -47,15 +48,15 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         // log our version
         Logger.LogInformation("Launching {name} {major}.{minor}.{build}", "GagSpeak", version.Major, version.Minor, version.Build);
 
+        // subscribe to the login and logout messages
+        Svc.ClientState.Login += DalamudUtilOnLogIn;
+        Svc.ClientState.Logout += (_, _) => DalamudUtilOnLogOut();
+
         // subscribe to the main UI message window for making the primary UI be the main UI interface.
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (msg) =>
         {
             if (_launchTask == null || _launchTask.IsCompleted) _launchTask = Task.Run(WaitForPlayerAndLaunchCharacterManager);
         });
-
-        // subscribe to the login and logout messages
-        Mediator.Subscribe<DalamudLoginMessage>(this, (_) => DalamudUtilOnLogIn());
-        Mediator.Subscribe<DalamudLogoutMessage>(this, (_) => DalamudUtilOnLogOut());
 
         // start processing the mediator queue.
         Mediator.StartQueueProcessing();
@@ -71,6 +72,9 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 
         DalamudUtilOnLogOut();
 
+        Svc.ClientState.Login -= DalamudUtilOnLogIn;
+        Svc.ClientState.Logout -= (_, _) => DalamudUtilOnLogOut();
+
         Logger.LogDebug("Halting GagspeakPlugin");
         return Task.CompletedTask;
     }
@@ -83,7 +87,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     /// </summary>
     private void DalamudUtilOnLogIn()
     {
-        Logger?.LogDebug("Client login");
+        Svc.Logger.Debug("Client login");
         if (_launchTask == null || _launchTask.IsCompleted) _launchTask = Task.Run(WaitForPlayerAndLaunchCharacterManager);
     }
 
@@ -95,7 +99,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     /// </summary>
     private void DalamudUtilOnLogOut()
     {
-        Logger?.LogDebug("Client logout");
+        Svc.Logger.Debug("Client logout");
         _runtimeServiceScope?.Dispose();
     }
 
@@ -109,18 +113,20 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private async Task WaitForPlayerAndLaunchCharacterManager()
     {
         // wait for the player to be present
-        while (!await _player.IsPresentAsync().ConfigureAwait(false))
+        while (PlayerData.AvailableThreadSafe is false)
         {
+            Svc.Logger.Debug("Waiting for player to be present");
             await Task.Delay(100).ConfigureAwait(false);
         }
 
         // then launch the managers for the plugin to function at a base level
         try
         {
-            Logger?.LogDebug("Launching Managers");
+            Svc.Logger.Debug("Launching Managers");
             // before we do lets recreate the runtime service scope
             _runtimeServiceScope?.Dispose();
             _runtimeServiceScope = _serviceScopeFactory.CreateScope();
+
             // startup services that have no other services that call on them, yet are essential.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<UiService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();

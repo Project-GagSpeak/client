@@ -3,12 +3,9 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using GagSpeak.Interop;
 using GagSpeak.Localization;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
@@ -18,32 +15,12 @@ using ImGuiNET;
 namespace GagSpeak.CkCommons.Gui;
 
 // Primary Partial Class
-public partial class CkGui
+public static partial class CkGui
 {
     public static readonly ImGuiWindowFlags PopupWindowFlags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoScrollWithMouse;
 
     public const string TooltipSeparator = "--SEP--";
     public const string ColorToggleSeparator = "--COL--";
-
-    private readonly ILogger<CkGui> _logger;
-    private readonly ServerConfigManager _serverConfigs;
-    private readonly IDalamudPluginInterface _pi;
-    private readonly ITextureProvider _textureProvider;
-
-    public static Dictionary<string, object> _selectedComboItems;    // the selected combo items
-    public static Dictionary<string, string> SearchStrings;
-
-    public CkGui(ILogger<CkGui> logger, ServerConfigManager serverConfigs,
-        IDalamudPluginInterface pi, ITextureProvider tp)
-    {
-        _logger = logger;
-        _serverConfigs = serverConfigs;
-        _pi = pi;
-        _textureProvider = tp;
-
-        _selectedComboItems = new(StringComparer.Ordinal);
-        SearchStrings = new(StringComparer.Ordinal);
-    }
 
     /// <summary> A helper function for centering the next displayed window. </summary>
     /// <param name="width"> The width of the window. </param>
@@ -162,25 +139,6 @@ public partial class CkGui
         if (col is not null)
             ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), col.Value);
         ImGui.Spacing();
-    }
-
-    public static void DrawGrouped(Action imguiDrawAction, float? width = null, float height = 0, float rounding = 5f, Vector4 color = default)
-    {
-        var cursorPos = ImGui.GetCursorPos();
-        using (ImRaii.Group())
-        {
-            if (width != null)
-            {
-                ImGuiHelpers.ScaledDummy(width.Value, height);
-                ImGui.SetCursorPos(cursorPos);
-            }
-            imguiDrawAction.Invoke();
-        }
-
-        ImGui.GetWindowDrawList().AddRect(
-            ImGui.GetItemRectMin() - ImGui.GetStyle().ItemInnerSpacing,
-            ImGui.GetItemRectMax() + ImGui.GetStyle().ItemInnerSpacing,
-            Color(color), rounding);
     }
 
     /// <summary> The additional param for an ID is optional. if not provided, the id will be the text. </summary>
@@ -515,182 +473,5 @@ public partial class CkGui
             ServerState.ConnectedDataSynced => MainHub.DisplayName,
             _ => string.Empty
         };
-    }
-
-    public bool ApplyNicknamesFromClipboard(string notes, bool overwrite)
-    {
-        var splitNicknames = notes.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).ToList();
-        var splitNicknamesStart = splitNicknames.FirstOrDefault();
-        var splitNicknamesEnd = splitNicknames.LastOrDefault();
-        if (!string.Equals(splitNicknamesStart, "##GAGSPEAK_USER_NICKNAME_START##", StringComparison.Ordinal) || !string.Equals(splitNicknamesEnd, "##GAGSPEAK_USER_NICKNAME_END##", StringComparison.Ordinal))
-            return false;
-
-        splitNicknames.RemoveAll(n => string.Equals(n, "##GAGSPEAK_USER_NICKNAME_START##", StringComparison.Ordinal) || string.Equals(n, "##GAGSPEAK_USER_NICKNAME_END##", StringComparison.Ordinal));
-
-        foreach (var note in splitNicknames)
-        {
-            try
-            {
-                var splittedEntry = note.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
-                var uid = splittedEntry[0];
-                var comment = splittedEntry[1].Trim('"');
-                if (_serverConfigs.GetNicknameForUid(uid) != null && !overwrite) continue;
-                _serverConfigs.SetNicknameForUid(uid, comment);
-            }
-            catch
-            {
-                _logger.LogWarning("Could not parse {note}", note);
-            }
-        }
-
-        _serverConfigs.SaveNicknames();
-
-        return true;
-    }
-
-    public void DrawCombo<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
-        Action<T?>? onSelected = null, T? initialSelectedItem = default, bool shouldShowLabel = true,
-        CFlags flags = CFlags.None, string defaultPreviewText = "Nothing Selected..")
-    {
-        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        var comboLabel = shouldShowLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
-        if (!comboItems.Any())
-        {
-            ImGui.SetNextItemWidth(width);
-            if (ImGui.BeginCombo(comboLabel, defaultPreviewText, flags))
-            {
-                ImGui.EndCombo();
-            }
-            return;
-        }
-
-        if (!_selectedComboItems.TryGetValue(comboName, out var selectedItem) && selectedItem == null)
-        {
-            if (!EqualityComparer<T>.Default.Equals(initialSelectedItem, default))
-            {
-                selectedItem = initialSelectedItem;
-                _selectedComboItems[comboName] = selectedItem!;
-                if (!EqualityComparer<T>.Default.Equals(initialSelectedItem, default))
-                    onSelected?.Invoke(initialSelectedItem);
-            }
-            else
-            {
-                selectedItem = comboItems.First();
-                _selectedComboItems[comboName] = selectedItem!;
-            }
-        }
-
-        var displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
-
-        ImGui.SetNextItemWidth(width);
-        if (ImGui.BeginCombo(comboLabel, displayText, flags))
-        {
-            foreach (var item in comboItems)
-            {
-                var isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
-                if (ImGui.Selectable(toName(item), isSelected))
-                {
-                    _selectedComboItems[comboName] = item!;
-                    onSelected?.Invoke(item!);
-                }
-            }
-
-            ImGui.EndCombo();
-        }
-        // Check if the item was right-clicked. If so, reset to default value.
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        {
-            _logger.LogTrace("Right-clicked on {comboName}. Resetting to default value.", comboName);
-            selectedItem = comboItems.First();
-            _selectedComboItems[comboName] = selectedItem!;
-            onSelected?.Invoke((T)selectedItem!);
-        }
-        return;
-    }
-
-    public static void DrawComboSearchable<T>(string comboName, float width, IEnumerable<T> comboItems, Func<T, string> toName,
-        bool showLabel = true, Action<T?>? onSelected = null, T? initialSelectedItem = default,
-        string defaultPreviewText = "No Items Available...", CFlags flags = CFlags.None)
-    {
-        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        try
-        {
-            // Return default if there are no items to display in the combo box.
-            var comboLabel = showLabel ? $"{comboName}##{comboName}" : $"##{comboName}";
-            if (!comboItems.Any())
-            {
-                ImGui.SetNextItemWidth(width);
-                if (ImGui.BeginCombo(comboLabel, defaultPreviewText, flags))
-                {
-                    ImGui.EndCombo();
-                }
-                return;
-            }
-
-            // try to get currently selected item from a dictionary storing selections for each combo box.
-            if (!_selectedComboItems.TryGetValue(comboName, out var selectedItem) && selectedItem == null)
-            {
-                if (!EqualityComparer<T>.Default.Equals(initialSelectedItem, default))
-                {
-                    selectedItem = initialSelectedItem;
-                    _selectedComboItems[comboName] = selectedItem!;
-                    if (!EqualityComparer<T>.Default.Equals(initialSelectedItem, default))
-                        onSelected?.Invoke(initialSelectedItem);
-                }
-                else
-                {
-                    selectedItem = comboItems.First();
-                    _selectedComboItems[comboName] = selectedItem!;
-                }
-            }
-
-            // Retrieve or initialize the search string for this combo box.
-            if (!SearchStrings.TryGetValue(comboName, out var searchString))
-            {
-                searchString = string.Empty;
-                SearchStrings[comboName] = searchString;
-            }
-
-            var displayText = selectedItem == null ? defaultPreviewText : toName((T)selectedItem!);
-
-            ImGui.SetNextItemWidth(width);
-            if (ImGui.BeginCombo(comboLabel, displayText, flags))
-            {
-                // Search filter
-                ImGui.SetNextItemWidth(width);
-                ImGui.InputTextWithHint("##filter", "Filter...", ref searchString, 255);
-                SearchStrings[comboName] = searchString;
-                var searchText = searchString.ToLowerInvariant();
-
-                var filteredItems = string.IsNullOrEmpty(searchText)
-                    ? comboItems
-                    : comboItems.Where(item => toName(item).ToLowerInvariant().Contains(searchText));
-
-                // display filtered content.
-                foreach (var item in filteredItems)
-                {
-                    var isSelected = EqualityComparer<T>.Default.Equals(item, (T?)selectedItem);
-                    if (ImGui.Selectable(toName(item), isSelected))
-                    {
-                        GagSpeak.StaticLog.Verbose("Selected {item} from {comboName}", toName(item), comboName);
-                        _selectedComboItems[comboName] = item!;
-                        onSelected?.Invoke(item!);
-                    }
-                }
-                ImGui.EndCombo();
-            }
-            // Check if the item was right-clicked. If so, reset to default value.
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            {
-                GagSpeak.StaticLog.Verbose("Right-clicked on {comboName}. Resetting to default value.", comboName);
-                selectedItem = comboItems.First();
-                _selectedComboItems[comboName] = selectedItem!;
-                onSelected?.Invoke((T)selectedItem!);
-            }
-        }
-        catch (Exception ex)
-        {
-            GagSpeak.StaticLog.Error(ex, "Error in DrawComboSearchable");
-        }
     }
 }

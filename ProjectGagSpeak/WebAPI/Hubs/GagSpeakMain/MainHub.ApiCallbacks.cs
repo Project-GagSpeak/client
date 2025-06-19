@@ -150,8 +150,7 @@ public partial class MainHub
     {
         Logger.LogDebug("Callback_ApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
         // obtain the local player name and world
-        var NameWithWorld = _player.ClientPlayer.NameWithWorld();
-        _visualListener.ApplyStatusesToSelf(dto, NameWithWorld);
+        _visualListener.ApplyStatusesToSelf(dto, PlayerData.NameWithWorld);
         return Task.CompletedTask;
     }
 

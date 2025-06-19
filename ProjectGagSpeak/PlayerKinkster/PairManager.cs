@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
-using Dalamud.Plugin.Services;
+using GagSpeak.Kinksters.Factories;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -8,9 +9,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.PlayerClient;
-using GagSpeak.Kinksters.Factories;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Kinksters;
 
@@ -21,29 +19,27 @@ namespace GagSpeak.Kinksters;
 public sealed partial class PairManager : DisposableMediatorSubscriberBase
 {
     private readonly ConcurrentDictionary<UserData, Pair> _allClientPairs;  // concurrent dictionary of all paired paired to the client.
-    private readonly MainConfig _mainConfig;                     // main gagspeak config
-    private readonly ServerConfigManager _serverConfigs;             // for nick handling.
-    private readonly PairFactory _pairFactory;                              // the pair factory for creating new pair objects
-    private readonly IContextMenu _contextMenu;                             // adds GagSpeak options when right clicking players.
+    private readonly MainConfig _mainConfig;
+    private readonly ServerConfigManager _serverConfigs;
+    private readonly PairFactory _pairFactory;
     
     private Lazy<List<Pair>> _directPairsInternal;                          // the internal direct pairs lazy list for optimization
     public List<Pair> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
 
     public PairManager(ILogger<PairManager> logger, GagspeakMediator mediator,
-        PairFactory pairFactory, MainConfig mainConfig, 
-        ServerConfigManager serverConfigs, IContextMenu contextMenu) : base(logger, mediator)
+        PairFactory factory, MainConfig config, ServerConfigManager serverConfigs) 
+        : base(logger, mediator)
     {
         _allClientPairs = new(UserDataComparer.Instance);
-        _pairFactory = pairFactory;
-        _mainConfig = mainConfig;
+        _pairFactory = factory;
+        _mainConfig = config;
         _serverConfigs = serverConfigs;
-        _contextMenu = contextMenu;
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearPairs());
         Mediator.Subscribe<CutsceneEndMessage>(this, (_) => ReapplyPairData());
 
         _directPairsInternal = DirectPairsLazy();
-        _contextMenu.OnMenuOpened += OnOpenPairContextMenu;
+        Svc.ContextMenu.OnMenuOpened += OnOpenPairContextMenu;
     }
 
     private void OnOpenPairContextMenu(IMenuOpenedArgs args)
@@ -66,7 +62,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        _contextMenu.OnMenuOpened -= OnOpenPairContextMenu;
+        Svc.ContextMenu.OnMenuOpened -= OnOpenPairContextMenu;
         // dispose of the pairs
         DisposePairs();
     }

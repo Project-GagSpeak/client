@@ -16,15 +16,13 @@ namespace GagSpeak.Services;
 public sealed class ArousalService : IDisposable
 {
     private readonly ILogger<ArousalService> _logger;
-    private readonly MainConfig _config;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
 
-    public ArousalService(ILogger<ArousalService> logger, MainConfig config)
+    public ArousalService(ILogger<ArousalService> logger)
     {
         _logger = logger;
-        _config = config;
         UpdateFinalCache();
         _timerTask = Task.Run(TimerTask, _timerCts.Token);
     }

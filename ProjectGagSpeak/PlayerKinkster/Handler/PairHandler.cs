@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.CkCommons;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters.Factories;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
@@ -105,7 +106,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
             // if we are not zoning, or in a cutscene, but this player is being disposed, they are leaving a zone.
             // Because this is happening, we need to make sure that we revert their IPC data and toggle their address & visibility.
-            if (!_frameworkUtil.Zoning && !string.IsNullOrEmpty(name))
+            if (!PlayerData.IsZoning && !string.IsNullOrEmpty(name))
             {
                 Logger.LogTrace("[" + applicationId + "] Restoring State for [" + name + "] (" + OnlineUser + ")", LoggerType.PairHandlers);
                 // They are visible but being disposed, so revert their applied customization data

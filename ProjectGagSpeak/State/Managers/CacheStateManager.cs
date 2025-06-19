@@ -54,12 +54,17 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _arousalHandler = arousals;
 
         // Only clear on logout, not disconnect, we want to keep people helpless~
-        Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearCaches());
+        Svc.ClientState.Logout += (_, _) => OnLogout();
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+        ClearCaches();
+    }
+
+    private void OnLogout()
+    {
         ClearCaches();
     }
 

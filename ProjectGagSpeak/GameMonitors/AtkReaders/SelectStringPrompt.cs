@@ -1,20 +1,16 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.PlayerClient;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
-
+using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
 
 namespace GagSpeak.Game.Readers;
 public class SelectStringPrompt : SetupSelectListPrompt
 {
-    public SelectStringPrompt(ILogger<SelectStringPrompt> logger, IAddonLifecycle addonLifecycle, 
-        ITargetManager targets) : base(logger, addonLifecycle, targets) 
+    public SelectStringPrompt(ILogger<SelectStringPrompt> logger) : base(logger) 
     { }
 
     public override void Enable()
@@ -22,8 +18,8 @@ public class SelectStringPrompt : SetupSelectListPrompt
         if(!Enabled)
         {
             base.Enable();
-            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", AddonSetup);
-            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", SetEntry);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", AddonSetup);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", SetEntry);
         }
     }
 
@@ -53,8 +49,8 @@ public class SelectStringPrompt : SetupSelectListPrompt
         if(Enabled)
         {
             base.Disable();
-            _addonLifecycle.UnregisterListener(AddonSetup);
-            _addonLifecycle.UnregisterListener(SetEntry);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
+            Svc.AddonLifecycle.UnregisterListener(SetEntry);
             _logger.LogInformation("Disabling SelectString!", LoggerType.HardcorePrompt);
         }
     }
@@ -65,8 +61,7 @@ public class SelectStringPrompt : SetupSelectListPrompt
         // Fetch the addon
         var addon = (AddonSelectString*)addonInfo.Base();
         // store node name
-        var target = _targets.Target;
-        var targetName = target != null ? target.Name.ExtractText() : string.Empty;
+        var targetName = Svc.Targets.Target?.Name.ExtractText() ?? string.Empty;
         MainConfig.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
         // Store the node label,

@@ -42,10 +42,10 @@ public class FavoritesManager : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Favorites;
-        GagSpeak.StaticLog.Warning("Loading in Favorites Config for file: " + file);
+        Svc.Logger.Warning("Loading in Favorites Config for file: " + file);
         if (!File.Exists(file))
         {
-            GagSpeak.StaticLog.Warning("No Favorites Config file found at {0}", file);
+            Svc.Logger.Warning("No Favorites Config file found at {0}", file);
             _saver.Save(this);
             return;
         }
@@ -68,7 +68,7 @@ public class FavoritesManager : IHybridSavable
         }
         catch (Exception e)
         {
-            GagSpeak.StaticLog.Error(e, "Failed to load favorites.");
+            Svc.Logger.Error(e, "Failed to load favorites.");
         }
     }
 
@@ -88,7 +88,7 @@ public class FavoritesManager : IHybridSavable
 
         if (res)
         {
-            GagSpeak.StaticLog.Information("Added {0} to favorites.", type);
+            Svc.Logger.Information("Added {0} to favorites.", type);
             _saver.Save(this);
         }
 

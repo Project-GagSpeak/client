@@ -1,9 +1,8 @@
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Plugin;
 using GagSpeak.PlayerClient;
-using GagSpeak.State.Models;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using Glamourer.Api.Enums;
 using Glamourer.Api.Helpers;
@@ -16,8 +15,6 @@ namespace GagSpeak.Interop;
 public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller, IGlamourer
 {
     /* ------------- Class Attributes ------------ */
-    private readonly KinksterRequests _clientData;
-    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtils;
 
     private bool _shownGlamourerUnavailable = false;
@@ -31,19 +28,16 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     private readonly SetItem SetItem;           // Update a single Item on the Client. (Also restores items on slots no longer enabled for modification)
     private readonly SetMetaState SetMetaState; // Changes the metadata state(s) on the Client.
 
-    public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator,
-        KinksterRequests clientData, PlayerData clientMonitor, OnFrameworkService frameworkUtils,
-        IDalamudPluginInterface pi) : base(logger, mediator)
+    public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils) 
+        : base(logger, mediator)
     {
-        _clientData = clientData;
         _frameworkUtils = frameworkUtils;
-        _player = clientMonitor;
 
-        ApiVersion = new ApiVersion(pi);
-        GetState = new GetState(pi);
-        ApplyState = new ApplyState(pi);
-        SetItem = new SetItem(pi);
-        SetMetaState = new SetMetaState(pi);
+        ApiVersion = new ApiVersion(Svc.PluginInterface);
+        GetState = new GetState(Svc.PluginInterface);
+        ApplyState = new ApplyState(Svc.PluginInterface);
+        SetItem = new SetItem(Svc.PluginInterface);
+        SetMetaState = new SetMetaState(Svc.PluginInterface);
 
         // check API status.
         CheckAPI();
@@ -54,7 +48,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     #region Generic IPC Setup
     public void CheckAPI()
     {
-        bool apiAvailable = false; // assume false at first
+        var apiAvailable = false; // assume false at first
         try
         {
             var version = ApiVersion.Invoke();
@@ -90,7 +84,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
-        if (!APIAvailable || _player.IsZoning) return;
+        if (!APIAvailable || PlayerData.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, 1337)).ConfigureAwait(true);
@@ -104,7 +98,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
     public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
-        if (!APIAvailable || _player.IsZoning) return;
+        if (!APIAvailable || PlayerData.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, 1337)).ConfigureAwait(false);
@@ -118,7 +112,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     public async Task SetCustomize(JToken customizations, JToken parameters)
     {
         // if the glamourerApi is not active, then return an empty string for the customization
-        if (!APIAvailable || _player.IsZoning) return;
+        if (!APIAvailable || PlayerData.IsZoning) return;
         try
         {
             await _frameworkUtils.RunOnFrameworkThread(() =>

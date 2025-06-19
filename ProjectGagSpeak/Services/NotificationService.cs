@@ -23,21 +23,15 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly MainConfig _mainConfig;
     private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
-    private readonly INotificationManager _notifications;
-    private readonly IChatGui _chat;
-
     public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, GlobalPermissions globals, GagRestrictionManager gags,
-        IChatGui chat, INotificationManager notifications) : base(logger, mediator)
+        MainConfig mainConfig, GlobalPermissions globals, GagRestrictionManager gags)
+        : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _globals = globals;
         _gags = gags;
-        _chat = chat;
-        _notifications = notifications;
 
         Mediator.Subscribe<NotificationMessage>(this, ShowNotification);
-        Mediator.Subscribe<NotifyChatMessage>(this, ShowChat);
 
         // notify about live chat garbler on zone switch.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
@@ -51,34 +45,34 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
     }
 
     public void ShowCustomNotification(Notification customNotif)
-        => _notifications.AddNotification(customNotif);
+        => Svc.Notifications.AddNotification(customNotif);
 
     private void PrintErrorChat(string? message)
     {
         var se = new SeStringBuilder().AddText("[Gagspeak] Error: " + message);
-        _chat.PrintError(se.BuiltString);
+        Svc.Chat.PrintError(se.BuiltString);
     }
 
     private void PrintInfoChat(string? message)
     {
         var se = new SeStringBuilder().AddText("[Gagspeak] Info: ").AddItalics(message ?? string.Empty);
-        _chat.Print(se.BuiltString);
+        Svc.Chat.Print(se.BuiltString);
     }
 
     private void PrintWarnChat(string? message)
     {
         var se = new SeStringBuilder().AddText("[Gagspeak] ").AddUiForeground("Warning: " + (message ?? string.Empty), 31).AddUiForegroundOff();
-        _chat.Print(se.BuiltString);
+        Svc.Chat.Print(se.BuiltString);
     }
 
     public void PrintCustomChat(SeString builtMessage)
     {
-       _chat.Print(builtMessage);
+       Svc.Chat.Print(builtMessage);
     }
 
     public void PrintCustomErrorChat(SeString builtMessage)
     {
-        _chat.PrintError(builtMessage);
+        Svc.Chat.PrintError(builtMessage);
     }
 
     private void ShowChat(NotificationMessage msg)
@@ -97,23 +91,6 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
 
             case NotificationType.Error:
                 PrintErrorChat(msg.Message);
-                break;
-        }
-    }
-
-    private void ShowChat(NotifyChatMessage msg)
-    {
-        switch (msg.Type)
-        {
-            case NotificationType.Info:
-            case NotificationType.Success:
-            case NotificationType.None:
-            case NotificationType.Warning:
-                PrintCustomChat(msg.Message);
-                break;
-
-            case NotificationType.Error:
-                PrintCustomErrorChat(msg.Message);
                 break;
         }
     }
@@ -164,7 +141,7 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
 
     private void ShowToast(NotificationMessage msg)
     {
-        _notifications.AddNotification(new Notification()
+        Svc.Notifications.AddNotification(new Notification()
         {
             Content = msg.Message ?? string.Empty,
             Title = msg.Title,

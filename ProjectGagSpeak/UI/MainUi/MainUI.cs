@@ -32,7 +32,6 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly GlobalChatTab _globalChat;
     private readonly AccountTab _account;
     private readonly TutorialService _guides;
-    private readonly IDalamudPluginInterface _pi;
     private float _windowContentWidth;
     private bool _addingNewUser = false;
     public string _pairToAdd = string.Empty; // the pair to add
@@ -42,25 +41,24 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
-        MainConfig config, PairManager pairManager, ServerConfigManager serverConfigs,
-        HomepageTab homepage, WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub,
-        GlobalChatTab globalChat, AccountTab account, MainMenuTabs tabMenu, TutorialService tutorialService,
-        IDalamudPluginInterface pi) : base(logger, mediator, "###GagSpeakMainUI")
+        MainConfig config, PairManager pairs, ServerConfigManager serverConfigs,
+        HomepageTab home, WhitelistTab whitelist, PatternHubTab patternHub, 
+        MoodleHubTab moodlesHub, GlobalChatTab globalChat, AccountTab account, 
+        MainMenuTabs tabMenu, TutorialService tutorialService) 
+        : base(logger, mediator, "###GagSpeakMainUI")
     {
         _hub = hub;
         _configService = config;
-        _pairManager = pairManager;
+        _pairManager = pairs;
         _serverConfigs = serverConfigs;
-        _homepage = homepage;
+        _homepage = home;
         _whitelist = whitelist;
         _patternHub = patternHub;
         _moodlesHub = moodlesHub;
         _globalChat = globalChat;
         _account = account;
-        _guides = tutorialService;
-        _pi = pi;
-
         _tabMenu = tabMenu;
+        _guides = tutorialService;
 
         AllowPinning = false;
         AllowClickthrough = false;

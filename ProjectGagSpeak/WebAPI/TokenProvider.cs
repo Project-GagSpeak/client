@@ -13,7 +13,6 @@ namespace GagSpeak.WebAPI;
 public sealed class TokenProvider : DisposableMediatorSubscriberBase
 {
     private readonly HttpClient _httpClient;
-    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtil;
     private readonly ServerConfigManager _serverManager;
     private readonly ConcurrentDictionary<JwtIdentifier, string> _tokenCache;
@@ -21,27 +20,17 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     private JwtIdentifier? _lastJwtIdentifier;
 
     public TokenProvider(ILogger<TokenProvider> logger, GagspeakMediator mediator,
-        PlayerData clientMonitor, ServerConfigManager serverManager,
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        ServerConfigManager serverManager, OnFrameworkService frameworkUtils) 
+        : base(logger, mediator)
     {
-        _player = clientMonitor;
         _serverManager = serverManager;
         _frameworkUtil = frameworkUtils;
         _httpClient = new HttpClient();
         _tokenCache = new ConcurrentDictionary<JwtIdentifier, string>();
         var ver = Assembly.GetExecutingAssembly().GetName().Version;
 
-        // subscribe to the login and logout messages, making sure to clear the token cache on logout and login
-        Mediator.Subscribe<DalamudLogoutMessage>(this, (_) =>
-        {
-            _lastJwtIdentifier = null;
-            _tokenCache.Clear();
-        });
-        Mediator.Subscribe<DalamudLoginMessage>(this, (_) =>
-        {
-            _lastJwtIdentifier = null;
-            _tokenCache.Clear();
-        });
+        Svc.ClientState.Login += OnLogin;
+        Svc.ClientState.Logout += OnLogout;
         // append a user agent to the http clients request headers to identify the client
         _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("GagSpeak", ver!.Major + "." + ver!.Minor + "." + ver!.Build + "." + ver!.Revision));
     }
@@ -50,7 +39,21 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+        Svc.ClientState.Login -= OnLogin;
+        Svc.ClientState.Logout -= OnLogout;
         _httpClient.Dispose();
+    }
+
+    private void OnLogin()
+    {
+        _lastJwtIdentifier = null;
+        _tokenCache.Clear();
+    }
+
+    private void OnLogout(int type, int code)
+    {
+        _lastJwtIdentifier = null;
+        _tokenCache.Clear();
     }
 
     /// <summary> Prints the tokens in the token cache to the logger </summary>
@@ -88,7 +91,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // If for some god awful reason we have horrible timing and our character happens to be zoning during this 6 hourly interval, wait.
         try
         {
-            while (!await _player.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+            while (!PlayerData.AvailableThreadSafe && !token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
@@ -245,7 +248,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     /// <returns>the JWT identifier object for the token</returns>
     private JwtIdentifier? GetIdentifier()
     {
-        var tempLocalContentID = _player.ContentIdAsync().GetAwaiter().GetResult();
+        var tempLocalContentID = PlayerData.ContendIdInstanced;
         try
         {
             var secretKey = string.Empty;
@@ -327,7 +330,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // await for the player to be present to get the JWT token
         try
         {
-            while (!await _player.IsPresentAsync().ConfigureAwait(false) && !linkedCTS.Token.IsCancellationRequested)
+            while (!PlayerData.AvailableThreadSafe && !linkedCTS.Token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), linkedCTS.Token).ConfigureAwait(false);

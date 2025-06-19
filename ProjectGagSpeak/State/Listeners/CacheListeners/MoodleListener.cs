@@ -8,21 +8,15 @@ namespace GagSpeak.State.Listeners;
 
 public class MoodleListener : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerData _clientData;
     private readonly MoodleCache _cache;
     private readonly IpcCallerMoodles _ipc;
 
     private bool _isZoning = false;
 
-    public MoodleListener(
-        ILogger<MoodleListener> logger,
-        GagspeakMediator mediator,
-        PlayerData client,
-        MoodleCache cache,
-        IpcCallerMoodles ipc)
+    public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
+        MoodleCache cache, IpcCallerMoodles ipc)
         : base(logger, mediator)
     {
-        _clientData = client;
         _cache = cache;
         _ipc = ipc;
 
@@ -67,10 +61,10 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     /// <remarks> Will also reapply any restricted Moodles gone missing! </remarks>
     public void OnStatusManagerModified(IPlayerCharacter chara)
     {
-        if (_isZoning || !_clientData.IsPresent)
+        if (_isZoning || !PlayerData.Available)
             return;
 
-        if (chara.Address != _clientData.Address)
+        if (chara.Address != PlayerData.ObjectAddress)
             return;
 
         // Check and Update the clients Moodles. Reapply if the moodle removed was restricted.
@@ -80,7 +74,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     /// <summary> Fired whenever we change any setting in any of our Moodles Statuses via the Moodles UI </summary>
     public async Task OnStatusModified(Guid id)
     {
-        if (_isZoning || !_clientData.IsPresent)
+        if (_isZoning || !PlayerData.Available)
             return;
 
         if (MoodleCache.IpcData.Statuses.ContainsKey(id))
@@ -95,7 +89,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     /// <summary> Fired whenever we change any setting in any of our Moodles Presets via the Moodles UI </summary>
     public async Task OnPresetModified(Guid id)
     {
-        if (_isZoning || !_clientData.IsPresent)
+        if (_isZoning || !PlayerData.Available)
             return;
 
         if (MoodleCache.IpcData.Presets.ContainsKey(id))

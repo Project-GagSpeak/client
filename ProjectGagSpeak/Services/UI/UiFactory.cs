@@ -22,7 +22,6 @@ public class UiFactory
     private readonly ImageImportTool _imageImport;
 
     // Managers
-    private readonly PlayerData _player;
     private readonly PairManager _pairManager;
     private readonly GlobalPermissions _globals;
 
@@ -44,7 +43,6 @@ public class UiFactory
         MoodleIcons iconDisplayer,
         ImageImportTool imageImport,
         // Managers
-        PlayerData clientMonitor,
         PairManager pairManager,
         GlobalPermissions globals,
         // Services
@@ -63,7 +61,6 @@ public class UiFactory
         _iconDisplayer = iconDisplayer;
         _imageImport = imageImport;
         
-        _player = clientMonitor;
         _pairManager = pairManager;
         _globals = globals;
         
@@ -92,7 +89,7 @@ public class UiFactory
     public PairStickyUI CreateStickyPairPerms(Pair pair, StickyWindowType drawType)
     {
         return new PairStickyUI(_loggerFactory.CreateLogger<PairStickyUI>(), _mediator, pair, drawType,
-            _hub, _globals, _presetService, _iconDisplayer, _pairManager, _player, _shockies);
+            _hub, _globals, _presetService, _iconDisplayer, _pairManager, _shockies);
     }
 
     public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)

@@ -17,10 +17,10 @@ public sealed class BonusItemCombo : CkFilterComboCache<EquipItem>
     private float _innerWidth;
     public PrimaryId CustomSetId { get; private set; }
     public Variant CustomVariant { get; private set; }
-    public BonusItemCombo(ItemService items, IDataManager gameData, BonusItemFlag slot, ILogger log)
+    public BonusItemCombo(ItemService items, BonusItemFlag slot, ILogger log)
         : base(() => GetItems(items, slot), log)
     {
-        Label = GetLabel(gameData, slot);
+        Label = GetLabel(slot);
         _currentItem = 0;
         SearchByParts = true;
     }
@@ -70,9 +70,9 @@ public sealed class BonusItemCombo : CkFilterComboCache<EquipItem>
     protected override string ToString(EquipItem obj)
         => obj.Name;
 
-    private static string GetLabel(IDataManager gameData, BonusItemFlag slot)
+    private static string GetLabel(BonusItemFlag slot)
     {
-        var sheet = gameData.GetExcelSheet<Addon>()!;
+        var sheet = Svc.Data.GetExcelSheet<Addon>()!;
         return slot switch
         {
             BonusItemFlag.Glasses => sheet.GetRow(16050).Text.ToString() ?? "Facewear",

@@ -21,14 +21,8 @@ public class GlamourHandler
     private SemaphoreSlim _applySlim = new SemaphoreSlim(1, 1);
     private IpcBlockReason _ipcBlocker = IpcBlockReason.None;
 
-    public GlamourHandler(
-        ILogger<GlamourHandler> logger,
-        IpcCallerGlamourer ipc,
-        GlamourCache cache,
-        PlayerData clientMonitor,
-        OnFrameworkService frameworkUtils,
-        IDalamudPluginInterface pi,
-        IGameInteropProvider gip)
+    public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc,
+        GlamourCache cache, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _ipc = ipc;

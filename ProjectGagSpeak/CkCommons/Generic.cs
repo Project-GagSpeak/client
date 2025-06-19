@@ -12,7 +12,7 @@ public static class Generic
         }
         catch (Exception ex)
         {
-            GagSpeak.StaticLog.Error("Error on executing safely:" + ex);
+            Svc.Logger.Error("Error on executing safely:" + ex);
         }
     }
 

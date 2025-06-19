@@ -2,6 +2,7 @@ using Dalamud.Plugin;
 using GagSpeak.CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.MufflerCore.Handler;
 
@@ -13,17 +14,15 @@ public class Ipa_EN_FR_JP_SP_Handler
 {
     private readonly ILogger<Ipa_EN_FR_JP_SP_Handler> _logger;
     private readonly MainConfig _config; // The GagSpeak configuration
-    private readonly IDalamudPluginInterface _pi; // file accessor
-    private Dictionary<string, string> obj;             // Dictionary to store the conversion rules in JSON
+    private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     public string uniqueSymbolsString = "";
 
     /* FOR DEBUGGING: If you ever need to aquire new unique symbols please reference the outdated private gagspeak repo. */
 
-    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
+    public Ipa_EN_FR_JP_SP_Handler(ILogger<Ipa_EN_FR_JP_SP_Handler> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _pi = pi;
         LoadConversionRules();
     }
 
@@ -32,7 +31,7 @@ public class Ipa_EN_FR_JP_SP_Handler
         var data_file = GetDataFilePath();
         try
         {
-            var jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
+            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);

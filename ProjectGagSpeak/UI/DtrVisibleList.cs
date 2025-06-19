@@ -1,7 +1,5 @@
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
@@ -9,17 +7,16 @@ using ImGuiNET;
 namespace GagSpeak.CkCommons.Gui.Components;
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
-    private readonly DtrBarService _dtrBarService;
+    private readonly DtrBarService _service;
     private bool ThemePushed = false;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
         DtrBarService dtrService) : base(logger, mediator, "##DtrLinker")
     {
-        _dtrBarService = dtrService;
+        _service = dtrService;
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
     }
 
-    private List<IPlayerCharacter> NonGagspeakUsers => _dtrBarService._visiblePlayers;
     private int SelectedIndex = -1;
     private Vector2 LastRecordedPos = Vector2.Zero;
     public override void OnOpen() => LastRecordedPos = ImGui.GetMousePos();
@@ -32,7 +29,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         Flags |= WFlags.NoMove;
 
-        var cnt = NonGagspeakUsers.Count > 10 ? 10+2 : NonGagspeakUsers.Count+2;
+        var cnt = _service.VisiblePlayers.Count > 10 ? 10+2 : _service.VisiblePlayers.Count+2;
         var size = new Vector2(200f, (ImGui.GetTextLineHeightWithSpacing() * cnt) - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y + ImGuiHelpers.GlobalScale);
 
         ImGui.SetNextWindowSize(size);
@@ -50,21 +47,21 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // draw a list of tree nodes, for each player. When they are selected, display the map coordinates of them.
-        var displayedPlayers = NonGagspeakUsers.Take(10).ToList();
-        var remainingCount = NonGagspeakUsers.Count - displayedPlayers.Count;
+        var displayedPlayers = _service.VisiblePlayers.Take(10).ToList();
+        var remainingCount = _service.VisiblePlayers.Count - displayedPlayers.Count;
 
         for(var i=0; i<displayedPlayers.Count; i++)
         {
-            var text = displayedPlayers[i].GetName() + "  " + displayedPlayers[i].HomeWorldName();
+            var text = displayedPlayers[i].Name.TextValue + "  " + displayedPlayers[i].HomeWorld.Value.Name.ToString();
             if(ImGui.Selectable(text, SelectedIndex == i))
             {
                 SelectedIndex = i;
-                _dtrBarService.LocatePlayer(displayedPlayers[i]);
+                _service.LocatePlayer(displayedPlayers[i]);
             }
         }
         if (remainingCount > 0)
         {
-            CkGui.ColorTextCentered("And " + remainingCount + " more...", ImGuiColors.ParsedPink);
+            CkGui.ColorTextCentered($"And {remainingCount} more...", ImGuiColors.ParsedPink);
         }
 
         // close window if its not focused.

@@ -34,9 +34,6 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     private const uint DESCRIPTION_NODE_ID = 19;
 
     private readonly TraitsCache _cache;
-    private readonly PlayerData _player;
-    private readonly IAddonLifecycle _lifecycle;
-    private readonly IGameGui _gameGui;
 
     /// <summary> The currently banned actions determined by the <see cref="_cache"/>'s _finalTrait's </summary>
     private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
@@ -54,22 +51,13 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     
     private Traits _sources = Traits.None;
 
-    public unsafe HotbarActionController(
-        ILogger<HotbarActionController> logger,
-        GagspeakMediator mediator,
-        TraitsCache cache,
-        PlayerData player,
-        IAddonLifecycle afc,
-        IGameGui gg)
+    public unsafe HotbarActionController(ILogger<HotbarActionController> logger, GagspeakMediator mediator, TraitsCache cache)
         : base(logger, mediator)
     {
         _cache = cache;
-        _player = player;
-        _lifecycle = afc;
-        _gameGui = gg;
 
-        afc.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon));
-        Mediator.Subscribe<JobChangeMessage>(this, msg => OnJobChange(msg.jobId));
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon));
+        Svc.ClientState.ClassJobChanged += OnJobChange;
     }
 
     /// <summary> The currently active traits that are blocking your actions. </summary>
@@ -78,7 +66,8 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        _lifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail");
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail");
+        Svc.ClientState.ClassJobChanged -= OnJobChange;
         // just incase.
         RestoreSavedSlots();
     }
@@ -172,7 +161,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                hotbarModule->LoadSavedHotbar(_player.JobId, (uint)i);
+                hotbarModule->LoadSavedHotbar(PlayerData.JobId, (uint)i);
         }
     }
 
@@ -243,7 +232,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     private unsafe void OnActionTooltip(AtkUnitBase* addon)
     {
         // Ensure tooltip exists.
-        if (addon is null || _gameGui.HoveredAction is not { } hoveredAct)
+        if (addon is null || Svc.GameGui.HoveredAction is not { } hoveredAct)
             return;
 
         // Must be an action tooltip.

@@ -16,35 +16,25 @@ namespace GagSpeak.State.Handlers;
 public class HardcoreHandler
 {
     private readonly ILogger<HardcoreHandler> _logger;
-    private readonly PlayerData _player;
     private readonly GlobalPermissions _globals;
     private readonly AutoPromptController _prompts;
     private readonly KeystateController _keyStates;
     private readonly MovementController _movement;
     private readonly ChatboxController _chatbox;
-    private readonly ITargetManager _target;
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
 
-    public HardcoreHandler(
-        ILogger<HardcoreHandler> logger,
-        PlayerData player,
-        GlobalPermissions globals,
-        AutoPromptController prompts,
-        KeystateController keyStates,
-        MovementController movement,
-        ChatboxController chatbox,
-        ITargetManager tm)
+    public HardcoreHandler(ILogger<HardcoreHandler> logger, GlobalPermissions globals,
+        AutoPromptController prompts, KeystateController keyStates,
+        MovementController movement, ChatboxController chatbox)
     {
         _logger = logger;
-        _player = player;
         _globals = globals;
         _prompts = prompts;
         _keyStates = keyStates;
         _movement = movement;
         _chatbox = chatbox;
-        _target = tm;
     }
 
     public void EnableForcedFollow(Pair? pair = null)
@@ -69,7 +59,7 @@ public class HardcoreHandler
         // Identify the player to target, and begin following them.
         if (pair.VisiblePairGameObject?.IsTargetable ?? false)
         {
-            _target.Target = pair.VisiblePairGameObject;
+            Svc.Targets.Target = pair.VisiblePairGameObject;
             ChatService.SendCommand("follow <t>");
             _logger.LogDebug("Enabled forced follow for pair.", LoggerType.HardcoreMovement);
         }
@@ -101,7 +91,7 @@ public class HardcoreHandler
         _keyStates.AddControlSources(PlayerControlSource.ForcedEmote);
 
         // get our current emoteID.
-        var currentEmote = EmoteService.CurrentEmoteId(_player.Address);
+        var currentEmote = EmoteService.CurrentEmoteId(PlayerData.ObjectAddress);
         var expectedEmote = _globals.ForcedEmoteState;
 
         // Handle forcing the state based on what is expected.
@@ -186,13 +176,13 @@ public class HardcoreHandler
         }
 
         // get our cycle pose.
-        var curCyclePose = EmoteService.CurrentCyclePose(_player.Address);
+        var curCyclePose = EmoteService.CurrentCyclePose(PlayerData.ObjectAddress);
         // If it doesnt match, force into that pose.
         if (curCyclePose != expected.CyclePoseByte)
         {
             _logger.LogDebug($"Your CyclePose ({curCyclePose}) isnt the expected ({expected.CyclePoseByte})");
             if (!EmoteService.IsCyclePoseTaskRunning)
-                EmoteService.ForceCyclePose(_player.Address, expected.CyclePoseByte);
+                EmoteService.ForceCyclePose(PlayerData.ObjectAddress, expected.CyclePoseByte);
         }
     }
 

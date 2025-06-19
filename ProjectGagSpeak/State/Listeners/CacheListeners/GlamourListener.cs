@@ -14,24 +14,16 @@ public class GlamourListener : IDisposable
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
     private readonly GlamourHandler _handler;
-    private readonly PlayerData _player;
-
-    public GlamourListener(
-        ILogger<GlamourListener> logger,
-        IpcCallerGlamourer ipc,
-        GlamourCache cache,
-        GlamourHandler handler,
-        PlayerData player,
-        IDalamudPluginInterface pi)
+    public GlamourListener(ILogger<GlamourListener> logger, IpcCallerGlamourer ipc,
+        GlamourCache cache, GlamourHandler handler)
     {
         _logger = logger;
         _ipc = ipc;
         _cache = cache;
         _handler = handler;
-        _player = player;
 
-        _ipc.StateWasChanged = StateChangedWithType.Subscriber(pi, OnStateChanged);
-        _ipc.StateWasFinalized = StateFinalized.Subscriber(pi, OnStateFinalized);
+        _ipc.StateWasChanged = StateChangedWithType.Subscriber(Svc.PluginInterface, OnStateChanged);
+        _ipc.StateWasFinalized = StateFinalized.Subscriber(Svc.PluginInterface, OnStateFinalized);
         _ipc.StateWasChanged.Enable();
         _ipc.StateWasFinalized.Enable();
     }
@@ -52,7 +44,7 @@ public class GlamourListener : IDisposable
     /// <remarks> This is primarily used to cache the state of the Client. Discarded for other players. </remarks>
     private async void OnStateChanged(nint address, StateChangeType changeType)
     {
-        if (address != _player.Address)
+        if (address != PlayerData.ObjectAddress)
             return;
 
         if (changeType is not (StateChangeType.Equip or StateChangeType.Stains or StateChangeType.Other))
@@ -93,7 +85,7 @@ public class GlamourListener : IDisposable
     /// <remarks> This is primarily used to cache the state of the player after a glamour operation has completed. </remarks>
     private async void OnStateFinalized(nint address, StateFinalizationType finalizationType)
     {
-        if (address != _player.Address)
+        if (address != PlayerData.ObjectAddress)
             return;
 
         // if the finalization type was a gearset finalized, remove the gearset from the ipc blocker filter.

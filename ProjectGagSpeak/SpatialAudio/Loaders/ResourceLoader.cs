@@ -3,6 +3,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.Services.Mediator;
 using System.Runtime.InteropServices;
 using GagSpeak.PlayerClient;
+using GagSpeak.GameInternals;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 
@@ -24,73 +25,45 @@ public unsafe partial class ResourceLoader : IDisposable
     private readonly MainConfig _mainConfig;
     private readonly AvfxManager _avfxManager;
     private readonly ScdManager _scdManager;
-    private readonly IDataManager _dataManager;
 
     public static readonly Dictionary<string, string> CustomPathBackups = []; // Map of lowercase custom game paths to local paths
     public bool HooksEnabled = false;
 
-    // https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Game/Object/GameObject.cs
     public const int GameResourceOffset = 0x38;
 
-    private static class Signatures
-    {
-        public const string ReadFileSig = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 63 42";
-        public const string ReadSqpackSig = "40 56 41 56 48 83 EC ?? 0F BE 02 ";
-        public const string GetResourceSyncSig = "E8 ?? ?? ?? ?? 48 8B D8 8B C7 ";
-        public const string GetResourceAsyncSig = "E8 ?? ?? ?? 00 48 8B D8 EB ?? F0 FF 83 ?? ?? 00 00";
-
-        internal const string StaticVfxCreateSig = "E8 ?? ?? ?? ?? F3 0F 10 35 ?? ?? ?? ?? 48 89 43 08";
-        internal const string StaticVfxRunSig = "E8 ?? ?? ?? ?? 8B 4B 7C 85 C9";
-        internal const string StaticVfxRemoveSig = "40 53 48 83 EC 20 48 8B D9 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 28 33 D2 E8 ?? ?? ?? ?? 48 8B 8B ?? ?? ?? ?? 48 85 C9";
-
-        internal const string ActorVfxCreateSig = "40 53 55 56 57 48 81 EC ?? ?? ?? ?? 0F 29 B4 24 ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 AC 24 ?? ?? ?? ?? 0F 28 F3 49 8B F8";
-        internal const string ActorVfxRemoveSig = "0F 11 48 10 48 8D 05"; // the weird one
-
-        internal const string CallTriggerSig = "E8 ?? ?? ?? ?? 0F B7 43 56";
-
-        internal const string PlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2"; // FunctionPointer to play sound to system.
-        internal const string InitSoundSig = "E8 ?? ?? ?? ?? 8B 5D 77"; // Signature to sound initialization
-    }
-
-    public ResourceLoader(ILogger<ResourceLoader> logger,
-        GagspeakMediator mediator, MainConfig mainConfig, 
-        AvfxManager avfxManager, ScdManager scdManager, 
-        IDataManager dataManager, ISigScanner sigScanner, 
-        IGameInteropProvider interopProvider)
+    public ResourceLoader(ILogger<ResourceLoader> logger, GagspeakMediator mediator,
+        MainConfig mainConfig, AvfxManager avfxManager, ScdManager scdManager)
     {
         _logger = logger;
         _mediator = mediator;
         _mainConfig = mainConfig;
         _avfxManager = avfxManager;
         _scdManager = scdManager;
-        _dataManager = dataManager;
-
-        // init the attributes
-        interopProvider.InitializeFromAttributes(this);
-
+        
+        Svc.Hook.InitializeFromAttributes(this);
 
         // declare the addresses
-        var staticVfxCreateAddress = sigScanner.ScanText(Signatures.StaticVfxCreateSig);
-        var staticVfxRemoveAddress = sigScanner.ScanText(Signatures.StaticVfxRemoveSig);
-        var actorVfxCreateAddress = sigScanner.ScanText(Signatures.ActorVfxCreateSig);
-        var actorVfxRemoveAddresTemp = sigScanner.ScanText(Signatures.ActorVfxRemoveSig) + 7;
+        var staticVfxCreateAddress = Svc.SigScanner.ScanText(Signatures.StaticVfxCreateSig);
+        var staticVfxRemoveAddress = Svc.SigScanner.ScanText(Signatures.StaticVfxRemoveSig);
+        var actorVfxCreateAddress = Svc.SigScanner.ScanText(Signatures.ActorVfxCreateSig);
+        var actorVfxRemoveAddresTemp = Svc.SigScanner.ScanText(Signatures.ActorVfxRemoveSig) + 7;
         var actorVfxRemoveAddress = Marshal.ReadIntPtr(actorVfxRemoveAddresTemp + Marshal.ReadInt32(actorVfxRemoveAddresTemp) + 4);
 
-        ReadSqpackHook = interopProvider.HookFromSignature<ReadSqpackPrototype>(Signatures.ReadSqpackSig, ReadSqpackDetour);
-        GetResourceSyncHook = interopProvider.HookFromSignature<GetResourceSyncPrototype>(Signatures.GetResourceSyncSig, GetResourceSyncDetour);
-        GetResourceAsyncHook = interopProvider.HookFromSignature<GetResourceAsyncPrototype>(Signatures.GetResourceAsyncSig, GetResourceAsyncDetour);
-        ReadFile = Marshal.GetDelegateForFunctionPointer<ReadFilePrototype>(sigScanner.ScanText(Signatures.ReadFileSig));
+        ReadSqpackHook = Svc.Hook.HookFromSignature<ReadSqpackPrototype>(Signatures.ReadSqpackSig, ReadSqpackDetour);
+        GetResourceSyncHook = Svc.Hook.HookFromSignature<GetResourceSyncPrototype>(Signatures.GetResourceSyncSig, GetResourceSyncDetour);
+        GetResourceAsyncHook = Svc.Hook.HookFromSignature<GetResourceAsyncPrototype>(Signatures.GetResourceAsyncSig, GetResourceAsyncDetour);
+        ReadFile = Marshal.GetDelegateForFunctionPointer<ReadFilePrototype>(Svc.SigScanner.ScanText(Signatures.ReadFileSig));
 
 
         // declare the hooks.
         ActorVfxCreate = Marshal.GetDelegateForFunctionPointer<ActorVfxCreateDelegate>(actorVfxCreateAddress);
         ActorVfxRemove = Marshal.GetDelegateForFunctionPointer<ActorVfxRemoveDelegate>(actorVfxRemoveAddress);
-        ActorVfxCreateHook = interopProvider.HookFromAddress<ActorVfxCreateDelegate>(actorVfxCreateAddress, ActorVfxNewDetour);
-        ActorVfxRemoveHook = interopProvider.HookFromAddress<ActorVfxRemoveDelegate>(actorVfxRemoveAddress, ActorVfxRemoveDetour);
-        VfxUseTriggerHook = interopProvider.HookFromSignature<VfxUseTriggerDelete>(Signatures.CallTriggerSig, VfxUseTriggerDetour);
+        ActorVfxCreateHook = Svc.Hook.HookFromAddress<ActorVfxCreateDelegate>(actorVfxCreateAddress, ActorVfxNewDetour);
+        ActorVfxRemoveHook = Svc.Hook.HookFromAddress<ActorVfxRemoveDelegate>(actorVfxRemoveAddress, ActorVfxRemoveDetour);
+        VfxUseTriggerHook = Svc.Hook.HookFromSignature<VfxUseTriggerDelete>(Signatures.CallTriggerSig, VfxUseTriggerDetour);
 
-        PlaySoundPath = Marshal.GetDelegateForFunctionPointer<PlaySoundDelegate>(sigScanner.ScanText(Signatures.PlaySoundSig));
-        InitSoundHook = interopProvider.HookFromSignature<InitSoundPrototype>(Signatures.InitSoundSig, InitSoundDetour);
+        PlaySoundPath = Marshal.GetDelegateForFunctionPointer<PlaySoundDelegate>(Svc.SigScanner.ScanText(Signatures.PlaySoundSig));
+        InitSoundHook = Svc.Hook.HookFromSignature<InitSoundPrototype>(Signatures.InitSoundSig, InitSoundDetour);
 
         logger.LogInformation("Resource Loader Hooks Initialized");
 

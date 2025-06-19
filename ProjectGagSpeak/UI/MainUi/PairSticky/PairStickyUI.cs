@@ -26,7 +26,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private readonly GlobalPermissions _globals;
     private readonly PresetLogicDrawer _presets;
     private readonly PairManager _pairs;
-    private readonly PlayerData _monitor;
     private readonly PiShockProvider _shockies;
 
     // Private variables for the sticky UI and its respective combos.
@@ -50,17 +49,9 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
     private DateTime _lastRefresh = DateTime.MinValue;
     private static string DisplayName;
 
-    public PairStickyUI(
-        ILogger<PairStickyUI> logger,
-        GagspeakMediator mediator, 
-        Pair pair,
-        StickyWindowType drawType,
-        MainHub hub,
-        GlobalPermissions globals,
-        PresetLogicDrawer presets,
-        MoodleIcons iconDisplayer,
-        PairManager pairs,
-        PlayerData monitor,
+    public PairStickyUI(ILogger<PairStickyUI> logger, GagspeakMediator mediator, Pair pair,
+        StickyWindowType drawType, MainHub hub, GlobalPermissions globals, 
+        PresetLogicDrawer presets, MoodleIcons iconDisplayer, PairManager pairs,
         PiShockProvider shocks)
         : base(logger, mediator, $"PairStickyUI-{pair.UserData.UID}")
     {
@@ -68,7 +59,6 @@ public partial class PairStickyUI : WindowMediatorSubscriberBase
         _hub = hub;
         _globals = globals;
         _pairs = pairs;
-        _monitor = monitor;
         _shockies = shocks;
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;

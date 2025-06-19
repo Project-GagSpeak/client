@@ -19,24 +19,19 @@ namespace GagSpeak.Services.Textures;
 public class MoodleIcons
 {
     private readonly ILogger<MoodleIcons> _logger;
-    private readonly IDataManager _data;
-    private readonly ITextureProvider _textures;
-
-    public MoodleIcons(ILogger<MoodleIcons> logger, IDataManager data, ITextureProvider textures)
+    public MoodleIcons(ILogger<MoodleIcons> logger)
     {
         _logger = logger;
-        _data = data;
-        _textures = textures;
     }
 
     public IDalamudTextureWrap? GetGameIconOrDefault(uint iconId)
-        => _textures.GetFromGameIcon(iconId).GetWrapOrDefault();
+        => Svc.Texture.GetFromGameIcon(iconId).GetWrapOrDefault();
 
     public IDalamudTextureWrap GetGameIconOrEmpty(uint iconId)
-        => _textures.GetFromGameIcon(iconId).GetWrapOrEmpty();
+        => Svc.Texture.GetFromGameIcon(iconId).GetWrapOrEmpty();
 
     public IDalamudTextureWrap? GetGameIconOrDefault(int iconId, int stacks)
-        => _textures.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault();
+        => Svc.Texture.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault();
 
 
     /// <summary>
@@ -44,7 +39,7 @@ public class MoodleIcons
     /// </summary>
     public void DrawMoodleIcon(int iconId, int stacks, Vector2 size)
     {
-        if (_textures.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault() is { } wrap)
+        if (Svc.Texture.GetFromGameIcon(new GameIconLookup((uint)(iconId + stacks - 1))).GetWrapOrDefault() is { } wrap)
             ImGui.Image(wrap.ImGuiHandle, size);
         else
             ImGui.Dummy(size);
@@ -224,7 +219,7 @@ public class MoodleIcons
                         r = (ushort)Enum.GetValues<XlDataUiColor>().FirstOrDefault(x => x.ToString().Equals(str[7..^1], StringComparison.OrdinalIgnoreCase));
 
                     // If the end result was WhitNormal, or the resulting value r is not present in the datasheet, throw a color error.
-                    if (_data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is { } validUICol && r != 0)
+                    if (Svc.Data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is { } validUICol && r != 0)
                     {
                         // convert the forground to imgui u32 format.
                         var col = BinaryPrimitives.ReverseEndianness(validUICol.Dark);
@@ -265,7 +260,7 @@ public class MoodleIcons
                         r = (ushort)Enum.GetValues<XlDataUiColor>().FirstOrDefault(x => x.ToString().Equals(str[6..^1], StringComparison.OrdinalIgnoreCase));
 
                     // If the end result was WhitNormal, or the resulting value r is not present in the datasheet, throw a color error.
-                    if (r == 0 || _data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is not { } validUIGlow)
+                    if (r == 0 || Svc.Data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is not { } validUIGlow)
                         throw new Exception("Error: Glow is out of range.");
 
                     // Add the glow modifier

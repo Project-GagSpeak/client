@@ -2,6 +2,7 @@ using Dalamud.Plugin;
 using GagSpeak.CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
 
 // This file has no current use, but is here for any potential future implementations of the IPA parser.
 
@@ -16,18 +17,16 @@ public class Ipa_Persian_Handler
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Persian_Handler> _logger; // Logger
     private readonly MainConfig _config; // The GagSpeak configuration
-    private readonly IDalamudPluginInterface _pi; // Plugin interface for file access
     private List<string> CombinationsEng = new List<string> { "ɒː", "e", "iː", "uː", "eː", "ej", "ɒːj", "aw", "t͡ʃ", "d͡ʒ", "ts" };
 
     // List to store unique phonetic symbols
     private HashSet<string> uniqueSymbols = new HashSet<string>();
     public string uniqueSymbolsString = "";
 
-    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
+    public Ipa_Persian_Handler(ILogger<Ipa_Persian_Handler> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _pi = pi;
         data_file = "MufflerCore\\StoredDictionaries\\fa.json"; // Set the path to the JSON file based on the language dialect
         LoadConversionRules();
     }
@@ -36,7 +35,7 @@ public class Ipa_Persian_Handler
     {
         try
         {
-            var jsonFilePath = Path.Combine(_pi.AssemblyLocation.Directory?.FullName!, data_file);
+            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);

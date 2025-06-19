@@ -89,9 +89,10 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
 
     public void UpdatePlayerCharacterRef()
     {
-        if(Address == IntPtr.Zero) return;
+        if(Address == IntPtr.Zero)
+            return;
         PlayerCharacterObjRef = _frameworkUtil.GetIPlayerCharacterFromObjectTableAsync(Address).GetAwaiter().GetResult();
-        NameWithWorld = PlayerCharacterObjRef?.NameWithWorld() ?? string.Empty;
+        NameWithWorld = PlayerCharacterObjRef?.GetNameWithWorld() ?? string.Empty;
     }
 
     /* Performs an operation on each framework update to check and update the owned objects we have. 

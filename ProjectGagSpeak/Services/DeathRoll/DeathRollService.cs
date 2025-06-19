@@ -13,21 +13,16 @@ public sealed class DeathRollService
 {
     private readonly ILogger<DeathRollService> _logger;
     private readonly KinksterRequests _globals;
-    private readonly PlayerData _player;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerActions;
-    private readonly IChatGui _chatGui;
 
     public DeathRollService(ILogger<DeathRollService> logger, KinksterRequests globals,
-        PlayerData clientMonitor, TriggerManager manager, TriggerActionService actions,
-        IChatGui chatGui)
+        TriggerManager manager, TriggerActionService actions)
     {
         _logger = logger;
         _globals = globals;
-        _player = clientMonitor;
         _triggers = manager;
         _triggerActions = actions;
-        _chatGui = chatGui;
     }
 
     private Dictionary<string, DeathRollSession> MonitoredSessions = new();
@@ -35,7 +30,7 @@ public sealed class DeathRollService
     // add a helper function to retrieve the roll cap of the last active session our player is in.
     public int? GetLastRollCap()
     {
-        var player = _player.ClientPlayer.NameWithWorld();
+        var player = PlayerData.NameWithWorld;
         // Sort all sessions in order by their LastRollTime, and return the first one where either the opponent is nullorEmpty, or matches the clientplayernameandworld.
         var matchedSession = MonitoredSessions.Values
         .OrderByDescending(s => s.LastRollTime)
@@ -46,7 +41,7 @@ public sealed class DeathRollService
 
     public void ProcessMessage(XivChatType type, string nameWithWorld, SeString message)
     {
-        if (_player.Address == nint.Zero || !message.Payloads.Exists(p => p.Type == PayloadType.Icon))
+        if (!PlayerData.Available || !message.Payloads.Exists(p => p.Type == PayloadType.Icon))
         {
             _logger.LogDebug("Ignoring message due to not being in a world or not being a chat message.", LoggerType.Triggers);
             return;
@@ -140,10 +135,10 @@ public sealed class DeathRollService
     private async void OnSessionComplete(DeathRollSession session)
     {
         var se = new SeStringBuilder().AddText("[Deathroll]").AddUiForeground("Match ended. Loser: " + session.LastRoller, 31).AddUiForegroundOff();
-        _chatGui.Print(se.BuiltString);
+        Svc.Chat.Print(se.BuiltString);
         _logger.LogInformation("Session completed and removed.");
         // if we were the loser, then fire the deathroll trigger.
-        if (session.LastRoller == _player.ClientPlayer.NameWithWorld())
+        if (session.LastRoller == PlayerData.NameWithWorld)
             foreach (var trigger in _triggers.Storage.Social)
                 await _triggerActions.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction);
 

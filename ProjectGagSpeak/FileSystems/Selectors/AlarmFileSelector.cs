@@ -36,7 +36,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
     => base.SelectedLeaf;
 
     public AlarmFileSelector(ILogger<AlarmFileSelector> logger, GagspeakMediator mediator, FavoritesManager favorites,
-        AlarmManager manager, AlarmFileSystem fileSystem, IKeyState keys) : base(fileSystem, logger, keys, "##AlarmFS")
+        AlarmManager manager, AlarmFileSystem fileSystem) : base(fileSystem, logger, Svc.KeyState, "##AlarmFS")
     {
         Mediator = mediator;
         _favorites = favorites;

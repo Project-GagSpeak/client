@@ -35,7 +35,7 @@ public class MainConfig : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.MainConfig;
-        GagSpeak.StaticLog.Information("Loading in Config for file: " + file);
+        Svc.Logger.Information("Loading in Config for file: " + file);
         var jsonText = "";
         JObject jObject = new();
         try
@@ -48,7 +48,7 @@ public class MainConfig : IHybridSavable
             }
             else
             {
-                GagSpeak.StaticLog.Warning("Config file not found Attempting to find old config.");
+                Svc.Logger.Warning("Config file not found Attempting to find old config.");
                 var backupFile = file.Insert(file.Length - 5, "-testing");
                 if (File.Exists(backupFile))
                 {
@@ -60,7 +60,7 @@ public class MainConfig : IHybridSavable
                 }
                 else
                 {
-                    GagSpeak.StaticLog.Warning("No Config file found for: " + backupFile);
+                    Svc.Logger.Warning("No Config file found for: " + backupFile);
                     return;
                 }
             }
@@ -92,10 +92,10 @@ public class MainConfig : IHybridSavable
             ForcedStayPromptList = jObject["ForcedStayPromptList"]?.ToObject<TextFolderNode>() 
                 ?? new TextFolderNode { FriendlyName = "ForcedDeclineList" };
 
-            GagSpeak.StaticLog.Information("Config loaded.");
+            Svc.Logger.Information("Config loaded.");
             Save();
         }
-        catch (Exception ex) { GagSpeak.StaticLog.Error("Failed to load config." + ex); }
+        catch (Exception ex) { Svc.Logger.Error("Failed to load config." + ex); }
     }
 
     public GagspeakConfig Current { get; private set; } = new();

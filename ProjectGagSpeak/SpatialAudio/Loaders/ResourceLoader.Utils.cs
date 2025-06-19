@@ -64,7 +64,8 @@ public unsafe partial class ResourceLoader
     private bool GetCustomPathBackup(string gamePath, out string localPath)
     {
         localPath = null!;
-        if (_dataManager.FileExists(gamePath)) return false; // not custom path
+        if (Svc.Data.FileExists(gamePath))
+            return false; // not custom path
 
         return CustomPathBackups.TryGetValue(gamePath.ToLower(), out localPath!);
     }

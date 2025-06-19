@@ -17,7 +17,6 @@ namespace GagSpeak.Services.Controller;
 public sealed class KeystateController : DisposableMediatorSubscriberBase
 {
     private readonly MovementController _moveService;
-    private readonly IKeyState _keyState;
 
     delegate ref int GetRefValue(int vkCode);
     private static GetRefValue? _getRefValue;
@@ -26,16 +25,15 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     private PlayerControlSource _sources = PlayerControlSource.None;
     private bool _keysWereCancelled = false;
 
-    public KeystateController(ILogger<KeystateController> logger, GagspeakMediator mediator, 
-        MovementController moveService, IKeyState keyState) : base(logger, mediator)
+    public KeystateController(ILogger<KeystateController> logger, GagspeakMediator mediator, MovementController moveService) 
+        : base(logger, mediator)
     {
         _moveService = moveService;
-        _keyState = keyState;
 
         Generic.ExecuteSafely(delegate
         {
-            _getRefValue = (GetRefValue)Delegate.CreateDelegate(typeof(GetRefValue), keyState,
-                keyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(int)], null)!);
+            _getRefValue = (GetRefValue)Delegate.CreateDelegate(typeof(GetRefValue), Svc.KeyState,
+                Svc.KeyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(int)], null)!);
         });
 
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
@@ -66,10 +64,10 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
         foreach (var x in MoveKeys)
         {
             // the action to execute for each of our moved keys
-            if (_keyState.GetRawValue(x) == 0)
+            if (Svc.KeyState.GetRawValue(x) == 0)
             {
                 // if the value is not set to execute, set it.
-                _keyState.SetRawValue(x, 1);
+                Svc.KeyState.SetRawValue(x, 1);
                 _keysWereCancelled = true;
             }
         }

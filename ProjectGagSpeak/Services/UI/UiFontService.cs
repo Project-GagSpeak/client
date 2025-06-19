@@ -8,7 +8,6 @@ namespace GagSpeak.Services;
 /// <summary> Manages GagSpeaks custom fonts during plugin lifetime. </summary>
 public sealed class UiFontService : IHostedService
 {
-    private readonly IDalamudPluginInterface _pi;
     public static IFontHandle GameFont { get; private set; }
     public static IFontHandle IconFont { get; private set; }
     public static IFontHandle UidFont { get; private set; }
@@ -17,54 +16,52 @@ public sealed class UiFontService : IHostedService
     public static IFontHandle GagspeakFont { get; private set; }
     public static IFontHandle GagspeakLabelFont { get; private set; }
     public static IFontHandle GagspeakTitleFont { get; private set; }
-    public UiFontService(IDalamudPluginInterface pi)
+    public UiFontService()
     {
-        _pi = pi;
-
         // the special gagspeak font that i cant ever get to load for some wierd ass reason.
-        var gagspeakFontFile = Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
+        var gagspeakFontFile = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
         if (File.Exists(gagspeakFontFile))
         {
             // get the glyph ranges
             var glyphRanges = GetGlyphRanges();
 
             // create the font handle
-            GagspeakFont = pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
+            GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
                 tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges })));
 
-            GagspeakLabelFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
+            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
                 tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges })));
 
-            GagspeakTitleFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
+            GagspeakTitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
                 tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 48, GlyphRanges = glyphRanges })));
         }
 
         // the font atlas for our UID display (make it the font from gagspeak probably unless this fits more)
-        UidFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
+        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
         {
             e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
         });
 
-        FullScreenFont = _pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
+        FullScreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
         {
             e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 175 }));
         });
 
         // the font atlas for our game font
-        GameFont = _pi.UiBuilder.FontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.Axis12));
+        GameFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.Axis12));
         // the font atlas for our icon font
-        IconFont = _pi.UiBuilder.IconFontFixedWidthHandle;
+        IconFont = Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("UiFontService Started.");
+        Svc.Logger.Information("UiFontService Started.");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("UiFontService Stopped.");
+        Svc.Logger.Information("UiFontService Stopped.");
         GagspeakFont?.Dispose();
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();

@@ -29,21 +29,21 @@ public partial class AchievementListener
         (ClientAchievements.SaveData[Achievements.Humiliation.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(visiblePairs);
     }
 
-    private void CheckOnZoneSwitchStart(ushort prevZone)
+    private void CheckOnZoneSwitchStart(uint prevZone)
     {
         // Nothing yet.
     }
 
     private void CheckOnZoneSwitchEnd()
     {
-        Logger.LogTrace("Current Territory Id: " + _player.TerritoryId, LoggerType.AchievementEvents);
-        if(_player.InMainCity)
+        Logger.LogTrace("Current Territory Id: " + PlayerContent.TerritoryID, LoggerType.AchievementEvents);
+        if(PlayerContent.InMainCity)
             (ClientAchievements.SaveData[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
-        var territory = _player.TerritoryId;
+        var territory = PlayerContent.TerritoryID;
 
         // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
-        if (territory is 939 && !_player.InPvP)
+        if (territory is 939 && !PlayerData.IsInPvP)
             (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         else
             (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -68,11 +68,11 @@ public partial class AchievementListener
         if (floor is null) 
             return;
 
-        var deepDungeonType = _player.GetDeepDungeonType();
+        var deepDungeonType = PlayerData.GetDeepDungeonType();
         if (deepDungeonType is null) 
             return;
 
-        if (_player.PartySize is 1)
+        if (PlayerData.PartySize is 1)
             (ClientAchievements.SaveData[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         // start this under any condition.
         (ClientAchievements.SaveData[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -125,7 +125,7 @@ public partial class AchievementListener
     private void OnDutyStart(object? sender, ushort e)
     {
         Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
-        if (_player.InPvP)
+        if (PlayerData.IsInPvP)
             return;
 
         (ClientAchievements.SaveData[Achievements.KinkyExplorer.Id] as ConditionalAchievement)?.CheckCompletion();
@@ -133,11 +133,11 @@ public partial class AchievementListener
         (ClientAchievements.SaveData[Achievements.SilentButDeadly.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
         (ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.BeginConditionalTask(25); // 10s delay.
 
-        if (_player.ClientPlayer.ClassJobRole() is ActionRoles.Healer)
+        if (PlayerData.JobRole is ActionRoles.Healer)
             (ClientAchievements.SaveData[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
 
         // If the party size is 8, let's check for the trials.
-        if(_player.PartySize is 8 && _player.Level >= 90)
+        if(PlayerData.PartySize is 8 && PlayerData.Level >= 90)
         {
             (ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
             (ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -150,7 +150,7 @@ public partial class AchievementListener
 
     private void OnDutyEnd(object? sender, ushort e)
     {
-        if (_player.InPvP)
+        if (PlayerData.IsInPvP)
             return;
         Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
         if ((ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
@@ -165,7 +165,7 @@ public partial class AchievementListener
         // Trial has ended, check for completion.
         if ((ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_player.PartySize is 8 && _player.Level >= 90)
+            if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
                 (ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -173,7 +173,7 @@ public partial class AchievementListener
         
         if ((ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_player.PartySize is 8 && _player.Level >= 90)
+            if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
                 (ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -181,7 +181,7 @@ public partial class AchievementListener
         
         if ((ClientAchievements.SaveData[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
-            if (_player.PartySize is 8 && _player.Level >= 90)
+            if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
                 (ClientAchievements.SaveData[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
             else // if we are not in a full party, we should reset the task.
                 (ClientAchievements.SaveData[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
@@ -593,7 +593,7 @@ public partial class AchievementListener
                     (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
 
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
-                    if(_player.TerritoryId is 939 && (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
+                    if(PlayerContent.TerritoryID is 939 && (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
@@ -1000,11 +1000,11 @@ public partial class AchievementListener
     //{
 
     //    // Check if client player is null
-    //    if (!_player.IsPresent)
+    //    if (!PlayerData.IsPresent)
     //        return;
 
     //    // Return if not in the gold saucer
-    //    if (_player.TerritoryId is not 144)
+    //    if (PlayerContent.TerritoryID is not 144)
     //        return;
 
     //    // Check if the GagReflex achievement is already completed
@@ -1028,7 +1028,7 @@ public partial class AchievementListener
     //    }
 
     //    // Check if any effects were a knockback effect targeting the local player
-    //    if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == _player.ObjectId))
+    //    if (actionEffects.Any(x => x.Type == LimitedActionEffectType.Knockback && x.TargetID == PlayerData.ObjectId))
     //    {
     //        // Increment progress if the achievement is not yet completed
     //        gagReflexAchievement.IncrementProgress();

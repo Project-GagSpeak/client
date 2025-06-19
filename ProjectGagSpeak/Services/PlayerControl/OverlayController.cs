@@ -15,18 +15,12 @@ namespace GagSpeak.Services.Controller;
 /// </remarks>
 public sealed class OverlayController : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerData _player;
     private readonly BlindfoldService _blindfoldService;
     private readonly HypnoService _hypnoService;
-    public OverlayController(
-        ILogger<OverlayController> logger,
-        GagspeakMediator mediator,
-        PlayerData player,
-        BlindfoldService blindfoldService,
-        HypnoService hypnoService)
+    public OverlayController(ILogger<OverlayController> logger, GagspeakMediator mediator,
+        BlindfoldService blindfoldService, HypnoService hypnoService)
         : base(logger, mediator)
     {
-        _player = player;
         _blindfoldService = blindfoldService;
         _hypnoService = hypnoService;
 

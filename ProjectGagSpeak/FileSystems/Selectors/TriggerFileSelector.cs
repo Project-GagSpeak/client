@@ -36,8 +36,9 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     public new TriggerFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public TriggerFileSelector(ILogger<TriggerFileSelector> log, GagspeakMediator mediator, FavoritesManager favorites,
-        TriggerManager manager, TriggerFileSystem fileSystem, IKeyState keys) : base(fileSystem, log, keys, "##TriggerFS")
+    public TriggerFileSelector(ILogger<TriggerFileSelector> log, GagspeakMediator mediator,
+        FavoritesManager favorites, TriggerManager manager, TriggerFileSystem fileSystem)
+        : base(fileSystem, log, Svc.KeyState, "##TriggerFS")
     {
         Mediator = mediator;
         _favorites = favorites;

@@ -57,7 +57,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 
         // Get the visible characters.
         var visiblePlayerCharacters = _frameworkUtils.GetObjectTablePlayers()
-            .Where(player => playerTriggers.Keys.Contains(player.NameWithWorld()));
+            .Where(player => playerTriggers.Keys.Contains(player.GetNameWithWorld()));
 
         // Remove players from MonitoredPlayers who are no longer visible.
         var playersToRemove = MonitoredPlayers.Keys.Except(visiblePlayerCharacters);
@@ -71,7 +71,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 
         // add all the visible players
         foreach (var player in playersToAdd)
-            if (playerTriggers.TryGetValue(player.NameWithWorld(), out var triggers))
+            if (playerTriggers.TryGetValue(player.GetNameWithWorld(), out var triggers))
                 MonitoredPlayers.Add(player, triggers);
     }
 

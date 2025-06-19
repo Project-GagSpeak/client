@@ -1,7 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
@@ -9,7 +8,6 @@ using GagSpeak.CkCommons.Gui.Publications;
 using GagSpeak.CkCommons.Gui.Toybox;
 using GagSpeak.CkCommons.Gui.UiRemote;
 using GagSpeak.CkCommons.Gui.Wardrobe;
-using GagSpeak.PlayerClient;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
@@ -18,17 +16,14 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class HomepageTab
 {
     private readonly GagspeakMediator _mediator;
-    private readonly PlayerData _client;
     private readonly OnFrameworkService _framework;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
 
-    public HomepageTab(GagspeakMediator mediator, PlayerData client, 
-        OnFrameworkService framework)
+    public HomepageTab(GagspeakMediator mediator, OnFrameworkService framework)
     {
         _mediator = mediator;
-        _client = client;
         _framework = framework;
 
         // Define all module information in a single place

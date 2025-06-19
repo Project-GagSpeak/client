@@ -18,7 +18,6 @@ public class IntroUi : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly MainConfig _configService;
     private readonly ServerConfigManager _serverConfigs;
-    private readonly PlayerData _player;
     private readonly TutorialService _guides;
 
     private bool ThemePushed = false;
@@ -28,15 +27,12 @@ public class IntroUi : WindowMediatorSubscriberBase
     private string _secretKey = string.Empty;
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
-        MainConfig configService, ServerConfigManager serverConfigs,
-        PlayerData clientMonitor, TutorialService guides)
+        MainConfig config, ServerConfigManager serverConfigs, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {
         _hub = mainHub;
-        _configService = configService;
+        _configService = config;
         _serverConfigs = serverConfigs;
-        _player = clientMonitor;
-
         _guides = guides;
 
         IsOpen = false;
@@ -303,7 +299,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                     };
 
                     // set the secret key for the character
-                    _serverConfigs.SetSecretKeyForCharacter(_player.ContentId, newKey);
+                    _serverConfigs.SetSecretKeyForCharacter(PlayerData.ContentId, newKey);
 
                     // run the create connections and set our account created to true
                     _initialAccountCreationTask = PerformFirstLoginAsync();
@@ -376,7 +372,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             };
 
             // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(_player.ContentId, newKey);
+            _serverConfigs.SetSecretKeyForCharacter(PlayerData.ContentId, newKey);
             _configService.Save();
             // Log the details.
             _logger.LogInformation("UID: " + accountDetails.Item1);

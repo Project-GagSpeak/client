@@ -12,7 +12,7 @@ public static class ImGuiSeStringParser
     private static string           _lastString;
     private static ParsedSeString   _lastParsedString;
 
-    public static void DisplayMoodleString(string moodleEncodedString, IDataManager data)
+    public static void DisplayMoodleString(string moodleEncodedString)
     {
         // Grab from the cache instead of re-parsing if the string is the same. This avoids overhead from drawframes.
         if (string.Equals(moodleEncodedString, _lastString, StringComparison.OrdinalIgnoreCase))
@@ -22,7 +22,7 @@ public static class ImGuiSeStringParser
         }
 
         // Otherwise, parse it then render it.
-        var parsed = ParseMoodleSeStringInternal(moodleEncodedString, data, out var error);
+        var parsed = ParseMoodleSeStringInternal(moodleEncodedString, out var error);
         if (!parsed.RawString.IsNullOrWhitespace())
         {
             // Cache it if valid.
@@ -50,7 +50,7 @@ public static class ImGuiSeStringParser
     /// <param name="text"> the moodle-encoded-string. </param>
     /// <param name="error"> The error string output if failure occurs. </param>
     /// <returns> the parsed moodle string ready to be rendered for display. </returns>
-    private static ParsedSeString ParseMoodleSeStringInternal(string text, IDataManager data, out string error)
+    private static ParsedSeString ParseMoodleSeStringInternal(string text, out string error)
     {
         // assume no error.
         error = string.Empty;
@@ -90,7 +90,7 @@ public static class ImGuiSeStringParser
                         r = (ushort)Enum.GetValues<XlDataUiColor>().FirstOrDefault(x => x.ToString().Equals(str[7..^1], StringComparison.OrdinalIgnoreCase));
 
                     // If the end result was WhitNormal, or the resulting value r is not present in the datasheet, throw a color error.
-                    if (data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is { } validUICol && r != 0)
+                    if (Svc.Data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is { } validUICol && r != 0)
                     {
                         // convert the forground to imgui u32 format.
                         var col = BinaryPrimitives.ReverseEndianness(validUICol.Dark);
@@ -128,7 +128,7 @@ public static class ImGuiSeStringParser
                         r = (ushort)Enum.GetValues<XlDataUiColor>().FirstOrDefault(x => x.ToString().Equals(str[6..^1], StringComparison.OrdinalIgnoreCase));
 
                     // If the end result was WhitNormal, or the resulting value r is not present in the datasheet, throw a color error.
-                    if (r == 0 || data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is not { } validUIGlow)
+                    if (r == 0 || Svc.Data.GetExcelSheet<UIColor>().GetRowOrDefault(r) is not { } validUIGlow)
                         throw new Exception("Error: Glow is out of range.");
 
                     // Add the glow modifier

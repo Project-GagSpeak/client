@@ -1,4 +1,5 @@
 using Dalamud.Plugin.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 using OtterGui.Raii;
@@ -13,17 +14,16 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
 {
     private readonly IpcCallerPenumbra _penumbra;
     private readonly ItemData _itemData;
-    private readonly IClientState _clientState;
     public DateTime LastTooltip { get; private set; } = DateTime.MinValue;
     public DateTime LastClick { get; private set; } = DateTime.MinValue;
 
     public PenumbraChangedItemTooltip(ILogger<PenumbraChangedItemTooltip> logger,
-        GagspeakMediator mediator, IpcCallerPenumbra penumbra, IClientState clientState,
-        ItemData itemData) : base(logger, mediator)
+        GagspeakMediator mediator, IpcCallerPenumbra penumbra, ItemData itemData)
+        : base(logger, mediator)
     {
         _penumbra = penumbra;
-        _clientState = clientState;
         _itemData = itemData;
+
         _penumbra.Tooltip += OnPenumbraTooltip;
         _penumbra.Click += OnPenumbraClick;
     }
@@ -37,7 +37,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
 
     public void CreateTooltip(EquipItem item, string prefix, bool openTooltip)
     {
-        if (!_clientState.IsLoggedIn || _clientState.LocalContentId == 0)
+        if (!Svc.ClientState.IsLoggedIn || Svc.ClientState.LocalContentId == 0)
         {
             return;
         }
@@ -89,7 +89,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
     private void OnPenumbraTooltip(ChangedItemType type, uint id)
     {
         LastTooltip = DateTime.UtcNow;
-        if (!_clientState.IsLoggedIn || _clientState.LocalContentId == 0)
+        if (!PlayerData.IsLoggedIn || PlayerData.ContentId is 0)
         {
             return;
         }
@@ -111,12 +111,10 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
         if (button is not MouseButton.Middle)
             return;
 
-        if (!_clientState.IsLoggedIn || _clientState.LocalContentId == 0)
-        {
+        if (!PlayerData.IsLoggedIn || PlayerData.ContentId is 0)
             return;
-        }
 
-        if (type == ChangedItemType.Item)
+        if (type is ChangedItemType.Item)
         {
             if (!_itemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
             {

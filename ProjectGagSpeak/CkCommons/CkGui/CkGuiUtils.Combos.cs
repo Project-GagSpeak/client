@@ -1,5 +1,6 @@
 using ImGuiNET;
 using OtterGui.Raii;
+using System.Linq;
 
 namespace GagSpeak.CkCommons.Gui.Utility;
 public static partial class CkGuiUtils
@@ -94,7 +95,7 @@ public static partial class CkGuiUtils
     /// <returns> True if the value was changed. </returns>
     /// <remarks> Useful for non-enum based dropdowns for simplistic options. </remarks>
     public static bool StringCombo(string label, float width, string current, out string newValue,
-    IEnumerable<string> options, string defaultText = "Select Item...")
+        IEnumerable<string> options, string defaultText = "Select Item...")
     {
         ImGui.SetNextItemWidth(width);
         var previewText = options.Contains(current) ? current.ToString() : defaultText;
@@ -108,6 +109,38 @@ public static partial class CkGuiUtils
                 newValue = data;
                 return true;
             }
+
+        newValue = current;
+        return false;
+    }
+
+    public static bool IntCombo(string label, float width, int current, out int newValue, IEnumerable<int> options, 
+        Func<int, string>? toString = null, string defaultText = "Select Item...", CFlags flags = CFlags.None)
+    {
+        ImGui.SetNextItemWidth(width);
+        var previewText = options.Contains(current) ? (toString?.Invoke(current) ?? current.ToString()) : defaultText;
+        using (var combo = ImRaii.Combo(label, previewText, flags))
+        {
+            if (combo)
+            {
+                foreach (var option in options)
+                {
+                    var display = toString?.Invoke(option) ?? option.ToString();
+                    if (display.Length == 0 || !ImGui.Selectable(display, option == current) || option == current)
+                        continue;
+
+                    newValue = option;
+                    return true;
+                }
+            }
+        }
+
+        // Reset to first option if right-clicked
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            newValue = options.FirstOrDefault();
+            return true;
+        }
 
         newValue = current;
         return false;

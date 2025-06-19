@@ -44,7 +44,7 @@ public static class PermissionHelper
         }
         catch (InvalidOperationException ex)
         {
-            GagSpeak.StaticLog.Warning(ex.Message + "(Resetting to Previous Value)");
+            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
             property.SetValue(perms, currentValue);
             return false;
         }
@@ -85,7 +85,7 @@ public static class PermissionHelper
         }
         catch (InvalidOperationException ex)
         {
-            GagSpeak.StaticLog.Warning(ex.Message + "(Resetting to Previous Value)");
+            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
             property.SetValue(perms, currentValue);
             return false;
         }
@@ -126,7 +126,7 @@ public static class PermissionHelper
         }
         catch (InvalidOperationException ex)
         {
-            GagSpeak.StaticLog.Warning(ex.Message + "(Resetting to Previous Value)");
+            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
             property.SetValue(perms, currentValue);
             return false;
         }
@@ -168,7 +168,7 @@ public static class PermissionHelper
         }
         catch (InvalidOperationException ex)
         {
-            GagSpeak.StaticLog.Warning(ex.Message + "(Resetting to Previous Value)");
+            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
             property.SetValue(perms, currentValue);
             return false;
         }
@@ -210,7 +210,7 @@ public static class PermissionHelper
         }
         catch (InvalidOperationException ex)
         {
-            GagSpeak.StaticLog.Warning(ex.Message + "(Resetting to Previous Value)");
+            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
             property.SetValue(perms, currentValue);
             return false;
         }
@@ -226,23 +226,23 @@ public static class PermissionHelper
     {
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
-            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
+            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
             return false;
         }
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
         {
-            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
+            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
             return false;
         }
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Special))
         {
-            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
+            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
         if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles) && statuses.Any(statuses => statuses.NoExpire))
         {
-            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
+            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
             return false;
         }
 
@@ -250,7 +250,7 @@ public static class PermissionHelper
         if (statuses.Any(status => status.NoExpire == false && // if the status is not permanent, and the time its set for is longer than max allowed time.
             new TimeSpan(status.Days, status.Hours, status.Minutes, status.Seconds) > pairPerms.MaxMoodleTime))
         {
-            GagSpeak.StaticLog.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
+            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
             return false;
         }
         // return true if reached here.

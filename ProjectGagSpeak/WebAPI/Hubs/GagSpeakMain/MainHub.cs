@@ -47,7 +47,6 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         ILogger<MainHub> logger,
         GagspeakMediator mediator,
         TokenProvider tokenProvider,
-        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils,
         HubFactory hubFactory,
         ClientAchievements achievements,
@@ -60,7 +59,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         PairManager pairs,
         ServerConfigManager serverConfigs,
         MainConfig mainConfig)
-        : base(logger, mediator, tokenProvider, clientMonitor, frameworkUtils)
+        : base(logger, mediator, tokenProvider, frameworkUtils)
     {
         _hubFactory = hubFactory;
         _requests = requests;
@@ -95,7 +94,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         {
             if (_serverStatus != value)
             {
-                GagSpeak.StaticLog.Debug("(Hub-Main): New ServerState: " + value + ", prev ServerState: " + _serverStatus, LoggerType.ApiCore);
+                Svc.Logger.Debug("(Hub-Main): New ServerState: " + value + ", prev ServerState: " + _serverStatus, LoggerType.ApiCore);
                 _serverStatus = value;
             }
         }
@@ -368,7 +367,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         fetchedSecretKey = string.Empty;
 
         // if we are not logged in, we should not be able to connect.
-        if (_player.IsLoggedIn is false)
+        if (PlayerData.IsLoggedIn is false)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;

@@ -14,14 +14,8 @@ public class ModListener : DisposableMediatorSubscriberBase
     private readonly ModHandler _handler;
     private readonly ModSettingPresetManager _manager;
 
-    public ModListener(
-        ILogger<ModListener> logger,
-        GagspeakMediator mediator,
-        IpcCallerPenumbra ipc,
-        ModCache cache,
-        ModHandler handler,
-        ModSettingPresetManager manager,
-        IDalamudPluginInterface pi) 
+    public ModListener(ILogger<ModListener> logger, GagspeakMediator mediator,
+        IpcCallerPenumbra ipc, ModCache cache, ModHandler handler, ModSettingPresetManager manager) 
         : base(logger, mediator)
     {
         _ipc = ipc;
@@ -29,9 +23,9 @@ public class ModListener : DisposableMediatorSubscriberBase
         _handler = handler;
         _manager = manager;
 
-        _ipc.OnModMoved = ModMoved.Subscriber(pi, OnModInfoChanged);
-        _ipc.OnModAdded = ModAdded.Subscriber(pi, OnModAdded);
-        _ipc.OnModDeleted = ModDeleted.Subscriber(pi, OnModDeleted);
+        _ipc.OnModMoved = ModMoved.Subscriber(Svc.PluginInterface, OnModInfoChanged);
+        _ipc.OnModAdded = ModAdded.Subscriber(Svc.PluginInterface, OnModAdded);
+        _ipc.OnModDeleted = ModDeleted.Subscriber(Svc.PluginInterface, OnModDeleted);
 
         // if penumbra api is connected, immediately run a OnPenumbraInitialized after our load.
         if (IpcCallerPenumbra.APIAvailable)

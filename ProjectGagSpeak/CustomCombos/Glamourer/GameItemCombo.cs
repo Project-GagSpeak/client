@@ -17,10 +17,10 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
     public ItemId _currentItem;
     public PrimaryId CustomSetId { get; private set; }
     public Variant CustomVariant { get; private set; }
-    public GameItemCombo(IDataManager gameData, EquipSlot slot, ItemData itemData, ILogger log)
+    public GameItemCombo(EquipSlot slot, ItemData itemData, ILogger log)
         : base(() => GetItems(itemData, slot), log)
     {
-        Label = GetLabel(gameData, slot);
+        Label = GetLabel(slot);
         _currentItem = ItemService.NothingId(slot);
         SearchByParts = true;
     }
@@ -67,9 +67,9 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
     protected override string ToString(EquipItem obj)
         => obj.Name;
 
-    private static string GetLabel(IDataManager gameData, EquipSlot slot)
+    private static string GetLabel(EquipSlot slot)
     {
-        var sheet = gameData.GetExcelSheet<Addon>()!;
+        var sheet = Svc.Data.GetExcelSheet<Addon>()!;
 
         return slot switch
         {

@@ -13,23 +13,21 @@ using GagSpeak.Kinksters;
 namespace GagSpeak.CkCommons.Gui.Profile;
 public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 {
-    private readonly PairManager _pairManager;
-    private readonly KinkPlateService _profileService;
+    private readonly PairManager _pairs;
+    private readonly KinkPlateService _profiles;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
 
 
     private bool ThemePushed = false;
     public KinkPlatePreviewUI(ILogger<KinkPlatePreviewUI> logger, GagspeakMediator mediator,
-        PairManager pairManager, KinkPlateService profileService,
-        CosmeticService cosmetics, TextureService textureService, CkGui uiShared)
-        : base(logger, mediator, "Our User's KinkPlate##GagspeakKinkPlatePreviewUI")
+        PairManager pairs, KinkPlateService kinkPlates, CosmeticService cosmetics,
+        TextureService textures) : base(logger, mediator, "Own KinkPlate##PlatePreviewUI")
     {
-        _pairManager = pairManager;
-        _profileService = profileService;
+        _pairs = pairs;
+        _profiles = kinkPlates;
         _cosmetics = cosmetics;
-        _textures = textureService;
-
+        _textures = textures;
 
         Flags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoTitleBar;
         Size = new Vector2(750, 450);
@@ -65,7 +63,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         RectMax = drawList.GetClipRectMax();
 
         // obtain the profile for this userPair.
-        var KinkPlate = _profileService.GetKinkPlate(MainHub.PlayerUserData);
+        var KinkPlate = _profiles.GetKinkPlate(MainHub.PlayerUserData);
 
         // Draw KinkPlateUI Function here.
         DrawKinkPlate(drawList, KinkPlate);

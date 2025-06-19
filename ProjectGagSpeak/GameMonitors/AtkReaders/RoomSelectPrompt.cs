@@ -1,7 +1,5 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Plugin.Services;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerClient;
@@ -12,18 +10,13 @@ public class RoomSelectPrompt : BasePrompt
 {
     private readonly ILogger<RoomSelectPrompt> _logger;
     private readonly MainConfig _config;
-    private readonly IAddonLifecycle _addonLifecycle;
-    private readonly ITargetManager _targets;
 
     private DateTime LastSelectionTime = DateTime.MinValue;
 
-    internal RoomSelectPrompt(ILogger<RoomSelectPrompt> logger, MainConfig config, 
-        IAddonLifecycle addonLifecycle, ITargetManager targetManager)
+    public RoomSelectPrompt(ILogger<RoomSelectPrompt> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _addonLifecycle = addonLifecycle;
-        _targets = targetManager;
     }
 
     // Run on plugin Enable
@@ -32,10 +25,10 @@ public class RoomSelectPrompt : BasePrompt
         if(!Enabled)
         {
             base.Enable();
-            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", AddonSetup);
-            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", SetEntry);
-            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", AddonSetup);
-            _addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MansionSelectRoom", SetEntry);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", AddonSetup);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", SetEntry);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", AddonSetup);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MansionSelectRoom", SetEntry);
         }
     }
 
@@ -45,8 +38,7 @@ public class RoomSelectPrompt : BasePrompt
         {
             var addon = args.Base();
             // get the name
-            var target = _targets.Target;
-            var targetName = target != null ? target.Name.ExtractText() : string.Empty;
+            var targetName = Svc.Targets.Target?.Name.ExtractText() ?? string.Empty;
             MainConfig.LastSeenNodeName = targetName;
             // Output all the text nodes in a concatinated string
             MainConfig.LastSeenNodeLabel = AddonBaseRoom.ToText(addon, 8);
@@ -60,8 +52,8 @@ public class RoomSelectPrompt : BasePrompt
         if(Enabled)
         {
             base.Disable();
-            _addonLifecycle.UnregisterListener(AddonSetup);
-            _addonLifecycle.UnregisterListener(SetEntry);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
+            Svc.AddonLifecycle.UnregisterListener(SetEntry);
         }
     }
 
@@ -71,8 +63,7 @@ public class RoomSelectPrompt : BasePrompt
         await Task.Delay(750);
 
         // get the name
-        var target = _targets.Target;
-        var targetName = target != null ? target.Name.ExtractText() : string.Empty;
+        var targetName = Svc.Targets.Target?.Name.ExtractText() ?? string.Empty;
         MainConfig.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
 

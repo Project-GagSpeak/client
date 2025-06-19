@@ -1,12 +1,10 @@
 using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
+using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
-using GagspeakAPI.Util;
 
 namespace GagSpeak.Services.Textures;
 
@@ -15,16 +13,9 @@ namespace GagSpeak.Services.Textures;
 public class CosmeticService : IHostedService, IDisposable
 {
     private readonly ILogger<CosmeticService> _logger;
-    private readonly OnFrameworkService _frameworkUtils;
-    private readonly ITextureProvider _textures;
-    private readonly IDalamudPluginInterface _pi;
-    public CosmeticService(ILogger<CosmeticService> logger, GagspeakMediator mediator,
-        OnFrameworkService frameworkUtils, IDalamudPluginInterface pi, ITextureProvider tp)
+    public CosmeticService(ILogger<CosmeticService> logger, GagspeakMediator mediator)
     {
         _logger = logger;
-        _frameworkUtils = frameworkUtils;
-        _textures = tp;
-        _pi = pi;
     }
 
     private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
@@ -109,13 +100,13 @@ public class CosmeticService : IHostedService, IDisposable
     public IDalamudTextureWrap? GagImageFromType(GagType gagType)
     {
         var stringToSearch = $"GagImages\\{gagType.GagName()}.png";
-        return _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
+        return Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
     }
 
     public IDalamudTextureWrap? PadlockImageFromType(Padlocks padlock)
     {
         var stringToSearch = $"PadlockImages\\{padlock}.png";
-        return _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
+        return Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
     }
 
     /// <summary>
@@ -206,17 +197,17 @@ public class CosmeticService : IHostedService, IDisposable
     }
 
     public IDalamudTextureWrap GetImageFromAssetsFolder(string path)
-        => _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
+        => Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
     public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
-        => _textures.CreateFromImageAsync(imageData).Result;
+        => Svc.Texture.CreateFromImageAsync(imageData).Result;
     public IDalamudTextureWrap? GetImageMetadataPath(ImageDataType folder, string path)
-        => _textures.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
+        => Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
 
     public IDalamudTextureWrap? GetImageFromBytes(byte[] imageData)
     {
         try
         {
-            return _textures.CreateFromImageAsync(imageData).Result;
+            return Svc.Texture.CreateFromImageAsync(imageData).Result;
         }
         catch (Exception e)
         {
@@ -229,7 +220,7 @@ public class CosmeticService : IHostedService, IDisposable
     {
         try
         {
-            return await _textures.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).RentAsync();
+            return await Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).RentAsync();
         }
         catch (Exception)
         {
@@ -242,7 +233,7 @@ public class CosmeticService : IHostedService, IDisposable
     {
         try
         {
-            fileTexture = _textures.GetFromFile(Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", path)).RentAsync().Result;
+            fileTexture = Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", path)).RentAsync().Result;
             return true;
         }
         catch (Exception)
@@ -273,16 +264,16 @@ public class CosmeticService : IHostedService, IDisposable
             // Ensure our directories exist.
             foreach (var (_, subDir, _) in transferTargets)
             {
-                string targetDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDir);
+                var targetDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDir);
                 Directory.CreateDirectory(targetDir);
             }
 
             // Properly move the asset images into the correct folders.
             foreach (var (sourceFile, subDirectory, targetFile) in transferTargets)
             {
-                string sourcePath = Path.Combine(_pi.AssemblyLocation.DirectoryName!, "Assets", "RequiredImages", sourceFile);
-                string destDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDirectory);
-                string destPath = Path.Combine(destDir, targetFile);
+                var sourcePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "RequiredImages", sourceFile);
+                var destDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDirectory);
+                var destPath = Path.Combine(destDir, targetFile);
 
                 // Migrate the file if it does not exist in the target directory (renaming it in the process)
                 if (File.Exists(sourcePath) && !File.Exists(destPath))

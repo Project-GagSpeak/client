@@ -20,29 +20,25 @@ public class AccountManagerTab
     private readonly MainConfig _mainConfig;
     private readonly ServerConfigManager _serverConfigs;
     private readonly ConfigFileProvider _configFiles;
-    private readonly PlayerData _player;
-
+    
     private bool DeleteAccountConfirmation = false;
     private int ShowKeyIdx = -1;
     private int EditingIdx = -1;
-    public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator,
-        MainHub hub, MainConfig mainConfig, ServerConfigManager serverConfigs,
-        ConfigFileProvider configDirectory, PlayerData clientMonitor)
+    public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator, MainHub hub,
+        MainConfig config, ServerConfigManager serverConfigs, ConfigFileProvider configFiles)
     {
         _logger = logger;
         _mediator = mediator;
         _hub = hub;
-        _mainConfig = mainConfig;
+        _mainConfig = config;
         _serverConfigs = serverConfigs;
-        _configFiles = configDirectory;
-        _player = clientMonitor;
-        _configFiles = configDirectory;
+        _configFiles = configFiles;
     }
 
     public void DrawManager()
     {
         CkGui.GagspeakBigText(GSLoc.Settings.Accounts.PrimaryLabel);
-        var localContentId = _player.ContentId;
+        var localContentId = PlayerData.ContentId;
 
         // obtain the primary account auth.
         var primaryAuth = _serverConfigs.ServerStorage.Authentications.FirstOrDefault(c => c.IsPrimary);

@@ -26,26 +26,18 @@ public class TriggerHandler
     private readonly GlobalPermissions _globals;
     private readonly PuppeteerManager _aliases;
     private readonly TriggerManager _triggers;
-    private readonly PlayerData  _player;
     private readonly TriggerActionService _triggerService;
     private readonly OnFrameworkService _frameworkUtils;
 
-    public TriggerHandler(
-        ILogger<TriggerHandler> logger,
-        MainConfig config,
-        GlobalPermissions globals,
-        PuppeteerManager aliases,
-        TriggerManager triggers,
-        PlayerData player,
-        TriggerActionService triggerService,
-        OnFrameworkService frameworkUtils)
+    public TriggerHandler(ILogger<TriggerHandler> logger, MainConfig config,
+        GlobalPermissions globals, PuppeteerManager aliases, TriggerManager triggers,
+        TriggerActionService triggerService, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _config = config;
         _globals = globals;
         _aliases = aliases;
         _triggers = triggers;
-        _player = player;
         _triggerService = triggerService;
         _frameworkUtils = frameworkUtils;
     }
@@ -85,7 +77,7 @@ public class TriggerHandler
     /// </summary>
     public async void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
     {
-        if (!_player.IsPresent || !_triggers.Storage.SpellAction.Any())
+        if (!PlayerData.Available || !_triggers.Storage.SpellAction.Any())
             return;
 
         // maybe run this in async but idk it could also be a very bad idea.
@@ -97,8 +89,8 @@ public class TriggerHandler
                 if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
                 {
                     // Perform logging and action processing for each effect
-                    var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.NameWithWorld() ?? "UNKN OBJ";
-                    var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.NameWithWorld() ?? "UNKN OBJ";
+                    var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
+                    var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
 
                     var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
 
@@ -268,7 +260,7 @@ public class TriggerHandler
         foreach (var trigger in relevantTriggers)
         {
             _logger.LogTrace("Checking Trigger: " + trigger.Label, LoggerType.Triggers);
-            if (!IsDirectionMatch(trigger.Direction, _player.ObjectId, actionEffect.SourceID, actionEffect.TargetID))
+            if (!IsDirectionMatch(trigger.Direction, PlayerData.Object?.GameObjectId ?? 0, actionEffect.SourceID, actionEffect.TargetID))
             {
                 _logger.LogDebug("Direction didn't match", LoggerType.Triggers);
                 continue;

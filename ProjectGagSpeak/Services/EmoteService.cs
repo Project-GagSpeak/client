@@ -28,12 +28,11 @@ public sealed class EmoteService : IHostedService
     /// <remarks> Only works for one execution. </remarks>
     public static ushort SpecialAllowanceEmote { get; private set; } = 0;
 
-    public EmoteService(IDataManager dataManager)
+    public EmoteService()
     {
-        ValidEmoteCache = dataManager.GetExcelSheet<Emote>().Where(x => x.EmoteCategory.IsValid && !x.Name.ExtractText().IsNullOrWhitespace()).ToImmutableList();
+        ValidEmoteCache = Svc.Data.GetExcelSheet<Emote>().Where(x => x.EmoteCategory.IsValid && !x.Name.ExtractText().IsNullOrWhitespace()).ToImmutableList();
         ValidLightEmoteCache = ValidEmoteCache.Select(x => new ParsedEmoteRow(x)).ToImmutableList();
-
-        // GagSpeak.StaticLog.Verbose("Emote Commands: " + string.Join("|", ValidLightEmoteCache.Select(row => row.InfoString)));
+        // Svc.Logger.Verbose("Emote Commands: " + string.Join("|", ValidLightEmoteCache.Select(row => row.InfoString)));
     }
 
     public static bool IsStandingIdle(ushort emoteId) => StandIdleList.Contains(emoteId);
@@ -90,7 +89,7 @@ public sealed class EmoteService : IHostedService
         if (IsCyclePoseTaskRunning)
             return;
 
-        GagSpeak.StaticLog.Verbose("Forcing player into cycle pose: " + expectedCyclePose, LoggerType.EmoteMonitor);
+        Svc.Logger.Verbose("Forcing player into cycle pose: " + expectedCyclePose, LoggerType.EmoteMonitor);
         EnforceCyclePoseTask = ForceCyclePoseInternal(playerAddr, expectedCyclePose);
     }
 
@@ -112,7 +111,7 @@ public sealed class EmoteService : IHostedService
                     if (current == expectedCyclePose)
                         break;
 
-                    GagSpeak.StaticLog.Verbose("Cycle Pose State was [" + current + "], expected [" + expectedCyclePose + "]. Sending /cpose.", LoggerType.EmoteMonitor);
+                    Svc.Logger.Verbose("Cycle Pose State was [" + current + "], expected [" + expectedCyclePose + "]. Sending /cpose.", LoggerType.EmoteMonitor);
                     ExecuteEmote(90);
                     await WaitForCondition(() => CanUseEmote(90), 5);
                 }
@@ -138,26 +137,26 @@ public sealed class EmoteService : IHostedService
                 if (condition()) 
                     return true;
 
-                GagSpeak.StaticLog.Verbose("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
+                Svc.Logger.Verbose("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
                 await Task.Delay(100, timeout.Token);
             }
         }
         catch (TaskCanceledException)
         {
-            GagSpeak.StaticLog.Verbose("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
+            Svc.Logger.Verbose("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
         }
         return false;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("EmoteMonitor started.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("EmoteMonitor started.", LoggerType.EmoteMonitor);
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("EmoteMonitor stopped.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("EmoteMonitor stopped.", LoggerType.EmoteMonitor);
         return Task.CompletedTask;
     }
 }

@@ -14,17 +14,10 @@ public class YesNoPrompt : BasePrompt
 {
     private readonly ILogger<YesNoPrompt> _logger;
     private readonly MainConfig _config;
-    private readonly IAddonLifecycle _addonLifecycle;
-    private readonly ITargetManager _targets;
-
-
-    internal YesNoPrompt(ILogger<YesNoPrompt> logger,
-        MainConfig config, IAddonLifecycle addonLifecycle, ITargetManager targetManager)
+    public YesNoPrompt(ILogger<YesNoPrompt> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _addonLifecycle = addonLifecycle;
-        _targets = targetManager;
     }
 
     // Run on plugin Enable
@@ -33,7 +26,7 @@ public class YesNoPrompt : BasePrompt
         if(!Enabled)
         {
             base.Enable();
-            _addonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", AddonSetup);
         }
     }
 
@@ -43,7 +36,7 @@ public class YesNoPrompt : BasePrompt
         if(Enabled)
         {
             base.Disable();
-            _addonLifecycle.UnregisterListener(AddonSetup);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
         }
     }
 
@@ -52,8 +45,7 @@ public class YesNoPrompt : BasePrompt
     {
         var addon = (AddonSelectYesno*)addonInfo.Base();
         // get the name
-        var target = _targets.Target;
-        var targetName = target != null ? target.Name.ExtractText() : string.Empty;
+        var targetName = Svc.Targets.Target?.Name.ExtractText() ?? string.Empty;
         MainConfig.LastSeenNodeName = targetName;
         _logger.LogDebug("Node Name: " + targetName);
 
@@ -104,17 +96,17 @@ public class YesNoPrompt : BasePrompt
     {
         if (node.TargetNodeLabelIsRegex)
         {
-            GagSpeak.StaticLog.Verbose("Entry is regex: " + node.TargetNodeTextRegex);
+            Svc.Logger.Verbose("Entry is regex: " + node.TargetNodeTextRegex);
             if (node.TargetNodeTextRegex?.IsMatch(targetNodeLabel) ?? false)
             {
-                GagSpeak.StaticLog.Verbose("Matched regex: " + node.TargetNodeTextRegex);
+                Svc.Logger.Verbose("Matched regex: " + node.TargetNodeTextRegex);
                 return true;
             }
         }
 
         if (targetNodeLabel.Contains(node.TargetNodeLabel))
         {
-            GagSpeak.StaticLog.Verbose("Matched string: " + node.TargetNodeLabel);
+            Svc.Logger.Verbose("Matched string: " + node.TargetNodeLabel);
             return true;
         }
         return false;

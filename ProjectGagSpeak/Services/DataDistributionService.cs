@@ -15,7 +15,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
-    private readonly PlayerData _player;
     private readonly PairManager _pairs;
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
@@ -31,38 +30,25 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
-    public DataDistributionService(
-        ILogger<DataDistributionService> logger,
-        GagspeakMediator mediator,
-        MainHub hub,
-        ClientAchievements achievements,
-        PlayerData player,
-        PairManager pairManager,
-        GagRestrictionManager gagManager,
-        RestrictionManager restrictionManager,
-        RestraintManager restraintManager,
-        CursedLootManager cursedManager,
-        PuppeteerManager puppetManager,
-        PatternManager patternManager,
-        AlarmManager alarmManager,
-        TriggerManager triggerManager,
-        TraitAllowanceManager traitManager)
+    public DataDistributionService(ILogger<DataDistributionService> logger, GagspeakMediator mediator,
+        MainHub hub, ClientAchievements achievements, PairManager pairManager, GagRestrictionManager gags,
+        RestrictionManager restrictions, RestraintManager restraints, CursedLootManager cursedLoot,
+        PuppeteerManager puppetManager, PatternManager patterns, AlarmManager alarms,
+        TriggerManager triggers, TraitAllowanceManager traitAllowances)
         : base(logger, mediator)
     {
         _hub = hub;
         _achievements = achievements;
-        _player = player;
         _pairs = pairManager;
-        _gagManager = gagManager;
-        _restrictionManager = restrictionManager;
-        _restraintManager = restraintManager;
-        _cursedManager = cursedManager;
+        _gagManager = gags;
+        _restrictionManager = restrictions;
+        _restraintManager = restraints;
+        _cursedManager = cursedLoot;
         _puppetManager = puppetManager;
-        _patternManager = patternManager;
-        _alarmManager = alarmManager;
-        _triggerManager = triggerManager;
-        _traitManager = traitManager;
-
+        _patternManager = patterns;
+        _alarmManager = alarms;
+        _triggerManager = triggers;
+        _traitManager = traitAllowances;
 
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
@@ -119,7 +105,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         }
 
         // Handle Visible Players.
-        if (_player.IsPresent && _newVisibleKinksters.Count > 0)
+        if (PlayerData.Available && _newVisibleKinksters.Count > 0)
         {
             var newVisiblePlayers = _newVisibleKinksters.ToList();
             _newVisibleKinksters.Clear();

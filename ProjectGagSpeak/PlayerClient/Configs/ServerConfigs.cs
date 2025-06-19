@@ -30,10 +30,10 @@ public class NicknamesConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Nicknames;
-        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
+        Svc.Logger.Warning("Loading in Config for file: " + file);
         if (!File.Exists(file))
         {
-            GagSpeak.StaticLog.Warning("Config file not found for: " + file);
+            Svc.Logger.Warning("Config file not found for: " + file);
             return;
         }
 
@@ -55,10 +55,10 @@ public class NicknamesConfigService : IHybridSavable
                 LoadV0(jObject["ServerNicknames"]);
                 break;
             default:
-                GagSpeak.StaticLog.Error("Invalid Version!");
+                Svc.Logger.Error("Invalid Version!");
                 return;
         }
-        GagSpeak.StaticLog.Information("Config loaded.");
+        Svc.Logger.Information("Config loaded.");
         Save();
     }
 
@@ -112,10 +112,10 @@ public class ServerConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.ServerConfig;
-        GagSpeak.StaticLog.Warning("Loading in Config for file: " + file);
+        Svc.Logger.Warning("Loading in Config for file: " + file);
         if (!File.Exists(file))
         {
-            GagSpeak.StaticLog.Warning("Config file not found for: " + file);
+            Svc.Logger.Warning("Config file not found for: " + file);
             return;
         }
 
@@ -137,10 +137,10 @@ public class ServerConfigService : IHybridSavable
                 LoadV0(jObject["ServerStorage"]);
                 break;
             default:
-                GagSpeak.StaticLog.Error("Invalid Version!");
+                Svc.Logger.Error("Invalid Version!");
                 return;
         }
-        GagSpeak.StaticLog.Information("Config loaded.");
+        Svc.Logger.Information("Config loaded.");
         Save();
     }
 

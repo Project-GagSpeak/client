@@ -21,44 +21,37 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
     private readonly GlobalPermissions _globals;
-    private readonly PlayerData _player;
     private readonly SelectStringPrompt _promptsString;
     private readonly YesNoPrompt _promptsYesNo;
     private readonly RoomSelectPrompt _promptsRooms;
     private readonly KeystateController _keyController;
     private readonly MovementController _moveController;
-    private readonly IObjectTable _objects;
-    private readonly ITargetManager _target;
 
     // Dictates controlling the player's AutoPrompt selecting.
     private PlayerControlSource _sources = PlayerControlSource.None;
 
     public AutoPromptController(ILogger<AutoPromptController> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, GlobalPermissions globals, PlayerData player,
-        SelectStringPrompt strPrompts, YesNoPrompt ynPrompts, RoomSelectPrompt roomPrompts,
-        KeystateController keyCtrl, MovementController moveCtrl, IObjectTable ot,
-        ITargetManager tm) : base(logger, mediator)
+        MainConfig mainConfig, GlobalPermissions globals, SelectStringPrompt strPrompts, 
+        YesNoPrompt ynPrompts, RoomSelectPrompt roomPrompts, KeystateController keyCtrl, 
+        MovementController moveCtrl) 
+        : base(logger, mediator)
     {
         _config = mainConfig;
         _globals = globals;
-        _player = player;
         _promptsString = strPrompts;
         _promptsYesNo = ynPrompts;
         _promptsRooms = roomPrompts;
         _keyController = keyCtrl;
         _moveController = moveCtrl;
-        _objects = ot;
-        _target = tm;
 
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
-    // Temp Dummy Variables.
     public PlayerControlSource Sources => _sources;
 
     private unsafe void FrameworkUpdate()
     {
-        if (_player.IsDead)
+        if (PlayerData.IsDead)
             return;
 
         // Handle the ForcedStayMode
@@ -76,7 +69,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         }
 
         // No reason to look for nodes if not in blocked by any sources.
-        if (_sources is 0 || _player.InQuestEvent)
+        if (_sources is 0 || PlayerData.InQuestEvent)
             return;
 
         // NOTE: The Below is purely to make sure we automate people going into their destination.
@@ -95,10 +88,10 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
     private unsafe void TryInteractWithNodes()
     {
-        var nodes = _objects.Where(x => x.ObjectKind is Dalamud.Game.ClientState.Objects.Enums.ObjectKind.EventObj);
+        var nodes = Svc.Objects.Where(x => x.ObjectKind is Dalamud.Game.ClientState.Objects.Enums.ObjectKind.EventObj);
         foreach (var node in nodes)
         {
-            var distance = _player.ClientPlayer?.GetTargetDistance(node) ?? float.MaxValue;
+            var distance = PlayerData.DistanceTo(node);
 
             if (NameIsApartmentOrEstate(node))
             {
@@ -112,7 +105,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
                     Logger.LogDebug("Entrance Node Interactable?" + node.IsTargetable);
                     if (node.IsTargetable)
                     {
-                        _target.Target = node;
+                        Svc.Targets.Target = node;
                         TargetSystem.Instance()->InteractWithObject((GameObject*)node.Address, false);
                     }
                 }
@@ -135,7 +128,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
                     Logger.LogDebug("Node Interactable?" + node.IsTargetable);
                     if (node.IsTargetable)
                     {
-                        _target.Target = node;
+                        Svc.Targets.Target = node;
                         TargetSystem.Instance()->InteractWithObject((GameObject*)node.Address, false);
                     }
                 }
@@ -162,7 +155,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         var movementTask = Task.Run(async () =>
         {
             Logger.LogDebug("Node for Chambers Detected, Auto Walking to it for 5 seconds.");
-            _target.Target = moveToThisNode;
+            Svc.Targets.Target = moveToThisNode;
             ChatService.SendCommand("lockon");
             await Task.Delay(500);
 

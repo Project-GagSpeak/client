@@ -111,7 +111,7 @@ public class ActionRateLimiter
         }
 
         // Log the strike for debugging purposes
-        GagSpeak.StaticLog.Verbose($"[RateLimiter] {type} has been struck at {DateTime.Now}, " +
+        Svc.Logger.Verbose($"[RateLimiter] {type} has been struck at {DateTime.Now}, " +
             $"next available time allowed in: {stats.BlockFor.ToGsRemainingTime()}", LoggerType.Triggers);
     }
 }

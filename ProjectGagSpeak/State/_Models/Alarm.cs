@@ -71,7 +71,7 @@ public class Alarm : IEditableStorageItem<Alarm>
             if (patterns.Storage.FirstOrDefault(p => p.Identifier == refGuid) is { } match)
                 patternRef = match;
             else
-                GagSpeak.StaticLog.Warning("Alarm Referenced Pattern no longer exists!");
+                Svc.Logger.Warning("Alarm Referenced Pattern no longer exists!");
         }
         else throw new Exception("Invalid GUID format in GUID field.");
 

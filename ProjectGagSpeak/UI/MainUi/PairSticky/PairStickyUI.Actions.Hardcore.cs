@@ -25,7 +25,7 @@ public partial class PairStickyUI
         }
 
         // Required Close-Ranged Hardcore commands must be in range
-        var inRange = _monitor.IsPresent && SPair.VisiblePairGameObject is { } validObj && Vector3.Distance(_monitor.ClientPlayer!.Position, validObj.Position) < 3;
+        var inRange = PlayerData.Available && SPair.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 3;
 
         var pairlockStateStr = SPair.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
 

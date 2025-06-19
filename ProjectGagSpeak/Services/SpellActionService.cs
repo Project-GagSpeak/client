@@ -21,16 +21,16 @@ public sealed class SpellActionService : IHostedService
     public static ImmutableDictionary<uint, ParsedActionRow> AllActionsLookup => AllActions.ToImmutableDictionary(x => x.ActionID);
     public static ImmutableDictionary<LightJob, List<ParsedActionRow>> JobActionsDict { get; private set; }
 
-    public SpellActionService(IDataManager gameData)
+    public SpellActionService()
     {
 
         // Start performance timer.
         var stopwatch = Stopwatch.StartNew();
 
-        _keyGameActions = gameData.GetExcelSheet<GameAction>()
+        _keyGameActions = Svc.Data.GetExcelSheet<GameAction>()
             .Where(r => r.IsPlayerAction && r.ClassJob.ValueNullable.HasValue).ToImmutableList();
         
-        AllJobs = gameData.GetExcelSheet<ClassJob>().Select(x => new LightJob(x)).ToImmutableList();
+        AllJobs = Svc.Data.GetExcelSheet<ClassJob>().Select(x => new LightJob(x)).ToImmutableList();
         AllActions = _keyGameActions.Select(x => new ParsedActionRow(x)).ToImmutableList();
 
         var jobLookup = AllJobs.ToDictionary(j => (uint)j.JobId);
@@ -45,7 +45,7 @@ public sealed class SpellActionService : IHostedService
         // Stop the performance timer.
         stopwatch.Stop();
 
-        GagSpeak.StaticLog.Information($"Cached {_keyGameActions.Count()} actions " +
+        Svc.Logger.Information($"Cached {_keyGameActions.Count()} actions " +
             $"in {stopwatch.ElapsedMilliseconds}ms for {AllJobs.Count()} Jobs.");
 
         // Assign the final immutable lists.
@@ -73,13 +73,13 @@ public sealed class SpellActionService : IHostedService
 
     public Task StartAsync(CancellationToken ct)
     {
-        GagSpeak.StaticLog.Information("SpellAction Monitor started.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("SpellAction Monitor started.", LoggerType.EmoteMonitor);
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken ct)
     {
-        GagSpeak.StaticLog.Information("SpellAction Monitor stopped.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("SpellAction Monitor stopped.", LoggerType.EmoteMonitor);
         return Task.CompletedTask;
     }
 }

@@ -4,7 +4,7 @@ using OtterGui.Raii;
 namespace GagSpeak.CkCommons.Gui.Clip;
 
 // ClippedDraw Methods are taken from OtterGui's ImGuiClip func, and modified to allow for a width parameter.
-public static partial class CkGuiClip
+public static class CkGuiClip
 {
     /// <summary>
     ///     A variant of ImGuiClip that accepts the width paramater to define drawlength.

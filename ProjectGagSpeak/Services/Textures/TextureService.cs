@@ -1,7 +1,4 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Plugin.Services;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -11,10 +8,9 @@ using Penumbra.GameData.Structs;
 // If it is possible to reconstruct this into an internal game storage cache for job actions and other things, do so.
 namespace GagSpeak.Services.Textures;
 
-public sealed class TextureService(IUiBuilder uiBuilder, IDataManager dataManager, ITextureProvider textureProvider)
-        : TextureCache(dataManager, textureProvider), IDisposable
+public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDisposable
 {
-    private readonly IDalamudTextureWrap?[] _slotIcons = CreateSlotIcons(uiBuilder);
+    private readonly IDalamudTextureWrap?[] _slotIcons = CreateSlotIcons();
 
     public (nint, Vector2, bool) GetIcon(EquipItem item, EquipSlot slot)
     {
@@ -51,11 +47,11 @@ public sealed class TextureService(IUiBuilder uiBuilder, IDataManager dataManage
         }
     }
 
-    private static IDalamudTextureWrap?[] CreateSlotIcons(IUiBuilder uiBuilder)
+    private static IDalamudTextureWrap?[] CreateSlotIcons()
     {
         var ret = new IDalamudTextureWrap?[13];
 
-        using var uldWrapper = uiBuilder.LoadUld("ui/uld/Character.uld");
+        using var uldWrapper = Svc.PluginInterface.UiBuilder.LoadUld("ui/uld/Character.uld");
 
         if (!uldWrapper.Valid)
         {

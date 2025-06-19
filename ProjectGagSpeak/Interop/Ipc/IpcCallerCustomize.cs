@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
@@ -20,17 +19,17 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     private readonly ICallGateSubscriber<Guid, int>                  EnableProfile;
     private readonly ICallGateSubscriber<Guid, int>                  DisableProfile;
 
-    public IpcCallerCustomize(ILogger<IpcCallerCustomize> logger, GagspeakMediator mediator, 
-        IDalamudPluginInterface pluginInterface) : base(logger, mediator)
+    public IpcCallerCustomize(ILogger<IpcCallerCustomize> logger, GagspeakMediator mediator)
+        : base(logger, mediator)
     {
         // setup IPC subscribers
-        ApiVersion = pluginInterface.GetIpcSubscriber<(int, int)>("CustomizePlus.General.GetApiVersion");
-        GetProfileList = pluginInterface.GetIpcSubscriber<IList<IPCProfileDataTuple>>("CustomizePlus.Profile.GetList");
-        GetActiveProfile = pluginInterface.GetIpcSubscriber<ushort, (int, Guid?)>("CustomizePlus.Profile.GetActiveProfileIdOnCharacter");
-        EnableProfile = pluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.EnableByUniqueId");
-        DisableProfile = pluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DisableByUniqueId");
+        ApiVersion = Svc.PluginInterface.GetIpcSubscriber<(int, int)>("CustomizePlus.General.GetApiVersion");
+        GetProfileList = Svc.PluginInterface.GetIpcSubscriber<IList<IPCProfileDataTuple>>("CustomizePlus.Profile.GetList");
+        GetActiveProfile = Svc.PluginInterface.GetIpcSubscriber<ushort, (int, Guid?)>("CustomizePlus.Profile.GetActiveProfileIdOnCharacter");
+        EnableProfile = Svc.PluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.EnableByUniqueId");
+        DisableProfile = Svc.PluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DisableByUniqueId");
         // set up event subscribers
-        OnProfileUpdate = pluginInterface.GetIpcSubscriber<ushort, Guid, object>("CustomizePlus.Profile.OnUpdate");
+        OnProfileUpdate = Svc.PluginInterface.GetIpcSubscriber<ushort, Guid, object>("CustomizePlus.Profile.OnUpdate");
         
         CheckAPI();
     }

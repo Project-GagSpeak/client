@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 using ImGuiNET;
@@ -40,17 +41,9 @@ public class VfxLoopItem
 public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
 {
     private readonly ResourceLoader _resourceLoader;
-    private readonly IClientState _clientState;
-    private readonly ITargetManager _targets;
-
-    public VfxSpawns(ILogger<VfxSpawns> logger,
-        GagspeakMediator mediator, ResourceLoader resourceLoader,
-        IClientState clientState, ITargetManager targets) : base(logger, mediator)
+    public VfxSpawns(ILogger<VfxSpawns> logger, GagspeakMediator mediator, ResourceLoader resourceLoader)
+        : base(logger, mediator)
     {
-        _resourceLoader = resourceLoader;
-
-        _clientState = clientState;
-        _targets = targets;
         _resourceLoader = resourceLoader;
 
         // Subscribe to the VfxActorRemoved event
@@ -76,8 +69,8 @@ public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
 
     public void OnSelf(string path, bool canLoop)
     {
-        IGameObject? playerObject = _clientState?.LocalPlayer;
-        if (playerObject == null) return;
+        if (!PlayerData.Available)
+            return;
 
         try
         {
@@ -103,7 +96,7 @@ public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
 
             // construct the actorVfx from the given objects and paths.
             var createdVfx = (VfxStruct*)_resourceLoader.ActorVfxCreate
-                (path, playerObject.Address, playerObject.Address, -1, (char)0, 0, (char)0);
+                (path, PlayerData.Object!.Address, PlayerData.Object!.Address, -1, (char)0, 0, (char)0);
 
             // create the actor for it & add it.
             Vfxs.Add(new ActorVfx(createdVfx, path), new(path, SpawnType.Self, canLoop));
@@ -116,7 +109,7 @@ public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
 
     public void OnTarget(string path, bool canLoop)
     {
-        var targetObject = _targets?.Target;
+        var targetObject = Svc.Targets.Target;
         if (targetObject == null) return;
 
         try

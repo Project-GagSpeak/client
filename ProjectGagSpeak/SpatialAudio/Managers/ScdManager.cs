@@ -1,22 +1,19 @@
 using Dalamud.Plugin.Services;
+using GagSpeak.Services.Configs;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 public class ScdManager
 {
     private readonly ILogger<ScdManager> _logger;
-    private readonly IDataManager _dataManager;
-    private string _configDirectory;
-    public string AudioFilesFolder => Path.Combine(_configDirectory, "audiofiles");
+    public string AudioFilesFolder => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "audiofiles");
     public string Extension { get; } = "scd";
 
-    public ScdManager(ILogger<ScdManager> logger, IDataManager dataManager, string configDirectory)
+    public ScdManager(ILogger<ScdManager> logger)
     {
         _logger = logger;
-        _dataManager = dataManager;
-        _configDirectory = configDirectory;
     }
 
-    public bool FileExists(string path) => _dataManager.FileExists(path) || GetReplacePath(path, out var _);
+    public bool FileExists(string path) => Svc.Data.FileExists(path) || GetReplacePath(path, out var _);
     public bool DoDebug(string path) => path.Contains($".{Extension}");
 
     public bool GetReplacePath(string path, out string replacePath)

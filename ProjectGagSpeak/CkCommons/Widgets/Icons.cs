@@ -43,7 +43,7 @@ public static class Icons
         }
         catch (Exception e)
         {
-            GagSpeak.StaticLog.Error(e, "Error drawing icon");
+            Svc.Logger.Error(e, "Error drawing icon");
         }
     }
 

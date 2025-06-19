@@ -1,15 +1,12 @@
-using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI.Utils;
 using Microsoft.Extensions.Hosting;
-using StructsPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
+using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace GagSpeak.Services;
 
@@ -18,40 +15,28 @@ namespace GagSpeak.Services;
 /// </summary>
 public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedService
 {
-    private readonly PlayerData _player;
-    private readonly IFramework _framework;
-    private readonly IObjectTable _objectTable;
-
     // The list of player characters, to associate their hashes with the player character name and addresses. Useful for indicating if they are visible or not.
     private readonly Dictionary<string, (string Name, nint Address)> _playerCharas;
     private readonly List<string> _notUpdatedCharas = [];
 
     private DateTime _delayedFrameworkUpdateCheck = DateTime.Now;
-    private ushort _lastZone = 0;
+    // Tracks the start and endpoints of these transitions / activities.
+    private uint _lastZone = 0;
     private bool _sentBetweenAreas = false;
     private bool _isInGpose = false;
     private bool _isInCutscene = false;
 
-    public bool Zoning => _player.IsZoning;
     public static short LastCommendationsCount = 0;
     public static Lazy<Dictionary<ushort, string>> WorldData { get; private set; }
-    public bool IsFrameworkUnloading => _framework.IsFrameworkUnloading;
 
-    public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator,
-        PlayerData clientMonitor, IDataManager gameData, IFramework framework,
-        IObjectTable objectTable, ITargetManager targets) : base(logger, mediator)
+    public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator) 
+        : base(logger, mediator)
     {
-        _player = clientMonitor;
-        _framework = framework;
-        _objectTable = objectTable;
-
-        /*ClientPlayerAddress = GetPlayerPointerAsync().GetAwaiter().GetResult();*/
-
         _playerCharas = new(StringComparer.Ordinal);
 
         WorldData = new(() =>
         {
-            return gameData.GetExcelSheet<Lumina.Excel.Sheets.World>(Dalamud.Game.ClientLanguage.English)!
+            return Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.World>(Dalamud.Game.ClientLanguage.English)!
                 .Where(w => w.IsPublic && !w.Name.IsEmpty)
                 .ToDictionary(w => (ushort)w.RowId, w => w.Name.ToString());
         });
@@ -59,26 +44,26 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // stores added pairs character name and addresses when added.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>
         {
-            if (_player.InPvP) return;
+            if (PlayerData.IsInPvP) return;
             var name = msg.Pair.PlayerName;
             if (string.IsNullOrEmpty(name)) return;
             var addr = _playerCharas.FirstOrDefault(f => string.Equals(f.Value.Name, name, StringComparison.Ordinal)).Value.Address;
             if (addr == nint.Zero) return;
             _ = RunOnFrameworkThread(() =>
             {
-                targets.Target = CreateGameObject(addr);
+                Svc.Targets.Target = CreateGameObject(addr);
             }).ConfigureAwait(false);
         });
     }
 
     #region FrameworkMethods
-    public TimeSpan GetUpdateDelta() => _framework.UpdateDelta;
+    public TimeSpan GetUpdateDelta() => Svc.Framework.UpdateDelta;
 
 
     /// <summary> Ensures that we are running on the games framework thread. Throws exception if we are not. </summary>
     public void EnsureIsOnFramework()
     {
-        if (!_framework.IsInFrameworkUpdateThread) throw new InvalidOperationException("Can only be run on Framework");
+        if (!Svc.Framework.IsInFrameworkUpdateThread) throw new InvalidOperationException("Can only be run on Framework");
     }
 
     /// <summary> Create a game object based off its pointer address reference </summary>
@@ -89,7 +74,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // ensure we are on the framework thread
         EnsureIsOnFramework();
         // then createObjectReference
-        return _objectTable.CreateObjectReference(reference);
+        return Svc.Objects.CreateObjectReference(reference);
     }
 
     /// <summary> An asyncronous task that create a game object based on its pointer address.</summary>
@@ -97,18 +82,18 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <returns></returns>Task of Dalamud.Game.ClientState.Objects.Types.GameObject, type of Gameobject</returns>
     public async Task<IGameObject?> CreateGameObjectAsync(nint reference)
     {
-        return await RunOnFrameworkThread(() => _objectTable.CreateObjectReference(reference)).ConfigureAwait(false);
+        return await RunOnFrameworkThread(() => Svc.Objects.CreateObjectReference(reference)).ConfigureAwait(false);
     }
 
     public IGameObject? SearchObjectTableById(ulong id)
     {
         EnsureIsOnFramework();
-        return _objectTable.SearchById(id);
+        return Svc.Objects.SearchById(id);
     }
 
     public async Task<IGameObject?> SearchObjectTableByIdAsync(uint id)
     {
-        return await RunOnFrameworkThread(() => _objectTable.SearchById(id)).ConfigureAwait(false);
+        return await RunOnFrameworkThread(() => Svc.Objects.SearchById(id)).ConfigureAwait(false);
     }
 
 
@@ -116,19 +101,19 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     public IPlayerCharacter? GetIPlayerCharacterFromObjectTable(IntPtr address)
     {
         EnsureIsOnFramework();
-        return (IPlayerCharacter?)_objectTable.CreateObjectReference(address);
+        return (IPlayerCharacter?)Svc.Objects.CreateObjectReference(address);
     }
 
     /// <summary> Get the player character from the object table based on the pointer address asynchronously</summary>
     public async Task<IPlayerCharacter?> GetIPlayerCharacterFromObjectTableAsync(IntPtr address)
     {
-        return await RunOnFrameworkThread(() => (IPlayerCharacter?)_objectTable.CreateObjectReference(address)).ConfigureAwait(false);
+        return await RunOnFrameworkThread(() => (IPlayerCharacter?)Svc.Objects.CreateObjectReference(address)).ConfigureAwait(false);
     }
 
     public List<IPlayerCharacter> GetObjectTablePlayers()
     {
         EnsureIsOnFramework();
-        return _objectTable.OfType<IPlayerCharacter>().ToList();
+        return Svc.Objects.OfType<IPlayerCharacter>().ToList();
     }
 
     public async Task<List<IPlayerCharacter>> GetObjectTablePlayersAsync()
@@ -140,7 +125,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <returns> The local player character's name hashed </returns>
     public async Task<string> GetPlayerNameHashedAsync()
     {
-        return await RunOnFrameworkThread(() => (_player.Name, (ushort)_player.ClientPlayer.HomeWorldId()).GetHash256()).ConfigureAwait(false);
+        return await RunOnFrameworkThread(() => (PlayerData.Name, (ushort)PlayerData.HomeWorldId).GetHash256()).ConfigureAwait(false);
     }
 
     /// <summary> Gets the player characters ID of the world they are currently in.</summary>
@@ -156,10 +141,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <param name="act">an action to run if any</param>
     public async Task RunOnFrameworkThread(Action act)
     {
-        if (!_framework.IsInFrameworkUpdateThread)
+        if (!Svc.Framework.IsInFrameworkUpdateThread)
         {
-            await _framework.RunOnFrameworkThread(act).ContinueWith((_) => Task.CompletedTask).ConfigureAwait(false);
-            while (_framework.IsInFrameworkUpdateThread) // yield the thread again, should technically never be triggered
+            await Svc.Framework.RunOnFrameworkThread(act).ContinueWith((_) => Task.CompletedTask).ConfigureAwait(false);
+            while (Svc.Framework.IsInFrameworkUpdateThread) // yield the thread again, should technically never be triggered
             {
                 Logger.LogTrace("Still on framework");
                 await Task.Delay(1).ConfigureAwait(false);
@@ -174,10 +159,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <param name="func">a function to run if any</param>"
     public async Task<T> RunOnFrameworkThread<T>(Func<T> func)
     {
-        if (!_framework.IsInFrameworkUpdateThread)
+        if (!Svc.Framework.IsInFrameworkUpdateThread)
         {
-            var result = await _framework.RunOnFrameworkThread(func).ContinueWith((task) => task.Result).ConfigureAwait(false);
-            while (_framework.IsInFrameworkUpdateThread) // yield the thread again, should technically never be triggered
+            var result = await Svc.Framework.RunOnFrameworkThread(func).ContinueWith((task) => task.Result).ConfigureAwait(false);
+            while (Svc.Framework.IsInFrameworkUpdateThread) // yield the thread again, should technically never be triggered
             {
                 Logger.LogTrace("Still on framework");
                 await Task.Delay(1).ConfigureAwait(false);
@@ -193,7 +178,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     {
         Logger.LogInformation("Starting OnFrameworkService");
         // subscribe to the framework updates
-        _framework.Update += FrameworkOnUpdate;
+        Svc.Framework.Update += FrameworkOnUpdate;
 
         Logger.LogInformation("Started OnFrameworkService");
         return Task.CompletedTask;
@@ -205,7 +190,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // unsubscribe from all mediator messages
         Mediator.UnsubscribeAll(this);
         // unsubscribe from the framework updates
-        _framework.Update -= FrameworkOnUpdate;
+        Svc.Framework.Update -= FrameworkOnUpdate;
         return Task.CompletedTask;
     }
 
@@ -221,7 +206,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     /// <summary> Run An action on the Framework Delayed by a set number of ticks. </summary>
     public async Task RunOnFrameworkTickDelayed(Action act, int ticks)
     {
-        await _framework.RunOnTick(() => act(), delayTicks: ticks);
+        await Svc.Framework.RunOnTick(() => act(), delayTicks: ticks);
     }
 
     /// <summary> The method that is called when the framework updates </summary>
@@ -231,12 +216,12 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     private unsafe void FrameworkOnUpdateInternal()
     {
         // If the local player is dead or null, return after setting the hasDied flag to true
-        if (!_player.IsPresent)
+        if (!PlayerData.Available)
             return;
 
         // we need to update our stored player characters to know if they are still valid, and to update our pair handlers
         // Begin by adding the range of existing player character keys
-        var playerCharacters = _objectTable.OfType<IPlayerCharacter>().ToList();
+        var playerCharacters = Svc.Objects.OfType<IPlayerCharacter>().ToList();
         _notUpdatedCharas.AddRange(_playerCharas.Keys);
 
         // for each object in the renderable object table
@@ -258,26 +243,26 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // check if we are in the middle of a delayed framework update
         var isNormalFrameworkUpdate = DateTime.Now < _delayedFrameworkUpdateCheck.AddSeconds(1);
 
-        if (_player.InCutscene && !_isInCutscene)
+        if (PlayerData.InCutscene && !_isInCutscene)
         {
             Logger.LogDebug("Cutscene start");
             _isInCutscene = true;
             Mediator.Publish(new CutsceneBeginMessage());
         }
-        else if (!_player.InCutscene && _isInCutscene)
+        else if (!PlayerData.InCutscene && _isInCutscene)
         {
             Logger.LogDebug("Cutscene end");
             _isInCutscene = false;
             Mediator.Publish(new CutsceneEndMessage());
         }
 
-        if (_player.InGPose && !_isInGpose)
+        if (PlayerData.IsInGPose && !_isInGpose)
         {
             Logger.LogDebug("Gpose start");
             _isInGpose = true;
             Mediator.Publish(new GPoseStartMessage());
         }
-        else if (!_player.InGPose && _isInGpose)
+        else if (!PlayerData.IsInGPose && _isInGpose)
         {
             Logger.LogDebug("Gpose end");
             _isInGpose = false;
@@ -285,10 +270,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         }
 
         // if we are zoning, 
-        if (_player.IsZoning)
+        if (PlayerData.IsZoning)
         {
             // get the zone
-            var zone = _player.TerritoryId;
+            var zone = PlayerContent.TerritoryID;
             // if the zone is different from the last zone
             if (_lastZone != zone)
             {
@@ -314,12 +299,12 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             _sentBetweenAreas = false;
             Mediator.Publish(new ZoneSwitchEndMessage());
             // if our commendation count is different, update it and invoke the event with the difference.
-            var newCommendations = StructsPlayerState.Instance()->PlayerCommendations;
+            var newCommendations = PlayerState.Instance()->PlayerCommendations;
             if (newCommendations != LastCommendationsCount)
             {
                 Logger.LogDebug("Our Previous Commendation Count was: " + LastCommendationsCount + " and our new commendation count is: " + newCommendations);
                 // publish to mediator if we are logged in
-                if (_player.IsLoggedIn)
+                if (PlayerData.IsLoggedIn)
                     Mediator.Publish(new CommendationsIncreasedMessage(newCommendations - LastCommendationsCount));
                 // update the count
                 LastCommendationsCount = newCommendations;
@@ -334,10 +319,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         if (isNormalFrameworkUpdate)
             return;
 
-        var localPlayer = _player.ClientPlayer!;
+        var localPlayer = PlayerData.Object;
 
         // check if we are at 1 hp, if so, grant the boundgee jumping achievement.
-        if (localPlayer.CurrentHp is 1)
+        if (localPlayer?.CurrentHp is 1)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientOneHp);
 
         // push the delayed framework update message to the mediator for things like the UI and the online player manager

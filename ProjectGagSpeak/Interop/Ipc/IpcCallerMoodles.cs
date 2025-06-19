@@ -43,42 +43,39 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly PlayerData _player;
     private readonly OnFrameworkService _frameworkUtils;
 
-    public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, IDalamudPluginInterface pi,
-        GagspeakMediator mediator, PlayerData clientMonitor, OnFrameworkService frameworkUtils)
+    public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
-        _player = clientMonitor;
         _frameworkUtils = frameworkUtils;
 
-        _moodlesApiVersion = pi.GetIpcSubscriber<int>("Moodles.Version");
+        _moodlesApiVersion = Svc.PluginInterface.GetIpcSubscriber<int>("Moodles.Version");
 
         // API Getter Functions
-        GetMoodleInfo = pi.GetIpcSubscriber<Guid, MoodlesStatusInfo>("Moodles.GetRegisteredMoodleInfo");
-        GetMoodlesInfo = pi.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetRegisteredMoodlesInfo");
-        GetPresetInfo = pi.GetIpcSubscriber<Guid, MoodlePresetInfo>("Moodles.GetRegisteredPresetInfo");
-        GetPresetsInfo = pi.GetIpcSubscriber<List<MoodlePresetInfo>>("Moodles.GetRegisteredPresetsInfo");
-        GetStatusManager = pi.GetIpcSubscriber<string>("Moodles.GetStatusManagerLP");
-        GetStatusManagerByName = pi.GetIpcSubscriber<string, string>("Moodles.GetStatusManagerByName");
-        GetStatusManagerInfo = pi.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetStatusManagerInfoLP");
-        GetStatusManagerInfoByName = pi.GetIpcSubscriber<string, List<MoodlesStatusInfo>>("Moodles.GetStatusManagerInfoByName");
+        GetMoodleInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, MoodlesStatusInfo>("Moodles.GetRegisteredMoodleInfo");
+        GetMoodlesInfo = Svc.PluginInterface.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetRegisteredMoodlesInfo");
+        GetPresetInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, MoodlePresetInfo>("Moodles.GetRegisteredPresetInfo");
+        GetPresetsInfo = Svc.PluginInterface.GetIpcSubscriber<List<MoodlePresetInfo>>("Moodles.GetRegisteredPresetsInfo");
+        GetStatusManager = Svc.PluginInterface.GetIpcSubscriber<string>("Moodles.GetStatusManagerLP");
+        GetStatusManagerByName = Svc.PluginInterface.GetIpcSubscriber<string, string>("Moodles.GetStatusManagerByName");
+        GetStatusManagerInfo = Svc.PluginInterface.GetIpcSubscriber<List<MoodlesStatusInfo>>("Moodles.GetStatusManagerInfoLP");
+        GetStatusManagerInfoByName = Svc.PluginInterface.GetIpcSubscriber<string, List<MoodlesStatusInfo>>("Moodles.GetStatusManagerInfoByName");
 
         // API Enactor Functions
-        _applyStatusByGuid = pi.GetIpcSubscriber<Guid, string, object>("Moodles.AddOrUpdateMoodleByGUIDByName");
-        _applyPresetByGuid = pi.GetIpcSubscriber<Guid, string, object>("Moodles.ApplyPresetByGUIDByName");
-        _applyStatusesFromPair = pi.GetIpcSubscriber<string, string, List<MoodlesStatusInfo>, object>("Moodles.ApplyStatusesFromGSpeakPair");
-        _removeStatusByGuids = pi.GetIpcSubscriber<List<Guid>, string, object>("Moodles.RemoveMoodlesByGUIDByName");
+        _applyStatusByGuid = Svc.PluginInterface.GetIpcSubscriber<Guid, string, object>("Moodles.AddOrUpdateMoodleByGUIDByName");
+        _applyPresetByGuid = Svc.PluginInterface.GetIpcSubscriber<Guid, string, object>("Moodles.ApplyPresetByGUIDByName");
+        _applyStatusesFromPair = Svc.PluginInterface.GetIpcSubscriber<string, string, List<MoodlesStatusInfo>, object>("Moodles.ApplyStatusesFromGSpeakPair");
+        _removeStatusByGuids = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, string, object>("Moodles.RemoveMoodlesByGUIDByName");
 
-        _setStatusManager = pi.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByName");
-        _clearStatusesFromManager = pi.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByName");
+        _setStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByName");
+        _clearStatusesFromManager = Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByName");
 
         // API Action Events:
-        OnStatusManagerModified = pi.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");
-        OnStatusSettingsModified = pi.GetIpcSubscriber<Guid, object>("Moodles.StatusModified");
-        OnPresetModified = pi.GetIpcSubscriber<Guid, object>("Moodles.PresetModified");
+        OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");
+        OnStatusSettingsModified = Svc.PluginInterface.GetIpcSubscriber<Guid, object>("Moodles.StatusModified");
+        OnPresetModified = Svc.PluginInterface.GetIpcSubscriber<Guid, object>("Moodles.PresetModified");
 
         CheckAPI();
     }
@@ -165,8 +162,8 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if(_player.ClientPlayer.NameWithWorld() is not { } name) return;
-            Parallel.ForEach(guidsToAdd, guid => _applyStatusByGuid.InvokeAction(guid, name));
+            var clientNameWorld = PlayerData.NameWithWorld;
+            Parallel.ForEach(guidsToAdd, guid => _applyStatusByGuid.InvokeAction(guid, PlayerData.NameWithWorld));
         });
     }
 
@@ -174,8 +171,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if (_player.ClientPlayer.NameWithWorld() is not { } name) return;
-            _applyPresetByGuid.InvokeAction(guid, name);
+            _applyPresetByGuid.InvokeAction(guid, PlayerData.NameWithWorld);
         });
     }
 
@@ -188,11 +184,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     /// <summary> This method removes the moodles from the client </summary>
     public async Task RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
     {
-        await ExecuteIpcOnThread(() =>
-        {
-            if (_player.ClientPlayer.NameWithWorld() is not { } name) return;
-            _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), name);
-        });
+        await ExecuteIpcOnThread(() => _removeStatusByGuids.InvokeAction(guidsToRemove.ToList(), PlayerData.NameWithWorld));
     }
 
     /// <summary> This method sets the status of the moodles for a game object specified by the pointer </summary>
@@ -205,8 +197,8 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         await ExecuteIpcOnThread(() =>
         {
-            if(_player.ClientPlayer.NameWithWorld() is not { } name) return;
-            _clearStatusesFromManager.InvokeAction(name);
+            var clientNameWorld = PlayerData.NameWithWorld;
+            _clearStatusesFromManager.InvokeAction(clientNameWorld);
         });
     }
 

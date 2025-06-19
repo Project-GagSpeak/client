@@ -251,7 +251,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             }
             else
             {
-                GagSpeak.StaticLog.Warning("No Config file found for: " + oldFormatFile);
+                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
                 _saver.Save(this);
                 return;
             }

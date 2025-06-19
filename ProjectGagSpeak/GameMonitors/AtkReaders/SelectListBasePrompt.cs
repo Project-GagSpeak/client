@@ -1,22 +1,12 @@
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Plugin.Services;
 using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Game.Readers;
 public abstract class SetupSelectListPrompt : BasePrompt
 {
     protected readonly ILogger _logger;
-    protected readonly IAddonLifecycle _addonLifecycle;
-    protected readonly ITargetManager _targets;
-
-    internal SetupSelectListPrompt(
-        ILogger logger,
-        IAddonLifecycle addonLifecycle,
-        ITargetManager targets)
+    public SetupSelectListPrompt(ILogger logger)
     {
         _logger = logger;
-        _addonLifecycle = addonLifecycle;
-        _targets = targets;
     }
 
     protected unsafe int? GetMatchingIndex(string[] entries, string nodeLabel)

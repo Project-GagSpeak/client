@@ -7,7 +7,7 @@ public static class ConfigMigrator
 {
     public static JObject MigrateMainConfig(JObject mainConfig, ConfigFileProvider fileNames)
     {
-        GagSpeak.StaticLog.Warning("Outdated MainConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated MainConfig detected, migrating to new format!");
 
         // Create a new JObject for the config section
         JObject config = new JObject();
@@ -120,7 +120,7 @@ public static class ConfigMigrator
 
     public static JObject MigrateGagRestrictionsConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
     {
-        GagSpeak.StaticLog.Warning("Outdated GagRestrictionConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated GagRestrictionConfig detected, migrating to new format!");
 
         // Create the new GagRestrictions object
         JObject gagRestrictions = new JObject();
@@ -202,7 +202,7 @@ public static class ConfigMigrator
 
     public static JObject MigrateWardrobeConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
     {
-        GagSpeak.StaticLog.Warning("Outdated RestraintConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated RestraintConfig detected, migrating to new format!");
 
         return oldConfig;
     }
@@ -210,7 +210,7 @@ public static class ConfigMigrator
     /// <summary> "Migrates" the few external values. Actual cursed items must be reset. </summary>
     public static JObject MigrateCursedLootConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
     {
-        GagSpeak.StaticLog.Warning("Outdated CursedLootConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated CursedLootConfig detected, migrating to new format!");
 
         var newFormat = new JObject()
         {
@@ -244,7 +244,7 @@ public static class ConfigMigrator
 
     public static JObject MigratePatternConfig(JObject oldConfig, ConfigFileProvider fileNames)
     {
-        GagSpeak.StaticLog.Warning("Outdated PatternConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated PatternConfig detected, migrating to new format!");
 
         var oldPatternArray = oldConfig["PatternStorage"]!["Patterns"];
         // for each of the pattern objects in the old array, construct a new one to add.
@@ -253,7 +253,7 @@ public static class ConfigMigrator
         // if the old pattern array is null, return an empty array.
         if (oldPatternArray is null)
         {
-            GagSpeak.StaticLog.Error("Old pattern array is null, returning empty array.");
+            Svc.Logger.Error("Old pattern array is null, returning empty array.");
             return new JObject()
             {
                 ["Version"] = 0,
@@ -297,7 +297,7 @@ public static class ConfigMigrator
 
     public static JObject MigrateAlarmsConfig(JObject oldConfig, ConfigFileProvider fileNames)
     {
-        GagSpeak.StaticLog.Warning("Outdated AlarmsConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated AlarmsConfig detected, migrating to new format!");
 
         var oldAlarmArray = oldConfig["AlarmStorage"]!["Alarms"];
         // for each of the pattern objects in the old array, construct a new one to add.
@@ -306,7 +306,7 @@ public static class ConfigMigrator
         // if the old pattern array is null, return an empty array.
         if (oldAlarmArray is null)
         {
-            GagSpeak.StaticLog.Error("Old alarm array is null, returning empty array.");
+            Svc.Logger.Error("Old alarm array is null, returning empty array.");
             return new JObject()
             {
                 ["Version"] = 0,
@@ -336,7 +336,7 @@ public static class ConfigMigrator
             ["Alarms"] = newAlarmArray
         };
 
-        GagSpeak.StaticLog.Information("New JOBject:" + newFormat.ToString(Formatting.Indented));
+        Svc.Logger.Information("New JOBject:" + newFormat.ToString(Formatting.Indented));
 
         // remove the backups of old versions.
         string oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
@@ -361,7 +361,7 @@ public static class ConfigMigrator
 
     public static JObject MigrateTriggersConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
     {
-        GagSpeak.StaticLog.Warning("Outdated TriggersConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated TriggersConfig detected, migrating to new format!");
 
         var newFormat = new JObject()
         {
@@ -421,10 +421,11 @@ public static class ConfigMigrator
 
     public static JObject MigrateServerConfig(JObject serverConfig, ConfigFileProvider fileNames)
     {
-        GagSpeak.StaticLog.Warning("Outdated ServerConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated ServerConfig detected, migrating to new format!");
         // we should search the directory to see if the servertags.json file exists, and if so remove it.
-        if(File.Exists(fileNames.ServerTags))
-            File.Delete(fileNames.ServerTags);
+        var serverTagsPath = Path.Combine(ConfigFileProvider.AssemblyLocation, "servertags.json");
+        if (File.Exists(serverTagsPath))
+            File.Delete(serverTagsPath);
 
         // nothing else needed that i can see.
         return serverConfig;
@@ -432,7 +433,7 @@ public static class ConfigMigrator
 
     public static JObject MigrateNicknamesConfig(JObject nicknamesConfig)
     {
-        GagSpeak.StaticLog.Warning("Outdated NicknamesConfig detected, migrating to new format!");
+        Svc.Logger.Warning("Outdated NicknamesConfig detected, migrating to new format!");
 
         // Ensure that the "ServerNicknames" object exists
         if (nicknamesConfig["ServerNicknames"] is not JObject)

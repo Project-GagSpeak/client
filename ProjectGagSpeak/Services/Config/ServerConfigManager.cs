@@ -11,16 +11,14 @@ public class ServerConfigManager
 {
     private readonly ILogger<ServerConfigManager> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly PlayerData _player;
     private readonly ServerConfigService _serverConfig;
     private readonly NicknamesConfigService _nicknameConfig;
 
     public ServerConfigManager(ILogger<ServerConfigManager> logger, GagspeakMediator mediator,
-        PlayerData clientMonitor, ServerConfigService serverConfig, NicknamesConfigService nicksConfig)
+        ServerConfigService serverConfig, NicknamesConfigService nicksConfig)
     {
         _logger = logger;
         _mediator = mediator;
-        _player = clientMonitor;
         _serverConfig = serverConfig;
         _nicknameConfig = nicksConfig;
     }
@@ -43,7 +41,7 @@ public class ServerConfigManager
     public bool TryGetAuthForCharacter([NotNullWhen(true)] out Authentication auth)
     {
         // fetch the players local content ID (matches regardless of name or world change) and the name & worldId.
-        var LocalContentID = _player.ContentIdAsync().GetAwaiter().GetResult();
+        var LocalContentID = Svc.Framework.RunOnFrameworkThread(() => PlayerData.ContentId).Result;
         // Once we have obtained the information, check to see if the currently logged in character has a matching authentication with the same local content ID.
         auth = ServerStorage.Authentications.FirstOrDefault(f => f.CharacterPlayerContentId == LocalContentID)!;
         if (auth is null)
@@ -82,20 +80,16 @@ public class ServerConfigManager
         if (auth == null) return;
 
         // fetch the players name and world ID.
-        var charaName = _player.NameAsync().GetAwaiter().GetResult();
-        var worldId = _player.HomeWorldIdAsync().GetAwaiter().GetResult();
+        var charaName = PlayerData.NameInstanced;
+        var worldId = PlayerData.HomeWorldIdInstanced;
 
         // update the name if it has changed.
         if (auth.CharacterName != charaName)
-        {
             auth.CharacterName = charaName;
-        }
 
         // update the world ID if it has changed.
         if (auth.WorldId != worldId)
-        {
             auth.WorldId = worldId;
-        }
     }
 
     public int AuthCount() => ServerStorage.Authentications.Count;
@@ -104,12 +98,12 @@ public class ServerConfigManager
 
     public bool CharacterHasSecretKey()
     {
-        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == _player.ContentId && !string.IsNullOrEmpty(a.SecretKey.Key));
+        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.ContentId && !string.IsNullOrEmpty(a.SecretKey.Key));
     }
 
     public bool AuthExistsForCurrentLocalContentId()
     {
-        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == _player.ContentId);
+        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.ContentId);
     }
 
     public void GenerateAuthForCurrentCharacter()
@@ -118,9 +112,9 @@ public class ServerConfigManager
         // generates a new auth object for the list of authentications with no secret key.
         var auth = new Authentication
         {
-            CharacterPlayerContentId = _player.ContentIdAsync().GetAwaiter().GetResult(),
-            CharacterName = _player.NameAsync().GetAwaiter().GetResult(),
-            WorldId = _player.HomeWorldIdAsync().GetAwaiter().GetResult(),
+            CharacterPlayerContentId = PlayerData.ContendIdInstanced,
+            CharacterName = PlayerData.NameInstanced,
+            WorldId = PlayerData.HomeWorldIdInstanced,
             IsPrimary = !ServerStorage.Authentications.Any(),
             SecretKey = new SecretKey()
         };

@@ -50,7 +50,7 @@ public class EquipmentDrawer
     private readonly CosmeticService _cosmetics;
     public EquipmentDrawer(ILogger<EquipmentDrawer> logger, IpcCallerGlamourer glamourer,
         RestrictionManager restrictions, FavoritesManager favorites, ItemService items,
-        TextureService textures, CosmeticService cosmetics, IDataManager data)
+        TextureService textures, CosmeticService cosmetics)
     {
         _logger = logger;
         _ipcGlamourer = glamourer;
@@ -59,8 +59,8 @@ public class EquipmentDrawer
         _cosmetics = cosmetics;
         _textures = textures;
         // Preassign these 10 itemCombo slots. They will be consistant throughout the plugins usage.
-        _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(data, e, items.ItemData, logger)).ToArray();
-        _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(items, data, f, logger)).ToArray();
+        _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, items.ItemData, logger)).ToArray();
+        _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(items, f, logger)).ToArray();
         _stainCombo = new GameStainCombo(_items.Stains, logger);
         _restrictionCombo = new RestrictionCombo(logger, favorites, () => 
         [ 

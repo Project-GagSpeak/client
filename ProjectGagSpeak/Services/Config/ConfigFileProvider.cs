@@ -10,8 +10,9 @@ public interface IHybridSavable : IHybridConfig<ConfigFileProvider> { }
 public class ConfigFileProvider : IConfigFileProvider
 {
     // Shared Config Directories
-    public static string AssemblyDirectory  { get; private set; } = string.Empty;
-    public static string GagSpeakDirectory  { get; private set; } = string.Empty;
+    public static string AssemblyLocation   => Svc.PluginInterface.AssemblyLocation.FullName;
+    public static string AssemblyDirectory  => Svc.PluginInterface.AssemblyLocation.Directory?.FullName ?? string.Empty;
+    public static string GagSpeakDirectory  => Svc.PluginInterface.ConfigDirectory.FullName;
     public static string EventDirectory     { get; private set; } = string.Empty;
     public static string FileSysDirectory   { get; private set; } = string.Empty;
     public static string ThumbnailDirectory { get; private set; } = string.Empty;
@@ -36,7 +37,6 @@ public class ConfigFileProvider : IConfigFileProvider
     // Shared Server Configs
     public readonly string Nicknames;
     public readonly string ServerConfig;
-    public readonly string ServerTags;
 
     // Unique Client Configs Per Account.
     public string GagRestrictions => Path.Combine(CurrentPlayerDirectory, "gag-restrictions.json");
@@ -49,11 +49,8 @@ public class ConfigFileProvider : IConfigFileProvider
     public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
     public string? CurrentUserUID { get; private set; } = null;
 
-    public ConfigFileProvider(IDalamudPluginInterface pi)
+    public ConfigFileProvider()
     {
-        AssemblyDirectory = pi.AssemblyLocation.Directory?.FullName ?? string.Empty;
-        GagSpeakDirectory = pi.ConfigDirectory.FullName;
-
         GagDataJson = Path.Combine(AssemblyDirectory, "MufflerCore", "GagData", "gag_data.json");
 
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
@@ -69,7 +66,6 @@ public class ConfigFileProvider : IConfigFileProvider
 
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");
-        ServerTags = Path.Combine(pi.AssemblyLocation.FullName, "servertags.json"); // this is depricated.
 
         // attempt to load in the UID if the config.json exists.
         if (File.Exists(MainConfig))
@@ -91,13 +87,13 @@ public class ConfigFileProvider : IConfigFileProvider
 
     public void UpdateConfigs(string uid)
     {
-        GagSpeak.StaticLog.Information("Updating Configs for UID: " + uid);
+        Svc.Logger.Information("Updating Configs for UID: " + uid);
         UpdateUserUID(uid);
 
         if (!Directory.Exists(CurrentPlayerDirectory))
             Directory.CreateDirectory(CurrentPlayerDirectory);
 
-        GagSpeak.StaticLog.Information("Configs Updated.");
+        Svc.Logger.Information("Configs Updated.");
         HasValidProfileConfigs = true;
     }
 

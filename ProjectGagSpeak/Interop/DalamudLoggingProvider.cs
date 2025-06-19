@@ -11,13 +11,11 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
 {
     // the concurrent dictionary of loggers that we have created
     private readonly ConcurrentDictionary<string, DalamudLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
-    private readonly IPluginLog _pluginLog;
 
-    public DalamudLoggingProvider(IPluginLog pluginLog)
+    public DalamudLoggingProvider()
     {
-        _pluginLog = pluginLog;
-        pluginLog.Information("DalamudLoggingProvider is initialized.");
-        _pluginLog.MinimumLogLevel = LogEventLevel.Verbose;
+        Svc.Logger.Information("DalamudLoggingProvider is initialized.");
+        Svc.Logger.MinimumLogLevel = LogEventLevel.Verbose;
     }
 
     public ILogger CreateLogger(string categoryName)
@@ -41,14 +39,14 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
         // now that we have the name properly, get/add it to our logger for dalamud
         try
         {
-            var newLogger = _loggers.GetOrAdd(catName, name => new DalamudLogger(name, _pluginLog));
+            var newLogger = _loggers.GetOrAdd(catName, name => new DalamudLogger(name, Svc.Logger));
             //_pluginLog.Information($"Logger {catName} is created."); // <--- FOR DEBUGGING
             return newLogger;
         }
         catch (Exception e)
         {
-            _pluginLog.Error($"Failed to create logger {catName}.");
-            _pluginLog.Error(e.ToString());
+            Svc.Logger.Error($"Failed to create logger {catName}.");
+            Svc.Logger.Error(e.ToString());
             throw;
         }
     }

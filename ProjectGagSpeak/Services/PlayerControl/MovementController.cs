@@ -17,7 +17,6 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 {
     private readonly TraitsCache _traitCache;
     private readonly GlobalPermissions _globals;
-    private readonly PlayerData _player;
     private readonly MovementDetours _moveDtor;
 
     // Fields useful for forced-follow behavior.
@@ -32,12 +31,11 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private bool _forceRunDuringTask = false;
 
     public MovementController(ILogger<KeystateController> logger, GagspeakMediator mediator,
-        TraitsCache traitsCache, GlobalPermissions globals, PlayerData player,
-        MovementDetours moveDtor) : base(logger, mediator)
+        TraitsCache traitsCache, GlobalPermissions globals, MovementDetours moveDtor)
+        : base(logger, mediator)
     {
         _traitCache = traitsCache;
         _globals = globals;
-        _player = player;
         _moveDtor = moveDtor;
 
         _timeoutTracker = new Stopwatch();
@@ -108,7 +106,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (!_timeoutTracker.IsRunning)
             return;
 
-        if (_player.ClientPlayer!.Position != _lastPos)
+        if (PlayerData.Object!.Position != _lastPos)
             RestartTimeoutTracker();
         if (_timeoutTracker.Elapsed > TimeSpan.FromSeconds(6))
             HandleNaturalExpiration();

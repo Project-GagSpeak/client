@@ -1,12 +1,12 @@
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
@@ -14,8 +14,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
-using GagSpeak.PlayerClient;
-using GagSpeak.Kinksters;
 
 
 namespace GagSpeak.Services;
@@ -32,26 +30,16 @@ public class ChatService : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly PuppeteerManager _puppetManager;
     private readonly TriggerHandler _triggerHandler;
-    private readonly PlayerData _player;
     private readonly DeathRollService _deathRolls;
-    private readonly IChatGui _chat;
 
     // private variables for chat message handling 
     public static readonly ConcurrentQueue<string> _messagesToSend = new();
     private readonly Stopwatch _delayTimer = new();
 
-    public ChatService(
-        ILogger<ChatService> logger,
-        GagspeakMediator mediator,
-        MainConfig config,
-        GlobalPermissions globals,
-        PairManager pairs,
-        GagRestrictionManager gags,
-        PuppeteerManager puppetManager,
-        TriggerHandler triggerHandler,
-        PlayerData client, 
-        DeathRollService deathRolls,
-        IChatGui chat)
+    public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator,
+        MainConfig config, GlobalPermissions globals, PairManager pairs,
+        GagRestrictionManager gags, PuppeteerManager puppetManager,
+        TriggerHandler triggerHandler, DeathRollService dr)
         : base(logger, mediator)
     {
         _config = config;
@@ -60,12 +48,10 @@ public class ChatService : DisposableMediatorSubscriberBase
         _pairs = pairs;
         _puppetManager = puppetManager;
         _triggerHandler = triggerHandler;
-        _player = client;
-        _deathRolls = deathRolls;
-        _chat = chat;
+        _deathRolls = dr;
 
         _delayTimer.Start();
-        _chat.ChatMessage += OnChatboxMessage;
+        Svc.Chat.ChatMessage += OnChatboxMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
     }
 
@@ -73,7 +59,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         base.Dispose(disposing);
         Logger.LogInformation("Disposing ChatService and unsubscribing from events.");
-        _chat.ChatMessage -= OnChatboxMessage;
+        Svc.Chat.ChatMessage -= OnChatboxMessage;
         _delayTimer?.Stop();
     }
 
@@ -100,7 +86,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
     {
-        if (_player.ClientPlayer is null || MainHub.IsConnected is false)
+        if (PlayerData.Object is null || MainHub.IsConnected is false)
             return; // Process as normal.
 
         // Check for things we dont need the player payload for.
@@ -109,15 +95,15 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         // Extract the sender name & world from the sender payload, defaulting to the client player if not available.
         var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
-        var senderName = senderPayload?.PlayerName ?? _player.ClientPlayer.Name.TextValue;
-        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? _player.ClientPlayer.HomeWorldName();
+        var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
+        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorld;
 
         // If the chat is not a GsChatChannel, don't process anything more.
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
 
         // if we are the sender, return after checking if what we sent matches any of our pairs triggers.
-        if (senderName + "@" + senderWorld == _player.ClientPlayer.NameWithWorld())
+        if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)
         {
             CheckOwnChatMessage(channel, msg.TextValue);
             return;
@@ -132,11 +118,11 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void CheckForPvpActivity(XivChatType type, SeString msg)
     {
-        if (!_player.InPvP || type is not (XivChatType)2874)
+        if (!PlayerData.IsInPvP || type is not (XivChatType)2874)
             return;
 
         // If we got a kill, fore achievement.
-        if (!_player.IsDead)
+        if (!PlayerData.IsDead)
         {
             Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
@@ -153,7 +139,7 @@ public class ChatService : DisposableMediatorSubscriberBase
             if (msg.Payloads.OfType<PlayerPayload>().FirstOrDefault() is { } otherPlayer)
                 _deathRolls.ProcessMessage(type, otherPlayer.PlayerName + "@" + otherPlayer.World.Value.Name.ToString(), msg);
             else
-                _deathRolls.ProcessMessage(type, _player.ClientPlayer.NameWithWorld(), msg);
+                _deathRolls.ProcessMessage(type, PlayerData.NameWithWorld, msg);
         }
     }
 
@@ -179,11 +165,11 @@ public class ChatService : DisposableMediatorSubscriberBase
             switch (bytes.Length)
             {
                 case 0:
-                    GagSpeak.StaticLog.Warning("[ChatSender] Cannot Send Empty message!");
+                    Svc.Logger.Warning("[ChatSender] Cannot Send Empty message!");
                     return;
 
                 case > 500:
-                    GagSpeak.StaticLog.Warning("[ChatSender] Message exceeded maximum byte length!");
+                    Svc.Logger.Warning("[ChatSender] Message exceeded maximum byte length!");
                     return;
 
                 default:
@@ -193,7 +179,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         }
         catch (Exception exception)
         {
-            GagSpeak.StaticLog.Error($"[ChatSender] Could not send Message!: {exception}");
+            Svc.Logger.Error($"[ChatSender] Could not send Message!: {exception}");
         }
     }
 
@@ -240,7 +226,7 @@ public class ChatService : DisposableMediatorSubscriberBase
                 remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
                 Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
 
-                // If the string contains the word "grovel", fire the grovel achievement.
+                // If the string contains the word "grovel", fire the grovel achievement. (Fix these to be ID's not names.)
                 if (remainingMessage.TextValue.Contains("grovel"))
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
                 else if (remainingMessage.TextValue.Contains("dance"))

@@ -128,14 +128,16 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
         using (ImRaii.Group())
         {
-            List<(int, string)> items = ClientAchievements.CompletedAchievements.Select(x => (x.AchievementId, x.Title)).ToList();
-            items.Insert(0, (0, "None"));
+            var completed = new SortedList<int, string>(ClientAchievements.CompletedAchievements.ToDictionary(x => x.AchievementId, x => x.Title));
+            completed.Add(0, "None"); // Add a default option for no title selected
 
             CkGui.ColorText("Select Title", ImGuiColors.ParsedGold);
             CkGui.HelpText("Select a title to display on your KinkPlate!--SEP--Can only select Achievement Titles you've completed!");
-            CkGui.DrawComboSearchable("##ProfileSelectTitle", 200f, items, (achievement) => achievement.Item2, true,
-                (i) => profile.KinkPlateInfo.ChosenTitleId = i.Item1,
-                initialSelectedItem: (profile.KinkPlateInfo.ChosenTitleId, ClientAchievements.GetTitleById(profile.KinkPlateInfo.ChosenTitleId)));
+            if (CkGuiUtils.IntCombo("##TitleSelect", 200f, profile.KinkPlateInfo.ChosenTitleId, out var newTitleId, completed.Keys,
+                num => completed.TryGetValue(num, out var title) ? title : "Unknown Title", "Select Title..."))
+            {
+                profile.KinkPlateInfo.ChosenTitleId = newTitleId;
+            }
         }
 
         using (ImRaii.Group())

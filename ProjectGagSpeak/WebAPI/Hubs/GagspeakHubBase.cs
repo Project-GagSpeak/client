@@ -13,20 +13,18 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
 {
     // make any accessible classes in here protected.
     protected readonly TokenProvider _tokenProvider;
-    protected readonly PlayerData _player;
     protected readonly OnFrameworkService _frameworkUtils;
 
     public GagspeakHubBase(ILogger logger, GagspeakMediator mediator, 
-        TokenProvider tokenProvider, PlayerData clientMonitor, 
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        TokenProvider tokenProvider, OnFrameworkService frameworkUtils)
+        : base(logger, mediator)
     {
         _tokenProvider = tokenProvider;
-        _player = clientMonitor;
         _frameworkUtils = frameworkUtils;
 
         // Should fire to all overrides.
-        Mediator.Subscribe<DalamudLoginMessage>(this, (_) => OnLogin());
-        Mediator.Subscribe<DalamudLogoutMessage>(this, (_) => OnLogout());
+        Svc.ClientState.Login += OnLogin;
+        Svc.ClientState.Logout += (_,_) => OnLogout();
     }
     protected static Version ClientVersion => Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0, 0);
     protected static Version ExpectedClientVersion = new Version(0, 0, 0, 0); // Set upon each connection
@@ -55,6 +53,14 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
     protected bool SuppressNextNotification = false;
     public static string AuthFailureMessage = string.Empty;
     public static int MainOnlineUsers => ServerInfo?.OnlineUsers ?? 0;
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        Svc.ClientState.Login -= OnLogin;
+        Svc.ClientState.Logout -= (_, _) => OnLogout();
+    }
+
 
     /// <summary> Creates a connection to our GagSpeakHub. </summary>
     /// <remarks> Not valid if secret key is not valid, account is not created, not logged in, or if client is connected already. </remarks>
@@ -142,7 +148,7 @@ public abstract class GagspeakHubBase : DisposableMediatorSubscriberBase
     /// <param name="token"> token that when canceled will stop the while loop from occurring, preventing infinite reloads/waits </param>
     protected async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {
-        while (!await _player.IsPresentAsync().ConfigureAwait(false) && !token.IsCancellationRequested)
+        while (!PlayerData.AvailableThreadSafe && !token.IsCancellationRequested)
         {
             Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
             await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);

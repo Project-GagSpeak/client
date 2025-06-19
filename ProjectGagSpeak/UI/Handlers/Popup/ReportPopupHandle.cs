@@ -25,8 +25,7 @@ internal class ReportPopupHandler : IPopupHandler
     private const string DefaultReportReason = "Describe why you are reporting this Kinkster here...";
 
     public ReportPopupHandler(MainHub hub, PairManager pairs,
-        CosmeticService cosmetics, KinkPlateService kinkplates, 
-        CkGui uiShared)
+        CosmeticService cosmetics, KinkPlateService kinkplates)
     {
         _hub = hub;
         _pairs = pairs;

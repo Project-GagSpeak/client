@@ -36,7 +36,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         GagRestrictionManager gags,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
-        PlayerData clientMonitor,
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {

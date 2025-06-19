@@ -73,7 +73,7 @@ public class AccountTab
             }
             catch (Exception ex)
             {
-                GagSpeak.StaticLog.Error($"Error: {ex}");
+                Svc.Logger.Error($"Error: {ex}");
             }
 
             // draw the UID header below this.
@@ -108,7 +108,7 @@ public class AccountTab
                 Environment.NewLine + "any support or tips are much appreciated ♥", () =>
                 {
                     try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-                    catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
+                    catch (Exception e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
                 });
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
 
@@ -119,21 +119,21 @@ public class AccountTab
                 Environment.NewLine + "any support / tips are much appreciated ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the Patreon link. {e.Message}"); }
+                catch (Exception e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
-                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the google form. {e.Message}"); }
+                catch (Exception e) { Svc.Logger.Error($"Failed to open the google form. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://docs.google.com/document/d/1nluBM2tsLzTrRdZEZN8FnpvOSPzdPrcH9R-SL78mJdA/edit?tab=t.0", UseShellExecute = true }); }
-                catch (Exception e) { GagSpeak.StaticLog.Error($"Failed to open the google doc. {e.Message}"); }
+                catch (Exception e) { Svc.Logger.Error($"Failed to open the google doc. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
@@ -146,7 +146,7 @@ public class AccountTab
                 }
                 catch (Exception e)
                 {
-                    GagSpeak.StaticLog.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
+                    Svc.Logger.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
                 }
             });
         }

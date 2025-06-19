@@ -15,13 +15,11 @@ public class Ipa_Cantonese_Handler
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     private readonly ILogger<Ipa_Cantonese_Handler> _logger; // Logger
     private readonly MainConfig _config; // The GagSpeak configuration
-    private readonly IDalamudPluginInterface _pluginInterface; // Plugin interface for file access
 
-    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, MainConfig config, IDalamudPluginInterface pi)
+    public Ipa_Cantonese_Handler(ILogger<Ipa_Cantonese_Handler> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _pluginInterface = pi;
         LoadConversionRules();
     }
 
@@ -30,7 +28,7 @@ public class Ipa_Cantonese_Handler
         var data_file = "MufflerCore\\StoredDictionaries\\yue.json";
         try
         {
-            var jsonFilePath = Path.Combine(_pluginInterface.AssemblyLocation.Directory?.FullName!, data_file);
+            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"[IPA Parser] File read: {data_file}", LoggerType.GarblerCore);

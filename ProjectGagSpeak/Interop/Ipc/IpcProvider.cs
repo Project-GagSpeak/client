@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Handlers;
@@ -19,8 +18,6 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
     private readonly ILogger<IpcProvider> _logger;
     private readonly PairManager _pairManager;
-    private readonly OnFrameworkService _frameworkUtils;
-    private readonly IDalamudPluginInterface _pi;
 
     public GagspeakMediator Mediator { get; init; }
 
@@ -50,13 +47,10 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private static ICallGateProvider<object>? GagSpeakDisposing; // FUNC
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
-        PairManager pairManager, OnFrameworkService frameworkUtils,
-        IDalamudPluginInterface pi)
+        PairManager pairManager, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _pairManager = pairManager;
-        _frameworkUtils = frameworkUtils;
-        _pi = pi;
         Mediator = mediator;
 
         Mediator.Subscribe<MoodlesReady>(this, (_) => NotifyListChanged());
@@ -97,22 +91,22 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     {
         _logger.LogInformation("Starting IpcProviderService");
 
-        GagSpeakApiVersion = _pi.GetIpcProvider<int>("GagSpeak.GetApiVersion");
+        GagSpeakApiVersion = Svc.PluginInterface.GetIpcProvider<int>("GagSpeak.GetApiVersion");
         GagSpeakApiVersion.RegisterFunc(() => GagspeakApiVersion);
 
-        GagSpeakReady = _pi.GetIpcProvider<object>("GagSpeak.Ready");
-        GagSpeakDisposing = _pi.GetIpcProvider<object>("GagSpeak.Disposing");
+        GagSpeakReady = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Ready");
+        GagSpeakDisposing = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Disposing");
 
-        _handledVisiblePairs = _pi.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
+        _handledVisiblePairs = Svc.PluginInterface.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
         _handledVisiblePairs.RegisterFunc(GetVisiblePairs);
 
         // Register our action.
-        _applyStatusesToPairRequest = _pi.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
+        _applyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
         _applyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
 
         // This is an action that we send off whenever our pairs update.
-        GagSpeakListUpdated = _pi.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
-        GagSpeakTryMoodleStatus = _pi.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.TryOnMoodleStatus");
+        GagSpeakListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
+        GagSpeakTryMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.TryOnMoodleStatus");
 
         _logger.LogInformation("Started IpcProviderService");
         NotifyReady();

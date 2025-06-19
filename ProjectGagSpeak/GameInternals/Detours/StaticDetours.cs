@@ -34,19 +34,10 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly MufflerService _muffler;
     private readonly OnFrameworkService _frameworkUtils;
 
-    public StaticDetours(
-        ILogger<StaticDetours> logger,
-        GagspeakMediator mediator,
-        GlobalPermissions globals,
-        GagRestrictionManager gags,
-        GlamourHandler glamourHandler,
-        LootHandler lootHandler,
-        TraitsCache traitCache,
-        TriggerHandler triggerHandler,
-        MufflerService muffler,
-        OnFrameworkService frameworkUtils,
-        ISigScanner ss,
-        IGameInteropProvider gip)
+    public StaticDetours(ILogger<StaticDetours> logger, GagspeakMediator mediator,
+        GlobalPermissions globals, GagRestrictionManager gags, GlamourHandler glamourHandler,
+        LootHandler lootHandler, TraitsCache traitCache, TriggerHandler triggerHandler,
+        MufflerService muffler, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         _globals = globals;
@@ -59,20 +50,20 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         _frameworkUtils = frameworkUtils;
 
         Logger.LogInformation("Initializing all StaticDetours!");
-        gip.InitializeFromAttributes(this);
+        Svc.Hook.InitializeFromAttributes(this);
 
-        ActionEffectHook = gip.HookFromAddress<ProcessActionEffect>(ss.ScanText(Signatures.ReceiveActionEffect), ActionEffectDetour);
+        ActionEffectHook = Svc.Hook.HookFromAddress<ProcessActionEffect>(Svc.SigScanner.ScanText(Signatures.ReceiveActionEffect), ActionEffectDetour);
         
-        OnExecuteEmoteHook = gip.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
-        ProcessEmoteHook = gip.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmote, ProcessEmoteDetour);
+        OnExecuteEmoteHook = Svc.Hook.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
+        ProcessEmoteHook = Svc.Hook.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmote, ProcessEmoteDetour);
         
-        UseActionHook = gip.HookFromAddress<ActionManager.Delegates.UseAction>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
+        UseActionHook = Svc.Hook.HookFromAddress<ActionManager.Delegates.UseAction>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
         
-        FireCallback = Marshal.GetDelegateForFunctionPointer<FireCallbackFuncDelegate>(ss.ScanText(Signatures.Callback));
+        FireCallback = Marshal.GetDelegateForFunctionPointer<FireCallbackFuncDelegate>(Svc.SigScanner.ScanText(Signatures.Callback));
 
-        ItemInteractedHook = gip.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
+        ItemInteractedHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
 
-        GearsetInternalHook = gip.HookFromAddress<RaptureGearsetModule.Delegates.EquipGearsetInternal>((nint)RaptureGearsetModule.MemberFunctionPointers.EquipGearsetInternal, GearsetInternalDetour);
+        GearsetInternalHook = Svc.Hook.HookFromAddress<RaptureGearsetModule.Delegates.EquipGearsetInternal>((nint)RaptureGearsetModule.MemberFunctionPointers.EquipGearsetInternal, GearsetInternalDetour);
 
         EnableHooks();
     }

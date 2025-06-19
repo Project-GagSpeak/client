@@ -118,7 +118,7 @@ public unsafe partial class StaticDetours
             {
                 CallbackValues.Add($"    Value {i}: [input: {values[i]}/{values[i]?.GetType().Name}] -> {DecodeValue(atkValues[i])})");
             }
-            GagSpeak.StaticLog.Verbose($"Firing callback: " + Base->Name.Read() + ", valueCount = " + values.Length + ", " +
+            Svc.Logger.Verbose($"Firing callback: " + Base->Name.Read() + ", valueCount = " + values.Length + ", " +
                 "updateStatte = " + updateState + ", values:\n" + string.Join("\n", CallbackValues), LoggerType.HardcorePrompt);
 
             if (FireCallback is not null)
@@ -127,7 +127,7 @@ public unsafe partial class StaticDetours
             }
             else
             {
-                GagSpeak.StaticLog.Error("FireCallback somehow not yet Initialized!");
+                Svc.Logger.Error("FireCallback somehow not yet Initialized!");
             }
         }
         finally

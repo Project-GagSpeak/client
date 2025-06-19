@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
-public partial class CkGui
+public static partial class CkGui
 {
     /// <seealso cref="ImUtf8.TextRightAligned(ReadOnlySpan{byte}, float)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

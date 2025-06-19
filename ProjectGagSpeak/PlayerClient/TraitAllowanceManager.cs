@@ -155,7 +155,7 @@ public class TraitAllowanceManager : IHybridSavable
         }
         catch (Exception e)
         {
-            GagSpeak.StaticLog.Error(e, "Failed to load TraitsManager.");
+            Svc.Logger.Error(e, "Failed to load TraitsManager.");
         }
     }
 

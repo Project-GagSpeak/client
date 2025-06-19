@@ -220,7 +220,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         }
         else
         {
-            GagSpeak.StaticLog.Warning("Cursed Loot Config file not found. Attempting to find old config.");
+            Svc.Logger.Warning("Cursed Loot Config file not found. Attempting to find old config.");
             var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "cursedloot.json");
             if (File.Exists(oldFormatFile))
             {
@@ -230,7 +230,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
             }
             else
             {
-                GagSpeak.StaticLog.Warning("No Config file found for: " + oldFormatFile);
+                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
                 // create a new file with default values.
                 _saver.Save(this);
                 return;
@@ -339,7 +339,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
         }
         catch (Exception ex)
         {
-            GagSpeak.StaticLog.Error($"Failed to deserialize loot item: {ex}");
+            Svc.Logger.Error($"Failed to deserialize loot item: {ex}");
             return false;
         }
     }

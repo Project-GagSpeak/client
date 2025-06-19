@@ -11,6 +11,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
+using GagSpeak.CkCommons.Gui.Utility;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 public class PatternHubTab : DisposableMediatorSubscriberBase
@@ -199,21 +200,20 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(tagsComboWidth);
-            CkGui.DrawComboSearchable("##patternTagsFilter", tagsComboWidth, _shareHub.FetchedTags.ToImmutableList(), (i) => i, false,
-                (tag) =>
+            if (CkGuiUtils.StringCombo("##pTagFilter", tagsComboWidth, string.Empty, out var selected, _shareHub.FetchedTags, "Add Tag.."))
+            {
+                if (string.IsNullOrWhiteSpace(selected))
+                    return;
+                // append the tag to the search tags if it does not exist.
+                if (!_shareHub.SearchTags.Contains(selected))
                 {
-                    if(string.IsNullOrWhiteSpace(tag))
-                        return;
-                    // append the tag to the search tags if it does not exist.
-                    if (!_shareHub.SearchTags.Contains(tag))
-                    {
-                        // if there is not a comma at the end of the string, add one.
-                        if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
-                            _shareHub.SearchTags += ", ";
-                        // append the tag to it.
-                        _shareHub.SearchTags += tag.ToLower();
-                    }
-                }, defaultPreviewText: "Add Tag..");
+                    // if there is not a comma at the end of the string, add one.
+                    if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
+                        _shareHub.SearchTags += ", ";
+                    // append the tag to it.
+                    _shareHub.SearchTags += selected.ToLower();
+                }
+            }
             CkGui.AttachToolTip("Select from an existing list of tags." +
                 "--SEP--This will help make your Pattern easier to find.");
         }

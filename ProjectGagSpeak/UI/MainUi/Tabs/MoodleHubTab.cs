@@ -218,24 +218,22 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(tagsComboWidth);
-            CkGui.DrawComboSearchable("##moodleTagsFilter", tagsComboWidth, _shareHub.FetchedTags.ToImmutableList(), (i) => i, false,
-                (tag) =>
-                {
-                    if (tag.IsNullOrWhitespace())
-                        return;
+            if (CkGuiUtils.StringCombo("##mTagFilter", tagsComboWidth, string.Empty, out var selected, _shareHub.FetchedTags, "Add Tag.."))
+            {
+                if (string.IsNullOrWhiteSpace(selected))
+                    return;
 
-                    // append the tag to the search tags if it does not exist.
-                    if (!_shareHub.SearchTags.Contains(tag))
-                    {
-                        // if there is not a comma at the end of the string, add one.
-                        if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
-                            _shareHub.SearchTags += ", ";
-                        // append the tag to it.
-                        _shareHub.SearchTags += tag.ToLower();
-                    }
-                }, defaultPreviewText: "Add Tag..");
-            CkGui.AttachToolTip("Select from an existing list of tags." +
-                "--SEP--This will help make your Moodle easier to find.");
+                // append the tag to the search tags if it does not exist.
+                if (!_shareHub.SearchTags.Contains(selected))
+                {
+                    // if there is not a comma at the end of the string, add one.
+                    if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
+                        _shareHub.SearchTags += ", ";
+                    // append the tag to it.
+                    _shareHub.SearchTags += selected.ToLower();
+                }
+            }
+            CkGui.AttachToolTip("Select from an existing list of tags.--SEP--This will help make your Moodle easier to find.");
         }
     }
 }

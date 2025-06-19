@@ -15,18 +15,15 @@ public class GagSpeakLoc : IDisposable, IHostedService
     private readonly Dalamud.Localization _localization;
     private readonly MainConfig _mainConfig;
     private readonly TutorialService _tutorialService;
-    private readonly IDalamudPluginInterface _pi;
 
-    public GagSpeakLoc(ILogger<GagSpeakLoc> logger, Dalamud.Localization localization,
-        MainConfig configService, TutorialService tutorialService, IDalamudPluginInterface pi)
+    public GagSpeakLoc(ILogger<GagSpeakLoc> logger, Dalamud.Localization localization, MainConfig config, TutorialService tutorial)
     {
         _logger = logger;
         _localization = localization;
-        _mainConfig = configService;
-        _tutorialService = tutorialService;
-        _pi = pi;
+        _mainConfig = config;
+        _tutorialService = tutorial;
 
-        _localization.SetupWithLangCode(_pi.UiLanguage);
+        _localization.SetupWithLangCode(Svc.PluginInterface.UiLanguage);
         GSLoc.ReInitialize();
 
         // Update our forced stay entries as well.
@@ -38,12 +35,12 @@ public class GagSpeakLoc : IDisposable, IHostedService
         _tutorialService.InitializeTutorialStrings();
 
         // subscribe to any localization changes.
-        _pi.LanguageChanged += LoadLocalization;
+        Svc.PluginInterface.LanguageChanged += LoadLocalization;
     }
 
     public void Dispose()
     {
-        _pi.LanguageChanged -= LoadLocalization;
+        Svc.PluginInterface.LanguageChanged -= LoadLocalization;
     }
 
     private void LoadLocalization(string languageCode)

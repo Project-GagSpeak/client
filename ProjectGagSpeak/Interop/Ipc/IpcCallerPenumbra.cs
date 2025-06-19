@@ -66,29 +66,29 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private RemoveTemporaryModSettingsPlayer    RemoveTempMod;         // Removes a temporary mod we set. Used for cleanup.
     private RemoveAllTemporaryModSettingsPlayer RemoveAllTempMod;      // Removes all temporary mods we set. Used for cleanup.
 
-    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator,
-        OnFrameworkService frameworkUtils, IDalamudPluginInterface pi) : base(logger, mediator)
+    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
+        : base(logger, mediator)
     {
-        OnInitialized = Initialized.Subscriber(pi, () => 
+        OnInitialized = Initialized.Subscriber(Svc.PluginInterface, () => 
         {
             APIAvailable = true;
             Mediator.Publish(new PenumbraInitializedMessage());
         });
-        OnDisposed = Disposed.Subscriber(pi, () => Mediator.Publish(new PenumbraDisposedMessage()));
+        OnDisposed = Disposed.Subscriber(Svc.PluginInterface, () => Mediator.Publish(new PenumbraDisposedMessage()));
 
-        TooltipSubscriber = ChangedItemTooltip.Subscriber(pi);
-        ItemClickedSubscriber = ChangedItemClicked.Subscriber(pi);
-        OnRedrawFinished = GameObjectRedrawn.Subscriber(pi, ObjectRedrawnEvent);
+        TooltipSubscriber = ChangedItemTooltip.Subscriber(Svc.PluginInterface);
+        ItemClickedSubscriber = ChangedItemClicked.Subscriber(Svc.PluginInterface);
+        OnRedrawFinished = GameObjectRedrawn.Subscriber(Svc.PluginInterface, ObjectRedrawnEvent);
 
-        Version = new ApiVersion(pi);
-        RedrawClient = new RedrawObject(pi);
-        GetModList = new GetModList(pi);
-        GetActiveCollection = new GetCollection(pi);
-        GetModSettingsAll = new GetAvailableModSettings(pi);
-        GetModSettingsSelected = new GetCurrentModSettings(pi);
-        SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(pi);
-        RemoveTempMod = new RemoveTemporaryModSettingsPlayer(pi);
-        RemoveAllTempMod = new RemoveAllTemporaryModSettingsPlayer(pi);
+        Version = new ApiVersion(Svc.PluginInterface);
+        RedrawClient = new RedrawObject(Svc.PluginInterface);
+        GetModList = new GetModList(Svc.PluginInterface);
+        GetActiveCollection = new GetCollection(Svc.PluginInterface);
+        GetModSettingsAll = new GetAvailableModSettings(Svc.PluginInterface);
+        GetModSettingsSelected = new GetCurrentModSettings(Svc.PluginInterface);
+        SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(Svc.PluginInterface);
+        RemoveTempMod = new RemoveTemporaryModSettingsPlayer(Svc.PluginInterface);
+        RemoveAllTempMod = new RemoveAllTemporaryModSettingsPlayer(Svc.PluginInterface);
 
         CheckAPI();
     }

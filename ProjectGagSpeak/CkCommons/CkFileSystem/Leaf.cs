@@ -51,7 +51,7 @@ public partial class CkFileSystem<T>
 
         void IWritePath.UpdateState(bool state)
         {
-            GagSpeak.StaticLog.Debug("Why are you trying to update the leafs state?");
+            Svc.Logger.Debug("Why are you trying to update the leafs state?");
         }
     }
 }

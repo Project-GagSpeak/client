@@ -54,12 +54,18 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _visuals = visuals;
         _achievements = achievements;
 
-        Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearClientDataForProfile());
+        Svc.ClientState.Logout += (_,_) => OnLogout();
     }
 
-    private void ClearClientDataForProfile()
+    protected override void Dispose(bool disposing)
     {
-        // Clear the folder paths for the configs, and then set the valid configs variable to false.
+        base.Dispose(disposing);
+        Svc.ClientState.Logout -= (_, _) => OnLogout();
+    }
+
+    private void OnLogout()
+    {
+        Logger.LogInformation("Clearing Client Data for Profile on Logout!");
         _fileNames.ClearUidConfigs();
     }
 

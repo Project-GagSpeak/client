@@ -1,13 +1,12 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using ImGuiNET;
 using OtterGui.Text;
 
 namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
-public partial class CkGui
+public static partial class CkGui
 {
     /// <summary> A helper function to attach a tooltip to a section in the UI currently hovered. </summary>
     /// <remarks> If the string is null, empty, or whitespace, will do early return at no performance impact. </remarks>

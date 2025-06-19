@@ -33,10 +33,10 @@ public partial class StaticDetours
             await _frameworkUtils.RunOnFrameworkThread(() =>
             {
                 var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
-                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Emote Caller";
+                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Emote Caller";
                 var emoteName = EmoteService.EmoteName(emoteId);
                 var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
-                var targetName = (targetObj as IPlayerCharacter)?.NameWithWorld() ?? "No Player Was Target";
+                var targetName = (targetObj as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Target";
                 Logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
 
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);

@@ -23,16 +23,14 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly UiFactory _uiFactory;
     private readonly WindowSystem _windowSystem;
     private readonly UiFileDialogService _fileService;
-    private readonly IUiBuilder _uiBuilder;
 
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
         MainConfig mainConfig, ServerConfigService serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
-        UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog,
-        IUiBuilder uiBuilder) : base(logger, mediator)
+        UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog) 
+        : base(logger, mediator)
     {
         _logger = logger;
-        _uiBuilder = uiBuilder;
         _mainConfig = mainConfig;
         _windowSystem = windowSystem;
         _uiFactory = uiFactory;
@@ -41,13 +39,13 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         _mainTabMenu = menuTabs;
 
         // disable the UI builder while in g-pose 
-        _uiBuilder.DisableGposeUiHide = true;
+        Svc.PluginInterface.UiBuilder.DisableGposeUiHide = true;
         // add the event handlers for the UI builder's draw event
-        _uiBuilder.Draw += Draw;
+        Svc.PluginInterface.UiBuilder.Draw += Draw;
         // subscribe to the UI builder's open config UI event
-        _uiBuilder.OpenConfigUi += ToggleUi;
+        Svc.PluginInterface.UiBuilder.OpenConfigUi += ToggleUi;
         // subscribe to the UI builder's open main UI event
-        _uiBuilder.OpenMainUi += ToggleMainUi;
+        Svc.PluginInterface.UiBuilder.OpenMainUi += ToggleMainUi;
 
         // for each window in the collection of window mediator subscribers
         foreach (var window in windows)
@@ -250,9 +248,9 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             window.Dispose();
 
         // unsubscribe from the draw, open config UI, and main UI
-        _uiBuilder.Draw -= Draw;
-        _uiBuilder.OpenConfigUi -= ToggleUi;
-        _uiBuilder.OpenMainUi -= ToggleMainUi;
+        Svc.PluginInterface.UiBuilder.Draw -= Draw;
+        Svc.PluginInterface.UiBuilder.OpenConfigUi -= ToggleUi;
+        Svc.PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
     }
 
     /// <summary> Draw the windows system and file dialogue managers </summary>

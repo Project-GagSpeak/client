@@ -5,7 +5,7 @@ namespace GagSpeak.CkCommons.Gui;
 #nullable disable
 
 // DragDrop helpers, pulled from ECommons.ImGuiMethods.ImGuiDragDrop for reference, credit to them for original code. This is an adaptation.
-public partial class CkGui
+public static partial class CkGui
 {
     /// <summary> A helper function to attach a tooltip to a section in the UI currently hovered. </summary>
     public static unsafe void SetDragDropPayload<T>(string type, T data, ImGuiCond condition = 0) where T : unmanaged
