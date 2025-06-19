@@ -73,23 +73,17 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         if (MainHub.ConnectionResponse is not { } connectionInfo)
             return;
 
-        // 1. See if this was a simple reconnect, or a change in user profiles.
-        if (_fileNames.CurrentUserUID != MainHub.UID)
-        {
-            Logger.LogInformation($"Connected with different UID than previous! Updating UID to [{_fileNames.CurrentUserUID}]");
-            _fileNames.UpdateConfigs(MainHub.UID);
+        // 1. Load in the updated config storages for the profile.
+        _fileNames.UpdateConfigs(MainHub.UID);
 
-            // 1b. Load in the updated config storages for the profile.
-            Logger.LogInformation($"Loading Configs for [{MainHub.UID}]'s Profile!");
-            _gags.Load();
-            _restrictions.Load();
-            _restraints.Load();
-            _cursedLoot.Load();
-            _puppeteer.Load();
-            _alarms.Load();
-            _triggers.Load();
-            // Maybe favorites and trait allowances here but idk.
-        }
+        Logger.LogInformation($"Loading Configs for [{MainHub.UID}]'s Profile!");
+        _gags.Load();
+        _restrictions.Load();
+        _restraints.Load();
+        _cursedLoot.Load();
+        _puppeteer.Load();
+        _alarms.Load();
+        _triggers.Load();
 
         // 2. Load in the data from the server into our storages.
         Logger.LogInformation("Syncing Data with Connection DTO");

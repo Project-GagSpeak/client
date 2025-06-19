@@ -20,7 +20,6 @@ namespace GagSpeak.CkCommons.Gui.Wardrobe;
 // it might be wise to move the selector draw into the panel so we have more control over the editor covering both halves.
 public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<RestraintsPanel> _logger;
     private readonly RestraintSetFileSelector _selector;
     private readonly ActiveItemsDrawer _activeDrawer;
     private readonly RestraintManager _manager;
@@ -42,7 +41,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator)
     {
-        _logger = logger;
         _selector = selector;
         _activeDrawer = activeDrawer;
         _manager = manager;
@@ -155,31 +153,36 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var col = btnHovered ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
         wdl.AddRectFilled(drawRegion.Pos, drawRegion.Pos + buttonWrapSize, CkColor.SideButton.Uint(), rounding, ImDrawFlags.RoundCornersBottomRight);
         wdl.AddRectFilled(drawRegion.Pos, drawRegion.Pos + buttonSize, col, rounding, ImDrawFlags.RoundCornersBottomRight);
-        
+
         ImGui.SetCursorPosX(cursorPos.X + style.WindowPadding.X);
-        ImUtf8.TextFrameAligned(_selector.Selected!.Label);
+        if (_selector.Selected is not { } selected)
+        {
+            ImUtf8.TextFrameAligned("Nothing Selected!");
+            return;
+        }
+        ImUtf8.TextFrameAligned(selected.Label);
 
         if (btnHovered)
         {
             if(ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                _manager.StartEditing(_selector.Selected!);
+                _manager.StartEditing(selected);
             CkGui.AttachToolTip("Double-Click me to open the editor!");
         }
 
         ImGui.SetCursorPosY(cursorPos.Y + ImGui.GetFrameHeight());
         using (ImRaii.Child("DescriptionChild", new Vector2(leftWidth, ImGui.GetTextLineHeightWithSpacing() * 4), false, WFlags.AlwaysUseWindowPadding))
-            CkGui.TextWrapped(_selector.Selected!.Description);
+            CkGui.TextWrapped(selected.Description);
 
         // Draw the IconsRow.
         var trueCol = 0xFFFFFFFF;
         var falseCol = CkColor.FancyHeaderContrast.Uint();
-        var helmAttribute = _selector.Selected.HeadgearState != OptionalBool.Null;
-        var visorAttribute = _selector.Selected.VisorState != OptionalBool.Null;
-        var weaponAttribute = _selector.Selected.WeaponState != OptionalBool.Null;
-        var redrawAttribute = _selector.Selected.DoRedraw;
-        var layersAttribute = _selector.Selected.Layers.Count > 0;
-        var modsAttribute = _selector.Selected.RestraintMods.Count > 0;
-        var moodleAttribute = _selector.Selected.RestraintMoodles.Count > 0;
+        var helmAttribute = selected.HeadgearState != OptionalBool.Null;
+        var visorAttribute = selected.VisorState != OptionalBool.Null;
+        var weaponAttribute = selected.WeaponState != OptionalBool.Null;
+        var redrawAttribute = selected.DoRedraw;
+        var layersAttribute = selected.Layers.Count > 0;
+        var modsAttribute = selected.RestraintMods.Count > 0;
+        var moodleAttribute = selected.RestraintMoodles.Count > 0;
 
         // Get the remaining Y content region, and set our cursorPos to be center of it.
         using (ImRaii.Group())

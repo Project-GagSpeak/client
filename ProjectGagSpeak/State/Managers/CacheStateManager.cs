@@ -57,6 +57,12 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearCaches());
     }
 
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        ClearCaches();
+    }
+
     private async void ClearCaches()
     {
         Logger.LogInformation("------- Clearing all caches on logout -------");

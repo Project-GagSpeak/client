@@ -34,9 +34,9 @@ public static class ActionTooltipEx
         seString.Append(trait switch
         {
             Traits.Gagged => "With a muffled voice, the spell falters — its power silenced before it can take form.",
-            Traits.Blindfolded => "Unable to track your target’s movements through sight, swift attacks find themselves faltering and missing their mark.",
-            Traits.Weighty => "Burdened by unseen weight, each step a sluggish effort. Swift movement is but a memory, replaced only by hobbled steps.",
-            Traits.Immobile => "No matter how you strain, your body refuses to budge. Locked in place and helpless to act.",
+            Traits.Blindfolded => "Unable to see your target’s movements, swift attacks from afar seem to always miss their mark.",
+            Traits.Weighty => "Weighted by your binds, swift movement is now but a memory — replaced only by hobbled steps.",
+            Traits.Immobile => "No matter how you strain, your body refuses to budge — locked in place and helpless to act.",
             Traits.BoundLegs => "Your legs make an effort to act, but the binds offer no give — stopping the action before it begins.",
             Traits.BoundArms => "Your arms make an effort to act, but the binds offer no give — stopping the action before it begins.",
             _ => "ERR.UNK_TRAIT"

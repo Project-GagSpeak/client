@@ -19,10 +19,15 @@ public unsafe partial class StaticDetours
     /// <remarks> This is called BEFORE anything is applied to the character. </remarks>
     private unsafe int GearsetInternalDetour(RaptureGearsetModule* module, int gearsetId, byte glamourPlateId)
     {
-        // Inform the handler to ensure we block all StateChanged calls until this is finished.
-        _glamourHandler.OnEquipGearsetInternal(gearsetId, glamourPlateId);
-        // Then return the original. Nothing else needs to be done here.
-        return GearsetInternalHook.Original(module, gearsetId, glamourPlateId);
+        var priorGearsetId = module->CurrentGearsetIndex;
+        // process the original now.
+        var ret = GearsetInternalHook.Original(module, gearsetId, glamourPlateId);
+
+        // if it is different, we need to inform the handler.
+        if(gearsetId != priorGearsetId)
+            _glamourHandler.OnEquipGearsetInternal(gearsetId, glamourPlateId);
+
+        return ret;
     }
 
 }

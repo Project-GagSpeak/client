@@ -92,7 +92,7 @@ public class ModCache
 
         // output the mods that were removed as well.
         removed = prevMods.Except(_finalMods).ToList();
-        return anyChange;
+        return anyChange || removed.Any();
     }
 
     #region DebugHelper

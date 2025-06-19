@@ -21,8 +21,6 @@ public class MoodleHandler
         _ipc = ipc;
     }
 
-    private static IEnumerable<Guid> ActiveStatusIds => MoodleCache.IpcData.DataInfo.Keys;
-
     /// <summary> Add a single Moodle to the GlamourCache for the key. </summary>
     public bool TryAddMoodleToCache(CombinedCacheKey key, Moodle mod)
         => _cache.AddMoodle(key, mod);
@@ -74,7 +72,10 @@ public class MoodleHandler
     /// </remarks>
     private async Task ApplyMoodleCache()
     {
-        await _ipc.ApplyOwnStatusByGUID(_cache.FinalStatusIds.Except(ActiveStatusIds));
+        var idsToApply = MoodleCache.IpcData.DataInfo.Any()
+            ? _cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys)
+            : _cache.FinalStatusIds;
+        await _ipc.ApplyOwnStatusByGUID(idsToApply);
         _logger.LogDebug("Applied all cached moodles to the client.", LoggerType.IpcMoodles);
     }
 

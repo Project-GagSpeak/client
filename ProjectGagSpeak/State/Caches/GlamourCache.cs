@@ -200,7 +200,7 @@ public class GlamourCache
             anyChanges |= true;
         }
 
-        return anyChanges;
+        return anyChanges || removedSlots.Any();
     }
 
     public bool UpdateFinalMetaCache()

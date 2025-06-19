@@ -24,11 +24,25 @@ public struct MetaDataStruct
         Weapon = OptionalBool.Null;
     }
 
-    public MetaDataStruct(OptionalBool headgear = default, OptionalBool visor = default, OptionalBool weapon = default)
+    public MetaDataStruct(OptionalBool headgear)
     {
-        Headgear = headgear == default ? OptionalBool.Null : headgear;
-        Visor = visor == default ? OptionalBool.Null : visor;
-        Weapon = weapon == default ? OptionalBool.Null : weapon;
+        Headgear = headgear;
+        Visor = OptionalBool.Null;
+        Weapon = OptionalBool.Null;
+    }
+    
+    public MetaDataStruct(OptionalBool headgear, OptionalBool visor)
+    {
+        Headgear = headgear;
+        Visor = visor;
+        Weapon = OptionalBool.Null;
+    }
+
+    public MetaDataStruct(OptionalBool headgear, OptionalBool visor, OptionalBool weapon)
+    {
+        Headgear = headgear;
+        Visor = visor;
+        Weapon = weapon;
     }
 
     public bool AnySet()

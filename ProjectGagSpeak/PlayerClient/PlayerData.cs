@@ -5,13 +5,17 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
-using StructsPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
+using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
+using Aetheryte = Lumina.Excel.Sheets.Aetheryte;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace GagSpeak.PlayerClient;
 
@@ -57,11 +61,33 @@ public class PlayerData : IHostedService
     }
 
     public static readonly int MaxLevel = 100;
-    public static IntPtr ClientPlayerAddress { get; private set; } = IntPtr.Zero; // Only use this if we run into problems with the normal one.
-    public static unsafe short Commendations => StructsPlayerState.Instance()->PlayerCommendations;
+    public ClientLanguage ClientLanguage => _clientState.ClientLanguage;
+    public IPlayerCharacter? Object => _clientState.LocalPlayer; // Nullable.
+    public bool Available => _clientState.LocalPlayer is not null;
+    public unsafe static bool AvailableThreadSafe => GameObjectManager.Instance()->Objects.IndexSorted[0].Value is not null;
+    public unsafe ushort JobId => PlayerState.Instance()->CurrentClassJobId;
+    public static unsafe short Commendations => PlayerState.Instance()->PlayerCommendations;
     public static unsafe bool IsInDuty => GameMain.Instance()->CurrentContentFinderConditionId is not 0; // alternative method from IDutyState
     public static unsafe bool IsOnIsland => MJIManager.Instance()->IsPlayerInSanctuary is 1;
-    public ClientLanguage ClientLanguage => _clientState.ClientLanguage;
+
+    public bool IsLoggedIn => _clientState.IsLoggedIn;
+    public bool InQuestEvent => _condition[ConditionFlag.OccupiedInQuestEvent];
+    public bool IsChocoboRacing => _condition[ConditionFlag.ChocoboRacing];
+    public bool IsZoning => _condition[ConditionFlag.BetweenAreas] || _condition[ConditionFlag.BetweenAreas51];
+    public bool InDungeonDuty => _condition[ConditionFlag.BoundByDuty] || _condition[ConditionFlag.BoundByDuty56] || _condition[ConditionFlag.BoundByDuty95] || _condition[ConditionFlag.InDeepDungeon];
+    public bool InPvP => _clientState.IsPvP;
+    public bool InGPose => _clientState.IsGPosing;
+    public bool InCutscene => !InDungeonDuty && _condition[ConditionFlag.OccupiedInCutSceneEvent] || _condition[ConditionFlag.WatchingCutscene78];
+    public bool InMainCity => _gameData.GetExcelSheet<Aetheryte>()?.Any(x => x.IsAetheryte && x.Territory.RowId == _clientState.TerritoryType && x.Territory.Value.TerritoryIntendedUse.Value.RowId is 0) ?? false;
+    public string MainCityName => _gameData.GetExcelSheet<Aetheryte>()?.FirstOrDefault(x => x.IsAetheryte && x.Territory.RowId == _clientState.TerritoryType && x.Territory.Value.TerritoryIntendedUse.Value.RowId is 0).PlaceName.ToString() ?? "Unknown";
+    public ushort TerritoryId => _clientState.TerritoryType;
+    public TerritoryType TerritoryType => _gameData.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(TerritoryId) ?? default;
+    public TerritoryIntendedUseEnum TerritoryIntendedUse => (TerritoryIntendedUseEnum)(_gameData.GetExcelSheet<TerritoryType>().GetRowOrDefault(TerritoryId)?.TerritoryIntendedUse.ValueNullable?.RowId ?? default);
+
+    public int PartySize => _partyList.Length;
+    public bool InSoloParty => _partyList.Length <= 1 && IsInDuty;
+
+    // These throw errors when accessed outside the mainThread.
     public IPlayerCharacter? ClientPlayer => _clientState.LocalPlayer;
     public bool IsPresent => _clientState.LocalPlayer is not null && _clientState.LocalPlayer.IsValid();
     public async Task<bool> IsPresentAsync() => await RunOnFrameworkThread(() => IsPresent).ConfigureAwait(false);
@@ -81,23 +107,6 @@ public class PlayerData : IHostedService
     public uint Health => _clientState.LocalPlayer?.CurrentHp ?? 0;
     public ulong TargetObjectId => _clientState.LocalPlayer?.TargetObjectId ?? ulong.MaxValue;
 
-    public bool IsLoggedIn => _clientState.IsLoggedIn;
-    public bool InQuestEvent => _condition[ConditionFlag.OccupiedInQuestEvent];
-    public bool IsChocoboRacing => _condition[ConditionFlag.ChocoboRacing];
-    public bool IsZoning => _condition[ConditionFlag.BetweenAreas] || _condition[ConditionFlag.BetweenAreas51];
-    public bool InDungeonDuty => _condition[ConditionFlag.BoundByDuty] || _condition[ConditionFlag.BoundByDuty56] || _condition[ConditionFlag.BoundByDuty95] || _condition[ConditionFlag.InDeepDungeon];
-    public bool InPvP => _clientState.IsPvP;
-    public bool InGPose => _clientState.IsGPosing;
-    public bool InCutscene => !InDungeonDuty && _condition[ConditionFlag.OccupiedInCutSceneEvent] || _condition[ConditionFlag.WatchingCutscene78];
-    public bool InMainCity => _gameData.GetExcelSheet<Aetheryte>()?.Any(x => x.IsAetheryte && x.Territory.RowId == _clientState.TerritoryType && x.Territory.Value.TerritoryIntendedUse.Value.RowId is 0) ?? false;
-    public string MainCityName => _gameData.GetExcelSheet<Aetheryte>()?.FirstOrDefault(x => x.IsAetheryte && x.Territory.RowId == _clientState.TerritoryType && x.Territory.Value.TerritoryIntendedUse.Value.RowId is 0).PlaceName.ToString() ?? "Unknown";
-    public ushort TerritoryId => _clientState.TerritoryType;
-    public TerritoryType TerritoryType => _gameData.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(TerritoryId) ?? default;
-    public TerritoryIntendedUseEnum TerritoryIntendedUse => (TerritoryIntendedUseEnum)(_gameData.GetExcelSheet<TerritoryType>().GetRowOrDefault(TerritoryId)?.TerritoryIntendedUse.ValueNullable?.RowId ?? default);
-
-    public int PartySize => _partyList.Length;
-    public bool InSoloParty => _partyList.Length <= 1 && IsInDuty;
-
     public void OpenMapWithMapLink(MapLinkPayload mapLink) => _gameGui.OpenMapWithMapLink(mapLink);
     public DeepDungeonType? GetDeepDungeonType()
     {
@@ -116,20 +125,21 @@ public class PlayerData : IHostedService
 
     private void OnJobChanged(uint jobId)
     {
-        if (!_clientState.IsLoggedIn) return;
+        if (!_clientState.IsLoggedIn)
+            return;
         _mediator.Publish(new JobChangeMessage(jobId));
     }
 
-    private void OnLogin()
+    private unsafe void OnLogin()
     {
         _logger.LogInformation("Logged in");
-        unsafe { OnFrameworkService.LastCommendationsCount = StructsPlayerState.Instance()->PlayerCommendations; }
+        OnFrameworkService.LastCommendationsCount = PlayerState.Instance()->PlayerCommendations;
         _mediator.Publish(new DalamudLoginMessage());
     }
 
     private void OnLogout(int type, int code)
     {
-        GagSpeak.StaticLog.Information("Player Logged out from their client with type: " + type + " and code: " + code);
+        _logger.LogInformation($"Logged out from client with type: {type} and code: {code}");
         _mediator.Publish(new DalamudLogoutMessage(type, code));
     }
 
@@ -154,13 +164,13 @@ public class PlayerData : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("Starting PlayerData");
+        _logger.LogInformation("Starting PlayerData");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        GagSpeak.StaticLog.Information("Stopping PlayerData");
+        _logger.LogInformation("Stopping PlayerData");
         return Task.CompletedTask;
     }
 }

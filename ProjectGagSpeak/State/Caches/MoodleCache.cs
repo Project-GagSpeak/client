@@ -82,7 +82,7 @@ public class MoodleCache
         bool anyRemoved = false;
         foreach (var key in allKeys)
         {
-            _logger.LogDebug($"Removing GlamourCache key ([{key.Item1}] - [{key.Item2}])");
+            _logger.LogDebug($"Removing Cache key ([{key.Item1}] - [{key.Item2}])");
             anyRemoved |= _moodles.Remove(key);
         }
         return anyRemoved;
@@ -127,7 +127,7 @@ public class MoodleCache
         }
 
         removedStatusIds = prevIds.Except(_finalStatusIds);
-        return anyChanges;
+        return anyChanges || removedStatusIds.Any();
     }
 
 

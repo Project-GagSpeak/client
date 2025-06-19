@@ -99,6 +99,10 @@ public class GlamourListener : IDisposable
         // if the finalization type was a gearset finalized, remove the gearset from the ipc blocker filter.
         if (finalizationType is StateFinalizationType.Gearset)
         {
+            // if there was not a gearset blocker that means we are just spamming the same gearset, so dont process it.
+            if (!_handler.BlockIpcCalls.HasFlag(IpcBlockReason.Gearset))
+                return;
+
             _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
             _handler.OnEquipGearsetFinalized();
         }

@@ -1,5 +1,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Game.Gui;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -39,16 +40,18 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
 
     /// <summary> The currently banned actions determined by the <see cref="_cache"/>'s _finalTrait's </summary>
     private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
-    
-    /// <summary> Trait -> Override ActionId map, ordered by priority of application. </summary>
-    private ImmutableDictionary<uint, Traits> _traitActionIds = ImmutableDictionary<uint, Traits>.Empty
-        .Add(2886, Traits.Gagged)
-        .Add(99, Traits.Blindfolded)
-        .Add(151, Traits.Weighty)
-        .Add(2883, Traits.Immobile)
-        .Add(55, Traits.BoundLegs)
-        .Add(68, Traits.BoundArms);
 
+    /// <summary> Trait -> Override ActionId map, ordered by priority of application. </summary>
+    private static readonly (uint Id, Traits Traits)[] _traitActionIds =
+    [
+        (2886, Traits.Gagged),
+        (99, Traits.Blindfolded),
+        (151, Traits.Weighty),
+        (2883, Traits.Immobile),
+        (55, Traits.BoundLegs),
+        (68, Traits.BoundArms)
+    ];
+    
     private Traits _sources = Traits.None;
 
     public unsafe HotbarActionController(
@@ -84,7 +87,10 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     {
         // If the traits changed, update the slots.
         if (newSources != _sources)
+        {
+            _sources = newSources;
             UpdateSlots();
+        }
     }
 
     private void UpdateSlots()
@@ -139,7 +145,8 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
                 // Apply the first matching trait override
                 foreach (var (actionId, trait) in _traitActionIds)
                 {
-                    if (props.HasAny(trait))
+                    // If the property exists and we have that trait enabled, set the slot to the restricted item.
+                    if (props.HasAny(trait) && _sources.HasAny(trait))
                     {
                         slot->Set(hotbarModule->UIModule, RaptureHotbarModule.HotbarSlotType.Action, actionId);
                         break;
@@ -165,7 +172,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                hotbarModule->LoadSavedHotbar(_player.ClientPlayer.ClassJobId(), (uint)i);
+                hotbarModule->LoadSavedHotbar(_player.JobId, (uint)i);
         }
     }
 
@@ -174,11 +181,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     /// </summary>
     private void OnJobChange(uint jobId)
     {
-        // if we have no controlling traits, simply return.
-        //if (_sources is Traits.None)
-        //    return;
-
-        Logger.LogInformation($"Job Changed to [{((JobType)jobId)}], recalculating Banned Actions.");
+        Logger.LogDebug($"Job Changed to [{((JobType)jobId)}], recalculating Banned Actions.");
         _bannedActions = (JobType)jobId switch
         {
             JobType.ADV => RestrictedActions.Adventurer,
@@ -227,7 +230,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
             _ => ImmutableDictionary<uint, Traits>.Empty,
         };
         // Update the slots based on the new job.
-        SetBannedSlots();
+        UpdateSlots();
     }
 
     /// <summary>
@@ -240,21 +243,18 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     private unsafe void OnActionTooltip(AtkUnitBase* addon)
     {
         // Ensure tooltip exists.
-        if (addon is null)
-        {
-            Logger.LogWarning("AddonEvent.PostRequestedUpdated fired without valid addon");
+        if (addon is null || _gameGui.HoveredAction is not { } hoveredAct)
             return;
-        }
 
-        // Ensure the hovered action is a restricted action.
-        var actionId = _gameGui.HoveredAction?.ActionID ?? 0;
-        if (!_traitActionIds.ContainsKey(actionId))
-        {
-            Logger.LogDebug($"Action ({actionId}) is not a trait restriction, skipping tooltip update.", LoggerType.HardcoreActions);
+        // Must be an action tooltip.
+        if (hoveredAct.ActionKind is not HoverActionKind.Action)
             return;
-        }
 
-        Logger.LogDebug($"Action ({actionId}) is a trait restriction, updating tooltip.", LoggerType.HardcoreActions);
+        // Must be a TraitAction Action.
+        if (!_traitActionIds.Any(x => x.Id == hoveredAct.ActionID))
+            return;
+
+        Logger.LogTrace($"Action ({hoveredAct.ActionID}) is a TraitRestriction tooltip, altaring display.", LoggerType.HardcoreActions);
         // hide away the recast container, as it is not needed. (but maybe make it work?)
         var castRecastContainer = addon->GetNodeById(13);
         if (castRecastContainer is not null)
@@ -264,12 +264,12 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
         }
 
         // Set common actions.
-        ActionTooltipEx.ReplaceTextNodeText(addon, TITLE_NODE_ID, "Hardcore Trait"); // Usually spell (GCD) or ability (oGCD)
+        ActionTooltipEx.ReplaceTextNodeText(addon, ACTION_TYPE_NODE_ID, "Hardcore Trait"); // Usually spell (GCD) or ability (oGCD)
         ActionTooltipEx.ReplaceTextNodeText(addon, RANGE_NODE_ID, "0y");
         ActionTooltipEx.ReplaceTextNodeText(addon, RADIUS_NODE_ID, "0y");
 
         // Replace title and description based on the trait.
-        var trait = _traitActionIds.GetValueOrDefault(actionId);
+        var trait = _traitActionIds.FirstOrDefault(x => x.Id == hoveredAct.ActionID).Traits;
         var title = ActionTooltipEx.GetTitle(trait);
         var desc  = ActionTooltipEx.GetDescription(trait, _cache.GetSourceName(trait));
         ActionTooltipEx.ReplaceTextNodeText(addon, TITLE_NODE_ID, title);
