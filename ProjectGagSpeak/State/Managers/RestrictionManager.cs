@@ -28,7 +28,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
 
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
     private CharaActiveRestrictions? _serverRestrictionData = null;
-
+    private Dictionary<int, RestrictionItem> _activeItems = new();
     public RestrictionManager(
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
@@ -47,28 +47,29 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
     }
 
-    public CharaActiveRestrictions? ServerRestrictionData => _serverRestrictionData;
+    // ----------- STORAGE --------------
     public RestrictionStorage Storage { get; private set; } = new RestrictionStorage();
     public RestrictionItem? ItemInEditor => _itemEditor.ItemInEditor;
-    public RestrictionItem[] AppliedRestrictions { get; private set; } = Enumerable.Repeat(new RestrictionItem(), Constants.MaxRestrictionSlots).ToArray();
 
+    // ----------- ACTIVE DATA --------------
+    public CharaActiveRestrictions? ServerRestrictionData => _serverRestrictionData;
+    public IReadOnlyDictionary<int, RestrictionItem> ActiveItems => _activeItems;
+
+    // TODO: Revise later.
     /// <summary> Holds any restriction active from OTHER SOURCES. Is not used in Caching information. </summary>
     public HashSet<OccupiedRestriction> OccupiedRestrictions { get; private set; }
 
-
     /// <summary> Updates the manager with the latest data from the server. </summary>
+    /// <remarks> The CacheStateManager must be handled seperately here. </remarks>
     public void LoadServerData(CharaActiveRestrictions serverData)
     {
         _serverRestrictionData = serverData;
-        foreach (var (slot, idx) in AppliedRestrictions.WithIndex())
-        {
+        // iterate through each of the server's restriction data. If the identifer is not empty, add it.
+        _activeItems.Clear();
+        foreach (var (slot, idx) in serverData.Restrictions.WithIndex())
             if (slot.Identifier != Guid.Empty && Storage.TryGetRestriction(slot.Identifier, out var item))
-            {
-                AppliedRestrictions[idx] = item;
-                AddOccupiedRestriction(item, ManagerPriority.Restrictions);
-            }
-        }
-        // _managerCache.UpdateCache(AppliedRestrictions);
+                _activeItems.TryAdd(idx, item);
+        Logger.LogInformation("Syncronized all Active Restrictions with Client-Side Manager.");
     }
 
     public RestrictionItem CreateNew(string name, RestrictionType type)
@@ -201,7 +202,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // assign the information if present.
         if (Storage.TryGetRestriction(id, out item))
         {
-            AppliedRestrictions[layerIdx] = item;
+            _activeItems[layerIdx] = item;
             AddOccupiedRestriction(item, ManagerPriority.Restrictions);
             return true;
         }
@@ -250,10 +251,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layerIdx, removedRestriction, enactor);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetRestriction(removedRestriction, out var matchedItem))
+        if (Storage.TryGetRestriction(removedRestriction, out item))
         {
-            AppliedRestrictions[layerIdx] = new RestrictionItem();
-            RemoveOccupiedRestriction(matchedItem, ManagerPriority.Restrictions);
+            _activeItems[layerIdx] = new RestrictionItem();
+            RemoveOccupiedRestriction(item, ManagerPriority.Restrictions);
             return true;
         }
 

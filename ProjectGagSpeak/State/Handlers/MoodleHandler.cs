@@ -1,6 +1,8 @@
 using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
+using System.Threading.Tasks;
 
 namespace GagSpeak.State.Handlers;
 
@@ -19,21 +21,67 @@ public class MoodleHandler
         _ipc = ipc;
     }
 
-    // Likely makes things fucky with timed moodles but yeah, idk.
-    // Could add more overhead but not in the mood, just want efficiency rn.
+    private static IEnumerable<Guid> ActiveStatusIds => MoodleCache.IpcData.DataInfo.Keys;
+
+    /// <summary> Add a single Moodle to the GlamourCache for the key. </summary>
+    public bool TryAddMoodleToCache(CombinedCacheKey key, Moodle mod)
+        => _cache.AddMoodle(key, mod);
+
+    /// <summary> Add Multiple Moodles to the GlamourCache for the key. </summary>
+    public bool TryAddMoodleToCache(CombinedCacheKey key, IEnumerable<Moodle> mods)
+        => _cache.AddMoodle(key, mods);
+
+    /// <summary> Remove a single key from the GlamourCache. </summary>
+    public bool TryRemMoodleFromCache(CombinedCacheKey key)
+        => _cache.RemoveMoodle(key);
+
+    /// <summary> Remove Multiple keys from the GlamourCache. </summary>
+    public bool TryRemMoodleFromCache(IEnumerable<CombinedCacheKey> keys)
+        => _cache.RemoveMoodle(keys);
+
+    /// <summary> Clears the Caches contents and updates the visuals after. </summary>
+    public async Task ClearCache()
+    {
+        _logger.LogDebug("Clearing Moodles Cache.");
+        _cache.ClearCache();
+        await UpdateMoodleCache();
+    }
+
+    /// <summary>
+    ///     Updates the Final Glamour Cache, and then applies the visual updates.
+    /// </summary>
+    public async Task UpdateMoodleCache()
+    {
+        // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
+        if (_cache.UpdateFinalCache(out var removedMoodles))
+        {
+            _logger.LogDebug($"FinalMoodles Cache was updated!", LoggerType.VisualCache);
+            if (removedMoodles.Any())
+                await RestoreAndReapplyCache(removedMoodles);
+            else
+                await ApplyMoodleCache();
+        }
+        else
+            _logger.LogTrace("No change in FinalMoodles Cache.", LoggerType.VisualCache);
+    }
+
     /// <summary>
     ///     Applies all cached restricted moodles to the client.
     /// </summary>
-    public async Task ApplyMoodleCache()
+    /// <remarks>
+    ///     Likely makes things fucky with timed moodles but yeah, idk.
+    ///     Could add more overhead but not in the mood, just want efficiency rn.
+    /// </remarks>
+    private async Task ApplyMoodleCache()
     {
-        await _ipc.ApplyOwnStatusByGUID(_cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys));
+        await _ipc.ApplyOwnStatusByGUID(_cache.FinalStatusIds.Except(ActiveStatusIds));
         _logger.LogDebug("Applied all cached moodles to the client.", LoggerType.IpcMoodles);
     }
 
     /// <summary>
     ///     Removes moodles no longer meant to be present, then reapplies restricted ones
     /// </summary>
-    public async Task RestoreAndReapplyCache(IEnumerable<Guid> moodlesToRemove)
+    private async Task RestoreAndReapplyCache(IEnumerable<Guid> moodlesToRemove)
     {
         await _ipc.RemoveOwnStatusByGuid(moodlesToRemove);
         _logger.LogDebug($"Removed Moodles: {string.Join(", ", moodlesToRemove)}", LoggerType.IpcMoodles);
@@ -50,6 +98,7 @@ public class MoodleHandler
         await _ipc.ApplyOwnStatusByGUID(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]);
     }
 
+    // Hopefully never use this.
     public async Task ApplyMoodle(IEnumerable<Moodle> moodles)
     {
         await Parallel.ForEachAsync(moodles, async (moodle, _) => await ApplyMoodle(moodle));
@@ -63,10 +112,7 @@ public class MoodleHandler
         await _ipc.RemoveOwnStatusByGuid((moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]).Except(_cache.FinalStatusIds));
     }
 
-    /// <summary>
-    ///     Hopefully we never have to fun this...
-    /// </summary>
-    /// <remarks> Assumes they have already been removed from the finalMoodles cache. </remarks>
+    // Hopefully never use this.
     public async Task RemoveMoodle(IEnumerable<Moodle> moodles)
     {
         await Parallel.ForEachAsync(moodles, async (moodle, _) => await RemoveMoodle(moodle));

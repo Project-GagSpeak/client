@@ -56,16 +56,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         return isPair;
     }
 
+    // Re-Route directly to the CacheStateManager.
     public async Task SyncServerData(ConnectionResponse connectionDto)
-    {
-        // Reload the applied data.
-        _gags.LoadServerData(connectionDto.SyncedGagData);
-        _restrictions.LoadServerData(connectionDto.SyncedRestrictionsData);
-        _restraints.LoadServerData(connectionDto.SyncedRestraintSetData);
-
-        // i dont know how the fuck to do this cancerous stuff rn.
-        // await _cacheManager.ReapplyFinalState();
-    }
+        => await _cacheManager.SyncWithServerData(connectionDto);
 
 
     #region Gag Manipulation
@@ -81,7 +74,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <remarks> We can skip all validation checks for this, but don't update if not connected. </remarks>
     public async Task SwapGag(KinksterUpdateGagSlot gagData)
     {
-        if (!MainHub.IsConnected) 
+        if (!MainHub.IsConnectionDataSynced) 
             return;
         Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
         await RemoveGag(gagData, false);
@@ -90,26 +83,17 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         PostActionMsg(gagData.Enactor.UID, InteractionType.SwappedGag, gagData.PreviousGag.GagName() + " swapped to " + gagData.NewData.GagItem + " on layer " + gagData.AffectedLayer);
     }
 
-    /// <summary> Applies a Cursed Gag Item </summary>
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    public async Task ApplyCursedGag(/* Should be called directly from the Cursed Loot Handler but idk.*/) { }
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-
     /// <summary> Applies a Gag to a spesified layer. </summary>
     public async Task ApplyGag(KinksterUpdateGagSlot gagData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received ApplyGag instruction from server!", LoggerType.Gags);
         if (_gags.ApplyGag(gagData.AffectedLayer, gagData.NewData.GagItem, gagData.Enactor.UID, out var gagItem))
         {
             Logger.LogWarning("The Gag Had it's Visuals enabled, applying visuals to cache manager.");
-            // BEGIN
-            if (_gags.ServerGagData?.GagSlots[gagData.AffectedLayer] is { } gagSlot)
-                await _cacheManager.AddGagToCache(gagItem, gagSlot, gagData.AffectedLayer);
-            // END
-            Logger.LogWarning($"Gag Visuals Applied to Layer {gagData.AffectedLayer}", LoggerType.Gags);
+            await _cacheManager.AddGagItem(gagItem, gagData.AffectedLayer, gagData.Enactor.AliasOrUID);
         }
 
         PostActionMsg(gagData.Enactor.UID, InteractionType.ApplyGag, gagData.NewData.GagItem + " was applied on layer " + gagData.AffectedLayer);
@@ -118,7 +102,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Locks the gag with a padlock on a specified layer. </summary>
     public void LockGag(KinksterUpdateGagSlot gagData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received LockGag instruction from server!", LoggerType.Gags);
@@ -129,7 +113,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Unlocks the gag's padlock on a spesified layer. </summary>
     public void UnlockGag(KinksterUpdateGagSlot gagData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received UnlockGag instruction from server!", LoggerType.Gags);
@@ -140,11 +124,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Removes the gag from a defined layer. </summary>
     public async Task RemoveGag(KinksterUpdateGagSlot gagData, bool updateVisuals = true)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveGag instruction from server!", LoggerType.Gags);
         if(_gags.RemoveGag(gagData.AffectedLayer, gagData.Enactor.UID, out var visualItem))
-            await _cacheManager.RemoveGagFromCache(visualItem, gagData.AffectedLayer);
+            await _cacheManager.RemoveGagItem(visualItem, gagData.AffectedLayer);
         
         PostActionMsg(gagData.Enactor.UID, InteractionType.RemoveGag, gagData.PreviousGag.GagName() + " was removed on layer " + gagData.AffectedLayer);
     }
@@ -163,7 +147,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     public async Task SwapRestriction(KinksterUpdateRestriction itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
         await RemoveRestriction(itemData, false);
@@ -176,15 +160,14 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Applies a Restriction to the client at a defined index. </summary>
     public async Task ApplyRestriction(KinksterUpdateRestriction itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Restrictions);
         if(_restrictions.ApplyRestriction(itemData.AffectedLayer, itemData.NewData.Identifier, itemData.Enactor.UID, out var visualItem))
         {
             Logger.LogWarning("The Restriction Had Visuals enabled, applying visuals to cache manager.");
-            if (_restrictions.ServerRestrictionData?.Restrictions[itemData.AffectedLayer] is { } serverData)
-                await _cacheManager.AddRestrictionToCache(visualItem, serverData, itemData.AffectedLayer);
+            await _cacheManager.AddRestrictionItem(visualItem, itemData.AffectedLayer, itemData.Enactor.AliasOrUID);
         }
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
@@ -193,7 +176,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Locks a padlock from a restriction at a defined index. </summary>
     public void LockRestriction(KinksterUpdateRestriction itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received LockRestriction instruction from server!", LoggerType.Gags);
         _restrictions.LockRestriction(itemData.AffectedLayer, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
@@ -203,7 +186,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Unlocks a padlock from a restriction at a defined index. </summary>
     public void UnlockRestriction(KinksterUpdateRestriction itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received UnlockRestriction instruction from server!", LoggerType.Gags);
         _restrictions.UnlockRestriction(itemData.AffectedLayer, itemData.Enactor.UID);
@@ -213,11 +196,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Removes a restraint item from a defined index. </summary>
     public async Task RemoveRestriction(KinksterUpdateRestriction itemData, bool updateVisuals = true)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveRestriction instruction from server!", LoggerType.Gags);
         if(_restrictions.RemoveRestriction(itemData.AffectedLayer, itemData.Enactor.UID, out var visualItem))
-            await _cacheManager.RemoveRestrictionFromCache(visualItem, itemData.AffectedLayer);
+            await _cacheManager.RemoveRestrictionItem(visualItem, itemData.AffectedLayer);
         
         PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
     }
@@ -245,14 +228,13 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Applies a Restraint set to the client. </summary>
     public async Task ApplyRestraint(KinksterUpdateRestraint itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Gags);
         if(_restraints.ApplyRestraint(itemData.NewData.Identifier, itemData.Enactor.UID, out var restraintSet))
         {
             Logger.LogWarning("The Restraint Set Had Visuals enabled, applying visuals to cache manager.");
-            if (_restraints.ServerRestraintData is { } serverData)
-                await _cacheManager.AddRestraintToCache(restraintSet, serverData, -1);
+            await _cacheManager.AddRestraintSet(restraintSet, -1, itemData.Enactor.AliasOrUID);
         }
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestraint, itemData.NewData.Identifier + " was applied to you!");
@@ -261,7 +243,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Locks the active restraint set. </summary>
     public void LockRestraint(KinksterUpdateRestraint itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received LockRestraint instruction from server!", LoggerType.Gags);
         _restraints.LockRestraint(itemData.NewData.Identifier, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
@@ -271,7 +253,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Unlocks the active restraint set </summary>
     public void UnlockRestraint(KinksterUpdateRestraint itemData)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received UnlockRestraint instruction from server!", LoggerType.Gags);
         _restraints.UnlockRestraint(itemData.NewData.Identifier, itemData.Enactor.UID);
@@ -281,11 +263,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     /// <summary> Removes the active restraint. </summary>
     public async Task RemoveRestraint(KinksterUpdateRestraint itemData, bool updateVisuals = true)
     {
-        if (!MainHub.IsConnected)
+        if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveRestraint instruction from server!", LoggerType.Gags);
         if (_restraints.RemoveRestraint(itemData.Enactor.UID, out var restraintSet))
-            await _cacheManager.RemoveRestraintFromCache(restraintSet, -1);
+            await _cacheManager.RemoveRestraintSet(restraintSet, -1);
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestraint, "A Restriction item was removed from you!");
     }

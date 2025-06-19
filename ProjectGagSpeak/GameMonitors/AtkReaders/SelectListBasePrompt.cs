@@ -7,18 +7,15 @@ public abstract class SetupSelectListPrompt : BasePrompt
 {
     protected readonly ILogger _logger;
     protected readonly IAddonLifecycle _addonLifecycle;
-    private   readonly IGameInteropProvider _gameInterop;
     protected readonly ITargetManager _targets;
 
     internal SetupSelectListPrompt(
         ILogger logger,
         IAddonLifecycle addonLifecycle,
-        IGameInteropProvider gameInterop,
         ITargetManager targets)
     {
         _logger = logger;
         _addonLifecycle = addonLifecycle;
-        _gameInterop = gameInterop;
         _targets = targets;
     }
 

@@ -25,7 +25,7 @@ public sealed class ArousalService : IDisposable
     {
         _logger = logger;
         _config = config;
-        RecalculateArousals();
+        UpdateFinalCache();
         _timerTask = Task.Run(TimerTask, _timerCts.Token);
     }
 
@@ -86,41 +86,46 @@ public sealed class ArousalService : IDisposable
     public static float GcdDelayFactor => ArousalEffects.GCDFactor(ArousalPercent);
 
     #region Public Methods
-    /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>, then updates Arousals.</summary>
+    /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>.</summary>
     /// <returns> True if any change occured, false otherwise. </returns>
-    public void AddAndUpdateArousal(CombinedCacheKey combinedKey, Arousal strength)
+    public bool TryAddArousalToCache(CombinedCacheKey combinedKey, Arousal strength)
     {
         if (_arousals.TryAdd(combinedKey, strength))
+        {
             _logger.LogDebug($"Added ([{combinedKey}] <-> [{strength.ToString()}]) to Cache.", LoggerType.Arousal);
+            return true;
+        }
         else
+        {
             _logger.LogWarning($"KeyValuePair ([{combinedKey}]) already exists in the Cache!");
-
-        RecalculateArousals();
+            return false;
+        }
     }
 
-    /// <summary>Removes a strength for a <see cref="CombinedCacheKey"/> matching <paramref name="combinedKey"/>, then updates Arousals.</summary>
-    /// <returns>True if any change occured in <see cref="_finalProfile"/>, false otherwise. </returns>
-    public void RemoveAndUpdateArousal(CombinedCacheKey combinedKey)
+    /// <summary>Removes a strength for the <paramref name="combinedKey"/> from the cache.</summary>
+    /// <returns> True if any change occured, false otherwise. </returns>
+    public bool TryRemArousalFromCache(CombinedCacheKey combinedKey)
     {
         if (_arousals.Remove(combinedKey, out var a))
+        {
             _logger.LogDebug($"Removed Arousal of strength [{a.ToString()}] from cache at key [{combinedKey}].", LoggerType.Arousal);
+            return true;
+        }
         else
+        {
             _logger.LogWarning($"ArousalCache key ([{combinedKey}]) not found!");
-
-        RecalculateArousals();
+            return false;
+        }
     }
 
-    public void ClearArousals()
+    public async Task ClearArousals()
     {
         _arousals.Clear();
         _logger.LogDebug("Cleared all Arousals from cache.", LoggerType.Arousal);
-
-        RecalculateArousals();
+        await UpdateFinalCache();
     }
 
-    #endregion Public Methods
-
-    private void RecalculateArousals()
+    public Task UpdateFinalCache()
     {
         // Obtain the total arousal from all cached arousals.
         int totalArousal = _arousals.Values.Sum(x => (byte)x); // 0–N range
@@ -142,7 +147,10 @@ public sealed class ArousalService : IDisposable
 
         // Decay: usually a fraction of generation
         _degenerationRate = _generationRate * 0.5f;
+
+        return Task.CompletedTask;
     }
+    #endregion Public Methods
 
     // Maps a high stimulation value for a bounded growth curve to make more realistic sense.
     private float SoftcapStimuli(float value, float softcap, float hardcap)

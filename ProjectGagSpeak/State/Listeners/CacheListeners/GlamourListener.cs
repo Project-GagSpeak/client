@@ -72,7 +72,7 @@ public class GlamourListener : IDisposable
                 return;
 
             _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplySemaphore!", LoggerType.IpcGlamourer);
-            await _handler.ApplySemaphore(true, false, false);
+            await _handler.UpdateGlamourCacheSlim(false);
         }
         else if (changeType is StateChangeType.Other)
         {
@@ -80,7 +80,7 @@ public class GlamourListener : IDisposable
                 return;
 
             _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplyMetaCache!", LoggerType.IpcGlamourer);
-            await _handler.ApplySemaphore(false, true, false);
+            await _handler.UpdateMetaCacheSlim();
         }
     }
 
@@ -111,6 +111,6 @@ public class GlamourListener : IDisposable
         }
 
         _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LoggerType.IpcGlamourer);
-        await _handler.ApplySemaphore(true, true, true);
+        await _handler.UpdateGlamourCacheSlim(true);
     }
 }

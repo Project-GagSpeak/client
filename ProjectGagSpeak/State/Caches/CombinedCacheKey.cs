@@ -9,14 +9,19 @@ public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquata
     public ManagerPriority Manager { get; }
     public int LayerIndex { get; }
 
-    public CombinedCacheKey(ManagerPriority manager, int itemIdx)
+    // Used only for display and substituion purposes, may keep if useful later.
+    // Do not use for any comparisons.
+    public string Label { get; }
+
+    public CombinedCacheKey(ManagerPriority manager, int itemIdx, string label)
     {
         Manager = manager;
         LayerIndex = itemIdx;
+        Label = label;
     }
 
     public override string ToString()
-        => $"{Manager}-Layer {LayerIndex}";
+        => $"{Manager}-Layer {LayerIndex} ({Label})";
 
     // Higher manager priority first, then higher layer index first
     public int CompareTo(CombinedCacheKey other)

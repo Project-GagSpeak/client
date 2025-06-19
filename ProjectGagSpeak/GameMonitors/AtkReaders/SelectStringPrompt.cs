@@ -7,15 +7,14 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.PlayerClient;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
-using GagSpeak.PlayerClient;
+
 using GagSpeak.Utils;
 
 namespace GagSpeak.Game.Readers;
 public class SelectStringPrompt : SetupSelectListPrompt
 {
     public SelectStringPrompt(ILogger<SelectStringPrompt> logger, IAddonLifecycle addonLifecycle, 
-        IGameInteropProvider gameInterop, ITargetManager targets) 
-        : base(logger, addonLifecycle, gameInterop, targets) 
+        ITargetManager targets) : base(logger, addonLifecycle, targets) 
     { }
 
     public override void Enable()

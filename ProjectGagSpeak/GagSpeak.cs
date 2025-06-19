@@ -4,7 +4,6 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.PlayerClient;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Components;
 using GagSpeak.CkCommons.Gui.Handlers;
@@ -18,7 +17,6 @@ using GagSpeak.CkCommons.Gui.UiToybox;
 using GagSpeak.CkCommons.Gui.Wardrobe;
 using GagSpeak.FileSystems;
 using GagSpeak.Game.Readers;
-using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
@@ -185,7 +183,7 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<MufflerService>(), s.GetRequiredService<OnFrameworkService>(), ss, gip))
 
         // Game Monitors
-        .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), alc, gip, tm))
+        .AddSingleton((s) => new SelectStringPrompt(s.GetRequiredService<ILogger<SelectStringPrompt>>(), alc, tm))
         .AddSingleton((s) => new YesNoPrompt(s.GetRequiredService<ILogger<YesNoPrompt>>(), s.GetRequiredService<MainConfig>(), alc, tm))
         .AddSingleton((s) => new RoomSelectPrompt(s.GetRequiredService<ILogger<RoomSelectPrompt>>(), s.GetRequiredService<MainConfig>(), alc, tm))
 
@@ -229,6 +227,8 @@ public static class GagSpeakServiceExtensions
             s.GetRequiredService<YesNoPrompt>(), s.GetRequiredService<RoomSelectPrompt>(), s.GetRequiredService<KeystateController>(), s.GetRequiredService<MovementController>(), ot, tm))
         .AddSingleton<BlindfoldService>()
         .AddSingleton<ChatboxController>()
+        .AddSingleton<HotbarActionController>((s) => new HotbarActionController(s.GetRequiredService<ILogger<HotbarActionController>>(), 
+            s.GetRequiredService<GagspeakMediator>(), s.GetRequiredService<TraitsCache>(), s.GetRequiredService<PlayerData>(), alc, gg))
         .AddSingleton<HypnoService>()
         .AddSingleton((s) => new KeystateController(s.GetRequiredService<ILogger<KeystateController>>(), s.GetRequiredService<GagspeakMediator>(),
             s.GetRequiredService<MovementController>(), ks))

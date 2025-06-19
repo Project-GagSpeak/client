@@ -249,11 +249,11 @@ public sealed class LootHandler
 
     private async Task<bool> HandleRestrictionApplication(CursedItem cursedItem, TimeSpan lockTime)
     {
-        if (_restrictions.AppliedRestrictions is not { } restrictionData)
+        if (_restrictions.ActiveItems is not { } restrictionData)
             return false;
 
         // If the attached restriction item is already in the container of active restrictions, return false.
-        if (restrictionData.Any(x => x.Identifier == cursedItem.Identifier))
+        if (restrictionData.Values.Any(x => x.Identifier == cursedItem.Identifier))
             return false;
 
         // Get the first unused restriction index.

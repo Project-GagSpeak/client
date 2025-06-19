@@ -3,11 +3,11 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
-using GagSpeak.State.Listeners;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using OtterGui.Classes;
 
@@ -20,289 +20,331 @@ namespace GagSpeak.State.Managers;
 /// <remarks> Helps with code readability, and optimal sorting of storage caches. </remarks>
 public class CacheStateManager : DisposableMediatorSubscriberBase
 {
-    private readonly CustomizePlusCache _cplusCache;
+    private readonly GagRestrictionManager _gags;
+    private readonly RestrictionManager _restrictions;
+    private readonly RestraintManager _restraints;
     private readonly CustomizePlusHandler _cplusHandler;
-    private readonly GlamourCache _glamourCache;
     private readonly GlamourHandler _glamourHandler;
-    private readonly ModCache _modsCache;
     private readonly ModHandler _modHandler;
-    private readonly MoodleCache _moodlesCache;
     private readonly MoodleHandler _moodleHandler;
-    private readonly TraitsCache _traitsCache;
     private readonly TraitsHandler _traitsHandler;
     private readonly ArousalService _arousalHandler;
 
     public CacheStateManager(ILogger<CacheStateManager> logger,
         GagspeakMediator mediator,
-        CustomizePlusCache cplusCache,
-        CustomizePlusHandler cplusHandler,
-        GlamourCache glamourCache,
-        GlamourHandler glamourHandler,
-        ModCache modsCache,
-        ModHandler modHandler,
-        MoodleCache moodlesCache,
-        MoodleHandler moodleHandler,
-        TraitsCache traitsCache,
-        TraitsHandler traitsHandler,
-        ArousalService arousalHandler) 
+        GagRestrictionManager gags,
+        RestrictionManager restrictions,
+        RestraintManager restraints,
+        CustomizePlusHandler profiles,
+        GlamourHandler glamours,
+        ModHandler mods,
+        MoodleHandler moodles,
+        TraitsHandler traits,
+        ArousalService arousals) 
         : base(logger, mediator)
     {
-        _cplusCache = cplusCache;
-        _cplusHandler = cplusHandler;
-        _glamourCache = glamourCache;
-        _glamourHandler = glamourHandler;
-        _modsCache = modsCache;
-        _modHandler = modHandler;
-        _moodlesCache = moodlesCache;
-        _moodleHandler = moodleHandler;
-        _traitsCache = traitsCache;
-        _traitsHandler = traitsHandler;
-        _arousalHandler = arousalHandler;
+        _gags = gags;
+        _restrictions = restrictions;
+        _restraints = restraints;
+        _cplusHandler = profiles;
+        _glamourHandler = glamours;
+        _modHandler = mods;
+        _moodleHandler = moodles;
+        _traitsHandler = traits;
+        _arousalHandler = arousals;
 
-        // Subscribe to the logout message to clear the caches.
-        // Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearCaches());
+        // Only clear on logout, not disconnect, we want to keep people helpless~
+        Mediator.Subscribe<DalamudLogoutMessage>(this, _ => ClearCaches());
     }
 
-    /// <summary> Adds a <see cref="GarblerRestriction"/>'s visuals to the caches for a <paramref name="layerIdx"/>. </summary>
-    /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
-    public async Task AddGagToCache(GarblerRestriction gag, ActiveGagSlot serverData, int layerIdx)
+    private async void ClearCaches()
     {
-        Logger.LogDebug($"Adding {gag.GagType.GagName()} to cache at layer {layerIdx} with enabler {serverData.Enabler}");
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx);
-
-        Logger.LogWarning("Running tasks in parallel for GarblerRestriction");
-        var sw = Stopwatch.StartNew();
-
+        Logger.LogInformation("------- Clearing all caches on logout -------");
         await Task.WhenAll(
-            SetAndApplyGlamour(combinedKey, gag.Glamour, new(gag.HeadgearState, gag.VisorState)),
-            SetAndApplyMod(combinedKey, gag.Mod),
-            SetAndApplyMoodle(combinedKey, gag.Moodle),
-            SetAndApplyCPlusProfile(combinedKey, gag.CPlusProfile),
-            SetAndApplyTraits(combinedKey, gag.Traits),
-            SetAndApplyArousal(combinedKey, gag.Arousal)
+            _glamourHandler.ClearCache(),
+            _modHandler.ClearCache(),
+            _moodleHandler.ClearCache(),
+            _cplusHandler.ClearCache(),
+            _traitsHandler.ClearCache(),
+            _arousalHandler.ClearArousals()
         );
+        Logger.LogInformation("------- All caches cleared -------");
+    }
 
+    // Keep in mind that while this looks heavy, everything uses .TryAdd, meaning duplicates will not be reapplied.
+    public async Task SyncWithServerData(ConnectionResponse connectionDto)
+    {
+        Logger.LogWarning("Syncing Server Data to Active Items & Visuals");
+        var sw = Stopwatch.StartNew();
+        // Sync all server gag data with the GagRestrictionManager.
+        _gags.LoadServerData(connectionDto.SyncedGagData);
+        Logger.LogInformation("------ Syncing Gag Data to Cache ------");
+        foreach (var (layer, gagItem) in _gags.ActiveItems)
+        {
+            Logger.LogDebug($"Adding ({gagItem.GagType.GagName()}) at layer {layer}, which " +
+                $"was enabled by {_gags.ServerGagData!.GagSlots[layer].Enabler}.");
+            var key = new CombinedCacheKey(ManagerPriority.Gags, layer, gagItem.GagType.GagName());
+            _glamourHandler.TryAddGlamourToCache(key, gagItem.Glamour);
+            _glamourHandler.TryAddMetaToCache(key, new(gagItem.HeadgearState, gagItem.VisorState));
+            _modHandler.TryAddModToCache(key, gagItem.Mod);
+            _moodleHandler.TryAddMoodleToCache(key, gagItem.Moodle);
+            _traitsHandler.TryAddTraitsToCache(key, gagItem.Traits);
+            _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
+            _arousalHandler.TryAddArousalToCache(key, gagItem.Arousal);
+        }
+        Logger.LogInformation("------ Gag Data synced to Cache ------ ");
+
+        // Sync all server restriction data with the RestrictionManager.
+        _restrictions.LoadServerData(connectionDto.SyncedRestrictionsData);
+        Logger.LogInformation("------ Syncing Restriction Data to Cache ------");
+        foreach (var (layer, item) in _restrictions.ActiveItems)
+        {
+            Logger.LogDebug($"Adding Restriction [{item.Label}] at layer {layer}, which " +
+                $"was enabled by {_restrictions.ServerRestrictionData!.Restrictions[layer].Enabler}.");
+            var key = new CombinedCacheKey(ManagerPriority.Restrictions, layer, item.Label);
+            var metaStruct = item switch
+            {
+                BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
+                HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
+                _ => MetaDataStruct.Empty
+            };
+            _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
+            _glamourHandler.TryAddMetaToCache(key, metaStruct);
+            _modHandler.TryAddModToCache(key, item.Mod);
+            _moodleHandler.TryAddMoodleToCache(key, item.Moodle);
+            _arousalHandler.TryAddArousalToCache(key, item.Arousal);
+        }
+        Logger.LogInformation("------ Restriction Data synced to Cache ------ ");
+
+        // Sync all server restraint data with the RestraintManager.
+        _restraints.LoadServerData(connectionDto.SyncedRestraintSetData);
+        Logger.LogInformation("------ Syncing Restraint Data to Cache ------");
+        if(_restraints.AppliedRestraint is { } restraintSet)
+        {
+            Logger.LogDebug($"Adding RestraintSet [{restraintSet.Label}), which was enabled by {_restraints.ServerRestraintData?.Enabler}.");
+            var key = new CombinedCacheKey(ManagerPriority.Gags, -1, restraintSet.Label);
+            _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetGlamour().Values);
+            _glamourHandler.TryAddMetaToCache(key, restraintSet.GetMetaData());
+            _modHandler.TryAddModToCache(key, restraintSet.GetMods());
+            _moodleHandler.TryAddMoodleToCache(key, restraintSet.GetMoodles());
+            _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetTraits());
+            _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
+        }
+        Logger.LogInformation("------ Restraint Data synced to Cache ------ ");
+
+        // Now perform all updates in parallel.
+        Logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
+        await Task.WhenAll(
+            _glamourHandler.UpdateCaches(true), // this should maybe probably be false incase we trigger this in a bound state? Idk.
+            _modHandler.UpdateModCache(),
+            _moodleHandler.UpdateMoodleCache(),
+            _cplusHandler.UpdateProfileCache(),
+            _traitsHandler.UpdateTraitCache(),
+            _arousalHandler.UpdateFinalCache()
+        );
         sw.Stop();
-        Logger.LogWarning($"[{combinedKey}]'s Visual Attributes added to caches in {sw.ElapsedMilliseconds}ms.");
+        Logger.LogWarning($"------ All Updates & Visuals Applied in {sw.ElapsedMilliseconds}ms ------");
+    }
+
+    /// <summary> Adds a GagItem's visual properties to the cache at the defined layer. </summary>
+    /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
+    public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler)
+    {
+        Logger.LogDebug($"Adding GagItem ({item.GagType.GagName()}) at layer {layerIdx}, which was enabled by {enabler}.");
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, item.GagType.GagName());
+        // perform the updates in parallel.
+        await TimedWhenAll($"[{combinedKey}]'s Visual Attributes added to caches",
+            AddGlamourMeta(combinedKey, item.Glamour, new(item.HeadgearState, item.VisorState)),
+            AddModPreset(combinedKey, item.Mod),
+            AddMoodle(combinedKey, item.Moodle),
+            AddProfile(combinedKey, item.CPlusProfile),
+            AddTraits(combinedKey, item.Traits),
+            AddArousalStrength(combinedKey, item.Arousal)
+        );
     }
 
     /// <summary> Removes the visuals of a <see cref="GarblerRestriction"/> stored in the caches at a <paramref name="layerIdx"/></summary>
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
-    public async Task RemoveGagFromCache(GarblerRestriction item, int layerIdx)
+    public async Task RemoveGagItem(GarblerRestriction item, int layerIdx)
     {
         Logger.LogDebug($"Removing {item.GagType.GagName()} from cache at layer {layerIdx}");
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx);
-
-        Logger.LogDebug("Running tasks in parallel for GarblerRestriction");
-        var sw = Stopwatch.StartNew();
-        
-        await Task.WhenAll(
-            RemoveGlamourWithKey(combinedKey),
-            RemoveModWithKey(combinedKey),
-            RemoveMoodleWithKey(combinedKey),
-            RemoveCPlusProfileWithKey(combinedKey),
-            RemoveTraitsWithKey(combinedKey),
-            RemoveArousalWithKey(combinedKey)
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, item.GagType.GagName());
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
+            RemoveGlamourMeta(combinedKey),
+            RemoveModPreset(combinedKey),
+            RemoveMoodle(combinedKey),
+            RemoveProfile(combinedKey),
+            RemoveTraits(combinedKey),
+            RemoveArousalStrength(combinedKey)
         );
-
-        sw.Stop();
-        Logger.LogDebug($"[{combinedKey}]'s Visual Attributes removed from caches in {sw.ElapsedMilliseconds}ms.");
     }
 
-    public async Task AddRestrictionToCache(RestrictionItem item, ActiveRestriction serverData, int layerIdx)
+    public async Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler)
     {
-        Logger.LogInformation($"Adding Restriction [{item.Label}] to cache at layer {layerIdx} with enabler {serverData.Enabler}");
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx);
-
-        Logger.LogInformation("Running tasks in parallel for RestrictionItem");
-        var sw = Stopwatch.StartNew();
-        
+        Logger.LogInformation($"Adding Restriction ({item.Label}) at layer {layerIdx}, which was enabled by {enabler}.");
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, item.Label);        
         var metaStruct = item switch
         {
-            BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState, OptionalBool.Null),
-            HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState, OptionalBool.Null),
+            BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
+            HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
             _ => MetaDataStruct.Empty
         };
-        await Task.WhenAll(
-            SetAndApplyGlamour(combinedKey, item.Glamour, metaStruct),
-            SetAndApplyMod(combinedKey, item.Mod),
-            SetAndApplyMoodle(combinedKey, item.Moodle),
-            SetAndApplyArousal(combinedKey, item.Arousal)
+        await TimedWhenAll("[{combinedKey}]'s Visual Attributes added to caches",
+            AddGlamourMeta(combinedKey, item.Glamour, metaStruct),
+            AddModPreset(combinedKey, item.Mod),
+            AddMoodle(combinedKey, item.Moodle),
+            AddTraits(combinedKey, item.Traits),
+            AddArousalStrength(combinedKey, item.Arousal)
         );
-
-        sw.Stop();
-        Logger.LogDebug($"[{combinedKey}]'s Visual Attributes added to caches in {sw.ElapsedMilliseconds}ms.");
     }
 
-    public async Task RemoveRestrictionFromCache(RestrictionItem item, int layerIdx)
+    public async Task RemoveRestrictionItem(RestrictionItem item, int layerIdx)
     {
         Logger.LogInformation($"Removing Restriction [{item.Label}] from cache at layer {layerIdx}");
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx);
-
-        Logger.LogInformation("Running tasks in parallel for RestrictionItem");
-        var sw = Stopwatch.StartNew();
-        
-        await Task.WhenAll(
-            RemoveGlamourWithKey(combinedKey),
-            RemoveModWithKey(combinedKey),
-            RemoveMoodleWithKey(combinedKey),
-            RemoveArousalWithKey(combinedKey)
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, item.Label);
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
+            RemoveGlamourMeta(combinedKey),
+            RemoveModPreset(combinedKey),
+            RemoveMoodle(combinedKey),
+            RemoveTraits(combinedKey),
+            RemoveArousalStrength(combinedKey)
         );
-
-        Logger.LogDebug($"[{combinedKey}] removed from cache and base states restored.");
     }
 
     // This is going to be a whole other ballpark to deal with, so save for later, it will come with additional complexity.
-    public async Task AddRestraintToCache(RestraintSet item, CharaActiveRestraint serverData, int layerIdx)
+    public async Task AddRestraintSet(RestraintSet item, int layerIdx, string enabler)
     {
-        Logger.LogInformation($"Adding Restraint [{item.Label}] to cache at layer {layerIdx} with enabler {serverData.Enabler}");
+        Logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
         // -1 is the base, 0-4 are the layers. (could make it 0 to line things up but this makes it better in code)
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, layerIdx);
-
-        Logger.LogInformation("Running tasks in parallel for RestraintSet");
-        var sw = Stopwatch.StartNew();
-        
-        await Task.WhenAll(
-            SetAndApplyGlamour(combinedKey, item.GetGlamour().Values, item.GetMetaData()),
-            SetAndApplyMod(combinedKey, item.GetMods()),
-            SetAndApplyMoodle(combinedKey, item.GetMoodles()),
-            SetAndApplyArousal(combinedKey, item.Arousal)
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, layerIdx, item.Label);
+        // Add and update in parallel.
+        await TimedWhenAll($"[{combinedKey}]'s Visual Attributes added to caches",
+            AddGlamourMeta(combinedKey, item.GetGlamour().Values, item.GetMetaData()),
+            AddModPreset(combinedKey, item.GetMods()),
+            AddMoodle(combinedKey, item.GetMoodles()),
+            AddTraits(combinedKey, item.GetTraits()),
+            AddArousalStrength(combinedKey, item.Arousal)
         );
-
-        sw.Stop();
-        Logger.LogDebug($"[{combinedKey}]'s Visual Attributes added to caches in {sw.ElapsedMilliseconds}ms.");
     }
 
-    public async Task RemoveRestraintFromCache(RestraintSet item, int layerIdx)
+    // the layerIdx shouldnt even be here really if we are calling the layers seperately? idk.
+    public async Task RemoveRestraintSet(RestraintSet item, int layerIdx)
     {
-        Logger.LogInformation($"Removing Restraint from cache at layer {layerIdx}");
-        var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, -1);
-
-        Logger.LogInformation("Running tasks in parallel for RestraintSet");
-        var sw = Stopwatch.StartNew();
-
-        await Task.WhenAll(
-            RemoveGlamourWithKey(combinedKey),
-            RemoveModWithKey(combinedKey),
-            RemoveMoodleWithKey(combinedKey),
-            RemoveArousalWithKey(combinedKey)
+        Logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer {layerIdx}");
+        var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, -1, item.Label);
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
+            RemoveGlamourMeta(combinedKey),
+            RemoveModPreset(combinedKey),
+            RemoveMoodle(combinedKey),
+            RemoveTraits(combinedKey),
+            RemoveArousalStrength(combinedKey)
         );
+    }
 
-        Logger.LogDebug($"[{combinedKey}] removed from cache and base states restored.");
+    private async Task TimedWhenAll(string label, params Task[] tasks)
+    {
+        var sw = Stopwatch.StartNew();
+        await Task.WhenAll(tasks);
+        sw.Stop();
+        Logger.LogDebug($"{label} in {sw.ElapsedMilliseconds}ms.");
     }
 
 
     #region Cache Update Helpers
-    private async Task SetAndApplyGlamour(CombinedCacheKey key, GlamourSlot glamSlot, MetaDataStruct meta)
+    private async Task AddGlamourMeta(CombinedCacheKey key, GlamourSlot glamSlot, MetaDataStruct meta)
     {
-        bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlot);
-        bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
-
-        await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
-        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
+        _glamourHandler.TryAddGlamourToCache(key, glamSlot);
+        _glamourHandler.TryAddMetaToCache(key, meta);
+        await _glamourHandler.UpdateCaches(false);
     }
 
-    private async Task SetAndApplyGlamour(CombinedCacheKey key, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
+    private async Task AddGlamourMeta(CombinedCacheKey key, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
     {
-        bool applyGlam = _glamourCache.AddAndUpdateGlamour(key, glamSlots);
-        bool applyMeta = _glamourCache.AddAndUpdateMeta(key, meta);
-        await _glamourHandler.ApplySemaphore(applyGlam, applyMeta, false);
-        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
+        _glamourHandler.TryAddGlamourToCache(key, glamSlots);
+        _glamourHandler.TryAddMetaToCache(key, meta);
+        await _glamourHandler.UpdateCaches(false);
     }
 
-    private async Task RemoveGlamourWithKey(CombinedCacheKey key)
+    private async Task RemoveGlamourMeta(CombinedCacheKey key)
     {
-        bool remGlam = _glamourCache.RemoveAndUpdateGlamour(key, out var removedSlots);
-        bool remMeta = _glamourCache.RemoveAndUpdateMeta(key);
-        await _glamourHandler  .RemoveSemaphore(remGlam, remMeta, false, removedSlots);
-        Logger.LogDebug($"Glamour Cache updated for key [{key}]!");
+        _glamourHandler.TryRemGlamourFromCache(key);
+        _glamourHandler.TryRemMetaFromCache(key);
+        await _glamourHandler.UpdateCaches(false);
     }
 
-    private async Task SetAndApplyMod(CombinedCacheKey key, ModSettingsPreset preset)
+    private async Task AddModPreset(CombinedCacheKey key, ModSettingsPreset preset)
     {
-        _modsCache.AddAndUpdateMod(key, preset);
-        await _modHandler.ApplyModCache();
-        Logger.LogDebug($"Mod Cache updated for key [{key}].");
+        _modHandler.TryAddModToCache(key, preset);
+        await _modHandler.UpdateModCache();
     }
 
-    private async Task SetAndApplyMod(CombinedCacheKey key, IEnumerable<ModSettingsPreset> presets)
+    private async Task AddModPreset(CombinedCacheKey key, IEnumerable<ModSettingsPreset> presets)
     {
-        _modsCache.AddAndUpdateMod(key, presets);
-        await _modHandler.ApplyModCache();
-        Logger.LogDebug($"Mod Cache updated for key [{key}].");
+        _modHandler.TryAddModToCache(key, presets);
+        await _modHandler.UpdateModCache();
     }
 
-    private async Task RemoveModWithKey(CombinedCacheKey key)
+    private async Task RemoveModPreset(CombinedCacheKey key)
     {
-        _modsCache.RemoveAndUpdateMod(key, out var removed);
-        await _modHandler.RestoreAndReapplyCache(removed);
-        Logger.LogDebug($"Mod Cache updated for key [{key}].");
+        _modHandler.TryRemModFromCache(key);
+        await _modHandler.UpdateModCache();
     }
 
-    private async Task SetAndApplyMoodle(CombinedCacheKey key, Moodle moodle)
+    private async Task AddMoodle(CombinedCacheKey key, Moodle moodle)
     {
-        _moodlesCache.AddAndUpdateMoodle(key, moodle);
-        await _moodleHandler.ApplyMoodleCache();
-        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
+        _moodleHandler.TryAddMoodleToCache(key, moodle);
+        await _moodleHandler.UpdateMoodleCache();
     }
 
-    private async Task SetAndApplyMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
+    private async Task AddMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
     {
-        _moodlesCache.AddAndUpdateMoodle(key, moodles);
-        await _moodleHandler.ApplyMoodleCache();
-        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
+        _moodleHandler.TryAddMoodleToCache(key, moodles);
+        await _moodleHandler.UpdateMoodleCache();
     }
 
-    private async Task RemoveMoodleWithKey(CombinedCacheKey key)
+    private async Task RemoveMoodle(CombinedCacheKey key)
     {
-        _moodlesCache.RemoveAndUpdateMoodle(key, out var removed);
-        await _moodleHandler.RestoreAndReapplyCache(removed);
-        Logger.LogDebug($"Moodles Cache updated for key [{key}].");
+        _moodleHandler.TryRemMoodleFromCache(key);
+        await _moodleHandler.UpdateMoodleCache();
     }
 
-    private async Task SetAndApplyCPlusProfile(CombinedCacheKey key, CustomizeProfile profile)
+    private async Task AddProfile(CombinedCacheKey key, CustomizeProfile profile)
     {
-        _cplusCache.AddAndUpdateprofile(key, profile);
-        await _cplusHandler.ApplyProfileCache();
-        Logger.LogDebug($"CPlus Cache updated for key [{key}].");
+        _cplusHandler.TryAddToCache(key, profile);
+        await _cplusHandler.UpdateProfileCache();
     }
 
-    private async Task RemoveCPlusProfileWithKey(CombinedCacheKey key)
+    private async Task RemoveProfile(CombinedCacheKey key)
     {
-        _cplusCache.RemoveAndUpdateprofile(key, out var removed);
-        await _cplusHandler.ApplyProfileCache();
-        Logger.LogDebug($"CPlus Cache updated for key [{key}].");
+        _cplusHandler.TryRemoveFromCache(key);
+        await _cplusHandler.UpdateProfileCache();
     }
 
-    private async Task SetAndApplyTraits(CombinedCacheKey key, Traits traits)
+    private async Task AddTraits(CombinedCacheKey key, Traits traits)
     {
-        _traitsCache.AddAndUpdatetraits(key, traits);
-        // For now, dont do anything. We need to set this up later but im too eepy girl rn.
-        // await _traitsHandler.ApplyProfileCache();
-        Logger.LogDebug($"Traits Cache updated for key [{key}].");
+        _traitsHandler.TryAddTraitsToCache(key, traits);
+        await _traitsHandler.UpdateTraitCache();
     }
 
-    private async Task RemoveTraitsWithKey(CombinedCacheKey key)
+    private async Task RemoveTraits(CombinedCacheKey key)
     {
-        _cplusCache.RemoveAndUpdateprofile(key, out var removed);
-        // For now, dont do anything. We need to set this up later but im too eepy girl rn.
-        // await _traitsHandler.ApplyProfileCache();
-        Logger.LogDebug($"Traits Cache updated for key [{key}].");
+        _traitsHandler.TryRemTraitsFromCache(key);
+        await _traitsHandler.UpdateTraitCache();
     }
 
-
-    private Task SetAndApplyArousal(CombinedCacheKey key, Arousal strength)
+    private async Task AddArousalStrength(CombinedCacheKey key, Arousal strength)
     {
-        _arousalHandler.AddAndUpdateArousal(key, strength);
-        Logger.LogDebug($"Arousal strength applied key [{key}] to the Cache!");
-        return Task.CompletedTask;
+        _arousalHandler.TryAddArousalToCache(key, strength);
+        await _arousalHandler.UpdateFinalCache();
     }
 
-    private Task RemoveArousalWithKey(CombinedCacheKey key)
+    private Task RemoveArousalStrength(CombinedCacheKey key)
     {
-        _arousalHandler.RemoveAndUpdateArousal(key);
-        Logger.LogDebug($"Arousal Cache removed entry [{key}], and reapplied Cache.");
-        return Task.CompletedTask;
+        _arousalHandler.TryRemArousalFromCache(key);
+        return _arousalHandler.UpdateFinalCache();
     }
     #endregion Cache Update Helpers
 }

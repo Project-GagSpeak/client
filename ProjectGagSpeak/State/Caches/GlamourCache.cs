@@ -7,6 +7,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using ImGuiNET;
+using Lumina.Extensions;
 using OtterGui;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
@@ -48,44 +49,16 @@ public class GlamourCache
         _logger.LogDebug($"Unbound Glamour Actor State Cached Successfully!");
     }
 
-
-    #region GlamourCache Functions
-    /// <summary>Applies a <paramref name="glamour"/> with <paramref name="combinedKey"/> to <see cref="_glamours"/> Cache.</summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalGlamour"/></b></remarks>
-    public void AddGlamour(CombinedCacheKey combinedKey, GlamourSlot glamour)
+    /// <summary>
+    ///     Applies a <paramref name="glamour"/> with <paramref name="combinedKey"/> to the Cache.
+    /// </summary>
+    public bool AddGlamour(CombinedCacheKey combinedKey, GlamourSlot glamour)
         => AddGlamour(combinedKey, [glamour]);
 
-    /// <summary>Applies multiple <paramref name="glamours"/> with <paramref name="combinedKey"/> to <see cref="_glamours"/> Cache.</summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalGlamour"/></b></remarks>
-    private void AddGlamour(CombinedCacheKey combinedKey, IEnumerable<GlamourSlot> glamours)
-    {
-        if (_glamours.Keys.Any(keys => keys.Item1.Equals(combinedKey)))
-        {
-            _logger.LogWarning($"Cannot add GlamourSlot to cache at key [{combinedKey}], it already exists!");
-            return;
-        }
-
-        foreach (var item in glamours)
-        {
-            _logger.LogDebug($"Adding GlamourCache key ([{combinedKey}] - [{item.Slot}]) with vaue [{item.GameItem.Name}]");
-            _glamours.TryAdd((combinedKey, item.Slot), item);
-        }
-    }
-
     /// <summary>
-    ///     Applies a <paramref name="glamour"/> with the <paramref name="combinedKey"/> to 
-    ///     <see cref="_glamours"/> Cache, then updates the <see cref="_finalGlamour"/> Cache.
+    ///     Applies multiple <paramref name="glamours"/> with <paramref name="combinedKey"/> to the Cache.
     /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    public bool AddAndUpdateGlamour(CombinedCacheKey combinedKey, GlamourSlot glamour)
-        => AddAndUpdateGlamour(combinedKey, [glamour]);
-
-    /// <summary>
-    ///     Applies list of <paramref name="glamours"/> with <paramref name="combinedKey"/> to
-    ///     <see cref="_glamours"/> Cache, then updates the <see cref="_finalGlamour"/> Cache.
-    /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    public bool AddAndUpdateGlamour(CombinedCacheKey combinedKey, IEnumerable<GlamourSlot> glamours)
+    public bool AddGlamour(CombinedCacheKey combinedKey, IEnumerable<GlamourSlot> glamours)
     {
         if (_glamours.Keys.Any(keys => keys.Item1.Equals(combinedKey)))
         {
@@ -93,171 +66,114 @@ public class GlamourCache
             return false;
         }
 
-        AddGlamour(combinedKey, glamours);
-        return UpdateFinalGlamourCache();
-    }
-
-    /// <summary> Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/></summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalGlamour"/></b></remarks>
-    public void RemoveGlamour(CombinedCacheKey combinedKey)
-        => RemoveGlamour([combinedKey]);
-
-    /// <summary> Removes all <see cref="CombinedCacheKey"/>'s using any of the <paramref name="combinedKeys"/></summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalGlamour"/></b></remarks>
-    public void RemoveGlamour(List<CombinedCacheKey> combinedKeys)
-    {
-        var keys = _glamours.Keys.Where(k => combinedKeys.Contains(k.Item1)).ToList();
-        if(!keys.Any())
+        foreach (var item in glamours)
         {
-            _logger.LogWarning($"None of the CombinedKeys were found in the GlamourCache!");
-            return;
+            _logger.LogDebug($"Adding GlamourCache key ([{combinedKey}] - [{item.Slot}]) with value [{item.GameItem.Name}]");
+            _glamours.TryAdd((combinedKey, item.Slot), item);
         }
 
-        // Remove all glamours for the combined key.
+        return true;
+    }
+
+    /// <summary>
+    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>
+    /// </summary>
+    public bool RemoveGlamour(CombinedCacheKey combinedKey)
+        => RemoveGlamour([combinedKey]);
+
+    /// <summary>
+    ///     Removes all <see cref="CombinedCacheKey"/>'s using any of the <paramref name="combinedKeys"/>
+    /// </summary>
+    public bool RemoveGlamour(IEnumerable<CombinedCacheKey> combinedKeys)
+    {
+        var keys = _glamours.Keys.Where(k => combinedKeys.Contains(k.Item1)).ToList();
+
+        if (!keys.Any())
+        {
+            _logger.LogWarning($"None of the CombinedKeys were found in the GlamourCache!");
+            return false;
+        }
+
         foreach (var key in keys)
         {
             _logger.LogDebug($"Removing GlamourCache key ([{key.Item1}] - [{key.Item2}])");
             _glamours.Remove(key);
         }
+
+        return true;
     }
 
     /// <summary> 
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>, 
-    ///     then updates the <see cref="_finalGlamour"/> Cache.
+    ///     Adds in the MetaState Cache at the CombinedKey <paramref name="key"/>, 
+    ///     The OptionalBool <paramref name="value"/> for the provided <paramref name="metaIdx"/>.
     /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    /// <remarks> The removed slots from the operation are pass to <paramref name="removed"/></remarks>
-    public bool RemoveAndUpdateGlamour(CombinedCacheKey combinedKey, out List<EquipSlot> removed)
-        => RemoveAndUpdateGlamour([combinedKey], out removed);
-
-
-    /// <summary> 
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>, 
-    ///     then updates the <see cref="_finalGlamour"/> Cache.
-    /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    /// <remarks> The removed slots from the operation are pass to <paramref name="removed"/></remarks>
-    public bool RemoveAndUpdateGlamour(List<CombinedCacheKey> combinedKeys, out List<EquipSlot> removed)
-    {
-        var prevFinalKeys = _finalGlamour.Keys.ToList();
-        // Remove all glamours for the combined keys.
-        RemoveGlamour(combinedKeys);
-
-        var changes = UpdateFinalGlamourCache();
-        removed = prevFinalKeys.Except(_finalGlamour.Keys).ToList();
-        return changes;
-    }
-
-    #endregion GlamourCache Functions
-
-    #region MetaCache Functions
-    /// <summary> 
-    ///     Adds an entry to <see cref="_metaStates"/>'s <paramref name="metaIdx"/> Cache, with the key <paramref name="combinedKey"/>
-    ///     and <see cref="OptionalBool"/> value <paramref name="value"/>, then updates the Final Cache.
-    /// </summary>
-    public void AddMeta(CombinedCacheKey key, MetaIndex metaIdx, OptionalBool value)
-    {
-        if(metaIdx is MetaIndex.Wetness || value.Equals(OptionalBool.Null))
-            return;
-
-        if (!_metaStates[metaIdx].TryAdd(key, value))
-        {
-            _logger.LogWarning($"Can't set MetaState to cache at key [{key}], it already exists!");
-            return;
-        }
-    }
-
-    /// <summary> 
-    ///     Adds <paramref name="meta"/>'s <see cref="OptionalBool"/>'s to the <see cref="_metaStates"/> Cache,
-    ///     with key <paramref name="combinedKey"/>, then updates the final MetaCache.
-    /// </summary>
-    public void AddMeta(CombinedCacheKey combinedKey, MetaDataStruct meta)
-    {
-        if (!meta.Headgear.Equals(OptionalBool.Null))
-            _metaStates[MetaIndex.HatState].TryAdd(combinedKey, meta.Headgear);
-
-        if (!meta.Visor.Equals(OptionalBool.Null))
-            _metaStates[MetaIndex.VisorState].TryAdd(combinedKey, meta.Visor);
-
-        if (!meta.Weapon.Equals(OptionalBool.Null))
-            _metaStates[MetaIndex.WeaponState].TryAdd(combinedKey, meta.Weapon);
-    }
-
-    /// <summary> 
-    ///     Adds an entry to <see cref="_metaStates"/>'s <paramref name="metaIdx"/> Cache, with the key <paramref name="combinedKey"/>
-    ///     and <see cref="OptionalBool"/> value <paramref name="value"/>, then updates the Final Cache.
-    /// </summary>
-    /// <returns> True if any changes occured, false otherwise. </returns>
-    public bool AddAndUpdateMeta(CombinedCacheKey combinedKey, MetaIndex metaIdx, OptionalBool value)
+    public bool AddMeta(CombinedCacheKey key, MetaIndex metaIdx, OptionalBool value)
     {
         if (metaIdx is MetaIndex.Wetness || value.Equals(OptionalBool.Null))
             return false;
 
-        AddMeta(combinedKey, metaIdx, value);
-        return _finalMeta.SetMeta(metaIdx, _metaStates[metaIdx].Values.FirstOrDefault());
+        if (!_metaStates[metaIdx].TryAdd(key, value))
+        {
+            _logger.LogWarning($"Can't set MetaState to cache at key [{key}], it already exists!");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary> 
     ///     Adds <paramref name="meta"/>'s <see cref="OptionalBool"/>'s to the <see cref="_metaStates"/> Cache,
     ///     with key <paramref name="combinedKey"/>, then updates the final MetaCache.
     /// </summary>
-    /// <returns> True if any changes occured, false otherwise. </returns>
-    public bool AddAndUpdateMeta(CombinedCacheKey combinedKey, MetaDataStruct meta)
+    public bool AddMeta(CombinedCacheKey combinedKey, MetaDataStruct meta)
     {
-        AddMeta(combinedKey, meta);
+        bool anyAdded = false;
 
-        var changed = false;
-        changed |= _finalMeta.SetMeta(MetaIndex.HatState, _metaStates[MetaIndex.HatState].Values.FirstOrDefault());
-        changed |= _finalMeta.SetMeta(MetaIndex.VisorState, _metaStates[MetaIndex.VisorState].Values.FirstOrDefault());
-        changed |= _finalMeta.SetMeta(MetaIndex.WeaponState, _metaStates[MetaIndex.WeaponState].Values.FirstOrDefault());
-        return changed;
+        if (!meta.Headgear.Equals(OptionalBool.Null))
+            anyAdded |= _metaStates[MetaIndex.HatState].TryAdd(combinedKey, meta.Headgear);
+
+        if (!meta.Visor.Equals(OptionalBool.Null))
+            anyAdded |= _metaStates[MetaIndex.VisorState].TryAdd(combinedKey, meta.Visor);
+
+        if (!meta.Weapon.Equals(OptionalBool.Null))
+            anyAdded |= _metaStates[MetaIndex.WeaponState].TryAdd(combinedKey, meta.Weapon);
+
+        return anyAdded;
     }
 
-    /// <summary> Removes all entries with <see cref="CombinedCacheKey"/>.</summary>
-    public void RemoveMeta(CombinedCacheKey key, MetaIndex metaIdx)
+    /// <summary>
+    ///     Removes all entries for each CombinedCacheKey across all MetaIndex states.
+    /// </summary>
+    public bool RemoveMeta(IEnumerable<CombinedCacheKey> combinedKeys)
     {
-        if (metaIdx is MetaIndex.Wetness)
-            return;
-
-        if (!_metaStates[metaIdx].Remove(key))
-            _logger.LogWarning($"Can't remove [{key}] from the [{metaIdx}] MetaStateCache, it does not exist!");
+        bool anyRemoved = false;
+        foreach (var key in combinedKeys)
+            anyRemoved |= RemoveMeta(key);
+        return anyRemoved;
     }
 
-    /// <summary> Removes all entries with <see cref="CombinedCacheKey"/>.</summary>
-    public void RemoveMeta(List<CombinedCacheKey> combinedKeys)
-        => combinedKeys.ForEach(RemoveMeta);
-
-    /// <summary> Removes all entries with <see cref="CombinedCacheKey"/>.</summary>
-    public void RemoveMeta(CombinedCacheKey combinedKey)
+    /// <summary>
+    ///     Removes all entries with the given CombinedCacheKey across all MetaIndex caches.
+    /// </summary>
+    public bool RemoveMeta(CombinedCacheKey key)
     {
-        foreach (var metaIdx in _metaStates.Keys)
-            if (!_metaStates[metaIdx].Remove(combinedKey))
-                _logger.LogWarning($"Can't remove key [{combinedKey}] from the [{metaIdx}] MetaStateCache, it does not exist!");
+        bool anyRemoved = false;
+        foreach (var (metaIdx, stateList) in _metaStates)
+            anyRemoved |= stateList.Remove(key);
+        return anyRemoved;
     }
 
-    /// <summary> Removes all entries with <see cref="CombinedCacheKey"/>, then updates the final MetaCache. </summary>
-    /// <returns> True if any changes occured, false otherwise. </returns>
-    public bool RemoveAndUpdateMeta(CombinedCacheKey combinedKey)
-        => RemoveAndUpdateMeta([combinedKey]);
-
-    /// <summary> Removes all entries with <see cref="CombinedCacheKey"/>, then updates the final MetaCache. </summary>
-    /// <returns> True if any changes occured, false otherwise. </returns>
-    public bool RemoveAndUpdateMeta(List<CombinedCacheKey> combinedKeys)
+    /// <summary>
+    ///     Careful where and how you call this, use responsibly.
+    ///     If done poorly, things will go out of sync.
+    /// </summary>
+    public void ClearCaches()
     {
-        // Remove all glamours for the combined keys.
-        combinedKeys.ForEach(RemoveMeta);
-
-        var anyChanges = false;
-        // True if any update occured (which it always will in this case)
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.HatState, _metaStates[MetaIndex.HatState].Values.FirstOrDefault());
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.VisorState, _metaStates[MetaIndex.VisorState].Values.FirstOrDefault());
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.WeaponState, _metaStates[MetaIndex.WeaponState].Values.FirstOrDefault());
-        return anyChanges;
+        _glamours.Clear();
+        _metaStates.Clear();
     }
 
-    #endregion MetaCache Functions
-
-    private bool UpdateFinalGlamourCache()
+    public bool UpdateFinalGlamourCache(out List<EquipSlot> removedSlots)
     {
         var anyChanges = false;
         var seenSlots = new HashSet<EquipSlot>();
@@ -270,11 +186,14 @@ public class GlamourCache
             if (!seenSlots.Add(slot))
                 continue;
 
-            if(TryUpdateFinalWithItem(glamItem))
+            if (!_finalGlamour.TryGetValue(glamItem.Slot, out var curr) || !curr.Equals(glamItem))
+            {
+                _finalGlamour[glamItem.Slot] = glamItem;
                 anyChanges |= true;
+            }
         }
 
-        var removedSlots = _finalGlamour.Keys.Except(seenSlots).ToList();
+        removedSlots = _finalGlamour.Keys.Except(seenSlots).ToList();
         foreach (var slot in removedSlots)
         {
             _finalGlamour.Remove(slot);
@@ -284,15 +203,37 @@ public class GlamourCache
         return anyChanges;
     }
 
-    private bool TryUpdateFinalWithItem(GlamourSlot newGlamItem)
+    public bool UpdateFinalMetaCache()
     {
-        if (!_finalGlamour.TryGetValue(newGlamItem.Slot, out var curr) || !curr.Equals(newGlamItem))
-        {
-            _finalGlamour[newGlamItem.Slot] = newGlamItem;
-            return true;
-        }
-        return false;
+        var anyChanges = false;
+        // True if any update occured (which it always will in this case)
+        anyChanges |= _finalMeta.SetMeta(MetaIndex.HatState, GetFirstHatState());
+        anyChanges |= _finalMeta.SetMeta(MetaIndex.VisorState, GetFirstVisorState());
+        anyChanges |= _finalMeta.SetMeta(MetaIndex.WeaponState, GetFirstWeaponState());
+        return anyChanges;
     }
+
+    public OptionalBool GetFirstHatState()
+    {
+        if (_metaStates.TryGetValue(MetaIndex.HatState, out var stateList) && stateList.Any())
+            return stateList.Values.First();
+        return OptionalBool.Null;
+    }
+
+    public OptionalBool GetFirstVisorState()
+    {
+        if (_metaStates.TryGetValue(MetaIndex.VisorState, out var stateList) && stateList.Any())
+            return stateList.Values.First();
+        return OptionalBool.Null;
+    }
+
+    public OptionalBool GetFirstWeaponState()
+    {
+        if (_metaStates.TryGetValue(MetaIndex.WeaponState, out var stateList) && stateList.Any())
+            return stateList.Values.First();
+        return OptionalBool.Null;
+    }
+
 
     #region DebugHelper
     public void DrawCacheTable(TextureService textures)

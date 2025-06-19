@@ -20,6 +20,38 @@ public class CustomizePlusHandler
 
     private CustomizeProfile FinalProfile => _cache.FinalProfile;
 
+    /// <summary> Adds KVP <paramref name="key"/> - <paramref name="profile"/> to the Cache. </summary>
+    public bool TryAddToCache(CombinedCacheKey key, CustomizeProfile profile)
+        => _cache.Addprofile(key, profile);
+
+    /// <summary> Removes the <paramref name="key"/> from the Cache. </summary>
+    public bool TryRemoveFromCache(CombinedCacheKey key)
+        => _cache.Removeprofile(key);
+
+    /// <summary> Clears the Caches contents and updates the visuals after. </summary>
+    public async Task ClearCache()
+    {
+        _logger.LogDebug("Clearing C+ Cache.");
+        _cache.ClearCache();
+        await UpdateProfileCache();
+    }
+
+    public async Task UpdateProfileCache()
+    {
+        var prevprofile = FinalProfile;
+        if (_cache.UpdateFinalCache())
+            _logger.LogDebug($"Final C+ Profile updated to [{FinalProfile.ProfileName}] with Priority {FinalProfile.Priority}.", LoggerType.VisualCache);
+        else
+            _logger.LogTrace("No change in Final C+ Profile.", LoggerType.VisualCache);
+
+        // If the profile changed, apply the profile cache.
+        if (!FinalProfile.Equals(prevprofile))
+        {
+            _logger.LogDebug("Ensuring C+ is locked in the correct state.", LoggerType.VisualCache);
+            await ApplyProfileCache();
+        }
+    }
+
     public void EnsureRestrictedProfile()
     {
         if (!IpcCallerCustomize.APIAvailable)

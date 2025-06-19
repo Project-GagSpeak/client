@@ -15,6 +15,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
+using OtterGui;
 
 namespace GagSpeak.State.Managers;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -44,19 +45,22 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
     }
 
-    public CharaActiveRestraint? ServerRestraintData => _serverRestraintData;
+    // ----------- STORAGE --------------
     public RestraintStorage Storage { get; private set; } = new RestraintStorage();
     public RestraintSet? ItemInEditor => _itemEditor.ItemInEditor;
-    public RestraintSet AppliedRestraint { get; private set; } = new RestraintSet(); // Identifiers here dont madder here, so this is fine.
+
+    // ----------- ACTIVE DATA --------------
+    public CharaActiveRestraint? ServerRestraintData => _serverRestraintData;
+    public RestraintSet? AppliedRestraint { get; private set; } = new();
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
+    /// <remarks> The CacheStateManager must be handled seperately here. </remarks>
     public void LoadServerData(CharaActiveRestraint serverData)
     {
         _serverRestraintData = serverData;
-        if (Storage.TryGetRestraint(serverData.Identifier, out var item))
-        {
-            AppliedRestraint = item;
-        }
+        // iterate through each of the server's gag data.
+        AppliedRestraint = Storage.FirstOrDefault(rs => Guid.Equals(rs.Identifier, serverData.Identifier));
+        Logger.LogInformation("Syncronized Active RestraintSet with Client-Side Manager.");
     }
 
     public RestraintSet CreateNew(string restraintName)
@@ -220,7 +224,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestraint(removedRestraint, out item))
         {
-            AppliedRestraint = new RestraintSet();
+            // always revert the visuals.
+            AppliedRestraint = null;
             return true;
         }
 

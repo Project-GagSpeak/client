@@ -4,7 +4,10 @@ using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
+using GagSpeak.State.Models;
+using GagspeakAPI.Data.Struct;
 using Glamourer.Api.Enums;
+using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Handlers;
@@ -36,67 +39,124 @@ public class GlamourHandler
     public IpcBlockReason BlockIpcCalls => _ipcBlocker;
     private bool ActorCacheIsEmpty => _cache.LastUnboundState.Equals(GlamourActorState.Empty);
 
-    /// <summary>
-    ///     Called upon by the EquipGearsetInternalDetour.
-    /// </summary>
+    // Invoked by the EquipGearsetInternal detour.
     public void OnEquipGearsetInternal(int gearsetId, byte glamourPlateId)
     {
-        // This is called when a gearset is equipped, so we need to ensure that the glamour cache is applied.
         _logger.LogDebug($"EquipGearsetInternal for gearsetId {gearsetId} with plateId {glamourPlateId} occured!" +
-            $"Blocking any further OnStateChanged calls until gearset application finishes!");
+            "Blocking any further OnStateChanged calls until gearset application finishes!");
         _ipcBlocker |= IpcBlockReason.Gearset;
     }
 
+    // Invoked when the OnStateFinailization type is Gearset.
     public void OnEquipGearsetFinalized()
         => _ipcBlocker &= ~IpcBlockReason.Gearset;
 
+    /// <summary> Add a single GlamourSlot to the GlamourCache for the key. </summary>
+    public bool TryAddGlamourToCache(CombinedCacheKey key, GlamourSlot glamour)
+        => _cache.AddGlamour(key, glamour);
+
+    /// <summary> Add Multiple GlamourSlots to the GlamourCache for the key. </summary>
+    public bool TryAddGlamourToCache(CombinedCacheKey key, IEnumerable<GlamourSlot> glamours)
+        => _cache.AddGlamour(key, glamours);
+
+    /// <summary> Remove a single key from the GlamourCache. </summary>
+    public bool TryRemGlamourFromCache(CombinedCacheKey key)
+        => _cache.RemoveGlamour(key);
+
+    /// <summary> Remove Multiple keys from the GlamourCache. </summary>
+    public bool TryRemGlamourFromCache(IEnumerable<CombinedCacheKey> keys)
+        => _cache.RemoveGlamour(keys);
+
     /// <summary>
-    ///     Handles the apply process for the GlamourCache on both Glamour and Meta.
+    ///     For the appropriate <paramref name="metaIdx"/> metaState, add a key-value
+    ///     pair with <paramref name="key"/> and <paramref name="value"/>.
     /// </summary>
-    public async Task ApplySemaphore(bool applyGlamour, bool applyMeta, bool forceCacheCall)
+    public bool TryAddMetaToCache(CombinedCacheKey key, MetaIndex metaIdx, OptionalBool value)
+        => _cache.AddMeta(key, metaIdx, value);
+
+    /// <summary>
+    ///     Adds <paramref name="meta"/>'s <see cref="OptionalBool"/>'s to all metaState caches,
+    ///     adding the key-value pair at key <paramref name="key"/>.
+    /// </summary>
+    public bool TryAddMetaToCache(CombinedCacheKey key, MetaDataStruct meta)
+        => _cache.AddMeta(key, meta);
+
+    /// <summary> Removes a key from the Meta Caches. </summary>
+    public bool TryRemMetaFromCache(CombinedCacheKey key)
+        => _cache.RemoveMeta(key);
+
+    /// <summary> Removes multiple keys from the Meta Caches. </summary>
+    public bool TryRemMetaFromCache(IEnumerable<CombinedCacheKey> keys)
+        => _cache.RemoveMeta(keys);
+
+    /// <summary> Clears the Caches contents and updates the visuals after. </summary>
+    public async Task ClearCache()
     {
-        if (!applyGlamour && !applyMeta)
-            return;
-
-        await ExecuteWithSemaphore(async () =>
-        {
-            var tasks = new List<Task>();
-            if (applyGlamour)
-                tasks.Add(ApplyGlamourCache(forceCacheCall));
-
-            if (applyMeta)
-                tasks.Add(ApplyMetaCache());
-
-            await Task.WhenAll(tasks);
-            _logger.LogWarning($"Processed ApplySemaphore Successfully!");
-        });
+        _logger.LogDebug("Clearing Glamour Cache.");
+        _cache.ClearCaches();
+        await UpdateCaches(false);
     }
 
     /// <summary>
-    ///     Handles the removal process for the GlamourCache on both Glamour and Meta.
+    ///     Use this as your go-to update method for everything outside of IPC calls.
     /// </summary>
-    public async Task RemoveSemaphore(bool removeGlamour, bool removeMeta, bool forceCacheCall, List<EquipSlot>? removedSlots = null)
+    /// <param name="forceCacheCall"> If true, will force the cache to be applied before updating. </param>
+    /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
+    public async Task UpdateCaches(bool forceCacheCall)
     {
-        if (!removeGlamour && !removeMeta)
-            return;
-
-        if (removeGlamour && removedSlots is null)
-        {
-            _logger.LogError("Cannot remove GlamourCache without removedSlots provided!");
-            return;
-        }
-
+        _logger.LogDebug("Updating Glamourer Caches.");
         await ExecuteWithSemaphore(async () =>
         {
-            var tasks = new List<Task>();
-            if (removeGlamour)
-                tasks.Add(RestoreAndReapply(forceCacheCall, removedSlots!));
-
-            if (removeMeta)
-                tasks.Add(ApplyMetaCache());
-
-            await Task.WhenAll(tasks);
+            // Run both operations in parallel.
+            await Task.WhenAll(
+                UpdateGlamourInternal(forceCacheCall),
+                UpdateMetaInternal()
+            );
+            _logger.LogInformation($"Processed Cache Updates Successfully!");
         });
+    }
+
+    /// <summary> Should only ever be used by the GlamourListener. </summary>
+    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
+    public async Task UpdateGlamourCacheSlim(bool forceCacheCall)
+        => await ExecuteWithSemaphore(() => UpdateGlamourInternal(forceCacheCall));
+
+    /// <summary> Should only ever be used by the GlamourListener. </summary>
+    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
+    public async Task UpdateMetaCacheSlim()
+        => await ExecuteWithSemaphore(UpdateMetaInternal);
+
+    /// <summary>
+    ///     Updates the Final Glamour Cache, and then applies the visual updates.
+    /// </summary>
+    private async Task UpdateGlamourInternal(bool forceCacheCall)
+    {
+        // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
+        if (_cache.UpdateFinalGlamourCache(out var removedSlots))
+        {
+            _logger.LogDebug($"Final Glamour Cache was updated!", LoggerType.VisualCache);
+            if (removedSlots.Any())
+                await RestoreAndReapply(forceCacheCall, removedSlots);
+            else
+                await ApplyGlamourCache(forceCacheCall);
+        }
+        else
+            _logger.LogTrace("No change in Final Glamour Cache.", LoggerType.VisualCache);
+    }
+
+    /// <summary>
+    ///     Updates the Final Meta Cache, and then applies the visual updates.
+    /// </summary>
+    private async Task UpdateMetaInternal()
+    {
+        // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
+        if (_cache.UpdateFinalMetaCache())
+        {
+            _logger.LogDebug($"Final MetaState Cache was updated!", LoggerType.VisualCache);
+            await ApplyMetaCache();
+        }
+        else
+            _logger.LogTrace("No change in Final MetaState Cache.", LoggerType.VisualCache);
     }
 
     /// <summary> 
@@ -125,7 +185,6 @@ public class GlamourHandler
     /// <summary> 
     ///     Apples the FinalGlamour from <see cref="_cache"/> to the Client. 
     /// </summary>
-    /// <remarks> Must be used in <see cref="ExecuteWithSemaphore(Func{Task})"/></remarks>
     private async Task ApplyGlamourCache(bool cacheBeforeApply)
     {
         if (cacheBeforeApply || ActorCacheIsEmpty)
@@ -149,7 +208,6 @@ public class GlamourHandler
     /// <summary>
     ///     Apples the _finalMeta from the <see cref="_cache"/> Cache to the Client.
     /// </summary>
-    /// <remarks> Must be used in <see cref="ExecuteWithSemaphore(Func{Task})"/></remarks>
     private async Task ApplyMetaCache()
     {
         await _ipc.SetMetaStates(_cache.FinalMeta.OnFlags(), true);

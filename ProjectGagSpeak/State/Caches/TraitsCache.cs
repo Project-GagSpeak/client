@@ -19,76 +19,56 @@ public class TraitsCache
         _logger = logger;
     }
 
-    /// <summary> The currently banned actions determined by <see cref="_finalTraits"/></summary>
-    private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
-
     /// <summary> The stored traits for every active gag, restriction, or restraint set. </summary>
     private SortedList<CombinedCacheKey, Traits> _traits = new();
     private Traits _finalTraits = Traits.None;
 
-    // Public readonly Accessors
-    public IReadOnlyDictionary<uint, Traits> BannedActions => _bannedActions;
     public Traits FinalTraits => _finalTraits;
 
-
-    // Helper methods.
-    public void UpdateBannedActions(IImmutableDictionary<uint, Traits> bannedActions)
+    public string GetSourceName(Traits trait)
     {
-        _bannedActions = bannedActions.ToImmutableDictionary();
-        _logger.LogDebug($"Banned actions updated. Count: {_bannedActions.Count}");
+        if (_traits.FirstOrDefault(kvp => (kvp.Value & trait) != Traits.None) is { } match)
+            return match.Key.Label;
+        return "Unknown Source";
     }
 
-    public void Addtraits(CombinedCacheKey combinedKey, Traits traits)
+    /// <summary>
+    ///     Adds the given <paramref name="traits"/> to the cache for the specified <paramref name="key"/>.
+    /// </summary>
+    /// <returns> If the traits were successfully added. </returns>
+    public bool AddTraits(CombinedCacheKey key, Traits traits)
     {
-        if (!_traits.TryAdd(combinedKey, traits))
+        if (!_traits.TryAdd(key, traits))
         {
-            _logger.LogWarning($"Attempted to add traits for {combinedKey} but it already exists.");
-            return;
-        }
-        _logger.LogDebug($"[{combinedKey}] added traits [{traits}].");
-    }
-
-    public bool AddAndUpdatetraits(CombinedCacheKey combinedKey, Traits traits)
-    {
-        // Add them and stuff.
-        Addtraits(combinedKey, traits);
-
-        // return false if things were not added.
-        if (_traits.ContainsKey(combinedKey))
+            _logger.LogWarning($"Attempted to add traits for {key} but it already exists.");
             return false;
-
-        return UpdateFinalCache();
-    }
-
-    public void Removetraits(CombinedCacheKey combinedKey)
-    {
-        if (!_traits.Remove(combinedKey, out var traits))
-        {
-            _logger.LogWarning($"Failed to remove traits at [{combinedKey}]");
-            return;
         }
 
-        _logger.LogDebug($"[{combinedKey}] removed traits [{traits}].");
+        _logger.LogDebug($"[{key}] added traits [{traits}].");
+        return true;
     }
 
-    public bool RemoveAndUpdatetraits(CombinedCacheKey combinedKey, out Traits removed)
+    /// <summary>
+    ///     Removes the traits for the given <paramref name="key"/> from the cache.
+    /// </summary>
+    /// <returns> If the traits were successfully removed. </returns>
+    public bool RemoveTraits(CombinedCacheKey key)
     {
-        var prevTraits = _finalTraits;
+        if (!_traits.Remove(key, out var traits))
+        {
+            _logger.LogWarning($"Failed to remove traits at [{key}]");
+            return false;
+        }
 
-        // Remove the traits for the combined keys..
-        Removetraits(combinedKey);
-
-        var changed = UpdateFinalCache();
-        // perform flag enum expression logic to get the resulting traits that is the previous traits not in _finalTraits.
-        removed = prevTraits & ~_finalTraits;
-        return changed;
+        _logger.LogDebug($"[{key}] removed traits [{traits}].");
+        return true;
     }
 
     /// <summary>
     ///     Updates the _finalTraits based on the current _traits by aggregating all traits
     /// </summary>
     /// <returns> If the cache changed at all. </returns>
-    private bool UpdateFinalCache()
+    public bool UpdateFinalCache()
     {
         var aggregatedTraits = Traits.None;
         // Aggregate all traits from the _traits dictionary.
@@ -102,6 +82,13 @@ public class TraitsCache
         _finalTraits = aggregatedTraits;
         return changed;
     }
+
+    /// <summary>
+    ///     Careful where and how you call this, use responsibly.
+    ///     If done poorly, things will go out of sync.
+    /// </summary>
+    public void ClearCache()
+        => _traits.Clear();
 
     #region DebugHelper
     public void DrawCacheTable()

@@ -229,7 +229,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             else
             {
                 // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
-                if (_manager.AppliedRestrictions[index] is { } item && item.Identifier != Guid.Empty)
+                if (_manager.ActiveItems.TryGetValue(index, out var item) && item.Identifier != Guid.Empty)
                 {
                     if (restrictionData.IsLocked())
                         _activeItemDrawer.UnlockItemGroup(height, index, restrictionData, item);

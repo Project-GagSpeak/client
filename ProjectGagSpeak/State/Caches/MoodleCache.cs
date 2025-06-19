@@ -41,120 +41,68 @@ public class MoodleCache
     public IReadOnlySet<Guid> FinalStatusIds => _finalStatusIds;
 
 
-    /// <summary>
-    ///     Applies a <paramref name="moodle"/> with <paramref name="combinedKey"/> to <see cref="_moodles"/> Cache.
-    /// </summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalMoodles"/></b></remarks>
-    public void AddMoodle(CombinedCacheKey combinedKey, Moodle moodle)
-        => AddMoodle(combinedKey, [moodle]);
+    /// <summary> Applies a <paramref name="moodle"/> with <paramref name="key"/> to the Moodles Cache. </summary>
 
-    /// <summary>
-    ///     Applies all <paramref name="moodles"/> with <paramref name="combinedKey"/> to <see cref="_moodles"/> Cache.
-    /// </summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalMoodles"/></b></remarks>
-    public void AddMoodle(CombinedCacheKey combinedKey, IEnumerable<Moodle> moodles)
+    public bool AddMoodle(CombinedCacheKey key, Moodle moodle)
+        => AddMoodle(key, [moodle]);
+
+    /// <summary> Applies many <paramref name="moodles"/> with <paramref name="key"/> to the Moodles Cache. </summary>
+    public bool AddMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
     {
-        if (_moodles.Keys.Any(keys => keys.Item1.Equals(combinedKey)))
+        if (_moodles.Keys.Any(keys => keys.Item1.Equals(key)))
         {
-            _logger.LogWarning($"Cannot add [{combinedKey}] to Cache, the Key already exists!");
-            return;
-        }
-
-        foreach (var item in moodles)
-        {
-            if (_moodles.TryAdd((combinedKey, item.Id), item))
-                _logger.LogDebug($"Added KeyValuePair ([{combinedKey}] - [{item.Id}]) to Cache.");
-            else
-                _logger.LogWarning($"KeyValuePair ([{combinedKey}] - [{item.Id}]) already exists in the Cache!");
-        }
-    }
-
-    /// <summary>
-    ///     Applies a <paramref name="moodle"/> with <paramref name="combinedKey"/> to the <see cref="_moodles"/> Cache,
-    ///     then updates <see cref="_finalMoodleItems"/> and <see cref="_finalMoodleIds"/> Cache.
-    /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    public bool AddAndUpdateMoodle(CombinedCacheKey combinedKey, Moodle moodle)
-        => AddAndUpdateMoodle(combinedKey, [moodle]);
-
-    /// <summary>
-    ///     Applies <paramref name="moodles"/> with <paramref name="combinedKey"/> to the <see cref="_moodles"/> Cache,
-    ///     then updates <see cref="_finalMoodleItems"/> and <see cref="_finalMoodleIds"/> Cache.
-    /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    public bool AddAndUpdateMoodle(CombinedCacheKey combinedKey, IEnumerable<Moodle> moodles)
-    {
-        if (_moodles.Keys.Any(keys => keys.Item1.Equals(combinedKey)))
-        {
-            _logger.LogWarning($"Cannot add Modle to cache at key [{combinedKey}], it already exists!");
+            _logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!");
             return false;
         }
 
-        AddMoodle(combinedKey, moodles);
-        return UpdateFinalCache();
+        bool added = false;
+        foreach (var item in moodles)
+        {
+            added |= _moodles.TryAdd((key, item.Id), item);
+            if(added) _logger.LogDebug($"Added KeyValuePair ([{key}] - [{item.Id}]) to Cache.");
+        }
+        return added;
     }
 
-    /// <summary>
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using any of the <paramref name="combinedKey"/>
-    /// </summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalMoodleItems"/></b></remarks>
-    public void RemoveMoodle(CombinedCacheKey combinedKey)
-        => RemoveMoodle([combinedKey]);
+    /// <summary> Removes the <paramref name="key"/> from the Moodles Cache. </summary>
+    public bool RemoveMoodle(CombinedCacheKey key)
+        => RemoveMoodle([key]);
 
-    /// <summary>
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKeys"/>
-    /// </summary>
-    /// <remarks><b>THIS DOES NOT UPDATE <see cref="_finalMoodleItems"/></b></remarks>
-    public void RemoveMoodle(List<CombinedCacheKey> combinedKeys)
+    /// <summary> Removes all <paramref name="keys"/> from the Moodles Cache. </summary>
+    public bool RemoveMoodle(IEnumerable<CombinedCacheKey> keys)
     {
-        var keys = _moodles.Keys.Where(k => combinedKeys.Contains(k.Item1)).ToList();
-        if (!keys.Any())
+        var allKeys = _moodles.Keys.Where(k => keys.Contains(k.Item1)).ToList();
+        if (!allKeys.Any())
         {
             _logger.LogWarning($"None of the CombinedKeys were found in the MoodleCache!");
-            return;
+            return false;
         }
 
         // Remove all glamours for the combined key.
-        foreach (var key in keys)
+        bool anyRemoved = false;
+        foreach (var key in allKeys)
         {
             _logger.LogDebug($"Removing GlamourCache key ([{key.Item1}] - [{key.Item2}])");
-            _moodles.Remove(key);
+            anyRemoved |= _moodles.Remove(key);
         }
+        return anyRemoved;
     }
 
-    /// <summary> 
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>, 
-    ///     then updates the <see cref="_finalMoodleItems"/> Cache.
+    /// <summary>
+    ///     Careful where and how you call this, use responsibly.
+    ///     If done poorly, things will go out of sync.
     /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    /// <remarks> The removed moodles Id's are collected in <paramref name="removed"/></remarks>
-    public bool RemoveAndUpdateMoodle(CombinedCacheKey combinedKey, out List<Guid> removed)
-        => RemoveAndUpdateMoodle([combinedKey], out removed);
+    public void ClearCache()
+        => _moodles.Clear();
 
-
-    /// <summary> 
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKeys"/>, 
-    ///     then updates the <see cref="_finalMoodleItems"/> Cache.
-    /// </summary>
-    /// <returns> True if any change occured, false otherwise. </returns>
-    /// <remarks> The removed moodles Id's are collected in <paramref name="removed"/></remarks>
-    public bool RemoveAndUpdateMoodle(List<CombinedCacheKey> combinedKeys, out List<Guid> removed)
+    public bool UpdateFinalCache(out IEnumerable<Guid> removedStatusIds)
     {
         var prevIds = _finalStatusIds.ToList();
-        // Remove all glamours for the combined keys.
-        RemoveMoodle(combinedKeys);
-
-        var changes = UpdateFinalCache();
-        removed = prevIds.Except(_finalStatusIds).ToList();
-        return changes;
-    }
-
-    private bool UpdateFinalCache()
-    {
         var anyChanges = false;
         _finalMoodleItems.Clear();
         _finalStatusIds.Clear();
 
+        // Automatically recalculates the statusIds list based on the moodle type for the moodles added.
         foreach (var moodle in _moodles.Values)
         {
             if (moodle is MoodlePreset p)
@@ -177,6 +125,8 @@ public class MoodleCache
                 }
             }
         }
+
+        removedStatusIds = prevIds.Except(_finalStatusIds);
         return anyChanges;
     }
 
