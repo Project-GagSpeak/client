@@ -1,6 +1,8 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
@@ -11,6 +13,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
@@ -130,10 +133,11 @@ public class ActiveItemsDrawer
     }
 
     // New Revised and Optimized displays:
-    public void ApplyItemGroup(float height, int slotIdx, ActiveGagSlot data)
+    public void ApplyItemGroup(int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
 
+        var height = CkStyle.ThreeRowHeight();
         // Draw out the framed image first.
         DrawFramedImage(data.GagItem, height, 10f);
 
@@ -165,10 +169,11 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void ApplyItemGroup(float height, int slotIdx, ActiveRestriction data)
+    public void ApplyItemGroup(int slotIdx, ActiveRestriction data)
     {
         using var group = ImRaii.Group();
 
+        var height = CkStyle.TwoRowHeight();
         // Draw out the framed image first.
         DrawRestrictionImage(null, height, 10f);
         // Perform actions based on the itemRect. (In this case, clear the gag.)
@@ -206,10 +211,11 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void LockItemGroup(float height, int slotIdx, ActiveGagSlot data)
+    public void LockItemGroup(int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
 
+        var height = CkStyle.ThreeRowHeight();
         // Draw out the framed image first.
         DrawFramedImage(data.GagItem, height, 10f);
         // We can remove if we are not yet locked (unlocked)
@@ -224,9 +230,11 @@ public class ActiveItemsDrawer
         _gagPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
     }
 
-    public void LockItemGroup(float height, int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    public void LockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem dispData)
     {
         using var group = ImRaii.Group();
+
+        var height = CkStyle.TwoRowHeight();
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         // We can remove if we are not yet locked (unlocked)
@@ -241,24 +249,41 @@ public class ActiveItemsDrawer
         _restrictionPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
     }
 
-    public void UnlockItemGroup(float height, int slotIdx, ActiveGagSlot data)
+    public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)
     {
         using var group = ImRaii.Group();
-        var size = new Vector2(height);
-        var padlockSize = size / 2;
-        // Draw out the framed image first.
-        DrawFramedImage(data.GagItem, height, 10f);
-        ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + (size - padlockSize) / 2);
-        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
 
-        ImUtf8.SameLineInner();
-        var rightWidth = ImGui.GetContentRegionAvail().X;
-        _gagPadlocks[slotIdx].DrawUnlockCombo(rightWidth, slotIdx, "Attempt to unlock this Padlock!");
+        var size = new Vector2(CkStyle.ThreeRowHeight());
+        var padlockSize = new Vector2(CkStyle.TwoRowHeight());
+        var offsetV = ImGui.GetFrameHeight() / 2;
+        // Draw out the framed image first.
+        DrawFramedImage(data.GagItem, size.X, 10f);
+        var gagDispPos = ImGui.GetItemRectMin();
+
+        // Move over the distance of the framed image.
+        ImGui.SameLine(0, padlockSize.X - (size.X * .2f));
+        using (var c = CkRaii.Child($"UnlockGroup-{slotIdx}", new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.TwoRowHeight())))
+        {
+            var centerWidth = c.InnerRegion.X - ImGui.GetFrameHeight();
+            if (data.Padlock.IsTimerLock())
+                CkGui.CenterColorTextAligned(data.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink, centerWidth);
+            else
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight());
+
+            // Display the unlock row.
+            _gagPadlocks[slotIdx].DrawUnlockCombo(c.InnerRegion.X, slotIdx, "Attempt to unlock this Padlock!");
+        }
+        
+        // Go back and show the image.
+        ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV));
+        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
     }
 
-    public void UnlockItemGroup(float height, int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem dispData)
     {
         using var group = ImRaii.Group();
+
+        var height = CkStyle.TwoRowHeight();
         var size = new Vector2(height);
         var padlockSize = size / 2;
         // Draw out the framed image first.
@@ -271,21 +296,21 @@ public class ActiveItemsDrawer
         _restrictionPadlocks[slotIdx].DrawUnlockCombo(rightWidth, slotIdx, "Attempt to unlock this Padlock!");
     }
 
-    public void DrawFramedImage(GagType gag, float size, float rounding, bool excludeFrame = false)
+    public void DrawFramedImage(GagType gag, float size, float rounding, bool frame = false)
     {
         var gagImage = gag is GagType.None ? null : _cosmetics.GagImageFromType(gag);
-        var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frame) ? frame : null;
-        DrawImageInternal(gagImage, gagFrame, size, rounding, excludeFrame);
+        var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
+        DrawImageInternal(gagImage, gagFrame, size, rounding, frame);
     }
 
-    public void DrawFramedImage(Padlocks padlock, float size, float rounding, bool excludeFrame = false)
+    public void DrawFramedImage(Padlocks padlock, float size, float rounding, bool frame = false)
     {
         var padlockImage = padlock is Padlocks.None ? null : _cosmetics.PadlockImageFromType(padlock);
-        var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frame) ? frame : null;
-        DrawImageInternal(padlockImage, padlockFrame, size, rounding, excludeFrame);
+        var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
+        DrawImageInternal(padlockImage, padlockFrame, size, rounding, frame, true, size / 6);
     }
 
-    public void DrawRestrictionImage(RestrictionItem? restriction, float size, float rounding, bool excludeFrame = false)
+    public void DrawRestrictionImage(RestrictionItem? restriction, float size, float rounding, bool frame = false)
     {
         // Attempt custom thumbnail.
         if (restriction != null && _cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.ThumbnailPath) is { } image)
@@ -303,31 +328,39 @@ public class ActiveItemsDrawer
         }
 
         // Fill out the frame.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameWrap) && !excludeFrame)
+        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameWrap) && !frame)
             ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, ImGui.GetItemRectMin(), new Vector2(size), rounding);
     }
 
-    public void DrawFramedImage(RestraintSet? rs, Vector2 size, float rounding, bool excludeFrame = false)
+    public void DrawFramedImage(RestraintSet? rs, Vector2 size, float rounding, bool frame = false)
     {
         var image = rs is null ? null : _cosmetics.GetImageMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath);
         DrawImageInternal(image, null, size, rounding);
     }
 
-    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, float size, float rounding, bool excludeFrame = false)
-        => DrawImageInternal(img, frame, new Vector2(size), rounding, excludeFrame);
+    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frameImg, float size, float rounding, bool frame = true, bool bg = false, float padding = 0)
+        => DrawImageInternal(img, frameImg, new Vector2(size), rounding, frame, bg, padding);
 
-    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, Vector2 size, float rounding, bool excludeFrame = false)
+    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frameImg, Vector2 size, float rounding, bool frame = true, bool bg = false, float padding = 0)
     {
         // Fill the area with the dummy region.
         ImGui.Dummy(size);
         var pos = ImGui.GetItemRectMin();
 
+        if (bg)
+            ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, 0xFF000000, size.X);
+
         // Now draw out the image, if we should.
-        if(img is { } imageWrap)
-            ImGui.GetWindowDrawList().AddDalamudImageRounded(imageWrap, pos, size, rounding);
+        if (img is { } imageWrap)
+        {
+            if (padding > 0)
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(imageWrap, pos + new Vector2(padding), size - new Vector2(padding * 2), rounding);
+            else
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(imageWrap, pos, size, rounding);
+        }
 
         // Fill out the frame.
-        if (frame is { } frameWrap && !excludeFrame)
+        if (frameImg is { } frameWrap && !frame)
             ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, pos, size, rounding);
     }
 }

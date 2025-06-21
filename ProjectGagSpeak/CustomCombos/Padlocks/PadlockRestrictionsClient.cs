@@ -27,7 +27,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 
 
     protected override bool DisableCondition(int layerIdx)
-        => Items[layerIdx].CanLock() is false || Items[layerIdx].Padlock == SelectedLock;
+        => Items[layerIdx].Identifier == Guid.Empty;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
         => DrawLockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
@@ -48,11 +48,11 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
             };
             _mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
             ResetSelection();
-        }
-        else
-        {
             ResetInputs();
+            return Task.FromResult(true);
         }
+        
+        ResetInputs();
         return Task.FromResult(true);
     }
 

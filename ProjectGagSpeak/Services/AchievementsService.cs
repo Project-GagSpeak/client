@@ -1,6 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.CkCommons;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -17,7 +18,7 @@ namespace GagSpeak.Services;
 /// <summary>
 ///     A service that manages achievements for the GagSpeak client.
 /// </summary>
-public partial class AchievementsService : DisposableMediatorSubscriberBase, IHostedService
+public class AchievementsService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly ClientAchievements _saveData;
     private readonly MainConfig _config;
@@ -32,20 +33,26 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly SexToyManager _sexToys;
+    private readonly AchievementEventHandler _handler;
     private readonly NotificationService _notifier;
     private readonly OnFrameworkService _frameworkUtils;
-    
-    private DateTime _lastCheck = DateTime.UtcNow;
-    private DateTime _lastPlayerCheck = DateTime.UtcNow;
-    private int _lastPlayerCount = 0;
+
+    private DateTime _lastCheck = DateTime.MinValue;
+    private DateTime _lastPlayerCheck = DateTime.MinValue;
     private bool _clientWasDead = false;
+    private int _lastPlayerCount = 0;
+
+    private Task? _updateLoopTask = null;
+    private CancellationTokenSource? _updateLoopCTS = new();
+
 
     public AchievementsService(ILogger<AchievementsService> logger, GagspeakMediator mediator,
         ClientAchievements saveData, MainConfig config, GlobalPermissions globals, TraitsCache traits,
-        PairManager pairs, GagRestrictionManager gags, RestrictionManager restrictions, 
+        PairManager pairs, GagRestrictionManager gags, RestrictionManager restrictions,
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns,
-        AlarmManager alarms, TriggerManager triggers, SexToyManager sexToys, NotificationService notifier,
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        AlarmManager alarms, TriggerManager triggers, SexToyManager sexToys,
+        AchievementEventHandler handler, NotificationService notifier, OnFrameworkService frameworkUtils)
+        : base(logger, mediator)
     {
         _saveData = saveData;
         _config = config;
@@ -60,14 +67,14 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
         _alarms = alarms;
         _triggers = triggers;
         _sexToys = sexToys;
+        _handler = handler;
         _notifier = notifier;
         _frameworkUtils = frameworkUtils;
 
-        // Initialize the achievement save data.
-        ReInitializeAchievements(true);
-
+        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => OnFrameworkCheck());
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
         {
+            _updateLoopCTS?.Cancel();
             // if the lastUnhandled disconnect is MinValue, then we should reset the cache entirely.
             if (!ClientAchievements.HadUnhandledDC)
             {
@@ -76,6 +83,55 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
             }
         });
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _updateLoopCTS?.CancelDispose();
+        }
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        Logger.LogInformation("AchievementListener Starting");
+        ReInitializeAchievements(true);
+        _handler.SubscribeToEvents();
+        BeginSaveCycle();
+        Logger.LogInformation("AchievementListener Started");
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        Logger.LogInformation("AchievementListener Stopping");
+        _handler.UnsubscribeFromEvents();
+        return Task.CompletedTask;
+    }
+    public void OnServerConnection(string? connectedAchievementString)
+    {
+        // Process the internal process of handling the string upon connection.
+        _saveData.OnConnection(connectedAchievementString);
+        // if the last unhandled disconnect is any value besides MinValue, then load in that data.
+        if (!ClientAchievements.HasValidData)
+        {
+            Logger.LogWarning("Achievement Save Data is invalid, cannot load achievements. Refusing the update.", LoggerType.Achievements);
+            return;
+        }
+
+        // Otherwise we should begin the update loop.
+        Logger.LogInformation("Achievement Save Data is valid, beginning save cycle.", LoggerType.Achievements);
+        BeginSaveCycle();
+    }
+
+    private void BeginSaveCycle()
+    {
+        Logger.LogInformation("Beginning Achievement Save Cycle", LoggerType.Achievements);
+        _updateLoopCTS = _updateLoopCTS?.CancelRecreate();
+        _updateLoopTask = RunPeriodicUpdate(_updateLoopCTS!.Token);
+    }
+
 
     private Task OnCompletion(int id, string title)
     {
@@ -94,8 +150,95 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
         Mediator.Publish(new UpdateCompletedAchievements());
         return Task.CompletedTask;
     }
+    private unsafe void OnFrameworkCheck()
+    {
+        // Throttle to once every 5 seconds.
+        var now = DateTime.UtcNow;
+        if ((now - _lastCheck).TotalSeconds < 5)
+            return;
 
-    private void ReInitializeAchievements(bool invalidate)
+        _lastCheck = now;
+
+        var isCurrentlyDead = PlayerData.Health is 0;
+
+        if (isCurrentlyDead && !_clientWasDead)
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
+
+        _clientWasDead = isCurrentlyDead;
+
+
+        // check if in gold saucer (maybe do something better for this later.
+        if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
+        {
+            var resultMenu = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
+            if (resultMenu != null && resultMenu->RootNode->IsVisible())
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.ChocoboRaceFinished);
+        }
+
+        // if 15 seconds has passed since the last player check, check the player.
+        if ((now - _lastPlayerCheck).TotalSeconds < 15)
+            return;
+
+        // update player count
+        _lastPlayerCheck = now;
+
+        // we should get the current player object count that is within the range required for crowd pleaser.
+        var playersInRange = _frameworkUtils.GetObjectTablePlayers()
+            .Where(player => PlayerData.DistanceTo(player.Position) < 30f)
+            .Count();
+
+        if (playersInRange != _lastPlayerCount)
+        {
+            Logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LoggerType.AchievementInfo);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PlayersInProximity, playersInRange);
+            _lastPlayerCount = playersInRange;
+        }
+    }
+
+    private async Task RunPeriodicUpdate(CancellationToken ct)
+    {
+        Logger.LogInformation("Starting SaveData Update Loop", LoggerType.Achievements);
+        var random = new Random();
+        while (!ct.IsCancellationRequested)
+        {
+            var minutesToNextCheck = 60;
+            try
+            {
+                Logger.LogDebug("Achievement SaveData Update processing...", LoggerType.Achievements);
+
+                if (!ClientAchievements.HasValidData)
+                {
+                    Logger.LogWarning("Had Invalid Save Data, refusing to Update.");
+                    minutesToNextCheck = 5;
+                }
+                else if (ClientAchievements.HadUnhandledDC)
+                {
+                    Logger.LogWarning("Had Unhandled DC you have still not yet recovered from, refusing to Update.");
+                    minutesToNextCheck = 1;
+                }
+                else
+                {
+                    Mediator.Publish(new SendAchievementData());
+                    Logger.LogDebug("Achievement SaveData Update completed successfully.", LoggerType.Achievements);
+                    minutesToNextCheck = random.Next(20, 31);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.LogDebug("SaveData Update loop canceled.", LoggerType.Achievements);
+                break;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unexpected error in SaveData Update loop.");
+            }
+
+            Logger.LogInformation($"Updating SaveData again in {minutesToNextCheck}minutes.");
+            await Task.Delay(TimeSpan.FromMinutes(minutesToNextCheck), ct).ConfigureAwait(false);
+        }
+    }
+
+    public void ReInitializeAchievements(bool invalidate)
     {
         Logger.LogInformation("Resetting achievements data.", LoggerType.Achievements);
         _saveData.ResetAchievements(invalidate);
@@ -381,11 +524,11 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
         () =>
         {
-                if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && (_globals.Current?.HcFollowState() ?? false))
-                    if (PlayerContent.InMainCity)
-                        return true;
-                return false;
-            }, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Walked for", suffix: "In a Major City");
+            if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && (_globals.Current?.HcFollowState() ?? false))
+                if (PlayerContent.InMainCity)
+                    return true;
+            return false;
+        }, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Walked for", suffix: "In a Major City");
 
         _saveData.AddConditional(AchievementModuleKind.Hardcore, Achievements.BlindLeadingTheBlind,
             () =>
@@ -556,18 +699,5 @@ public partial class AchievementsService : DisposableMediatorSubscriberBase, IHo
             return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Presentations Given on Stage", isSecret: true);
         #endregion SECRETS MODULE
-
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogInformation("AchievementsService started.");
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogInformation("AchievementsService stopped.");
-        return Task.CompletedTask;
     }
 }

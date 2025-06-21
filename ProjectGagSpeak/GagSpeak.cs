@@ -206,7 +206,7 @@ public static class GagSpeakServiceExtensions
 
         // Player Client
         .AddSingleton<ClientAchievements>()
-        .AddSingleton<AchievementListener>()
+        .AddSingleton<AchievementEventHandler>()
         .AddSingleton<FavoritesManager>()
         .AddSingleton<GlobalPermissions>()
         .AddSingleton<KinksterRequests>()
@@ -244,6 +244,7 @@ public static class GagSpeakServiceExtensions
 
         // Services (Tutorial)
         .AddSingleton<TutorialService>()
+
         // Services (UI)
         .AddSingleton<UiFontService>()
 
@@ -480,25 +481,35 @@ public static class GagSpeakServiceExtensions
     #endregion ScopedServices
 
     #region HostedServices
+    /// <summary>
+    ///     Services that must run logic on initialization to help with monitoring.
+    ///     If it does not, it can also be an important monitor background service.
+    /// </summary>
+    /// <remarks> Services that simply monitor actions should be invoked in 'WaitForPlayerAndLaunchCharacterManager' </remarks>
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)
     => services
-        .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())
-        .AddHostedService(p => p.GetRequiredService<UiFontService>())
-        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())
-        .AddHostedService(p => p.GetRequiredService<NotificationService>())
-        .AddHostedService(p => p.GetRequiredService<SpellActionService>())
-        .AddHostedService(p => p.GetRequiredService<EmoteService>())
-        .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())
-        .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())
-        .AddHostedService(p => p.GetRequiredService<EventAggregator>())
-        .AddHostedService(p => p.GetRequiredService<IpcProvider>())
-        .AddHostedService(p => p.GetRequiredService<CosmeticService>())
-        .AddHostedService(p => p.GetRequiredService<MainHub>())
-        .AddHostedService(p => p.GetRequiredService<SafewordService>())
-        .AddHostedService(p => p.GetRequiredService<AchievementsService>())
+        .AddHostedService(p => p.GetRequiredService<HybridSaveService>())   // Begins the SaveCycle task loop
+        .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Initializes our required textures so methods can work.
+        .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())    // Runs the task for monitoring mediator events.
+        .AddHostedService(p => p.GetRequiredService<NotificationService>()) // Important Background Monitor.
+        .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())  // Starts & monitors the framework update cycle.
 
-        // add our main Plugin.cs file as a hosted ;
-        .AddHostedService<GagSpeakHost>();
+        // Cached Data That MUST be initialized before anything else for validity.
+        .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Provides all Textures nessisary for the plugin.
+        .AddHostedService(p => p.GetRequiredService<UiFontService>())       // Provides all fonts nessisary for the plugin.
+        .AddHostedService(p => p.GetRequiredService<SpellActionService>())  // Provides all actions nessisary for the plugin.
+        .AddHostedService(p => p.GetRequiredService<EmoteService>())        // Provides all emotes nessisary for the plugin.
+
+        .AddHostedService(p => p.GetRequiredService<GagSpeakLoc>())         // Inits Localization with the current language.
+        .AddHostedService(p => p.GetRequiredService<EventAggregator>())     // Forcibly calls the constructor, subscribing to the monitors.
+        .AddHostedService(p => p.GetRequiredService<IpcProvider>())         // Required for IPC calls to work properly.
+
+        .AddHostedService(p => p.GetRequiredService<CacheStateManager>())   // Manages control over our visual state caches.
+        .AddHostedService(p => p.GetRequiredService<MainHub>())             // Required for beyond obvious reasons.
+        .AddHostedService(p => p.GetRequiredService<SafewordService>())     // Can never have too many safeguards to ensure this is active.
+        .AddHostedService(p => p.GetRequiredService<AchievementsService>()) // Nessisary to begin the task that listens for 
+
+        .AddHostedService(p => p.GetRequiredService<GagSpeakHost>());       // Make this always the final hosted service, initializing the startup.
     #endregion HostedServices
 }
 

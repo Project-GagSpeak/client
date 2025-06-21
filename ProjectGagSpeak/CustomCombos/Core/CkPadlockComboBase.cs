@@ -1,3 +1,4 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagspeakAPI.Data;
@@ -138,8 +139,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     public void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
         => DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip, CFlags.None);
 
-    public virtual void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, 
-        CFlags flags = CFlags.None)
+    public virtual void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, CFlags flags = CFlags.None)
     {
         // we need to calculate the size of the button for locking, so do so.
         using var group = ImRaii.Group();
@@ -154,8 +154,8 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         {
             var hint = Items[layerIdx].Padlock switch
             {
-                Padlocks.CombinationPadlock => "Guess Combination...",
-                Padlocks.PasswordPadlock => "Guess Password...",
+                Padlocks.CombinationPadlock   => "Guess Combo...",
+                Padlocks.PasswordPadlock      => "Guess Password...",
                 Padlocks.TimerPasswordPadlock => "Guess Password...",
                 _ => string.Empty,
             };
@@ -239,22 +239,20 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             {
                 ImGui.SetNextItemWidth(inputTextWidth);
                 ImGui.InputTextWithHint(passFieldLabel, passFieldHint, ref Password, maxLength);
+                ImUtf8.SameLineInner();
+                CkGui.FramedIconText(FAI.Key);
             }
-            ImUtf8.SameLineInner();
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FAI.Key);
         }
         // Timer Row
         using (ImRaii.Group())
         {
-            using (ImRaii.Disabled(!SelectedLock.IsTimerLock()))
+            using (ImRaii.Disabled(!PadlockEx.TimerLocks.Contains(SelectedLock)))
             {
                 ImGui.SetNextItemWidth(inputTextWidth);
                 ImGui.InputTextWithHint("##Timer_" + id, timerFieldHint, ref Timer, 12);
+                ImUtf8.SameLineInner();
+                CkGui.FramedIconText(FAI.Clock);
             }
-            ImUtf8.SameLineInner();
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FAI.Clock);
         }
     }
 }

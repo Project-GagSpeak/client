@@ -23,8 +23,8 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
 
-    protected override bool DisableCondition(int _)
-        => Items[0].GagItem is GagType.None;
+    protected override bool DisableCondition(int layerIdx)
+        => Items[layerIdx].GagItem is GagType.None;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
         => DrawLockCombo($"##ClientGagLock-{layerIdx}", width, layerIdx, string.Empty, tooltip, false);
@@ -34,13 +34,16 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 
     protected override Task<bool> OnLockButtonPress(int layerIdx)
     {
-        if (Items[0].CanLock())
+        if (Items[layerIdx].CanLock())
         {
+            var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock 
+                ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+
             var newData = new ActiveGagSlot()
             {
                 Padlock = SelectedLock,
                 Password = Password,
-                Timer = Timer.GetEndTimeUTC(),
+                Timer = finalTime,
                 PadlockAssigner = MainHub.UID // use the same assigner. (To remove devotional timers)
             };
             _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
@@ -57,12 +60,12 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     protected override Task<bool> OnUnlockButtonPress(int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
-        if (Items[0].CanUnlock())
+        if (Items[layerIdx].CanUnlock())
         {
             var newData = new ActiveGagSlot()
             {
-                Padlock = Items[0].Padlock,
-                Password = Items[0].Password,
+                Padlock = Items[layerIdx].Padlock,
+                Password = Items[layerIdx].Password,
                 PadlockAssigner = MainHub.UID
             };
             _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));

@@ -75,7 +75,7 @@ public class HybridSaveServiceBase<T> where T : IConfigFileProvider
 
     private void SaveConfigAsync(IHybridConfig<T> config)
     {
-        _logger.LogDebug($"Saving {config.GetType().Name}.");
+        _logger.LogTrace($"Saving {config.GetType().Name}.");
         var configPath = config.GetFileName(FileNames, out var uniquePerAccount);
         if (uniquePerAccount && !FileNames.HasValidProfileConfigs)
         {

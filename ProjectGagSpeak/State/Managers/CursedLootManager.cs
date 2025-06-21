@@ -133,7 +133,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
 
         // if it was a restriction manager, be sure to apply its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
-            _restrictions.AddOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+            _restrictions.TryAddOccupied(nonGagRestriction, GagspeakModule.CursedLoot);
 
         // Update the cache regardless.
         // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
@@ -151,7 +151,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
 
         // if it was a restriction manager, be sure to remove its item.
         if (item.RestrictionRef is RestrictionItem nonGagRestriction)
-            _restrictions.RemoveOccupiedRestriction(nonGagRestriction, ManagerPriority.CursedLoot);
+            _restrictions.TryRemoveRemoveOccupied(nonGagRestriction);
 
         // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
     }

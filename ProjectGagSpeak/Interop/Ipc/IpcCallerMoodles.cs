@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -163,16 +162,14 @@ public sealed class IpcCallerMoodles : IIpcCaller
         await ExecuteIpcOnThread(() =>
         {
             var clientNameWorld = PlayerData.NameWithWorld;
-            Parallel.ForEach(guidsToAdd, guid => _applyStatusByGuid.InvokeAction(guid, PlayerData.NameWithWorld));
+            foreach (var guid in guidsToAdd)
+                _applyStatusByGuid.InvokeAction(guid, clientNameWorld);
         });
     }
 
     public async Task ApplyOwnPresetByGUID(Guid guid)
     {
-        await ExecuteIpcOnThread(() =>
-        {
-            _applyPresetByGuid.InvokeAction(guid, PlayerData.NameWithWorld);
-        });
+        await ExecuteIpcOnThread(() => _applyPresetByGuid.InvokeAction(guid, PlayerData.NameWithWorld));
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
@@ -195,11 +192,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
     public async Task ClearStatus()
     {
-        await ExecuteIpcOnThread(() =>
-        {
-            var clientNameWorld = PlayerData.NameWithWorld;
-            _clearStatusesFromManager.InvokeAction(clientNameWorld);
-        });
+        await ExecuteIpcOnThread(() => _clearStatusesFromManager.InvokeAction(PlayerData.NameWithWorld));
     }
 
     /// <summary> Reverts the status of the moodles for a GameObject specified by the pointer</summary>

@@ -52,7 +52,7 @@ public class GlamourListener : IDisposable
 
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
-            _logger.LogError($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            // _logger.LogTrace($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
             return;
         }
 

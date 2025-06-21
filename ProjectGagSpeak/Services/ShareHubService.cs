@@ -15,7 +15,7 @@ using ImGuiNET;
 
 namespace GagSpeak.Services;
 
-// handles the global chat and pattern discovery social features.
+// Will need to revise this structure soon. Very messy at the moment.
 public class ShareHubService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
@@ -38,7 +38,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             ClientPublishedMoodles = MainHub.ConnectionResponse.PublishedMoodles;
 
             // grab the tags.
-            UiBlockingTask = FetchLatestTags();
+            AssignBlockingTask(FetchLatestTags());
         });
     }
 
@@ -65,26 +65,22 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
     public void ToggleSortDirection() => SearchSort = SearchSort == SearchSort.Ascending ? SearchSort.Descending : SearchSort.Ascending;
 
-    // Pattern Tasks
-    public void PerformPatternSearch() 
-        => UiBlockingTask = FetchPatternsTask();
+    private void AssignBlockingTask(Task task)
+    {
+        Logger.LogDebug("Assigning UI blocking task: " + task.Id);
+        UiBlockingTask = task;
+    }
 
-    public void DownloadPattern(Guid patternId)
-        => UiBlockingTask = DownloadPatternTask(patternId);
-    public void PerformPatternLikeAction(Guid patternId)
-        => UiBlockingTask = LikePatternActionTask(patternId);
-    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags)
-        => UiBlockingTask = PatternUploadTask(pattern, authorName, tags);
-    public void RemovePattern(Guid patternId)
-        => UiBlockingTask = PatternRemoveTask(patternId);
+    // Pattern Tasks
+    public void DownloadPattern(Guid patternId) => AssignBlockingTask(DownloadPatternTask(patternId));
+    public void PerformPatternLikeAction(Guid patternId) => AssignBlockingTask(LikePatternActionTask(patternId));
+    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags) => AssignBlockingTask(PatternUploadTask(pattern, authorName, tags));
+    public void RemovePattern(Guid patternId) => AssignBlockingTask(PatternRemoveTask(patternId));
 
     // Moodles Tasks
-    public void PerformMoodleSearch()
-        => UiBlockingTask = FetchMoodleTask();
-    public void PerformMoodleLikeAction(Guid moodleId)
-        => UiBlockingTask = LikeMoodleActionTask(moodleId);
-    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
-        => UiBlockingTask = UploadMoodleTask(authorName, tags, moodleInfo);
+    public void PerformMoodleSearch() => AssignBlockingTask(FetchMoodleTask());
+    public void PerformMoodleLikeAction(Guid moodleId) => AssignBlockingTask(LikeMoodleActionTask(moodleId));
+    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo) => AssignBlockingTask(UploadMoodleTask(authorName, tags, moodleInfo));
     public void RemoveMoodle(Guid idToRemove)
         => UiBlockingTask = RemoveMoodleTask(idToRemove);
 
@@ -97,41 +93,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         var moodleTupleToTry = match.MoodleStatus;
         Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
         _ipcProvider.TryOnStatus(moodleTupleToTry);
-    }
-
-    public void CopyMoodleToClipboard(Guid moodleId)
-    {
-        // Grab the moodle status of the moodle id we want to copy.
-        if(!LatestMoodleResults.Any(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId)) 
-            return;
-
-        // grab it.
-        var moodleStatus = LatestMoodleResults.First(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId).MoodleStatus;
-
-        // convert the moodle status to a copiable json clipboard.
-        var jsonObject = new
-        {
-            moodleStatus.IconID,
-            moodleStatus.Title,
-            moodleStatus.Description,
-            Type = (int)moodleStatus.Type,
-            moodleStatus.Applier,
-            moodleStatus.Dispelable,
-            moodleStatus.Stacks,
-            moodleStatus.StatusOnDispell,
-            CustomFXPath = moodleStatus.CustomVFXPath,
-            moodleStatus.StackOnReapply,
-            moodleStatus.StacksIncOnReapply,
-            moodleStatus.Days,
-            moodleStatus.Hours,
-            moodleStatus.Minutes,
-            moodleStatus.Seconds,
-            moodleStatus.NoExpire,
-            moodleStatus.AsPermanent
-        };
-        var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
-        ImGui.SetClipboardText(stringToCopy);
-        Logger.LogInformation("Copied moodle to clipboard.");
     }
 
     private async Task FetchLatestTags()
@@ -158,35 +119,39 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     }
 
     #region PatternHub Tasks
-    private async Task FetchPatternsTask()
+    public void PerformPatternSearch()
     {
-        // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-        var tags = SearchTags.Split(',')
-            .Select(x => x.ToLower().Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Where(x => x.Length > 0)
-            .ToHashSet();
-
-        // Firstly, we should compose the Dto for the search operation.
-        PatternSearch dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
-        var hubResponse = await _hub.SearchPatterns(dto);
-        var result = hubResponse.Value ?? [];
-
-        // if the result contains an empty list, then we failed to retrieve patterns.
-        if (result.Count <= 0)
+        Logger.LogTrace("Performing Pattern Search.", LoggerType.ShareHub);
+        UiBlockingTask = Task.Run(async () =>
         {
-            Logger.LogError("Failed to retrieve patterns from servers.");
-            LatestPatternResults.Clear();
-        }
-        else
-        {
-            Logger.LogInformation("Retrieved patterns from servers.", LoggerType.ShareHub);
-            LatestPatternResults = result;
-        }
+            // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
+            var tags = SearchTags.Split(',')
+                .Select(x => x.ToLower().Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Where(x => x.Length > 0)
+                .ToHashSet();
 
-        // if we have not called the initial patterns call, then we set it to true.
-        if (!InitialPatternsCall)
-            InitialPatternsCall = true;
+            // Firstly, we should compose the Dto for the search operation.
+            PatternSearch dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
+            var hubResponse = await _hub.SearchPatterns(dto);
+            var result = hubResponse.Value ?? new List<ServerPatternInfo>();
+
+            // if the result contains an empty list, then we failed to retrieve patterns.
+            if (result.Count <= 0)
+            {
+                Logger.LogError("Failed to retrieve patterns from servers.");
+                LatestPatternResults.Clear();
+            }
+            else
+            {
+                Logger.LogInformation("Retrieved patterns from servers.", LoggerType.ShareHub);
+                LatestPatternResults = result;
+            }
+
+            // if we have not called the initial patterns call, then we set it to true.
+            if (!InitialPatternsCall)
+                InitialPatternsCall = true;
+        });
     }
 
     private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
@@ -426,4 +391,39 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
     #endregion PatternHub Tasks
+
+    public void CopyMoodleToClipboard(Guid moodleId)
+    {
+        // Grab the moodle status of the moodle id we want to copy.
+        if (!LatestMoodleResults.Any(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId))
+            return;
+
+        // grab it.
+        var moodleStatus = LatestMoodleResults.First(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId).MoodleStatus;
+
+        // convert the moodle status to a copiable json clipboard.
+        var jsonObject = new
+        {
+            moodleStatus.IconID,
+            moodleStatus.Title,
+            moodleStatus.Description,
+            Type = (int)moodleStatus.Type,
+            moodleStatus.Applier,
+            moodleStatus.Dispelable,
+            moodleStatus.Stacks,
+            moodleStatus.StatusOnDispell,
+            CustomFXPath = moodleStatus.CustomVFXPath,
+            moodleStatus.StackOnReapply,
+            moodleStatus.StacksIncOnReapply,
+            moodleStatus.Days,
+            moodleStatus.Hours,
+            moodleStatus.Minutes,
+            moodleStatus.Seconds,
+            moodleStatus.NoExpire,
+            moodleStatus.AsPermanent
+        };
+        var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
+        ImGui.SetClipboardText(stringToCopy);
+        Logger.LogInformation("Copied moodle to clipboard.");
+    }
 }

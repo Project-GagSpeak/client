@@ -260,7 +260,7 @@ public class UserPairListHandler
         var bidirectionalTaggedPairs = BasicSortedList(filteredPairs
             .Where(u => FilterOnlineUsers(u) && FilterPairedOrPausedSelf(u)));
 
-        _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomAllTag, LoggerType.UI);
+        // _logger.LogTrace("Adding Pair Section List Tag: " + Constants.CustomAllTag, LoggerType.UI);
         drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomAllTag, bidirectionalTaggedPairs, allOnlinePairs));
 
 
@@ -268,7 +268,7 @@ public class UserPairListHandler
         if (_configService.Current.ShowOfflineUsersSeparately)
         {
             // create the draw folders for the online untagged pairs
-            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UI);
+            // _logger.LogTrace("Adding Pair Section List Tag: " + Constants.CustomOnlineTag, LoggerType.UI);
             drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOnlineTag, onlineFilteredPairs, allOnlinePairs));
 
             // then do so.
@@ -278,7 +278,7 @@ public class UserPairListHandler
                 .Where(FilterOfflineUsers));
 
             // add the folder.
-            _logger.LogDebug("Adding Pair Section List Tag: " + Constants.CustomOfflineTag, LoggerType.UI);
+            // _logger.LogTrace("Adding Pair Section List Tag: " + Constants.CustomOfflineTag, LoggerType.UI);
             drawFolders.Add(_drawEntityFactory.CreateDrawTagFolder(Constants.CustomOfflineTag, filteredOfflinePairs,
                 allOfflinePairs));
 

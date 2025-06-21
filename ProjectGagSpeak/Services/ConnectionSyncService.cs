@@ -24,7 +24,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     private readonly TriggerManager _triggers;
     private readonly VisualStateListener _visuals;
     private readonly ConfigFileProvider _fileNames;
-    private readonly AchievementListener _achievements;
+    private readonly AchievementsService _achievements;
 
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
@@ -39,7 +39,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         AlarmManager alarms,
         TriggerManager triggers,
         VisualStateListener visuals,
-        AchievementListener achievements)
+        AchievementsService achievements)
         : base(logger, mediator)
     {
         _globals = globals;

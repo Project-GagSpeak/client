@@ -230,7 +230,7 @@ public class GlamourHandler
 
         // Now that we've acquired it, update block reason.
         _ipcBlocker |= IpcBlockReason.SemaphoreTask;
-        _logger.LogWarning($"Now running Semaphore. Blockers: {_ipcBlocker}", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"Now running Semaphore. Blockers: {_ipcBlocker}", LoggerType.IpcGlamourer);
 
         try
         {
@@ -246,7 +246,7 @@ public class GlamourHandler
             await _frameworkUtils.RunOnFrameworkTickDelayed(() =>
             {
                 _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
-                _logger.LogWarning($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
+                _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
             }, 1);
             // Release the slim, allowing further execution.
             _applySlim.Release();

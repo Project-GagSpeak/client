@@ -3,11 +3,6 @@ namespace GagSpeak.Services.Mediator;
 /// <summary> Invoked upon Client Player Login. </summary>
 public record DalamudLoginMessage : MessageBase;
 
-/// <summary> Invoked upon Client Player Logout. </summary>
-/// <param name="type"> The type of logout. </param>
-/// <param name="code"> The code of logout. </param>
-public record DalamudLogoutMessage(int type, int code) : MessageBase;
-
 /// <summary> Every Game Framework Update, this fires. </summary>
 public record FrameworkUpdateMessage : SameThreadMessage;
 

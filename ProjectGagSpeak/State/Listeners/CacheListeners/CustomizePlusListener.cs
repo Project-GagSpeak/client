@@ -10,7 +10,6 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
     private readonly IpcCallerCustomize _ipc; 
     private readonly CustomizePlusCache _cache;
     private readonly CustomizePlusHandler _handler;
-    
     public CustomizePlusListener(
         ILogger<CustomizePlusListener> logger,
         GagspeakMediator mediator,
@@ -25,10 +24,11 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
 
         _ipc.OnProfileUpdate.Subscribe(OnProfileUpdate);
 
-        if (IpcCallerCustomize.APIAvailable) 
-            OnCustomizeReady();
+        if (IpcCallerCustomize.APIAvailable)
+            FetchProfileList();
 
-        Mediator.Subscribe<CustomizeReady>(this, (msg) => OnCustomizeReady());
+        Mediator.Subscribe<CustomizeReady>(this, _ => FetchProfileList());
+        Mediator.Subscribe<CustomizeProfileListRequest>(this, _ => FetchProfileList());
     }
 
     protected override void Dispose(bool disposing)
@@ -39,7 +39,7 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
 
     /// <summary> Fetches all information from moodles we can cache and store. (Presets, Statuses, StatusManager). </summary>
     /// <remarks> This will fire every time that Moodles Plugin initializes. </remarks>
-    private void OnCustomizeReady()
+    private void FetchProfileList()
     {
         _cache.UpdateIpcProfileList(_ipc.GetAllProfiles());
         Logger.LogInformation("All CustomizePlus Profiles Retrieved!", LoggerType.IpcCustomize);

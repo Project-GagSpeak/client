@@ -57,7 +57,6 @@ public sealed class JobCombo : CkFilterComboCache<LightJob>
         var parsedJob = Items[globalIdx];
 
         // Draw a ghost selectable at first.
-        // Draw a ghost selectable at first.
         var ret = false;
         var pos = ImGui.GetCursorPos();
         using (ImRaii.Group())

@@ -75,7 +75,6 @@ public class CustomizePlusHandler
     {
         if (FinalProfile.Equals(CustomizeProfile.Empty))
         {
-            _logger.LogWarning("No C+ Profile found in Cache! Cannot apply profile cache.", LoggerType.IpcCustomize);
             if (_ipc.CurrentActiveProfile() is { } activeProfile && activeProfile.ProfileGuid != Guid.Empty)
                 _ipc.SetProfileDisable(activeProfile.ProfileGuid);
             return Task.CompletedTask;

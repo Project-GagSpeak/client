@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -9,6 +10,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
+using Microsoft.Extensions.Hosting;
 using OtterGui.Classes;
 
 namespace GagSpeak.State.Managers;
@@ -18,8 +20,9 @@ namespace GagSpeak.State.Managers;
 ///     Helper functions for appending, removing, and managing individual caches are included.
 /// </summary>
 /// <remarks> Helps with code readability, and optimal sorting of storage caches. </remarks>
-public class CacheStateManager : DisposableMediatorSubscriberBase
+public class CacheStateManager : IHostedService
 {
+    private readonly ILogger<CacheStateManager> _logger;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -30,19 +33,12 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     private readonly TraitsHandler _traitsHandler;
     private readonly ArousalService _arousalHandler;
 
-    public CacheStateManager(ILogger<CacheStateManager> logger,
-        GagspeakMediator mediator,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
-        RestraintManager restraints,
-        CustomizePlusHandler profiles,
-        GlamourHandler glamours,
-        ModHandler mods,
-        MoodleHandler moodles,
-        TraitsHandler traits,
+    public CacheStateManager(ILogger<CacheStateManager> logger, GagRestrictionManager gags,
+        RestrictionManager restrictions, RestraintManager restraints, CustomizePlusHandler profiles, 
+        GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, TraitsHandler traits, 
         ArousalService arousals) 
-        : base(logger, mediator)
     {
+        _logger = logger;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -52,25 +48,26 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         _moodleHandler = moodles;
         _traitsHandler = traits;
         _arousalHandler = arousals;
-
-        // Only clear on logout, not disconnect, we want to keep people helpless~
-        Svc.ClientState.Logout += (_, _) => OnLogout();
     }
 
-    protected override void Dispose(bool disposing)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        base.Dispose(disposing);
-        ClearCaches();
+        _logger.LogInformation("CacheStateManager started, listening for logout events.");
+        Svc.ClientState.Logout += (_, _) => ClearCaches();
+        return Task.CompletedTask;
     }
 
-    private void OnLogout()
+    public Task StopAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("CacheStateManager stopping, clearing caches.");
+        Svc.ClientState.Logout -= (_, _) => ClearCaches();
         ClearCaches();
+        return Task.CompletedTask;
     }
 
     private async void ClearCaches()
     {
-        Logger.LogInformation("------- Clearing all caches on logout -------");
+        _logger.LogInformation("------- Clearing all caches on logout -------");
         await Task.WhenAll(
             _glamourHandler.ClearCache(),
             _modHandler.ClearCache(),
@@ -79,20 +76,20 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             _traitsHandler.ClearCache(),
             _arousalHandler.ClearArousals()
         );
-        Logger.LogInformation("------- All caches cleared -------");
+        _logger.LogInformation("------- All caches cleared -------");
     }
 
     // Keep in mind that while this looks heavy, everything uses .TryAdd, meaning duplicates will not be reapplied.
     public async Task SyncWithServerData(ConnectionResponse connectionDto)
     {
-        Logger.LogWarning("Syncing Server Data to Active Items & Visuals");
+        _logger.LogWarning("Syncing Server Data to Active Items & Visuals");
         var sw = Stopwatch.StartNew();
         // Sync all server gag data with the GagRestrictionManager.
         _gags.LoadServerData(connectionDto.SyncedGagData);
-        Logger.LogInformation("------ Syncing Gag Data to Cache ------");
+        _logger.LogInformation("------ Syncing Gag Data to Cache ------");
         foreach (var (layer, gagItem) in _gags.ActiveItems)
         {
-            Logger.LogDebug($"Adding ({gagItem.GagType.GagName()}) at layer {layer}, which " +
+            _logger.LogDebug($"Adding ({gagItem.GagType.GagName()}) at layer {layer}, which " +
                 $"was enabled by {_gags.ServerGagData!.GagSlots[layer].Enabler}.");
             var key = new CombinedCacheKey(ManagerPriority.Gags, layer, gagItem.GagType.GagName());
             _glamourHandler.TryAddGlamourToCache(key, gagItem.Glamour);
@@ -103,14 +100,14 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
             _arousalHandler.TryAddArousalToCache(key, gagItem.Arousal);
         }
-        Logger.LogInformation("------ Gag Data synced to Cache ------ ");
+        _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
         // Sync all server restriction data with the RestrictionManager.
         _restrictions.LoadServerData(connectionDto.SyncedRestrictionsData);
-        Logger.LogInformation("------ Syncing Restriction Data to Cache ------");
+        _logger.LogInformation("------ Syncing Restriction Data to Cache ------");
         foreach (var (layer, item) in _restrictions.ActiveItems)
         {
-            Logger.LogDebug($"Adding Restriction [{item.Label}] at layer {layer}, which " +
+            _logger.LogDebug($"Adding Restriction [{item.Label}] at layer {layer}, which " +
                 $"was enabled by {_restrictions.ServerRestrictionData!.Restrictions[layer].Enabler}.");
             var key = new CombinedCacheKey(ManagerPriority.Restrictions, layer, item.Label);
             var metaStruct = item switch
@@ -125,14 +122,14 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             _moodleHandler.TryAddMoodleToCache(key, item.Moodle);
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
         }
-        Logger.LogInformation("------ Restriction Data synced to Cache ------ ");
+        _logger.LogInformation("------ Restriction Data synced to Cache ------ ");
 
         // Sync all server restraint data with the RestraintManager.
         _restraints.LoadServerData(connectionDto.SyncedRestraintSetData);
-        Logger.LogInformation("------ Syncing Restraint Data to Cache ------");
+        _logger.LogInformation("------ Syncing Restraint Data to Cache ------");
         if(_restraints.AppliedRestraint is { } restraintSet)
         {
-            Logger.LogDebug($"Adding RestraintSet [{restraintSet.Label}), which was enabled by {_restraints.ServerRestraintData?.Enabler}.");
+            _logger.LogDebug($"Adding RestraintSet [{restraintSet.Label}), which was enabled by {_restraints.ServerRestraintData?.Enabler}.");
             var key = new CombinedCacheKey(ManagerPriority.Gags, -1, restraintSet.Label);
             _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetGlamour().Values);
             _glamourHandler.TryAddMetaToCache(key, restraintSet.GetMetaData());
@@ -141,10 +138,10 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetTraits());
             _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
         }
-        Logger.LogInformation("------ Restraint Data synced to Cache ------ ");
+        _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
 
         // Now perform all updates in parallel.
-        Logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
+        _logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
         await Task.WhenAll(
             _glamourHandler.UpdateCaches(true), // this should maybe probably be false incase we trigger this in a bound state? Idk.
             _modHandler.UpdateModCache(),
@@ -154,14 +151,14 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
             _arousalHandler.UpdateFinalCache()
         );
         sw.Stop();
-        Logger.LogWarning($"------ All Updates & Visuals Applied in {sw.ElapsedMilliseconds}ms ------");
+        _logger.LogInformation($"------ All Updates & Visuals Applied in {sw.ElapsedMilliseconds}ms ------");
     }
 
     /// <summary> Adds a GagItem's visual properties to the cache at the defined layer. </summary>
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
     public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler)
     {
-        Logger.LogDebug($"Adding GagItem ({item.GagType.GagName()}) at layer {layerIdx}, which was enabled by {enabler}.");
+        _logger.LogDebug($"Adding GagItem ({item.GagType.GagName()}) at layer {layerIdx}, which was enabled by {enabler}.");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, item.GagType.GagName());
         // perform the updates in parallel.
         await TimedWhenAll($"[{combinedKey}]'s Visual Attributes added to caches",
@@ -178,7 +175,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
     public async Task RemoveGagItem(GarblerRestriction item, int layerIdx)
     {
-        Logger.LogDebug($"Removing {item.GagType.GagName()} from cache at layer {layerIdx}");
+        _logger.LogDebug($"Removing {item.GagType.GagName()} from cache at layer {layerIdx}");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, item.GagType.GagName());
         // Remove and update in parallel.
         await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
@@ -193,7 +190,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
 
     public async Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler)
     {
-        Logger.LogInformation($"Adding Restriction ({item.Label}) at layer {layerIdx}, which was enabled by {enabler}.");
+        _logger.LogInformation($"Adding Restriction ({item.Label}) at layer {layerIdx}, which was enabled by {enabler}.");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, item.Label);        
         var metaStruct = item switch
         {
@@ -212,7 +209,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
 
     public async Task RemoveRestrictionItem(RestrictionItem item, int layerIdx)
     {
-        Logger.LogInformation($"Removing Restriction [{item.Label}] from cache at layer {layerIdx}");
+        _logger.LogInformation($"Removing Restriction [{item.Label}] from cache at layer {layerIdx}");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, item.Label);
         // Remove and update in parallel.
         await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
@@ -227,7 +224,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     // This is going to be a whole other ballpark to deal with, so save for later, it will come with additional complexity.
     public async Task AddRestraintSet(RestraintSet item, int layerIdx, string enabler)
     {
-        Logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
+        _logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
         // -1 is the base, 0-4 are the layers. (could make it 0 to line things up but this makes it better in code)
         var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, layerIdx, item.Label);
         // Add and update in parallel.
@@ -243,7 +240,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
     // the layerIdx shouldnt even be here really if we are calling the layers seperately? idk.
     public async Task RemoveRestraintSet(RestraintSet item, int layerIdx)
     {
-        Logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer {layerIdx}");
+        _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer {layerIdx}");
         var combinedKey = new CombinedCacheKey(ManagerPriority.Restraints, -1, item.Label);
         // Remove and update in parallel.
         await TimedWhenAll($"[{combinedKey}] removed from cache and base states restored",
@@ -260,7 +257,7 @@ public class CacheStateManager : DisposableMediatorSubscriberBase
         var sw = Stopwatch.StartNew();
         await Task.WhenAll(tasks);
         sw.Stop();
-        Logger.LogDebug($"{label} in {sw.ElapsedMilliseconds}ms.");
+        _logger.LogDebug($"{label} in {sw.ElapsedMilliseconds}ms.");
     }
 
 

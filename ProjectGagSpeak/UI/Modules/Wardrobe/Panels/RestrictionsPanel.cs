@@ -215,26 +215,23 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 7;
 
-        foreach (var (restrictionData, index) in activeRestrictionSlots.Restrictions.WithIndex())
+        foreach (var (data, index) in activeRestrictionSlots.Restrictions.WithIndex())
         {
             // Spacing.
             if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
             // Draw the framed Item.
-            if (restrictionData.Identifier== Guid.Empty)
-            {
-                // Display empty showing.
-                _activeItemDrawer.ApplyItemGroup(groupH, index, restrictionData);
-            }
+            if (data.Identifier == Guid.Empty)
+                _activeItemDrawer.ApplyItemGroup(index, data);
             else
             {
                 // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
                 if (_manager.ActiveItems.TryGetValue(index, out var item) && item.Identifier != Guid.Empty)
                 {
-                    if (restrictionData.IsLocked())
-                        _activeItemDrawer.UnlockItemGroup(height, index, restrictionData, item);
+                    if (data.IsLocked())
+                        _activeItemDrawer.UnlockItemGroup(index, data, item);
                     else
-                        _activeItemDrawer.LockItemGroup(height, index, restrictionData, item);
+                        _activeItemDrawer.LockItemGroup(index, data, item);
                 }
             }
         }

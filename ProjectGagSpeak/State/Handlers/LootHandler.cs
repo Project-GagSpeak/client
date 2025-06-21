@@ -178,9 +178,10 @@ public sealed class LootHandler
         }
 
         // gag failed to apply, now we need to apply a valid restriction. Restriction must be unoccupied.
+        // This currently allows for collar restrictions, dont let this happen.
         var itemsToRoll = _manager.Storage.InactiveItemsInPool
-            .Where(item => item.RestrictionRef is not GarblerRestriction
-                && _restrictions.OccupiedRestrictions.Any(x => x.Item.Identifier == item.Identifier));
+            .Where(item => item.RestrictionRef is IRestrictionItem r 
+                && !_restrictions.ActiveItemsAll.ContainsKey(r.Identifier));
         // If no items, abort.
         if (!itemsToRoll.Any())
         {

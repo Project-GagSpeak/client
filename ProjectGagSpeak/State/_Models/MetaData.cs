@@ -50,23 +50,22 @@ public struct MetaDataStruct
 
     public bool SetMeta(MetaIndex index, OptionalBool newValue)
     {
-        switch (index)
+        if (index is MetaIndex.HatState && !newValue.Equals(Headgear))
         {
-            case MetaIndex.HatState:
-                if (!Headgear.Equals(newValue))
-                    Headgear = newValue;
-                return true;
-
-            case MetaIndex.VisorState:
-                if (!Visor.Equals(newValue))
-                    Visor = newValue; 
-                return true;
-
-            case MetaIndex.WeaponState:
-                if (!Weapon.Equals(newValue))
-                    Weapon = newValue;
-                return true;
+            Headgear = newValue;
+            return true;
         }
+        if (index is MetaIndex.VisorState && !newValue.Equals(Visor))
+        {
+            Visor = newValue;
+            return true;
+        }
+        if (index is MetaIndex.WeaponState && !newValue.Equals(Weapon))
+        {
+            Weapon = newValue;
+            return true;
+        }
+
         return false;
     }
 

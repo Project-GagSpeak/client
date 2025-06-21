@@ -41,7 +41,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
                 .ToDictionary(w => (ushort)w.RowId, w => w.Name.ToString());
         });
 
-        // stores added pairs character name and addresses when added.
+        // This should probably be moved somewhere else idealy but whatever for now.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>
         {
             if (PlayerData.IsInPvP) return;
@@ -54,6 +54,20 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
                 Svc.Targets.Target = CreateGameObject(addr);
             }).ConfigureAwait(false);
         });
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        Logger.LogInformation("Starting OnFrameworkService");
+        Svc.Framework.Update += FrameworkOnUpdate;
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        Logger.LogTrace("Stopping OnFrameworkService");
+        Svc.Framework.Update -= FrameworkOnUpdate;
+        return Task.CompletedTask;
     }
 
     #region FrameworkMethods
@@ -171,27 +185,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         }
 
         return func.Invoke();
-    }
-
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogInformation("Starting OnFrameworkService");
-        // subscribe to the framework updates
-        Svc.Framework.Update += FrameworkOnUpdate;
-
-        Logger.LogInformation("Started OnFrameworkService");
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        Logger.LogTrace("Stopping {type}", GetType());
-        // unsubscribe from all mediator messages
-        Mediator.UnsubscribeAll(this);
-        // unsubscribe from the framework updates
-        Svc.Framework.Update -= FrameworkOnUpdate;
-        return Task.CompletedTask;
     }
 
     /// <summary> Try and find a player by their name hash (ident ((identity))</summary>

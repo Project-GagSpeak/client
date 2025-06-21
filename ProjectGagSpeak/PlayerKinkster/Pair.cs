@@ -58,7 +58,7 @@ public class Pair : IComparable<Pair>
     public CharaActiveGags LastGagData { get; set; } = new();
     public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
     public CharaActiveRestraint LastRestraintData { get; set; } = new();
-    public IEnumerable<Guid> ActiveCursedItems { get; set; } = new List<Guid>();
+    public List<Guid> ActiveCursedItems { get; set; } = new();
     public AliasStorage LastGlobalAliasData { get; set; } = new();
     public NamedAliasStorage LastPairAliasData { get; set; } = new();
     public CharaToyboxData LastToyboxData { get; set; } = new();
@@ -298,7 +298,7 @@ public class Pair : IComparable<Pair>
     public void UpdateCursedLootData(KinksterUpdateCursedLoot data)
     {
         _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        ActiveCursedItems = data.ActiveItems;
+        ActiveCursedItems = data.ActiveItems.ToList();
         UpdateCachedLockedSlots();
     }
 

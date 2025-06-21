@@ -9,7 +9,7 @@ namespace GagSpeak;
 /// <summary>
 /// The service responsible for handling framework updates and other Dalamud related services.
 /// </summary>
-public class GagSpeakLoc : IDisposable, IHostedService
+public class GagSpeakLoc : IHostedService
 {
     private readonly ILogger<GagSpeakLoc> _logger;
     private readonly Dalamud.Localization _localization;
@@ -22,25 +22,6 @@ public class GagSpeakLoc : IDisposable, IHostedService
         _localization = localization;
         _mainConfig = config;
         _tutorialService = tutorial;
-
-        _localization.SetupWithLangCode(Svc.PluginInterface.UiLanguage);
-        GSLoc.ReInitialize();
-
-        // Update our forced stay entries as well.
-        MainConfig.ForcedStayPromptList.CheckAndInsertRequired();
-        MainConfig.ForcedStayPromptList.PruneEmpty();
-        _mainConfig.Save();
-
-        // load tutorial strings.
-        _tutorialService.InitializeTutorialStrings();
-
-        // subscribe to any localization changes.
-        Svc.PluginInterface.LanguageChanged += LoadLocalization;
-    }
-
-    public void Dispose()
-    {
-        Svc.PluginInterface.LanguageChanged -= LoadLocalization;
     }
 
     private void LoadLocalization(string languageCode)
@@ -60,12 +41,27 @@ public class GagSpeakLoc : IDisposable, IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting GagSpeak Localization Service.");
+        _localization.SetupWithLangCode(Svc.PluginInterface.UiLanguage);
+        GSLoc.ReInitialize();
+
+        // Update our forced stay entries as well.
+        MainConfig.ForcedStayPromptList.CheckAndInsertRequired();
+        MainConfig.ForcedStayPromptList.PruneEmpty();
+        _mainConfig.Save();
+
+        // load tutorial strings.
+        _tutorialService.InitializeTutorialStrings();
+
+        // subscribe to any localization changes.
+        Svc.PluginInterface.LanguageChanged += LoadLocalization;
+        _logger.LogInformation("GagSpeak Localization Service started successfully.");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Stopping GagSpeak Localization Service.");
+        Svc.PluginInterface.LanguageChanged -= LoadLocalization;
         return Task.CompletedTask;
     }
 }

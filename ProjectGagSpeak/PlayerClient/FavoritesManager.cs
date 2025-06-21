@@ -42,7 +42,7 @@ public class FavoritesManager : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Favorites;
-        Svc.Logger.Warning("Loading in Favorites Config for file: " + file);
+        Svc.Logger.Information("Loading in Favorites Config for file: " + file);
         if (!File.Exists(file))
         {
             Svc.Logger.Warning("No Favorites Config file found at {0}", file);

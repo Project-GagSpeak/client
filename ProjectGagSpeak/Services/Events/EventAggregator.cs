@@ -8,7 +8,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.Services.Events;
 
 /// <summary>
-/// Handles the management of logging, storing, and saving collected Events through the plugins lifespan.
+///     Handles the management of logging, storing, and saving collected Events through the plugins lifespan.
 /// </summary>
 public class EventAggregator : MediatorSubscriberBase, IHostedService
 {

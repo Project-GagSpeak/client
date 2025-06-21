@@ -9,6 +9,7 @@ public record PenumbraDisposedMessage : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;
 public record CustomizeReady : MessageBase;
+public record CustomizeProfileListRequest : MessageBase;
 public record CustomizeDispose : MessageBase;
 public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record MoodlesStatusManagerUpdate : MessageBase;

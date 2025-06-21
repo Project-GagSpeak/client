@@ -16,6 +16,9 @@ public class CosmeticService : IHostedService, IDisposable
     public CosmeticService(ILogger<CosmeticService> logger, GagspeakMediator mediator)
     {
         _logger = logger;
+        LoadAllCoreTextures();
+        LoadAllCoreEmoteTextures();
+        LoadAllCosmetics();
     }
 
     private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
@@ -247,18 +250,14 @@ public class CosmeticService : IHostedService, IDisposable
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Started.");
-        LoadAllCoreTextures();
-        LoadAllCoreEmoteTextures();
-        LoadAllCosmetics();
-
         try
         {
             // Create the directories if they do not yet exist.
             var transferTargets = new (string SourceFile, string SubDir, string TargetFile)[]
             {
-            ("BACKUP_BF_Light.png",    ImageDataType.Blindfolds.ToString(), "Blindfold Light.png"),
-            ("BACKUP_BF_Sensual.png",  ImageDataType.Blindfolds.ToString(), "Blindfold Sensual.png"),
-            ("BACKUP_Hypno_Spiral.png", ImageDataType.Hypnosis.ToString(),  "Hypno Spiral.png")
+                ("BACKUP_BF_Light.png",    ImageDataType.Blindfolds.ToString(), "Blindfold Light.png"),
+                ("BACKUP_BF_Sensual.png",  ImageDataType.Blindfolds.ToString(), "Blindfold Sensual.png"),
+                ("BACKUP_Hypno_Spiral.png", ImageDataType.Hypnosis.ToString(),  "Hypno Spiral.png")
             };
 
             // Ensure our directories exist.
@@ -282,6 +281,7 @@ public class CosmeticService : IHostedService, IDisposable
                     _logger.LogInformation($"Copied {sourceFile} to {destPath}");
                 }
             }
+            _logger.LogInformation("Default files migrated successfully.");
         }
         catch (Exception ex)
         {

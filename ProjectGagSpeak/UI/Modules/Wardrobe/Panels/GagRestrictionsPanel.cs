@@ -6,6 +6,7 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
@@ -33,6 +34,7 @@ public partial class GagRestrictionsPanel
     public bool IsEditing => _manager.ItemInEditor != null;
     public GagRestrictionsPanel(
         ILogger<GagRestrictionsPanel> logger,
+        GagspeakMediator mediator,
         GagRestrictionFileSelector selector,
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
@@ -55,7 +57,7 @@ public partial class GagRestrictionsPanel
         _pairs = pairs;
         _textures = textures;
         _guides = guides;
-        _profileCombo = new CustomizeProfileCombo(logger);
+        _profileCombo = new CustomizeProfileCombo(logger, mediator);
     }
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
@@ -198,13 +200,13 @@ public partial class GagRestrictionsPanel
 
             // Lock Display.
             if (gagData.GagItem is GagType.None)
-                _activeItemDrawer.ApplyItemGroup(groupH, index, gagData);
+                _activeItemDrawer.ApplyItemGroup(index, gagData);
             else
             {
                 if (gagData.IsLocked())
-                    _activeItemDrawer.UnlockItemGroup(groupH, index, gagData);
+                    _activeItemDrawer.UnlockItemGroup(index, gagData);
                 else
-                    _activeItemDrawer.LockItemGroup(groupH, index, gagData);
+                    _activeItemDrawer.LockItemGroup(index, gagData);
             }
         }
     }

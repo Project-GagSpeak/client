@@ -129,7 +129,7 @@ public class TraitAllowanceManager : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.TraitAllowances;
-        _logger.LogWarning("Loading in Config for file: " + file);
+        _logger.LogInformation("Loading in Config for file: " + file);
 
         if (!File.Exists(file))
         {

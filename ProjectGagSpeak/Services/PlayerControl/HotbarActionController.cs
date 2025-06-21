@@ -161,7 +161,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                hotbarModule->LoadSavedHotbar(PlayerData.JobId, (uint)i);
+                hotbarModule->LoadSavedHotbar(PlayerData.JobIdThreadSafe, (uint)i);
         }
     }
 

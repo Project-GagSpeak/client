@@ -30,7 +30,7 @@ public class NicknamesConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.Nicknames;
-        Svc.Logger.Warning("Loading in Config for file: " + file);
+        Svc.Logger.Information("Loading in Config for file: " + file);
         if (!File.Exists(file))
         {
             Svc.Logger.Warning("Config file not found for: " + file);
@@ -112,7 +112,7 @@ public class ServerConfigService : IHybridSavable
     public void Load()
     {
         var file = _saver.FileNames.ServerConfig;
-        Svc.Logger.Warning("Loading in Config for file: " + file);
+        Svc.Logger.Information("Loading in Config for file: " + file);
         if (!File.Exists(file))
         {
             Svc.Logger.Warning("Config file not found for: " + file);

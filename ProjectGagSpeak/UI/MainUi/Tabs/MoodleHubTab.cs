@@ -20,20 +20,19 @@ namespace GagSpeak.CkCommons.Gui.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
-    private readonly MainHub _hub;
     private readonly MoodleIcons _moodleDisplay;
     private readonly ShareHubService _shareHub;
-    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, MainHub hub,
-        MoodleIcons moodleDisplay, ShareHubService moodleHubService) : base(logger, mediator)
+    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator,
+        MoodleIcons moodleDisplay, ShareHubService moodleHubService) 
+        : base(logger, mediator)
     {
-        _hub = hub;
         _moodleDisplay = moodleDisplay;
         _shareHub = moodleHubService;
     }
 
     public void DrawMoodlesHub()
     {
-        // Handle grabbing new info from the server if none is present.
+        // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
         if (!_shareHub.InitialMoodlesCall && !_shareHub.DisableUI)
             _shareHub.PerformMoodleSearch();
 
@@ -191,7 +190,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             if (ImGui.InputTextWithHint("##moodleSearchFilter", "Search for Moodles...", ref searchString, 125))
                 _shareHub.SearchString = searchString;
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: !_shareHub.DisableUI))
+            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: _shareHub.DisableUI))
                 _shareHub.PerformMoodleSearch();
             CkGui.AttachToolTip("Update Search Results");
 

@@ -1,6 +1,10 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.GameInternals;
+using GagSpeak.Kinksters;
+using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State;
+using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -12,8 +16,179 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.PlayerClient;
 
-public partial class AchievementListener
+/// <summary>
+///     Controls when Achievement Event calls are being monitored.
+///     Also dictates what to do when they are called.
+/// </summary>
+public class AchievementEventHandler : DisposableMediatorSubscriberBase
 {
+    private readonly PairManager _pairs;
+    private readonly GagspeakEventManager _events;
+    private readonly GagRestrictionManager _gags;
+    private readonly RestrictionManager _restrictions;
+    private readonly RestraintManager _restraints;
+
+    private bool _isSubscribed = false;
+
+    public AchievementEventHandler(ILogger<AchievementEventHandler> logger, GagspeakMediator mediator,
+        ClientAchievements saveData, PairManager pairs, GagspeakEventManager events,
+        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
+        OnFrameworkService frameworkUtils) : base(logger, mediator)
+    {
+        _pairs = pairs;
+        _events = events;
+        _gags = gags;
+        _restrictions = restrictions;
+        _restraints = restraints;
+    }
+
+    public void SubscribeToEvents()
+    {
+        if (_isSubscribed)
+            return;
+
+        Logger.LogInformation("Player Logged In, Subscribing to Events!");
+        _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _events.Subscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Subscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _events.Subscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _events.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (ClientAchievements.SaveData[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+
+        _events.Subscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
+        _events.Subscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
+        _events.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestrictionLockStateChange, OnRestrictionLock); // Lock on US
+        _events.Subscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestrictionLockStateChange, OnPairRestrictionLockChange);
+
+
+        _events.Subscribe<RestraintSet>(UnlocksEvent.RestraintUpdated, OnRestraintSetUpdated);
+        _events.Subscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintStateChange); // Apply on US
+        _events.Subscribe<Guid, bool, string, string>(UnlocksEvent.PairRestraintStateChange, OnPairRestraintStateChange);
+        _events.Subscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
+        _events.Subscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
+
+        _events.Subscribe(UnlocksEvent.SoldSlave, () => (ClientAchievements.SaveData[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
+
+        _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
+        _events.Subscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Subscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
+
+        _events.Subscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
+
+        _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
+        _events.Subscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
+        _events.Subscribe(UnlocksEvent.DeathRollCompleted, () => (ClientAchievements.SaveData[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<bool>(UnlocksEvent.AlarmToggled, _ => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
+        _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
+
+        _events.Subscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+
+        _events.Subscribe(UnlocksEvent.RemoteOpened, () => (ClientAchievements.SaveData[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (ClientAchievements.SaveData[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+
+        _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
+        _events.Subscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe(UnlocksEvent.ClientOneHp, () => (ClientAchievements.SaveData[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Subscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
+        _events.Subscribe(UnlocksEvent.TutorialCompleted, () => (ClientAchievements.SaveData[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.PairAdded, OnPairAdded);
+        _events.Subscribe(UnlocksEvent.PresetApplied, () => (ClientAchievements.SaveData[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.GlobalSent, () => (ClientAchievements.SaveData[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Subscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
+        _events.Subscribe(UnlocksEvent.ChocoboRaceFinished, () => (ClientAchievements.SaveData[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Subscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (ClientAchievements.SaveData[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
+        _events.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
+
+        Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
+        Mediator.Subscribe<PairHandlerVisibleMessage>(this, _ => OnPairVisible());
+        Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
+        Mediator.Subscribe<PlaybackStateToggled>(this, (msg) => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+
+        Mediator.Subscribe<SafewordUsedMessage>(this, _ => (ClientAchievements.SaveData[Achievements.KnowsMyLimits.Id] as ProgressAchievement)?.IncrementProgress());
+
+        Mediator.Subscribe<GPoseStartMessage>(this, _ => (ClientAchievements.SaveData[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.BeginConditionalTask());
+        Mediator.Subscribe<GPoseEndMessage>(this, _ => (ClientAchievements.SaveData[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.FinishConditionalTask());
+        Mediator.Subscribe<CutsceneBeginMessage>(this, _ => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.BeginConditionalTask()); // starts Timer
+        Mediator.Subscribe<CutsceneEndMessage>(this, _ => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.FinishConditionalTask()); // ends/completes progress.
+
+        Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => CheckOnZoneSwitchStart(msg.prevZone));
+        Mediator.Subscribe<ZoneSwitchEndMessage>(this, _ => CheckOnZoneSwitchEnd());
+
+        Svc.ClientState.ClassJobChanged += OnJobChange;
+        Svc.DutyState.DutyStarted += OnDutyStart;
+        Svc.DutyState.DutyCompleted += OnDutyEnd;
+
+        _isSubscribed = true;
+    }
+
+    public void UnsubscribeFromEvents()
+    {
+        if (!_isSubscribed)
+            return;
+
+        _events.Unsubscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
+        _events.Unsubscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Unsubscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
+        _events.Unsubscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
+        _events.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (ClientAchievements.SaveData[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
+
+        _events.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestrictionStateChange, OnRestrictionStateChange); // Apply on US
+        _events.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestrictionStateChange, OnPairRestrictionStateChange);
+        _events.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestrictionLockStateChange, OnRestrictionLock); // Lock on US
+        _events.Unsubscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestrictionLockStateChange, OnPairRestrictionLockChange);
+
+        _events.Unsubscribe<RestraintSet>(UnlocksEvent.RestraintUpdated, OnRestraintSetUpdated);
+        _events.Unsubscribe<Guid, bool, string>(UnlocksEvent.RestraintStateChange, OnRestraintStateChange); // Apply on US
+        _events.Unsubscribe<Guid, bool, string, string>(UnlocksEvent.PairRestraintStateChange, OnPairRestraintStateChange);
+        _events.Unsubscribe<Guid, Padlocks, bool, string>(UnlocksEvent.RestraintLockChange, OnRestraintLock); // Lock on US
+        _events.Unsubscribe<Guid, Padlocks, bool, string, string>(UnlocksEvent.PairRestraintLockChange, OnPairRestraintLockChange);
+        _events.Unsubscribe(UnlocksEvent.SoldSlave, () => (ClientAchievements.SaveData[Achievements.SoldSlave.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
+
+        _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
+        _events.Unsubscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
+
+        _events.Unsubscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
+
+        _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
+        _events.Unsubscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
+        _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (ClientAchievements.SaveData[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<bool>(UnlocksEvent.AlarmToggled, _ => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
+        _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
+
+        _events.Unsubscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+
+        _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (ClientAchievements.SaveData[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (ClientAchievements.SaveData[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+
+        _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
+        _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Unsubscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
+        _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (ClientAchievements.SaveData[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
+        _events.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
+        _events.Unsubscribe(UnlocksEvent.PresetApplied, () => (ClientAchievements.SaveData[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.GlobalSent, () => (ClientAchievements.SaveData[Achievements.HelloKinkyWorld.Id] as ProgressAchievement)?.IncrementProgress());
+        _events.Unsubscribe(UnlocksEvent.CursedDungeonLootFound, OnCursedLootFound);
+        _events.Unsubscribe(UnlocksEvent.ChocoboRaceFinished, () => (ClientAchievements.SaveData[Achievements.WildRide.Id] as ConditionalAchievement)?.CheckCompletion());
+        _events.Unsubscribe<int>(UnlocksEvent.PlayersInProximity, (count) => (ClientAchievements.SaveData[Achievements.CrowdPleaser.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(count));
+        _events.Unsubscribe(UnlocksEvent.CutsceneInturrupted, () => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
+
+        Svc.ClientState.ClassJobChanged -= OnJobChange;
+        Svc.DutyState.DutyStarted -= OnDutyStart;
+        Svc.DutyState.DutyCompleted -= OnDutyEnd;
+
+        _isSubscribed = false;
+    }
+
     private void OnCommendationsGiven(int amount)
     {
         (ClientAchievements.SaveData[Achievements.KinkyTeacher.Id] as ConditionalProgressAchievement)?.CheckTaskProgress(amount);
@@ -37,7 +212,7 @@ public partial class AchievementListener
     private void CheckOnZoneSwitchEnd()
     {
         Logger.LogTrace("Current Territory Id: " + PlayerContent.TerritoryID, LoggerType.AchievementEvents);
-        if(PlayerContent.InMainCity)
+        if (PlayerContent.InMainCity)
             (ClientAchievements.SaveData[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
         var territory = PlayerContent.TerritoryID;
@@ -65,11 +240,11 @@ public partial class AchievementListener
         if (!Content.InDeepDungeon()) return;
 
         var floor = Content.GetFloor();
-        if (floor is null) 
+        if (floor is null)
             return;
 
         var deepDungeonType = PlayerData.GetDeepDungeonType();
-        if (deepDungeonType is null) 
+        if (deepDungeonType is null)
             return;
 
         if (PlayerData.PartySize is 1)
@@ -87,7 +262,7 @@ public partial class AchievementListener
                     if (floor is 50 || floor is 100)
                         (ClientAchievements.SaveData[Achievements.BondagePalace.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                 }
-                if(floor is 200)
+                if (floor is 200)
                 {
                     (ClientAchievements.SaveData[Achievements.MyKinkRunsDeep.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
                     (ClientAchievements.SaveData[Achievements.MyKinksRunDeeper.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
@@ -137,7 +312,7 @@ public partial class AchievementListener
             (ClientAchievements.SaveData[Achievements.HealSlut.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
 
         // If the party size is 8, let's check for the trials.
-        if(PlayerData.PartySize is 8 && PlayerData.Level >= 90)
+        if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
         {
             (ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
             (ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.BeginConditionalTask();
@@ -170,7 +345,7 @@ public partial class AchievementListener
             else // if we are not in a full party, we should reset the task.
                 (ClientAchievements.SaveData[Achievements.TrialOfFocus.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
         }
-        
+
         if ((ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
             if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
@@ -178,7 +353,7 @@ public partial class AchievementListener
             else // if we are not in a full party, we should reset the task.
                 (ClientAchievements.SaveData[Achievements.TrialOfDexterity.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt();
         }
-        
+
         if ((ClientAchievements.SaveData[Achievements.TrialOfTheBlind.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
         {
             if (PlayerData.PartySize is 8 && PlayerData.Level >= 90)
@@ -259,7 +434,7 @@ public partial class AchievementListener
 
     private void OnPairGagStateChanged(int layer, GagType gag, bool applying, string assignerUid, string affectedUid)
     {
-        if(applying)
+        if (applying)
         {
             if (gag is not GagType.None)
             {
@@ -414,7 +589,7 @@ public partial class AchievementListener
                 (ClientAchievements.SaveData[Achievements.Bondodge.Id] as TimeLimitConditionalAchievement)?.StartTask();
 
                 // track overkill if it is not yet completed
-                if((ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
+                if ((ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
                 {
                     if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
                         (ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(match.GetGlamour().Count());
@@ -470,7 +645,7 @@ public partial class AchievementListener
             }
         }
         else
-        { 
+        {
             // if the set is being unlocked, stop progress regardless.
             if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
             {
@@ -489,7 +664,7 @@ public partial class AchievementListener
     /// <summary> Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve  </summary>
     private void OnPairRestraintStateChange(Guid setName, bool isEnabling, string enactorUID, string affectedUID)
     {
-        Logger.LogTrace(enactorUID + " is "+ (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);
+        Logger.LogTrace(enactorUID + " is " + (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);
         // if we enabled a set on someone else
         if (isEnabling && enactorUID == MainHub.UID)
         {
@@ -510,7 +685,7 @@ public partial class AchievementListener
             if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock) // locking
             {
                 // make sure we are the locker before continuing
-                if(enactorUID == MainHub.UID)
+                if (enactorUID == MainHub.UID)
                 {
                     (ClientAchievements.SaveData[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), affectedPairUID);
                     (ClientAchievements.SaveData[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.StartTracking(restraintId.ToString(), affectedPairUID);
@@ -521,7 +696,7 @@ public partial class AchievementListener
                 }
             }
         }
-        if(!isLocking)
+        if (!isLocking)
         {
             // if the padlock is a timed padlock that we have unlocked, we should stop tracking it from these achievements.
             if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
@@ -593,7 +768,7 @@ public partial class AchievementListener
                     (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
 
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
-                    if(PlayerContent.TerritoryID is 939 && (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
+                    if (PlayerContent.TerritoryID is 939 && (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
                         (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
                 }
                 if (wasAlarm && patternGuid != Guid.Empty)
@@ -782,7 +957,7 @@ public partial class AchievementListener
     private void OnHardcoreAction(HardcoreSetting actionKind, bool state, string enactorUID, string affectedPairUID)
     {
         Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementInfo);
-        
+
         var affectedPairIsSelf = affectedPairUID == MainHub.UID;
 
         if (actionKind is HardcoreSetting.ForcedFollow)
@@ -849,7 +1024,7 @@ public partial class AchievementListener
         switch (emoteId)
         {
             case 22: // Lookout
-                if(emoteCallerObj.ObjectIndex is 0)
+                if (emoteCallerObj.ObjectIndex is 0)
                     (ClientAchievements.SaveData[Achievements.WhatAView.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
@@ -893,7 +1068,7 @@ public partial class AchievementListener
 
     private void OnPuppeteerOrderSent(PuppeteerMsgType orderType)
     {
-        switch(orderType)
+        switch (orderType)
         {
             case PuppeteerMsgType.GrovelOrder:
                 (ClientAchievements.SaveData[Achievements.KissMyHeels.Id] as ProgressAchievement)?.IncrementProgress();
@@ -936,7 +1111,7 @@ public partial class AchievementListener
 
     private void OnPuppeteerReceivedEmoteOrder(int emoteId)
     {
-        switch(emoteId)
+        switch (emoteId)
         {
             case 38: // Sulk
                 (ClientAchievements.SaveData[Achievements.Ashamed.Id] as ProgressAchievement)?.IncrementProgress();

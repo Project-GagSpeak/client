@@ -4,6 +4,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,10 +33,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         _serverConfigs = serverConfigs;
         _serviceScopeFactory = scopeFactory;
         _serverConfigs.Init();
-
-        // If already logged in, begin.
-        if (PlayerData.IsLoggedIn)
-            DalamudUtilOnLogIn();
     }
     /// <summary> 
     /// The task to run after all services have been properly constructed.
@@ -60,6 +57,10 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 
         // start processing the mediator queue.
         Mediator.StartQueueProcessing();
+
+        // If already logged in, begin.
+        if (PlayerData.IsLoggedIn)
+            DalamudUtilOnLogIn();
 
         // return that the startAsync has been completed.
         return Task.CompletedTask;
@@ -151,6 +152,18 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
                 Mediator.Publish(new SwitchToIntroUiMessage());
             }
 
+            // Services that require an initial constructor call during bootup.
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<SpellActionService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<UiFontService>();
+
+            // Init our listeners for IPC.
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<MoodleListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<PlayerHpListener>();
+
             // get the required service for the online player manager (and notification service if we add it)
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DataDistributionService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
@@ -159,13 +172,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
-
-            // Init our listeners for IPC.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<MoodleListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<PlayerHpListener>();
 
             // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();

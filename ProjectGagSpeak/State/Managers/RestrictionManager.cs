@@ -29,6 +29,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
     private CharaActiveRestrictions? _serverRestrictionData = null;
     private Dictionary<int, RestrictionItem> _activeItems = new();
+    // Maybe change this to a restriction item if we need to for later? idk.
+    private SortedList<Guid, GagspeakModule> _activeItemsAll = new();
     public RestrictionManager(
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
@@ -54,10 +56,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     // ----------- ACTIVE DATA --------------
     public CharaActiveRestrictions? ServerRestrictionData => _serverRestrictionData;
     public IReadOnlyDictionary<int, RestrictionItem> ActiveItems => _activeItems;
-
-    // TODO: Revise later.
-    /// <summary> Holds any restriction active from OTHER SOURCES. Is not used in Caching information. </summary>
-    public HashSet<OccupiedRestriction> OccupiedRestrictions { get; private set; }
+    public IReadOnlyDictionary<Guid, GagspeakModule> ActiveItemsAll => _activeItemsAll;
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
     /// <remarks> The CacheStateManager must be handled seperately here. </remarks>
@@ -169,17 +168,23 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
     public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
 
-    /// <summary> Appends a restriction item being used by other components to this list. </summary>
-    /// <remarks> The Occupied Restrictions list is scanned against to prevent duplicate application by other modules. </remarks>
-    public void AddOccupiedRestriction(RestrictionItem item, ManagerPriority source)
+    /// <summary> Attempts to add a now occupied restriction. Intended for other sources only. </summary>
+    public bool TryAddOccupied(RestrictionItem item, GagspeakModule source)
     {
-        // dont add the item if it is already existing in the hash set.
-        if (!OccupiedRestrictions.Any(i => i.Item == item))
-            OccupiedRestrictions.Add(new(item, source));
+        if (source is GagspeakModule.Restriction)
+            return false;
+
+        return _activeItemsAll.TryAdd(item.Identifier, source);
     }
 
-    public void RemoveOccupiedRestriction(RestrictionItem item, ManagerPriority source)
-        => OccupiedRestrictions.Remove(new(item, source));
+    /// <summary> Do not allow this if it exists in the active state. </summary>
+    public bool TryRemoveRemoveOccupied(RestrictionItem item)
+    {
+        if (_activeItemsAll.TryGetValue(item.Identifier, out var s) && s == GagspeakModule.Restriction)
+            return false;
+
+        return _activeItemsAll.Remove(item.Identifier);
+    }
 
     public bool CanApply(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanApply();
     public bool CanLock(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanLock();
@@ -203,7 +208,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         if (Storage.TryGetRestriction(id, out item))
         {
             _activeItems[layerIdx] = item;
-            AddOccupiedRestriction(item, ManagerPriority.Restrictions);
+            _activeItemsAll[item.Identifier] = GagspeakModule.Restriction;
             return true;
         }
 
@@ -253,8 +258,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // Update the affected visual states, if item is enabled.
         if (Storage.TryGetRestriction(removedRestriction, out item))
         {
-            _activeItems[layerIdx] = new RestrictionItem();
-            RemoveOccupiedRestriction(item, ManagerPriority.Restrictions);
+            _activeItems.Remove(layerIdx);
+            _activeItemsAll.Remove(item.Identifier);
             return true;
         }
 

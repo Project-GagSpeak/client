@@ -161,18 +161,24 @@ public static partial class CkGui
         ColorText(text, color);
     }
 
-    public static void CenterTextAligned(string text)
+    public static void CenterTextAligned(string text, float? width = null)
     {
-        var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
+        var offset = ((width ?? ImGui.GetContentRegionAvail().X) - ImGui.CalcTextSize(text).X) / 2;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
         ImUtf8.TextFrameAligned(text);
     }
 
-    public static void ColorTextCentered(string text, Vector4 color)
+    public static void ColorTextCentered(string text, Vector4 color, float? width = null)
     {
-        var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
+        var offset = ((width ?? ImGui.GetContentRegionAvail().X) - ImGui.CalcTextSize(text).X) / 2;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
         ColorText(text, color);
+    }
+
+    public static void CenterColorTextAligned(string text, Vector4 color, float? width = null)
+    {
+        using var _ = ImRaii.PushColor(ImGuiCol.Text, color);
+        CenterTextAligned(text, width);
     }
 
     /// <summary> What it says on the tin. </summary>
@@ -374,7 +380,7 @@ public static partial class CkGui
         // Get the itemrect
         var itemRect = ImGui.GetItemRectSize();
         // run a sameline from the position to set the cursorPosX to the end for us to draw the right aligned icon.
-        ImGui.SameLine(ImGui.GetCursorPosX() + itemRect.X - ImGui.GetTextLineHeight());
-        IconText(icon, ImGui.GetColorU32(ImGuiCol.Text));
+        ImGui.SameLine(itemRect.X - ImGui.GetFrameHeight());
+        FramedIconText(icon, ImGui.GetColorU32(ImGuiCol.TextDisabled));
     }
 }

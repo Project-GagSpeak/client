@@ -30,10 +30,6 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
 
     public void DrawPatternHub()
     {
-        // Handle grabbing new info from the server if none is present.
-        if(!_shareHub.InitialPatternsCall && !_shareHub.DisableUI)
-            _shareHub.PerformPatternSearch();
-
         DrawSearchFilter();
         ImGui.Separator();
 

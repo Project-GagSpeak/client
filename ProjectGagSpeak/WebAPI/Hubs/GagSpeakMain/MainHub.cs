@@ -77,6 +77,10 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         Mediator.Subscribe<MainHubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
         Mediator.Subscribe<MainHubReconnectedMessage>(this, (msg) => _ = HubInstanceOnReconnected());
         Mediator.Subscribe<MainHubReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
+
+        // If already logged in, begin.
+        if (PlayerData.IsLoggedIn)
+            OnLogin();
     }
 
     public static UserData PlayerUserData => ConnectionResponse!.User;
@@ -573,7 +577,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
 
     protected override async void OnLogin()
     {
-        Logger.LogWarning("Starting connection on login");
+        Logger.LogInformation("Starting connection on login");
         // Run the call to attempt a connection to the server.
         await Connect().ConfigureAwait(false);
     }
