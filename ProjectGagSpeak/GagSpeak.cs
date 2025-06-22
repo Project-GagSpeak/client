@@ -90,7 +90,8 @@ public class Svc
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
     [PluginService] public static ITargetManager Targets { get; private set; } = null!;
     [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
-    //[PluginService] public static IToastGui Toasts { get; private set; } = null!;
+    // [PluginService] public static IToastGui Toasts { get; private set; } = null!;
+    // [PluginService] public static ITextureSubstitutionProvider TextureSubstitution { get; private set; } = null!;
 }
 
 
@@ -281,6 +282,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ModCache>()
         .AddSingleton<MoodleCache>()
         .AddSingleton<TraitsCache>()
+        .AddSingleton<OverlayCache>()
 
         // State (Handlers)
         .AddSingleton<CustomizePlusHandler>()
@@ -292,6 +294,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PatternHandler>()
         .AddSingleton<TriggerHandler>()
         .AddSingleton<TraitsHandler>()
+        .AddSingleton<OverlayHandler>()
 
         // State (Listeners)
         .AddSingleton<CustomizePlusListener>()

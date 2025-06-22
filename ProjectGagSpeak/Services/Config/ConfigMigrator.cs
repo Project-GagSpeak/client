@@ -91,7 +91,7 @@ public static class ConfigMigrator
         config["PiShockUsername"] = mainConfig["PiShockUsername"];
         config["BlindfoldStyle"] = mainConfig["BlindfoldStyle"];
         config["ForceLockFirstPerson"] = mainConfig["ForceLockFirstPerson"];
-        config["BlindfoldMaxOpacity"] = mainConfig["BlindfoldMaxOpacity"];
+        config["OverlayMaxOpacity"] = mainConfig["OverlayMaxOpacity"];
 
         // Handle ForcedStayPromptList conversion (keeping it intact)
         config["ForcedStayPromptList"] = mainConfig["ForcedStayPromptList"];

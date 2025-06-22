@@ -36,6 +36,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly ModCache _modCache;
     private readonly MoodleCache _moodleCache;
     private readonly TraitsCache _traitsCache;
+    private readonly OverlayCache _overlayCache;
     private readonly ArousalService _arousal;
     private readonly TextureService _iconTextures;
 
@@ -55,6 +56,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ModCache modCache,
         MoodleCache moodleCache,
         TraitsCache traitsCache,
+        OverlayCache overlayCache,
         ArousalService arousal,
         TextureService iconTextures)
         : base(logger, mediator, "Active State Debugger")
@@ -73,6 +75,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _modCache = modCache;
         _moodleCache = moodleCache;
         _traitsCache = traitsCache;
+        _overlayCache = overlayCache;
         _arousal = arousal;
         _iconTextures = iconTextures;
 
@@ -107,6 +110,10 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Traits/Attributes Cache"))
             _traitsCache.DrawCacheTable();
+
+        ImGui.Separator();
+        if (ImGui.CollapsingHeader("Overlay Cache"))
+            _overlayCache.DrawCacheTable();
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Stimulation Cache"))

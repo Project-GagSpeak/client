@@ -17,6 +17,14 @@ public static class GsExtensions
         return configuration.Authentications.Count > 0;
     }
 
+    /// <summary> Linearly interpolates between two values based on a factor t. </summary>
+    /// <remarks> Think, “What number is 35% between 56 and 132?" </remarks>
+    /// <param name="a"> lower bound value </param>
+    /// <param name="b"> upper bound value </param>
+    /// <param name="t"> should be in the range [a, b] </param>
+    /// <returns> the interpolated value between a and b </returns>
+    public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
     public static string ExtractText(this SeString seStr, bool onlyFirst = false)
     {
         StringBuilder sb = new();

@@ -7,6 +7,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
+using System.Text.Json.Nodes;
 
 namespace GagSpeak.State.Models;
 
@@ -189,6 +190,33 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
 
     public AppliedSlot ToAppliedSlot() 
         => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
+
+    /// <summary> Constructs the RestrictionItem from a JToken. </summary>
+    /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
+    public static RestrictionItem FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    {
+        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        // If the "StatusIds" property exists, treat this as a MoodlePreset
+        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
+            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
+
+        // Construct the item to return.
+        return new RestrictionItem()
+        {
+            Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
+            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
+            Moodle = moodle,
+            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+        };
+    }
 }
 
 public class HypnoticRestriction : RestrictionItem
@@ -228,6 +256,36 @@ public class HypnoticRestriction : RestrictionItem
         json["Properties"] = JObject.FromObject(Properties);
         return json;
     }
+
+    /// <summary> Constructs the HypnoticItem from a JToken. </summary>
+    /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
+    public new static HypnoticRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    {
+        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        // If the "StatusIds" property exists, treat this as a MoodlePreset
+        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
+            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
+
+        // Construct the item to return.
+        return new HypnoticRestriction()
+        {
+            Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
+            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
+            Moodle = moodle,
+            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
+            VisorState = JParser.FromJObject(json["VisorState"]),
+            Properties = json["Properties"]?.ToObject<HypnoticOverlay>() ?? new HypnoticOverlay(),
+        };
+    }
 }
 
 
@@ -236,7 +294,7 @@ public class BlindfoldRestriction : RestrictionItem
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
     public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
     public OptionalBool VisorState { get; set; } = OptionalBool.Null;
-    public OverlayEffect Properties { get; set; } = new("Blindfold_Light.png");
+    public BlindfoldOverlay Properties { get; set; } = new("Blindfold_Light.png");
 
     public BlindfoldRestriction()
     { }
@@ -270,6 +328,36 @@ public class BlindfoldRestriction : RestrictionItem
         json["VisorState"] = VisorState.ToString();
         json["Properties"] = JObject.FromObject(Properties);
         return json;
+    }
+
+    /// <summary> Constructs the BlindfoldItem from a JToken. </summary>
+    /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
+    public new static BlindfoldRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    {
+        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        // If the "StatusIds" property exists, treat this as a MoodlePreset
+        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
+            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
+        
+        // Construct the item to return.
+        return new BlindfoldRestriction()
+        {
+            Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
+            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
+            Moodle = moodle,
+            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
+            VisorState = JParser.FromJObject(json["VisorState"]),
+            Properties = json["Properties"]?.ToObject<BlindfoldOverlay>() ?? new BlindfoldOverlay(),
+        };
     }
 }
 
@@ -306,5 +394,34 @@ public class CollarRestriction : RestrictionItem
         json["OwnerUID"] = OwnerUID;
         json["CollarWriting"] = CollarWriting;
         return json;
+    }
+
+    /// <summary> Constructs the CollarItem from a JToken. </summary>
+    /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
+    public new static CollarRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    {
+        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        // If the "StatusIds" property exists, treat this as a MoodlePreset
+        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
+            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
+
+        // Construct the item to return.
+        return new CollarRestriction()
+        {
+            Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
+            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
+            Moodle = moodle,
+            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty,
+            CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty,
+        };
     }
 }

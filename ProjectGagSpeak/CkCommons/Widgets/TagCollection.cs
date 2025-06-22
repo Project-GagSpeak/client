@@ -17,6 +17,9 @@ public class TagCollection
     private int    _editIdx    = -1;
     private bool   _setFocus;
 
+    /// <summary>
+    ///     Updates the latest string and tag collection if the tags have changed.
+    /// </summary>
     private void UpdateOrSetLatest(string csvString)
     {
         if (_latestString == csvString)
@@ -26,24 +29,55 @@ public class TagCollection
         _latestStringTags = GetTagCollection(csvString).ToList();
     }
 
-    public string CurrentString => _latestString;
+    /// <summary>
+    ///     Updates the latest string and tag collection if the tags have changed.
+    /// </summary>
+    private void UpdateOrSetLatest(IEnumerable<string> tags)
+    {
+        var tagList = GetTagCollection(tags).ToList();
+        if (_latestStringTags.SequenceEqual(tagList))
+            return;
+
+        _latestStringTags = tagList;
+        _latestString = string.Join(", ", tagList);
+    }
 
     /// <summary> 
     ///     Returns a collection of tags from a csv string.
     /// </summary>
     public IEnumerable<string> GetTagCollection(string csvString)
-        => csvString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s.Length > 0).Order();
+        => csvString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .Order();
 
-    public void DrawTagsPreview(string uniqueId, string csvString)
+    /// <summary>
+    ///     Returns a collection of tags from an array.
+    /// </summary>
+    public IEnumerable<string> GetTagCollection(IEnumerable<string> tags)
+        => tags
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Order();
+
+    public void DrawTagsPreview(string id, string csvString)
+    {
+        UpdateOrSetLatest(csvString);
+        DrawPreviewBase(id);
+    }
+
+    public void DrawTagsPreview(string id, IReadOnlyCollection<string> tags)
+    {
+        UpdateOrSetLatest(tags);
+        DrawPreviewBase(id);
+    }
+
+    private void DrawPreviewBase(string id)
     {
         // provide unique ID
-        using var id = ImRaii.PushId(uniqueId);
+        using var _ = ImRaii.PushId(id);
         // Encapsulate all in a group.
         using var group = ImRaii.Group();
-
-        // update latest.
-        UpdateOrSetLatest(csvString);
-
         // Grab the correct x position.
         var x = ImGui.GetCursorPosX();
         ImGui.SetCursorPosX(x);
@@ -68,14 +102,9 @@ public class TagCollection
         }
     }
 
-
-    /// <summary> Draws the editor variant of the tag collection. </summary>
-    /// <returns> If anything was updated. </returns>
-    public bool DrawTagsEditor(string uniqueId, string csvStringRef, out string updatedCsvString)
+    public bool DrawTagsEditor(string id, IReadOnlyCollection<string> tags, out List<string> updatedTags)
     {
-        // provide unique ID
-        using var id  = ImRaii.PushId(uniqueId);
-        // Encapsulate all in a group.
+        using var _ = ImRaii.PushId(id);
         using var group = ImRaii.Group();
 
         var color = ImGui.GetColorU32(ImGuiCol.Button);
@@ -84,19 +113,44 @@ public class TagCollection
             .Push(ImGuiCol.ButtonActive, color, false)
             .Push(ImGuiCol.Button, color);
 
-        // update latest.
-        UpdateOrSetLatest(csvStringRef);
-        updatedCsvString = _latestString;
+        UpdateOrSetLatest(tags);
 
-        // Grab the correct x position.
         var x = ImGui.GetCursorPosX();
         ImGui.SetCursorPosX(x);
         var rightEndOffset = 4 * ImGuiHelpers.GlobalScale;
 
-        bool changeOccurred = false;
+        var changed = DrawEditorCore(x, rightEndOffset);
+        updatedTags = _latestStringTags.ToList();
+        return changed;
+    }
 
-        // Draw the tags.
+    public bool DrawTagsEditor(string id, string csvString, out string updatedCsvString)
+    {
+        using var _ = ImRaii.PushId(id);
+        using var group = ImRaii.Group();
+
+        var color = ImGui.GetColorU32(ImGuiCol.Button);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, ImGui.GetStyle().ItemSpacing with { X = 4 * ImGuiHelpers.GlobalScale });
+        using var c = ImRaii.PushColor(ImGuiCol.ButtonHovered, color, false)
+            .Push(ImGuiCol.ButtonActive, color, false)
+            .Push(ImGuiCol.Button, color);
+
+        UpdateOrSetLatest(csvString);
+
+        var x = ImGui.GetCursorPosX();
+        ImGui.SetCursorPosX(x);
+        var rightEndOffset = 4 * ImGuiHelpers.GlobalScale;
+
+        var changed = DrawEditorCore(x, rightEndOffset);
+        updatedCsvString = string.Join(", ", _latestStringTags);
+        return changed;
+    }
+
+    private bool DrawEditorCore(float x, float rightEndOffset)
+    {
+        bool changeOccurred = false;
         var tagGroupClone = _latestStringTags.ToList();
+
         foreach (var (tag, idx) in tagGroupClone.WithIndex())
         {
             using var id2 = ImRaii.PushId(idx);
@@ -111,7 +165,6 @@ public class TagCollection
                 {
                     _latestStringTags[idx] = _currentTag;
                     _editIdx = -1;
-                    updatedCsvString = string.Join(", ", _latestStringTags);
                     changeOccurred = true;
                 }
             }
@@ -119,13 +172,12 @@ public class TagCollection
             {
                 SetPosButton(tag, x, rightEndOffset);
                 Button(tag, idx, true);
-                CkGui.AttachToolTip("Left-Click to modify entry." +
-                    "--SEP--CTRL + Right-Click to delete entry.");
+                CkGui.AttachToolTip("Left-Click to modify entry.--SEP--CTRL + Right-Click to delete entry.");
 
-                if(ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                if (ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     _latestStringTags.RemoveAt(idx);
-                    updatedCsvString = string.Join(", ", _latestStringTags);
+                    _editIdx = -1;
                     changeOccurred = true;
                 }
             }
@@ -142,7 +194,6 @@ public class TagCollection
             ImGui.InputText("##addEdit", ref _currentTag, 128);
             if (ImGui.IsItemDeactivated())
             {
-                // do not add if duplicate.
                 if (_latestStringTags.Contains(_currentTag, StringComparer.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(_currentTag))
                 {
                     _editIdx = -1;
@@ -154,7 +205,6 @@ public class TagCollection
                     _latestStringTags.Add(_currentTag);
                     _latestStringTags.Sort();
                     _editIdx = -1;
-                    updatedCsvString = string.Join(", ", _latestStringTags);
                     changeOccurred = true;
                 }
             }
@@ -169,16 +219,8 @@ public class TagCollection
                 _currentTag = string.Empty;
             }
             CkGui.AttachToolTip("Add Tag...");
-
-            if (changeOccurred)
-                _latestString = string.Join(", ", _latestStringTags);
-
-            return changeOccurred;
         }
 
-        if(changeOccurred)
-            _latestString = string.Join(", ", _latestStringTags);
-        
         return changeOccurred;
     }
 

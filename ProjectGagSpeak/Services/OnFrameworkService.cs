@@ -71,8 +71,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     }
 
     #region FrameworkMethods
-    public TimeSpan GetUpdateDelta() => Svc.Framework.UpdateDelta;
-
 
     /// <summary> Ensures that we are running on the games framework thread. Throws exception if we are not. </summary>
     public void EnsureIsOnFramework()

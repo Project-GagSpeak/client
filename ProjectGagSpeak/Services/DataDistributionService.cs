@@ -264,6 +264,12 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
     private async Task DistributeDataVisible(List<UserData> visChara, CharaIPCData newData, DataUpdateType kind)
     {
+        // Do not process if not data synced.
+        if (!MainHub.IsConnectionDataSynced)
+        {
+            _newVisibleKinksters.UnionWith(visChara);
+            return;
+        }
 
         if (DataIsDifferent(_prevIpcData, newData) is false)
             return;

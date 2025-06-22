@@ -7,6 +7,7 @@ using GagspeakAPI.Extensions;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using System.Linq;
 
 namespace GagSpeak.State.Models;
 
@@ -339,6 +340,39 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
                 .DefaultIfEmpty(Traits.None)
                 .Aggregate((x, y) => x | y);
     }
+
+    public BlindfoldOverlay? GetBlindfoldOverlay()
+    {
+        // Try to get from RestraintSlots first
+        foreach (var advSlot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+            if (advSlot.Ref is BlindfoldRestriction bfr)
+                return bfr.Properties;
+
+        // Then try the Layers.
+        foreach (var layer in Layers.OfType<RestrictionLayer>())
+            if (layer.Ref is BlindfoldRestriction bfr)
+                return bfr.Properties;
+
+        // If no blindfold overlay is found, return null.
+        return null;
+    }
+
+    public HypnoticOverlay? GetHypnoOverlay()
+    {
+        // Try to get from RestraintSlots first
+        foreach (var advSlot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+            if (advSlot.Ref is HypnoticRestriction hr)
+                return hr.Properties;
+
+        // Then try the Layers.
+        foreach (var layer in Layers.OfType<RestrictionLayer>())
+            if (layer.Ref is HypnoticRestriction hr)
+                return hr.Properties;
+
+        // If no Hypno Effect is found, return null.
+        return null;
+    }
+
     #endregion Cache Helpers
 
     public JObject Serialize()

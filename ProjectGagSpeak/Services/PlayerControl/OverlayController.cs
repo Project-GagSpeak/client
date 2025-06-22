@@ -2,6 +2,8 @@ using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.Services.Controller;
 
@@ -13,29 +15,52 @@ namespace GagSpeak.Services.Controller;
 ///     It should also be able to accept sent effects from others with proper permissions,
 ///     however its best to put that into a handler or something.
 /// </remarks>
-public sealed class OverlayController : DisposableMediatorSubscriberBase
+public sealed class OverlayController : IDisposable
 {
-    private readonly BlindfoldService _blindfoldService;
+    private readonly ILogger<OverlayController> _logger;
+    private readonly OverlayCache _cache;
+    private readonly BlindfoldService _bfService;
     private readonly HypnoService _hypnoService;
-    public OverlayController(ILogger<OverlayController> logger, GagspeakMediator mediator,
-        BlindfoldService blindfoldService, HypnoService hypnoService)
-        : base(logger, mediator)
+
+    // Might need for mare fuckery.
+    private bool _initialRedrawMade = false;
+
+    public OverlayController(ILogger<OverlayController> logger, OverlayCache cache,
+        BlindfoldService bfService, HypnoService hypnoService)
     {
-        _blindfoldService = blindfoldService;
+        _logger = logger;
+        _cache = cache;
+        _bfService = bfService;
         _hypnoService = hypnoService;
 
-        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        Svc.PluginInterface.UiBuilder.Draw += DrawOverlays;
     }
 
-    /// <summary> Lame overhead necessary to avoid mare conflicts with first person fuckery. </summary>
-    public bool InitialBlindfoldRedrawMade = false;
+    public CameraControlMode ForcedPerspective => GetExpectedPerspective();
+    public bool HasValidBlindfold => _bfService.HasValidBlindfold;
+    public bool HasValidHypnoEffect => _hypnoService.HasValidEffect;
 
-    /// <summary>
-    ///     The forced perspective we want to make the camera have.
-    /// </summary>
-    public CameraControlMode ForcedPerspective { get; private set; } = CameraControlMode.Unknown;
+    public void Dispose()
+    {
+        Svc.PluginInterface.UiBuilder.Draw -= DrawOverlays;
+    }
 
-    private unsafe void FrameworkUpdate()
+    private unsafe void DrawOverlays()
+    {
+        if (!Svc.ClientState.IsLoggedIn)
+            return;
+
+        // Handle Perspective
+        ForceCameraPerspective();
+
+        // Control Blindfold Draw
+        _bfService.DrawBlindfoldOverlay();
+
+        // Control Hypnosis Draw (Since it is 'under' the blindfold, but you 'see' it infront of the blindfold)
+        _hypnoService.DrawHypnoEffect();
+    }
+
+    private void ForceCameraPerspective()
     {
         // If the forced perspective is not set, we can skip this.
         if (ForcedPerspective is CameraControlMode.Unknown)
@@ -44,6 +69,27 @@ public sealed class OverlayController : DisposableMediatorSubscriberBase
         // Set the mode if it is not equal to the perspective we need to have.
         if (AddonCameraManager.IsActiveCameraValid && AddonCameraManager.ActiveMode != ForcedPerspective)
             AddonCameraManager.SetMode(ForcedPerspective);
+    }
+
+    public async Task ApplyBlindfold(BlindfoldOverlay overlay, string enactor)
+        => await _bfService.SwapBlindfold(overlay, enactor);
+
+    public async Task RemoveBlindfold()
+        => await _bfService.RemoveBlindfold();
+
+    public async Task ApplyHypnoEffect(HypnoticOverlay overlay, string enactor)
+        => await _hypnoService.SwapHypnoEffect(overlay, enactor);
+
+    public async Task RemoveHypnoEffect()
+        => await _hypnoService.RemoveHypnoEffect();
+
+    public CameraControlMode GetExpectedPerspective()
+    {
+        if (!Svc.ClientState.IsLoggedIn)
+            return CameraControlMode.Unknown;
+
+        // If we have a forced perspective, return it.
+        return _cache.ShouldBeFirstPerson ? CameraControlMode.FirstPerson : CameraControlMode.ThirdPerson;
     }
 
     /// <summary>

@@ -10,6 +10,7 @@ global using System.Text;
 global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
+global using ITFlags = ImGuiNET.ImGuiInputTextFlags;
 global using CFlags = ImGuiNET.ImGuiComboFlags;
 global using DFlags = ImGuiNET.ImDrawFlags;
 global using WFlags = ImGuiNET.ImGuiWindowFlags;

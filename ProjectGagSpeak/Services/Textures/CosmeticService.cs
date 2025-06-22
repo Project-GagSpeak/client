@@ -19,6 +19,10 @@ public class CosmeticService : IHostedService, IDisposable
         LoadAllCoreTextures();
         LoadAllCoreEmoteTextures();
         LoadAllCosmetics();
+
+
+
+
     }
 
     private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];

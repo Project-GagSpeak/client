@@ -58,7 +58,7 @@ public class GagspeakConfig
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
-    public float BlindfoldMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
+    public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 }
 

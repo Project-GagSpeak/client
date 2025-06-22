@@ -53,7 +53,7 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
     {
         var restraint = Items[globalIdx];
 
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, restraint.Identifier) && CurrentSelectionIdx == globalIdx)
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, restraint.Identifier, false) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;

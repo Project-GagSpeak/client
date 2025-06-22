@@ -1,20 +1,18 @@
 namespace GagSpeak.State.Models;
-public class OverlayEffect
+public interface IOverlayEffect
 {
-    public bool ForceFirstPerson { get; set; } = false;
-    public string OverlayPath { get; set; } = string.Empty;
+    /// <summary>
+    ///    If 1st Person Perspective should be forced during this effects duration.
+    /// </summary>
+    bool ForceFirstPerson { get; set; }
 
-    public OverlayEffect(string path = "")
-    {
-        OverlayPath = path;
-    }
+    /// <summary>
+    ///     The FilePath location used to identify the Overlay Image.
+    /// </summary>
+    public string OverlayPath { get; set; }
 
-    public OverlayEffect(OverlayEffect other)
-    {
-        ForceFirstPerson = other.ForceFirstPerson;
-        OverlayPath = other.OverlayPath;
-    }
-
-    public virtual OverlayEffect Clone()
-        => new OverlayEffect(this);
+    /// <summary>
+    ///     Checks if the overlay effect is valid.
+    /// </summary>
+    public bool IsValid();
 }

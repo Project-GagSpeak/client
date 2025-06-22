@@ -83,7 +83,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         };
         Storage.Add(restriction);
         _saver.Save(this);
-        Logger.LogDebug($"Created new restriction {restriction.Identifier}.");
+        Logger.LogDebug($"Created New [{type}] Restriction ({restriction.Label}) with ID: {restriction.Identifier}.");
         Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, restriction, null));
         return restriction;
     }
@@ -346,9 +346,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             // Create an instance of the correct type
             var restrictionItem = restrictionType switch
             {
-                RestrictionType.Blindfold => JParserBinds.FromBlindfoldToken(itemJson, _items, _modPresets),
-                RestrictionType.Collar => JParserBinds.FromCollarToken(itemJson, _items, _modPresets),
-                _ => JParserBinds.FromNormalToken(itemJson, _items, _modPresets),
+                RestrictionType.Collar => CollarRestriction.FromToken(itemJson, _items, _modPresets),
+                RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _items, _modPresets),
+                RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _items, _modPresets),
+                _ => RestrictionItem.FromToken(itemJson, _items, _modPresets),
             };
             Storage.Add(restrictionItem);
         }

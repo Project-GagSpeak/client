@@ -749,8 +749,8 @@ namespace GagSpeak.Localization
         public readonly string BlindfoldType = Loc.Localize("Hardcore_BlindfoldType", "Lace Style");
         public readonly string BlindfoldTypeTT = Loc.Localize("Hardcore_BlindfoldTypeTT", "Select the type of blindfold you wish to use.");
 
-        public readonly string BlindfoldMaxOpacity = Loc.Localize("Hardcore_BlindfoldMaxOpacity", "Opacity");
-        public readonly string BlindfoldMaxOpacityTT = Loc.Localize("Hardcore_BlindfoldMaxOpacityTT", "Set the opacity of the blindfold to account for variance in monitor displays.");
+        public readonly string OverlayMaxOpacity = Loc.Localize("Hardcore_OverlayMaxOpacity", "Opacity");
+        public readonly string OverlayMaxOpacityTT = Loc.Localize("Hardcore_OverlayMaxOpacityTT", "Set the opacity of the blindfold to account for variance in monitor displays.");
 
         public readonly string AddNodeLastSeenTT = Loc.Localize("Hardcore_AddNodeLastSeenTT", "Add last interacted node to list." +
             "--SEP--Note: Auto-selecting yes is not an allowed option");

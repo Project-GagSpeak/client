@@ -16,6 +16,7 @@ using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.MinionListModule.Delegates;
 
 namespace GagSpeak.FileSystems;
 
@@ -105,14 +106,16 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        ImGui.AlignTextToFramePadding();
         Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
-        ImGui.SameLine();
-        ImGui.Text(leaf.Value.Label);
-        ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-        if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+        CkGui.TextFrameAlignedInline(leaf.Value.Label);
+        ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
+        var pos = ImGui.GetCursorScreenPos();
+        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+        if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            Log.LogDebug($"Deleting {leaf.Value.Label}");
+            Log.LogDebug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
             _manager.Delete(leaf.Value);
         }
         CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
@@ -165,18 +168,32 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
             ImGui.CloseCurrentPopup();
 
-        ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
         if (ImGui.IsWindowAppearing())
             ImGui.SetKeyboardFocusHere();
-        var enterPressed = ImGui.InputTextWithHint("##newName", "Enter New Name...", ref newName, 512, ImGuiInputTextFlags.EnterReturnsTrue);
 
-        if (CkGuiUtils.EnumCombo("Restriction Kind", 100, _newType, out var newType,
+        var fullWidth = 200 * ImGuiHelpers.GlobalScale;
+        var comboWidth = fullWidth / 2;
+        var buttonWidth = fullWidth - comboWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+
+        ImGui.SetNextItemWidth(fullWidth);
+        var doit = ImGui.InputTextWithHint("##newName", "Enter New Name...", ref newName, 512, ITFlags.EnterReturnsTrue);
+
+        if (CkGuiUtils.EnumCombo("##RestrictionType", comboWidth, _newType, out var newType,
             Enum.GetValues<RestrictionType>().SkipLast(1), defaultText: "Select Type.."))
         {
             _newType = newType;
         }
+        CkGui.AttachToolTip("Define what type of restriction you want to make.");
 
-        if (!enterPressed)
+        // Alternative early exit.
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.PlusCircle, "Create Item", buttonWidth, disabled: string.IsNullOrWhiteSpace(newName)))
+        {
+            ImGui.CloseCurrentPopup();
+            return true;
+        }
+
+        if (!doit)
             return false;
 
         ImGui.CloseCurrentPopup();

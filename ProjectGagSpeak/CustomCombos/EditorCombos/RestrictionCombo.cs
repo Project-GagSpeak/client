@@ -51,7 +51,7 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
     {
         var restriction = Items[globalIdx];
 
-        if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, restriction.Identifier) && CurrentSelectionIdx == globalIdx)
+        if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, restriction.Identifier, false) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;

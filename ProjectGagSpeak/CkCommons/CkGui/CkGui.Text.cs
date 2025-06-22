@@ -67,9 +67,9 @@ public static partial class CkGui
 
     public static void TextFrameAlignedInline(string text, bool inner = true)
     {
-        if (inner) 
+        if (inner)
             ImUtf8.SameLineInner();
-        else 
+        else
             ImGui.SameLine();
 
         ImUtf8.TextFrameAligned(text);
@@ -372,15 +372,24 @@ public static partial class CkGui
     }
 
     // Helper function to draw an input text for a set width, with an icon drawn right aligned.
-    public static void InputTextRightIcon(string label, float width, string hint, ref string input, uint length, FAI icon)
+    public static void IconInputText(string label, float width, FAI icon, string hint, ref string input, int length, ITFlags flags = ITFlags.None)
     {
+        using var _ = ImRaii.Group();
         // Draw input text with hint below.
         ImGui.SetNextItemWidth(width);
-        ImGui.InputTextWithHint(label, hint, ref input, length);
-        // Get the itemrect
-        var itemRect = ImGui.GetItemRectSize();
-        // run a sameline from the position to set the cursorPosX to the end for us to draw the right aligned icon.
-        ImGui.SameLine(itemRect.X - ImGui.GetFrameHeight());
+        ImGui.InputTextWithHint(label, hint, ref input, (uint)length, flags);
+        ImGui.SameLine(ImGui.GetItemRectSize().X - ImGui.GetFrameHeight());
+        FramedIconText(icon, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+    }
+
+    // Helper function to draw an input text for a set width, with an icon drawn right aligned.
+    public static void IconInputTextOuter(string id, float width, FAI icon, string hint, ref string input, int length, ITFlags flags = ITFlags.None)
+    {
+        using var _ = ImRaii.Group();
+        // Draw input text with hint below.
+        ImGui.SetNextItemWidth(width - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.InputTextWithHint(id, hint, ref input, (uint)length, flags);
+        ImUtf8.SameLineInner();
         FramedIconText(icon, ImGui.GetColorU32(ImGuiCol.TextDisabled));
     }
 }

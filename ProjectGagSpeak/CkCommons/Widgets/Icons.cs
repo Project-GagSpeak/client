@@ -1,3 +1,4 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.CkCommons.Gui;
@@ -30,16 +31,20 @@ public static class Icons
                     : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, rounding);
-                if (ptr != nint.Zero)
-                    ImGui.Image(ptr, size, Vector2.Zero, Vector2.One, tint);
-                else
-                    ImGui.Dummy(size);
+                if (ptr != nint.Zero)    
+                    ImGui.GetWindowDrawList().AddImageRounded(ptr, pos, pos + size, Vector2.Zero, Vector2.One, ColorHelpers.RgbaVector4ToUint(tint), rounding);
             }
             else
             {
-                ImGui.Image(ptr, size);
-                if (doHover) ImGuiUtil.HoverIconTooltip(ptr, size, textureSize);
+                var pos = ImGui.GetCursorScreenPos();
+                ImGui.GetWindowDrawList().AddImageRounded(ptr, pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
             }
+
+            ImGui.Dummy(size);
+            if (doHover && !empty)
+                ImGuiUtil.HoverIconTooltip(ptr, size, textureSize);
+
+
         }
         catch (Exception e)
         {

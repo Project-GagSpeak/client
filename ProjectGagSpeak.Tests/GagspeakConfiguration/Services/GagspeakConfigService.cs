@@ -63,7 +63,7 @@ public class MainConfig
 //                                 "PiShockUsername": "",
 //                                 "BlindfoldStyle": 0,
 //                                 "ForceLockFirstPerson": false,
-//                                 "BlindfoldMaxOpacity": 1.0,
+//                                 "OverlayMaxOpacity": 1.0,
 //                                 "ForcedStayPromptList": {
 //                                     "$type": "GagSpeak.GameInternals.Addons.TextFolderNode, ProjectGagSpeak",
 //                                     "Enabled": true,

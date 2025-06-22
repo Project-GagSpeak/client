@@ -98,7 +98,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         Logger.LogInformation("AchievementListener Starting");
         ReInitializeAchievements(true);
         _handler.SubscribeToEvents();
-        BeginSaveCycle();
         Logger.LogInformation("AchievementListener Started");
         return Task.CompletedTask;
     }

@@ -13,10 +13,14 @@ public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquata
     // Do not use for any comparisons.
     public string Label { get; }
 
-    public CombinedCacheKey(ManagerPriority manager, int itemIdx, string label)
+    // Used for cases where keys should not be removed unless MainHub.UID == EnactorUID.
+    public string EnactorUID { get; }
+
+    public CombinedCacheKey(ManagerPriority manager, int itemIdx, string enactor, string label)
     {
         Manager = manager;
         LayerIndex = itemIdx;
+        EnactorUID = enactor;
         Label = label;
     }
 

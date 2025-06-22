@@ -51,6 +51,9 @@ public class AttributeDrawer
 
     public void DrawAttributesChild(IAttributeItem attributes, float width, int maxPerRow, Traits toShow = Traits.All)
     {
+        if (toShow is Traits.None)
+            return;
+
         var totalTraits = toShow.ActiveCount();
         var rows = (int)Math.Ceiling((float)totalTraits / maxPerRow);
         var height = ImGui.GetFrameHeight() * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1);

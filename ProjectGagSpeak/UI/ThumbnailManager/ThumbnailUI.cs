@@ -19,13 +19,10 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 {
     private readonly ImageImportTool _imageImport;
     private readonly MainConfig _config;
-    public ThumbnailUI(
-        ILogger<ThumbnailUI> logger,
-        GagspeakMediator mediator,
-        ImageImportTool imageImport,
-        MainConfig config, 
-        CosmeticService cosmetics,
-        ImageMetadataGS imageBase) : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
+    public ThumbnailUI(ILogger<ThumbnailUI> logger, GagspeakMediator mediator,
+        ImageImportTool imageImport, MainConfig config, CosmeticService cosmetics,
+        ImageMetadataGS imageBase) 
+        : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
     {
         _imageImport = imageImport;
         _config = config;

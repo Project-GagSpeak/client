@@ -138,10 +138,10 @@ public sealed class ArousalService : IDisposable
         float percent = StaticArousal / AROUSAL_CAP;
 
         // Generation rate: scaled based on softcapped stimulation
-        _generationRate = Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
+        _generationRate = GsExtensions.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
 
         // Frequency: faster when more stimulated
-        _generationFrequency = Lerp(MIN_FREQ, MAX_FREQ, percent);
+        _generationFrequency = GsExtensions.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
         // Decay: usually a fraction of generation
         _degenerationRate = _generationRate * 0.5f;
@@ -180,14 +180,6 @@ public sealed class ArousalService : IDisposable
         // Log the current arousal state.
         _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LoggerType.Arousal);
     }
-
-    /// <summary> Linearly interpolates between two values based on a factor t. </summary>
-    /// <remarks> Think, “What number is 35% between 56 and 132?" </remarks>
-    /// <param name="a"> lower bound value </param>
-    /// <param name="b"> upper bound value </param>
-    /// <param name="t"> should be in the range [a, b] </param>
-    /// <returns> the interpolated value between a and b </returns>
-    private float Lerp(float a, float b, float t) => a + (b - a) * t;
 
     #region DebugHelper
     public void DrawCacheTable()

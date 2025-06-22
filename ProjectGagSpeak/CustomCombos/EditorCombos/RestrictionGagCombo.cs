@@ -56,7 +56,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
     {
         var gagItem = Items[globalIdx];
 
-        if (Icons.DrawFavoriteStar(_favorites, gagItem.GagType) && CurrentSelectionIdx == globalIdx)
+        if (Icons.DrawFavoriteStar(_favorites, gagItem.GagType, false) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;
