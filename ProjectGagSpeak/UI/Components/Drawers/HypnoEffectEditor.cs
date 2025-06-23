@@ -10,6 +10,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
+using System;
 
 namespace GagSpeak.CkCommons.Gui;
 public class HypnoEffectEditor : IDisposable
@@ -22,10 +23,10 @@ public class HypnoEffectEditor : IDisposable
 
     // The selected preview values.
     private static uint  _imageColor = 0xFFFFFFFF; // EditorEntry.TintColor
-    private static float _transposeLifetime = 2000f; // how long it takes to transpose between colors.
+    private static int _transposeLifetime = 2000; // how long it takes to transpose between colors.
     private static float _currentSpinSpeed = 1.0f; // EditorEntry.SpinSpeed
     private static float _currentRotation = 0f;
-    private static float _currentZoom = 1.0f;
+    private static float _currentZoom = 0.5f;
 
     // Text Handles.
     private static string _currentText = string.Empty;
@@ -45,8 +46,11 @@ public class HypnoEffectEditor : IDisposable
     private readonly Vector2[] _hypnoUV = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
     private bool _open = false;
 
-    public HypnoEffectEditor()
-    { }
+    private readonly ILogger<HypnoEffectEditor> _logger;
+    public HypnoEffectEditor(ILogger<HypnoEffectEditor> logger)
+    {
+        _logger = logger;
+    }
 
     public void Dispose()
     {
@@ -60,7 +64,7 @@ public class HypnoEffectEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Svc.Logger.Warning($"Exception waiting for hypno background tasks to exit: {ex}");
+            _logger.LogWarning($"Exception waiting for hypno background tasks to exit: {ex}");
         }
 
         _textPhraseLoopCTS?.Dispose();
@@ -78,8 +82,8 @@ public class HypnoEffectEditor : IDisposable
     private TagCollection HypnoEffectPhrases = new();
     private Task? _transposeTask;
     private Task? _textPhraseTask;
-    private CancellationTokenSource? _textPhraseLoopCTS;
-    private CancellationTokenSource? _transposeColorCTS;
+    private CancellationTokenSource? _textPhraseLoopCTS = new();
+    private CancellationTokenSource? _transposeColorCTS = new();
     private async Task TransposeColorLoop()
     {
         _transposeColorCTS?.Cancel();
@@ -110,7 +114,7 @@ public class HypnoEffectEditor : IDisposable
             }
         }
         catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex) { Svc.Logger.Error($"Error in TransposeColorLoop: {ex}"); }
+        catch (Exception ex) { _logger.LogError($"Error in TransposeColorLoop: {ex}"); }
     }
     private async Task HandleColorTranspose(Vector4 start, Vector4 target, CancellationToken token)
     {
@@ -126,7 +130,7 @@ public class HypnoEffectEditor : IDisposable
             float t = Math.Clamp(elapsed / transposeDelta, 0f, 1f);
 
             // Attempt Smoothstep Easing
-            //t = t * t * (3f - 2f * t);
+            t = t * t * (3f - 2f * t);
 
             Vector4 lerped = new(
                 GsExtensions.Lerp(start.X, target.X, t),
@@ -146,7 +150,7 @@ public class HypnoEffectEditor : IDisposable
         }
     }
 
-    private async void TextDisplayLoop()
+    private async Task TextDisplayLoop()
     {
         _textPhraseLoopCTS?.Cancel();
         _textPhraseLoopCTS = new();
@@ -156,7 +160,7 @@ public class HypnoEffectEditor : IDisposable
                 await HandleTextDisplay(_textPhraseLoopCTS.Token);
         }
         catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex) { Svc.Logger.Error($"Error in TextDisplayLoop: {ex}"); }
+        catch (Exception) { /* Consume */ }
     }
     private async Task HandleTextDisplay(CancellationToken token)
     {
@@ -190,35 +194,42 @@ public class HypnoEffectEditor : IDisposable
             return;
 
         // Now we need to process and update the text for the visual state based on our attributes.
-        bool doTextFade = EditorEntry.Attributes.HasFlag(HypnoAttributes.TextFade);
-        bool linearScale = EditorEntry.Attributes.HasFlag(HypnoAttributes.LinearTextScale);
-        bool randomScale = EditorEntry.Attributes.HasFlag(HypnoAttributes.RandomTextScale);
+        bool doTextFade = EditorEntry.Attributes.HasAny(HypnoAttributes.TextFade);
+        bool linearScale = EditorEntry.Attributes.HasAny(HypnoAttributes.LinearTextScale);
+        bool randomScale = EditorEntry.Attributes.HasAny(HypnoAttributes.RandomTextScale);
 
         // Update the current opacity.
         _currentTextOpacity = doTextFade ? 0f : MaxTextOpacity;
-        _currentTextScale = randomScale ? 0.8f + Random.Shared.NextSingle() * 0.4f : linearScale ? 0.8f : 1f;
+        _currentTextScale = randomScale ? (0.75f + Random.Shared.NextSingle() * (1.35f - 0.75f)) : linearScale ? 0.8f : 1f;
 
-        // mark a stopwatch
-        var startTime = DateTime.UtcNow;
+        // If Scaling linearily, store the start and end draw regions.
+        if (linearScale)
+        {
+            var sizeBase = GetTextSizeFromFontPtr(UiFontService.FullScreenFontPtr, _currentText) * (_textSize / UiFontService.FullScreenFontPtr.FontSize);
+            TextStartOffset = (sizeBase * 0.75f) * 0.5f; // offset from center
+            TextEndOffset = (sizeBase * 1.35f) * 0.5f; // offset from center
+        }
+
+        PhraseStartTime = DateTime.UtcNow;
         var duration = _currentTextLifetime;
 
         while (!token.IsCancellationRequested)
         {
-            var elapsed = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
+            var elapsed = (int)(DateTime.UtcNow - PhraseStartTime).TotalMilliseconds;
             if (elapsed >= duration)
                 break;
 
-            float progress = elapsed / (float)duration;
+            var progress = elapsed / (float)duration;
 
             // Handle Opacity Fadein
             if (doTextFade && elapsed < _textFadeInTime)
-                _currentTextOpacity = GsExtensions.Lerp(0f, MaxTextOpacity, elapsed / (float)_textFadeInTime);
+                _currentTextOpacity = GsExtensions.EaseInExpo(elapsed / (float)_textFadeInTime);
             // Handle Opacity Fade Out.
             else if (doTextFade && elapsed >= (duration - _textFadeOutTime))
             {
                 var fadeOutStart = duration - _textFadeOutTime;
-                var fadeProgress = (elapsed - fadeOutStart) / (float)_textFadeOutTime;
-                _currentTextOpacity = GsExtensions.Lerp(MaxTextOpacity, 0f, fadeProgress);
+                var value = (elapsed - fadeOutStart) / (float)_textFadeOutTime;
+                _currentTextOpacity = MaxTextOpacity * GsExtensions.EaseOutExpo(1f - value);
             }
             // Handle simply displaying the text.
             else
@@ -226,16 +237,25 @@ public class HypnoEffectEditor : IDisposable
                 _currentTextOpacity = MaxTextOpacity;
             }
 
-            // Handle Scaling.
-            if (linearScale)
-                _currentTextScale = Math.Clamp(GsExtensions.Lerp(0.8f, 1.2f, progress), 0.8f, 1.2f);
-
             // Lighten Stress Load a little bit.
             await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds);
-
-            // POSSIBLY HANDLE SPIN SPEEDUP HERE
         }
+
+        if (EditorEntry.Attributes.HasAny(HypnoAttributes.SpeedUpOnCycle))
+            _ = AccelerateTemporarily(duration);
     }
+
+    private async Task AccelerateTemporarily(int duration)
+    {
+        var speedUpTime = Math.Clamp(250, 10, duration);
+        var currentSpeed = _currentSpinSpeed;
+        var newSpeed = _currentSpinSpeed * 2f;
+        // quickly accelerate the speed to 3x the current speed, then back to normal 50ms later, combined should take 100ms
+        _currentSpinSpeed = newSpeed;
+        await Task.Delay(speedUpTime);
+        _currentSpinSpeed = currentSpeed; // reset back to the original speed.
+    }
+
 
     public void SetHypnoEffect(HypnoticEffect effect)
     {
@@ -298,10 +318,17 @@ public class HypnoEffectEditor : IDisposable
 
                 // Next Column,
                 ImGui.TableNextColumn();
-                if (imgFinder.GetImageMetadataPath(ImageDataType.Hypnosis, overlay.OverlayPath) is { } img)
+                try
                 {
-                    var dispSize = DisplayPreviewEffect(editorHeight, img);
-                    ImGui.Dummy(dispSize);
+                    if (imgFinder.GetImageMetadataPath(ImageDataType.Hypnosis, overlay.OverlayPath) is { } img)
+                    {
+                        var dispSize = DisplayPreviewEffect(editorHeight, img);
+                        ImGui.Dummy(dispSize);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error displaying Hypnotic Effect Preview: {ex}");
                 }
 
                 ImGui.Separator();
@@ -446,7 +473,6 @@ public class HypnoEffectEditor : IDisposable
         // Spin Speed Slider 
         ImGui.SliderFloat("Image Spin Speed", ref _currentSpinSpeed, 0.1f, 10f, "%.2fx Speed");
 
-
         // Speed Selector Slider (uses only values from PreviewSpeeds)
         var speedIndex = Array.IndexOf(TextLifeTimeSpeeds, _currentTextLifetime);
         if (speedIndex < 0) speedIndex = TextLifeTimeSpeeds.Length - 1;
@@ -465,12 +491,20 @@ public class HypnoEffectEditor : IDisposable
         // Text Size Slider (175 - 350)
         ImGui.SliderInt("Text Size", ref _textSize, 175, 350, "%dpx Size");
 
-        // Text Fade In (50 to 1000ms, independent)
-        ImGui.SliderInt("Text Fade In", ref _textFadeInTime, 10, 1000, "%dms Delay");
+        if (EditorEntry!.Attributes.HasAny(HypnoAttributes.TextFade))
+        {
+            // Text Fade In (50 to 1000ms, independent)
+            ImGui.SliderInt("Text Fade In", ref _textFadeInTime, 10, 1000, "%dms Delay");
 
-        // Text Fade Out (50 to selected speed)
-        var max = _currentTextLifetime / 2;
-        ImGui.SliderInt("Text Fade Out", ref _textFadeOutTime, 10, _currentTextLifetime / 2, "%dms Delay");
+            // Text Fade Out (50 to selected speed)
+            var max = _currentTextLifetime / 2;
+            ImGui.SliderInt("Text Fade Out", ref _textFadeOutTime, 10, _currentTextLifetime / 2, "%dms Delay");
+        }
+        if (EditorEntry!.Attributes.HasAny(HypnoAttributes.TransposeColors))
+        {
+            // Color Transpose Duration
+            ImGui.SliderInt("ColorTranspose Duration", ref _transposeLifetime, 500, 5000, "%dms Duration");
+        }
     }
 
     private Vector2 DisplayPreviewEffect(float height, IDalamudTextureWrap hypnoImage)
@@ -480,7 +514,8 @@ public class HypnoEffectEditor : IDisposable
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)
         var speed = _currentSpinSpeed * 0.001f;
-        _currentRotation += Svc.Framework.UpdateDelta.Milliseconds * speed;
+        var direction = EditorEntry.Attributes.HasFlag(HypnoAttributes.InvertDirection) ? -1f : 1f;
+        _currentRotation += direction * (Svc.Framework.UpdateDelta.Milliseconds * speed);
         _currentRotation %= MathF.PI * 2f;
 
         // Fetch the windows foreground drawlist to avoid conflict with other UI's & be layered ontop.
@@ -537,25 +572,85 @@ public class HypnoEffectEditor : IDisposable
             imgTint);
         drawList.PopClipRect();
 
-        // Calculate the text scale with animated scale.
-        var fontSize = (int)MathF.Round(_textSize * _currentTextScale);
-        var scaleFactor = fontSize / 300f;
-        var size = CkGui.CalcFontTextSize(_currentText, UiFontService.FullScreenFont) * scaleFactor;
-        var textPos = new Vector2(
-            MathF.Floor(center.X - size.X * 0.5f),
-            MathF.Floor(center.Y - size.Y * 0.5f)
-        );
-        // Display the text in the center of the spiral.
+        if(string.IsNullOrEmpty(_currentText))
+            return screenSize;
+
+        // update the scale progress and get target position. Do this in the drawframe so it is in sync.
+        UpdateScaleProgress(EditorEntry);
+        var targetPos = GetTargetPos(EditorEntry, center);
+        
         drawList.OutlinedFontScaled(
             UiFontService.FullScreenFontPtr,
-            fontSize,
-            textPos,
+            UiFontService.FullScreenFontPtr.FontSize * FontScale,
+            targetPos, 
             _currentText,
             TextColor,
             TextOutlineColor,
-            5,
-            4);
+            10,
+            20);
 
-        return screenSize;
+        return screenSize;  
     }
+
+    private void UpdateScaleProgress(HypnoticEffect effect)
+    {
+        if (!effect.Attributes.HasAny(HypnoAttributes.LinearTextScale))
+            return; // No need to update progress if we are not scaling linearily.
+
+        var elapsed = (int)(DateTime.UtcNow - PhraseStartTime).TotalMilliseconds;
+        if (elapsed >= _currentTextLifetime)
+            return;
+
+        ScaleProgress = elapsed / (float)_currentTextLifetime;
+        _currentTextScale = Math.Clamp(GsExtensions.Lerp(0.75f, 1.35f, ScaleProgress), 0.75f, 1.35f);
+    }
+
+    private Vector2 GetTargetPos(HypnoticEffect effect, Vector2 center)
+    {
+        // if we are doing linear scaling, calculate that.
+        if (effect.Attributes.HasAny(HypnoAttributes.LinearTextScale))
+            return center - Vector2.Lerp(TextStartOffset, TextEndOffset, ScaleProgress);
+        else
+        {
+            var size = CkGui.CalcFontTextSize(_currentText, UiFontService.FullScreenFont) * FontScale;
+            return center - size * 0.5f; // offset from center
+        }
+    }
+
+    // Because ImGui.CalcTextSize is unreliable for larger font scales.
+    public static unsafe Vector2 GetTextSizeFromFontPtr(ImFontPtr fontPtr, string text)
+    {
+        if (!fontPtr.IsLoaded() || string.IsNullOrEmpty(text))
+            return Vector2.Zero;
+
+        float width = 0;
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var current = text[i];
+            var glyph = fontPtr.FindGlyph(current);
+            if (glyph.NativePtr is null)
+                continue;
+
+            width += glyph.AdvanceX;
+
+            // handle final char.
+            if (i + 1 < text.Length)
+            {
+                var next = text[i + 1];
+                width += fontPtr.GetDistanceAdjustmentForPair(current, next);
+            }
+        }
+
+        return new Vector2(width, fontPtr.FontSize);
+    }
+
+    private float FontScale => UiFontService.FullScreenFont.Available
+        ? (_textSize / UiFontService.FullScreenFontPtr.FontSize) * _currentTextScale
+        : _currentTextScale;
+
+    private Vector2 TextStartOffset = Vector2.Zero;
+    private Vector2 TextEndOffset = Vector2.Zero;
+    private DateTime PhraseStartTime = DateTime.MinValue;
+    private float ScaleProgress = 0;
 }

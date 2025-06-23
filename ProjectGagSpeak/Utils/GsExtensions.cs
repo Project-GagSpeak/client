@@ -25,6 +25,17 @@ public static class GsExtensions
     /// <returns> the interpolated value between a and b </returns>
     public static float Lerp(float a, float b, float t) => a + (b - a) * t;
 
+    public static float EaseInExpo(float t)
+    {
+        return t <= 0f ? 0f : MathF.Pow(2f, 10f * (t - 1f));
+    }
+
+    public static float EaseOutExpo(float t)
+    {
+        return t >= 1f ? 1f : 1f - MathF.Pow(2f, -10f * t);
+    }
+
+
     public static string ExtractText(this SeString seStr, bool onlyFirst = false)
     {
         StringBuilder sb = new();
