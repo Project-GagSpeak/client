@@ -3,6 +3,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui;
@@ -11,16 +12,27 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class PatternCombo : CkFilterComboCache<Pattern>
+public sealed class PatternCombo : CkFilterComboCache<Pattern>, IMediatorSubscriber, IDisposable
 {
     private readonly FavoritesManager _favorites;
     public Guid _current { get; private set; }
-    public PatternCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<Pattern>> generator)
-        : base(generator, log)
+    public PatternCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites,
+        Func<IReadOnlyList<Pattern>> generator) : base(generator, log)
     {
         _favorites = favorites;
         _current = Guid.Empty;
         SearchByParts = true;
+
+        Mediator = mediator;
+        Mediator.Subscribe<ConfigPatternChanged>(this, _ => RefreshCombo());
+    }
+
+    public GagspeakMediator Mediator { get; }
+
+    void IDisposable.Dispose()
+    {
+        Mediator.Unsubscribe<ConfigPatternChanged>(this);
+        GC.SuppressFinalize(this);
     }
 
     protected override string ToString(Pattern obj)

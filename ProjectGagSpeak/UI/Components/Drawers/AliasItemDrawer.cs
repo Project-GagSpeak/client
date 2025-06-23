@@ -7,6 +7,7 @@ using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
@@ -39,6 +40,7 @@ public sealed class AliasItemDrawer
     private MoodlePresetCombo _presetCombo { get; init; }
     public AliasItemDrawer(
         ILogger<AliasItemDrawer> logger,
+        GagspeakMediator mediator,
         MoodleDrawer moodleDrawer,
         MoodleIcons moodleDisplayer,
         GagRestrictionManager gags,
@@ -54,10 +56,10 @@ public sealed class AliasItemDrawer
         _manager = manager;
         _moodleDrawer = moodleDrawer;
 
-        _restrictionCombo = new RestrictionCombo(logger, favorites, () => [
+        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _restraintCombo = new RestraintCombo(logger, favorites, () => [
+        _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _statusCombo = new MoodleStatusCombo(1.15f, moodleDisplayer, logger);

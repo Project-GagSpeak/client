@@ -21,6 +21,7 @@ namespace GagSpeak.CkCommons.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestrictionFileSelector _selector;
+    private readonly HypnoEffectEditor _hypnoEditor;
     private readonly ActiveItemsDrawer _activeItemDrawer;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
@@ -34,6 +35,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ILogger<RestrictionsPanel> logger,
         GagspeakMediator mediator,
         RestrictionFileSelector selector,
+        HypnoEffectEditor hypnoEditor,
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
@@ -45,6 +47,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
+        _hypnoEditor = hypnoEditor;
         _attributeDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
@@ -129,13 +132,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var wdl = ImGui.GetWindowDrawList();
         var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
-        var tooltipAct = "Double Click me to begin editing!";
+        var disabled = _selector.Selected is null || _manager.ActiveItemsAll.ContainsKey(_selector.Selected.Identifier);
+        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click to begin editing!";
 
-        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tt: tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
+        using var c = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, disabled, ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
-        var imgSize = new Vector2(inner.InnerRegion.Y);
-        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+        var imgSize = new Vector2(c.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + c.InnerRegion.X - imgSize.X };
         // Draw the left items.
         if (_selector.Selected is not null) 
             DrawSelectedInner(imgSize.X);
@@ -177,7 +181,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             }
         }
 
-        void BeginEdits() { if (_selector.Selected is not null) _manager.StartEditing(_selector.Selected!); }
+        void BeginEdits(ImGuiMouseButton b)
+        {
+            if (b is not ImGuiMouseButton.Left || disabled)
+                return;
+            
+            if(_selector.Selected is not null)
+                _manager.StartEditing(_selector.Selected);
+        }
     }
 
     private void DrawSelectedInner(float rightOffset)

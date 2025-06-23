@@ -1,3 +1,4 @@
+using Dalamud.Interface;
 using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.PlayerClient;
@@ -17,8 +18,7 @@ namespace GagSpeak.Services.Controller;
 public class HypnoService
 {
     private const int ANIMATION_DURATION_MS =  1500;
-    private const float SPIRAL_SPEED_SCALE_MAX = 0.003f;
-    private const float SPIRAL_SCALE_SCALE_MIN = 0.000f;
+    private const float SPEED_DAMPENER = 0.003f;
 
     private readonly ILogger<HypnoService> _logger;
     private readonly MainConfig _config;
@@ -187,7 +187,7 @@ public class HypnoService
             return;
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)
-        var speed = (SPIRAL_SPEED_SCALE_MAX - SPIRAL_SCALE_SCALE_MIN) * (effect.SpinSpeed * 0.01f) + SPIRAL_SCALE_SCALE_MIN;
+        var speed = SPEED_DAMPENER * (effect.SpinSpeed * 0.01f);
         _currentRotation += Svc.Framework.UpdateDelta.Milliseconds * speed;
         _currentRotation %= MathF.PI * 2f;
 
@@ -235,17 +235,15 @@ public class HypnoService
             _hypnoUV[1],
             _hypnoUV[2],
             _hypnoUV[3],
-            imgTint);
+            ColorHelpers.ApplyOpacity(imgTint, _config.Current.OverlayMaxOpacity));
 
         // Can set the windows font scale here if we want for the attributes.
 
 
         // Display the text in the center of the spiral.
-        using (UiFontService.FullScreenFont.Push())
-        {
-            var size = ImGui.CalcTextSize(_currentText);
-            CkGui.OutlinedFont(foregroundList, _currentText, screenCenter - size * 0.5f, effect.TextColor, 0xFF000000, 3);
-        }
+        var size = CkGui.CalcFontTextSize(_currentText, UiFontService.FullScreenFont);
+        foregroundList.OutlinedFontScaled(UiFontService.FullScreenFontPtr, 175, screenCenter - size * 0.5f,
+            _currentText, effect.TextColor, 0xFF000000, 3);
 
         // Then can pop the font scale here.
     }
@@ -270,7 +268,7 @@ public class HypnoService
         }
 
 
-        if (effect.Attributes.HasAny(HypnoAttributes.TextIsRandom))
+        if (effect.Attributes.HasAny(HypnoAttributes.TextDisplayRandom))
         {
             var randomIndex = Random.Shared.Next(0, effect.DisplayWords.Length);
             // If the random INDEX (not text) is the same as the current text, pick again.

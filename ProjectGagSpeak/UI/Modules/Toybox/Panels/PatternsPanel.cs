@@ -69,13 +69,17 @@ public partial class PatternsPanel
     }
 
     private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
-    { 
-        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
-        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this pattern. "
-            + "--SEP-- Right Click to cancel changes and edit Editor.";
+    {
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
 
-        using (var c = CkRaii.LabelChildAction("Selected", region.Size, LabelDraw, ImGui.GetFrameHeight(),
-            OnLeftClick, OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
+        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
+        var disabled = _selector.Selected is null || _manager.ActivePattern?.Identifier == _selector.Selected.Identifier;
+        var tooltip = disabled
+            ? "Cannot edit an Active Pattern!"
+            : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Pattern. "
+            + "--SEP-- Right Click to cancel and exit Editor.";
+
+        using (CkRaii.LabelChildAction("Selected", region.Size, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, disabled, DFlags.RoundCornersRight))
         {
             // Show the info for either the editor item details, or the selected item details.
             DrawSelectedItemInfo(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
@@ -90,20 +94,15 @@ public partial class PatternsPanel
             CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
         }
 
-        void OnLeftClick()
+        void BeginEdits(ImGuiMouseButton b)
         {
+            if (b is not ImGuiMouseButton.Left || disabled)
+                return;
+
             if (IsEditorItem)
                 _manager.SaveChangesAndStopEditing();
             else
                 _manager.StartEditing(_selector.Selected!);
-        }
-
-        void OnRightClick()
-        {
-            if (IsEditorItem)
-                _manager.StopEditing();
-            else
-                _logger.LogWarning("Right Click on a pattern that is not in the editor.");
         }
     }
 

@@ -67,7 +67,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         _activeItems.Clear();
         foreach (var (slot, idx) in serverData.Restrictions.WithIndex())
             if (slot.Identifier != Guid.Empty && Storage.TryGetRestriction(slot.Identifier, out var item))
+            {
                 _activeItems.TryAdd(idx, item);
+                _activeItemsAll.TryAdd(slot.Identifier, GagspeakModule.Restriction);
+            }
         Logger.LogInformation("Syncronized all Active Restrictions with Client-Side Manager.");
     }
 

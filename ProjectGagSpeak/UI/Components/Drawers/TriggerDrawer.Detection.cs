@@ -6,6 +6,7 @@ using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -17,7 +18,7 @@ using OtterGui.Text;
 namespace GagSpeak.CkCommons.Gui.Components;
 
 // Scoped, sealed class to draw the editor and display components of aliasItems.
-public sealed partial class TriggerDrawer
+public sealed partial class TriggerDrawer : IDisposable
 {
     private static readonly string[] ThreeLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Any Layer"];
     private static readonly string[] FiveLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer"];
@@ -38,6 +39,7 @@ public sealed partial class TriggerDrawer
 
     public TriggerDrawer(
         ILogger<TriggerDrawer> logger,
+        GagspeakMediator mediator,
         MoodleDrawer moodleDrawer,
         MoodleIcons iconDisplayer,
         GagRestrictionManager gags,
@@ -52,15 +54,15 @@ public sealed partial class TriggerDrawer
         _moodleDrawer = moodleDrawer;
         _iconDisplayer = iconDisplayer;
 
-        _restrictionCombo = new RestrictionCombo(logger, favorites, () => [
+        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _restraintCombo = new RestraintCombo(logger, favorites, () => [
+        _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _patternCombo = new PatternCombo(logger, favorites, () => [
+        _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
@@ -69,12 +71,29 @@ public sealed partial class TriggerDrawer
 
         _jobCombo = new JobCombo(1.15f, iconDisplayer, logger);
         _jobActionCombo = new JobActionCombo(1.15f, iconDisplayer, logger, () => [
-            .. _jobCombo._currentJob is not JobType.ADV
-                ? SpellActionService.GetJobActions(_jobCombo._currentJob) ?? []
+            .. _jobCombo.Current.JobId is not JobType.ADV
+                ? SpellActionService.GetJobActions(_jobCombo.Current) ?? []
                 : SpellActionService.AllActions.OrderBy(c => c.ParentJob)
         ]);
 
         _emoteCombo = new EmoteCombo(1.15f, iconDisplayer, logger);
+
+        // Listener for refreshing the actions and stuff.
+        _jobCombo.SelectionChanged += OnJobSelected;
+
+    }
+
+    void IDisposable.Dispose()
+    {
+        _jobCombo.SelectionChanged -= OnJobSelected;
+        GC.SuppressFinalize(this);
+    }
+
+    private void OnJobSelected(LightJob oldJob, LightJob newJob)
+    {
+        // Refresh the actions based on the selected job.
+        _logger.LogTrace($"Changed from ({oldJob.ToString()}) to ({newJob.ToString()}). Refreshing action list.", LoggerType.Triggers);
+        _jobActionCombo.RefreshActionList();
     }
 
     public void DrawDetectionInfo(Trigger trigger, bool isEditorItem, uint searchBg)
@@ -219,9 +238,6 @@ public sealed partial class TriggerDrawer
         // DetectableActions - This filter display allows you to append certain jobs and actions you want the trigger to qualify for.
         if(!spellAct.IsGenericDetection)
             DrawDetectableActions(spellAct, isEditorItem, searchBg);
-
-        ImGui.TextWrapped("This is currently only half functional, and will be the last thing i debug here... this UI is hell.");
-
     }
 
     private JobType _selectedJob = JobType.ADV;
@@ -246,7 +262,7 @@ public sealed partial class TriggerDrawer
         CkGui.AttachToolTip("The Job to add actions for. Leave blank to add view actions from all jobs.");
 
         ImUtf8.SameLineInner();
-        var jobActChange = _jobActionCombo.Draw("##JobActionSelector", _selectedAction, ImGui.GetContentRegionAvail().X, 1.25f, searchBg);
+        var jobActChange = _jobActionCombo.Draw("##JobActionSelector", _selectedAction, ImGui.GetContentRegionAvail().X, 1.5f, searchBg);
         if (jobActChange && _selectedAction != _jobActionCombo.Current.ActionID)
         {
             var list = spellAct.StoredActions[_selectedJob] ??= [];

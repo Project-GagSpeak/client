@@ -345,9 +345,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                 ImDrawFlags.RoundCornersAll);
         }
 
-        CkGui.OutlinedFont(
-            drawList,
-            progressBarString,
+        drawList.OutlinedFont(progressBarString,
             pos with { X = pos.X + ((progressWidth - progressBarStringTextSize.X) / 2f) - 1, Y = pos.Y + ((progressHeight - progressBarStringTextSize.Y) / 2f) - 1 },
             CkGui.Color(255, 255, 255, 255),
             CkGui.Color(53, 24, 39, 255),

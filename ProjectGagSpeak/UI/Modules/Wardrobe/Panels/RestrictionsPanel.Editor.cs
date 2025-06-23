@@ -229,7 +229,7 @@ public partial class RestrictionsPanel
     private void DrawHypnoInfo(HypnoticRestriction hypnoticItem, float width)
     {
         // render it if we should.
-        HypnoEffectEditorPopUp(hypnoticItem.Properties);
+        _hypnoEditor.DrawPopup(_textures, hypnoticItem.Properties);
 
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
@@ -265,11 +265,7 @@ public partial class RestrictionsPanel
 
                 // Editor Button for the effect.
                 if (CkGui.IconTextButton(FAI.BookOpen, "Effect Editor"))
-                {
-                    Entry = hypnoticItem.Properties.Effect;
-                }
-
-                // Maybe do a 'preview' action here or something.. idk
+                    _hypnoEditor.SetHypnoEffect(hypnoticItem.Properties.Effect);
             }
         }
     }
@@ -300,127 +296,5 @@ public partial class RestrictionsPanel
     {
         var metaData = new ImageMetadataGS(type, size, Guid.Empty);
         Mediator.Publish(new OpenThumbnailBrowser(metaData));
-    }
-
-
-    private static ImGuiColorEditFlags ColorPickerFlags = ImGuiColorEditFlags.DisplayHex
-        | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar;
-
-    private static HypnoticEffect? Entry = null;
-    private static TagCollection HypnoEffectPhrases = new();
-    private static bool Open = false;
-    private void HypnoEffectEditorPopUp(HypnoticOverlay overlay)
-    {
-        if (Entry is null)
-            return;
-        if (!ImGui.IsPopupOpen("###HypnoEditModal"))
-        {
-            Open = true;
-            ImGui.OpenPopup("###HypnoEditModal");
-        }
-
-        if (ImGui.BeginPopupModal($"Effect Editor###HypnoEditModal", ref Open, ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            if (ImGui.BeginTable("HypnoEffectEditTable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
-            {
-                ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthFixed, 110);
-                ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthFixed, 290);
-
-                // Spin Speed
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Image Spin Speed");
-                ImGui.TableNextColumn();
-                ImGui.SetNextItemWidth(290);
-                ImGui.DragFloat("##SpinSpeed", ref Entry.SpinSpeed, 0.01f, 0f, 5f, "%.2fx Speed");
-
-                // Image Tint Color
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Image Tint Color");
-                ImGui.TableNextColumn();
-                Vector4 tintVec = ColorHelpers.RgbaUintToVector4(Entry.TintColor);
-                if (ImGui.ColorPicker4("##TintCol", ref tintVec, ColorPickerFlags))
-                    Entry.TintColor = ColorHelpers.RgbaVector4ToUint(tintVec);
-
-                // Text Color
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Text Color");
-                ImGui.TableNextColumn();
-                Vector4 textColVec = ColorHelpers.RgbaUintToVector4(Entry.TextColor);
-                if (ImGui.ColorPicker4("##TextColor", ref textColVec, ColorPickerFlags))
-                    Entry.TextColor = ColorHelpers.RgbaVector4ToUint(textColVec);
-
-                // Text Mode
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Text Display Order");
-                ImGui.TableNextColumn();
-                var selectedAttributes = (uint)Entry.Attributes;
-                var currentMode = Entry.Attributes & HypnoAttributes.ModeMask;
-
-                if (ImGui.RadioButton("Sequential", currentMode == HypnoAttributes.TextIsSequential))
-                    Entry.Attributes = (Entry.Attributes & ~HypnoAttributes.ModeMask) | HypnoAttributes.TextIsSequential;
-                CkGui.AttachToolTip("The text is displayed in the order displayed below.");
-
-                ImGui.SameLine();
-                if (ImGui.RadioButton("Random", currentMode == HypnoAttributes.TextIsRandom))
-                    Entry.Attributes = (Entry.Attributes & ~HypnoAttributes.ModeMask) | HypnoAttributes.TextIsRandom;
-                CkGui.AttachToolTip("The text is displayed in a random order each time it is cycled.");
-
-                // Text Cycle Speed
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Text Cycle Speed");
-                ImGui.TableNextColumn();
-                ImGui.SetNextItemWidth(290);
-                ImGui.DragFloat("##TextCycleSpeed", ref Entry.TextCycleSpeed, 0.05f, 0f, 10f, "%.2f");
-                CkGui.AttachToolTip("How frequently the text cycles through the display words.");
-
-                // Attributes
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImUtf8.TextFrameAligned("Attributes");
-                ImGui.TableNextColumn();
-
-                using (var t = ImRaii.Table("###AttributesTable", 2))
-                {
-                    if (!t) return;
-
-                    foreach (var attribute in Enum.GetValues<HypnoAttributes>().Skip(2))
-                    {
-                        if (ImGui.CheckboxFlags($"{attribute}", ref selectedAttributes, (uint)attribute))
-                            Entry.Attributes ^= attribute;
-                        ImGui.TableNextColumn();
-                    }
-                }
-
-                ImGui.EndTable();
-            }
-            var size = ImGui.GetItemRectSize();
-
-            // Display Words
-            using (var c = CkRaii.HeaderChild("Display Text Phrases", new Vector2(size.X, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), HeaderFlags.AddPaddingToHeight))
-            {
-                using (CkRaii.FramedChildPaddedW("Display Phrases", c.InnerRegion.X, CkStyle.GetFrameRowsHeight(3), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
-                    if (HypnoEffectPhrases.DrawTagsEditor("##EffectPhrases", Entry.DisplayWords, out var newDisplayWords))
-                        Entry.DisplayWords = newDisplayWords.ToArray();
-            }
-
-            CkGui.SeparatorSpaced(width: size.X, col: CkColor.LushPinkLine.Uint());
-
-            CkGui.SetCursorXtoCenter(CkGui.IconTextButtonSize(FAI.Save, "Save and Close"));
-            if (CkGui.IconTextButton(FAI.Save, "Save and Close"))
-            {
-                Open = false;
-                overlay.Effect = Entry;
-            }
-
-            ImGui.EndPopup();
-        }
-
-        if (!Open)
-            Entry = null;
     }
 }

@@ -6,13 +6,6 @@ using OtterGui.Raii;
 
 // Credit to OtterGui for the original implementation.
 namespace GagSpeak.CustomCombos;
-public static class CkComboExtensions
-{
-    public static void SetSearchBgColor<T>(this CkFilterComboBase<T> combo, uint color)
-    {
-        combo.SetSearchBgColor(color);
-    }
-}
 
 public abstract class CkFilterComboBase<T>
 {
@@ -53,8 +46,8 @@ public abstract class CkFilterComboBase<T>
         _filter = LowerString.Empty;
         _filterParts = [];
         _lastSelection = -1;
-        Cleanup();
 
+        Cleanup();
         _filterDirty = true;
         _available.Clear();
         _available.TrimExcess();
@@ -84,6 +77,12 @@ public abstract class CkFilterComboBase<T>
         return InnerWidth.HasValue
             ? InnerWidth.Value - 2 * ImGui.GetStyle().FramePadding.X
             : ImGui.GetWindowWidth() - 2 * ImGui.GetStyle().FramePadding.X;
+    }
+
+    protected void RefreshCombo()
+    {
+        Cleanup(); // Instruct the CachingList to regenerate its items.
+        _filterDirty = true; // Force the filter to be updated (even when opened to make immidiate).
     }
 
     /// <summary> Called upon a storage clear. Should be overridden by Filter Combo Cache to ensure its caches are cleared. </summary>

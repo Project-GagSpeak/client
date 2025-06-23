@@ -326,6 +326,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<VibeSimAudio>()
 
         // UI (Probably mostly in Scoped)
+        .AddSingleton<HypnoEffectEditor>()
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
 

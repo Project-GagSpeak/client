@@ -74,7 +74,7 @@ public class ActiveItemsDrawer
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionItems.Length; i++)
-            _restrictionItems[i] = new RestrictionCombo(logger, favorites, () => [
+            _restrictionItems[i] = new RestrictionCombo(logger, mediator, favorites, () => [
                 ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
 
@@ -84,7 +84,7 @@ public class ActiveItemsDrawer
             _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions);
 
         // Init Restraint Combo & Padlock.
-        _restraintItem = new RestraintCombo(logger, favorites, () => [
+        _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints);

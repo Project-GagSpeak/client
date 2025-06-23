@@ -3,6 +3,7 @@ using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using ImGuiNET;
@@ -11,16 +12,27 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>
+public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>, IMediatorSubscriber, IDisposable
 {
     private readonly FavoritesManager _favorites;
     public Guid _currentRestraint { get; private set; }
-    public RestraintCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<RestraintSet>> restraintsGenerator)
-        : base(restraintsGenerator, log)
+    public RestraintCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites, 
+        Func<IReadOnlyList<RestraintSet>> generator) : base(generator, log)
     {
         _favorites = favorites;
         _currentRestraint = Guid.Empty;
         SearchByParts = true;
+
+        Mediator = mediator;
+        Mediator.Subscribe<ConfigRestraintSetChanged>(this, _ => RefreshCombo());
+    }
+
+    public GagspeakMediator Mediator { get; }
+
+    void IDisposable.Dispose()
+    {
+        Mediator.Unsubscribe<ConfigRestraintSetChanged>(this);
+        GC.SuppressFinalize(this);
     }
 
     protected override string ToString(RestraintSet obj)

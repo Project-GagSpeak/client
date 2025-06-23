@@ -51,6 +51,26 @@ public static partial class CkGui
         return ret;
     }
 
+    public static float GetAlpha(uint color)
+    {
+        byte alpha = (byte)(color >> 24);
+        return alpha / 255f;
+    }
+
+    public static uint InvertColor(uint color)
+    {
+        uint r = 0xFF - (color & 0xFF);
+        uint g = 0xFF - ((color >> 8) & 0xFF);
+        uint b = 0xFF - ((color >> 16) & 0xFF);
+        uint a = (color >> 24) & 0xFF;
+
+        return (a << 24) | (b << 16) | (g << 8) | r;
+    }
+
+    public static Vector4 InvertColor(Vector4 color)
+        => new Vector4(1f - color.X, 1f - color.Y, 1f - color.Z, color.W);
+
+
     public static Vector4 GetBoolColor(bool input) => input ? ImGuiColors.ParsedGreen : ImGuiColors.DalamudRed;
 
 /*    public float GetFontScalerFloat() => ImGuiHelpers.GlobalScale * (_pi.UiBuilder.DefaultFontSpec.SizePt / 12f); */

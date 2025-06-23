@@ -1,4 +1,3 @@
-using ImGuiNET;
 using OtterGui.Classes;
 
 namespace GagSpeak.CustomCombos;
@@ -8,16 +7,19 @@ namespace GagSpeak.CustomCombos;
 public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
 {
     /// <summary> The selected item in non-index format. </summary>
+    /// <remarks> This is for the OPENED Combo. This means if a combo has multiple draws, only the focused list reflects this. <remarks>
     public T? Current { get; protected set; }
 
     /// <summary> A Cached List of the generated items. </summary>
     /// <remarks> Items are regenerated every time a cleanup is called. </remarks>
     private readonly ICachingList<T> _items;
+
+    /// <summary> The current selection index in the filter cache. </summary>
+    /// <remarks> This is for the OPENED Combo. This means if a combo has multiple draws, only the focused list reflects this. <remarks>
     protected int CurrentSelectionIdx = -1;
 
     /// <summary> The condition that is met whenever the CachingList <typeparamref name="T"/> has finished caching the generated item function. </summary>
-    protected bool IsInitialized
-        => _items.IsInitialized;
+    protected bool IsInitialized => _items.IsInitialized;
 
     protected CkFilterComboCache(IEnumerable<T> items, ILogger log)
         : base(new TemporaryList<T>(items), log)

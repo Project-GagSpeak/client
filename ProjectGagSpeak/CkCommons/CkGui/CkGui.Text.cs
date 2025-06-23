@@ -181,6 +181,12 @@ public static partial class CkGui
         CenterTextAligned(text, width);
     }
 
+    public static void CenterColorTextAligned(string text, uint color, float? width = null)
+    {
+        using var _ = ImRaii.PushColor(ImGuiCol.Text, color);
+        CenterTextAligned(text, width);
+    }
+
     /// <summary> What it says on the tin. </summary>
     public static void ColorTextWrapped(string text, Vector4 color)
     {
@@ -191,92 +197,49 @@ public static partial class CkGui
     /// <summary> Helper function to draw the outlined font in ImGui. </summary>
     public static void OutlinedFont(string text, Vector4 fontColor, Vector4 outlineColor, int thickness)
     {
-        var original = ImGui.GetCursorPos();
-
+        var original = ImGui.GetCursorScreenPos();
         using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
-        {
-            ImGui.SetCursorPos(original with { Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-        }
+            OutlinedFontOutline(original, text, thickness);
 
         using (ImRaii.PushColor(ImGuiCol.Text, fontColor))
-        {
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-        }
+            OutlinedFontText(original, text);
     }
 
     public static void OutlinedFont(string text, uint fontColor, uint outlineColor, int thickness)
     {
-        var original = ImGui.GetCursorPos();
-
+        var original = ImGui.GetCursorScreenPos();
         using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
-        {
-            ImGui.SetCursorPos(original with { Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
-            ImGui.TextUnformatted(text);
-        }
+            OutlinedFontOutline(original, text, thickness);
 
         using (ImRaii.PushColor(ImGuiCol.Text, fontColor))
-        {
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-            ImGui.SetCursorPos(original);
-            ImGui.TextUnformatted(text);
-        }
+            OutlinedFontText(original, text);
     }
 
-
-    public static void OutlinedFont(ImDrawListPtr drawList, string text, Vector2 textPos, uint fontColor, uint outlineColor, int thickness)
+    private static void OutlinedFontOutline(Vector2 original, string text, int thickness)
     {
-        drawList.AddText(textPos with { Y = textPos.Y - thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { X = textPos.X - thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { Y = textPos.Y + thickness },
-            outlineColor, text);
-        drawList.AddText(textPos with { X = textPos.X + thickness },
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y - thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y + thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y + thickness),
-            outlineColor, text);
-        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y - thickness),
-            outlineColor, text);
-
-        drawList.AddText(textPos, fontColor, text);
-        drawList.AddText(textPos, fontColor, text);
+        ImGui.SetCursorPos(original with { Y = original.Y - thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X - thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { Y = original.Y + thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X + thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y - thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y + thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X - thickness, Y = original.Y + thickness });
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original with { X = original.X + thickness, Y = original.Y - thickness });
+        ImGui.TextUnformatted(text);
+    }
+    private static void OutlinedFontText(Vector2 original, string text)
+    {
+        ImGui.SetCursorPos(original);
+        ImGui.TextUnformatted(text);
+        ImGui.SetCursorPos(original);
+        ImGui.TextUnformatted(text);
     }
 
     public static Vector2 CalcFontTextSize(string text, IFontHandle fontHandle = null!)

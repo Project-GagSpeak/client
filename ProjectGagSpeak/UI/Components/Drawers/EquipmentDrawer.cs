@@ -12,6 +12,7 @@ using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -48,9 +49,9 @@ public class EquipmentDrawer
     private readonly ItemService _items;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
-    public EquipmentDrawer(ILogger<EquipmentDrawer> logger, IpcCallerGlamourer glamourer,
-        RestrictionManager restrictions, FavoritesManager favorites, ItemService items,
-        TextureService textures, CosmeticService cosmetics)
+    public EquipmentDrawer(ILogger<EquipmentDrawer> logger, GagspeakMediator mediator,
+        IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesManager favorites,
+        ItemService items, TextureService textures, CosmeticService cosmetics)
     {
         _logger = logger;
         _ipcGlamourer = glamourer;
@@ -62,7 +63,7 @@ public class EquipmentDrawer
         _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, items.ItemData, logger)).ToArray();
         _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(items, f, logger)).ToArray();
         _stainCombo = new GameStainCombo(_items.Stains, logger);
-        _restrictionCombo = new RestrictionCombo(logger, favorites, () => 
+        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => 
         [ 
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);

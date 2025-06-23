@@ -1,22 +1,19 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
 using GagSpeak.CkCommons.Gui;
 using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
-using GagSpeak.State;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.MinionListModule.Delegates;
 
 namespace GagSpeak.FileSystems;
 
@@ -52,12 +49,12 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         _manager = manager;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
-    }
 
-    private void RenameLeafRestriction(RestrictionFileSystem.Leaf leaf)
-    {
-        ImGui.Separator();
-        RenameLeaf(leaf);
+        // Do not subscribe to the default renamer, we only want to rename the item itself.
+        UnsubscribeRightClickLeaf(RenameLeaf);
+        // Subscribe to the rename Restriction.
+        SubscribeRightClickLeaf(RenameRestriction);
+
     }
 
     private void RenameRestriction(RestrictionFileSystem.Leaf leaf)
@@ -72,13 +69,13 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
-        ImGuiUtil.HoverTooltip("Enter a new name here to rename the changed restriction.");
+        CkGui.AttachToolTip("Enter a new name here to rename the changed restriction.");
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        Mediator.Unsubscribe<ConfigRestrictionChanged>(this);
+        Mediator.UnsubscribeAll(this);
     }
 
     protected override void DrawLeafInner(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
@@ -106,20 +103,23 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
+        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier);
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
-        ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
-        var pos = ImGui.GetCursorScreenPos();
-        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-        var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-        if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        // Only draw the deletion if the item is not active or occupied.
+        if(true /*!_manager.ActiveItemsAll.ContainsKey(leaf.Value.Identifier)*/)
         {
-            Log.LogDebug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
-            _manager.Delete(leaf.Value);
+            ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
+            var pos = ImGui.GetCursorScreenPos();
+            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            {
+                Log.LogDebug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+                _manager.Delete(leaf.Value);
+            }
+            CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
-        CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
-
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

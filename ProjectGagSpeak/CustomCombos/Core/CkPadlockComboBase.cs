@@ -199,10 +199,13 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
             CkGui.IconInputText($"##Input_{id}", leftWidth, FAI.Key, passHint, ref Password, maxLength, flags);
-        
+        CkGui.AttachToolTip("If interactable, a valid password must be entered here to lock this padlock.");
+
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(!PadlockEx.TimerLocks.Contains(SelectedLock)))
             CkGui.IconInputText($"##Timer_{id}", rightWidth, FAI.Clock, timerHint, ref Timer, 12);
+        CkGui.AttachToolTip("If interactable, a valid time must be entered here to lock this padlock." +
+            "--SEP--Ex: 0h2m7s (0 hours, 2 minutes, 7 seconds).");
     }
 
     protected void ThreeRowLockFields(string id, float width)
@@ -215,9 +218,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         // Password Row
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
             CkGui.IconInputTextOuter("##Input_" + id, width, FAI.Key, passHint, ref Password, maxLength, flags);
+        CkGui.AttachToolTip("If interactable, a valid password must be entered here to lock this padlock.");
 
         // Timer Row.
         using (ImRaii.Disabled(!PadlockEx.TimerLocks.Contains(SelectedLock)))
             CkGui.IconInputTextOuter("##Timer_" + id, width, FAI.Clock, timerHint, ref Timer, 12);
+        CkGui.AttachToolTip("If interactable, a valid time must be entered here to lock this padlock." +
+            "--SEP--Ex: 0h2m7s (0 hours, 2 minutes, 7 seconds).");
     }
 }

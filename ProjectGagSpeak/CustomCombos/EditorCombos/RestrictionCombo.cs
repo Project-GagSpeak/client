@@ -1,6 +1,7 @@
 using Dalamud.Interface.Colors;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui;
@@ -9,16 +10,26 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>
+public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>, IMediatorSubscriber, IDisposable
 {
     private readonly FavoritesManager _favorites;
     public Guid _currentRestriction;
-    public RestrictionCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<RestrictionItem>> generator)
-        : base(generator, log)
+    public RestrictionCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites, 
+        Func<IReadOnlyList<RestrictionItem>> generator) : base(generator, log)
     {
+        Mediator = mediator;
         _favorites = favorites;
         _currentRestriction = Guid.Empty;
         SearchByParts = true;
+        Mediator.Subscribe<ConfigRestrictionChanged>(this, _ => RefreshCombo());
+    }
+
+    public GagspeakMediator Mediator { get; }
+
+    void IDisposable.Dispose()
+    {
+        Mediator.Unsubscribe<ConfigRestrictionChanged>(this);
+        GC.SuppressFinalize(this);
     }
 
     protected override string ToString(RestrictionItem obj)

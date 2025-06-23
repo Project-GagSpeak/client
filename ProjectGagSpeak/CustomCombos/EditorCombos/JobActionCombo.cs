@@ -25,6 +25,9 @@ public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
         SearchByParts = true;
     }
 
+    public void RefreshActionList()
+        => RefreshCombo();
+
     protected override bool IsVisible(int globalIndex, LowerString filter)
         => filter.IsContained(Items[globalIndex].Name) 
         || filter.IsContained(Items[globalIndex].ActionID.ToString());

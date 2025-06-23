@@ -1,56 +1,85 @@
-using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
-using Dalamud.Plugin;
+using ImGuiNET;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
 
-/// <summary> Manages GagSpeaks custom fonts during plugin lifetime. </summary>
+/// <summary> Manages GagSpeaks custom fonts during plugin lifetimtk. </summary>
 public sealed class UiFontService : IHostedService
 {
-    public static IFontHandle GameFont { get; private set; }
-    public static IFontHandle IconFont { get; private set; }
+    public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
     public static IFontHandle UidFont { get; private set; }
     public static IFontHandle FullScreenFont { get; private set; }
+    public unsafe static ImFontPtr FullScreenFontPtr { get; private set; }
+
     // the below 3 are the same font at different sizes because idk how to register seperate sizes.
     public static IFontHandle GagspeakFont { get; private set; }
+    public unsafe static ImFontPtr GagspeakFontPtr { get; private set; }
     public static IFontHandle GagspeakLabelFont { get; private set; }
+    public unsafe static ImFontPtr GagspeakLabelFontPtr { get; private set; }
     public static IFontHandle GagspeakTitleFont { get; private set; }
+    public unsafe static ImFontPtr GagspeakTitleFontPtr { get; private set; }
+
     public UiFontService()
     {
-        // the special gagspeak font that i cant ever get to load for some wierd ass reason.
-        var gagspeakFontFile = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
-        if (File.Exists(gagspeakFontFile))
+        InitSupportedFonts();
+        InitCustomFonts();
+        Svc.Logger.Information("UiFontService: Initialized.");
+    }
+
+    private void InitSupportedFonts()
+    {
+        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
+        });
+
+        FullScreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(prebuild =>
+            {
+                FullScreenFontPtr = prebuild.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 300 });
+            });
+        });
+        Svc.Logger.Information("UiFontService: Initialized supported fonts.");
+    }
+
+    private void InitCustomFonts()
+    {
+        // grab the file locat ion of the GagSpeak Font.
+        var gsFontFileLoc = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
+        if (File.Exists(gsFontFileLoc))
         {
             // get the glyph ranges
             var glyphRanges = GetGlyphRanges();
 
-            // create the font handle
-            GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
-                tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges })));
+            // Assign the IFontHandltk.
+            GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            {
+                tk.OnPreBuild(prebuild =>
+                {
+                    // Within it, assign the Font Pointer to track the native stattk.
+                    GagspeakFontPtr = prebuild.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges });
+                });
+            });
 
-            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
-                tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges })));
+            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            {
+                tk.OnPreBuild(prebuild =>
+                {
+                    GagspeakLabelFontPtr = prebuild.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges });
+                });
+            });
 
-            GagspeakTitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(
-                tk => tk.AddFontFromFile(gagspeakFontFile, new SafeFontConfig { SizePx = 48, GlyphRanges = glyphRanges })));
+            GagspeakTitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            {
+                tk.OnPreBuild(prebuild =>
+                {
+                    GagspeakTitleFontPtr = prebuild.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 48, GlyphRanges = glyphRanges });
+                });
+            });
         }
-
-        // the font atlas for our UID display (make it the font from gagspeak probably unless this fits more)
-        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
-        {
-            e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
-        });
-
-        FullScreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e =>
-        {
-            e.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 175 }));
-        });
-
-        // the font atlas for our game font
-        GameFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.Axis12));
-        // the font atlas for our icon font
-        IconFont = Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
+        Svc.Logger.Information("UiFontService: Initialized custom fonts.");
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -67,8 +96,6 @@ public sealed class UiFontService : IHostedService
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
         FullScreenFont?.Dispose();
-        GameFont?.Dispose();
-        IconFont?.Dispose();
         return Task.CompletedTask;
     }
 

@@ -30,7 +30,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         => Items[layerIdx].Identifier == Guid.Empty;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
-        => DrawLockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
+        => DrawLockCombo($"##ClientLock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
 
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
         => DrawUnlockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);

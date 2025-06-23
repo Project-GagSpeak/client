@@ -17,7 +17,7 @@ public sealed class JobCombo : CkFilterComboCache<LightJob>
     private float _iconScale = 1.0f;
     public JobType _currentJob { get; private set; }
     public JobCombo(float iconScale, MoodleIcons disp, ILogger log)
-        : base([ ..SpellActionService.BattleClassJobs ], log)
+        : base(() => [ ..SpellActionService.BattleClassJobs ], log)
     {
         _iconScale = iconScale;
         _iconDrawer = disp;

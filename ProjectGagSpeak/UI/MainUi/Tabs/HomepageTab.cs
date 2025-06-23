@@ -9,6 +9,8 @@ using GagSpeak.CkCommons.Gui.Toybox;
 using GagSpeak.CkCommons.Gui.UiRemote;
 using GagSpeak.CkCommons.Gui.Wardrobe;
 using ImGuiNET;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Structs;
 
 namespace GagSpeak.CkCommons.Gui.MainWindow;
 

@@ -113,7 +113,7 @@ public partial class GagRestrictionsPanel
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
         var tooltipAct = "Double Click me to begin editing!";
 
-        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tt: tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
+        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y);
@@ -144,7 +144,11 @@ public partial class GagRestrictionsPanel
             }
         }
 
-        void BeginEdits() { if (_selector.Selected is not null) _manager.StartEditing(_selector.Selected!); }
+        void BeginEdits(ImGuiMouseButton b)
+        {
+            if (b is ImGuiMouseButton.Left && _selector.Selected is not null)
+                _manager.StartEditing(_selector.Selected);
+        }
     }
 
     private void DrawSelectedInner(float rightOffset)

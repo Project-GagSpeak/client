@@ -44,4 +44,40 @@ public static class CkGuiEx
             wdl.AddImage(valid.ImGuiHandle, pos, pos + size, Vector2.Zero, Vector2.One, CkGui.Color(tint));
         CkGui.AttachToolTipRect(pos, pos + size, tt);
     }
+
+    public static void OutlinedFont(this ImDrawListPtr drawList, string text, Vector2 textPos, uint fontColor, uint outlineColor, int thickness)
+    {
+        drawList.AddText(textPos with { Y = textPos.Y - thickness }, outlineColor, text);
+        drawList.AddText(textPos with { X = textPos.X - thickness }, outlineColor, text);
+        drawList.AddText(textPos with { Y = textPos.Y + thickness }, outlineColor, text);
+        drawList.AddText(textPos with { X = textPos.X + thickness }, outlineColor, text);
+        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y - thickness), outlineColor, text);
+        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y + thickness), outlineColor, text);
+        drawList.AddText(new Vector2(textPos.X - thickness, textPos.Y + thickness), outlineColor, text);
+        drawList.AddText(new Vector2(textPos.X + thickness, textPos.Y - thickness), outlineColor, text);
+        drawList.AddText(textPos, fontColor, text);
+        drawList.AddText(textPos, fontColor, text);
+    }
+
+    public static void OutlinedFontScaled(this ImDrawListPtr drawlist, ImFontPtr fontPtr, int size, Vector2 pos, string text, uint col, uint outline, int thickness, int quality = 4)
+    {
+        //drawlist.AddText(fontPtr, size, pos with { Y = pos.Y - thickness }, outline, text);
+        //drawlist.AddText(fontPtr, size, pos with { X = pos.X - thickness }, outline, text);
+        //drawlist.AddText(fontPtr, size, pos with { Y = pos.Y + thickness }, outline, text);
+        //drawlist.AddText(fontPtr, size, pos with { X = pos.X + thickness }, outline, text);
+        //drawlist.AddText(fontPtr, size, new Vector2(pos.X - thickness, pos.Y - thickness), outline, text);
+        //drawlist.AddText(fontPtr, size, new Vector2(pos.X + thickness, pos.Y + thickness), outline, text);
+        //drawlist.AddText(fontPtr, size, new Vector2(pos.X - thickness, pos.Y + thickness), outline, text);
+        //drawlist.AddText(fontPtr, size, new Vector2(pos.X + thickness, pos.Y - thickness), outline, text);
+        for (int i = 0; i < quality; i++)
+        {
+            float angle = (2 * MathF.PI / quality) * i;
+            float offsetX = MathF.Cos(angle) * thickness;
+            float offsetY = MathF.Sin(angle) * thickness;
+            drawlist.AddText(fontPtr, size, new Vector2(pos.X + offsetX, pos.Y + offsetY), outline, text);
+        }
+
+        drawlist.AddText(fontPtr, size, pos, col, text);
+        //drawlist.AddText(fontPtr, size, pos, col, text);
+    }
 }

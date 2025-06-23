@@ -42,6 +42,20 @@ public sealed class SpellActionService : IHostedService
             if (jobLookup.TryGetValue(gameAct.ClassJob.Value.RowId, out var job))
                 jobActionsDict[job].Add(new ParsedActionRow(gameAct));
         }
+
+        // Go back through and iterate over the light jobs. For any that are upgraded, concat their actions with their parent.
+        foreach (var (job, actions) in jobActionsDict)
+        {
+            // if the job is not an upgraded job continue.
+            if (!job.IsUpgradedJob())
+                continue;
+
+            // Otherwise, try and locate the actions for its parent job.
+            if (jobActionsDict.FirstOrDefault(x => x.Key.JobId == job.ParentJobId) is { } match)
+                // concatinate those actions with our jobs current actions.
+                actions.InsertRange(0, match.Value);
+        }
+
         // Stop the performance timer.
         stopwatch.Stop();
 

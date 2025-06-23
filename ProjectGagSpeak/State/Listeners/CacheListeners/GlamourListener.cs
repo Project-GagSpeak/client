@@ -102,7 +102,7 @@ public class GlamourListener : IDisposable
         // we can always remove this if it ends up becoming an issue, and isntead making the conditional of storing the cache based if the ipc blockers == 0
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
-            _logger.LogError($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
             return;
         }
 

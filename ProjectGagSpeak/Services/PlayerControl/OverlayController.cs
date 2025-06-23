@@ -23,6 +23,7 @@ public sealed class OverlayController : IDisposable
     private readonly HypnoService _hypnoService;
 
     // Might need for mare fuckery.
+    private CameraControlMode _forcedPerspective = CameraControlMode.Unknown;
     private bool _initialRedrawMade = false;
 
     public OverlayController(ILogger<OverlayController> logger, OverlayCache cache,
@@ -36,7 +37,7 @@ public sealed class OverlayController : IDisposable
         Svc.PluginInterface.UiBuilder.Draw += DrawOverlays;
     }
 
-    public CameraControlMode ForcedPerspective => GetExpectedPerspective();
+    public bool ShouldControlCamera => _cache.ShouldBeFirstPerson;
     public bool HasValidBlindfold => _bfService.HasValidBlindfold;
     public bool HasValidHypnoEffect => _hypnoService.HasValidEffect;
 
@@ -63,40 +64,61 @@ public sealed class OverlayController : IDisposable
     private void ForceCameraPerspective()
     {
         // If the forced perspective is not set, we can skip this.
-        if (ForcedPerspective is CameraControlMode.Unknown)
+        if (_forcedPerspective is CameraControlMode.Unknown)
             return;
 
         // Set the mode if it is not equal to the perspective we need to have.
-        if (AddonCameraManager.IsActiveCameraValid && AddonCameraManager.ActiveMode != ForcedPerspective)
-            AddonCameraManager.SetMode(ForcedPerspective);
+        if (AddonCameraManager.IsActiveCameraValid && AddonCameraManager.ActiveMode != _forcedPerspective)
+            AddonCameraManager.SetMode(_forcedPerspective);
     }
 
     public async Task ApplyBlindfold(BlindfoldOverlay overlay, string enactor)
-        => await _bfService.SwapBlindfold(overlay, enactor);
+    {
+        // update the expected perspective.
+        if (overlay.ForceFirstPerson)
+            _forcedPerspective = CameraControlMode.FirstPerson;
+        // Swap them and stuff.
+        await _bfService.SwapBlindfold(overlay, enactor);
+    }
 
     public async Task RemoveBlindfold()
-        => await _bfService.RemoveBlindfold();
+    {
+        // reset the forced perspective.
+        if (_forcedPerspective is CameraControlMode.FirstPerson)
+        {
+            _forcedPerspective = CameraControlMode.Unknown;
+            SetCameraPerspective(CameraControlMode.ThirdPerson);
+        }
+        // Remove the blindfold.
+        await _bfService.RemoveBlindfold();
+    }
 
     public async Task ApplyHypnoEffect(HypnoticOverlay overlay, string enactor)
-        => await _hypnoService.SwapHypnoEffect(overlay, enactor);
+    {
+        // update the expected perspective.
+        if (overlay.ForceFirstPerson)
+            _forcedPerspective = CameraControlMode.FirstPerson;
+        // Swap the hypno effect.
+        await _hypnoService.SwapHypnoEffect(overlay, enactor);
+    }
 
     public async Task RemoveHypnoEffect()
-        => await _hypnoService.RemoveHypnoEffect();
-
-    public CameraControlMode GetExpectedPerspective()
     {
-        if (!Svc.ClientState.IsLoggedIn)
-            return CameraControlMode.Unknown;
-
-        // If we have a forced perspective, return it.
-        return _cache.ShouldBeFirstPerson ? CameraControlMode.FirstPerson : CameraControlMode.ThirdPerson;
+        // reset the forced perspective.
+        if (_forcedPerspective is CameraControlMode.FirstPerson)
+        {
+            _forcedPerspective = CameraControlMode.Unknown;
+            SetCameraPerspective(CameraControlMode.ThirdPerson);
+        }
+        // Remove the hypno effect.
+        await _hypnoService.RemoveHypnoEffect();
     }
 
     /// <summary>
     ///     A generic helper method to set the camera to 
     /// </summary>
     /// <param name="mode"></param>
-    public void SetCameraPerspective(CameraControlMode mode)
+    private void SetCameraPerspective(CameraControlMode mode)
     {
         if (AddonCameraManager.IsActiveCameraValid)
             AddonCameraManager.SetMode(mode);

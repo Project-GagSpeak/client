@@ -50,7 +50,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         _gagItemCombo = new RestrictionGagCombo(logger, favorites, () => [
             ..gags.Storage.Values.OrderByDescending(p => favorites._favoriteGags.Contains(p.GagType)).ThenBy(p => p.GagType)
             ]);
-        _restrictionItemCombo = new RestrictionCombo(logger, favorites, () => [
+        _restrictionItemCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
     }

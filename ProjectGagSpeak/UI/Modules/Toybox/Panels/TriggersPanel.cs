@@ -23,12 +23,8 @@ public partial class TriggersPanel
     private readonly TriggerManager _manager;
     private readonly TutorialService _guides;
 
-    public TriggersPanel(
-        ILogger<TriggersPanel> logger,
-        TriggerFileSelector selector,
-        TriggerDrawer drawer,
-        TriggerManager manager,
-        TutorialService guides)
+    public TriggersPanel(ILogger<TriggersPanel> logger, TriggerFileSelector selector,
+        TriggerDrawer drawer, TriggerManager manager, TutorialService guides)
     {
         _logger = logger;
         _selector = selector;

@@ -69,13 +69,16 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
 
                 CreateDuplicateLeaf(parent, restriction.Label, restriction);
                 return;
+
             case StorageChangeType.Deleted:
                 if (FindLeaf(restriction, out var leaf1))
                     Delete(leaf1);
                 return;
+
             case StorageChangeType.Modified:
                 Reload();
                 return;
+
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(restriction, out var leaf2))
                     return;

@@ -6,11 +6,13 @@ using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
+using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.CkCommons.Gui.Toybox;
 
@@ -23,13 +25,9 @@ public partial class AlarmsPanel
     private readonly TutorialService _guides;
 
     private PatternCombo _patternCombo;
-    public AlarmsPanel(
-        ILogger<AlarmsPanel> logger,
-        AlarmFileSelector selector,
-        PatternManager patterns,
-        AlarmManager manager,
-        FavoritesManager favorites,
-        TutorialService guides)
+    public AlarmsPanel(ILogger<AlarmsPanel> logger, GagspeakMediator mediator,
+        AlarmFileSelector selector, PatternManager patterns, AlarmManager manager,
+        FavoritesManager favorites, TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
@@ -37,7 +35,7 @@ public partial class AlarmsPanel
         _manager = manager;
         _guides = guides;
 
-        _patternCombo = new PatternCombo(logger, favorites, () => [
+        _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
@@ -86,13 +84,16 @@ public partial class AlarmsPanel
 
     private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
     {
-        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
-        var tooltip = $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm. "
-            + "--SEP-- Right Click to cancel and exit Editor.";
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
 
-        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, LabelDraw, ImGui.GetFrameHeight(), OnLeftClick, 
-            OnRightClick, tooltip, ImDrawFlags.RoundCornersRight))
+        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
+        var disabled = _selector.Selected is null || _manager.ActiveAlarms.Any(a => a.Identifier == _selector.Selected.Identifier);
+        var tooltip = disabled 
+            ? "Cannot edit an Active Alarm!" 
+            : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm. "
+            + "--SEP-- Right Click to cancel and exit Editor.";
+
+        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, dFlag: DFlags.RoundCornersRight))
         {
             using (ImRaii.Child("Alarm_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
                 DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
@@ -107,20 +108,15 @@ public partial class AlarmsPanel
             CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
         }
 
-        void OnLeftClick()
+        void BeginEdits(ImGuiMouseButton b)
         {
-            if (IsEditorItem)
-                _manager.SaveChangesAndStopEditing();
-            else
-                _manager.StartEditing(_selector.Selected!);
-        }
+            if (b is not ImGuiMouseButton.Left || disabled)
+                return;
 
-        void OnRightClick()
-        {
-            if (IsEditorItem)
-                _manager.StopEditing();
-            else
-                _logger.LogWarning("Right Click on a Alarm that is not in the editor.");
+            if (IsEditorItem) 
+                _manager.SaveChangesAndStopEditing();
+            else 
+                _manager.StartEditing(_selector.Selected!);
         }
     }
 

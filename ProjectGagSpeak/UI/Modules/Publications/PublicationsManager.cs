@@ -19,19 +19,21 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.State.Caches;
+using OtterGui.Text.Widget.Editors;
+using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.CkCommons.Gui.Publications;
 public class PublicationsManager
 {
     private readonly MoodleIcons _icons;
     private readonly ShareHubService _shareHub;
-    public PublicationsManager(ILogger<PublicationsManager> logger, MoodleIcons icons,
-        FavoritesManager favorites, PatternManager patterns, TextureService textures, ShareHubService shareHub)
+    public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
+        MoodleIcons icons, FavoritesManager favorites, PatternManager patterns, ShareHubService shareHub)
     {
         _icons = icons;
         _shareHub = shareHub;
 
-        _patternCombo = new PatternCombo(logger, favorites, () => [
+        _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
