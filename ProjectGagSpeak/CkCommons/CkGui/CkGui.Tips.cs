@@ -1,13 +1,20 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using OtterGui.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
 public static partial class CkGui
 {
+    public const string TipSep = "--SEP--";
+    public const string TipNL = "--NL--";
+    public const string TipCol = "--COL--";
+    private static readonly Regex TooltipTokenRegex = new($"({TipSep}|{TipNL}|{TipCol})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     /// <summary> A helper function to attach a tooltip to a section in the UI currently hovered. </summary>
     /// <remarks> If the string is null, empty, or whitespace, will do early return at no performance impact. </remarks>
     public static void AttachToolTip(string? text, float borderSize = 1f, Vector4? color = null)
@@ -34,56 +41,63 @@ public static partial class CkGui
 
     private static void ToolTipInternal(string text, float borderSize = 1f, Vector4? color = null)
     {
-        using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-        using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, borderSize);
-        using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        // begin the tooltip interface
-        ImGui.BeginTooltip();
-        // push the text wrap position to the font size times 35
-        ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-        // we will then check to see if the text contains a tooltip
-        if (text.Contains(TooltipSeparator, StringComparison.Ordinal) || text.Contains(ColorToggleSeparator, StringComparison.Ordinal))
-        {
-            // if it does, we will split the text by the tooltip
-            var splitText = text.Split(TooltipSeparator, StringSplitOptions.None);
-            // for each of the split text, we will display the text unformatted
-            for (var i = 0; i < splitText.Length; i++)
-            {
-                if (splitText[i].Contains(ColorToggleSeparator, StringComparison.Ordinal) && color.HasValue)
-                {
-                    var colorSplitText = splitText[i].Split(ColorToggleSeparator, StringSplitOptions.None);
-                    var useColor = false;
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+            .Push(ImGuiStyleVar.WindowRounding, 4f)
+            .Push(ImGuiStyleVar.PopupBorderSize, borderSize);
+        using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
-                    for (var j = 0; j < colorSplitText.Length; j++)
-                    {
-                        if (useColor)
-                        {
-                            ImGui.SameLine(0, 0); // Prevent new line
-                            ImGui.TextColored(color.Value, colorSplitText[j]);
-                        }
-                        else
-                        {
-                            if (j > 0) ImGui.SameLine(0, 0); // Prevent new line
-                            ImGui.TextUnformatted(colorSplitText[j]);
-                        }
-                        // Toggle the color for the next segment
-                        useColor = !useColor;
-                    }
-                }
-                else
-                {
-                    ImGui.TextUnformatted(splitText[i]);
-                }
-                if (i != splitText.Length - 1) ImGui.Separator();
-            }
-        }
-        // otherwise, if it contains no tooltip, then we will display the text unformatted
-        else
+        ImGui.BeginTooltip();
+        ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
+
+        // Split the text by regex.
+        var tokens = TooltipTokenRegex.Split(text);
+
+        // if there were no tokens, just print the text unformatted
+        if (tokens.Length <= 1)
         {
             ImGui.TextUnformatted(text);
+            ImGui.PopTextWrapPos();
+            ImGui.EndTooltip();
+            return;
         }
-        // finally, pop the text wrap position and end the tooltip
+
+        // Otherwise, parse it!
+        var useColor = false;
+        bool firstLineSegment = true;
+
+        foreach (var token in tokens)
+        {
+            switch(token)
+            {
+                case TipSep:
+                    ImGui.Separator();
+                    break;
+
+                case TipNL:
+                    ImGui.NewLine();
+                    break;
+
+                case TipCol:
+                    useColor = !useColor;
+                    break;
+
+                default:
+                    if (string.IsNullOrEmpty(token))
+                        continue; // Skip empty tokens
+
+                    if (!firstLineSegment)
+                        ImGui.SameLine(0, 0);
+
+                    if (useColor && color.HasValue)
+                        ColorText(token, color.Value);
+                    else
+                        ImGui.TextUnformatted(token);
+
+                    firstLineSegment = false;
+                    break;
+            }
+        }
+
         ImGui.PopTextWrapPos();
         ImGui.EndTooltip();
     }
@@ -98,5 +112,29 @@ public static partial class CkGui
         var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
         FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : offColor ?? ImGui.GetColorU32(ImGuiCol.TextDisabled));
         AttachToolTip(helpText);
+    }
+
+    public static void HelpText(string helpText, Vector4 tooltipCol, bool inner = false, uint? offColor = null)
+    {
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
+        var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
+        FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : offColor ?? ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        AttachToolTip(helpText, color: tooltipCol);
+    }
+
+    public static void HelpText(string helpText, uint tooltipCol, bool inner = false, uint? offColor = null)
+    {
+        if (inner)
+            ImUtf8.SameLineInner();
+        else
+            ImGui.SameLine();
+
+        var hovering = ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
+        FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : offColor ?? ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        AttachToolTip(helpText, color: ColorHelpers.RgbaUintToVector4(tooltipCol));
     }
 }

@@ -19,9 +19,6 @@ public static partial class CkGui
 {
     public static readonly ImGuiWindowFlags PopupWindowFlags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoScrollWithMouse;
 
-    public const string TooltipSeparator = "--SEP--";
-    public const string ColorToggleSeparator = "--COL--";
-
     /// <summary> A helper function for centering the next displayed window. </summary>
     /// <param name="width"> The width of the window. </param>
     /// <param name="height"> The height of the window. </param>

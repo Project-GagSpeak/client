@@ -94,10 +94,10 @@ public class OverlayHandler
     private async Task UpdateHypnoEffectInternal()
     {
         // Update the final cache. If the hypno effect has changed, we need to perform a swap operation on them.
-        if (_cache.UpdateFinalHypnoEffectCache())
+        if (_cache.UpdateFinalHypnoEffectCache(out var enactorOfRemoved))
         {
             _logger.LogDebug($"Final HypnoEffect Cache updated with a change, reapplying cache!", LoggerType.VisualCache);
-            await ApplyHypnoEffectCache();
+            await ApplyHypnoEffectCache(enactorOfRemoved);
         }
         else
             _logger.LogTrace("No change in Final HypnoEffect Cache.", LoggerType.VisualCache);
@@ -125,14 +125,14 @@ public class OverlayHandler
     }
 
     // Do not await these or you will be delaying your cache optimization by like 3000ms lol.
-    public Task ApplyHypnoEffectCache()
+    public Task ApplyHypnoEffectCache(string prevEnactor)
     {
         var hasActiveEffect = _cache.ActiveEffect is not null;
         // If we have an active item, but there is no more items to apply, remove it.
         if (!hasActiveEffect && _controller.HasValidHypnoEffect)
         {
             _logger.LogDebug("No active Effect found in cache, removing current effect.");
-            _controller.RemoveHypnoEffect().ConfigureAwait(false);
+            _controller.RemoveHypnoEffect(prevEnactor).ConfigureAwait(false);
             return Task.CompletedTask;
         }
         // Otherwise, swap / apply it.

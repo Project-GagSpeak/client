@@ -5,9 +5,8 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using ImGuiNET;
-using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace GagSpeak.Services.Controller;
@@ -17,123 +16,127 @@ namespace GagSpeak.Services.Controller;
 /// </summary>
 public class HypnoService
 {
-    private const int ANIMATION_DURATION_MS =  1500;
-    private const float SPEED_DAMPENER = 0.003f;
+    // Constants.
+    public const int ANIMATION_DURATION_MS = 1500;
+    public const float SPIN_SPEED_MIN = 0.1f;
+    public const float SPIN_SPEED_MAX = 5f;
+    public const float ZOOM_MIN = 0.25f;
+    public const float ZOOM_MAX = 3.50f; // Account for people with higher resolution monitors.
+    public const int DISPLAY_TIME_MIN = 250;
+    public const int DISPLAY_TIME_MAX = 10000;
+    public const int FONTSIZE_MIN = 150; // px
+    public const int FONTSIZE_MAX = 500; // px
+    public const int SPEED_BETWEEN_MIN = 20; // ms
+    public const int SPEED_BETWEEN_MAX = 500; // ms
+    public const int STROKE_THICKNESS_MIN = 0; // px
+    public const int STROKE_THICKNESS_MAX = 16; // px
 
-    private readonly ILogger<HypnoService> _logger;
-    private readonly MainConfig _config;
-    private readonly CosmeticService _disp;
+    // Constants that cant be constant because struct stuff.
+    public static readonly Vector2[] UVCorners = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
+
+    // Local variables for the active display.
+    private HypnosisState   _activeState = new();
+
+    // Active Display Item.
+    private HypnoticEffect? _activeEffect = null;          
+    private string          _applierUid   = string.Empty;
+    private string          _overlayPath  = string.Empty; // For Effects with local FilePaths.
+    private byte[]          _imageBytes   = Array.Empty<byte>(); // For items sent with image data. (look into KinkPlates for more info)
 
     // Animation Control
-    private SemaphoreSlim _animationSlim = new(1, 1);
-    private CancellationTokenSource _opacityAnimCTS = new();
-    private float _currentOpacity = 0.0f;
+    private SemaphoreSlim            _animationSlim = new(1, 1);
+    private CancellationTokenSource  _opacityCTS = new();
+    private CancellationTokenSource  _tasksCTS = new();
+    private Task?                    _colorTask;
+    private Task?                    _textTask;
+    private Timer                    _expireTime;
 
-    // Internally stored Item for display.
-    // Not synced with cache intentionally to allow for animations.
-    private HypnoticOverlay? _appliedItem = null;
-    private string _applierUid = string.Empty;
-
-    // Overlay control.
-    private readonly Timer _textDisplayTimer;
-    private string _currentText = string.Empty;
-    private float _currentRotation;
-    private float _spiralScale = 1f;
-    private int _lastTextIdx;
-
-    // Self Expiration Timeouts.
-    private readonly Timer _expireTimer;
-
-    // Display Corners.
-    private readonly Vector2[] _hypnoUV = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
-
+    private readonly ILogger<HypnoService> _logger;
+    private readonly MainConfig            _config;
+    private readonly CosmeticService       _disp;
     public HypnoService(ILogger<HypnoService> logger, MainConfig config, CosmeticService render)
     {
         _logger = logger;
         _config = config;
         _disp = render;
 
-        // Initialize the timer for the Hypnotic animation
-        _textDisplayTimer = new Timer(int.MaxValue) { AutoReset = true };
-        _textDisplayTimer.Elapsed += ToNextPhrase;
+        // Setup the timer's interval elapsed to remove the item automatically (Handle how we do this later)
+        _expireTime = new(int.MaxValue) { AutoReset = true };
+        _expireTime.Elapsed += (_,_) => RemoveActiveItem();
     }
 
-    public bool HasValidEffect => _appliedItem is not null;
-    public bool CanRemoveEffect => string.Equals(_applierUid, MainHub.UID);
+    public bool HasValidEffect => _activeEffect is not null;
 
-    /// <summary> Swaps between two Hypnotic Effect by removing one, then applying another. </summary
-    public async Task SwapHypnoEffect(HypnoticOverlay overlay, string enactor)
+    private void RemoveActiveItem()
+        => _logger.LogInformation("Our Timer Expired!");
+
+    public bool CanRemove(string requesterUID) 
+        => string.Equals(_applierUid, requesterUID);
+
+    /// <summary> Swaps between two Hypnotic Effect by removing one, then applying another. </summary>
+    public async Task SwapEffect(HypnoticOverlay overlay, string enactor)
     {
+        if (HasValidEffect && !CanRemove(enactor))
+        {
+            _logger.LogWarning($"Cannot Switch! Current is Applied by [{_applierUid}]. Swapper [{enactor}] does not match!");
+            return;
+        }
+
         _logger.LogDebug($"Swapping Hypnotic Effect to: ({overlay.OverlayPath}) by [{enactor}]");
         await ExecuteWithSemaphore(async () =>
         {
-            // If we have an applied item, remove it first.
-            if (_appliedItem is not null)
+            if (HasValidEffect)
                 await RemoveAnimationInternal();
 
-            // Now apply the new Hypnotic Effect.
             await EquipAnimationInternal(overlay, enactor);
         });
     }
 
-    /// <summary> Performs the equip animation then clears the stored data. Will inturrupt removal-animation. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task EquipHypnoEffect(HypnoticOverlay overlay, string enactor)
+    /// <summary> Safely, manually remove a Hypno Effect. (Must match assigner) </summary>
+    public async Task RemoveEffect(string enactor)
     {
-        // reset the token thingy.
-        _opacityAnimCTS?.CancelDispose();
-        _opacityAnimCTS = new CancellationTokenSource();
-        await ExecuteWithSemaphore(() => EquipAnimationInternal(overlay, enactor));
-    }
-
-    /// <summary> Performs the remove animation then clears the stored data. Will inturrupt equip-animation. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task RemoveHypnoEffect()
-    {
-        if (_appliedItem is null)
+        if (!HasValidEffect || !CanRemove(enactor))
             return;
-        // reset the token thingy.
-        _opacityAnimCTS?.CancelDispose();
-        _opacityAnimCTS = new CancellationTokenSource();
+        // Cancel, Dispose, Recreate all active tasks.
+        // (This halts any progress on previous animation not yet finished.)
+        _tasksCTS?.CancelDispose();
+        _opacityCTS?.CancelDispose();
+        _tasksCTS = new CancellationTokenSource();
+        _opacityCTS = new CancellationTokenSource();
+        // Run the Removeal Internal 
         await ExecuteWithSemaphore(RemoveAnimationInternal);
     }
 
-
+    // Assumes the tasks have already been canceled and recreated.
     private async Task EquipAnimationInternal(HypnoticOverlay item, string enactor)
     {
         _logger.LogDebug($"{enactor} applied a hypnotic effect: ({item.OverlayPath})");
-        _appliedItem = item;
+        // set the effect, image path, and applier 
+        _activeEffect = item.Effect;
+        _overlayPath = item.OverlayPath;
         _applierUid = enactor;
-        _textDisplayTimer.Interval = 1000;
-        _textDisplayTimer.Start();
-        _currentOpacity = 0.0f;
-        // Perform the equip animation!
-        await AnimateOpacityTransition(_currentOpacity, _config.Current.OverlayMaxOpacity, _opacityAnimCTS.Token);
+        _activeState = new HypnosisState { ImageColor = _activeEffect.ImageColor };
 
-        // handle expiration.
+        // Assign the new Tasks.
+        _colorTask = ColorTransposeTask(_activeEffect, _activeState, _tasksCTS.Token);
+        _textTask = TextDisplayTask(_activeEffect, _activeState, _tasksCTS.Token);
+        // Begin animation
+        _activeState.ImageOpacity = 0;
+        await AnimateOpacityInternal(_activeState.ImageOpacity, CkGui.GetAlpha(_activeEffect.ImageColor), _opacityCTS.Token);
     }
 
     private async Task RemoveAnimationInternal()
     {
-        _logger.LogDebug($"Removing HypnoEffect: ({_appliedItem?.OverlayPath}) applied by [{_applierUid}]");
+        _logger.LogDebug($"Removing HypnoEffect applied by [{_applierUid}]");
         // Perform the removal animation!
-        await AnimateOpacityTransition(_currentOpacity, 0.0f, _opacityAnimCTS.Token);
-        // Then null the items and complete.
-        _appliedItem = null;
+        await AnimateOpacityInternal(_activeState.ImageOpacity, 0.0f, _opacityCTS.Token);
+        // Upon completion, cancel the other tasks.
+        _tasksCTS?.Cancel();
+        _activeEffect = null;
+        _overlayPath = string.Empty;
+        _imageBytes = Array.Empty<byte>();
+        _activeState = new HypnosisState();
         _applierUid = string.Empty;
-    }
-
-    private async Task AnimateOpacityTransition(float startOpacity, float endOpacity, CancellationToken token)
-    {
-        try
-        {
-            await AnimateOpacityInternal(startOpacity, endOpacity, token);
-        }
-        catch (OperationCanceledException) { /* Consume */ }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error during opacity animation: {ex}");
-        }
     }
 
     private async Task AnimateOpacityInternal(float startOpacity, float endOpacity, CancellationToken token)
@@ -144,7 +147,7 @@ public class HypnoService
             var opacityDelta = Math.Abs(endOpacity - startOpacity);
             if (opacityDelta < 0.01f)
             {
-                _currentOpacity = endOpacity;
+                _activeState.ImageOpacity = endOpacity;
                 return;
             }
 
@@ -158,56 +161,52 @@ public class HypnoService
             {
                 var elapsed = (float)(DateTime.UtcNow - start).TotalMilliseconds;
                 progress = Math.Clamp(elapsed / adjustedDuration, 0.0f, 1.0f);
-
                 // Perform SmoothStep easing for interpolation.
-                _currentOpacity = GsExtensions.Lerp(startOpacity, endOpacity, progress);
-
-                // Perform a small delay before processing the next progress point in opacity transition.
-                await Task.Delay(20, token);
+                _activeState.ImageOpacity = GsExtensions.Lerp(startOpacity, endOpacity, progress);
+                
+                await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds, token);
             }
-
-            // Ensure we set the final opacity to the end value.
-            _currentOpacity = endOpacity;
+            // Set final Opacity
+            _activeState.ImageOpacity = endOpacity;
         }
         catch (OperationCanceledException) { /* Consume */ }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error during opacity animation: {ex}");
-        }
+        catch (Exception ex) { _logger.LogError($"Error during opacity animation: {ex}"); }
 
-        _logger.LogDebug($"HypnoEffect opacity transition completed: {startOpacity:F2} -> {_currentOpacity:F2}");
+        _logger.LogDebug($"HypnoEffect opacity transition completed: {startOpacity:F2} -> {_activeState.ImageOpacity:F2}");
     }
 
     public void DrawHypnoEffect()
     {
-        if (_appliedItem is null || _appliedItem?.Effect is not { } effect)
+        if (_activeEffect is not { } effect)
             return;
 
-        if (_disp.GetImageMetadataPath(ImageDataType.Hypnosis, _appliedItem.OverlayPath) is not { } hypnoImage)
+        if (_disp.GetImageMetadataPath(ImageDataType.Hypnosis, _overlayPath) is not { } hypnoImage)
             return;
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)
-        var speed = SPEED_DAMPENER * (effect.SpinSpeed * 0.01f);
-        _currentRotation += Svc.Framework.UpdateDelta.Milliseconds * speed;
-        _currentRotation %= MathF.PI * 2f;
+        var speed = _activeState.SpinSpeed * 0.001f;
+        var direction = _activeEffect.Attributes.HasFlag(HypnoAttributes.InvertDirection) ? -1f : 1f;
+        _activeState.Rotation += direction * (Svc.Framework.UpdateDelta.Milliseconds * speed);
+        _activeState.Rotation %= MathF.PI * 2f;
 
         // Fetch the windows foreground drawlist to avoid conflict with other UI's & be layered ontop.
-        var foregroundList = ImGui.GetForegroundDrawList();
+        var drawList = ImGui.GetForegroundDrawList();
 
         // Screen positions
         var screenSize = ImGui.GetIO().DisplaySize;
-        var screenCenter = screenSize * 0.5f;
+        var center = screenSize * 0.5f;
 
         // time for rotation maths
-        var cos = MathF.Cos(_currentRotation);
-        var sin = MathF.Sin(_currentRotation);
+        var cos = MathF.Cos(_activeState.Rotation);
+        var sin = MathF.Sin(_activeState.Rotation);
 
+        // Impacted by zoom factor. (Nessisary for Pulsating)
         var corners = new[]
         {
-            new Vector2(-hypnoImage.Width, -hypnoImage.Height),
-            new Vector2(hypnoImage.Width, -hypnoImage.Height),
-            new Vector2(hypnoImage.Width, hypnoImage.Height),
-            new Vector2(-hypnoImage.Width, hypnoImage.Height)
+            new Vector2(-hypnoImage.Width, -hypnoImage.Height) * _activeEffect.ZoomDepth,
+            new Vector2(hypnoImage.Width, -hypnoImage.Height) * _activeEffect.ZoomDepth,
+            new Vector2(hypnoImage.Width, hypnoImage.Height) * _activeEffect.ZoomDepth,
+            new Vector2(-hypnoImage.Width, hypnoImage.Height) * _activeEffect.ZoomDepth
         };
 
         var rotatedBounds = new Vector2[4];
@@ -217,74 +216,219 @@ public class HypnoService
             var y = corners[i].Y;
 
             rotatedBounds[i] = new Vector2(
-                screenCenter.X + (x * cos - y * sin) * _spiralScale,
-                screenCenter.Y + (x * sin + y * cos) * _spiralScale
+                center.X + (x * cos - y * sin) * _activeEffect.ZoomDepth,
+                center.Y + (x * sin + y * cos) * _activeEffect.ZoomDepth
             );
         }
 
-        var imgTint = effect.TintColor;
+        // So we can account for transposing colors.
+        var imgTint = _activeState.ImageColor;
 
-        // Display the image stretched to the bounds of the screen and stuff.
-        foregroundList.AddImageQuad(
+        // Workaround the popup / windows cliprect and draw it at the correct dimentions.
+        drawList.AddImageQuad(
             hypnoImage.ImGuiHandle,
             rotatedBounds[0],
             rotatedBounds[1],
             rotatedBounds[2],
             rotatedBounds[3],
-            _hypnoUV[0],
-            _hypnoUV[1],
-            _hypnoUV[2],
-            _hypnoUV[3],
-            ColorHelpers.ApplyOpacity(imgTint, _config.Current.OverlayMaxOpacity));
+            UVCorners[0],
+            UVCorners[1],
+            UVCorners[2],
+            UVCorners[3],
+            imgTint);
 
-        // Can set the windows font scale here if we want for the attributes.
+        if (string.IsNullOrEmpty(_activeState.CurrentText))
+            return;
 
+        // determine the font scalar.
+        var fontScaler = UiFontService.FullScreenFont.Available
+            ? (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale
+            : _activeState.TextScale;
 
-        // Display the text in the center of the spiral.
-        var size = CkGui.CalcFontTextSize(_currentText, UiFontService.FullScreenFont);
-        foregroundList.OutlinedFontScaled(UiFontService.FullScreenFontPtr, 175, screenCenter - size * 0.5f,
-            _currentText, effect.TextColor, 0xFF000000, 3);
+        // determine the new target position.
+        var targetPos = _activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale)
+            ? center - Vector2.Lerp(_activeState.TextOffsetStart, _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
+            : center - (CkGui.CalcFontTextSize(_activeState.CurrentText, UiFontService.FullScreenFont) * fontScaler) * 0.5f;
 
-        // Then can pop the font scale here.
+        Svc.Logger.Debug($"Drawing Hypno Text: '{_activeState.CurrentText}' at {targetPos} with scale {fontScaler:F2}");
+
+        drawList.OutlinedFontScaled(
+            UiFontService.FullScreenFontPtr,
+            UiFontService.FullScreenFontPtr.FontSize * fontScaler,
+            targetPos,
+            _activeState.CurrentText,
+            ColorHelpers.ApplyOpacity(_activeEffect.TextColor, _activeState.TextOpacity),
+            ColorHelpers.ApplyOpacity(_activeEffect.StrokeColor, _activeState.TextOpacity),
+            _activeEffect.StrokeThickness);
     }
 
-    private void ToNextPhrase(object? sender, ElapsedEventArgs e)
+    /// <summary> Assignable Task that processes the color transpose effect. </summary>
+    /// <remarks> Assumes you have already performed a cancelRecreate on the passed in token before calling. </remarks>
+    public static async Task ColorTransposeTask(HypnoticEffect effect, HypnosisState state, CancellationToken token)
     {
-        // abort if there is no effect active.
-        if (_appliedItem is null || _appliedItem?.Effect is not { } effect)
-            return;
-
-        // Set the current text to nothing and return if no text was assigned.
-        if (effect.DisplayWords.Length <= 0)
+        try
         {
-            _currentText = string.Empty;
-            return;
+            while (!token.IsCancellationRequested)
+            {
+                if (effect.Attributes.HasAny(HypnoAttributes.TransposeColors))
+                {
+                    var start = ColorHelpers.RgbaUintToVector4(state.ImageColor);
+                    var target = CkGui.InvertColor(start); // Keep Alpha.
+                    await TransposeColor(state, effect.TransposeTime, start, target, token);
+                    await TransposeColor(state, effect.TransposeTime, target, start, token);
+                }
+                else
+                {
+                    // Just chill out for like a second or 2 doing nothing.
+                    await Task.Delay(500, token);
+                }
+            }
         }
-        // if only one was assigned, just set it to that.
-        else if (effect.DisplayWords.Length == 1)
+        catch (TaskCanceledException) { /* Consume */ }
+        catch (Exception ex) { Svc.Logger.Error($"Error in ColorTransposeTask: {ex}"); }
+    }
+
+    /// <summary> Assignable Task that processes the displayText cycling. </summary>
+    /// <remarks> Assumes you have already performed a cancelRecreate on the passed in token before calling. </remarks>
+    public static async Task TextDisplayTask(HypnoticEffect effect, HypnosisState state, CancellationToken token)
+    {
+        try
         {
-            _currentText = effect.DisplayWords[0];
-            return;
+            while (!token.IsCancellationRequested)
+                await HandleTextDisplay(effect, state, token);
         }
+        catch (TaskCanceledException) { /* Consume */ }
+        catch (Exception ex) { Svc.Logger.Error($"Error in TextDisplayTask: {ex}"); }
+    }
 
 
-        if (effect.Attributes.HasAny(HypnoAttributes.TextDisplayRandom))
+    /// <summary> Internal helper task for the ColorTranspose loop. Can be canceled. </summary>
+    private static async Task TransposeColor(HypnosisState state, int duration, Vector4 sCol, Vector4 tCol, CancellationToken token)
+    {
+        var startTime = DateTime.UtcNow;
+        while (!token.IsCancellationRequested)
         {
-            var randomIndex = Random.Shared.Next(0, effect.DisplayWords.Length);
-            // If the random INDEX (not text) is the same as the current text, pick again.
-            // This should only ever occur with more than one index, so it should be fine.
-            while (_lastTextIdx == randomIndex)
-                randomIndex = Random.Shared.Next(0, effect.DisplayWords.Length);
+            var elapsed = (float)(DateTime.UtcNow - startTime).TotalMilliseconds;
+            var t = Math.Clamp(elapsed / duration, 0f, 1f);
+            // Attempt Smoothstep Easing
+            t = t * t * (3f - 2f * t);
+            Vector4 lerped = new(
+                GsExtensions.Lerp(sCol.X, tCol.X, t),
+                GsExtensions.Lerp(sCol.Y, tCol.Y, t),
+                GsExtensions.Lerp(sCol.Z, tCol.Z, t),
+                sCol.W // Keep Alpha
+            );
+            // Set the state color.
+            state.ImageColor = ColorHelpers.RgbaVector4ToUint(lerped);
+            // If the elapsed time exceeds the transpose lifetime, break out of the loop.
+            if (elapsed >= duration)
+                break;
 
-            _lastTextIdx = randomIndex;
-            _currentText = effect.DisplayWords[randomIndex];
-            return;
+            await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds, token);
+        }
+    }
+
+    private static async Task HandleTextDisplay(HypnoticEffect effect, HypnosisState state, CancellationToken token)
+    {
+        // No message
+        if (effect.DisplayMessages is not { Length: > 0 } words)
+            state.CurrentText = string.Empty;
+        // Only Message
+        else if (words.Length == 1)
+        {
+            state.CurrentText = words[0];
+            state.LastTextIndex = 0;
+        }
+        // Random Message
+        else if (effect.Attributes.HasAny(HypnoAttributes.TextDisplayRandom))
+        {
+            int randomIdx;
+            do { randomIdx = Random.Shared.Next(0, effect.DisplayMessages.Length); } while (randomIdx == state.LastTextIndex);
+
+            state.LastTextIndex = randomIdx;
+            state.CurrentText = effect.DisplayMessages[state.LastTextIndex];
+        }
+        // Sequential Message
+        else
+        {
+            state.LastTextIndex = (state.LastTextIndex + 1) % effect.DisplayMessages.Length;
+            state.CurrentText = effect.DisplayMessages[state.LastTextIndex];
         }
 
-        // We should do it sequentially if we are not random.
-        _lastTextIdx++;
-        _lastTextIdx %= effect.DisplayWords.Length;
-        _currentText = effect.DisplayWords[_lastTextIdx];
+        // Start the DisplayText process with the visual appearance reflecting our set attributes.
+        var doTextFade = effect.Attributes.HasAny(HypnoAttributes.TextFade);
+        var linearScale = effect.Attributes.HasAny(HypnoAttributes.LinearTextScale);
+        var randomScale = effect.Attributes.HasAny(HypnoAttributes.RandomTextScale);
+
+        // Update the current opacity.
+        state.TextOpacity = doTextFade ? 0f : CkGui.GetAlpha(effect.TextColor);
+        state.TextScale = randomScale ? (0.75f + Random.Shared.NextSingle() * (1.35f - 0.75f)) : linearScale ? 0.8f : 1f;
+
+        // If Scaling linearily, store the start and end draw regions.
+        if (linearScale)
+        {
+            // Calculate it with the font pointer since we run this off the main thread.
+            var sizeBase = CkGui.CalcTextSizeFontPtr(UiFontService.FullScreenFontPtr, state.CurrentText);
+            var sizeScaled = sizeBase * (effect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize);
+            state.TextOffsetStart = (sizeScaled * 0.75f) * 0.5f; // offset from center
+            state.TextOffsetEnd = (sizeScaled * 1.35f) * 0.5f; // offset from center
+            state.TextScaleProgress = 0f; // Reset the progress for linear scaling.
+        }
+
+        var start = DateTime.UtcNow;
+        var duration = effect.TextDisplayTime;
+        var alpha = CkGui.GetAlpha(effect.TextColor);
+
+        while (!token.IsCancellationRequested)
+        {
+            var elapsed = (int)(DateTime.UtcNow - start).TotalMilliseconds;
+            if (elapsed >= duration)
+                break;
+
+            state.TextScaleProgress = elapsed / (float)duration;
+
+            if(doTextFade)
+            {
+                if (doTextFade && elapsed < effect.TextFadeInTime)
+                    state.TextOpacity = GsExtensions.EaseInExpo(elapsed / (float)effect.TextFadeInTime);
+                // Handle Opacity Fade Out.
+                else if (doTextFade && elapsed >= (duration - effect.TextFadeOutTime))
+                {
+                    var fadeOutStart = duration - effect.TextFadeOutTime;
+                    var value = (elapsed - fadeOutStart) / (float)effect.TextFadeOutTime;
+                    state.TextOpacity = CkGui.GetAlpha(effect.TextColor) * GsExtensions.EaseOutExpo(1f - value);
+                }
+                // Handle simply displaying the text.
+                else
+                {
+                    state.TextOpacity = CkGui.GetAlpha(effect.TextColor);
+                }
+            }
+
+            if (linearScale) // Linear Scaling
+                state.TextScale = GsExtensions.Lerp(0.75f, 1.35f, state.TextScaleProgress);
+
+            // Lighten Stress Load a little bit.
+            await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds);
+        }
+
+        if (effect.Attributes.HasAny(HypnoAttributes.SpeedUpOnCycle))
+            _ = AccelerateTemporarily(state, effect.SpeedupTime, duration, token);
+    }
+
+    // prevDuration is the latest time, and this time must be clamped.
+    // time is the speedup time, which will be divided into 3 for its ramps.
+    private static async Task AccelerateTemporarily(HypnosisState state, int speedupTime, int duration, CancellationToken token)
+    {
+        // No breaking the game plz.
+        if (speedupTime < SPEED_BETWEEN_MIN)
+            return;
+
+        var holdTime = Math.Clamp(speedupTime, SPEED_BETWEEN_MIN, duration / 2);
+        var original = state.SpinSpeed;
+        state.SpinSpeed *= 2.5f;
+        await Task.Delay(holdTime, token);
+        state.SpinSpeed = original; // reset back to the original speed.
     }
 
     // Performs animation operations sequentially one after the other.

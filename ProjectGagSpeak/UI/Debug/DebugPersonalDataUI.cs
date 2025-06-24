@@ -240,9 +240,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
         DrawPermissionRowBool("Allow Forced Emote", perms.AllowForcedEmote);
         DrawPermissionRowBool("Allow Forced To Stay", perms.AllowForcedStay);
+        DrawPermissionRowBool("Allow GarbleChannelEditing", perms.AllowGarbleChannelEditing);
         DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
         DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
+        DrawPermissionRowBool("Allow Hypnosis Effect Sending", perms.AllowHypnoEffectSending);
+        DrawPermissionRowBool("Allow Hypnosis Image Sending", perms.AllowHypnoImageSending);
         ImGui.TableNextRow();
         DrawPermissionRowString("Shock Collar Share Code", perms.PiShockShareCode);
         DrawPermissionRowBool("Allow Shocks", perms.AllowShocks);

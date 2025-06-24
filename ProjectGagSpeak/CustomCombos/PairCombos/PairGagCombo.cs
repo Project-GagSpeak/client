@@ -97,10 +97,10 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
             // push the text wrap position to the font size times 35
             ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
             // we will then check to see if the text contains a tooltip
-            if (headerText.Contains(CkGui.TooltipSeparator, StringComparison.Ordinal))
+            if (headerText.Contains(CkGui.TipSep, StringComparison.Ordinal))
             {
                 // if it does, we will split the text by the tooltip
-                var splitText = headerText.Split(CkGui.TooltipSeparator, StringSplitOptions.None);
+                var splitText = headerText.Split(CkGui.TipSep, StringSplitOptions.None);
                 // for each of the split text, we will display the text unformatted
                 for (var i = 0; i < splitText.Length; i++)
                 {

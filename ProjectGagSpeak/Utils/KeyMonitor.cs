@@ -25,6 +25,7 @@ public static class KeyMonitor
     public static bool CtrlPressed() => (IsKeyPressed(0xA2) || IsKeyPressed(0xA3));
     public static bool AltPressed() => (IsKeyPressed(0xA4) || IsKeyPressed(0xA5));
     public static bool BackPressed() => IsKeyPressed(0x08);
+    public static bool TabPressed() => IsKeyPressed(0x09);
     public static bool Numpad0Pressed() => IsKeyPressed(0x60);
 
     public static bool RightMouseButtonDown() => IsKeyPressed(0x02);

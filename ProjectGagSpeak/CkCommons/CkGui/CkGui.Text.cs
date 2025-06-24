@@ -251,6 +251,34 @@ public static partial class CkGui
             return ImGui.CalcTextSize(text);
     }
 
+    // Because ImGui.CalcTextSize is unreliable for larger font scales.
+    public static unsafe Vector2 CalcTextSizeFontPtr(ImFontPtr fontPtr, string text)
+    {
+        if (!fontPtr.IsLoaded() || string.IsNullOrEmpty(text))
+            return Vector2.Zero;
+
+        float width = 0;
+        float scale = fontPtr.Scale; // Important for ImGui fonts!
+        ushort? prevChar = null;
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            ushort current = text[i];
+
+            if (prevChar.HasValue)
+                width += fontPtr.GetDistanceAdjustmentForPair(prevChar.Value, current) * scale;
+
+            var glyph = fontPtr.FindGlyph(current);
+            if (glyph.NativePtr is null)
+                continue;
+
+            width += glyph.AdvanceX * scale;
+            prevChar = current;
+        }
+
+        return new Vector2(width, fontPtr.FontSize);
+    }
+
     public static void CopyableDisplayText(string text, string tooltip = "Click to copy")
     {
         // then when the item is clicked, copy it to clipboard so we can share with others

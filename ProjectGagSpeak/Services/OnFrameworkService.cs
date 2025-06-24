@@ -194,10 +194,27 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         return result;
     }
 
-    /// <summary> Run An action on the Framework Delayed by a set number of ticks. </summary>
+    /// <summary>
+    ///     Run An action on the Framework Delayed by a set number of ticks. <para />
+    ///     
+    ///     Because this is a delayed task, there is a change that after the time this is called,
+    ///     upon closing the game, the framework service has been unloaded. <para />
+    ///     
+    ///     This means that the tick we should execute our function may run it on an unloaded framework,
+    ///     throwing a task cancellation exception. So we must catch it.
+    /// </summary>
     public async Task RunOnFrameworkTickDelayed(Action act, int ticks)
     {
-        await Svc.Framework.RunOnTick(() => act(), delayTicks: ticks);
+        try
+        {
+            await Svc.Framework.RunOnTick(() => act(), delayTicks: ticks);
+        }
+        catch (TaskCanceledException) { /* CONSUME */ }
+        catch (Exception ex)
+        {
+            // Otherwise, log the exception.
+            Logger.LogError($"Safely caught an exception during the delayed framework call by {ticks} ticks: {ex}");
+        }
     }
 
     /// <summary> The method that is called when the framework updates </summary>

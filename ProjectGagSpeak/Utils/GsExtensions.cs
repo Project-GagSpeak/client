@@ -23,17 +23,18 @@ public static class GsExtensions
     /// <param name="b"> upper bound value </param>
     /// <param name="t"> should be in the range [a, b] </param>
     /// <returns> the interpolated value between a and b </returns>
-    public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+    public static float Lerp(float a, float b, float t) 
+        => a + (b - a) * t;
 
-    public static float EaseInExpo(float t)
-    {
-        return t <= 0f ? 0f : MathF.Pow(2f, 10f * (t - 1f));
-    }
+    public static float EaseInExpo(float t) 
+        => t <= 0f ? 0f : MathF.Pow(2f, 10f * (t - 1f));
 
     public static float EaseOutExpo(float t)
-    {
-        return t >= 1f ? 1f : 1f - MathF.Pow(2f, -10f * t);
-    }
+        => t >= 1f ? 1f : 1f - MathF.Pow(2f, -10f * t);
+
+    public static float EaseInOutSine(float t)
+        => (1f - MathF.Cos(t * MathF.PI)) * 0.5f;
+
 
 
     public static string ExtractText(this SeString seStr, bool onlyFirst = false)

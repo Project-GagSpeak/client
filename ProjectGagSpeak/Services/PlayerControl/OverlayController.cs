@@ -99,10 +99,10 @@ public sealed class OverlayController : IDisposable
         if (overlay.ForceFirstPerson)
             _forcedPerspective = CameraControlMode.FirstPerson;
         // Swap the hypno effect.
-        await _hypnoService.SwapHypnoEffect(overlay, enactor);
+        await _hypnoService.SwapEffect(overlay, enactor);
     }
 
-    public async Task RemoveHypnoEffect()
+    public async Task RemoveHypnoEffect(string enactor)
     {
         // reset the forced perspective.
         if (_forcedPerspective is CameraControlMode.FirstPerson)
@@ -111,7 +111,7 @@ public sealed class OverlayController : IDisposable
             SetCameraPerspective(CameraControlMode.ThirdPerson);
         }
         // Remove the hypno effect.
-        await _hypnoService.RemoveHypnoEffect();
+        await _hypnoService.RemoveEffect(enactor);
     }
 
     /// <summary>

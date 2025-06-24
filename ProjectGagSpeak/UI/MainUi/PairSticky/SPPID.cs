@@ -59,10 +59,12 @@ public enum SPPID : byte
     ForcedFollow,
     ForcedEmoteState,
     ForcedStay,
+    GarbleChannelEditing,
     ChatBoxesHidden,
     ChatInputHidden,
     ChatInputBlocked,
-    GarbleChannelEditing,
+    HypnoticEffect,
+    HypnoticImage,
 
     PiShockShareCode,
     MaxVibrateDuration,
@@ -184,10 +186,12 @@ public static class SPPIDExtensions
             SPPID.ForcedFollow          => nameof(PairPerms.AllowForcedFollow),
             SPPID.ForcedEmoteState      => isAllEmote ? nameof(PairPerms.AllowForcedEmote) : nameof(PairPerms.AllowForcedEmote),
             SPPID.ForcedStay            => nameof(PairPerms.AllowForcedStay),
+            SPPID.GarbleChannelEditing  => nameof(PairPerms.AllowGarbleChannelEditing),
             SPPID.ChatBoxesHidden       => nameof(PairPerms.AllowHidingChatBoxes),
             SPPID.ChatInputHidden       => nameof(PairPerms.AllowHidingChatInput),
             SPPID.ChatInputBlocked      => nameof(PairPerms.AllowChatInputBlocking),
-            SPPID.GarbleChannelEditing  => nameof(PairPerms.AllowGarbleChannelEditing),
+            SPPID.HypnoticEffect        => nameof(PairPerms.AllowHypnoEffectSending),
+            SPPID.HypnoticImage         => nameof(PairPerms.AllowHypnoImageSending),
             _ => string.Empty
         };
 }

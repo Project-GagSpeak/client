@@ -145,11 +145,13 @@ public sealed class OverlayCache
     /// <summary>
     ///     Updates the priority blindfold by finding the lowest priority blindfold. 
     /// </summary>
+    /// <remarks> Outputs the previous effects enactor. If the effect was null, the string will be empty. </remarks>
     /// <returns> If the profile Changed. </returns>
-    public bool UpdateFinalHypnoEffectCache()
+    public bool UpdateFinalHypnoEffectCache([NotNullWhen(true)] out string prevEnactor)
     {
         var newFinalItem = _hypnoEffects.FirstOrDefault();
         var anyChange = !_priorityEffect?.Key.Equals(newFinalItem.Key) ?? true;
+        prevEnactor = _priorityEffect?.Key.EnactorUID ?? string.Empty;
         _priorityEffect = newFinalItem;
         return anyChange;
     }

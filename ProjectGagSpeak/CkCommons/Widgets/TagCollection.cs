@@ -1,6 +1,8 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using GagSpeak.CkCommons.Gui;
+using GagSpeak.Localization;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -10,6 +12,18 @@ namespace GagSpeak.CkCommons.Widgets;
 /// <summary> Widget drawing out a group of tags from a csv. </summary>
 public class TagCollection
 {
+    private const string HELP_TEXT = $"Keybinds:--SEP--"+
+        "--NL----COL--[SHIFT + L-Click]--COL-- -> Shift entry to the left." +
+        "--NL----COL--[SHIFT + R-Click]--COL-- -> Shift entry to the right." +
+        "--NL----COL--[CTRL + R-Click]--COL-- -> Remove entry." +
+        "--NL----COL--[L-Click]--COL-- -> Edit entry.";
+
+    private const string HELP_TEXT_SHORT =
+        "--COL--[SHIFT + L-Click]--COL-- -> Shift left\n" +
+        "--NL----COL--[SHIFT + R-Click]--COL-- -> Shift right\n" +
+        "--NL----COL--[CTRL + R-Click]--COL-- -> Remove\n" +
+        "--NL----COL--[L-Click]--COL-- -> Edit";
+
     private string _latestString = string.Empty;
     private List<string> _latestStringTags = new List<string>();
 
@@ -48,8 +62,7 @@ public class TagCollection
     public IEnumerable<string> GetTagCollection(string csvString)
         => csvString.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())
-            .Where(s => s.Length > 0)
-            .Order();
+            .Where(s => s.Length > 0);
 
     /// <summary>
     ///     Returns a collection of tags from an array.
@@ -57,8 +70,7 @@ public class TagCollection
     public IEnumerable<string> GetTagCollection(IEnumerable<string> tags)
         => tags
             .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Select(s => s.Trim())
-            .Order();
+            .Select(s => s.Trim());
 
     public void DrawTagsPreview(string id, string csvString)
     {
@@ -100,6 +112,70 @@ public class TagCollection
             Button(tag, idx, false);
             ImGui.SameLine();
         }
+    }
+
+    public bool DrawHelpButtons(string csvString, out string updatedCsvString, bool showSort)
+    {
+        bool change = false;
+
+        // Update the tags.
+        UpdateOrSetLatest(csvString);
+
+        // do the draws.
+        var pos = ImGui.GetCursorPos();
+        var available = ImGui.GetContentRegionAvail();
+        var bottomRightPos = pos + available;
+        var width = showSort ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X : ImGui.GetFrameHeight();
+        var iconSize = new Vector2(width, ImGui.GetFrameHeight());
+        // Move and draw the icons.
+        ImGui.SetCursorPos(bottomRightPos - iconSize);
+        if (showSort)
+        {
+            if (CkGui.IconButton(FontAwesomeIcon.SortAlphaDown, inPopup: true))
+            {
+                _latestStringTags.Sort();
+                change = true;
+            }
+            CkGui.AttachToolTip("Sort Tags Alphabetically");
+        }
+
+        ImGui.SameLine();
+        CkGui.HelpText(HELP_TEXT, CkColor.VibrantPink.Uint());
+
+        updatedCsvString = string.Join(", ", _latestStringTags);
+        return change;
+    }
+
+    public bool DrawHelpButtons(IReadOnlyCollection<string> tags, out List<string> updatedTags, bool showSort)
+    {
+        bool change = false;
+
+        // Update the tags.
+        UpdateOrSetLatest(tags);
+
+        // do the draws.
+        var pos = ImGui.GetCursorPos();
+        var available = ImGui.GetContentRegionAvail();
+        var bottomRightPos = pos + available;
+        var width = showSort ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X : ImGui.GetFrameHeight();
+        var iconSize = new Vector2(width, ImGui.GetFrameHeight());
+        // Move and draw the icons.
+        ImGui.SetCursorPos(bottomRightPos - iconSize);
+        if(showSort)
+        {
+            if (CkGui.IconButton(FontAwesomeIcon.SortAlphaDown, inPopup: true))
+            {
+                _latestStringTags.Sort();
+                change = true;
+            }
+            CkGui.AttachToolTip("Sort Tags Alphabetically");
+        }
+
+        ImGui.SameLine();
+        CkGui.HelpText(HELP_TEXT, CkColor.VibrantPink.Uint());
+
+        updatedTags = _latestStringTags;
+        return change;
     }
 
     public bool DrawTagsEditor(string id, IReadOnlyCollection<string> tags, out List<string> updatedTags)
@@ -172,9 +248,25 @@ public class TagCollection
             {
                 SetPosButton(tag, x, rightEndOffset);
                 Button(tag, idx, true);
-                CkGui.AttachToolTip("Left-Click to modify entry.--SEP--CTRL + Right-Click to delete entry.");
-
-                if (ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                var lClicked = ImGui.IsItemClicked(ImGuiMouseButton.Left);
+                var rClicked = ImGui.IsItemClicked(ImGuiMouseButton.Right);
+                CkGui.AttachToolTip(HELP_TEXT_SHORT, color: CkColor.VibrantPink.Vec4());
+                // Rearrangement.
+                if(ImGui.IsItemHovered() && KeyMonitor.ShiftPressed())
+                {
+                    if (idx > 0 && lClicked)
+                    {
+                        (_latestStringTags[idx], _latestStringTags[idx - 1]) = (_latestStringTags[idx - 1], _latestStringTags[idx]);
+                        changeOccurred = true;
+                    }
+                    else if (idx < _latestStringTags.Count - 1 && rClicked)
+                    {
+                        (_latestStringTags[idx], _latestStringTags[idx + 1]) = (_latestStringTags[idx + 1], _latestStringTags[idx]);
+                        changeOccurred = true;
+                    }
+                }
+                // Handle Delete
+                if (KeyMonitor.CtrlPressed() && rClicked)
                 {
                     _latestStringTags.RemoveAt(idx);
                     _editIdx = -1;
@@ -191,7 +283,25 @@ public class TagCollection
             SetFocus();
 
             ImGui.SetNextItemWidth(width);
-            ImGui.InputText("##addEdit", ref _currentTag, 128);
+            bool textChanged = ImGui.InputText($"##addEdit{_editIdx}", ref _currentTag, 128);
+            bool tabPressed = ImGui.IsItemActive() && ImGui.IsKeyPressed(ImGuiKey.Tab, false);
+
+            // Handle TAB press immediately, not on deactivation
+            if (tabPressed)
+            {
+                if (!_latestStringTags.Contains(_currentTag, StringComparer.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(_currentTag))
+                {
+                    _latestStringTags.Add(_currentTag);
+                    changeOccurred = true;
+                }
+                // Stay in add mode for next entry
+                _editIdx = _latestStringTags.Count;
+                _setFocus = true;
+                _currentTag = string.Empty;
+                return changeOccurred;
+            }
+
+            // Handle deactivation (e.g., when clicking outside or pressing Enter)
             if (ImGui.IsItemDeactivated())
             {
                 if (_latestStringTags.Contains(_currentTag, StringComparer.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(_currentTag))
@@ -203,7 +313,6 @@ public class TagCollection
                 else
                 {
                     _latestStringTags.Add(_currentTag);
-                    _latestStringTags.Sort();
                     _editIdx = -1;
                     changeOccurred = true;
                 }
