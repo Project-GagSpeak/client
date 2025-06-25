@@ -221,11 +221,11 @@ public class TraitAllowancePanel
     {
         var img = option switch
         {
-            GagspeakModule.Restraint => _cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs],
-            GagspeakModule.Restriction => _cosmetics.CoreTextures[CoreTexture.Restrained],
-            GagspeakModule.Gag => _cosmetics.CoreTextures[CoreTexture.Gagged],
-            GagspeakModule.Pattern => _cosmetics.CoreTextures[CoreTexture.Vibrator],
-            GagspeakModule.Trigger => _cosmetics.CoreTextures[CoreTexture.ShockCollar],
+            GagspeakModule.Restraint => CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs],
+            GagspeakModule.Restriction => CosmeticService.CoreTextures[CoreTexture.Restrained],
+            GagspeakModule.Gag => CosmeticService.CoreTextures[CoreTexture.Gagged],
+            GagspeakModule.Pattern => CosmeticService.CoreTextures[CoreTexture.Vibrator],
+            GagspeakModule.Trigger => CosmeticService.CoreTextures[CoreTexture.ShockCollar],
             _ => null
         };
         if (img is { } wrap)

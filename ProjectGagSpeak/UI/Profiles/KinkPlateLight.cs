@@ -83,7 +83,7 @@ public class KinkPlateLight
             ImGui.TextColored(ImGuiColors.ParsedGold, titleName);
         }
         // move over to the top area to draw out the achievement title line wrap.
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
         var ret = DrawStats(drawList, profile.KinkPlateInfo, displayName, userData, hoveringReport);
         return ret;
@@ -111,13 +111,13 @@ public class KinkPlateLight
         else if(profile.TempDisabled)
         {
             // profile is pending report review.
-            drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            drawList.AddDalamudImageRounded(CosmeticService.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
             CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
         }
         else if ((!profile.KinkPlateInfo.PublicPlate && !isPair))
         {
             // profile is not public.
-            drawList.AddDalamudImageRounded(_cosmetics.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            drawList.AddDalamudImageRounded(CosmeticService.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
             CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
         }
         else
@@ -260,7 +260,7 @@ public class KinkPlateLight
         var totalWidth = dateWidth + achievementWidth + StatIconSize.X * 3 + spacing * 3;
 
         statsPos.X += (PlateSize.X - totalWidth) / 2;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Clock], statsPos, StatIconSize, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Clock], statsPos, StatIconSize, ImGuiColors.ParsedGold);
 
         // set the cursor screen pos to the right of the clock, and draw out the joined date.
         statsPos.X += StatIconSize.X + 2f;
@@ -269,7 +269,7 @@ public class KinkPlateLight
         CkGui.AttachToolTip("The date " + displayName + " first joined GagSpeak.");
 
         statsPos.X += dateWidth + spacing;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
 
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);

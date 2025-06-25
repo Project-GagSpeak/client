@@ -171,11 +171,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             {
                 (var image, var tooltip) = _selector.Selected?.Type switch
                 {
-                    RestrictionType.Gag => (_textures.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!"),
-                    RestrictionType.Collar => (_textures.CoreTextures[CoreTexture.Collar], "This is a Collar Restriction!"),
-                    RestrictionType.Hypnotic => (_textures.CoreTextures[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
-                    RestrictionType.Blindfold => (_textures.CoreTextures[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
-                    _ => (_textures.CoreTextures[CoreTexture.Restrained], "This is a generic Restriction.")
+                    RestrictionType.Gag => (CosmeticService.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!"),
+                    RestrictionType.Collar => (CosmeticService.CoreTextures[CoreTexture.Collar], "This is a Collar Restriction!"),
+                    RestrictionType.Hypnotic => (CosmeticService.CoreTextures[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
+                    RestrictionType.Blindfold => (CosmeticService.CoreTextures[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
+                    _ => (CosmeticService.CoreTextures[CoreTexture.Restrained], "This is a generic Restriction.")
                 };
                 ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
             }

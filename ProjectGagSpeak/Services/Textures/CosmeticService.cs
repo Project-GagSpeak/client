@@ -3,6 +3,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Util;
+using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
@@ -19,15 +20,11 @@ public class CosmeticService : IHostedService, IDisposable
         LoadAllCoreTextures();
         LoadAllCoreEmoteTextures();
         LoadAllCosmetics();
-
-
-
-
     }
 
-    private Dictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
-    public  Dictionary<CoreTexture, IDalamudTextureWrap> CoreTextures = [];
-    public  Dictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures = [];
+    private static ConcurrentDictionary<string, IDalamudTextureWrap>           InternalCosmeticCache = [];
+    public static ConcurrentDictionary<CoreTexture, IDalamudTextureWrap>       CoreTextures          = [];
+    public static ConcurrentDictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures     = [];
 
     // MUST ensure ALL images are disposed of or else we will leak a very large amount of memory.
     public void Dispose()
@@ -204,7 +201,7 @@ public class CosmeticService : IHostedService, IDisposable
     }
 
     public IDalamudTextureWrap GetImageFromAssetsFolder(string path)
-        => Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", path)).GetWrapOrEmpty();
+        => Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.AssemblyDirectoryName!, "Assets", path)).GetWrapOrEmpty();
     public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
         => Svc.Texture.CreateFromImageAsync(imageData).Result;
     public IDalamudTextureWrap? GetImageMetadataPath(ImageDataType folder, string path)

@@ -86,7 +86,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
     {
         // If the user does not have a profile set, return the default logo.
         if(string.IsNullOrEmpty(Base64ProfilePicture) || _imageData.Value.IsNullOrEmpty())
-            return _cosmetics.CoreTextures[CoreTexture.Icon256Bg];
+            return CosmeticService.CoreTextures[CoreTexture.Icon256Bg];
 
         // Otherwise, fetch the profile image for it.
         if(_storedProfileImage is not null)

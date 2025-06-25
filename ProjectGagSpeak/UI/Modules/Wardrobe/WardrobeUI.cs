@@ -33,13 +33,13 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Restrained], SelectedTab.MyRestraints,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Restrained], SelectedTab.MyRestraints,
             "Restraints--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
-        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
             "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
-        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.Gagged], SelectedTab.MyGags,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Gagged], SelectedTab.MyGags,
             "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-        _tabMenu.AddDrawButton(_cosmetics.CoreTextures[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
             "Cursed Loot--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
 
         AllowPinning = false;

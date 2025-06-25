@@ -1,10 +1,12 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
+using ImGuiNET;
 using Microsoft.Extensions.Hosting;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 

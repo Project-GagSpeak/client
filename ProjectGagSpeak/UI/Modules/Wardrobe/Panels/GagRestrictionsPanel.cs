@@ -139,7 +139,7 @@ public partial class GagRestrictionsPanel
             // Draw the type of restriction item as an image path here.
             if (_selector.Selected is not null)
             {
-                (var image, var tooltip) = (_textures.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!");
+                (var image, var tooltip) = (CosmeticService.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!");
                 ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
             }
         }

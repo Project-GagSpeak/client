@@ -70,7 +70,7 @@ public class AttributeDrawer
         for (int i = 0; i < traitData.Length; i++)
         {
             var (trait, icon, tooltip, col) = traitData[i];
-            TraitCheckbox(trait.ToString(), _textures.CoreTextures[icon], ref attributes, trait);
+            TraitCheckbox(trait.ToString(), CosmeticService.CoreTextures[icon], ref attributes, trait);
             CkGui.AttachToolTip(tooltip, color: col);
 
             // Only SameLine if not the last in the row
@@ -114,7 +114,7 @@ public class AttributeDrawer
         for (int i = 0; i < icons.Count; i++)
         {
             if (i > 0) ImGui.SameLine(0, spacing);
-            ImGui.Image(_textures.CoreTextures[icons[i].tex].ImGuiHandle, iconSize);
+            ImGui.Image(CosmeticService.CoreTextures[icons[i].tex].ImGuiHandle, iconSize);
             CkGui.AttachToolTip(icons[i].tooltip);
         }
     }

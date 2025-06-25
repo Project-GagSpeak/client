@@ -117,7 +117,6 @@ public class MainUI : WindowMediatorSubscriberBase
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
         WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
-
         // Default to open if the user desires for it to be open.
         if(_configService.Current.OpenMainUiOnStartup) Toggle();
 

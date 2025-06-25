@@ -244,7 +244,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     // draw the text in the second column.
                     ImGui.TableNextColumn();
                     // we should fetch the cached image from our texture cache service
-                    var achievementCosmetic = _textures.CoreTextures[CoreTexture.Icon256Bg];
+                    var achievementCosmetic = CosmeticService.CoreTextures[CoreTexture.Icon256Bg];
                     // Ensure its a valid texture wrap
                     if (!(achievementCosmetic is { } wrap))
                     {

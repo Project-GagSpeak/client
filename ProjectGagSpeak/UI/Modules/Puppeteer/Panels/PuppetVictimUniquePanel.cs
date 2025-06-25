@@ -188,7 +188,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
-        if (_cosmetics.CoreTextures[CoreTexture.PuppetVictimUnique] is { } wrap)
+        if (CosmeticService.CoreTextures[CoreTexture.PuppetVictimUnique] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
             ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));

@@ -197,7 +197,7 @@ public static partial class CkGui
     /// <summary> Helper function to draw the outlined font in ImGui. </summary>
     public static void OutlinedFont(string text, Vector4 fontColor, Vector4 outlineColor, int thickness)
     {
-        var original = ImGui.GetCursorScreenPos();
+        var original = ImGui.GetCursorPos();
         using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
             OutlinedFontOutline(original, text, thickness);
 
@@ -207,7 +207,7 @@ public static partial class CkGui
 
     public static void OutlinedFont(string text, uint fontColor, uint outlineColor, int thickness)
     {
-        var original = ImGui.GetCursorScreenPos();
+        var original = ImGui.GetCursorPos();
         using (ImRaii.PushColor(ImGuiCol.Text, outlineColor))
             OutlinedFontOutline(original, text, thickness);
 

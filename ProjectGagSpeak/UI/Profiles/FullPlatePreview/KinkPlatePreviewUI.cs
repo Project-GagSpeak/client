@@ -94,7 +94,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
             ImGui.TextColored(ImGuiColors.ParsedGold, titleName);
         }
         // move over to the top area to draw out the achievement title line wrap.
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
         DrawGagInfo(drawList, profile.KinkPlateInfo);
 
@@ -161,22 +161,22 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         int iconWidthPlusSpacing = 38;
         var iconOverviewPos = IconOverviewListPos;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
     }
 
     private void DrawDescription(ImDrawListPtr drawList, KinkPlate profile)
@@ -271,7 +271,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     {
         // jump down to where we should draw out the stats, and draw out the achievement icon.
         var statsPos = StatsPos;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Clock], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Clock], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
         // set the cursor screen pos to the right of the clock, and draw out the joined date.
         statsPos += new Vector2(24, 0);
 
@@ -283,7 +283,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         var textWidth = ImGui.CalcTextSize($"MM-DD-YYYY").X;
         statsPos += new Vector2(textWidth + 4, 0);
         // to the right of this, draw out the achievement icon.
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Achievement], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Achievement], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
@@ -307,13 +307,13 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
         // draw out the blocked causes icon row.
         var blockedAffecterPos = LockAffectersRowPos;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
         blockedAffecterPos.X += LockAffecterIconSize.X + LockAffecterSpacing.X;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.CursedLoot], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.CursedLoot], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
         blockedAffecterPos.X += LockAffecterIconSize.X + 11f;
 
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Blindfolded], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Blindfolded], blockedAffecterPos, LockAffecterIconSize, ImGuiColors.DalamudGrey3);
 
         // draw out the background for the head slot.
         if (_cosmetics.TryGetBorder(ProfileComponent.BlockedSlot, info.BlockedSlotBorder, out var blockedSlotBG))
@@ -368,15 +368,15 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
         // draw the icon list underneath that displays the hardcore traits and shit
         var hardcoreTraitsPos = HardcoreTraitsRowPos;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
         hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
         hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
         hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
         hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3);
     }
 
     private void CloseButton(ImDrawListPtr drawList)

@@ -10,9 +10,10 @@ public interface IHybridSavable : IHybridConfig<ConfigFileProvider> { }
 public class ConfigFileProvider : IConfigFileProvider
 {
     // Shared Config Directories
-    public static string AssemblyLocation   => Svc.PluginInterface.AssemblyLocation.FullName;
-    public static string AssemblyDirectory  => Svc.PluginInterface.AssemblyLocation.Directory?.FullName ?? string.Empty;
-    public static string GagSpeakDirectory  => Svc.PluginInterface.ConfigDirectory.FullName;
+    public static string AssemblyLocation       => Svc.PluginInterface.AssemblyLocation.FullName;
+    public static string AssemblyDirectoryName  => Svc.PluginInterface.AssemblyLocation.DirectoryName ?? string.Empty;
+    public static string AssemblyDirectory      => Svc.PluginInterface.AssemblyLocation.Directory?.FullName ?? string.Empty;
+    public static string GagSpeakDirectory      => Svc.PluginInterface.ConfigDirectory.FullName;
     public static string EventDirectory     { get; private set; } = string.Empty;
     public static string FileSysDirectory   { get; private set; } = string.Empty;
     public static string ThumbnailDirectory { get; private set; } = string.Empty;

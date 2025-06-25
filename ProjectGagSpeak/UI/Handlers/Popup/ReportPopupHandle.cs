@@ -109,7 +109,7 @@ internal class ReportPopupHandler : IPopupHandler
 
         // Draw the gold line split.
         var reportBoxSize = new Vector2(250 + 192 + ImGui.GetStyle().ItemSpacing.X);
-        drawList.AddDalamudImage(_cosmetics.CoreTextures[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 220), new Vector2(770, 6));
+        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 220), new Vector2(770, 6));
 
         ImGui.SetCursorScreenPos(rectMin + new Vector2(15, 235));
         ImGui.InputTextMultiline("##reportReason", ref _reportReason, 500, new Vector2(reportBoxSize.X, 200));

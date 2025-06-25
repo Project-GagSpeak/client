@@ -122,7 +122,7 @@ public void AddMessageRange(IEnumerable<InternalChatMessage> messages)
                 // if the message is :cat_pats: then draw the texture instead of the message.
                 if (x.Message == ":cat_pats:")
                 {
-                    var secret = _cosmetics.CoreEmoteTextures[CoreEmoteTexture.CatPat];
+                    var secret = CosmeticService.CoreEmoteTextures[CoreEmoteTexture.CatPat];
                     if (secret is { } wrap)
                     {
                         ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetTextLineHeight(), ImGui.GetTextLineHeight()));
