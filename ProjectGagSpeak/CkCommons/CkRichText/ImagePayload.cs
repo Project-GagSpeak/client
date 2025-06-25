@@ -7,38 +7,41 @@ namespace GagSpeak.CkCommons;
 
 public class ImagePayload : RichPayload
 {
-    private Func<IDalamudTextureWrap?>? _wrapFunc;
-    public string ImagePath { get; }
+    /// <summary> if his image should be drawn inline or not. </summary>
+    private bool _isInline = false;
+
+    /// <summary> A potential function that obtains our texture wrap for us, over an image path. </summary>
+    private readonly Func<IDalamudTextureWrap?>? _imageFunc;
+
+    /// <summary> If no func provided, this image path should map to a valid image in the asset folder. </summary>
+    public string _path { get; }
+
     public ImagePayload(string imagePath)
-    {
-        ImagePath = imagePath;
-    }
-
+        => _path = imagePath;
     public ImagePayload(Func<IDalamudTextureWrap?> wrapFunc)
-    {
-        _wrapFunc = wrapFunc;
-    }
+        => _imageFunc = wrapFunc;
 
-    public override void Draw(CkRaii.RichColor _)
+    /// <summary> Draws out the image to ImGui. </summary>
+    public void Draw()
     {
-        if (IsInline)
+        if (_isInline)
             ImGui.SameLine(0, 0);
 
-        var imageSize = new Vector2(ImGui.GetTextLineHeight());
-        var img = _wrapFunc is not null
-            ? _wrapFunc.Invoke()
-            : Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", ImagePath)).GetWrapOrDefault();
+        var img = _imageFunc is not null
+            ? _imageFunc.Invoke()
+            : Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", _path)).GetWrapOrDefault();
         // draw based on texture validity.
         if (img is { } validTexture)
-            ImGui.Image(validTexture.ImGuiHandle, imageSize);
+            ImGui.Image(validTexture.ImGuiHandle, new Vector2(ImGui.GetTextLineHeight()));
         else
-            ImGui.Dummy(imageSize); // Fallback to dummy if texture is invalid.
+            ImGui.Dummy(new Vector2(ImGui.GetTextLineHeight())); // Fallback to dummy if texture is invalid.
     }
 
     public override void UpdateCache(ImFontPtr font, float wrapWidth, ref float curLineWidth)
     {
         if (curLineWidth != 0f)
-            IsInline = true;
+            _isInline = true;
+
         // assert the new curLineWidth
         var newLineWidth = curLineWidth + ImGui.GetTextLineHeight();
         curLineWidth = newLineWidth > wrapWidth ? 0 : newLineWidth;

@@ -29,21 +29,17 @@ public static class CkRichText
     // ------------------- Methods ------------------- //
     public static void DrawColorHelpText()
     {
-        string tooltip = "--COL--You can use the following for named colors:--COL----SEP--" +
-            string.Join(", ", Enum.GetNames<XlDataUiColor>());
+        string tooltip = $"--COL--Named Color Codes:--COL----SEP--{string.Join(", ", Enum.GetNames<XlDataUiColor>())}";
         CkGui.HelpText(tooltip, ImGuiColors.ParsedPink);
     }
-
 
     /// <inheritdoc cref="Text(ImFontPtr, float, string, int)"/>/>
     public static void Text(string text, int cloneId = 0)
         => Text(currentFont, currentWidth, text, cloneId);
 
-
     /// <inheritdoc cref="Text(ImFontPtr, float, string, int)"/>/>
     public static void Text(float wrapWidth, string text, int cloneId = 0)
         => Text(currentFont, wrapWidth, text, cloneId);
-
 
     /// <inheritdoc cref="Text(ImFontPtr, float, string, int)"/>/>
     public static void Text(ImFontPtr fontPtr, string text, int cloneId = 0)

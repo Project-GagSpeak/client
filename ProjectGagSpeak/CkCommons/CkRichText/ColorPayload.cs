@@ -8,17 +8,18 @@ public class ColorPayload : RichPayload
 {
     public uint Color { get; }
     public ColorPayload(uint color)
-        => Color = color;
+    {
+        Color = color;
+    }
 
     public static ColorPayload Off => new(0);
 
-    public override void Draw(CkRaii.RichColor c)
+    public void UpdateColor()
     {
         if (Color != 0)
-            c.Push(CkRichCol.Text, Color);
+            ImGui.PushStyleColor(ImGuiCol.Text, Color);
         else
-            c.Pop(CkRichCol.Text); // Pop the color if it's off.
-        ImRaii.Color
+            ImGui.PopStyleColor();
     }
 
     public override void UpdateCache(ImFontPtr _, float __, ref float ___)

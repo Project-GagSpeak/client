@@ -11,12 +11,12 @@ public class StrokePayload : RichPayload
 
     public static StrokePayload Off => new(0);
 
-    public override void Draw(CkRaii.RichColor c)
+    public void UpdateStroke(ref Stack<uint> colorStrokes)
     {
         if (Color != 0)
-            c.Push(CkRichCol.Stroke, Color);
+            colorStrokes.Push(Color);
         else
-            c.Pop(CkRichCol.Stroke); // Pop the color if it's off.
+            colorStrokes.Pop();
     }
 
     public override void UpdateCache(ImFontPtr _, float __, ref float ___)
