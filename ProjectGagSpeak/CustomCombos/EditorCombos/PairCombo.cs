@@ -8,11 +8,11 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class PairCombo : CkFilterComboCache<Pair>
+public sealed class PairCombo : CkFilterComboCache<Kinkster>
 {
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly FavoritesManager _favorites;
-    public PairCombo(ILogger log, PairManager pairs, FavoritesManager favorites, Func<IReadOnlyList<Pair>> generator)
+    public PairCombo(ILogger log, KinksterManager pairs, FavoritesManager favorites, Func<IReadOnlyList<Kinkster>> generator)
         : base(generator, log)
     {
         _pairs = pairs;
@@ -45,7 +45,7 @@ public sealed class PairCombo : CkFilterComboCache<Pair>
             || (Items[globalIndex].PlayerName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
-    protected override string ToString(Pair obj)
+    protected override string ToString(Kinkster obj)
         => obj.GetNickAliasOrUid();
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>

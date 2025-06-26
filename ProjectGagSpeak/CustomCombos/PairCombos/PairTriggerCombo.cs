@@ -1,7 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -15,20 +14,20 @@ namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
 {
     private readonly MainHub _mainHub;
-    private Pair _pairRef;
+    private Kinkster _ref;
 
-    public PairTriggerCombo(Pair pair, MainHub hub, ILogger log)
-        : base([ .. pair.LastLightStorage.Triggers.OrderBy(x => x.Label)], log, FAI.Bell, "Enable")
+    public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster)
+        : base(log, FAI.Bell, "Enable", () => [ .. kinkster.LastLightStorage.Triggers.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
-        _pairRef = pair;
+        _ref = kinkster;
 
         // update current selection to the last registered LightTrigger from that pair on construction.
-        Current = _pairRef.LastLightStorage?.Triggers.FirstOrDefault();
+        Current = _ref.LastLightStorage?.Triggers.FirstOrDefault();
     }
 
     // override the method to extract items by extracting all LightTriggers.
-    protected override bool DisableCondition() => _pairRef.PairPerms.ToggleTriggers is false;
+    protected override bool DisableCondition() => _ref.PairPerms.ToggleTriggers is false;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -50,18 +49,18 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             return false;
 
         // Construct the dto, and then send it off.
-        PushKinksterToyboxUpdate dto = new(_pairRef.UserData, _pairRef.LastToyboxData, Current.Id, DataUpdateType.TriggerToggled);
+        PushKinksterToyboxUpdate dto = new(_ref.UserData, _ref.LastToyboxData, Current.Id, DataUpdateType.TriggerToggled);
         
         // send the dto to the server.
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform TriggerToggle on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Toggling Trigger {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
+            Log.LogDebug($"Toggling Trigger {Current.Label} on {_ref.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
             return true;
         }
     }

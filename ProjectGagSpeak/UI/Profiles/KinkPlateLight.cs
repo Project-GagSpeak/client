@@ -15,7 +15,7 @@ using ImGuiNET;
 using System.Globalization;
 using GagSpeak.Kinksters;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 
 /// <summary>
 /// The UI Design for the KinkPlates.
@@ -24,13 +24,13 @@ public class KinkPlateLight
 {
     private readonly ILogger<KinkPlateLight> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly ServerConfigManager _serverConfigs;
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
     public KinkPlateLight(ILogger<KinkPlateLight> logger, GagspeakMediator mediator,
-        PairManager pairManager, ServerConfigManager serverConfigs,
+        KinksterManager pairManager, ServerConfigManager serverConfigs,
         KinkPlateService profiles, CosmeticService cosmetics, TextureService textures)
     {
         _logger = logger;

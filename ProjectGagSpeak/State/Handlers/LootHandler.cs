@@ -29,7 +29,7 @@ public sealed class LootHandler
     private readonly GagspeakMediator _mediator;
     private readonly GlobalPermissions _globals;
     private readonly MainHub _hub;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly CursedLootManager _manager;
@@ -42,7 +42,7 @@ public sealed class LootHandler
     private Task? _openLootTask = null;
 
     public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator,
-        GlobalPermissions globals, MainHub hub, PairManager pairs,
+        GlobalPermissions globals, MainHub hub, KinksterManager pairs,
         GagRestrictionManager gags, RestrictionManager restrictions,
         CursedLootManager manager, MainConfig config, OnFrameworkService frameworkUtils)
     {

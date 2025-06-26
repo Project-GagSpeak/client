@@ -6,13 +6,13 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Profile;
+using GagSpeak.Gui.Profile;
 using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 public class AccountTab
 {

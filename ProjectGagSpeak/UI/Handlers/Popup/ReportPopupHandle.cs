@@ -9,12 +9,12 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 internal class ReportPopupHandler : IPopupHandler
 {
     private readonly MainHub _hub;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly CosmeticService _cosmetics;
     private readonly KinkPlateService _kinkPlates;
 
@@ -24,7 +24,7 @@ internal class ReportPopupHandler : IPopupHandler
 
     private const string DefaultReportReason = "Describe why you are reporting this Kinkster here...";
 
-    public ReportPopupHandler(MainHub hub, PairManager pairs,
+    public ReportPopupHandler(MainHub hub, KinksterManager pairs,
         CosmeticService cosmetics, KinkPlateService kinkplates)
     {
         _hub = hub;

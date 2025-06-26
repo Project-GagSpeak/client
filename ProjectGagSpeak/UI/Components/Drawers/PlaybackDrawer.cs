@@ -1,10 +1,11 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.State.Handlers;
 using ImGuiNET;
 using ImPlotNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 public class PlaybackDrawer
 {

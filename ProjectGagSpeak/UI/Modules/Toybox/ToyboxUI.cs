@@ -1,13 +1,13 @@
 using Dalamud.Interface.Utility;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.UiToybox;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.UiToybox;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Toybox;
+namespace GagSpeak.Gui.Toybox;
 
 public class ToyboxUI : WindowMediatorSubscriberBase
 {

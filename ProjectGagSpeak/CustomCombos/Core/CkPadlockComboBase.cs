@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.CkCommons.Raii;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;

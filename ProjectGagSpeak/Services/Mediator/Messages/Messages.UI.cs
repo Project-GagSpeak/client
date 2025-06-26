@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
@@ -14,19 +14,11 @@ public enum ToggleType
     Hide
 }
 
-public record UserPairSelected(Pair? Pair) : MessageBase; // This likely can be removed.
+public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can be removed.
 
 
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
-/// <param name="Pair"> The pair we are opening the permissions for. </param>
-/// <param name="PermsWindowType"> The type of window we are opening. </param>
-/// <param name="ForceOpenMainUI"> Whether or not we should force open the main UI. </param>
-public record OpenPairPerms(Pair? Pair, StickyWindowType PermsWindowType, bool ForceOpenMainUI) : MessageBase;
-
-
-/// <summary> Fires once a new StickyPair window is created </summary>
-/// <remarks> Useful for informing us to refresh any pair combos or other associated actions. </remarks>
-public record StickyPairWindowCreated(Pair newPair) : MessageBase;
+public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, InteractionsTab Type) : MessageBase;
 
 
 /// <summary> Fires whenever we need to refresh the UI. </summary>
@@ -34,8 +26,6 @@ public record RefreshUiMessage : MessageBase;
 
 
 /// <summary> Fires whenever we need to toggle the UI. </summary>
-/// <param name="UiType"> The type of UI we are toggling. </param>
-/// <param name="ToggleType"> The type of toggle we are performing. </param>
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase;
 
 
@@ -62,7 +52,7 @@ public record RemoveWindowMessage(WindowMediatorSubscriberBase Window) : Message
 
 /// <summary> Fires every time a standalone KinkPlate™ is opened. </summary>
 /// <param name="Pair"> The Kinkster pair belonging to the KinkPlate. </param>
-public record KinkPlateOpenStandaloneMessage(Pair Pair) : MessageBase;
+public record KinkPlateOpenStandaloneMessage(Kinkster Pair) : MessageBase;
 
 
 /// <summary> Fires every time a standalone Light KinkPlate™ is opened. </summary>

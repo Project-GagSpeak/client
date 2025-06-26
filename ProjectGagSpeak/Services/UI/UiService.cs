@@ -1,12 +1,10 @@
-using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
-using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.MainWindow;
-using GagSpeak.CkCommons.Gui.Permissions;
-using GagSpeak.CkCommons.Gui.Profile;
+using GagSpeak.Gui;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.MainWindow;
+using GagSpeak.Gui.Profile;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 
 namespace GagSpeak.Services;
@@ -24,10 +22,14 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     private readonly WindowSystem _windowSystem;
     private readonly UiFileDialogService _fileService;
 
+    // The universal UiBlocking interaction task.
+    public static Task? UiTask { get; private set; }
+    public static bool DisableUI => UiTask is not null && !UiTask.IsCompleted;
+
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
         MainConfig mainConfig, ServerConfigService serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
-        UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog) 
+        UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog)
         : base(logger, mediator)
     {
         _logger = logger;
@@ -56,13 +58,10 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, (msg) =>
         {
-            var pairPermissionWindows = _createdWindows
-                .Where(p => p is PairStickyUI)
-                .ToList();
-
+            var pairPermissionWindows = _createdWindows.OfType<KinksterInteractionsUI>().ToList();
             foreach (var window in pairPermissionWindows)
             {
-                _logger.LogTrace("Closing pair permission window for pair "+((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.StickyUI);
+                _logger.LogTrace("Closing KinksterInteractions window.", LoggerType.StickyUI);
                 _windowSystem.RemoveWindow(window);
                 _createdWindows.Remove(window);
                 window.Dispose();
@@ -108,58 +107,6 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             }
         });
 
-
-        Mediator.Subscribe<OpenPairPerms>(this, (msg) =>
-        {
-            // if we are forcing the main UI, do so.
-            if (msg.ForceOpenMainUI)
-            {
-                // if the mainUI window is not null, set the tab selection to whitelist.
-                if (_createdWindows.FirstOrDefault(p => p is MainUI) is not null)
-                {
-
-                    _logger.LogTrace("Forcing main UI to whitelist tab", LoggerType.StickyUI);
-                    _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
-                }
-                else
-                {
-                    Mediator.Publish(new UiToggleMessage(typeof(MainUI), ToggleType.Show));
-                    _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
-                }
-            }
-
-            // Attempt to locate the existing PairStickyUI window.
-            if (_createdWindows.OfType<PairStickyUI>().FirstOrDefault(w => w.SPair.UserData.UID == msg.Pair?.UserData.UID) is PairStickyUI stickyUI)
-            {
-                // Attempt to change the draw-type. But if it is the same draw-type as the current, toggle the window.
-                if (stickyUI.DrawType == msg.PermsWindowType)
-                    stickyUI.Toggle();
-                else
-                {
-                    stickyUI.DrawType = msg.PermsWindowType;
-                    if (!stickyUI.IsOpen)
-                        stickyUI.Toggle();
-                }
-                stickyUI.DrawType = msg.PermsWindowType;
-            }
-            else // We are attempting to open a stickyPairUi for another pair. Let's first destroy the current pairStickyUI's if they exist.
-            {
-                _logger.LogDebug("Destroying other pair's sticky UI's and recreating UI for new pair.", LoggerType.UI);
-                foreach (var window in _createdWindows.OfType<PairStickyUI>())
-                {
-                    _windowSystem.RemoveWindow(window);
-                    _createdWindows.Remove(window);
-                    window?.Dispose();
-                }
-
-                // Create a new sticky pair perms window for the pair
-                _logger.LogTrace("Creating new sticky window for pair "+msg.Pair?.UserData.AliasOrUID, LoggerType.StickyUI);
-                var newWindow = _uiFactory.CreateStickyPairPerms(msg.Pair!, msg.PermsWindowType);
-                _createdWindows.Add(newWindow);
-                _windowSystem.AddWindow(newWindow);
-            }
-        });
-
         Mediator.Subscribe<OpenThumbnailBrowser>(this, (msg) =>
         {
             if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.ImageBase.Kind == msg.MetaData.Kind) is ThumbnailUI match)
@@ -185,26 +132,40 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 _windowSystem.AddWindow(newWindow);
             }
         });
-
-        Mediator.Subscribe<PairWasRemovedMessage>(this, (msg) => CloseExistingPairWindow());
-        Mediator.Subscribe<ClosedMainUiMessage>(this, (msg) => CloseExistingPairWindow());
-        Mediator.Subscribe<MainWindowTabChangeMessage>(this, (msg) => { if (msg.NewTab != MainMenuTabs.SelectedTab.Whitelist) CloseExistingPairWindow(); });
     }
 
-    private void CloseExistingPairWindow()
+    /// <summary>
+    ///     Offloads a UI task to the thread pool to not halt ImGui. 
+    ///     When the task is finished DisableUI will be set to false.
+    /// </summary>
+    public static void SetUITask(Task task)
     {
-        var pairPermissionWindows = _createdWindows
-            .Where(p => p is PairStickyUI)
-            .ToList();
-
-        foreach (var window in pairPermissionWindows)
+        if (DisableUI)
         {
-            _logger.LogTrace("Closing pair permission window for pair " + ((PairStickyUI)window).SPair.UserData.AliasOrUID, LoggerType.StickyUI);
-            _windowSystem.RemoveWindow(window);
-            _createdWindows.Remove(window);
-            window.Dispose();
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            return;
         }
+
+        UiTask = task;
+        Svc.Logger.Verbose("Assigned new UI blocking task: " + task, LoggerType.UI);
     }
+
+    /// <summary>
+    ///     Offloads a UI task to the thread pool to not halt ImGui. 
+    ///     When the task is finished DisableUI will be set to false.
+    /// </summary>
+    public static void SetUITask(Func<Task> asyncAction)
+    {
+        if (DisableUI)
+        {
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            return;
+        }
+
+        UiTask = Task.Run(asyncAction);
+        Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
+    }
+
 
     /// <summary> Method to toggle the main UI for the plugin. </summary>
     /// <remarks> Checks if user has valid setup, and opens introUI or MainUI </remarks>

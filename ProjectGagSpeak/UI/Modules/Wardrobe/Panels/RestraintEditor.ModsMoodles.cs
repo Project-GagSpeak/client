@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
@@ -15,7 +15,7 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class RestraintEditorModsMoodles : IFancyTab
 {

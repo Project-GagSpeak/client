@@ -1,7 +1,7 @@
 using ImGuiNET;
 using System.Runtime.InteropServices;
 
-namespace GagSpeak.CkCommons.Gui.Utility;
+namespace GagSpeak.Gui.Utility;
 public static partial class CkGuiUtils
 {
     private static int FindWrapPosition(string text, float wrapWidth)

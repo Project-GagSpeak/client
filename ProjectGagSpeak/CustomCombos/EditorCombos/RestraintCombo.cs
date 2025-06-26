@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;

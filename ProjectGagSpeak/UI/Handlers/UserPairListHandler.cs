@@ -2,14 +2,14 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui.Handlers;
+namespace GagSpeak.Gui.Handlers;
 
 /// <summary>
 /// Handler for drawing the list of user pairs in various ways.
@@ -21,16 +21,16 @@ public class UserPairListHandler
     private readonly GagspeakMediator _mediator;
     private List<IDrawFolder> _drawFolders;
     private List<DrawUserPair> _allUserPairDrawsDistinct; // distinct userpairs to draw
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
     private readonly DrawRequests _drawRequests;
     private readonly MainConfig _configService;
 
-    private Pair? _selectedPair = null;
+    private Kinkster? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
-        PairManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
+        KinksterManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
         MainConfig configService)
     {
         _logger = logger;
@@ -48,7 +48,7 @@ public class UserPairListHandler
     /// <summary> List of all draw folders to display in the UI </summary>
     public List<DrawUserPair> AllPairDrawsDistinct => _allUserPairDrawsDistinct;
 
-    public Pair? SelectedPair
+    public Kinkster? SelectedPair
     {
         get => _selectedPair;
         private set
@@ -210,34 +210,34 @@ public class UserPairListHandler
             });
 
         // the alphabetical sort function of the pairs.
-        string? AlphabeticalSort(Pair u)
+        string? AlphabeticalSort(Kinkster u)
             => !string.IsNullOrEmpty(u.PlayerName)
                     ? (_configService.Current.PreferNicknamesOverNames ? u.GetNickname() ?? u.UserData.AliasOrUID : u.PlayerName)
                     : u.GetNickname() ?? u.UserData.AliasOrUID;
 
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)
-        bool FilterOnlineOrPausedSelf(Pair u)
+        bool FilterOnlineOrPausedSelf(Kinkster u)
             => u.IsOnline || !u.IsOnline && !_configService.Current.ShowOfflineUsersSeparately || u.UserPair.OwnPerms.IsPaused;
 
-        bool FilterPairedOrPausedSelf(Pair u)
+        bool FilterPairedOrPausedSelf(Kinkster u)
              => u.IsOnline || !u.IsOnline || u.UserPair.OwnPerms.IsPaused;
 
 
         // collect the sorted list
-        List<Pair> BasicSortedList(IEnumerable<Pair> u)
+        List<Kinkster> BasicSortedList(IEnumerable<Kinkster> u)
             => u.OrderByDescending(u => u.IsVisible)
                 .ThenByDescending(u => u.IsOnline)
-                .ThenBy(AlphabeticalSort, StringComparer.OrdinalIgnoreCase)
+                .ThenBy<Kinkster, string>(AlphabeticalSort, (IComparer<string?>)StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-        ImmutableList<Pair> ImmutablePairList(IEnumerable<Pair> u) => u.ToImmutableList();
+        ImmutableList<Kinkster> ImmutablePairList(IEnumerable<Kinkster> u) => u.ToImmutableList();
 
         // if we should filter visible users
-        bool FilterVisibleUsers(Pair u) => u.IsVisible;
+        bool FilterVisibleUsers(Kinkster u) => u.IsVisible;
 
-        bool FilterOnlineUsers(Pair u) => u.IsOnline;
+        bool FilterOnlineUsers(Kinkster u) => u.IsOnline;
 
-        bool FilterOfflineUsers(Pair u) => !u.IsOnline && !u.UserPair.OwnPerms.IsPaused;
+        bool FilterOfflineUsers(Kinkster u) => !u.IsOnline && !u.UserPair.OwnPerms.IsPaused;
 
 
         // if we wish to display our visible users separately, then do so.

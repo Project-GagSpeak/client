@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 public class Changelog
 {
     public List<VersionEntry> Versions { get; private set; } = new List<VersionEntry>();

@@ -1,10 +1,10 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Publications;
+namespace GagSpeak.Gui.Publications;
 
 public class PublicationsUI : WindowMediatorSubscriberBase
 {

@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
@@ -15,7 +15,7 @@ using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 // it might be wise to move the selector draw into the panel so we have more control over the editor covering both halves.
 public partial class RestraintsPanel : DisposableMediatorSubscriberBase
@@ -23,7 +23,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private readonly RestraintSetFileSelector _selector;
     private readonly ActiveItemsDrawer _activeDrawer;
     private readonly RestraintManager _manager;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public bool IsEditing => _manager.ItemInEditor != null;
@@ -37,7 +37,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         RestraintEditorLayers editorLayers,
         RestraintEditorEquipment editorEquipment,
         RestraintEditorModsMoodles editorModsMoodles,
-        PairManager pairs,
+        KinksterManager pairs,
         CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator)
     {

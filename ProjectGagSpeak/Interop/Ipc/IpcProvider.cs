@@ -17,7 +17,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private const int GagspeakApiVersion = 1;
 
     private readonly ILogger<IpcProvider> _logger;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
 
     public GagspeakMediator Mediator { get; init; }
 
@@ -47,7 +47,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private static ICallGateProvider<object>? GagSpeakDisposing; // FUNC
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
-        PairManager pairManager, OnFrameworkService frameworkUtils)
+        KinksterManager pairManager, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _pairManager = pairManager;

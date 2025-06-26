@@ -2,11 +2,11 @@ using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using ImGuiNET;
-using static GagSpeak.CkCommons.Gui.Components.WardrobeTabs;
+using static GagSpeak.Gui.Components.WardrobeTabs;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class WardrobeUI : WindowMediatorSubscriberBase
 {

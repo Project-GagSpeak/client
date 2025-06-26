@@ -3,8 +3,8 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
@@ -20,12 +20,12 @@ namespace GagSpeak.Services;
 public sealed class DtrBarService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly OnFrameworkService _frameworkUtils;
 
     private List<IPlayerCharacter> _visiblePlayers;
     public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, PairManager pairs, OnFrameworkService frameworkUtils) 
+        MainConfig mainConfig, KinksterManager pairs, OnFrameworkService frameworkUtils) 
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;

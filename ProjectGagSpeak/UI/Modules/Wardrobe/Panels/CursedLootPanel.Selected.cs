@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
@@ -9,7 +9,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 {
     private void DrawSelectedItemInfo(Vector2 region, float rounding)

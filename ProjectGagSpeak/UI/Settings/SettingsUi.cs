@@ -16,7 +16,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class SettingsUi : WindowMediatorSubscriberBase
 {

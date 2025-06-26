@@ -27,6 +27,6 @@ public class PairFactory
     /// <summary> Creates a new Pair object from the KinksterPair</summary>
     /// <param name="KinksterPair"> The data transfer object of a user pair</param>
     /// <returns> A new Pair object </returns>
-    public Pair Create(KinksterPair kinksterPair)
-        => new(kinksterPair, _loggerFactory.CreateLogger<Pair>(), _mediator, _cachedPlayerFactory, _serverConfigs, _cosmetics);
+    public Kinkster Create(KinksterPair kinksterPair)
+        => new(kinksterPair, _loggerFactory.CreateLogger<Kinkster>(), _mediator, _cachedPlayerFactory, _serverConfigs, _cosmetics);
 }

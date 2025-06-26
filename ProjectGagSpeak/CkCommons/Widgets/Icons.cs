@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using ImGuiNET;

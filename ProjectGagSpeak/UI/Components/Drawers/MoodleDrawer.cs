@@ -1,5 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services.Textures;
@@ -11,7 +12,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
@@ -169,8 +170,8 @@ public class MoodleDrawer
             if (status.IconID is 0)
                 continue;
 
-            _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
-            _statusMonitor.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+            MoodleIcons.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            MoodleIcons.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
             {
@@ -195,9 +196,9 @@ public class MoodleDrawer
             if(status.IconID is 0)
                 continue;
 
-            _statusMonitor.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            MoodleIcons.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
-                _statusMonitor.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+                MoodleIcons.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
             ImGui.SameLine();
         }
 

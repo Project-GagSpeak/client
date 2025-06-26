@@ -2,8 +2,8 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Clip;
-using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.Gui.Clip;
+using GagSpeak.Gui.Handlers;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
@@ -11,7 +11,7 @@ using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> For drawing a list of kinksters, allowing for searching and filtering. </summary>
 /// <remarks> You will need to add a mediator subscription to update things yourself! </remarks>
@@ -19,16 +19,16 @@ public class KinksterSearchList
 {
     protected readonly MainConfig _config;
     protected readonly IdDisplayHandler _nameHandle;
-    protected readonly PairManager _pairs;
+    protected readonly KinksterManager _pairs;
     protected readonly CosmeticService _cosmetics;
 
-    protected ImmutableList<Pair> _immutablePairs = ImmutableList<Pair>.Empty;
+    protected ImmutableList<Kinkster> _immutablePairs = ImmutableList<Kinkster>.Empty;
     protected string _searchValue = string.Empty;
 
     public KinksterSearchList(
         MainConfig config,
         IdDisplayHandler handler, 
-        PairManager pairs, 
+        KinksterManager pairs, 
         CosmeticService cosmetics)
     {
         _config = config;
@@ -45,7 +45,7 @@ public class KinksterSearchList
     
     /// <summary> Draws the resulting list, with a custom drawaction allowed for replacement display. </summary>
     /// <remarks> Keep in mind the drawact height must match the passed in height. </remarks>
-    public void DrawResultList(Action<Pair, float>? selectableDraw = null)
+    public void DrawResultList(Action<Kinkster, float>? selectableDraw = null)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(2f));
         using var font = ImRaii.PushFont(UiBuilder.DefaultFont);
@@ -82,7 +82,7 @@ public class KinksterSearchList
             .ToImmutableList();
     }
 
-    private bool CheckFilter(Pair pair)
+    private bool CheckFilter(Kinkster pair)
     {
         return pair.UserData.AliasOrUID.Contains(_searchValue, StringComparison.OrdinalIgnoreCase)
             || (pair.GetNickname()?.Contains(_searchValue, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -90,7 +90,7 @@ public class KinksterSearchList
     }
 
     /// <summary> If you overwrite this, make sure the height is ImGui.GetFrameHeight(). </summary>
-    protected virtual void DrawSelectable(Pair pair, float width)
+    protected virtual void DrawSelectable(Kinkster pair, float width)
     {
         using var id = ImRaii.PushId(pair.UserData.UID);
 
@@ -102,7 +102,7 @@ public class KinksterSearchList
         _nameHandle.DrawPairText(pair.UserData.UID, pair, 0f, () => width - ImGui.GetFrameHeight() - 20f, true, true);
     }
 
-    protected void DrawTierIcon(Pair pair)
+    protected void DrawTierIcon(Kinkster pair)
     {
         if (pair.UserData.Tier is CkSupporterTier.NoRole)
             return;

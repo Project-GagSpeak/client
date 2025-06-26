@@ -1,5 +1,5 @@
 using Dalamud.Interface.Colors;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
@@ -17,7 +17,7 @@ using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
 {
     private readonly ILogger<GagRestrictionsPanel> _logger;
@@ -28,7 +28,7 @@ public partial class GagRestrictionsPanel
     private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly GagRestrictionManager _manager;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
     public bool IsEditing => _manager.ItemInEditor != null;
@@ -42,7 +42,7 @@ public partial class GagRestrictionsPanel
         MoodleDrawer moodleDrawer,
         AttributeDrawer attributeDrawer,
         GagRestrictionManager manager,
-        PairManager pairs,
+        KinksterManager pairs,
         CosmeticService textures,
         TutorialService guides)
     {

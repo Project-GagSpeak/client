@@ -26,7 +26,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
     private readonly GlobalPermissions _globals;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly PuppeteerManager _puppetManager;
     private readonly TriggerHandler _triggerHandler;
@@ -37,7 +37,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     private readonly Stopwatch _delayTimer = new();
 
     public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator,
-        MainConfig config, GlobalPermissions globals, PairManager pairs,
+        MainConfig config, GlobalPermissions globals, KinksterManager pairs,
         GagRestrictionManager gags, PuppeteerManager puppetManager,
         TriggerHandler triggerHandler, DeathRollService dr)
         : base(logger, mediator)

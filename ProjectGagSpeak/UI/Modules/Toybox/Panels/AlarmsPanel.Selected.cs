@@ -1,7 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Models;
@@ -9,7 +9,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Toybox;
+namespace GagSpeak.Gui.Toybox;
 
 public partial class AlarmsPanel
 {

@@ -3,18 +3,18 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
-using GagSpeak.CkCommons.Gui.Publications;
-using GagSpeak.CkCommons.Gui.Toybox;
-using GagSpeak.CkCommons.Gui.UiRemote;
-using GagSpeak.CkCommons.Gui.Wardrobe;
+using GagSpeak.Gui.Modules.Puppeteer;
+using GagSpeak.Gui.Publications;
+using GagSpeak.Gui.Toybox;
+using GagSpeak.Gui.UiRemote;
+using GagSpeak.Gui.Wardrobe;
 using ImGuiNET;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Structs;
 using OtterGui.Text;
 using GagSpeak.Services.Textures;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> The homepage will provide the player with links to open up other windows in the plugin via components </summary>
 public class HomepageTab

@@ -12,7 +12,7 @@ using ImGuiNET;
 
 // please dont change this namespace or you will mess up so many references i dont want to deal with fixing.
 // unless you are willing to, then by all means please do.
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 // Primary Partial Class
 public static partial class CkGui

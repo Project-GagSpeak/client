@@ -3,12 +3,12 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 internal class MigrationsUI : WindowMediatorSubscriberBase
 {

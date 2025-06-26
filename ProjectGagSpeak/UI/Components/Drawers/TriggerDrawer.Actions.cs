@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.State.Models;
@@ -10,8 +10,9 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using GagSpeak.CkCommons;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 // Scoped, sealed class to draw the editor and display components of aliasItems.
 public sealed partial class TriggerDrawer

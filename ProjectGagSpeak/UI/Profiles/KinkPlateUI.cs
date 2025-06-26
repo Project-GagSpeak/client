@@ -13,18 +13,18 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.IdentityModel.Tokens;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
 {
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
 
     private bool ThemePushed = false;
     public KinkPlateUI(ILogger<KinkPlateUI> logger, GagspeakMediator mediator,
-        PairManager pairManager, KinkPlateService profileService, CosmeticService cosmetics,
-        TextureService textureService, Pair pair) 
+        KinksterManager pairManager, KinkPlateService profileService, CosmeticService cosmetics,
+        TextureService textureService, Kinkster pair) 
         : base(logger, mediator, pair.UserData.AliasOrUID + "'s KinkPlate##GagspeakKinkPlateUI" + pair.UserData.AliasOrUID)
     {
         _pairManager = pairManager;
@@ -39,7 +39,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     }
 
     private bool HoveringCloseButton { get; set; } = false;
-    public Pair Pair { get; init; } // The pair this profile is being drawn for.
+    public Kinkster Pair { get; init; } // The pair this profile is being drawn for.
     private string DisplayName => Pair.UserData.AliasOrUID;
     private string PairUID => Pair.UserData.UID;
 

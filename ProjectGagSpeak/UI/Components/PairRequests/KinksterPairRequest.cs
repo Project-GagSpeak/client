@@ -7,7 +7,7 @@ using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)

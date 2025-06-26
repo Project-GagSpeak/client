@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -10,7 +10,7 @@ using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class TraitAllowancePanel
 {
@@ -18,7 +18,7 @@ public class TraitAllowancePanel
     private readonly TraitAllowanceSelector _selector;
     private readonly TraitAllowanceManager _manager;
     private readonly AttributeDrawer _drawer;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
@@ -27,7 +27,7 @@ public class TraitAllowancePanel
         TraitAllowanceSelector selector,
         TraitAllowanceManager manager,
         AttributeDrawer drawer,
-        PairManager pairs,
+        KinksterManager pairs,
         FavoritesManager favorites,
         CosmeticService cosmetics,
         TutorialService guides)
@@ -51,7 +51,7 @@ public class TraitAllowancePanel
         ];
 
     private GagspeakModule _selectedModule = GagspeakModule.None;
-    private ImmutableList<Pair> _allowedPairs = ImmutableList<Pair>.Empty;
+    private ImmutableList<Kinkster> _allowedPairs = ImmutableList<Kinkster>.Empty;
     public GagspeakModule SelectedModule
     {
         get => _selectedModule;
@@ -235,7 +235,7 @@ public class TraitAllowancePanel
         }
     }
 
-    private void DrawAllowedPair(Pair pair)
+    private void DrawAllowedPair(Kinkster pair)
     {
         var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         var pos = ImGui.GetCursorScreenPos();

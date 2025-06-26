@@ -5,14 +5,14 @@ using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> The base for the draw folder, a dropdown section in the list of paired users </summary>
 public abstract class DrawFolderBase : IDrawFolder
 {
     public IImmutableList<DrawUserPair> DrawPairs { get; init; }
     protected readonly string _id;
-    protected readonly IImmutableList<Pair> _allPairs;
+    protected readonly IImmutableList<Kinkster> _allPairs;
     protected readonly ServerConfigManager _serverConfigs;
 
     private float _menuWidth = -1;
@@ -23,7 +23,7 @@ public abstract class DrawFolderBase : IDrawFolder
     public string ID => _id;
 
     protected DrawFolderBase(string id, IImmutableList<DrawUserPair> drawPairs,
-        IImmutableList<Pair> allPairs, ServerConfigManager serverConfigs)
+        IImmutableList<Kinkster> allPairs, ServerConfigManager serverConfigs)
     {
         _id = id;
         DrawPairs = drawPairs;

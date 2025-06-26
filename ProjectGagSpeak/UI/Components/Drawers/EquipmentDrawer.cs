@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
@@ -24,8 +24,9 @@ using OtterGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using GagSpeak.CkCommons;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> Helper for all displays and editors that work with Equip & Stains </summary>
 /// <remarks> Can be used for hover tooltips as well and other checks involving Equip & Stains. </remarks>

@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 using ImGuiNET;

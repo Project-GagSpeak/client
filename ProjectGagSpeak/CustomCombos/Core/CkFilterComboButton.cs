@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -42,13 +42,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
         // disable the button if we should.
         using var disabled = ImRaii.Disabled(DisableCondition());
         if (ImGuiUtil.DrawDisabledButton(bText, new Vector2(), string.Empty, DisableCondition()))
-        {
-            _ = Task.Run(async () =>
-            {
-                if(await OnButtonPress(layerIdx) is true)
-                    onButtonSuccess?.Invoke();
-            });
-        }
+            _ = OnButtonPress(layerIdx);
         CkGui.AttachToolTip(tt);
 
         return ret;

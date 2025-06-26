@@ -24,7 +24,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly MainConfig _config;
     private readonly GlobalPermissions _globals;
     private readonly TraitsCache _traits;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -48,7 +48,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
     public AchievementsService(ILogger<AchievementsService> logger, GagspeakMediator mediator,
         ClientAchievements saveData, MainConfig config, GlobalPermissions globals, TraitsCache traits,
-        PairManager pairs, GagRestrictionManager gags, RestrictionManager restrictions,
+        KinksterManager pairs, GagRestrictionManager gags, RestrictionManager restrictions,
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns,
         AlarmManager alarms, TriggerManager triggers, SexToyManager sexToys,
         AchievementEventHandler handler, NotificationService notifier, OnFrameworkService frameworkUtils)

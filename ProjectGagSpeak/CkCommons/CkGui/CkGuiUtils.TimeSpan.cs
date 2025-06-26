@@ -1,7 +1,7 @@
 using GagSpeak.Services;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Utility;
+namespace GagSpeak.Gui.Utility;
 public static partial class CkGuiUtils
 {
 /*    public static void DrawTimeSpanCombo(string label, TimeSpan patternMaxDuration, ref TimeSpan patternDuration, float width, string format = "hh\\:mm\\:ss", bool showLabel = true)

@@ -5,7 +5,7 @@ using Dalamud.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -22,7 +22,7 @@ using GagSpeak.State.Caches;
 using OtterGui.Text.Widget.Editors;
 using GagSpeak.Services.Mediator;
 
-namespace GagSpeak.CkCommons.Gui.Publications;
+namespace GagSpeak.Gui.Publications;
 public class PublicationsManager
 {
     private readonly MoodleIcons _icons;

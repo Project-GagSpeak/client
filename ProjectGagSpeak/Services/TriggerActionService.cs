@@ -29,7 +29,7 @@ public class TriggerActionService
     private readonly ILogger<TriggerActionService> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly GlobalPermissions _globals;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -45,7 +45,7 @@ public class TriggerActionService
         GagspeakMediator mediator,
         DataDistributionService distributer,
         GlobalPermissions globals,
-        PairManager pairs,
+        KinksterManager pairs,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,

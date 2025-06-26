@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -16,20 +16,20 @@ namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
 {
     private readonly MainHub _mainHub;
-    private Pair _pairRef;
-    public PairPatternCombo(Pair pair, MainHub hub, ILogger log)
-        : base([ .. pair.LastLightStorage.Patterns.OrderBy(x => x.Label)], log, FAI.PlayCircle, "Execute")
+    private Kinkster _kinksterRef;
+    public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair)
+        : base(log, FAI.PlayCircle, "Execute", () => [ .. pair.LastLightStorage.Patterns.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
-        _pairRef = pair;
+        _kinksterRef = pair;
 
         // update current selection to the last registered LightPattern from that pair on construction.
-        Current = _pairRef.LastLightStorage.Patterns.FirstOrDefault(r => r.Id == _pairRef.LastToyboxData.ActivePattern);
+        Current = _kinksterRef.LastLightStorage.Patterns.FirstOrDefault(r => r.Id == _kinksterRef.LastToyboxData.ActivePattern);
     }
 
     protected override bool DisableCondition()
-        => _pairRef.PairPerms.ExecutePatterns is false
-        || _pairRef.LastToyboxData.ActivePattern == Current?.Id
+        => _kinksterRef.PairPerms.ExecutePatterns is false
+        || _kinksterRef.LastToyboxData.ActivePattern == Current?.Id
         || Current is null;
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -56,24 +56,24 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
     protected override async Task<bool> OnButtonPress()
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (Current is null || _pairRef.LastToyboxData.ActivePattern == Current.Id)
+        if (Current is null || _kinksterRef.LastToyboxData.ActivePattern == Current.Id)
             return false;
 
-        var updateType = _pairRef.LastRestraintData.Identifier== Guid.Empty
+        var updateType = _kinksterRef.LastRestraintData.Identifier== Guid.Empty
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
         // construct the dto to send.
-        var dto = new PushKinksterToyboxUpdate(_pairRef.UserData, _pairRef.LastToyboxData, Current.Id, updateType);
+        var dto = new PushKinksterToyboxUpdate(_kinksterRef.UserData, _kinksterRef.LastToyboxData, Current.Id, updateType);
 
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Executing Pattern {Current.Label} on {_pairRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
+            Log.LogDebug($"Executing Pattern {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
             return true;
         }
     }

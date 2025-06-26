@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
@@ -14,23 +14,20 @@ namespace GagSpeak.CustomCombos.Editor;
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
 {
-    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     private uint _currentEmoteId;
     
-    public EmoteCombo(float scale, MoodleIcons disp, ILogger log)
+    public EmoteCombo(ILogger log, float scale)
         : base(() => [ ..EmoteService.ValidLightEmoteCache.OrderBy(e => e.RowId) ], log)
     {
         _iconScale = scale;
-        _iconDrawer = disp;
         SearchByParts = true;
         _currentEmoteId = Items.FirstOrDefault().RowId;
     }
 
-    public EmoteCombo(float scale, MoodleIcons disp, ILogger log, Func<IReadOnlyList<ParsedEmoteRow>> gen)
+    public EmoteCombo(ILogger log, float scale, Func<IReadOnlyList<ParsedEmoteRow>> gen)
         : base(gen, log)
     {
-        _iconDrawer = disp;
         SearchByParts = true;
         _currentEmoteId = Items.FirstOrDefault().RowId;
     }
@@ -67,7 +64,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
         if (Current.RowId is 0 or uint.MaxValue)
             return;
 
-        var image = _iconDrawer.GetGameIconOrEmpty(Current.IconId);
+        var image = Svc.Texture.GetFromGameIcon((uint)Current.IconId).GetWrapOrEmpty();
         ImGui.Image(image.ImGuiHandle, new Vector2(height));
         DrawItemTooltip(Current, image);
     }
@@ -79,7 +76,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
         // Draw a ghost selectable at first.
         bool ret = false;
         var pos = ImGui.GetCursorPos();
-        var img = _iconDrawer.GetGameIconOrEmpty(parsedEmote.IconId);
+        var img = Svc.Texture.GetFromGameIcon((uint)parsedEmote.IconId).GetWrapOrEmpty();
         using (ImRaii.Group())
         {
             var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * _iconScale);
@@ -100,10 +97,9 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f).Push(ImGuiStyleVar.PopupRounding, 4f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
             // begin the tooltip interface
             ImGui.BeginTooltip();

@@ -4,7 +4,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
     private readonly DtrBarService _service;

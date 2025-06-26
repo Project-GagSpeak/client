@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;

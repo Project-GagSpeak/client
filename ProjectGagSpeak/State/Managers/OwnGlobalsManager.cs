@@ -13,13 +13,13 @@ public sealed class OwnGlobalsManager
     private readonly ILogger<OwnGlobalsManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly GlobalPermissions _globals;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly HardcoreHandler _hcHandler;
     public OwnGlobalsManager(
         ILogger<OwnGlobalsManager> logger,
         GagspeakMediator mediator,
         GlobalPermissions globals,
-        PairManager pairs,
+        KinksterManager pairs,
         HardcoreHandler hcHandler)
     {
         _logger = logger;
@@ -102,7 +102,7 @@ public sealed class OwnGlobalsManager
         }
     }
 
-    private void PerformPermissionChange(SingleChangeGlobal dto, Pair? pair = null)
+    private void PerformPermissionChange(SingleChangeGlobal dto, Kinkster? pair = null)
     {
         // retrieve the previous value, in the case it is a hardcore change.
         var prevValue = dto.NewPerm.Key switch
@@ -156,7 +156,7 @@ public sealed class OwnGlobalsManager
     private void SendActionEventMessage(string applierNick, string applierUid, string message)
         => _mediator.Publish(new EventMessage(new(applierNick, applierUid, InteractionType.ForcedPermChange, message)));
 
-    private void OnForcedFollowChange(string newPermVal, string? prevVal, string enactor, Pair? pair = null)
+    private void OnForcedFollowChange(string newPermVal, string? prevVal, string enactor, Kinkster? pair = null)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
         var prevState = string.IsNullOrEmpty(prevVal);

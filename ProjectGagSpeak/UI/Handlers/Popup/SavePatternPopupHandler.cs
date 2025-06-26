@@ -7,7 +7,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> A interface for handling the popups in the UI. </summary>
 public class SavePatternPopupHandler : IPopupHandler

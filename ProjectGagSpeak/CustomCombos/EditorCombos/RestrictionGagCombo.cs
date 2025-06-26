@@ -1,5 +1,5 @@
 using Dalamud.Interface.Colors;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;

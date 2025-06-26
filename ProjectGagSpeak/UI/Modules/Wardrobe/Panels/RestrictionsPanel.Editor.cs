@@ -2,7 +2,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -21,7 +21,7 @@ using OtterGui.Text.EndObjects;
 using GagSpeak.CkCommons.Widgets;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel
 {
     private static OptionalBoolCheckbox HelmetCheckbox = new();

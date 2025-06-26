@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Handlers;
-using GagSpeak.CkCommons.Gui.Wardrobe;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Handlers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -15,12 +15,12 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
     private readonly GlobalPermissions _globals;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -35,7 +35,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         RestraintManager restraints,
         MainConfig config,
         IdDisplayHandler nameDisplay,
-        PairManager pairs,
+        KinksterManager pairs,
         CosmeticService icon)
         : base(logger, mediator, "Kinkster Data Debugger")
     {
@@ -82,7 +82,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawPairData(Pair pair, float width)
+    private void DrawPairData(Kinkster pair, float width)
     {
         using (var node = ImRaii.TreeNode(pair.GetNickAliasOrUid() + "'s Pair Info"))
         {

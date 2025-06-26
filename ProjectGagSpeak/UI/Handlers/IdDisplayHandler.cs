@@ -6,7 +6,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Handlers;
+namespace GagSpeak.Gui.Handlers;
 
 public class IdDisplayHandler
 {
@@ -26,7 +26,7 @@ public class IdDisplayHandler
         _mainConfig = gagspeakConfigService;
     }
 
-    public bool DrawPairText(string id, Pair pair, float textPosX, Func<float> editBoxWidth, bool canTogglePairTextDisplay, bool displayNameTT)
+    public bool DrawPairText(string id, Kinkster pair, float textPosX, Func<float> editBoxWidth, bool canTogglePairTextDisplay, bool displayNameTT)
     {
         var returnVal = false;
 
@@ -132,7 +132,7 @@ public class IdDisplayHandler
         }
         return returnVal;
     }
-    public (bool isUid, string text) GetPlayerText(Pair pair)
+    public (bool isUid, string text) GetPlayerText(Kinkster pair)
     {
         var textIsUid = true;
         var showUidInsteadOfName = ShowUidInsteadOfName(pair);
@@ -176,12 +176,12 @@ public class IdDisplayHandler
         _editComment = string.Empty;
     }
 
-    internal void OpenProfile(Pair entry)
+    internal void OpenProfile(Kinkster entry)
     {
         _mediator.Publish(new KinkPlateOpenStandaloneMessage(entry));
     }
 
-    private bool ShowUidInsteadOfName(Pair pair)
+    private bool ShowUidInsteadOfName(Kinkster pair)
     {
         _showIdForEntry.TryGetValue(pair.UserData.UID, out var showidInsteadOfName);
 

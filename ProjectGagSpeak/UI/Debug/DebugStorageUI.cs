@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
@@ -14,7 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using Penumbra.GameData.Enums;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class DebugStorageUI : WindowMediatorSubscriberBase
 {

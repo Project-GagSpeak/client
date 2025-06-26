@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using GagSpeak.Services.Mediator;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 
 /// <summary>
 /// The UI Design for the KinkPlates.

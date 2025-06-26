@@ -10,10 +10,10 @@ using ImGuiNET;
 using System.Globalization;
 using GagSpeak.Kinksters;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 {
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly KinkPlateService _profiles;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
@@ -21,7 +21,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
     private bool ThemePushed = false;
     public KinkPlatePreviewUI(ILogger<KinkPlatePreviewUI> logger, GagspeakMediator mediator,
-        PairManager pairs, KinkPlateService kinkPlates, CosmeticService cosmetics,
+        KinksterManager pairs, KinkPlateService kinkPlates, CosmeticService cosmetics,
         TextureService textures) : base(logger, mediator, "Own KinkPlate##PlatePreviewUI")
     {
         _pairs = pairs;

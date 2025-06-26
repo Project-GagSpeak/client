@@ -14,7 +14,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly MainHub _hub;
     private readonly GlobalPermissions _globals;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly VisualStateListener _visualListener; // can directly call upon all reversion operations.
     private readonly ToyboxStateListener _toyboxListener;
 
@@ -28,7 +28,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private static DateTime _lastHcSafewordTime = DateTime.MinValue;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub hub, GlobalPermissions globals, PairManager pairManager,
+        MainHub hub, GlobalPermissions globals, KinksterManager pairManager,
         VisualStateListener visualListener, ToyboxStateListener toyboxListener)
         : base(logger, mediator)
     {

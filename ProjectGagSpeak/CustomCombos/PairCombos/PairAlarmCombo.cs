@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -15,19 +15,19 @@ namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 {
     private readonly MainHub _mainHub;
-    private Pair _pairRef;
+    private Kinkster _kinksterRef;
 
-    public PairAlarmCombo(Pair pair, MainHub hub, ILogger log) 
-        : base([ ..pair.LastLightStorage.Alarms.OrderBy(x => x.Label)], log, FAI.Bell, "Enable")
+    public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster) 
+        : base(log, FAI.Bell, "Enable", () => [ ..kinkster.LastLightStorage.Alarms.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
-        _pairRef = pair;
+        _kinksterRef = kinkster;
 
         // update current selection to the last registered LightAlarm from that pair on construction.
-        Current = _pairRef.LastLightStorage?.Alarms.FirstOrDefault();
+        Current = kinkster.LastLightStorage?.Alarms.FirstOrDefault();
     }
 
-    protected override bool DisableCondition() => _pairRef.PairPerms.ToggleAlarms is false;
+    protected override bool DisableCondition() => _kinksterRef.PairPerms.ToggleAlarms is false;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -56,22 +56,22 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
     protected override async Task<bool> OnButtonPress()
     {
-        if (_pairRef.LastToyboxData is null || Current is null) 
+        if (_kinksterRef.LastToyboxData is null || Current is null) 
             return false;
 
         // Construct the dto, and then send it off.
-        var dto = new PushKinksterToyboxUpdate(_pairRef.UserData, _pairRef.LastToyboxData, Current.Id, DataUpdateType.AlarmToggled);
+        var dto = new PushKinksterToyboxUpdate(_kinksterRef.UserData, _kinksterRef.LastToyboxData, Current.Id, DataUpdateType.AlarmToggled);
 
         // Send out the command.
         var result = await _mainHub.UserChangeKinksterToyboxState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform AlarmToggled on {_pairRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform AlarmToggled on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             return false;
         }
         else
         {
-            Log.LogDebug($"Toggling Alarm on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Toggling Alarm on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
     }
@@ -98,7 +98,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 
             ImGui.Spacing();
 
-            if(_pairRef.LastLightStorage.Patterns.FirstOrDefault(x => x.Id == item.Id) is { } pattern)
+            if(_kinksterRef.LastLightStorage.Patterns.FirstOrDefault(x => x.Id == item.Id) is { } pattern)
             {
                 CkGui.ColorText("Alarm plays the Pattern:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();

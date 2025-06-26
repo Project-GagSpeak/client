@@ -1,7 +1,7 @@
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class ThumbnailFolder : IDisposable
 {

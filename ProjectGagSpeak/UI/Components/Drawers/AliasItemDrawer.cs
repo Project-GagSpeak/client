@@ -2,7 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
@@ -18,7 +18,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 // Scoped, sealed class to draw the editor and display components of aliasItems.
 public sealed class AliasItemDrawer

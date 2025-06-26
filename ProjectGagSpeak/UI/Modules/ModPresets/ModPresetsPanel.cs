@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
@@ -9,7 +9,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class ModPresetsPanel
 {

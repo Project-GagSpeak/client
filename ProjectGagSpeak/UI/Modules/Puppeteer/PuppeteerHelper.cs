@@ -7,7 +7,7 @@ using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+namespace GagSpeak.Gui.Modules.Puppeteer;
 
 /// <summary> A sealed partial class that helps with pair-based selection and definition. </summary>
 public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
@@ -17,7 +17,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
     private PairCombo _pairCombo;
 
     public PuppeteerHelper(ILogger<PuppeteerHelper> logger, GagspeakMediator mediator,
-        PairManager pairs, PuppeteerManager manager, FavoritesManager favorites, 
+        KinksterManager pairs, PuppeteerManager manager, FavoritesManager favorites, 
         MainConfig config) : base(logger, mediator)
     {
         _manager = manager;
@@ -44,7 +44,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
     public event Action? OnPairUpdated;
 
     private string _selectedUid => SelectedPair?.UserData.UID ?? string.Empty;
-    public Pair? SelectedPair => _pairCombo.Current; 
+    public Kinkster? SelectedPair => _pairCombo.Current; 
     public NamedAliasStorage? NamedStorage => _manager.PairAliasStorage.GetValueOrDefault(_selectedUid);
     public AliasStorage? Storage => NamedStorage?.Storage;
     public NamedAliasStorage? PairNamedStorage => SelectedPair?.LastPairAliasData;

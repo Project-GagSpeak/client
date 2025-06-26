@@ -1,7 +1,7 @@
 
 using System.Collections.Immutable;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary>
 /// Interface for drawing a dropdown section in the list of paired users

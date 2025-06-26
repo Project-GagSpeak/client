@@ -12,12 +12,12 @@ namespace GagSpeak.WebAPI;
 public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly MainHub _mainHub;
     private readonly HttpClient _httpClient;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, PairManager pairManager, MainHub mainHub) : base(logger, mediator)
+        MainConfig mainConfig, KinksterManager pairManager, MainHub mainHub) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _pairManager = pairManager;

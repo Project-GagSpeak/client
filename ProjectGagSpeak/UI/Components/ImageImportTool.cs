@@ -1,4 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.CkCommons.ImageHandling;
 using GagSpeak.CkCommons.Widgets;
@@ -13,7 +14,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 public class ImageImportTool
 {
     private readonly ILogger<ImageImportTool> _logger;

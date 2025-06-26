@@ -6,7 +6,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
@@ -15,14 +15,14 @@ using System.Reflection;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly MainConfig _configService;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly ServerConfigManager _serverConfigs;
     private readonly MainMenuTabs _tabMenu;
     private readonly HomepageTab _homepage;
@@ -41,7 +41,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
-        MainConfig config, PairManager pairs, ServerConfigManager serverConfigs,
+        MainConfig config, KinksterManager pairs, ServerConfigManager serverConfigs,
         HomepageTab home, WhitelistTab whitelist, PatternHubTab patternHub, 
         MoodleHubTab moodlesHub, GlobalChatTab globalChat, AccountTab account, 
         MainMenuTabs tabMenu, TutorialService tutorialService) 

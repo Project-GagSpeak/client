@@ -1,7 +1,7 @@
 using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.Utils.ChatLog;
 using GagSpeak.WebAPI;
@@ -16,10 +16,10 @@ namespace GagSpeak.Services;
 public class DiscoverService : DisposableMediatorSubscriberBase
 {
     private readonly MainMenuTabs _tabMenu;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private static string ChatFilePath => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
     public DiscoverService(ILogger<DiscoverService> logger, GagspeakMediator mediator, 
-        MainHub hub, MainMenuTabs tabMenu, PairManager pairManager,
+        MainHub hub, MainMenuTabs tabMenu, KinksterManager pairManager,
         CosmeticService cosmetics) : base(logger, mediator)
     {
         _tabMenu = tabMenu;

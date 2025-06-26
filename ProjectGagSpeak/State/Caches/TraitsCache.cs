@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui;

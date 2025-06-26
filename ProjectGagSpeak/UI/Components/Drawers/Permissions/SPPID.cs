@@ -1,6 +1,6 @@
 using GagspeakAPI.Data.Permissions;
 
-namespace GagSpeak.CkCommons.Gui.Permissions;
+namespace GagSpeak.Gui;
 
 /// <summary> Sticky Pair Permission ID </summary>
 public enum SPPID : byte
@@ -79,52 +79,52 @@ public static class SPPIDExtensions
             SPPID.ChatGarblerLocked     => (nameof(GlobalPerms.ChatGarblerLocked),            PermissionType.Global),
             SPPID.LockToyboxUI          => (nameof(GlobalPerms.LockToyboxUI),                 PermissionType.Global),
 
-            SPPID.PermanentLocks        => (nameof(PairPerms.PermanentLocks),                 PermissionType.UniquePairPerm),
-            SPPID.OwnerLocks            => (nameof(PairPerms.OwnerLocks),                     PermissionType.UniquePairPerm),
-            SPPID.DevotionalLocks       => (nameof(PairPerms.DevotionalLocks),                PermissionType.UniquePairPerm),
+            SPPID.PermanentLocks        => (nameof(PairPerms.PermanentLocks),                 PermissionType.PairPerm),
+            SPPID.OwnerLocks            => (nameof(PairPerms.OwnerLocks),                     PermissionType.PairPerm),
+            SPPID.DevotionalLocks       => (nameof(PairPerms.DevotionalLocks),                PermissionType.PairPerm),
 
             SPPID.GagVisuals            => (nameof(GlobalPerms.GagVisuals),                   PermissionType.Global),
-            SPPID.ApplyGags             => (nameof(PairPerms.ApplyGags),                      PermissionType.UniquePairPerm),
-            SPPID.LockGags              => (nameof(PairPerms.LockGags),                       PermissionType.UniquePairPerm),
-            SPPID.MaxGagTime            => (nameof(PairPerms.MaxGagTime),                     PermissionType.UniquePairPerm),
-            SPPID.UnlockGags            => (nameof(PairPerms.UnlockGags),                     PermissionType.UniquePairPerm),
-            SPPID.RemoveGags            => (nameof(PairPerms.RemoveGags),                     PermissionType.UniquePairPerm),
+            SPPID.ApplyGags             => (nameof(PairPerms.ApplyGags),                      PermissionType.PairPerm),
+            SPPID.LockGags              => (nameof(PairPerms.LockGags),                       PermissionType.PairPerm),
+            SPPID.MaxGagTime            => (nameof(PairPerms.MaxGagTime),                     PermissionType.PairPerm),
+            SPPID.UnlockGags            => (nameof(PairPerms.UnlockGags),                     PermissionType.PairPerm),
+            SPPID.RemoveGags            => (nameof(PairPerms.RemoveGags),                     PermissionType.PairPerm),
 
             SPPID.RestrictionVisuals    => (nameof(GlobalPerms.RestrictionVisuals),           PermissionType.Global),
-            SPPID.ApplyRestrictions     => (nameof(PairPerms.ApplyRestrictions),              PermissionType.UniquePairPerm),
-            SPPID.LockRestrictions      => (nameof(PairPerms.LockRestrictions),               PermissionType.UniquePairPerm),
-            SPPID.MaxRestrictionTime    => (nameof(PairPerms.MaxRestrictionTime),             PermissionType.UniquePairPerm),
-            SPPID.UnlockRestrictions    => (nameof(PairPerms.UnlockRestrictions),             PermissionType.UniquePairPerm),
-            SPPID.RemoveRestrictions    => (nameof(PairPerms.RemoveRestrictions),             PermissionType.UniquePairPerm),
+            SPPID.ApplyRestrictions     => (nameof(PairPerms.ApplyRestrictions),              PermissionType.PairPerm),
+            SPPID.LockRestrictions      => (nameof(PairPerms.LockRestrictions),               PermissionType.PairPerm),
+            SPPID.MaxRestrictionTime    => (nameof(PairPerms.MaxRestrictionTime),             PermissionType.PairPerm),
+            SPPID.UnlockRestrictions    => (nameof(PairPerms.UnlockRestrictions),             PermissionType.PairPerm),
+            SPPID.RemoveRestrictions    => (nameof(PairPerms.RemoveRestrictions),             PermissionType.PairPerm),
 
             SPPID.RestraintSetVisuals   => (nameof(GlobalPerms.RestraintSetVisuals),          PermissionType.Global),
-            SPPID.ApplyRestraintSets    => (nameof(PairPerms.ApplyRestraintSets),             PermissionType.UniquePairPerm),
-            SPPID.LockRestraintSets     => (nameof(PairPerms.LockRestraintSets),              PermissionType.UniquePairPerm),
-            SPPID.MaxRestraintTime      => (nameof(PairPerms.MaxRestraintTime),               PermissionType.UniquePairPerm),
-            SPPID.UnlockRestraintSets   => (nameof(PairPerms.UnlockRestraintSets),            PermissionType.UniquePairPerm),
-            SPPID.RemoveRestraintSets   => (nameof(PairPerms.RemoveRestraintSets),            PermissionType.UniquePairPerm),
+            SPPID.ApplyRestraintSets    => (nameof(PairPerms.ApplyRestraintSets),             PermissionType.PairPerm),
+            SPPID.LockRestraintSets     => (nameof(PairPerms.LockRestraintSets),              PermissionType.PairPerm),
+            SPPID.MaxRestraintTime      => (nameof(PairPerms.MaxRestraintTime),               PermissionType.PairPerm),
+            SPPID.UnlockRestraintSets   => (nameof(PairPerms.UnlockRestraintSets),            PermissionType.PairPerm),
+            SPPID.RemoveRestraintSets   => (nameof(PairPerms.RemoveRestraintSets),            PermissionType.PairPerm),
 
-            SPPID.PuppetPermSit         => (nameof(PairPerms.PuppetPerms),                    PermissionType.UniquePairPerm),
-            SPPID.PuppetPermEmote       => (nameof(PairPerms.PuppetPerms),                    PermissionType.UniquePairPerm),
-            SPPID.PuppetPermAlias       => (nameof(PairPerms.PuppetPerms),                    PermissionType.UniquePairPerm),
-            SPPID.PuppetPermAll         => (nameof(PairPerms.PuppetPerms),                    PermissionType.UniquePairPerm),
+            SPPID.PuppetPermSit         => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),
+            SPPID.PuppetPermEmote       => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),
+            SPPID.PuppetPermAlias       => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),
+            SPPID.PuppetPermAll         => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),
 
-            SPPID.ApplyPositive         => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
-            SPPID.ApplyNegative         => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
-            SPPID.ApplySpecial          => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
-            SPPID.ApplyPairsMoodles     => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
-            SPPID.ApplyOwnMoodles       => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
-            SPPID.MaxMoodleTime         => (nameof(PairPerms.MaxMoodleTime),                  PermissionType.UniquePairPerm),
-            SPPID.RemoveMoodles         => (nameof(PairPerms.MoodlePerms),                    PermissionType.UniquePairPerm),
+            SPPID.ApplyPositive         => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
+            SPPID.ApplyNegative         => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
+            SPPID.ApplySpecial          => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
+            SPPID.ApplyPairsMoodles     => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
+            SPPID.ApplyOwnMoodles       => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
+            SPPID.MaxMoodleTime         => (nameof(PairPerms.MaxMoodleTime),                  PermissionType.PairPerm),
+            SPPID.RemoveMoodles         => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
 
-            SPPID.ToyControl            => (nameof(PairPerms.RemoteControlAccess),            PermissionType.UniquePairPerm),
-            SPPID.PatternStarting       => (nameof(PairPerms.ExecutePatterns),                PermissionType.UniquePairPerm),
-            SPPID.PatternStopping       => (nameof(PairPerms.StopPatterns),                   PermissionType.UniquePairPerm),
-            SPPID.AlarmToggling         => (nameof(PairPerms.ToggleAlarms),                   PermissionType.UniquePairPerm),
-            SPPID.TriggerToggling       => (nameof(PairPerms.ToggleTriggers),                 PermissionType.UniquePairPerm),
+            SPPID.ToyControl            => (nameof(PairPerms.RemoteControlAccess),            PermissionType.PairPerm),
+            SPPID.PatternStarting       => (nameof(PairPerms.ExecutePatterns),                PermissionType.PairPerm),
+            SPPID.PatternStopping       => (nameof(PairPerms.StopPatterns),                   PermissionType.PairPerm),
+            SPPID.AlarmToggling         => (nameof(PairPerms.ToggleAlarms),                   PermissionType.PairPerm),
+            SPPID.TriggerToggling       => (nameof(PairPerms.ToggleTriggers),                 PermissionType.PairPerm),
 
-            SPPID.HardcoreModeState     => (nameof(PairPerms.InHardcore),                     PermissionType.UniquePairPerm),
-            SPPID.PairLockedStates      => (nameof(PairPerms.PairLockedStates),               PermissionType.UniquePairPerm),
+            SPPID.HardcoreModeState     => (nameof(PairPerms.InHardcore),                     PermissionType.PairPerm),
+            SPPID.PairLockedStates      => (nameof(PairPerms.PairLockedStates),               PermissionType.PairPerm),
 /*          SPPID.ForcedFollow          => (nameof(GlobalPerms.ForcedFollow),                 PermissionType.Global),
             SPPID.ForcedEmoteState      => (nameof(GlobalPerms.ForcedEmoteState),             PermissionType.Global),
             SPPID.ForcedStay            => (nameof(GlobalPerms.ForcedStay),                   PermissionType.Global),
@@ -132,8 +132,8 @@ public static class SPPIDExtensions
             SPPID.ChatInputHidden       => (nameof(GlobalPerms.ChatInputHidden),              PermissionType.Global),
             SPPID.ChatInputBlocked      => (nameof(GlobalPerms.ChatInputBlocked),             PermissionType.Global),
             SPPID.GarbleChannelEditing  => (nameof(GlobalPerms.ChatGarblerChannelsBitfield),  PermissionType.Global),*/
-            SPPID.PiShockShareCode      => (nameof(PairPerms.PiShockShareCode),               PermissionType.UniquePairPerm),
-            SPPID.MaxVibrateDuration    => (nameof(PairPerms.MaxVibrateDuration),             PermissionType.UniquePairPerm),
+            SPPID.PiShockShareCode      => (nameof(PairPerms.PiShockShareCode),               PermissionType.PairPerm),
+            SPPID.MaxVibrateDuration    => (nameof(PairPerms.MaxVibrateDuration),             PermissionType.PairPerm),
 
             _ => (string.Empty, PermissionType.Global)
         };

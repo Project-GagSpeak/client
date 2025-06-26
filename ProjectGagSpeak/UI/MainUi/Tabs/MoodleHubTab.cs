@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
@@ -12,10 +12,10 @@ using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MoodleHubTab : DisposableMediatorSubscriberBase

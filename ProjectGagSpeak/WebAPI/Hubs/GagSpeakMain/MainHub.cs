@@ -33,7 +33,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _kinkListener;
     private readonly ConnectionSyncService _dataSyncronizer;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly ServerConfigManager _serverConfigs;
     private readonly MainConfig _mainConfig;
 
@@ -56,7 +56,7 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         PuppeteerListener puppetListener,
         ToyboxStateListener kinkListener,
         ConnectionSyncService dataSyncronizer,
-        PairManager pairs,
+        KinksterManager pairs,
         ServerConfigManager serverConfigs,
         MainConfig mainConfig)
         : base(logger, mediator, tokenProvider, frameworkUtils)

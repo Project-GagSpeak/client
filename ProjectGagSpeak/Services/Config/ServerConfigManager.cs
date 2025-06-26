@@ -21,10 +21,7 @@ public class ServerConfigManager
         _mediator = mediator;
         _serverConfig = serverConfig;
         _nicknameConfig = nicksConfig;
-    }
 
-    public void Init()
-    {
         _serverConfig.Load();
         _nicknameConfig.Load();
     }

@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -15,10 +15,10 @@ namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
 {
     private readonly MainHub _mainHub;
-    private Pair _pairRef;
+    private Kinkster _pairRef;
 
-    public PairRestraintCombo(Pair pair, MainHub hub, ILogger log)
-        : base([.. pair.LastLightStorage.Restraints.OrderBy(x => x.Label)], log)
+    public PairRestraintCombo(ILogger log, MainHub hub, Kinkster pair)
+        : base(() => [.. pair.LastLightStorage.Restraints.OrderBy(x => x.Label)], log)
     {
         _mainHub = hub;
         _pairRef = pair;

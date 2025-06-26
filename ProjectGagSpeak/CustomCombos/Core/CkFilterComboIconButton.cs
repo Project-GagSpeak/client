@@ -1,5 +1,5 @@
 using Dalamud.Interface;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -10,14 +10,14 @@ public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
     protected FontAwesomeIcon ButtonIcon = FAI.None;
     protected string ButtonText = string.Empty;
 
-    protected CkFilterComboIconButton(IEnumerable<T> items, ILogger log, FAI icon, string buttonText)
+    protected CkFilterComboIconButton(ILogger log, FAI icon, string buttonText, IEnumerable<T> items)
         : base(items, log)
     {
         ButtonIcon = icon;
         ButtonText = buttonText;
     }
 
-    protected CkFilterComboIconButton(Func<IReadOnlyList<T>> generator, ILogger log, FAI icon, string buttonText)
+    protected CkFilterComboIconButton(ILogger log, FAI icon, string buttonText, Func<IReadOnlyList<T>> generator)
         : base(generator, log)
     {
         ButtonIcon = icon;

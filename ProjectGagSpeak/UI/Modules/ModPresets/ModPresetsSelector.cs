@@ -6,7 +6,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
 using ImGuiNET;
 using OtterGui.Text;
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class ModPresetSelector(ModSettingPresetManager manager)
 {

@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.UiRemote;
+using GagSpeak.Gui.UiRemote;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
@@ -9,13 +9,13 @@ using OtterGui.Text;
 using GagSpeak.CkCommons.Intiface;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.State;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;
 
-namespace GagSpeak.CkCommons.Gui.Toybox;
+namespace GagSpeak.Gui.Toybox;
 
 public class ToysPanel
 {

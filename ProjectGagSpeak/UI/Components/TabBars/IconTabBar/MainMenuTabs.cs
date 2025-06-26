@@ -6,7 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
 {

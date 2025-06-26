@@ -2,7 +2,7 @@ using Dalamud.Interface.Textures.TextureWraps;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 public readonly record struct ImageSizeData(int Width, int Height, int FileLength)
 {

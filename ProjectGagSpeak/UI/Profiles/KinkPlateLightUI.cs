@@ -7,20 +7,20 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 
 public class KinkPlateLightUI : WindowMediatorSubscriberBase
 {
     private readonly KinkPlateLight _lightUI;
     private readonly KinkPlateService _KinkPlateManager;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private bool _showFullUID;
 
     private bool ThemePushed = false;
 
     public KinkPlateLightUI(ILogger<KinkPlateLightUI> logger, GagspeakMediator mediator,
         KinkPlateLight plateLightUi, KinkPlateService KinkPlateManager,
-        PairManager pairManager, UserData pairUserData) : base(logger, mediator, "###KinkPlateLight" + pairUserData.UID)
+        KinksterManager pairManager, UserData pairUserData) : base(logger, mediator, "###KinkPlateLight" + pairUserData.UID)
     {
         _lightUI = plateLightUi;
         _KinkPlateManager = KinkPlateManager;

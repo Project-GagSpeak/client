@@ -22,7 +22,7 @@ namespace GagSpeak.PlayerClient;
 /// </summary>
 public class AchievementEventHandler : DisposableMediatorSubscriberBase
 {
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagspeakEventManager _events;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -31,7 +31,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private bool _isSubscribed = false;
 
     public AchievementEventHandler(ILogger<AchievementEventHandler> logger, GagspeakMediator mediator,
-        ClientAchievements saveData, PairManager pairs, GagspeakEventManager events,
+        ClientAchievements saveData, KinksterManager pairs, GagspeakEventManager events,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
         OnFrameworkService frameworkUtils) : base(logger, mediator)
     {

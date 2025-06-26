@@ -1,7 +1,7 @@
 using ImGuiNET;
 using System.Runtime.CompilerServices;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 #nullable disable
 
 // DragDrop helpers, pulled from ECommons.ImGuiMethods.ImGuiDragDrop for reference, credit to them for original code. This is an adaptation.

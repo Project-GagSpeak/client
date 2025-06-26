@@ -1,5 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services;
@@ -11,7 +12,7 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui.Components;
 public class HypnoEffectEditor : IDisposable
 {
     // Effect Constants

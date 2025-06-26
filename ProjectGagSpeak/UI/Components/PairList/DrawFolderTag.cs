@@ -4,7 +4,7 @@ using ImGuiNET;
 using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
@@ -12,7 +12,7 @@ public class DrawFolderTag : DrawFolderBase
     public DrawFolderTag(
         string id,
         IImmutableList<DrawUserPair> drawPairs, 
-        IImmutableList<Pair> allPairs,
+        IImmutableList<Kinkster> allPairs,
         ServerConfigManager configs) : base(id, drawPairs, allPairs, configs)
     { }
 

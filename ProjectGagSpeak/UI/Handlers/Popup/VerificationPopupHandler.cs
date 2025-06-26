@@ -6,7 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 internal class VerificationPopupHandler : IPopupHandler
 {

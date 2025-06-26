@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> The handler class for the popups in the UI. </summary>
 public class PopupHandler : WindowMediatorSubscriberBase

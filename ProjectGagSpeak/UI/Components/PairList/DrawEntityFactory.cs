@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Handlers;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -8,7 +8,7 @@ using GagspeakAPI.Network;
 using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class DrawEntityFactory
 {
@@ -30,10 +30,10 @@ public class DrawEntityFactory
         _cosmetics = cosmetics;
     }
 
-    public DrawFolderTag CreateDrawTagFolder(string tag, List<Pair> filteredPairs, IImmutableList<Pair> allPairs)
+    public DrawFolderTag CreateDrawTagFolder(string tag, List<Kinkster> filteredPairs, IImmutableList<Kinkster> allPairs)
         => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs, _configs);
 
-    public DrawUserPair CreateDrawPair(string id, Pair kinkster)
+    public DrawUserPair CreateDrawPair(string id, Kinkster kinkster)
         => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + kinkster.UserData.UID,
             kinkster, _hub, _nameDisplay, _mediator, _cosmetics);
 

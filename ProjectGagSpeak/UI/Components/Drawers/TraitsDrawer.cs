@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
@@ -11,7 +11,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 // Drawing methods for shared IRestriction based interactions without required dependancies.
 public class AttributeDrawer

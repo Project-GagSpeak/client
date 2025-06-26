@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;

@@ -9,7 +9,7 @@ namespace GagSpeak.Kinksters;
 /// General note to self, pairs used to have "own permissions" and "other permissions" but they were removed.
 /// <para> If down the line something like this is an answer to a problem of mine, then find a way to utilize it.</para>
 /// </summary>
-public sealed partial class PairManager : DisposableMediatorSubscriberBase
+public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 {
     /// <summary>
     /// Updates all permissions of a client pair user.

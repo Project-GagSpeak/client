@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.Gui.Handlers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -8,7 +8,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary>
 /// Class handling the draw function for a singular user pair that the client has. (one row)
@@ -18,12 +18,12 @@ public class DrawUserPair
     protected readonly MainHub _hub;
     protected readonly IdDisplayHandler _displayHandler;
     protected readonly GagspeakMediator _mediator;
-    protected Pair _pair;
+    protected Kinkster _pair;
     private readonly string _id;
     private readonly CosmeticService _cosmetics;
 
     private Dictionary<byte, bool> IsHovered = new();
-    public DrawUserPair(ILogger<DrawUserPair> logger, string id, Pair entry, MainHub hub,
+    public DrawUserPair(ILogger<DrawUserPair> logger, string id, Kinkster entry, MainHub hub,
         IdDisplayHandler uIDDisplayHandler, GagspeakMediator mediator, CosmeticService cosmetics)
     {
         _id = id;
@@ -34,7 +34,7 @@ public class DrawUserPair
         _cosmetics = cosmetics;
     }
 
-    public Pair Pair => _pair;
+    public Kinkster Pair => _pair;
 
     public bool DrawPairedClient(byte ident, bool supporterIcon = true, bool icon = true, bool iconTT = true, bool displayToggles = true, 
         bool displayNameTT = true, bool showHovered = true, bool showRightButtons = true)
@@ -145,25 +145,25 @@ public class DrawUserPair
         if (CkGui.IconButton(FAI.EllipsisV))
         {
             // open the permission setting window
-            _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.PairActionFunctions, false));
+            _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.Interactions));
         }
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Cog))
         {
-            if (Pair != null) _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.ClientPermsForPair, false));
+            if (Pair != null) _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.PermsForKinkster));
         }
-        CkGui.AttachToolTip("Set your Permissions for " + _pair.UserData.AliasOrUID);
+        CkGui.AttachToolTip($"Set your Permissions for {_pair.UserData.AliasOrUID}");
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Search))
         {
             // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
-            _mediator.Publish(new OpenPairPerms(_pair, StickyWindowType.PairPerms, false));
+            _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.KinkstersPerms));
         }
-        CkGui.AttachToolTip("Inspect " + _pair.UserData.AliasOrUID + "'s permissions");
+        CkGui.AttachToolTip($"Inspect {_pair.UserData.AliasOrUID}'s permissions");
 
         return currentRightSide;
     }

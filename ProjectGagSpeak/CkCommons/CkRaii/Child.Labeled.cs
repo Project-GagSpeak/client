@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using ImGuiNET;
 
 namespace GagSpeak.CkCommons.Raii;

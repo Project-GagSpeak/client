@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -15,13 +15,13 @@ namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 {
     private readonly MainHub _mainHub;
-    private Pair _pairRef;
+    private Kinkster _ref;
 
-    public PairRestrictionCombo(Pair pair, MainHub hub, ILogger log)
-        : base([.. pair.LastLightStorage.Restrictions.OrderBy(x => x.Label)], log)
+    public PairRestrictionCombo(ILogger log, MainHub hub, Kinkster kinkster)
+        : base(() => [.. kinkster.LastLightStorage.Restrictions.OrderBy(x => x.Label)], log)
     {
         _mainHub = hub;
-        _pairRef = pair;
+        _ref = kinkster;
         Current = default;
     }
 
@@ -55,18 +55,18 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 
 
     protected override bool DisableCondition()
-        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == Current.Id;
+        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.LastRestraintData.Identifier == Current.Id;
 
     protected override async Task<bool> OnButtonPress(int layerIdx)
     {
         if (Current is null)
             return false;
 
-        var updateType = _pairRef.LastRestrictionsData.Restrictions[layerIdx].Identifier== Guid.Empty
+        var updateType = _ref.LastRestrictionsData.Restrictions[layerIdx].Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
 
         // construct the dto to send.
-        var dto = new PushKinksterRestrictionUpdate(_pairRef.UserData, updateType)
+        var dto = new PushKinksterRestrictionUpdate(_ref.UserData, updateType)
         {
             Layer = layerIdx,
             RestrictionId = Current.Id,
@@ -76,12 +76,12 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
             return false;
         }
         else
         {
-            Log.LogDebug($"Applying Restraint with {Current.Label} on {_pairRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             return true;
         }
     }

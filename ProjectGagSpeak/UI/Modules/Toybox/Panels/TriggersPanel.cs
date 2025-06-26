@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
@@ -13,7 +13,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.UiToybox;
+namespace GagSpeak.Gui.UiToybox;
 
 public partial class TriggersPanel
 {

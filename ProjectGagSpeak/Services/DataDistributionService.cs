@@ -15,7 +15,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
@@ -31,7 +31,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
     public DataDistributionService(ILogger<DataDistributionService> logger, GagspeakMediator mediator,
-        MainHub hub, ClientAchievements achievements, PairManager pairManager, GagRestrictionManager gags,
+        MainHub hub, ClientAchievements achievements, KinksterManager pairManager, GagRestrictionManager gags,
         RestrictionManager restrictions, RestraintManager restraints, CursedLootManager cursedLoot,
         PuppeteerManager puppetManager, PatternManager patterns, AlarmManager alarms,
         TriggerManager triggers, TraitAllowanceManager traitAllowances)

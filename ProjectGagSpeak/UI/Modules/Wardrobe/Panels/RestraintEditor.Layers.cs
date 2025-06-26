@@ -1,6 +1,6 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
@@ -14,7 +14,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class RestraintEditorLayers : IFancyTab
 {

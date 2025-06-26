@@ -18,9 +18,9 @@ namespace GagSpeak.Kinksters;
 
 /// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
 /// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
-public class Pair : IComparable<Pair>
+public class Kinkster : IComparable<Kinkster>
 {
-    private readonly ILogger<Pair> _logger;
+    private readonly ILogger<Kinkster> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly PairHandlerFactory _cachedPlayerFactory;
     private readonly SemaphoreSlim _creationSemaphore = new(1);
@@ -30,7 +30,7 @@ public class Pair : IComparable<Pair>
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
-    public Pair(KinksterPair pair, ILogger<Pair> logger, GagspeakMediator mediator,
+    public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
         PairHandlerFactory factory, ServerConfigManager nicks, CosmeticService cosmetics)
     {
         _logger = logger;
@@ -70,6 +70,7 @@ public class Pair : IComparable<Pair>
     public bool IsPaused => UserPair.OwnPerms.IsPaused;
     public bool IsOnline => CachedPlayer != null;
     public bool IsVisible => CachedPlayer?.IsVisible ?? false;
+    public bool HasShockCollar => PairGlobals.HasValidShareCode() || PairPerms.HasValidShareCode();
     public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null;
     public string PlayerName => CachedPlayer?.PlayerName ?? UserData.AliasOrUID ?? string.Empty;  // Name of pair player. If empty, (pair handler) CachedData is not initialized yet.
     public string PlayerNameWithWorld => CachedPlayer?.PlayerNameWithWorld ?? string.Empty;
@@ -77,7 +78,7 @@ public class Pair : IComparable<Pair>
     public Dictionary<EquipSlot, (EquipItem, string)> LockedSlots { get; private set; } = new(); // the locked slots of the pair. Used for quick reference in profile viewer.
 
     // IComparable satisfier
-    public int CompareTo(Pair? other)
+    public int CompareTo(Kinkster? other)
     {
         if (other is null)
             return 1;
@@ -113,7 +114,7 @@ public class Pair : IComparable<Pair>
             Name = new SeStringBuilder().AddText("Pair Actions").Build(),
             PrefixChar = 'G',
             PrefixColor = 561,
-            OnClicked = (a) => { _mediator.Publish(new OpenPairPerms(this, StickyWindowType.PairActionFunctions, true)); },
+            OnClicked = (a) => { _mediator.Publish(new KinksterInteractionUiChangeMessage(this, InteractionsTab.Interactions)); },
         });
     }
 

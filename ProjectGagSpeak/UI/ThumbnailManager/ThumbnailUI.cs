@@ -2,7 +2,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.Utils;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +11,7 @@ using OtterGui.Text;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public readonly record struct ImageMetadataGS(ImageDataType Kind, Vector2 BaseSize, Guid SourceId);
 

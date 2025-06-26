@@ -7,7 +7,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary>
 /// The base for the draw folder, which is a dropdown section in the list of paired users, and handles the basic draw functionality

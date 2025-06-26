@@ -8,7 +8,7 @@ using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 public class SettingsHardcore
 {

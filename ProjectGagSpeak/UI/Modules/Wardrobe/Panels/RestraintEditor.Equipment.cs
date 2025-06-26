@@ -2,13 +2,13 @@ using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.FileSystems;
 using GagSpeak.State.Managers;
 using ImGuiNET;
 using Penumbra.GameData.Enums;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class RestraintEditorEquipment : IFancyTab
 {

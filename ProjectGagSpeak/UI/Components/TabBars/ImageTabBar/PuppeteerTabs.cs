@@ -1,6 +1,6 @@
 using GagSpeak.CkCommons.Widgets;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 public class PuppeteerTabs : ImageTabBar<PuppeteerTabs.SelectedTab>
 {

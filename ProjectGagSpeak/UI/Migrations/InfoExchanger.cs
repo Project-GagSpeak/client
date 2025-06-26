@@ -3,7 +3,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary>
 /// Helps with copying over details stored on other GagSpeak accounts.

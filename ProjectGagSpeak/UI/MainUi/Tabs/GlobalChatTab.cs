@@ -14,7 +14,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class GlobalChatTab : DisposableMediatorSubscriberBase

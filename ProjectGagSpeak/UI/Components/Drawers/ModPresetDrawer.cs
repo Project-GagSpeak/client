@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -11,8 +11,9 @@ using ImGuiNET;
 using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
+using GagSpeak.CkCommons;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 // This class will automate the drawing of checkboxes, buttons, sliders and more used across the various UI elements through a modular approach.
 public sealed class ModPresetDrawer
 {

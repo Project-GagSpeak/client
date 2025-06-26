@@ -9,7 +9,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
 {
     private CustomizeProfileCombo _profileCombo;

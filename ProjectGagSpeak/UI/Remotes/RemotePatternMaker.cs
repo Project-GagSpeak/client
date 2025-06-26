@@ -8,7 +8,7 @@ using ImGuiNET;
 using OtterGui;
 using System.Timers;
 
-namespace GagSpeak.CkCommons.Gui.UiRemote;
+namespace GagSpeak.Gui.UiRemote;
 
 public class RemotePatternMaker : RemoteBase
 {

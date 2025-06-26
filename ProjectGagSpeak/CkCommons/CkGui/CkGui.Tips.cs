@@ -6,7 +6,7 @@ using OtterGui.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 // Partial Class for Text Display Helpers.
 public static partial class CkGui

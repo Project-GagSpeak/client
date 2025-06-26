@@ -13,14 +13,14 @@ namespace GagSpeak.Services.Events;
 public class EventAggregator : MediatorSubscriberBase, IHostedService
 {
     private readonly ILogger<EventAggregator> _logger;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
 
     private readonly RollingList<InteractionEvent> _events = new(500);
     private readonly SemaphoreSlim _lock = new(1);
     private string CurrentLogName => $"{DateTime.Now:yyyy-MM-dd}-events.log";
     private DateTime _currentTime;
 
-    public EventAggregator(ILogger<EventAggregator> logger, GagspeakMediator mediator, PairManager pairs) 
+    public EventAggregator(ILogger<EventAggregator> logger, GagspeakMediator mediator, KinksterManager pairs) 
         : base(logger, mediator)
     {
         _logger = logger;

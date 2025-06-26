@@ -1,5 +1,5 @@
 using Dalamud.Interface;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;

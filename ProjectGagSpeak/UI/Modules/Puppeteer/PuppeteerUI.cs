@@ -1,13 +1,13 @@
 using Dalamud.Interface.Utility;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
-using static GagSpeak.CkCommons.Gui.Components.PuppeteerTabs;
+using static GagSpeak.Gui.Components.PuppeteerTabs;
 
-namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+namespace GagSpeak.Gui.Modules.Puppeteer;
 
 public class PuppeteerUI : WindowMediatorSubscriberBase
 {

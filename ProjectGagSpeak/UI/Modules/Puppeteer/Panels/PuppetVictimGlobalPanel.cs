@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
@@ -16,7 +16,7 @@ using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+namespace GagSpeak.Gui.Modules.Puppeteer;
 public sealed partial class PuppetVictimGlobalPanel
 {
     private readonly ILogger<PuppetVictimGlobalPanel> _logger;

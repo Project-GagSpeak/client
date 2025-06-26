@@ -1,5 +1,5 @@
 using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;

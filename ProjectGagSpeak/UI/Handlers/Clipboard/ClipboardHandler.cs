@@ -1,6 +1,6 @@
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 public class ClipboardHandler<T> : IClipboardHandler<T>
 {

@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.Gui.Handlers;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -13,19 +13,19 @@ using System.Collections.Immutable;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
     private readonly IdDisplayHandler _nameHandle;
     private readonly TraitAllowanceManager _manager;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly FavoritesManager _favorites;
     private readonly CosmeticService _cosmetics;
 
     public TraitAllowanceSelector(ILogger<TraitAllowanceSelector> logger,
         GagspeakMediator mediator, MainConfig config,
-        IdDisplayHandler handler, TraitAllowanceManager manager, PairManager pairs,
+        IdDisplayHandler handler, TraitAllowanceManager manager, KinksterManager pairs,
         FavoritesManager favorites, CosmeticService cosmetics) : base(logger, mediator)
     {
         _config = config;
@@ -38,15 +38,15 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
         Mediator.Subscribe<RefreshUiMessage>(this, _ => UpdatePairList());
     }
 
-    private ImmutableList<Pair>  _immutablePairs = ImmutableList<Pair>.Empty;
+    private ImmutableList<Kinkster>  _immutablePairs = ImmutableList<Kinkster>.Empty;
     // Internal Storage.
     private string              _searchValue = string.Empty;
     private float               _availableWidth = 0f;
-    private HashSet<Pair>       _selectedPairs = new HashSet<Pair>();
-    private Pair?               _lastPair = null;
+    private HashSet<Kinkster>       _selectedPairs = new HashSet<Kinkster>();
+    private Kinkster?               _lastPair = null;
 
-    public ImmutableList<Pair>  FilteredPairs => _immutablePairs;
-    public HashSet<Pair>        SelectedPairs => _selectedPairs;
+    public ImmutableList<Kinkster>  FilteredPairs => _immutablePairs;
+    public HashSet<Kinkster>        SelectedPairs => _selectedPairs;
 
     public void DrawSearch()
     {
@@ -121,14 +121,14 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
     }
 
 
-    private bool CheckFilter(Pair pair)
+    private bool CheckFilter(Kinkster pair)
     {
         return pair.UserData.AliasOrUID.Contains(_searchValue, StringComparison.OrdinalIgnoreCase)
             || (pair.GetNickname()?.Contains(_searchValue, StringComparison.OrdinalIgnoreCase) ?? false)
             || (pair.PlayerName?.Contains(_searchValue, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
-    private void DrawSelectable(Pair pair)
+    private void DrawSelectable(Kinkster pair)
     {
         var selected = _selectedPairs.Contains(pair);
         var dispText = _nameHandle.GetPlayerText(pair);
@@ -243,7 +243,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
         ImGui.SameLine();
     }
 
-    private Vector2 DrawRight(string dispName, Pair pair)
+    private Vector2 DrawRight(string dispName, Kinkster pair)
     {
         var endX = ImGui.GetContentRegionAvail().X;
         var currentX = endX - ImGui.GetTextLineHeightWithSpacing();

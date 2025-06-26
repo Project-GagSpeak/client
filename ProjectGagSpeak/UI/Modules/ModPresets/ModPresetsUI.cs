@@ -5,7 +5,7 @@ using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using GagSpeak.CkCommons.Widgets;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class ModPresetsUI : WindowMediatorSubscriberBase
 {

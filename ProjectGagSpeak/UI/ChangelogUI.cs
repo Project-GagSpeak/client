@@ -2,10 +2,10 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using ImGuiNET;
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
 {

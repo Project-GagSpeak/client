@@ -4,7 +4,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using OtterGui.Widgets;
 
-namespace GagSpeak.CkCommons.Gui.Utility;
+namespace GagSpeak.Gui.Utility;
 
 // Mimics the penumbra mod groups from penumbra mod selection.
 public static partial class CkGuiUtils

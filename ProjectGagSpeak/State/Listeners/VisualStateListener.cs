@@ -18,7 +18,7 @@ namespace GagSpeak.State.Listeners;
 public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 {
     private readonly IpcManager             _interop;
-    private readonly PairManager            _pairs;
+    private readonly KinksterManager            _pairs;
     private readonly RestraintManager       _restraints;
     private readonly RestrictionManager     _restrictions;
     private readonly GagRestrictionManager  _gags;
@@ -30,7 +30,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         GagspeakMediator mediator,
         MainConfig config,
         IpcManager interop,
-        PairManager pairs,
+        KinksterManager pairs,
         RestraintManager restraints,
         RestrictionManager restrictions,
         GagRestrictionManager gags,

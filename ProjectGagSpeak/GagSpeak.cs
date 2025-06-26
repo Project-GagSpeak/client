@@ -5,20 +5,20 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Components;
-using GagSpeak.CkCommons.Gui.Handlers;
-using GagSpeak.CkCommons.Gui.MainWindow;
-using GagSpeak.CkCommons.Gui.Modules.Puppeteer;
-using GagSpeak.CkCommons.Gui.Profile;
-using GagSpeak.CkCommons.Gui.Publications;
-using GagSpeak.CkCommons.Gui.Toybox;
-using GagSpeak.CkCommons.Gui.UiRemote;
-using GagSpeak.CkCommons.Gui.UiToybox;
-using GagSpeak.CkCommons.Gui.Wardrobe;
 using GagSpeak.FileSystems;
 using GagSpeak.Game.Readers;
 using GagSpeak.GameInternals.Detours;
+using GagSpeak.Gui;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Handlers;
+using GagSpeak.Gui.MainWindow;
+using GagSpeak.Gui.Modules.Puppeteer;
+using GagSpeak.Gui.Profile;
+using GagSpeak.Gui.Publications;
+using GagSpeak.Gui.Toybox;
+using GagSpeak.Gui.UiRemote;
+using GagSpeak.Gui.UiToybox;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
@@ -46,7 +46,6 @@ using OtterGui.Log;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 
 namespace GagSpeak;
 
@@ -217,7 +216,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GameObjectHandlerFactory>()
         .AddSingleton<PairFactory>()
         .AddSingleton<PairHandlerFactory>()
-        .AddSingleton<PairManager>()
+        .AddSingleton<KinksterManager>()
 
         // Services (Deathroll)
         .AddSingleton<DeathRollService>()
@@ -241,7 +240,6 @@ public static class GagSpeakServiceExtensions
 
         // Services (Textures)
         .AddSingleton<CosmeticService>()
-        .AddSingleton<MoodleIcons>()
 
         // Services (Tutorial)
         .AddSingleton<TutorialService>()

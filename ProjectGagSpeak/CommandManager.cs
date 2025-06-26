@@ -4,8 +4,8 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.MainWindow;
+using GagSpeak.Gui;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
@@ -22,10 +22,10 @@ public sealed class CommandManager : IDisposable
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _mainConfig;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private readonly ServerConfigService _serverConfig;
     private readonly DeathRollService _deathRolls;
-    public CommandManager(GagspeakMediator mediator, MainConfig config, PairManager pairManager,
+    public CommandManager(GagspeakMediator mediator, MainConfig config, KinksterManager pairManager,
         ServerConfigService server, DeathRollService dr)
     {
         _mediator = mediator;

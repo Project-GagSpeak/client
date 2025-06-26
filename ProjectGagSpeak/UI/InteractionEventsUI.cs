@@ -7,7 +7,7 @@ using OtterGui.Text;
 using OtterGui;
 using GagSpeak.Services.Configs;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 internal class InteractionEventsUI : WindowMediatorSubscriberBase
 {

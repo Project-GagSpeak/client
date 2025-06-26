@@ -1,8 +1,8 @@
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.Handlers;
+using GagSpeak.Gui.Handlers;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.MainWindow;
+namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> 
 /// Sub-class of the main UI window. Handles drawing the whitelist/contacts tab of the main UI.

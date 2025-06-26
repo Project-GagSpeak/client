@@ -37,7 +37,7 @@ public class HardcoreHandler
         _chatbox = chatbox;
     }
 
-    public void EnableForcedFollow(Pair? pair = null)
+    public void EnableForcedFollow(Kinkster? pair = null)
     {
         if(pair is null)
         {

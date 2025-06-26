@@ -1,7 +1,7 @@
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 
 /// <summary>
 /// Helper Functions for Drawing out the components.

@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -32,7 +32,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         _mainConfig = mainConfig;
         _serverConfigs = serverConfigs;
         _serviceScopeFactory = scopeFactory;
-        _serverConfigs.Init();
     }
     /// <summary> 
     /// The task to run after all services have been properly constructed.

@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
@@ -14,7 +14,7 @@ using ImGuiNET;
 using OtterGui.Text;
 using OtterGui.Text.Widget.Editors;
 
-namespace GagSpeak.CkCommons.Gui.Toybox;
+namespace GagSpeak.Gui.Toybox;
 
 public partial class AlarmsPanel
 {

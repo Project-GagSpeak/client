@@ -10,7 +10,7 @@ using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui;
 
-namespace GagSpeak.CkCommons.Gui;
+namespace GagSpeak.Gui;
 
 /// <summary> The introduction UI that will be shown the first time that the user starts the plugin. </summary>
 public class IntroUi : WindowMediatorSubscriberBase

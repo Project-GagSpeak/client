@@ -14,7 +14,7 @@ public sealed class ToyboxStateListener
 {
     private readonly ILogger<ToyboxStateListener> _logger;
     private readonly GagspeakMediator   _mediator;
-    private readonly PairManager        _pairs;
+    private readonly KinksterManager        _pairs;
 
     // Managers:
     // - SexToyManager (Manages what kind of toy is connected (actual vs simulated), and handles various reactions.
@@ -34,7 +34,7 @@ public sealed class ToyboxStateListener
     public ToyboxStateListener(
         ILogger<ToyboxStateListener> logger,
         GagspeakMediator mediator,
-        PairManager pairs,
+        KinksterManager pairs,
         PatternManager patterns,
         AlarmManager alarmManager,
         TriggerManager triggers,

@@ -2,7 +2,7 @@ using ImGuiNET;
 using OtterGui.Raii;
 using System.Linq;
 
-namespace GagSpeak.CkCommons.Gui.Utility;
+namespace GagSpeak.Gui.Utility;
 public static partial class CkGuiUtils
 {
     /// <summary> Yanked variant of GenericEnumCombo from ImGui, with a custom display text when not found.

@@ -9,11 +9,11 @@ namespace GagSpeak.State.Listeners;
 public sealed class PuppeteerListener
 {
     private readonly GagspeakMediator _mediator;
-    private readonly PairManager _pairs;
+    private readonly KinksterManager _pairs;
     private readonly PuppeteerManager _aliasManager;
     public PuppeteerListener(
         GagspeakMediator mediator,
-        PairManager pairs,
+        KinksterManager pairs,
         PuppeteerManager aliasManager)
     {
         _mediator = mediator;

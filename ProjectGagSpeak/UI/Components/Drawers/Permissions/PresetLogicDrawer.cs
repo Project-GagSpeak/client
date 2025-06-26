@@ -1,127 +1,126 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui;
+using GagSpeak.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;
+using GagSpeak.Services;
+using GagspeakAPI.Hub;
 
-namespace GagSpeak.Services;
+namespace GagSpeak.Gui.Components;
 
 public class PresetLogicDrawer
 {
     private readonly ILogger<PresetLogicDrawer> _logger;
     private readonly MainHub _hub;
+
+    private PresetName _selected = PresetName.NoneSelected;
     public PresetLogicDrawer(ILogger<PresetLogicDrawer> logger, MainHub hub)
     {
         _logger = logger;
         _hub = hub;
     }
+    private bool DisableUI => UiService.DisableUI;
 
-    public DateTime LastApplyTime { get; private set; } = DateTime.MinValue;
-    public PresetName SelectedPreset { get; private set; } = PresetName.NoneSelected;
-
-    public void DrawPresetList(Pair pairToDrawListFor, float width)
+    public void DrawPresetList(Kinkster pairToDrawListFor, float width)
     {
-        // before drawing, we need to know if we should disable it or not.
-        // It's OK if things are active for the player, since it doesn't actually trigger everything at once.
-        var disabledCondition = DateTime.UtcNow - LastApplyTime < TimeSpan.FromSeconds(10) || pairToDrawListFor.OwnPerms.InHardcore;
-
         var comboW = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
-        using (var disabled = ImRaii.Disabled(disabledCondition))
+        using (ImRaii.Disabled(DisableUI))
         {
-            if(CkGuiUtils.EnumCombo("##Presets", comboW, SelectedPreset, out var newVal))
-                SelectedPreset = newVal;
+            if(CkGuiUtils.EnumCombo("##Presets", comboW, _selected, out var newVal))
+                _selected = newVal;
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Sync, "Apply Preset", disabled: SelectedPreset is PresetName.NoneSelected))
+            if (CkGui.IconTextButton(FAI.Sync, "Apply Preset", disabled: _selected is PresetName.NoneSelected))
             {
                 ApplySelectedPreset(pairToDrawListFor);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PresetApplied);
             }
         }
         CkGui.AttachToolTip(pairToDrawListFor.OwnPerms.InHardcore
-            ? "Cannot execute presets while in Hardcore mode."
-            : disabledCondition
-                ? "You must wait 10 seconds between applying presets."
-                : "Select a permission preset to apply for this pair." + Environment.NewLine + "Will update your permissions in bulk. (10s Cooldown)");
+            ? "Can't use while in Hardcore mode!" 
+            : "Select a preset to apply for this Kinkster.--NL--This will update your permissions in bulk.");
     }
 
-    private void ApplySelectedPreset(Pair pairToDrawListFor)
+    private void ApplySelectedPreset(Kinkster pairToDrawListFor)
     {
         // get the correct preset we are applying, and execute the action. Afterwards, set the last executed time.
-        try
+        Tuple<PairPerms, PairPermAccess> permissionTuple;
+        switch (_selected)
         {
-            Tuple<PairPerms, PairPermAccess> permissionTuple;
-            switch (SelectedPreset)
-            {
-                case PresetName.Dominant:
-                    permissionTuple = PresetDominantSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Dominant");
-                    break;
+            case PresetName.Dominant:
+                permissionTuple = PresetDominantSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Dominant");
+                break;
 
-                case PresetName.Brat:
-                    permissionTuple = PresetBratSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Brat");
-                    break;
+            case PresetName.Brat:
+                permissionTuple = PresetBratSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Brat");
+                break;
 
-                case PresetName.RopeBunny:
-                    permissionTuple = PresetRopeBunnySetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "RopeBunny");
-                    break;
+            case PresetName.RopeBunny:
+                permissionTuple = PresetRopeBunnySetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "RopeBunny");
+                break;
 
-                case PresetName.Submissive:
-                    permissionTuple = PresetSubmissiveSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Submissive");
-                    break;
+            case PresetName.Submissive:
+                permissionTuple = PresetSubmissiveSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Submissive");
+                break;
 
-                case PresetName.Slut:
-                    permissionTuple = PresetSlutSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Slut");
-                    break;
+            case PresetName.Slut:
+                permissionTuple = PresetSlutSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Slut");
+                break;
 
-                case PresetName.Pet:
-                    permissionTuple = PresetPetSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Pet");
-                    break;
+            case PresetName.Pet:
+                permissionTuple = PresetPetSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Pet");
+                break;
 
-                case PresetName.Slave:
-                    permissionTuple = PresetSlaveSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "Slave");
-                    break;
+            case PresetName.Slave:
+                permissionTuple = PresetSlaveSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "Slave");
+                break;
 
-                case PresetName.OwnersSlut:
-                    permissionTuple = PresetOwnersSlutSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersSlut");
-                    break;
+            case PresetName.OwnersSlut:
+                permissionTuple = PresetOwnersSlutSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersSlut");
+                break;
 
-                case PresetName.OwnersPet:
-                    permissionTuple = PresetOwnersPetSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersPet");
-                    break;
+            case PresetName.OwnersPet:
+                permissionTuple = PresetOwnersPetSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersPet");
+                break;
 
-                case PresetName.OwnersSlave:
-                    permissionTuple = PresetOwnersSlaveSetup();
-                    PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersSlave");
-                    break;
+            case PresetName.OwnersSlave:
+                permissionTuple = PresetOwnersSlaveSetup();
+                PushCmdToServer(pairToDrawListFor, permissionTuple, "OwnersSlave");
+                break;
 
-                default:
-                    _logger.LogWarning("No preset selected for pair {pair}", pairToDrawListFor.UserData.UID);
-                    break;
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error applying preset {preset} to pair {pair}", SelectedPreset, pairToDrawListFor.UserData.UID);
+            default:
+                _logger.LogWarning("No preset selected for pair {pair}", pairToDrawListFor.UserData.UID);
+                break;
         }
     }
 
-    private void PushCmdToServer(Pair pairToDrawListFor, Tuple<PairPerms, PairPermAccess> permTuple, string presetName)
+    private void PushCmdToServer(Kinkster kinkster, Tuple<PairPerms, PairPermAccess> perms, string presetName)
     {
-        _ = _hub.UserBulkChangeUnique(new(pairToDrawListFor.UserData, permTuple.Item1, permTuple.Item2));
-        _logger.LogInformation("Applied {preset} preset to pair {pair}", presetName, pairToDrawListFor.UserData.UID);
-        LastApplyTime = DateTime.UtcNow;
+        UiService.SetUITask(Task.Run(async () =>
+        {
+            var res = await _hub.UserBulkChangeUnique(new(kinkster.UserData, perms.Item1, perms.Item2));
+            if (res.ErrorCode != GagSpeakApiEc.Success)
+            {
+                _logger.LogError($"Failed preset application for [{kinkster.GetNickAliasOrUid()}]. Error: {res.ErrorCode}");
+                return;
+            }
+            else
+            {
+                _logger.LogInformation($"Applied Preset [{presetName}] to Kinkster [{kinkster.GetNickAliasOrUid()}]");
+            }
+        }));
     }
 
     private Tuple<PairPerms, PairPermAccess> PresetDominantSetup()

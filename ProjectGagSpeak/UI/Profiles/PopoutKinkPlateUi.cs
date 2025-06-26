@@ -1,22 +1,22 @@
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.CkCommons.Gui.MainWindow;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
 using ImGuiNET;
 
-namespace GagSpeak.CkCommons.Gui.Profile;
+namespace GagSpeak.Gui.Profile;
 
 public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 {
     private readonly KinkPlateLight _lightUI;
     private readonly KinkPlateService _KinkPlateManager;
-    private readonly PairManager _pairManager;
+    private readonly KinksterManager _pairManager;
     private UserData? _userDataToDisplay;
     private bool ThemePushed = false;
 
     public PopoutKinkPlateUi(ILogger<PopoutKinkPlateUi> logger, GagspeakMediator mediator,
-        KinkPlateLight plateLightUi, KinkPlateService manager, PairManager pairs) 
+        KinkPlateLight plateLightUi, KinkPlateService manager, KinksterManager pairs) 
         : base(logger, mediator, "###GagSpeakPopoutProfileUI")
     {
         _lightUI = plateLightUi;

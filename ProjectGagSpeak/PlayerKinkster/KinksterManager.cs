@@ -16,17 +16,17 @@ namespace GagSpeak.Kinksters;
 /// General note to self, pairs used to have "own permissions" and "other permissions" but they were removed.
 /// <para> If down the line something like this is an answer to a problem of mine, then find a way to utilize it.</para>
 /// </summary>
-public sealed partial class PairManager : DisposableMediatorSubscriberBase
+public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 {
-    private readonly ConcurrentDictionary<UserData, Pair> _allClientPairs;  // concurrent dictionary of all paired paired to the client.
+    private readonly ConcurrentDictionary<UserData, Kinkster> _allClientPairs;  // concurrent dictionary of all paired paired to the client.
     private readonly MainConfig _mainConfig;
     private readonly ServerConfigManager _serverConfigs;
     private readonly PairFactory _pairFactory;
     
-    private Lazy<List<Pair>> _directPairsInternal;                          // the internal direct pairs lazy list for optimization
-    public List<Pair> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
+    private Lazy<List<Kinkster>> _directPairsInternal;                          // the internal direct pairs lazy list for optimization
+    public List<Kinkster> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
 
-    public PairManager(ILogger<PairManager> logger, GagspeakMediator mediator,
+    public KinksterManager(ILogger<KinksterManager> logger, GagspeakMediator mediator,
         PairFactory factory, MainConfig config, ServerConfigManager serverConfigs) 
         : base(logger, mediator)
     {
@@ -144,7 +144,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Fetches the filtered list of user pair objects where only users that are currently online are returned.</summary>
-    public List<Pair> GetOnlineUserPairs()
+    public List<Kinkster> GetOnlineUserPairs()
         => _allClientPairs.Where(p => !string.IsNullOrEmpty(p.Value.GetPlayerNameHash())).Select(p => p.Value).ToList();
 
     /// <summary> Fetches all online userPairs, but returns the key instead of value like above.</summary>
@@ -362,7 +362,7 @@ public sealed partial class PairManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> The lazy list of direct pairs, remade from the _allClientPairs</summary>
-    private Lazy<List<Pair>> DirectPairsLazy() => new(() => _allClientPairs.Select(k => k.Value).ToList());
+    private Lazy<List<Kinkster>> DirectPairsLazy() => new(() => _allClientPairs.Select(k => k.Value).ToList());
 
     /// <summary> Disposes of all the pairs in the client's pair list.</summary>
     private void DisposePairs()

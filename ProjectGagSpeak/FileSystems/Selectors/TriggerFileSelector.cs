@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using GagSpeak.CkCommons.FileSystem;
 using GagSpeak.CkCommons.FileSystem.Selector;
-using GagSpeak.CkCommons.Gui;
+using GagSpeak.Gui;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using ImGuiNET;

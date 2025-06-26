@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
@@ -14,8 +14,9 @@ using GagSpeak.Utils;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
+using GagSpeak.CkCommons;
 
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 // Scoped, sealed class to draw the editor and display components of aliasItems.
 public sealed partial class TriggerDrawer : IDisposable
@@ -76,7 +77,7 @@ public sealed partial class TriggerDrawer : IDisposable
                 : SpellActionService.AllActions.OrderBy(c => c.ParentJob)
         ]);
 
-        _emoteCombo = new EmoteCombo(1.15f, iconDisplayer, logger);
+        _emoteCombo = new EmoteCombo(logger, 1.15f);
 
         // Listener for refreshing the actions and stuff.
         _jobCombo.SelectionChanged += OnJobSelected;
@@ -249,7 +250,7 @@ public sealed partial class TriggerDrawer : IDisposable
         // Combo Row.
         using (ImRaii.Group())
         {
-            var img = _iconDisplayer.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
+            var img = MoodleIcons.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
             ImGui.Image(img.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
 
             ImUtf8.SameLineInner();
@@ -295,7 +296,7 @@ public sealed partial class TriggerDrawer : IDisposable
                     continue;
 
                 // Draw the icon.
-                ImGui.Image(_iconDisplayer.GetGameIconOrEmpty(iconData.IconID).ImGuiHandle, iconSize);
+                ImGui.Image(MoodleIcons.GetGameIconOrEmpty(iconData.IconID).ImGuiHandle, iconSize);
                 if(ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     // Remove the action from the list.

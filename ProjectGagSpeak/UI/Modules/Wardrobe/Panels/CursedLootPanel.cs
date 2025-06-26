@@ -8,7 +8,7 @@ using GagSpeak.FileSystems;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -16,7 +16,7 @@ using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Wardrobe;
+namespace GagSpeak.Gui.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 {
     private readonly CursedLootFileSelector _selector;

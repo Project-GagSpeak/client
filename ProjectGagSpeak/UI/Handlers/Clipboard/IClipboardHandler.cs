@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 public interface IClipboardHandler<T>
 {
     void Copy(T item);

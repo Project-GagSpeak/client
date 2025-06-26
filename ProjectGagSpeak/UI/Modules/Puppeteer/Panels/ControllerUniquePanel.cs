@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Components;
+using GagSpeak.Gui.Components;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Kinksters;
@@ -14,7 +14,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 
-namespace GagSpeak.CkCommons.Gui.Modules.Puppeteer;
+namespace GagSpeak.Gui.Modules.Puppeteer;
 public partial class ControllerUniquePanel : IDisposable
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
@@ -34,7 +34,7 @@ public partial class ControllerUniquePanel : IDisposable
         AliasItemDrawer aliasDrawer,
         PuppeteerManager manager,
         FavoritesManager favorites,
-        PairManager pairs,
+        KinksterManager pairs,
         CosmeticService cosmetics)
     {
         _logger = logger;

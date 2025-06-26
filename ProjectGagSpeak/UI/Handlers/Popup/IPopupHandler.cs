@@ -1,4 +1,4 @@
-namespace GagSpeak.CkCommons.Gui.Components;
+namespace GagSpeak.Gui.Components;
 
 /// <summary> A interface for handling the popups in the UI. </summary>
 public interface IPopupHandler
