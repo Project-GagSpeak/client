@@ -1,3 +1,4 @@
+using CkCommons.Classes;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
@@ -5,7 +6,6 @@ using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
-using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Models;
@@ -61,8 +61,8 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
-    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
+    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public CustomizeProfile CPlusProfile { get; set; } = CustomizeProfile.Empty;
     public bool DoRedraw { get; set; } = false;
 
@@ -126,8 +126,8 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             Moodle = moodles,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
-            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
-            VisorState = GsExtensions.FromJObject(json["VisorState"]),
+            HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
+            VisorState = TriStateBool.FromJObject(json["VisorState"]),
             CPlusProfile = new CustomizeProfile(profileId, profilePrio),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
@@ -221,8 +221,8 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
 public class HypnoticRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Hypnotic;
-    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
+    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public HypnoticOverlay Properties { get; set; } = new();
 
     public HypnoticRestriction() 
@@ -280,8 +280,8 @@ public class HypnoticRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
-            VisorState = GsExtensions.FromJObject(json["VisorState"]),
+            HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
+            VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<HypnoticOverlay>() ?? new HypnoticOverlay(),
         };
     }
@@ -291,8 +291,8 @@ public class HypnoticRestriction : RestrictionItem
 public class BlindfoldRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
-    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
+    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
+    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public BlindfoldOverlay Properties { get; set; } = new("Blindfold_Light.png");
 
     public BlindfoldRestriction()
@@ -353,8 +353,8 @@ public class BlindfoldRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
-            VisorState = GsExtensions.FromJObject(json["VisorState"]),
+            HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
+            VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<BlindfoldOverlay>() ?? new BlindfoldOverlay(),
         };
     }

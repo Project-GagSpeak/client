@@ -1,17 +1,17 @@
+using CkCommons;
+using CkCommons.Classes;
+using CkCommons.Gui;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using CkCommons;
-using GagSpeak.Gui;
-using CkCommons.Widgets;
+using Dalamud.Plugin.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using ImGuiNET;
-using Lumina.Extensions;
 using OtterGui;
-using OtterGui.Classes;
+using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
-using CkCommons.Gui;
 
 namespace GagSpeak.State.Caches;
 
@@ -28,13 +28,12 @@ public class GlamourCache
     }
 
     private readonly SortedList<(CombinedCacheKey, EquipSlot), GlamourSlot> _glamours = new();
-    private readonly Dictionary<MetaIndex, SortedList<CombinedCacheKey, OptionalBool>> _metaStates = new()
+    private readonly Dictionary<MetaIndex, SortedList<CombinedCacheKey, TriStateBool>> _metaStates = new()
     {
-        { MetaIndex.HatState, new SortedList<CombinedCacheKey, OptionalBool>() },
-        { MetaIndex.VisorState, new SortedList<CombinedCacheKey, OptionalBool>() },
-        { MetaIndex.WeaponState, new SortedList<CombinedCacheKey, OptionalBool>() },
+        { MetaIndex.HatState, new SortedList<CombinedCacheKey, TriStateBool>() },
+        { MetaIndex.VisorState, new SortedList<CombinedCacheKey, TriStateBool>() },
+        { MetaIndex.WeaponState, new SortedList<CombinedCacheKey, TriStateBool>() },
     };
-
     private Dictionary<EquipSlot, GlamourSlot> _finalGlamour       = new();
     private MetaDataStruct                     _finalMeta          = MetaDataStruct.Empty;
     private GlamourActorState                  _latestUnboundState = GlamourActorState.Empty;
@@ -42,8 +41,6 @@ public class GlamourCache
     public IReadOnlyDictionary<EquipSlot, GlamourSlot> FinalGlamour => _finalGlamour;
     public MetaDataStruct FinalMeta => _finalMeta;
     public GlamourActorState LastUnboundState => _latestUnboundState;
-
-
     public void CacheUnboundState(GlamourActorState state)
     {
         _latestUnboundState = state;
@@ -106,11 +103,11 @@ public class GlamourCache
 
     /// <summary> 
     ///     Adds in the MetaState Cache at the CombinedKey <paramref name="key"/>, 
-    ///     The OptionalBool <paramref name="value"/> for the provided <paramref name="metaIdx"/>.
+    ///     The TriStateBool <paramref name="value"/> for the provided <paramref name="metaIdx"/>.
     /// </summary>
-    public bool AddMeta(CombinedCacheKey key, MetaIndex metaIdx, OptionalBool value)
+    public bool AddMeta(CombinedCacheKey key, MetaIndex metaIdx, TriStateBool value)
     {
-        if (metaIdx is MetaIndex.Wetness || value.Equals(OptionalBool.Null))
+        if (metaIdx is MetaIndex.Wetness || value.Equals(TriStateBool.Null))
             return false;
 
         if (!_metaStates[metaIdx].TryAdd(key, value))
@@ -123,20 +120,20 @@ public class GlamourCache
     }
 
     /// <summary> 
-    ///     Adds <paramref name="meta"/>'s <see cref="OptionalBool"/>'s to the <see cref="_metaStates"/> Cache,
+    ///     Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to the <see cref="_metaStates"/> Cache,
     ///     with key <paramref name="combinedKey"/>, then updates the final MetaCache.
     /// </summary>
     public bool AddMeta(CombinedCacheKey combinedKey, MetaDataStruct meta)
     {
-        bool anyAdded = false;
+        var anyAdded = false;
 
-        if (!meta.Headgear.Equals(OptionalBool.Null))
+        if (!meta.Headgear.Equals(TriStateBool.Null))
             anyAdded |= _metaStates[MetaIndex.HatState].TryAdd(combinedKey, meta.Headgear);
 
-        if (!meta.Visor.Equals(OptionalBool.Null))
+        if (!meta.Visor.Equals(TriStateBool.Null))
             anyAdded |= _metaStates[MetaIndex.VisorState].TryAdd(combinedKey, meta.Visor);
 
-        if (!meta.Weapon.Equals(OptionalBool.Null))
+        if (!meta.Weapon.Equals(TriStateBool.Null))
             anyAdded |= _metaStates[MetaIndex.WeaponState].TryAdd(combinedKey, meta.Weapon);
 
         return anyAdded;
@@ -147,7 +144,7 @@ public class GlamourCache
     /// </summary>
     public bool RemoveMeta(IEnumerable<CombinedCacheKey> combinedKeys)
     {
-        bool anyRemoved = false;
+        var anyRemoved = false;
         foreach (var key in combinedKeys)
             anyRemoved |= RemoveMeta(key);
         return anyRemoved;
@@ -158,7 +155,7 @@ public class GlamourCache
     /// </summary>
     public bool RemoveMeta(CombinedCacheKey key)
     {
-        bool anyRemoved = false;
+        var anyRemoved = false;
         foreach (var (metaIdx, stateList) in _metaStates)
             anyRemoved |= stateList.Remove(key);
         return anyRemoved;
@@ -189,6 +186,7 @@ public class GlamourCache
 
             if (!_finalGlamour.TryGetValue(glamItem.Slot, out var curr) || !curr.Equals(glamItem))
             {
+                _logger.LogTrace($"Final Slot was: {curr?.GameItem.Name} and will now be {glamItem.GameItem.Name} for slot {glamItem.Slot}");
                 _finalGlamour[glamItem.Slot] = glamItem;
                 anyChanges |= true;
             }
@@ -197,6 +195,7 @@ public class GlamourCache
         removedSlots = _finalGlamour.Keys.Except(seenSlots).ToList();
         foreach (var slot in removedSlots)
         {
+            _logger.LogTrace($"Removing Final Glamour Slot {slot} with Item {_finalGlamour[slot].GameItem.Name}");
             _finalGlamour.Remove(slot);
             anyChanges |= true;
         }
@@ -214,25 +213,25 @@ public class GlamourCache
         return anyChanges;
     }
 
-    public OptionalBool GetFirstHatState()
+    public TriStateBool GetFirstHatState()
     {
         if (_metaStates.TryGetValue(MetaIndex.HatState, out var stateList) && stateList.Any())
             return stateList.Values.First();
-        return OptionalBool.Null;
+        return TriStateBool.Null;
     }
 
-    public OptionalBool GetFirstVisorState()
+    public TriStateBool GetFirstVisorState()
     {
         if (_metaStates.TryGetValue(MetaIndex.VisorState, out var stateList) && stateList.Any())
             return stateList.Values.First();
-        return OptionalBool.Null;
+        return TriStateBool.Null;
     }
 
-    public OptionalBool GetFirstWeaponState()
+    public TriStateBool GetFirstWeaponState()
     {
         if (_metaStates.TryGetValue(MetaIndex.WeaponState, out var stateList) && stateList.Any())
             return stateList.Values.First();
-        return OptionalBool.Null;
+        return TriStateBool.Null;
     }
 
 
@@ -252,7 +251,7 @@ public class GlamourCache
                     if (!table)
                         return;
 
-                    ImGui.TableSetupColumn("Combined Key");
+                    ImGui.TableSetupColumn("Key", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Restrictionss(0)").X);
                     ImGui.TableSetupColumn("HeadSlot");
                     ImGui.TableSetupColumn("Chestpiece");
                     ImGui.TableSetupColumn("Gloves");
@@ -269,7 +268,7 @@ public class GlamourCache
 
                     foreach (var group in grouped)
                     {
-                        ImGuiUtil.DrawFrameColumn($"{group.Key.Manager} / {group.Key.LayerIndex}");
+                        ImGuiUtil.DrawFrameColumn($"{group.Key.Manager}({group.Key.LayerIndex})");
 
                         var slotMap = group.ToDictionary(kvp => kvp.Key.Item2, kvp => kvp.Value);
                         foreach (var slot in EquipSlotExtensions.EqdpSlots)
@@ -341,6 +340,42 @@ public class GlamourCache
         CkGui.ColorTextInline(_finalMeta.Visor.ToString(), CkColor.LushPinkLine.Uint());
         CkGui.TextInline("Weapon", false);
         CkGui.ColorTextInline(_finalMeta.Weapon.ToString(), CkColor.LushPinkLine.Uint());
+    }
+
+    public void DrawUnboundCacheStates(TextureService textures)
+    {
+        using var display = ImRaii.Group();
+
+
+        var iconSize = new Vector2(ImGui.GetFrameHeight());
+        ImGui.Text("Unbound State Cache History:");
+        using (var table = ImRaii.Table("UnboundStateCacheHistory", 11, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+        {
+            if (!table)
+                return;
+
+            ImGui.TableSetupColumn("Queue Pos");
+            ImGui.TableSetupColumn("HeadSlot");
+            ImGui.TableSetupColumn("Chestpiece");
+            ImGui.TableSetupColumn("Gloves");
+            ImGui.TableSetupColumn("Legs");
+            ImGui.TableSetupColumn("Feet");
+            ImGui.TableSetupColumn("Earring");
+            ImGui.TableSetupColumn("Necklace");
+            ImGui.TableSetupColumn("Bracelet");
+            ImGui.TableSetupColumn("LeftRing");
+            ImGui.TableSetupColumn("RightRing");
+            ImGui.TableHeadersRow();
+            // Draw the final State.
+            foreach (var slot in EquipSlotExtensions.EqdpSlots)
+            {
+                ImGui.TableNextColumn();
+                if (_latestUnboundState.ParsedEquipment.TryGetValue(slot, out var glamour))
+                    glamour.DrawIcon(textures, iconSize, slot);
+                else
+                    ItemService.NothingItem(slot).DrawIcon(textures, iconSize, slot);
+            }
+        }
     }
 
     private void DrawMetaTableRows(MetaIndex idx)

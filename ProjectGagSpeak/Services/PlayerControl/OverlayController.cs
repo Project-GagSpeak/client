@@ -81,7 +81,7 @@ public sealed class OverlayController : IDisposable
         await _bfService.SwapBlindfold(overlay, enactor);
     }
 
-    public async Task RemoveBlindfold()
+    public async Task RemoveBlindfold(string enactor)
     {
         // reset the forced perspective.
         if (_forcedPerspective is CameraControlMode.FirstPerson)
@@ -90,7 +90,7 @@ public sealed class OverlayController : IDisposable
             SetCameraPerspective(CameraControlMode.ThirdPerson);
         }
         // Remove the blindfold.
-        await _bfService.RemoveBlindfold();
+        await _bfService.RemoveBlindfold(enactor);
     }
 
     public async Task ApplyHypnoEffect(HypnoticOverlay overlay, string enactor)

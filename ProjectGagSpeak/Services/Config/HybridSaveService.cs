@@ -7,8 +7,7 @@ namespace GagSpeak.Services.Configs;
 /// <remarks> All saves are performed via secure write. Failed writes will not process. </remarks>
 public sealed class HybridSaveService : HybridSaveServiceBase<ConfigFileProvider>, IHostedService
 {
-    public HybridSaveService(ILogger<HybridSaveService> logger, ConfigFileProvider fileNameStructure)
-        : base(logger, fileNameStructure)
+    public HybridSaveService(ConfigFileProvider fileNameStructure) : base(fileNameStructure)
     { }
 
     public Task StartAsync(CancellationToken cancellationToken)

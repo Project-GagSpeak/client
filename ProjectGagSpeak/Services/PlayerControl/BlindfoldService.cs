@@ -21,14 +21,10 @@ public class BlindfoldService : IDisposable
     private CancellationTokenSource _opacityAnimCTS = new();
     private float _currentOpacity = 0.0f;
 
-
     // Internally stored Item for display.
     // Not synced with cache intentionally to allow for animations.
     private BlindfoldOverlay? _appliedItem = null;
-    private string _applierUid = string.Empty;
-
-    // Display Corners (Currently unused, but useful in hypno)
-    private readonly Vector2[] _blindfoldUV = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
+    private string            _applierUid  = string.Empty;
 
     public BlindfoldService(ILogger<BlindfoldService> logger, MainConfig config)
     {
@@ -37,7 +33,7 @@ public class BlindfoldService : IDisposable
     }
 
     public bool HasValidBlindfold => _appliedItem is not null;
-    public bool CanRemoveBlindfold => string.Equals(_applierUid, MainHub.UID);
+    public bool CanRemove(string enactor) => string.Equals(_applierUid, enactor);
 
     public void Dispose()
     {
@@ -49,6 +45,12 @@ public class BlindfoldService : IDisposable
     /// <summary> Swaps between two blindfolds by removing one, then applying another. </summary
     public async Task SwapBlindfold(BlindfoldOverlay overlay, string enactor)
     {
+        if (HasValidBlindfold && !CanRemove(enactor))
+        {
+            _logger.LogWarning($"Cannot Switch! Current is Applied by [{_applierUid}]. Swapper [{enactor}] does not match!");
+            return;
+        }
+
         _logger.LogDebug($"Swapping blindfolds: ({overlay.OverlayPath}) by [{enactor}]");
         await ExecuteWithSemaphore(async () =>
         {
@@ -74,10 +76,11 @@ public class BlindfoldService : IDisposable
 
     /// <summary> Performs the remove animation then clears the stored data. Will inturrupt equip-animation. </summary>
     /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task RemoveBlindfold()
+    public async Task RemoveBlindfold(string enactor)
     {
-        if (_appliedItem is null)
+        if (!HasValidBlindfold || !CanRemove(enactor))
             return;
+
         // reset the token thingy.
         _opacityAnimCTS?.Cancel();
         _opacityAnimCTS?.Dispose();

@@ -1,10 +1,10 @@
+using CkCommons.Classes;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -189,9 +189,9 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public List<IRestraintLayer> Layers { get; set; } = new List<IRestraintLayer>();
 
     // Satisfy IMetaToggles
-    public OptionalBool HeadgearState { get; set; } = OptionalBool.Null;
-    public OptionalBool VisorState { get; set; } = OptionalBool.Null;
-    public OptionalBool WeaponState { get; set; } = OptionalBool.Null;
+    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
+    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
+    public TriStateBool WeaponState { get; set; } = TriStateBool.Null;
 
     // Additional Appends
     public List<ModSettingsPreset> RestraintMods { get; set; } = new List<ModSettingsPreset>();

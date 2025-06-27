@@ -79,10 +79,10 @@ public class OverlayHandler
     private async Task UpdateBlindfoldInternal()
     {
         // Update the final cache. If the blindfolds have changed, we need to perform a swap operation on them.
-        if (_cache.UpdateFinalBlindfoldCache())
+        if (_cache.UpdateFinalBlindfoldCache(out var prevEnactor))
         {
             _logger.LogDebug($"Final Blindfold Cache updated with a change, calling swap function.", LoggerType.VisualCache);
-            await ApplyBlindfoldCache();
+            await ApplyBlindfoldCache(prevEnactor);
         }
         else
             _logger.LogTrace("No change in Final Blindfold Cache.", LoggerType.VisualCache);
@@ -105,14 +105,14 @@ public class OverlayHandler
 
 
     // Do not await these or you will be delaying your cache optimization by like 3000ms lol.
-    public Task ApplyBlindfoldCache()
+    public Task ApplyBlindfoldCache(string previousEnactor)
     {
         var hasActiveBlindfold = _cache.ActiveBlindfold is not null;
         // If we have an active item, but there is no more items to apply, remove it.
         if (!hasActiveBlindfold && _controller.HasValidBlindfold)
         {
             _logger.LogDebug("No active blindfold found in cache, removing current blindfold.");
-            _controller.RemoveBlindfold().ConfigureAwait(false);
+            _controller.RemoveBlindfold(previousEnactor).ConfigureAwait(false);
             return Task.CompletedTask;
         }
         // Otherwise, swap / apply it.

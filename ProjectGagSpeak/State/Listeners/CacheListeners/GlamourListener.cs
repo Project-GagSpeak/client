@@ -1,6 +1,7 @@
 using Dalamud.Plugin;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using Glamourer.Api.Enums;
@@ -11,6 +12,7 @@ namespace GagSpeak.State.Listeners;
 public class GlamourListener : IDisposable
 {
     private readonly ILogger<GlamourListener> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
     private readonly GlamourHandler _handler;
@@ -22,6 +24,9 @@ public class GlamourListener : IDisposable
         _cache = cache;
         _handler = handler;
 
+        // Always attempt to immidiately cache our player.
+        _handler.CacheActorState();
+        
         _ipc.StateWasChanged = StateChangedWithType.Subscriber(Svc.PluginInterface, OnStateChanged);
         _ipc.StateWasFinalized = StateFinalized.Subscriber(Svc.PluginInterface, OnStateFinalized);
         _ipc.StateWasChanged.Enable();
@@ -64,7 +69,7 @@ public class GlamourListener : IDisposable
                 return;
 
             _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplySemaphore!", LoggerType.IpcGlamourer);
-            await _handler.UpdateGlamourCacheSlim(false);
+            await _handler.UpdateGlamourCacheSlim(true);
         }
         else if (changeType is StateChangeType.Other)
         {
@@ -72,7 +77,7 @@ public class GlamourListener : IDisposable
                 return;
 
             _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplyMetaCache!", LoggerType.IpcGlamourer);
-            await _handler.UpdateMetaCacheSlim();
+            await _handler.UpdateMetaCacheSlim(true);
         }
     }
 
@@ -107,6 +112,6 @@ public class GlamourListener : IDisposable
         }
 
         _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LoggerType.IpcGlamourer);
-        await _handler.UpdateGlamourCacheSlim(true);
+        await _handler.ReapplyCaches();
     }
 }

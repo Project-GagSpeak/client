@@ -203,20 +203,6 @@ public static class GsExtensions
             ? new StainIds((StainId)stain1, (StainId)stain2)
             : StainIds.None;
     }
-    public static OptionalBool FromJObject(JToken? tokenValue)
-    {
-        if (tokenValue is null)
-            return OptionalBool.Null;
-
-        var value = tokenValue.Value<string>() ?? string.Empty;
-        return value.ToLowerInvariant() switch
-        {
-            "true" => OptionalBool.True,
-            "false" => OptionalBool.False,
-            "null" => OptionalBool.Null,
-            _ => throw new ArgumentException("Invalid string value for OptionalBool")
-        };
-    }
 
     public static void DrawMoodleStatusTooltip(MoodlesStatusInfo item, IEnumerable<MoodlesStatusInfo> otherStatuses)
     {

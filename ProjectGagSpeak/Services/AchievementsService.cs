@@ -12,6 +12,7 @@ using GagSpeak.Toybox;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
+using GagSpeak.Utils;
 
 namespace GagSpeak.Services;
 
@@ -74,7 +75,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => OnFrameworkCheck());
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
         {
-            _updateLoopCTS?.Cancel();
+            _updateLoopCTS.SafeCancel();
             // if the lastUnhandled disconnect is MinValue, then we should reset the cache entirely.
             if (!ClientAchievements.HadUnhandledDC)
             {
@@ -89,8 +90,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         base.Dispose(disposing);
         if (disposing)
         {
-            _updateLoopCTS?.Cancel();
-            _updateLoopCTS?.Dispose();
+            _updateLoopCTS.SafeCancelDispose();
         }
     }
 
@@ -128,9 +128,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private void BeginSaveCycle()
     {
         Logger.LogInformation("Beginning Achievement Save Cycle", LoggerType.Achievements);
-        _updateLoopCTS?.Cancel();
-        _updateLoopCTS?.Dispose();
-        _updateLoopCTS = new CancellationTokenSource();
+        _updateLoopCTS = _updateLoopCTS.SafeCancelRecreate();
         _updateLoopTask = RunPeriodicUpdate(_updateLoopCTS!.Token);
     }
 

@@ -15,8 +15,8 @@ namespace GagSpeak.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
 {
     private CustomizeProfileCombo _profileCombo;
-    private static OptionalBoolCheckbox HelmetCheckbox = new();
-    private static OptionalBoolCheckbox VisorCheckbox = new();
+    private static TriStateBoolCheckbox HelmetCheckbox = new();
+    private static TriStateBoolCheckbox VisorCheckbox = new();
     private void DrawEditorHeaderLeft(Vector2 region)
     {
         // Dont draw anything if the editor is not active.

@@ -1,5 +1,5 @@
+using CkCommons.Classes;
 using Glamourer.Api.Enums;
-using OtterGui.Classes;
 
 namespace GagSpeak.State.Models;
 
@@ -13,32 +13,32 @@ public enum MetaIndex : byte
 
 public struct MetaDataStruct
 {
-    public OptionalBool Headgear { get; private set; }
-    public OptionalBool Visor { get; private set; }
-    public OptionalBool Weapon { get; private set; }
+    public TriStateBool Headgear { get; private set; }
+    public TriStateBool Visor { get; private set; }
+    public TriStateBool Weapon { get; private set; }
 
     public MetaDataStruct()
     {
-        Headgear = OptionalBool.Null;
-        Visor = OptionalBool.Null;
-        Weapon = OptionalBool.Null;
+        Headgear = TriStateBool.Null;
+        Visor = TriStateBool.Null;
+        Weapon = TriStateBool.Null;
     }
 
-    public MetaDataStruct(OptionalBool headgear)
+    public MetaDataStruct(TriStateBool headgear)
     {
         Headgear = headgear;
-        Visor = OptionalBool.Null;
-        Weapon = OptionalBool.Null;
+        Visor = TriStateBool.Null;
+        Weapon = TriStateBool.Null;
     }
     
-    public MetaDataStruct(OptionalBool headgear, OptionalBool visor)
+    public MetaDataStruct(TriStateBool headgear, TriStateBool visor)
     {
         Headgear = headgear;
         Visor = visor;
-        Weapon = OptionalBool.Null;
+        Weapon = TriStateBool.Null;
     }
 
-    public MetaDataStruct(OptionalBool headgear, OptionalBool visor, OptionalBool weapon)
+    public MetaDataStruct(TriStateBool headgear, TriStateBool visor, TriStateBool weapon)
     {
         Headgear = headgear;
         Visor = visor;
@@ -48,7 +48,7 @@ public struct MetaDataStruct
     public bool AnySet()
         => Headgear.HasValue || Visor.HasValue || Weapon.HasValue;
 
-    public bool SetMeta(MetaIndex index, OptionalBool newValue)
+    public bool SetMeta(MetaIndex index, TriStateBool newValue)
     {
         if (index is MetaIndex.HatState && !newValue.Equals(Headgear))
         {

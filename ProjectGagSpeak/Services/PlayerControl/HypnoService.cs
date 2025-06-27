@@ -100,12 +100,8 @@ public class HypnoService
             return;
         // Cancel, Dispose, Recreate all active tasks.
         // (This halts any progress on previous animation not yet finished.)
-        _tasksCTS?.Cancel();
-        _tasksCTS?.Dispose();
-        _opacityCTS?.Cancel();
-        _opacityCTS?.Dispose();
-        _tasksCTS = new CancellationTokenSource();
-        _opacityCTS = new CancellationTokenSource();
+        _tasksCTS = _tasksCTS.SafeCancelRecreate();
+        _opacityCTS = _opacityCTS.SafeCancelRecreate();
         // Run the Removeal Internal 
         await ExecuteWithSemaphore(RemoveAnimationInternal);
     }

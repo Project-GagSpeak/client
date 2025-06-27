@@ -284,7 +284,7 @@ public class ImageImportTool
             return;
         }
 
-        if(!Generic.TryGetClipboardImage(out var byteArr, out var imgContext))
+        if(!ImageHelpers.TryGetClipboardImage(out var byteArr, out var imgContext))
         {
             _logger.LogWarning("Clipboard image is not valid.");
             return;

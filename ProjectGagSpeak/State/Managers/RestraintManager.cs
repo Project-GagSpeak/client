@@ -1,4 +1,5 @@
 using CkCommons;
+using CkCommons.Classes;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
@@ -375,9 +376,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 RestraintSlots = slotDict,
                 Glasses = _items.ParseBonusSlot(setJson["Glasses"]),
                 Layers = layers,
-                HeadgearState = GsExtensions.FromJObject(setJson["HeadgearState"]),
-                VisorState = GsExtensions.FromJObject(setJson["VisorState"]),
-                WeaponState = GsExtensions.FromJObject(setJson["WeaponState"]),
+                HeadgearState = TriStateBool.FromJObject(setJson["HeadgearState"]),
+                VisorState = TriStateBool.FromJObject(setJson["VisorState"]),
+                WeaponState = TriStateBool.FromJObject(setJson["WeaponState"]),
                 RestraintMods = restraintMods,
                 RestraintMoodles = restraintMoodles,
             };

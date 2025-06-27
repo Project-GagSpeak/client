@@ -1,35 +1,22 @@
-using Dalamud.Interface.Utility;
-using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
+using CkCommons;
 using CkCommons.Classes;
-using GagSpeak.Gui.Components;
+using CkCommons.Gui;
 using CkCommons.Raii;
-using GagSpeak.PlayerClient;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
-using System.Drawing;
-using GagspeakAPI.Data;
-using OtterGui;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.Utils;
-using GagspeakAPI.Data.Permissions;
-using OtterGui.Text.EndObjects;
-using CkCommons.Widgets;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using CkCommons.Gui;
-using CkCommons.Textures;
-using GagSpeak.Services.Textures;
-using CkCommons;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel
 {
-    private static OptionalBoolCheckbox HelmetCheckbox = new();
-    private static OptionalBoolCheckbox VisorCheckbox = new();
+    private static TriStateBoolCheckbox HelmetCheckbox = new();
+    private static TriStateBoolCheckbox VisorCheckbox = new();
 
     private void DrawEditorHeaderLeft(float width)
     {
@@ -133,7 +120,7 @@ public partial class RestrictionsPanel
         {
             using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
             {
-                HelmetCheckbox.Draw("##RestrictionHelmetMeta", OptionalBool.Null, out var _, true);
+                HelmetCheckbox.Draw("##RestrictionHelmetMeta", TriStateBool.Null, out var _, true);
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.HardHat);
                 CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
@@ -141,7 +128,7 @@ public partial class RestrictionsPanel
             ImGui.SameLine(0, itemSpacing);
             using (ImRaii.Child("VisorMetaGroup", childGroupSize))
             {
-                VisorCheckbox.Draw("##RestrictionVisorMeta", OptionalBool.Null, out var _, true);
+                VisorCheckbox.Draw("##RestrictionVisorMeta", TriStateBool.Null, out var _, true);
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.Glasses);
                 CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
@@ -216,7 +203,9 @@ public partial class RestrictionsPanel
                     ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkStyle.HeaderRounding());
                 }
             }
-            CkGui.AttachToolTip("This is the image that the blindfold will overlay on your screen while active.");
+            CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                blindfoldItem.Properties.OverlayPath = string.Empty;
 
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
@@ -257,8 +246,9 @@ public partial class RestrictionsPanel
                     ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkStyle.HeaderRounding());
                 }
             }
-            CkGui.AttachToolTip("This is the image that the hypnotic overlay on your screen while active.");
-
+            CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                hypnoticItem.Properties.OverlayPath = string.Empty;
             ImUtf8.SameLineInner();
 
             using (ImRaii.Group())

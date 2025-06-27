@@ -135,13 +135,24 @@ public sealed class OverlayCache
     /// </summary>
     /// <remarks> Remember, while others see the outermost blindfold, you see the innermost. </remarks>
     /// <returns> If the profile Changed. </returns>
-    public bool UpdateFinalBlindfoldCache()
+    public bool UpdateFinalBlindfoldCache([NotNullWhen(true)] out string prevEnactor)
     {
-        var newFinalItem = _blindfolds.LastOrDefault();
-        var anyChange = !_priorityBlindfold?.Key.Equals(newFinalItem.Key) ?? true;
+        bool anyChange;
+        if (_blindfolds.Count == 0)
+        {
+            anyChange = _priorityBlindfold != null;
+            prevEnactor = _priorityBlindfold?.Key.EnactorUID ?? string.Empty;
+            _priorityBlindfold = null;
+            return anyChange;
+        }
+
+        var newFinalItem = _blindfolds.Last();
+        anyChange = !_priorityBlindfold?.Key.Equals(newFinalItem.Key) ?? true;
+        prevEnactor = _priorityBlindfold?.Key.EnactorUID ?? string.Empty;
         _priorityBlindfold = newFinalItem;
         return anyChange;
     }
+
 
     /// <summary>
     ///     Updates the priority blindfold by finding the lowest priority blindfold. 
@@ -150,12 +161,22 @@ public sealed class OverlayCache
     /// <returns> If the profile Changed. </returns>
     public bool UpdateFinalHypnoEffectCache([NotNullWhen(true)] out string prevEnactor)
     {
-        var newFinalItem = _hypnoEffects.FirstOrDefault();
-        var anyChange = !_priorityEffect?.Key.Equals(newFinalItem.Key) ?? true;
+        bool anyChange;
+        if (_hypnoEffects.Count == 0)
+        {
+            anyChange = _priorityEffect != null;
+            prevEnactor = _priorityEffect?.Key.EnactorUID ?? string.Empty;
+            _priorityEffect = null;
+            return anyChange;
+        }
+
+        var newFinalItem = _hypnoEffects.First();
+        anyChange = !_priorityEffect?.Key.Equals(newFinalItem.Key) ?? true;
         prevEnactor = _priorityEffect?.Key.EnactorUID ?? string.Empty;
         _priorityEffect = newFinalItem;
         return anyChange;
     }
+
 
 
     #region DebugHelper
@@ -217,7 +238,7 @@ public sealed class OverlayCache
 
         ImGui.Separator();
         ImGui.Text("Final Blindfold: ");
-        if (_priorityBlindfold is { } validBf)
+        if (_priorityBlindfold is { } validBf && validBf.Value is not null)
         {
             CkGui.ColorTextInline($"[{validBf.Key.ToString()}]", CkGui.Color(ImGuiColors.HealerGreen));
             CkGui.TextInline($" Enactor: {validBf.Key.EnactorUID}");
@@ -229,7 +250,7 @@ public sealed class OverlayCache
         }
 
         ImGui.Text("Final Hypnotic Effect: ");
-        if (_priorityEffect is { } validHypno)
+        if (_priorityEffect is { } validHypno && validHypno.Value is not null)
         {
             CkGui.ColorTextInline($"[{validHypno.Key.ToString()}]", CkGui.Color(ImGuiColors.HealerGreen));
             CkGui.TextInline($" Enactor: {validHypno.Key.EnactorUID}");

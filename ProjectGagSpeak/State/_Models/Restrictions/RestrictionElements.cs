@@ -50,12 +50,16 @@ public class GlamourSlot : IEquatable<GlamourSlot>
         };
 
     public bool Equals(GlamourSlot? other)
-        => other != null && Slot == other.Slot && Equals(other.GameItem);
+        => other != null
+           && Slot == other.Slot
+           && GameItem.Equals(other.GameItem)
+           && GameStain.Equals(other.GameStain);
 
     public override bool Equals(object? obj)
         => obj is GlamourSlot glamour && Equals(glamour);
 
     public override int GetHashCode()
-        => HashCode.Combine(Slot, GameItem.Id, GameStain);
+        => HashCode.Combine(Slot, GameItem, GameStain);
+
 }
 

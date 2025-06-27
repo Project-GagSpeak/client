@@ -157,7 +157,7 @@ public class CacheStateManager : IHostedService
         // Now perform all updates in parallel.
         _logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
         await Task.WhenAll(
-            _glamourHandler.UpdateCaches(true), // this should maybe probably be false incase we trigger this in a bound state? Idk.
+            _glamourHandler.UpdateCaches(),
             _modHandler.UpdateModCache(),
             _moodleHandler.UpdateMoodleCache(),
             _cplusHandler.UpdateProfileCache(),
@@ -311,21 +311,21 @@ public class CacheStateManager : IHostedService
     {
         _glamourHandler.TryAddGlamourToCache(key, glamSlot);
         _glamourHandler.TryAddMetaToCache(key, meta);
-        await _glamourHandler.UpdateCaches(false);
+        await _glamourHandler.UpdateCaches();
     }
 
     private async Task AddGlamourMeta(CombinedCacheKey key, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
     {
         _glamourHandler.TryAddGlamourToCache(key, glamSlots);
         _glamourHandler.TryAddMetaToCache(key, meta);
-        await _glamourHandler.UpdateCaches(false);
+        await _glamourHandler.UpdateCaches();
     }
 
     private async Task RemoveGlamourMeta(CombinedCacheKey key)
     {
         _glamourHandler.TryRemGlamourFromCache(key);
         _glamourHandler.TryRemMetaFromCache(key);
-        await _glamourHandler.UpdateCaches(false);
+        await _glamourHandler.UpdateCaches();
     }
 
     private async Task AddModPreset(CombinedCacheKey key, ModSettingsPreset preset)

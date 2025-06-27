@@ -164,11 +164,13 @@ public sealed class GagSpeak : IDalamudPlugin
 
     public void Dispose()
     {
-        // dispose of CkCommons here maybe?
-        CkCommonsHost.Dispose();
-        // Dispose of the host.
+        // Stop the host.
         _host.StopAsync().GetAwaiter().GetResult();
+        // Dispose of CkCommons.
+        CkCommonsHost.Dispose();
+        // Dispose the Host.
         _host.Dispose();
+
     }
 }
 

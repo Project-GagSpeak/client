@@ -1,13 +1,9 @@
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
+using CkCommons.Classes;
 using GagSpeak.Interop;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
-using GagspeakAPI.Data.Struct;
 using Glamourer.Api.Enums;
-using OtterGui.Classes;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Handlers;
@@ -16,17 +12,19 @@ public class GlamourHandler
     private readonly ILogger<GlamourHandler> _logger;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
+    private readonly ItemService _items;
     private readonly OnFrameworkService _frameworkUtils;
 
     private SemaphoreSlim _applySlim = new SemaphoreSlim(1, 1);
     private IpcBlockReason _ipcBlocker = IpcBlockReason.None;
 
     public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc,
-        GlamourCache cache, OnFrameworkService frameworkUtils)
+        GlamourCache cache, ItemService items, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _ipc = ipc;
         _cache = cache;
+        _items = items;
         _frameworkUtils = frameworkUtils;
     }
 
@@ -65,11 +63,11 @@ public class GlamourHandler
     ///     For the appropriate <paramref name="metaIdx"/> metaState, add a key-value
     ///     pair with <paramref name="key"/> and <paramref name="value"/>.
     /// </summary>
-    public bool TryAddMetaToCache(CombinedCacheKey key, MetaIndex metaIdx, OptionalBool value)
+    public bool TryAddMetaToCache(CombinedCacheKey key, MetaIndex metaIdx, TriStateBool value)
         => _cache.AddMeta(key, metaIdx, value);
 
     /// <summary>
-    ///     Adds <paramref name="meta"/>'s <see cref="OptionalBool"/>'s to all metaState caches,
+    ///     Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to all metaState caches,
     ///     adding the key-value pair at key <paramref name="key"/>.
     /// </summary>
     public bool TryAddMetaToCache(CombinedCacheKey key, MetaDataStruct meta)
@@ -88,42 +86,57 @@ public class GlamourHandler
     {
         _logger.LogDebug("Clearing Glamour Cache.");
         _cache.ClearCaches();
-        await UpdateCaches(false);
+        await UpdateCaches();
     }
 
-    /// <summary>
-    ///     Use this as your go-to update method for everything outside of IPC calls.
-    /// </summary>
-    /// <param name="forceCacheCall"> If true, will force the cache to be applied before updating. </param>
+    /// <summary> Use this as your go-to update method for everything outside of IPC calls. </summary>
     /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
-    public async Task UpdateCaches(bool forceCacheCall)
+    public async Task UpdateCaches()
     {
         _logger.LogDebug("Updating Glamourer Caches.");
         await ExecuteWithSemaphore(async () =>
         {
             // Run both operations in parallel.
             await Task.WhenAll(
-                UpdateGlamourInternal(forceCacheCall),
-                UpdateMetaInternal()
+                UpdateGlamourInternal(false, true),
+                UpdateMetaInternal(true)
             );
             _logger.LogInformation($"Processed Cache Updates Successfully!");
         });
     }
 
-    /// <summary> Should only ever be used by the GlamourListener. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task UpdateGlamourCacheSlim(bool forceCacheCall)
-        => await ExecuteWithSemaphore(() => UpdateGlamourInternal(forceCacheCall));
+
+    /// <summary> Use this after any glamour Finalization type occurs. </summary>
+    /// <param name="storeProfile"> If true, will force the cache to be applied before updating. </param>
+    /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
+    public async Task ReapplyCaches(bool storeProfile = true)
+    {
+        _logger.LogDebug("Reapplying Glamourer Caches.");
+        await ExecuteWithSemaphore(async () =>
+        {
+            // Run both operations in parallel.
+            await Task.WhenAll(
+                ApplyGlamourCache(storeProfile),
+                ApplyMetaCache()
+            );
+            _logger.LogInformation($"Reapplied Cache Updates Successfully!");
+        });
+    }
 
     /// <summary> Should only ever be used by the GlamourListener. </summary>
     /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task UpdateMetaCacheSlim()
-        => await ExecuteWithSemaphore(UpdateMetaInternal);
+    public async Task UpdateGlamourCacheSlim(bool reapply)
+        => await ExecuteWithSemaphore(() => UpdateGlamourInternal(false, reapply));
+
+    /// <summary> Should only ever be used by the GlamourListener. </summary>
+    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
+    public async Task UpdateMetaCacheSlim(bool reapply)
+        => await ExecuteWithSemaphore(() => UpdateMetaInternal(reapply));
 
     /// <summary>
     ///     Updates the Final Glamour Cache, and then applies the visual updates.
     /// </summary>
-    private async Task UpdateGlamourInternal(bool forceCacheCall)
+    private async Task UpdateGlamourInternal(bool forceCacheCall, bool reapply)
     {
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalGlamourCache(out var removedSlots))
@@ -133,24 +146,38 @@ public class GlamourHandler
                 await RestoreAndReapply(forceCacheCall, removedSlots);
             else
                 await ApplyGlamourCache(forceCacheCall);
+            return;
         }
-        else
-            _logger.LogTrace("No change in Final Glamour Cache.", LoggerType.VisualCache);
+        else if (reapply)
+        {
+            _logger.LogDebug("Reapplying Glamour Cache", LoggerType.VisualCache);
+            await ApplyGlamourCache(forceCacheCall);
+            return;
+        }
+        // No Change
+        _logger.LogTrace("No change in Final Glamour Cache.", LoggerType.VisualCache);
     }
 
     /// <summary>
     ///     Updates the Final Meta Cache, and then applies the visual updates.
     /// </summary>
-    private async Task UpdateMetaInternal()
+    private async Task UpdateMetaInternal(bool reapply)
     {
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalMetaCache())
         {
             _logger.LogDebug($"Final MetaState Cache was updated!", LoggerType.VisualCache);
             await ApplyMetaCache();
+            return;
         }
-        else
-            _logger.LogTrace("No change in Final MetaState Cache.", LoggerType.VisualCache);
+        else if (reapply)
+        {
+            _logger.LogDebug("Reapplying MetaState Cache", LoggerType.VisualCache);
+            await ApplyMetaCache();
+            return;
+        }
+        // No Change
+        _logger.LogTrace("No change in Final MetaState Cache.", LoggerType.VisualCache);
     }
 
     /// <summary> 
@@ -212,11 +239,21 @@ public class GlamourHandler
     /// <summary>
     ///     Caches the latest state from Glamourer IPC to store the latest unbound state.
     /// </summary>
-    private void CacheActorState()
+    public void CacheActorState()
     {
-        _logger.LogTrace("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogWarning("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
         var latestState = _ipc.GetClientGlamourerState();
-        _cache.CacheUnboundState(new GlamourActorState(latestState));
+        if (latestState != null)
+        {
+            var latestUnboundCopy = GlamourActorState.Clone(_cache.LastUnboundState);
+            latestUnboundCopy.UpdateEquipment(latestState, _items, _cache.FinalGlamour.ToDictionary(x => x.Key, x => x.Value.GameItem));
+            _cache.CacheUnboundState(latestUnboundCopy);
+        }
+        else
+        {
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _cache.CacheUnboundState(new GlamourActorState(latestState));
+        }
     }
 
     /// <summary>

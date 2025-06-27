@@ -16,9 +16,9 @@ namespace GagSpeak.Gui;
 
 public class DebugActiveStateUI : WindowMediatorSubscriberBase
 {
-    private static OptionalBoolCheckbox HelmetCheckbox = new();
-    private static OptionalBoolCheckbox VisorCheckbox = new();
-    private static OptionalBoolCheckbox WeaponCheckbox = new();
+    private static TriStateBoolCheckbox HelmetCheckbox = new();
+    private static TriStateBoolCheckbox VisorCheckbox = new();
+    private static TriStateBoolCheckbox WeaponCheckbox = new();
 
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
@@ -77,6 +77,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _arousal = arousal;
         _iconTextures = iconTextures;
 
+        IsOpen = true;
+
         SizeConstraints = new WindowSizeConstraints()
         {
             MinimumSize = new Vector2(625, 400),
@@ -96,6 +98,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Glamour Cache"))
             _glamourCache.DrawCacheTable(_iconTextures);
+
+        if (ImGui.CollapsingHeader("Unbound Cache Queue"))
+            _glamourCache.DrawUnboundCacheStates(_iconTextures);
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Mods Cache"))

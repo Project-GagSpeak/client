@@ -94,7 +94,7 @@ public class HomepageTab
             using var group = ImRaii.Group();
             var height = ImGui.GetContentRegionAvail().Y;
 
-            CkGui.FontText(label, UiFontService.UidFont);
+            CkGui.FontText(label, UiFontService.GagspeakLabelFont);
             ImGui.SetWindowFontScale(1.5f);
 
             var size = CkGui.IconSize(FAI.WaveSquare);

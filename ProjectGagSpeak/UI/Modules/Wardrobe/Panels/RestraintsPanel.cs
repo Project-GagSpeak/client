@@ -1,10 +1,12 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
+using CkCommons;
 using CkCommons.Classes;
-using GagSpeak.Gui.Components;
+using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -14,8 +16,6 @@ using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
-using CkCommons;
-using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -81,9 +81,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         });
     }
 
-    private static OptionalBoolCheckbox HelmetCheckbox = new();
-    private static OptionalBoolCheckbox VisorCheckbox = new();
-    private static OptionalBoolCheckbox WeaponCheckbox = new();
+    private static TriStateBoolCheckbox HelmetCheckbox = new();
+    private static TriStateBoolCheckbox VisorCheckbox = new();
+    private static TriStateBoolCheckbox WeaponCheckbox = new();
     public IFancyTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>
@@ -178,9 +178,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         // Draw the IconsRow.
         var trueCol = 0xFFFFFFFF;
         var falseCol = CkColor.FancyHeaderContrast.Uint();
-        var helmAttribute = selected.HeadgearState != OptionalBool.Null;
-        var visorAttribute = selected.VisorState != OptionalBool.Null;
-        var weaponAttribute = selected.WeaponState != OptionalBool.Null;
+        var helmAttribute = selected.HeadgearState != TriStateBool.Null;
+        var visorAttribute = selected.VisorState != TriStateBool.Null;
+        var weaponAttribute = selected.WeaponState != TriStateBool.Null;
         var redrawAttribute = selected.DoRedraw;
         var layersAttribute = selected.Layers.Count > 0;
         var modsAttribute = selected.RestraintMods.Count > 0;

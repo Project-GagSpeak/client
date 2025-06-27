@@ -285,7 +285,7 @@ public class KinkPlateLight
             ? ImGui.GetColorU32(ImGuiColors.DalamudRed) 
             : hoveringReport ? ImGui.GetColorU32(ImGuiColors.DalamudGrey)
                              : ImGui.GetColorU32(ImGuiColors.DalamudGrey3);
-        using (UiFontService.IconFont.Push())
+        using (Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
         {
             drawList.AddText(statsPos, color, FAI.Flag.ToIconString());
         }
