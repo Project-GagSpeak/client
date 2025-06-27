@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.GarblerCore;
+using CkCommons.GarblerCore;
 using GagSpeak.Services;
 
 namespace GagSpeak.PlayerClient;

@@ -1,10 +1,11 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Gui;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
@@ -122,7 +123,7 @@ public void AddMessageRange(IEnumerable<InternalChatMessage> messages)
                 // if the message is :cat_pats: then draw the texture instead of the message.
                 if (x.Message == ":cat_pats:")
                 {
-                    var secret = CosmeticService.CoreEmoteTextures[CoreEmoteTexture.CatPat];
+                    var secret = CosmeticService.EmoteTextures.Cache[CoreEmoteTexture.CatPat];
                     if (secret is { } wrap)
                     {
                         ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetTextLineHeight(), ImGui.GetTextLineHeight()));

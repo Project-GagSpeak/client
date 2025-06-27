@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.HybridSaver;
 using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;

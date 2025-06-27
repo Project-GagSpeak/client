@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.GarblerCore;
+using CkCommons.GarblerCore;
 
 namespace GagSpeak.Services.Configs;
 
@@ -10,7 +10,7 @@ public static class ConfigMigrator
         Svc.Logger.Warning("Outdated MainConfig detected, migrating to new format!");
 
         // Create a new JObject for the config section
-        JObject config = new JObject();
+        var config = new JObject();
 
         // Map fields from the old format to the new config object
         config["LastRunVersion"] = mainConfig["LastRunVersion"];
@@ -55,7 +55,7 @@ public static class ConfigMigrator
             var channelsPuppeteer = mainConfig["ChannelsPuppeteer"]?.ToObject<List<int>>() ?? new List<int>();
 
             // Convert the channels into a bitfield
-            int puppeteerChannelsBitfield = ConvertToBitfield(channelsPuppeteer);
+            var puppeteerChannelsBitfield = ConvertToBitfield(channelsPuppeteer);
 
             // Set the bitfield in the config
             config["PuppeteerChannelsBitfield"] = puppeteerChannelsBitfield;
@@ -76,7 +76,7 @@ public static class ConfigMigrator
         config["Safeword"] = mainConfig["Safeword"];
         config["Language"] = mainConfig["Language"];
         // make sure to convert this from the string back to the enum value.
-        string dialectString = mainConfig["LanguageDialect"]?.ToString() ?? throw new Exception("LanguageDialect is missing or null");
+        var dialectString = mainConfig["LanguageDialect"]?.ToString() ?? throw new Exception("LanguageDialect is missing or null");
         config["LanguageDialect"] = JToken.FromObject(dialectString.ToDialect());
 
 
@@ -123,10 +123,10 @@ public static class ConfigMigrator
         Svc.Logger.Warning("Outdated GagRestrictionConfig detected, migrating to new format!");
 
         // Create the new GagRestrictions object
-        JObject gagRestrictions = new JObject();
+        var gagRestrictions = new JObject();
 
         // Extract the old GagEquipData from the old config
-        JObject oldGagEquipData = (JObject)oldConfig["GagStorage"]!["GagEquipData"]!;
+        var oldGagEquipData = (JObject)oldConfig["GagStorage"]!["GagEquipData"]!;
 
         // Iterate over the old GagEquipData keys and migrate each entry
         foreach (var gagItem in oldGagEquipData)
@@ -135,16 +135,16 @@ public static class ConfigMigrator
             if(gagItem.Key == "None")
                 continue;
 
-            string gagName = gagItem.Key;
+            var gagName = gagItem.Key;
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-            JObject oldGagData = (JObject)gagItem.Value;
+            var oldGagData = (JObject)gagItem.Value;
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             // Create the new structure for the current gag
-            JObject newGagData = new JObject();
+            var newGagData = new JObject();
 
             // Map "IsEnabled" to new structure
-            newGagData["IsEnabled"] = oldGagData["IsEnabled"];
+            newGagData["IsEnabled"] = oldGagData!["IsEnabled"];
             // Build the "Glamour" object and map the old fields
             newGagData["Glamour"] = new JObject()
             {
@@ -180,7 +180,7 @@ public static class ConfigMigrator
         };
 
         // remove the backups of old versions.
-        string oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
@@ -222,7 +222,7 @@ public static class ConfigMigrator
         };
 
         // remove the backups of old versions.
-        string oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
@@ -339,7 +339,7 @@ public static class ConfigMigrator
         Svc.Logger.Information("New JOBject:" + newFormat.ToString(Formatting.Indented));
 
         // remove the backups of old versions.
-        string oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
@@ -399,7 +399,7 @@ public static class ConfigMigrator
         }
 
         // remove the backups of old versions.
-        string oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
@@ -455,7 +455,7 @@ public static class ConfigMigrator
 
     public static int ConvertToBitfield(List<int> channelsPuppeteer)
     {
-        int bitfield = 0;
+        var bitfield = 0;
         foreach (var channel in channelsPuppeteer)
             if (channel >= 0 && channel < 32)  // Assuming channel numbers are between 0 and 31
                 bitfield |= (1 << channel);  // Set the corresponding bit

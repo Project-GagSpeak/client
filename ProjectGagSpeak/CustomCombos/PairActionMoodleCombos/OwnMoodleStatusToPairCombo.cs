@@ -1,4 +1,5 @@
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
+using CkCommons.Textures;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
@@ -31,7 +32,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
             ImGui.SameLine();
             var offset = ImGui.GetContentRegionAvail().X - IconSize.X;
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-            MoodleIcons.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+            MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
             // get the dispelable moodle if any.
             var status = moodleStatus.StatusOnDispell== Guid.Empty
                 ? "Unknown"

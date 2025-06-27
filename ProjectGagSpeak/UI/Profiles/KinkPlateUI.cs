@@ -12,6 +12,8 @@ using GagSpeak.Kinksters;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.IdentityModel.Tokens;
+using CkCommons.Gui;
+using CkCommons.Textures;
 
 namespace GagSpeak.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
@@ -104,7 +106,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             ImGui.TextColored(ImGuiColors.ParsedGold, titleName);
         }
         // move over to the top area to draw out the achievement title line wrap.
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
         DrawGagInfo(wdl, profile.KinkPlateInfo);
 
@@ -133,7 +135,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // We should always display the default GagSpeak Logo if the profile is either flagged or disabled.
         if (profile.TempDisabled)
         {
-            wdl.AddDalamudImageRounded(CosmeticService.CoreTextures[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
+            wdl.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
         else // But otherwise can draw normal image.
         {
@@ -186,35 +188,35 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var vibeTT = Pair.PairGlobals.ToysAreConnected
             ? DisplayName + " has a Sex Toy connected and active."
             : DisplayName + " does not have any Sex Toys connected and active.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, vibeColor, vibeTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, vibeColor, vibeTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var shockColor = Pair.PairGlobals.HasValidShareCode() ? Gold : ImGuiColors.DalamudGrey3;
         var shockTT = Pair.PairGlobals.HasValidShareCode()
             ? DisplayName + " is connected to their Shock Collar while in Hardcore Mode."
             : DisplayName + " has not connected a Shock Collar.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, shockColor, shockTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, shockColor, shockTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var forcedFollowColor = !Pair.PairGlobals.ForcedFollow.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedFollowTT = !Pair.PairGlobals.ForcedFollow.NullOrEmpty()
             ? DisplayName + " is being leashed around by another pair while in Hardcore Mode."
             : DisplayName + " is not following anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, forcedFollowColor, forcedFollowTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, forcedFollowColor, forcedFollowTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var forcedEmoteColor = !Pair.PairGlobals.ForcedEmoteState.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedEmoteTT = !Pair.PairGlobals.ForcedEmoteState.NullOrEmpty()
             ? DisplayName + " is being put on display for another pair while in Hardcore Mode."
             : DisplayName + " is not on display for anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var forcedStayColor =!Pair.PairGlobals.ForcedStay.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedStayTT = !Pair.PairGlobals.ForcedStay.NullOrEmpty()
             ? DisplayName + " has been ordered to stay put for another pair while in Hardcore Mode."
             : DisplayName + " has not been ordered to stay put by anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var chatManipulated = Pair.PairGlobals.HcChatVisState() || Pair.PairGlobals.HcChatInputVisState() || Pair.PairGlobals.HcBlockChatInputState();
@@ -222,7 +224,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var chatBlockedTT = chatManipulated
             ? DisplayName + " is having their chat access restricted by another pair while in Hardcore Mode."
             : DisplayName + " is not under any chat restrictions.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
     }
 
     private void DrawDescription(ImDrawListPtr wdl, KinkPlate profile)
@@ -279,17 +281,17 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         {
             if (Pair.LastGagData.GagSlots[0].GagItem is not GagType.None)
             {
-                var gagImage = _cosmetics.GetImageFromAssetsFolder("GagImages\\" + Pair.LastGagData.GagSlots[0].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[0].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotOnePos, GagSlotSize, 10f);
             }
             if (Pair.LastGagData.GagSlots[1].GagItem is not GagType.None)
             {
-                var gagImage = _cosmetics.GetImageFromAssetsFolder("GagImages\\" + Pair.LastGagData.GagSlots[1].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[1].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotTwoPos, GagSlotSize, 10f);
             }
             if (Pair.LastGagData.GagSlots[2].GagItem is not GagType.None)
             {
-                var gagImage = _cosmetics.GetImageFromAssetsFolder("GagImages\\" + Pair.LastGagData.GagSlots[2].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[2].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotThreePos, GagSlotSize, 10f);
             }
         }
@@ -321,17 +323,17 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         {
             if (Pair.LastGagData.GagSlots[0].Padlock is not Padlocks.None)
             {
-                var padlockImage = _cosmetics.GetImageFromAssetsFolder("PadlockImages\\" + Pair.LastGagData.GagSlots[0].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[0].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockOnePos, GagLockSize, GagLockSize.X / 2);
             }
             if (Pair.LastGagData.GagSlots[1].Padlock is not Padlocks.None)
             {
-                var padlockImage = _cosmetics.GetImageFromAssetsFolder("PadlockImages\\" + Pair.LastGagData.GagSlots[1].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[1].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockTwoPos, GagLockSize, GagLockSize.X / 2);
             }
             if (Pair.LastGagData.GagSlots[2].Padlock is not Padlocks.None)
             {
-                var padlockImage = _cosmetics.GetImageFromAssetsFolder("PadlockImages\\" + Pair.LastGagData.GagSlots[2].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[2].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockThreePos, GagLockSize, GagLockSize.X / 2);
             }
         }
@@ -357,7 +359,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     {
         // jump down to where we should draw out the stats, and draw out the achievement icon.
         var statsPos = StatsPos;
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Clock], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Clock], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
         // set the cursor screen pos to the right of the clock, and draw out the joined date.
         statsPos += new Vector2(24, 0);
 
@@ -369,7 +371,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var textWidth = ImGui.CalcTextSize($"MM-DD-YYYY").X;
         statsPos += new Vector2(textWidth + 4, 0);
         // to the right of this, draw out the achievement icon.
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Achievement], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Achievement], statsPos, Vector2.One * 20, ImGuiColors.ParsedGold);
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
@@ -395,19 +397,19 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var blockedAffecterPos = LockAffectersRowPos;
         var restrainedColor = Pair.LastRestraintData.Identifier== Guid.Empty ? ImGuiColors.DalamudGrey3 : Gold;
         var restrainedTT = Pair.LastRestraintData.Identifier== Guid.Empty ? DisplayName + " is not wearing a restraint set." : DisplayName + " has an active restraint set.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, restrainedColor, restrainedTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, restrainedColor, restrainedTT);
         blockedAffecterPos.X += LockAffecterIconSize.X + LockAffecterSpacing.X;
 
         var mimicColor = Pair.ActiveCursedItems.Any() ? Gold : ImGuiColors.DalamudGrey3;
         var mimicTT = Pair.ActiveCursedItems.Any() ? DisplayName + " is restrained by Cursed Loot!" : DisplayName + " is not restrained with Cursed Loot.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.CursedLoot], blockedAffecterPos, LockAffecterIconSize, mimicColor, mimicTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.CursedLoot], blockedAffecterPos, LockAffecterIconSize, mimicColor, mimicTT);
         blockedAffecterPos.X += LockAffecterIconSize.X + 11f;
 
         var blindfoldedColor = /*Pair.PairGlobals.IsBlindfolded() && Pair.LastLightStorage?.BlindfoldItem is not null ? Gold :*/ ImGuiColors.DalamudGrey3;
         var blindfoldedTT = /*Pair.PairGlobals.IsBlindfolded() && Pair.LastLightStorage?.BlindfoldItem is not null
             ? DisplayName + " is blindfolded."
             : */DisplayName + " is not blindfolded.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Blindfolded], blockedAffecterPos, LockAffecterIconSize, blindfoldedColor, blindfoldedTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Blindfolded], blockedAffecterPos, LockAffecterIconSize, blindfoldedColor, blindfoldedTT);
         // we will need to draw out all of the slot icons here from the game, based on the pairs locked slot status.
         if (!Pair.LockedSlots.IsNullOrEmpty())
         {
@@ -501,45 +503,45 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         /*if (Pair.LastWardrobeData is not null && activeSetLight is not null && activeSetLight.HardcoreTraits.TryGetValue(Pair.LastWardrobeData.ActiveSetEnabledBy, out var traits))
         {
             if (traits.BoundArms || traits.BoundArms)
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Arms/Legs Restrained--SEP--Restricts Actions that require the use of arms/legs, whichever option is enabled.");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Arms/Legs Restrained--SEP--Restricts Actions that require the use of arms/legs, whichever option is enabled.");
             else
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Arms/Legs Restrained");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Arms/Legs Restrained");
 
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
             if (traits.Gagged)
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Gagged--SEP--Restricts Actions that have your character shout/speak");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Gagged--SEP--Restricts Actions that have your character shout/speak");
             else
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Gagged");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Gagged");
 
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
             if (traits.Blindfolded)
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Blindfolded--SEP--Restricts Actions that require sight to be used.");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Blindfolded--SEP--Restricts Actions that require sight to be used.");
             else
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Blindfolded");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Blindfolded");
 
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
             if (traits.Weighty)
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Weighty--SEP--With heavy bondage applied, this trait forces them to only walk.");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Weighty--SEP--With heavy bondage applied, this trait forces them to only walk.");
             else
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Weighty");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Weighty");
 
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
             if (traits.StimulationLevel is not StimulationLevel.None)
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Stimulated--SEP--Distracted with stimulation, you care for combat less, increasing GCD Cooldown time in proportion to arousal level.");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, Gold, true, "Hardcore Trait: Stimulated--SEP--Distracted with stimulation, you care for combat less, increasing GCD Cooldown time in proportion to arousal level.");
             else
-                wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Stimulated");
+                wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, true, "Hardcore Trait: Stimulated");
         }
         else*/
         {
-            wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Arms/Legs Restrained");
+            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Arms/Legs Restrained");
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-            wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Gagged");
+            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Gagged");
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-            wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Blindfolded");
+            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.SightLoss], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Blindfolded");
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-            wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Weighty");
+            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Weighty], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Weighty");
             hardcoreTraitsPos.X += HardcoreTraitIconSize.X + HardcoreTraitSpacing.X;
-            wdl.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Stimulated");
+            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], hardcoreTraitsPos, HardcoreTraitIconSize, ImGuiColors.DalamudGrey3, "Hardcore Trait: Stimulated");
         }
     }
 

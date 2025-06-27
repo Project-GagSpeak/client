@@ -1,5 +1,5 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.PlayerClient;
@@ -96,7 +96,8 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         try
         {
             var applicationId = Guid.NewGuid();
-            _applicationCTS?.CancelDispose();
+            _applicationCTS?.Cancel();
+            _applicationCTS?.Dispose();
             _applicationCTS = null;
             _charaHandler?.Dispose();
             _charaHandler = null;
@@ -118,7 +119,8 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
                     Logger.LogDebug(name + " is not a Mare user. Clearing Moodles for " + OnlineUser.User.AliasOrUID, LoggerType.PairHandlers);
                     _ipcManager.Moodles.ClearStatus(name).ConfigureAwait(false);
                 }
-                cts.CancelDispose();
+                cts.Cancel();
+                cts.Dispose();
             }
         }
         catch (Exception ex)

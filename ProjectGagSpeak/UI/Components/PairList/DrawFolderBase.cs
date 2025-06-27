@@ -1,9 +1,10 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Kinksters;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
 
 namespace GagSpeak.Gui.Components;
 
@@ -15,7 +16,6 @@ public abstract class DrawFolderBase : IDrawFolder
     protected readonly IImmutableList<Kinkster> _allPairs;
     protected readonly ServerConfigManager _serverConfigs;
 
-    private float _menuWidth = -1;
     private bool _wasHovered = false;
 
     public int OnlinePairs => DrawPairs.Count(u => u.Pair.IsOnline);

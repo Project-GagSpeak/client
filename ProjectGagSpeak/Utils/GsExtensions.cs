@@ -9,6 +9,8 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;
+using CkCommons.Gui;
+using Dalamud.Interface.Utility.Raii;
 
 namespace GagSpeak.Utils;
 public static class GsExtensions
@@ -214,5 +216,61 @@ public static class GsExtensions
             "null" => OptionalBool.Null,
             _ => throw new ArgumentException("Invalid string value for OptionalBool")
         };
+    }
+
+    public static void DrawMoodleStatusTooltip(MoodlesStatusInfo item, IEnumerable<MoodlesStatusInfo> otherStatuses)
+    {
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetNextWindowSizeConstraints(new Vector2(350f, 0f), new Vector2(350f, float.MaxValue));
+
+            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
+            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
+            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+
+            ImGui.BeginTooltip();
+
+            // push the title, converting all color tags into the actual label.
+            CkCommons.RichText.CkRichText.Text(item.Title);
+
+            if (!item.Description.IsNullOrWhitespace())
+            {
+                ImGui.Separator();
+                CkCommons.RichText.CkRichText.Text(350f, item.Description);
+            }
+
+            ImGui.Separator();
+            CkGui.ColorText("Stacks:", ImGuiColors.ParsedGold);
+            ImGui.SameLine();
+            ImGui.Text(item.Stacks.ToString());
+            if (item.StackOnReapply)
+            {
+                ImGui.SameLine();
+                CkGui.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
+            }
+
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
+            ImGui.SameLine();
+            ImGui.Text($"{item.Days}d {item.Hours}h {item.Minutes}m {item.Seconds}");
+
+            CkGui.ColorText("Category:", ImGuiColors.ParsedGold);
+            ImGui.SameLine();
+            ImGui.Text(item.Type.ToString());
+
+            CkGui.ColorText("Dispellable:", ImGuiColors.ParsedGold);
+            ImGui.SameLine();
+            ImGui.Text(item.Dispelable ? "Yes" : "No");
+
+            if (item.StatusOnDispell != Guid.Empty)
+            {
+                CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
+                ImGui.SameLine();
+                var status = otherStatuses.FirstOrDefault(x => x.GUID == item.StatusOnDispell).Title ?? "Unknown";
+                ImGui.Text(status);
+            }
+
+            ImGui.EndTooltip();
+        }
     }
 }

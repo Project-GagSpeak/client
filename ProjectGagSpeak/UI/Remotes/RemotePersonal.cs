@@ -1,3 +1,5 @@
+using CkCommons;
+using CkCommons.Gui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
@@ -80,7 +82,7 @@ public class RemotePersonal : RemoteBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
 
             // attempt to obtain an image wrap for it
-            if (CosmeticService.CoreTextures[CoreTexture.ArrowSpin] is { } wrap)
+            if (CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin] is { } wrap)
             {
                 var buttonColor = IsLooping ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
@@ -95,7 +97,7 @@ public class RemotePersonal : RemoteBase
             // move it down from current position by another .2f scale
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + CurrentRegion.Y * .05f);
 
-            if (CosmeticService.CoreTextures[CoreTexture.CircleDot] is { } wrap2)
+            if (CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot] is { } wrap2)
             {
                 var buttonColor2 = IsFloating ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
@@ -110,7 +112,7 @@ public class RemotePersonal : RemoteBase
 
             ImGui.SetCursorPosY(CurrentRegion.Y * .775f);
 
-            if (CosmeticService.CoreTextures[CoreTexture.Power] is { } wrap3)
+            if (CosmeticService.CoreTextures.Cache[CoreTexture.Power] is { } wrap3)
             {
                 var buttonColor3 = RemoteOnline ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.

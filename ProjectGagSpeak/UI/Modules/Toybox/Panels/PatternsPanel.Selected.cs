@@ -1,15 +1,14 @@
+using CkCommons;
+using CkCommons.Classes;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Raii;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Raii;
+using GagSpeak.Services;
 using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Gui;
 
 namespace GagSpeak.Gui.Toybox;
 
@@ -96,7 +95,7 @@ public partial class PatternsPanel
 
         // Split things up into 2 columns.
         var columnWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight() + ImGui.GetFrameHeightWithSpacing();
+        var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
         using var group = ImRaii.Group();
 
         // First child. (left, startpoint)
@@ -108,12 +107,12 @@ public partial class PatternsPanel
             var format = pattern.Duration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
             if (isEditing)
             {
-                CkGuiUtils.TimeSpanEditor("StartPnt", pattern.Duration, ref refStartPoint, format, c.InnerRegion.X);
+                CkGuiUtils.TimeSpanEditor("StartPnt", pattern.Duration, ref refStartPoint, format, UiFontService.UidFont, c.InnerRegion.X);
                 pattern.StartPoint = refStartPoint;
             }
             else
             {
-                CkGuiUtils.TimeSpanPreview("StartPnt", pattern.Duration, refStartPoint, format, c.InnerRegion.X);
+                CkGuiUtils.TimeSpanPreview("StartPnt", pattern.Duration, refStartPoint, format, UiFontService.UidFont, c.InnerRegion.X);
             }
         }
 
@@ -138,12 +137,12 @@ public partial class PatternsPanel
             var format = refPlaybackDur.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
             if (isEditing)
             {
-                CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDur, format, c.InnerRegion.X);
+                CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDur, format, UiFontService.UidFont, c.InnerRegion.X);
                 pattern.PlaybackDuration = refPlaybackDur;
             }
             else
             {
-                CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDur, format, c.InnerRegion.X);
+                CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDur, format, UiFontService.UidFont, c.InnerRegion.X);
             }
         }
     }

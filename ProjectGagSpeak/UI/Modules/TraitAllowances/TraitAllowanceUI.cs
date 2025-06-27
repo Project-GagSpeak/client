@@ -1,9 +1,10 @@
+using CkCommons;
+using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
-using GagSpeak.CkCommons.Widgets;
 
 namespace GagSpeak.Gui.Wardrobe;
 

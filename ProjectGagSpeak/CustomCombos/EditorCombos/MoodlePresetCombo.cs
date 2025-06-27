@@ -1,12 +1,14 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using OtterGui.Extensions;
+using CkCommons.Textures;
 
 namespace GagSpeak.CustomCombos.Editor;
 
@@ -16,8 +18,8 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
     private Guid _currentItem;
     private float MaxIconWidth => IconWithPadding * (_maxPresetCount - 1);
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
-    public MoodlePresetCombo(float iconScale, MoodleIcons monitor, ILogger log)
-        : base(iconScale, monitor, log, () => [ .. MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title)])
+    public MoodlePresetCombo(ILogger log, float iconScale)
+        : base(log, iconScale, () => [ .. MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title)])
     {
         SearchByParts = false;
     }
@@ -88,7 +90,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
                 continue;
             }
 
-            _displayer.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+            MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
             DrawItemTooltip(info);
 
             if (++iconsDrawn < moodlePreset.Statuses.Count)

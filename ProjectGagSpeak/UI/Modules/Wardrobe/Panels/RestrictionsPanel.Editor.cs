@@ -1,9 +1,9 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Classes;
+using CkCommons.Classes;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
+using CkCommons.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
@@ -18,8 +18,12 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text.EndObjects;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using FFXIVClientStructs.FFXIV.Common.Lua;
+using CkCommons.Gui;
+using CkCommons.Textures;
+using GagSpeak.Services.Textures;
+using CkCommons;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel
@@ -202,7 +206,7 @@ public partial class RestrictionsPanel
         {
             using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
             {
-                if (_textures.GetImageMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
+                if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
                 {
                     // scale down the image to match the available widthInner.X.
                     var scaler = rightWidth / validImage.Width;
@@ -243,7 +247,7 @@ public partial class RestrictionsPanel
         {
             using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
             {
-                if (_textures.GetImageMetadataPath(ImageDataType.Hypnosis, hypnoticItem.Properties.OverlayPath) is { } validImage)
+                if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, hypnoticItem.Properties.OverlayPath) is { } validImage)
                 {
                     // scale down the image to match the available widthInner.X.
                     var scaler = rightWidth / validImage.Width;

@@ -1,7 +1,10 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
+using CkCommons.Raii;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.Raii;
+using GagSpeak.Services;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -10,7 +13,6 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using GagSpeak.CkCommons;
 
 namespace GagSpeak.Gui.Components;
 
@@ -433,7 +435,7 @@ public sealed partial class TriggerDrawer
 
         // Split things up into 2 columns.
         var columnWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight() + ImGui.GetFrameHeightWithSpacing();
+        var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
         // Enter the first column.
         using (ImRaii.Group())
         {
@@ -445,12 +447,12 @@ public sealed partial class TriggerDrawer
                 ImGuiUtil.Center("Start After");
                 if (isEditorItem)
                 {
-                    CkGuiUtils.TimeSpanEditor("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", UiFontService.UidFont, c.InnerRegion.X);
                     toyAct.StartAfter = refStart;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("ToyActStart", TimeSpan.FromMilliseconds(59999), refStart, "ss\\:fff", c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("ToyActStart", TimeSpan.FromMilliseconds(59999), refStart, "ss\\:fff", UiFontService.UidFont, c.InnerRegion.X);
                 }
             }
         }
@@ -467,12 +469,12 @@ public sealed partial class TriggerDrawer
                 var format = toyAct.EndAfter.Minutes > 0 ? "mm\\:ss" : "ss\\:fff";
                 if (isEditorItem)
                 {
-                    CkGuiUtils.TimeSpanEditor("ToyActEnd", TimeSpan.FromMinutes(30), ref refEnd, format, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("ToyActEnd", TimeSpan.FromMinutes(30), ref refEnd, format, UiFontService.UidFont, c.InnerRegion.X);
                     toyAct.EndAfter = refEnd;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("ToyActEnd", TimeSpan.FromMinutes(30), refEnd, format, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("ToyActEnd", TimeSpan.FromMinutes(30), refEnd, format, UiFontService.UidFont, c.InnerRegion.X);
                 }
             }
         }

@@ -1,19 +1,22 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
 using GagSpeak.Gui.UiRemote;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using ImGuiNET;
-using OtterGui.Text;
-using GagSpeak.CkCommons.Intiface;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
-using GagSpeak.Gui.Components;
-using GagSpeak.PlayerClient;
 using GagSpeak.State;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;
+using GagSpeak.Utils;
+using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.Toybox;
 
@@ -112,7 +115,7 @@ public class ToysPanel
 
         // draw out the list of devices
         ImGui.Separator();
-        CkGui.BigText("Connected Device(s)");
+        CkGui.FontText("Connected Device(s)", UiFontService.UidFont);
         if (_clientConfigs.Current.VibratorMode == VibratorEnums.Simulated)
         {
             DrawSimulatedVibeInfo();

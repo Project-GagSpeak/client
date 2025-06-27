@@ -3,8 +3,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
@@ -13,6 +13,8 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using CkCommons;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
 public partial class ControllerUniquePanel : IDisposable
@@ -134,7 +136,7 @@ public partial class ControllerUniquePanel : IDisposable
     {
         var pos = ImGui.GetCursorPos();
         var spacing = ImGui.GetStyle().ItemSpacing;
-        using (CkRaii.Child("##PermBoxHeader", new Vector2(drawRegion.SizeX, ImGui.GetFrameHeightWithSpacing()), 
+        using (CkRaii.Child("##PermBoxHeader", new Vector2(drawRegion.SizeX, ImGui.GetFrameHeightWithSpacing()),
             CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft))
         {
             // Ensure the Spacing, and draw the header.
@@ -177,7 +179,7 @@ public partial class ControllerUniquePanel : IDisposable
         CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
-        if (CosmeticService.CoreTextures[CoreTexture.PuppetMaster] is { } wrap)
+        if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetMaster] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
             ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));

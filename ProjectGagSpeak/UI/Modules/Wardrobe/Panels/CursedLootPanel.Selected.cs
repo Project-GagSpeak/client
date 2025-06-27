@@ -1,10 +1,12 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
@@ -149,7 +151,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             {
                 using (ImRaii.Group())
                 {
-                    ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.Gagged], pos, imgSize, ImGuiColors.ParsedGold);
+                    ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], pos, imgSize, ImGuiColors.ParsedGold);
                     ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
                     ImUtf8.SameLineInner();
                     ImGui.AlignTextToFramePadding();
@@ -161,7 +163,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             {
                 using (ImRaii.Group())
                 {
-                    ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], pos, imgSize, ImGuiColors.ParsedGold);
+                    ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], pos, imgSize, ImGuiColors.ParsedGold);
                     ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
                     ImUtf8.SameLineInner();
                     ImGui.AlignTextToFramePadding();

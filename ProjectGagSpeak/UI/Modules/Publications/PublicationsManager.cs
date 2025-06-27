@@ -2,7 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services;
 using GagSpeak.Gui.Components;
@@ -21,23 +21,23 @@ using GagSpeak.State.Models;
 using GagSpeak.State.Caches;
 using OtterGui.Text.Widget.Editors;
 using GagSpeak.Services.Mediator;
+using CkCommons.Gui;
+using CkCommons.Textures;
 
 namespace GagSpeak.Gui.Publications;
 public class PublicationsManager
 {
-    private readonly MoodleIcons _icons;
     private readonly ShareHubService _shareHub;
     public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        MoodleIcons icons, FavoritesManager favorites, PatternManager patterns, ShareHubService shareHub)
+        FavoritesManager favorites, PatternManager patterns, ShareHubService shareHub)
     {
-        _icons = icons;
         _shareHub = shareHub;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _statusCombo = new MoodleStatusCombo(1.5f, icons, logger);
+        _statusCombo = new MoodleStatusCombo(logger, 1.5f);
     }
 
     private string _authorName = string.Empty;
@@ -49,7 +49,7 @@ public class PublicationsManager
 
     public void DrawPatternPublications()
     {
-        CkGui.GagspeakBigText("Publish A Pattern");
+        CkGui.FontText("Publish A Pattern", UiFontService.UidFont);
 
         _patternCombo.Draw("PatternSelector", _selectedPattern.Identifier, 200f);
 
@@ -123,7 +123,7 @@ public class PublicationsManager
         else
         {
             // draw the create section.
-            CkGui.GagspeakBigText("Publish A Moodle");
+            CkGui.FontText("Publish A Moodle", UiFontService.UidFont);
 
             _statusCombo.Draw("PublicationStatuses", 200f);
 
@@ -351,7 +351,7 @@ public class PublicationsManager
             }
 
             if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                _icons.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+                MoodleDisplay.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
         }
     }
 

@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.Helpers;
+using CkCommons.HybridSaver;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;

@@ -1,11 +1,11 @@
-using GagSpeak.CkCommons;
-using GagSpeak.Gui;
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Textures;
 using GagSpeak.Services;
-using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 
 namespace GagSpeak.CustomCombos.Editor;
@@ -13,14 +13,11 @@ namespace GagSpeak.CustomCombos.Editor;
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class JobCombo : CkFilterComboCache<LightJob>
 {
-    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     public JobType _currentJob { get; private set; }
-    public JobCombo(float iconScale, MoodleIcons disp, ILogger log)
-        : base(() => [ ..SpellActionService.BattleClassJobs ], log)
+    public JobCombo(ILogger log, float iconScale) : base(() => [ ..SpellActionService.BattleClassJobs ], log)
     {
         _iconScale = iconScale;
-        _iconDrawer = disp;
         SearchByParts = true;
     }
 
@@ -67,7 +64,7 @@ public sealed class JobCombo : CkFilterComboCache<LightJob>
             ImGui.SetCursorPos(pos);
             using (ImRaii.Group())
             {
-                ImGui.Image(_iconDrawer.GetGameIconOrEmpty(parsedJob.GetIconId()).ImGuiHandle, new Vector2(size.Y));
+                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(parsedJob.GetIconId()).ImGuiHandle, new Vector2(size.Y));
                 CkGui.TextFrameAlignedInline(parsedJob.Name);
                 CkGui.ColorTextFrameAlignedInline($"({parsedJob.Abbreviation})", CkColor.ElementBG.Uint(), false);
             }

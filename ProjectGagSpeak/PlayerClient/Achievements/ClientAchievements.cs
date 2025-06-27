@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons;
+using CkCommons;
 using System.Net.WebSockets;
 
 namespace GagSpeak.PlayerClient;

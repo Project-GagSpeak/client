@@ -1,15 +1,17 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Helpers;
+using CkCommons.Widgets;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Gui.Components;
-using GagSpeak.Utils;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Text;
-using GagSpeak.CkCommons.Widgets;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui;
 

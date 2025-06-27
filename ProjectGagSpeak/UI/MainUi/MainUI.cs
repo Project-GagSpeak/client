@@ -1,19 +1,19 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin;
-using Dalamud.Utility;
+using GagSpeak.Gui.Components;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Components;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Globalization;
 using System.Reflection;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -261,12 +261,12 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private void DrawUIDHeader()
     {
-        var uidText = CkGui.GetUidText();
+        var uidText = GsExtensions.GetUidText();
         using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-            ImGui.TextColored(CkGui.UidColor(), uidText);
+            ImGui.TextColored(GsExtensions.UidColor(), uidText);
         }
 
         // if we are connected
@@ -277,7 +277,7 @@ public class MainUI : WindowMediatorSubscriberBase
             {
                 var originalTextSize = ImGui.CalcTextSize(MainHub.UID);
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - originalTextSize.X / 2);
-                ImGui.TextColored(CkGui.UidColor(), MainHub.UID);
+                ImGui.TextColored(GsExtensions.UidColor(), MainHub.UID);
                 CkGui.CopyableDisplayText(MainHub.UID);
             }
         }
@@ -346,8 +346,8 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
             // now we need to display the connection link button beside it.
-            var color = CkGui.ServerStateColor();
-            var connectedIcon = CkGui.ServerStateIcon(MainHub.ServerStatus);
+            var color = GsExtensions.ServerStateColor();
+            var connectedIcon = GsExtensions.ServerStateIcon(MainHub.ServerStatus);
 
             // if the server is reconnecting or disconnecting
             using (ImRaii.Disabled(MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting))

@@ -1,8 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Raii;
+using CkCommons.Gui.Utility;
+using CkCommons.Raii;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
@@ -10,6 +10,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Components;
 
@@ -70,7 +71,7 @@ public class AttributeDrawer
         for (int i = 0; i < traitData.Length; i++)
         {
             var (trait, icon, tooltip, col) = traitData[i];
-            TraitCheckbox(trait.ToString(), CosmeticService.CoreTextures[icon], ref attributes, trait);
+            TraitCheckbox(trait.ToString(), CosmeticService.CoreTextures.Cache[icon], ref attributes, trait);
             CkGui.AttachToolTip(tooltip, color: col);
 
             // Only SameLine if not the last in the row
@@ -114,7 +115,7 @@ public class AttributeDrawer
         for (int i = 0; i < icons.Count; i++)
         {
             if (i > 0) ImGui.SameLine(0, spacing);
-            ImGui.Image(CosmeticService.CoreTextures[icons[i].tex].ImGuiHandle, iconSize);
+            ImGui.Image(CosmeticService.CoreTextures.Cache[icons[i].tex].ImGuiHandle, iconSize);
             CkGui.AttachToolTip(icons[i].tooltip);
         }
     }

@@ -1,5 +1,5 @@
 using Dalamud.Interface;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
@@ -8,6 +8,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using Timer = System.Timers.Timer;
+using CkCommons.Gui;
 
 namespace GagSpeak.Services.Controller;
 
@@ -99,8 +100,10 @@ public class HypnoService
             return;
         // Cancel, Dispose, Recreate all active tasks.
         // (This halts any progress on previous animation not yet finished.)
-        _tasksCTS?.CancelDispose();
-        _opacityCTS?.CancelDispose();
+        _tasksCTS?.Cancel();
+        _tasksCTS?.Dispose();
+        _opacityCTS?.Cancel();
+        _opacityCTS?.Dispose();
         _tasksCTS = new CancellationTokenSource();
         _opacityCTS = new CancellationTokenSource();
         // Run the Removeal Internal 
@@ -180,7 +183,7 @@ public class HypnoService
         if (_activeEffect is not { } effect)
             return;
 
-        if (_disp.GetImageMetadataPath(ImageDataType.Hypnosis, _overlayPath) is not { } hypnoImage)
+        if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, _overlayPath) is not { } hypnoImage)
             return;
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)

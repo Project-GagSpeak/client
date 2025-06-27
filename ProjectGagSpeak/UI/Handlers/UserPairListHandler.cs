@@ -1,13 +1,13 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Gui.Components;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.Handlers;
 
@@ -227,7 +227,7 @@ public class UserPairListHandler
         List<Kinkster> BasicSortedList(IEnumerable<Kinkster> u)
             => u.OrderByDescending(u => u.IsVisible)
                 .ThenByDescending(u => u.IsOnline)
-                .ThenBy<Kinkster, string>(AlphabeticalSort, (IComparer<string?>)StringComparer.OrdinalIgnoreCase)
+                .ThenBy(AlphabeticalSort, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
         ImmutableList<Kinkster> ImmutablePairList(IEnumerable<Kinkster> u) => u.ToImmutableList();

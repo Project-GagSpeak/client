@@ -1,11 +1,11 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.FileSystem;
-using GagSpeak.CkCommons.FileSystem.Selector;
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
 using GagSpeak.Gui;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Gui.Utility;
+using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
@@ -14,6 +14,8 @@ using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 
 namespace GagSpeak.FileSystems;
 
@@ -42,7 +44,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     public RestrictionFileSelector(ILogger<RestrictionFileSelector> log, GagspeakMediator mediator,
         FavoritesManager favorites, RestrictionManager manager, RestrictionFileSystem fileSystem)
-        : base(fileSystem, log, Svc.KeyState, "##RestrictionFS")
+        : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
     {
         Mediator = mediator;
         _favorites = favorites;
@@ -115,7 +117,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
             if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             {
-                Log.LogDebug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                 _manager.Delete(leaf.Value);
             }
             CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");

@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
@@ -107,13 +108,15 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void DrawWelcomePage()
     {
-        CkGui.GagspeakTitleText("Welcome to Project GagSpeak!");
+        CkGui.FontText("Welcome to Project GagSpeak!", UiFontService.GagspeakTitleFont);
 
         ImGui.Separator();
         ImGui.TextWrapped("Project GagSpeak is a highly ambitious project that has been devloped over the course of a year in closed Beta, " +
             "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.");
         ImGui.Spacing();
-        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink)) CkGui.GagspeakBigText("The Plugin Contains a variety of Modules, such as:");
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
+            CkGui.FontText("The Plugin Contains a variety of Modules, such as:", UiFontService.GagspeakLabelFont);
+
         // if the title text is pressed, proceed.
         if (ImGui.IsItemClicked()) _readFirstPage = true;
 
@@ -266,7 +269,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         // Below this we will provide the user with a space to insert an existing UID & Key to
         // log back into a account they already have if they needed to reset for any reason.
-        CkGui.GagspeakBigText("Does your Character already have a Primary Account?");
+        CkGui.FontText("Does your Character already have a Primary Account?", UiFontService.UidFont);
         CkGui.ColorText("Retreive the key from where you saved it, or the discord bot, and insert it below.", ImGuiColors.ParsedGold);
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * .85f);
         ImGui.InputText("Key##RefNewKey", ref _secretKey, 64);

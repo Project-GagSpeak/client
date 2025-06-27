@@ -1,7 +1,5 @@
+using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Utility;
-using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -13,7 +11,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using OtterGui;
+using OtterGui.Extensions;
 
 namespace GagSpeak.Services;
 

@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Gui.Components;

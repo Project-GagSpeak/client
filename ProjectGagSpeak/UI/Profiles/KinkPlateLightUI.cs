@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.Kinksters;
@@ -68,7 +69,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         // obtain the profile for this userPair.
         var KinkPlate = _KinkPlateManager.GetKinkPlate(UserDataToDisplay);
 
-        string DisplayName = _showFullUID
+        var DisplayName = _showFullUID
             ? UserDataToDisplay.AliasOrUID
             : "Kinkster-" + UserDataToDisplay.UID.Substring(UserDataToDisplay.UID.Length - 4);
 

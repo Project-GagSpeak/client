@@ -1,14 +1,16 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -221,11 +223,11 @@ public class TraitAllowancePanel
     {
         var img = option switch
         {
-            GagspeakModule.Restraint => CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs],
-            GagspeakModule.Restriction => CosmeticService.CoreTextures[CoreTexture.Restrained],
-            GagspeakModule.Gag => CosmeticService.CoreTextures[CoreTexture.Gagged],
-            GagspeakModule.Pattern => CosmeticService.CoreTextures[CoreTexture.Vibrator],
-            GagspeakModule.Trigger => CosmeticService.CoreTextures[CoreTexture.ShockCollar],
+            GagspeakModule.Restraint => CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs],
+            GagspeakModule.Restriction => CosmeticService.CoreTextures.Cache[CoreTexture.Restrained],
+            GagspeakModule.Gag => CosmeticService.CoreTextures.Cache[CoreTexture.Gagged],
+            GagspeakModule.Pattern => CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator],
+            GagspeakModule.Trigger => CosmeticService.CoreTextures.Cache[CoreTexture.ShockCollar],
             _ => null
         };
         if (img is { } wrap)

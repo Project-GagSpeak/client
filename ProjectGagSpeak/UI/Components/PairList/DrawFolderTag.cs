@@ -1,8 +1,9 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Kinksters;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
 
 namespace GagSpeak.Gui.Components;
 

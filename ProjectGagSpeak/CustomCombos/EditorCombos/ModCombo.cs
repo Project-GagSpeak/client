@@ -1,8 +1,8 @@
 using Dalamud.Interface.Utility;
 using GagSpeak.Interop;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
 

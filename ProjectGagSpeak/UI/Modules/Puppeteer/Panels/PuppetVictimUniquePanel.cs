@@ -3,8 +3,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
@@ -16,6 +16,8 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 using OtterGui.Text;
+using CkCommons.Gui;
+using CkCommons;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
 
@@ -188,7 +190,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
-        if (CosmeticService.CoreTextures[CoreTexture.PuppetVictimUnique] is { } wrap)
+        if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
             ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));

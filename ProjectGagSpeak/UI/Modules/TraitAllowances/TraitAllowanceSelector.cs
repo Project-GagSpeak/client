@@ -1,17 +1,18 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Widgets;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.Gui.Handlers;
-using GagSpeak.CkCommons.Widgets;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.Wardrobe;
 public class TraitAllowanceSelector : DisposableMediatorSubscriberBase

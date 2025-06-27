@@ -1,85 +1,44 @@
+using CkCommons.RichText;
+using CkCommons.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
-using GagspeakAPI.Util;
-using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services.Textures;
 
-// Friendly Reminder, this is a scoped service, and IDalamudTextureWraps will only return values on the framework thread.
-// Attempting to use or access this class to obtain information outside the framework draw update thread will result in a null return.
+/// <summary>
+///     Friendly Reminder, all methods in this class must be called in the framework thread or they will fail.
+/// </summary>
 public class CosmeticService : IHostedService, IDisposable
 {
     private readonly ILogger<CosmeticService> _logger;
     public CosmeticService(ILogger<CosmeticService> logger, GagspeakMediator mediator)
     {
         _logger = logger;
-        LoadAllCoreTextures();
-        LoadAllCoreEmoteTextures();
+        CoreTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.NecessaryImages);
+        EmoteTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.ChatEmoteTextures);
+        CkRichText.DefineEmoteResolver(TryResolveEmote);
+
         LoadAllCosmetics();
     }
+    
+    public static EnumTextureCache<CoreTexture>      CoreTextures;
+    public static EnumTextureCache<CoreEmoteTexture> EmoteTextures;
+    private static ConcurrentDictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
 
-    private static ConcurrentDictionary<string, IDalamudTextureWrap>           InternalCosmeticCache = [];
-    public static ConcurrentDictionary<CoreTexture, IDalamudTextureWrap>       CoreTextures          = [];
-    public static ConcurrentDictionary<CoreEmoteTexture , IDalamudTextureWrap> CoreEmoteTextures     = [];
-
-    // MUST ensure ALL images are disposed of or else we will leak a very large amount of memory.
     public void Dispose()
     {
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Disposing.");
-        foreach (var texture in CoreTextures.Values)
-            texture?.Dispose();
-        foreach (var texture in CoreEmoteTextures.Values)
-            texture?.Dispose();
         foreach (var texture in InternalCosmeticCache.Values)
             texture?.Dispose();
 
-        // clear the dictionary, erasing all disposed textures.
-        CoreEmoteTextures.Clear();
-        CoreTextures.Clear();
         InternalCosmeticCache.Clear();
     }
 
-    public void LoadAllCoreEmoteTextures()
-    {
-        foreach (var label in CosmeticLabels.ChatEmoteTextures)
-        {
-            var key = label.Key;
-            var path = label.Value;
-            if (string.IsNullOrEmpty(path))
-            {
-                _logger.LogError("Emote Key: " + key + " Texture Path is Empty.");
-                return;
-            }
-
-            _logger.LogDebug("Renting Emote image to store in Cache: " + key, LoggerType.Textures);
-            if (TryRentImageFromFile(path, out var texture))
-                CoreEmoteTextures[key] = texture;
-        }
-        _logger.LogInformation("GagSpeak Profile Emote Image Cache Fetched all NecessaryImages!", LoggerType.Textures);
-    }
-
-    public void LoadAllCoreTextures()
-    {
-        foreach (var label in CosmeticLabels.NecessaryImages)
-        {
-            var key = label.Key;
-            var path = label.Value;
-            if (string.IsNullOrEmpty(path))
-            {
-                _logger.LogError("Cosmetic Key: " + key + " Texture Path is Empty.");
-                return;
-            }
-
-            _logger.LogDebug("Renting image to store in Cache: " + key, LoggerType.Textures);
-            if(TryRentImageFromFile(path, out var texture))
-                CoreTextures[key] = texture;
-        }
-        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all NecessaryImages!", LoggerType.Textures);
-    }
+    private IDalamudTextureWrap? TryResolveEmote(string name)
+        => Enum.TryParse<CoreEmoteTexture>(name, out var key) ? EmoteTextures.Cache.GetValueOrDefault(key) : null;
 
     public void LoadAllCosmetics()
     {
@@ -96,27 +55,13 @@ public class CosmeticService : IHostedService, IDisposable
             }
 
             _logger.LogDebug("Renting image to store in Cache: " + key, LoggerType.Textures);
-            if (TryRentImageFromFile(path, out var texture))
+            if (TextureManager.TryRentAssetDirectoryImage(path, out var texture))
                 InternalCosmeticCache[key] = texture;
         }
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LoggerType.Textures);
     }
 
-    public IDalamudTextureWrap? GagImageFromType(GagType gagType)
-    {
-        var stringToSearch = $"GagImages\\{gagType.GagName()}.png";
-        return Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
-    }
-
-    public IDalamudTextureWrap? PadlockImageFromType(Padlocks padlock)
-    {
-        var stringToSearch = $"PadlockImages\\{padlock}.png";
-        return Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", stringToSearch)).GetWrapOrDefault();
-    }
-
-    /// <summary>
-    /// Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists.
-    /// </summary>
+    /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
     public bool TryGetBackground(ProfileComponent section, ProfileStyleBG style, out IDalamudTextureWrap value)
     {
@@ -131,9 +76,7 @@ public class CosmeticService : IHostedService, IDisposable
         return false;
     }
 
-    /// <summary>
-    /// Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists.
-    /// </summary>
+    /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
     public bool TryGetBorder(ProfileComponent section, ProfileStyleBorder style, out IDalamudTextureWrap value)
     {
@@ -146,9 +89,7 @@ public class CosmeticService : IHostedService, IDisposable
         return false;
     }
 
-    /// <summary>
-    /// Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists.
-    /// </summary>
+    /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
     public bool TryGetOverlay(ProfileComponent section, ProfileStyleOverlay style, out IDalamudTextureWrap value)
     {
@@ -169,27 +110,27 @@ public class CosmeticService : IHostedService, IDisposable
         switch (userData.Tier)
         {
             case CkSupporterTier.ServerBooster:
-                supporterWrap = CoreTextures[CoreTexture.TierBoosterIcon];
+                supporterWrap = CoreTextures.Cache[CoreTexture.TierBoosterIcon];
                 tooltipString = userData.AliasOrUID + " is supporting the discord with a server Boost!";
                 break;
 
             case CkSupporterTier.IllustriousSupporter:
-                supporterWrap = CoreTextures[CoreTexture.Tier1Icon];
+                supporterWrap = CoreTextures.Cache[CoreTexture.Tier1Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Illustrious Supporter";
                 break;
 
             case CkSupporterTier.EsteemedPatron:
-                supporterWrap = CoreTextures[CoreTexture.Tier2Icon];
+                supporterWrap = CoreTextures.Cache[CoreTexture.Tier2Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Esteemed Patron";
                 break;
 
             case CkSupporterTier.DistinguishedConnoisseur:
-                supporterWrap = CoreTextures[CoreTexture.Tier3Icon];
+                supporterWrap = CoreTextures.Cache[CoreTexture.Tier3Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as a Distinguished Connoisseur";
                 break;
 
             case CkSupporterTier.KinkporiumMistress:
-                supporterWrap = CoreTextures[CoreTexture.Tier4Icon];
+                supporterWrap = CoreTextures.Cache[CoreTexture.Tier4Icon];
                 tooltipString = userData.AliasOrUID + " is the Shop Mistress of CK, and the Dev of GagSpeak.";
                 break;
 
@@ -199,54 +140,6 @@ public class CosmeticService : IHostedService, IDisposable
         }
 
         return (supporterWrap, tooltipString);
-    }
-
-    public IDalamudTextureWrap GetImageFromAssetsFolder(string path)
-        => Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.AssemblyDirectoryName!, "Assets", path)).GetWrapOrEmpty();
-    public IDalamudTextureWrap GetProfilePicture(byte[] imageData)
-        => Svc.Texture.CreateFromImageAsync(imageData).Result;
-    public IDalamudTextureWrap? GetImageMetadataPath(ImageDataType folder, string path)
-        => Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
-
-    public IDalamudTextureWrap? GetImageFromBytes(byte[] imageData)
-    {
-        try
-        {
-            return Svc.Texture.CreateFromImageAsync(imageData).Result;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("Failed to load image from bytes: " + e);
-            return null;
-        }
-    }
-
-    public async Task<IDalamudTextureWrap?> RentThumbnailFile(ImageDataType folder, string path)
-    {
-        try
-        {
-            return await Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).RentAsync();
-        }
-        catch (Exception)
-        {
-            _logger.LogError("Failed to load thumbnail image from path: " + Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path));
-            return null;
-        }
-    }
-
-    private bool TryRentImageFromFile(string path, [NotNullWhen(true)] out IDalamudTextureWrap? fileTexture)
-    {
-        try
-        {
-            fileTexture = Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", path)).RentAsync().Result;
-            return true;
-        }
-        catch (Exception)
-        {
-            //_logger.LogWarning($"Failed to load texture from path: {path}");
-            fileTexture = null;
-            return false;
-        }
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

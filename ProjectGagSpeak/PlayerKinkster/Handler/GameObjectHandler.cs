@@ -1,5 +1,5 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -131,7 +131,8 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
             if (_clearCts != null)
             {
                 Logger.LogDebug("Cancelling Clear Task", LoggerType.GameObjects);
-                _clearCts.CancelDispose();
+                _clearCts.Cancel();
+                _clearCts.Dispose();
                 _clearCts = null;
             }
 
@@ -159,7 +160,8 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
             if (IsOwnedObject)
             {
                 Logger.LogDebug("["+this+"] Calling upon ClearAsync due to an owned object vanishing.", LoggerType.GameObjects);
-                _clearCts?.CancelDispose();
+                _clearCts?.Cancel();
+                _clearCts?.Dispose();
                 _clearCts = new();
                 var token = _clearCts.Token;
                 _ = Task.Run(() => ClearAsync(token), token);

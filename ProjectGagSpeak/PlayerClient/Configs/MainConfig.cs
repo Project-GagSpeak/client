@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.GarblerCore;
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.GarblerCore;
+using CkCommons.HybridSaver;
 using GagSpeak.Game;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;

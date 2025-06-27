@@ -1,6 +1,4 @@
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Utility;
-using GagSpeak.PlayerClient;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -15,7 +13,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using System.Net.WebSockets;
-using GagSpeak.CkCommons;
 
 namespace GagSpeak.WebAPI;
 #pragma warning disable MA0040 
@@ -143,7 +140,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         // Debug the current state here encase shit hits the fan.
         Logger.LogDebug("Current ServerState during this Connection Attempt: " + ServerStatus, LoggerType.ApiCore);
         // Recreate the ConnectionCTS.
-        _hubConnectionCTS = _hubConnectionCTS.CancelRecreate();
+        _hubConnectionCTS?.Cancel();
+        _hubConnectionCTS?.Dispose();
+        _hubConnectionCTS = new CancellationTokenSource();
         var connectionToken = _hubConnectionCTS.Token;
 
         // While we are still waiting to connect to the server, do the following:
@@ -480,7 +479,9 @@ public sealed partial class MainHub : GagspeakHubBase, IGagspeakHubClient, IHost
         OnRoomChatMessage((dto, message) => _ = Callback_RoomChatMessage(dto, message));
 
         // create a new health check token
-        _hubHealthCTS = _hubHealthCTS?.CancelRecreate();
+        _hubHealthCTS?.Cancel();
+        _hubHealthCTS?.Dispose();
+        _hubHealthCTS = new CancellationTokenSource();
         // Start up our health check loop.
         _ = ClientHealthCheckLoop(_hubHealthCTS!.Token);
         // set us to initialized (yippee!!!)

@@ -1,6 +1,6 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -109,7 +109,7 @@ internal class ReportPopupHandler : IPopupHandler
 
         // Draw the gold line split.
         var reportBoxSize = new Vector2(250 + 192 + ImGui.GetStyle().ItemSpacing.X);
-        drawList.AddDalamudImage(CosmeticService.CoreTextures[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 220), new Vector2(770, 6));
+        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 220), new Vector2(770, 6));
 
         ImGui.SetCursorScreenPos(rectMin + new Vector2(15, 235));
         ImGui.InputTextMultiline("##reportReason", ref _reportReason, 500, new Vector2(reportBoxSize.X, 200));
@@ -127,7 +127,7 @@ internal class ReportPopupHandler : IPopupHandler
 
             ImGui.Spacing();
 
-            CkGui.GagspeakTitleText("Report " + _reportedDisplayName + "?", ImGuiColors.ParsedGold);
+            CkGui.FontText("Report " + _reportedDisplayName + "?", UiFontService.GagspeakTitleFont, ImGuiColors.ParsedGold);
             if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report Kinkster", 
                 disabled: _reportReason.IsNullOrWhitespace() || string.Equals(_reportReason, DefaultReportReason, StringComparison.OrdinalIgnoreCase)))
             {

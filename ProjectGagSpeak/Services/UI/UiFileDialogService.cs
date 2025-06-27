@@ -4,6 +4,7 @@ using Dalamud.Utility;
 using GagSpeak.Services.Configs;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Extensions;
 using System.Reflection;
 
 namespace GagSpeak.Services;

@@ -1,10 +1,11 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.PlayerClient;
@@ -299,14 +300,14 @@ public class ActiveItemsDrawer
 
     public void DrawFramedImage(GagType gag, float size, float rounding, bool frame = false)
     {
-        var gagImage = gag is GagType.None ? null : _cosmetics.GagImageFromType(gag);
+        var gagImage = gag is GagType.None ? null : TextureManagerEx.GagImage(gag);
         var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
         DrawImageInternal(gagImage, gagFrame, size, rounding, frame);
     }
 
     public void DrawFramedImage(Padlocks padlock, float size, float rounding, bool frame = false)
     {
-        var padlockImage = padlock is Padlocks.None ? null : _cosmetics.PadlockImageFromType(padlock);
+        var padlockImage = padlock is Padlocks.None ? null : TextureManagerEx.PadlockImage(padlock);
         var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
         DrawImageInternal(padlockImage, padlockFrame, size, rounding, frame, true, size / 6);
     }
@@ -314,7 +315,7 @@ public class ActiveItemsDrawer
     public void DrawRestrictionImage(RestrictionItem? restriction, float size, float rounding, bool frame = false)
     {
         // Attempt custom thumbnail.
-        if (restriction != null && _cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.ThumbnailPath) is { } image)
+        if (restriction != null && TextureManagerEx.GetMetadataPath(ImageDataType.Restrictions, restriction.ThumbnailPath) is { } image)
         {
             ImGuiHelpers.ScaledDummy(size);
             ImGui.GetWindowDrawList().AddDalamudImageRounded(image, ImGui.GetItemRectMin(), new Vector2(size), rounding);
@@ -335,7 +336,7 @@ public class ActiveItemsDrawer
 
     public void DrawFramedImage(RestraintSet? rs, Vector2 size, float rounding, bool frame = false)
     {
-        var image = rs is null ? null : _cosmetics.GetImageMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath);
+        var image = rs is null ? null : TextureManagerEx.GetMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath);
         DrawImageInternal(image, null, size, rounding);
     }
 

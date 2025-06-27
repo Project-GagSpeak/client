@@ -1,4 +1,5 @@
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
+using CkCommons.Textures;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
@@ -41,7 +42,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                 continue;
             }
 
-            MoodleIcons.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+            MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
             // get the dispelable moodle if any.
             var title = _kinksterRef.LastIpcData.Statuses.GetValueOrDefault(info.StatusOnDispell).Title ?? "Unknown";
             DrawItemTooltip(info, title);

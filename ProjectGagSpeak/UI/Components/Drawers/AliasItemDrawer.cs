@@ -1,10 +1,11 @@
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
+using CkCommons.Raii;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -42,7 +43,6 @@ public sealed class AliasItemDrawer
         ILogger<AliasItemDrawer> logger,
         GagspeakMediator mediator,
         MoodleDrawer moodleDrawer,
-        MoodleIcons moodleDisplayer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -62,8 +62,8 @@ public sealed class AliasItemDrawer
         _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _statusCombo = new MoodleStatusCombo(1.15f, moodleDisplayer, logger);
-        _presetCombo = new MoodlePresetCombo(1.15f, moodleDisplayer, logger);
+        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
+        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
     }
 
     public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, bool canEdit = true)

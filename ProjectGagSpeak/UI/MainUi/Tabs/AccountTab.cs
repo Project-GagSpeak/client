@@ -11,6 +11,8 @@ using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
+using CkCommons.Gui;
+using GagSpeak.Utils;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -158,7 +160,7 @@ public class AccountTab
     private void DrawUIDHeader()
     {
         // fetch the Uid Text of yourself
-        var uidText = CkGui.GetUidText();
+        var uidText = GsExtensions.GetUidText();
 
         // push the big boi font for the UID
         using (UiFontService.UidFont.Push())
@@ -166,7 +168,7 @@ public class AccountTab
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
             // display it, it should be green if connected and red when not.
-            ImGui.TextColored(CkGui.UidColor(), uidText);
+            ImGui.TextColored(GsExtensions.UidColor(), uidText);
         }
 
         // if we are connected
@@ -181,7 +183,7 @@ public class AccountTab
                 var origTextSize = ImGui.CalcTextSize(MainHub.UID);
                 // adjust the cursor and redraw the UID (really not sure why this is here but we can trial and error later.
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - origTextSize.X / 2);
-                ImGui.TextColored(CkGui.UidColor(), MainHub.UID);
+                ImGui.TextColored(GsExtensions.UidColor(), MainHub.UID);
                 // give it the same functionality.
                 CkGui.CopyableDisplayText(MainHub.UID);
             }

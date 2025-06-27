@@ -1,8 +1,9 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using ImGuiNET;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Components;
 

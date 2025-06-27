@@ -1,10 +1,10 @@
-using GagSpeak.Gui;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagSpeak.Utils;
 using GagspeakAPI.Data.Struct;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 
 namespace GagSpeak.CustomCombos.Editor;
@@ -45,7 +45,7 @@ public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
         _currentItem = currentProfile;
         // Maybe there is a faster way to know this, but atm I do not know.
         var previewName = Items.FirstOrDefault(i => i.ProfileGuid == _currentItem).ProfileName ?? "Select a Profile...";
-        bool selected = Draw($"##{label}", previewName, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
+        var selected = Draw($"##{label}", previewName, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
         CkGui.AttachToolTip("[CTRL + L-Click] -> Fetch latest profile list.");
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && KeyMonitor.CtrlPressed())
             _mediator.Publish(new CustomizeProfileListRequest());

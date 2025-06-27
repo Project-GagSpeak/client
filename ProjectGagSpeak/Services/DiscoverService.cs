@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Gui.Components;

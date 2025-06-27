@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using GagSpeak.Services.Mediator;
 using ImGuiNET;
 
@@ -11,20 +12,20 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     public static void DrawLimitedDescription(string desc, Vector4 color, Vector2 size)
     {
         // Calculate the line height and determine the max lines based on available height
-        float lineHeight = ImGui.CalcTextSize("A").Y;
-        int maxLines = (int)(size.Y / lineHeight);
+        var lineHeight = ImGui.CalcTextSize("A").Y;
+        var maxLines = (int)(size.Y / lineHeight);
         var startX = ImGui.GetCursorScreenPos().X;
         double currentLines = 1;
-        float lineWidth = size.X; // Max width for each line
-        string[] words = desc.Split(' '); // Split text by words
-        string newDescText = "";
-        string currentLine = "";
+        var lineWidth = size.X; // Max width for each line
+        var words = desc.Split(' '); // Split text by words
+        var newDescText = "";
+        var currentLine = "";
 
         foreach (var word in words)
         {
             // Try adding the current word to the line
-            string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-            float testLineWidth = ImGui.CalcTextSize(testLine).X;
+            var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+            var testLineWidth = ImGui.CalcTextSize(testLine).X;
 
             // if a word contains newlines, count how many, append, and add to current lines.
             if (word.Contains("\n\n"))

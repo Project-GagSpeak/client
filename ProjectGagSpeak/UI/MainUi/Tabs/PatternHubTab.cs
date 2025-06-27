@@ -1,17 +1,16 @@
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using System.Collections.Immutable;
 using System.Globalization;
-using GagSpeak.PlayerClient;
-using GagSpeak.State.Managers;
-using GagSpeak.CkCommons.Gui.Utility;
 
 namespace GagSpeak.Gui.MainWindow;
 public class PatternHubTab : DisposableMediatorSubscriberBase
@@ -166,14 +165,14 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
 
             // Show the filter combo.
             ImUtf8.SameLineInner();
-            if(ImGuiUtil.GenericEnumCombo("##PatternFilterType", filterTypeSize, _shareHub.SearchFilter, out ResultFilter newFilter, i => i.ToString()))
+            if(ImGuiUtil.GenericEnumCombo("##PatternFilterType", filterTypeSize, _shareHub.SearchFilter, out var newFilter, i => i.ToString()))
                 _shareHub.SearchFilter = newFilter;
             CkGui.AttachToolTip("Sort Method.--SEP--Defines how results are found.");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubFilterType, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             // beside this, the duration filter.
             ImUtf8.SameLineInner();
-            if(ImGuiUtil.GenericEnumCombo("##DurationFilter", durationFilterSize, _shareHub.SearchDuration, out DurationLength newLength, i => i.ToName()))
+            if(ImGuiUtil.GenericEnumCombo("##DurationFilter", durationFilterSize, _shareHub.SearchDuration, out var newLength, i => i.ToName()))
                 _shareHub.SearchDuration = newLength;
             CkGui.AttachToolTip("Time Range");
 

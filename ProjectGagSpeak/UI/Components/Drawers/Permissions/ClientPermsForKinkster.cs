@@ -1,4 +1,4 @@
-using Dalamud.Interface.Utility.Raii;using GagSpeak.CkCommons.Gui;using GagSpeak.CkCommons.Raii;using GagSpeak.Gui;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using GagspeakAPI.Hub;using ImGuiNET;using NAudio.SoundFont;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
+using Dalamud.Interface.Utility.Raii;using CkCommons.Gui;using CkCommons.Raii;using GagSpeak.Gui;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using GagspeakAPI.Hub;using ImGuiNET;using NAudio.SoundFont;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
 public class ClientPermsForKinkster{
     private readonly GlobalPermissions _globals;
     private readonly MainHub _hub;

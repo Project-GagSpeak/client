@@ -1,7 +1,7 @@
+using CkCommons.Helpers;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -12,6 +12,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
+using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.Gui;
@@ -166,7 +167,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGuiUtil.DrawTableColumn("ChatGarblerChannelsBitfield:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatGarblerChannelsBitfield.ToString());
+                    ImGuiUtil.DrawTableColumn(_globals.Current!.ChatGarblerChannelsBitfield.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
                     ImGuiUtil.DrawTableColumn(_globals.Current.ChatGarblerActive.ToString());

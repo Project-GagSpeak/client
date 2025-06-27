@@ -1,10 +1,11 @@
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -12,7 +13,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.Gui.Toybox;
 

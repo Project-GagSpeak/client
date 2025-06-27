@@ -2,10 +2,10 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
-using GagSpeak.CkCommons.FileSystem;
-using GagSpeak.CkCommons.FileSystem.Selector;
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
 using GagSpeak.Gui;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -15,6 +15,8 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using OtterGuiInternal.Structs;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 
 namespace GagSpeak.FileSystems;
 
@@ -37,8 +39,8 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     public new CursedLootFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public CursedLootFileSelector(ILogger<CursedLootFileSelector> log, GagspeakMediator mediator, FavoritesManager favorites,
-        CursedLootManager manager, CursedLootFileSystem fileSystem) : base(fileSystem, log, Svc.KeyState, "##CursedLootFS")
+    public CursedLootFileSelector(GagspeakMediator mediator, FavoritesManager favorites, CursedLootManager manager,
+        CursedLootFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##CursedLootFS")
     {
         Mediator = mediator;
         _favorites = favorites;

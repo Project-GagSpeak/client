@@ -1,13 +1,13 @@
-using GagSpeak.CkCommons;
-using GagSpeak.Gui;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;

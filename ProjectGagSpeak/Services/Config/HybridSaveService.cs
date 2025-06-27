@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.HybridSaver;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services.Configs;
@@ -13,12 +13,12 @@ public sealed class HybridSaveService : HybridSaveServiceBase<ConfigFileProvider
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        StartChecking();
+        Init();
         return Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        await StopCheckingAsync();
+        await Dispose();
     }
 }

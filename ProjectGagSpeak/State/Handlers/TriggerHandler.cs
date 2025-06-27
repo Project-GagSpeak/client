@@ -1,8 +1,6 @@
+using CkCommons.Helpers;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Utility;
-using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.GameInternals.Structs;

@@ -1,5 +1,5 @@
 using Dalamud.Interface.Colors;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
@@ -7,6 +7,7 @@ using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
+using OtterGui.Extensions;
 
 namespace GagSpeak.CustomCombos.Editor;
 

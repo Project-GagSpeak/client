@@ -1,13 +1,13 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Raii;
+using CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Gui.Utility;
+using CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -23,6 +23,8 @@ using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -93,14 +95,15 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         GlobalPermissions globals,
         PresetLogicDrawer presets,
         KinksterPermsForClient permsForSelf,
-        ClientPermsForKinkster permsForKinkster,
-        MoodleIcons iconDisplayer,
-        KinksterManager pairs)
+        ClientPermsForKinkster permsForKinkster)
         : base(logger, mediator, $"StickyPermissionUI")
     {
+        _mainTabMenu = mainTabMenu;
         _hub = hub;
         _globals = globals;
         _presets = presets;
+        _kinksterPerms = permsForSelf;
+        _permsForKinkster = permsForKinkster;
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
 

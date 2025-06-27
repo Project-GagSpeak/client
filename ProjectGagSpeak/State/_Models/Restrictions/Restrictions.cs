@@ -1,13 +1,12 @@
-using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
-using System.Text.Json.Nodes;
 
 namespace GagSpeak.State.Models;
 
@@ -116,7 +115,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             throw new ArgumentException("Invalid JObjectToken!");
 
         var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
-        var moodles = JParser.LoadMoodle(json["Moodle"]);
+        var moodles = GsExtensions.LoadMoodle(json["Moodle"]);
         var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
         return new GarblerRestriction(gagType)
@@ -127,8 +126,8 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             Moodle = moodles,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
-            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
-            VisorState = JParser.FromJObject(json["VisorState"]),
+            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
+            VisorState = GsExtensions.FromJObject(json["VisorState"]),
             CPlusProfile = new CustomizeProfile(profileId, profilePrio),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
@@ -198,7 +197,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         // If the "StatusIds" property exists, treat this as a MoodlePreset
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
@@ -264,7 +263,7 @@ public class HypnoticRestriction : RestrictionItem
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         // If the "StatusIds" property exists, treat this as a MoodlePreset
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
@@ -281,8 +280,8 @@ public class HypnoticRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
-            VisorState = JParser.FromJObject(json["VisorState"]),
+            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
+            VisorState = GsExtensions.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<HypnoticOverlay>() ?? new HypnoticOverlay(),
         };
     }
@@ -337,7 +336,7 @@ public class BlindfoldRestriction : RestrictionItem
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         // If the "StatusIds" property exists, treat this as a MoodlePreset
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
@@ -354,8 +353,8 @@ public class BlindfoldRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-            HeadgearState = JParser.FromJObject(json["HeadgearState"]),
-            VisorState = JParser.FromJObject(json["VisorState"]),
+            HeadgearState = GsExtensions.FromJObject(json["HeadgearState"]),
+            VisorState = GsExtensions.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<BlindfoldOverlay>() ?? new BlindfoldOverlay(),
         };
     }
@@ -403,7 +402,7 @@ public class CollarRestriction : RestrictionItem
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        Guid id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         // If the "StatusIds" property exists, treat this as a MoodlePreset
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);

@@ -2,6 +2,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Extensions;
 
 namespace GagSpeak.CustomCombos;
 

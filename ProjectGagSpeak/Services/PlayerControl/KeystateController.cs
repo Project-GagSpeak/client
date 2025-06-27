@@ -1,11 +1,12 @@
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Plugin.Services;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
 using GagSpeak.Utils;
 using System.Reflection;
 using System.Windows.Forms;
+using CkCommons.Helpers;
 
 
 namespace GagSpeak.Services.Controller;
@@ -30,7 +31,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     {
         _moveService = moveService;
 
-        Generic.ExecuteSafely(delegate
+        Generic.Safe(delegate
         {
             _getRefValue = (GetRefValue)Delegate.CreateDelegate(typeof(GetRefValue), Svc.KeyState,
                 Svc.KeyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(int)], null)!);

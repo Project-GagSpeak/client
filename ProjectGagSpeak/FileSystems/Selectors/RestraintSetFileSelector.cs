@@ -3,10 +3,10 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using GagSpeak.CkCommons.FileSystem;
-using GagSpeak.CkCommons.FileSystem.Selector;
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
 using GagSpeak.Gui;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -14,6 +14,8 @@ using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 
 namespace GagSpeak.FileSystems;
 
@@ -44,7 +46,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
     public RestraintSetFileSelector(ILogger<RestraintSetFileSelector> log, GagspeakMediator mediator,
         FavoritesManager favorites, RestraintManager manager, RestraintSetFileSystem fileSystem)
-        : base(fileSystem, log, Svc.KeyState, "##RestraintSetFS")
+        : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestraintSetFS")
     {
         Mediator = mediator;
         _favorites = favorites;

@@ -1,6 +1,5 @@
 using Buttplug.Client;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;

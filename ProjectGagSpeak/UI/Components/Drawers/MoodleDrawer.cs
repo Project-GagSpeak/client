@@ -1,7 +1,7 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Raii;
+using CkCommons;
+using CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
@@ -11,20 +11,21 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using CkCommons.Gui;
+using CkCommons.Helpers;
+using CkCommons.Textures;
 
 namespace GagSpeak.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
-    private readonly MoodleIcons _statusMonitor;
     private MoodleStatusCombo _statusCombo { get; init; }
     private MoodlePresetCombo _presetCombo { get; init; }
-    public MoodleDrawer(ILogger<MoodleDrawer> logger, MoodleIcons statusMonitor)
+    public MoodleDrawer(ILogger<MoodleDrawer> logger)
     {
         _logger = logger;
-        _statusMonitor = statusMonitor;
-        _statusCombo = new MoodleStatusCombo(1.15f, statusMonitor, logger);
-        _presetCombo = new MoodlePresetCombo(1.15f, statusMonitor, logger);
+        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
+        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
     }
 
     public static Vector2 IconSize
@@ -170,8 +171,8 @@ public class MoodleDrawer
             if (status.IconID is 0)
                 continue;
 
-            MoodleIcons.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
-            MoodleIcons.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
             {
@@ -196,9 +197,9 @@ public class MoodleDrawer
             if(status.IconID is 0)
                 continue;
 
-            MoodleIcons.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
-                MoodleIcons.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+                GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
             ImGui.SameLine();
         }
 

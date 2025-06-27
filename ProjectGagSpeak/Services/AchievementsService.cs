@@ -1,7 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -89,7 +89,8 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         base.Dispose(disposing);
         if (disposing)
         {
-            _updateLoopCTS?.CancelDispose();
+            _updateLoopCTS?.Cancel();
+            _updateLoopCTS?.Dispose();
         }
     }
 
@@ -127,7 +128,9 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private void BeginSaveCycle()
     {
         Logger.LogInformation("Beginning Achievement Save Cycle", LoggerType.Achievements);
-        _updateLoopCTS = _updateLoopCTS?.CancelRecreate();
+        _updateLoopCTS?.Cancel();
+        _updateLoopCTS?.Dispose();
+        _updateLoopCTS = new CancellationTokenSource();
         _updateLoopTask = RunPeriodicUpdate(_updateLoopCTS!.Token);
     }
 

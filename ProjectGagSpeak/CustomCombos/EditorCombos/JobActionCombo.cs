@@ -3,25 +3,25 @@ using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui;
 using OtterGui.Raii;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
+using CkCommons.Gui;
+using OtterGui.Extensions;
+using CkCommons.Textures;
 
 namespace GagSpeak.CustomCombos.Editor;
 
 /// <summary> Capable of displaying every valid emote, along with its icon and all command variants. </summary>
 public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
 {
-    private readonly MoodleIcons _iconDrawer;
     private float _iconScale = 1.0f;
     private uint _currentActionId;
 
     // Need a generator to make sure it reflects the selected job and stuffies.
-    public JobActionCombo(float iconScale, MoodleIcons disp, ILogger log, 
-        Func<IReadOnlyList<ParsedActionRow>> gen) : base(gen, log)
+    public JobActionCombo(ILogger log, float iconScale, Func<IReadOnlyList<ParsedActionRow>> gen) : base(gen, log)
     {
         _iconScale = iconScale;
-        _iconDrawer = disp;
         SearchByParts = true;
     }
 
@@ -73,7 +73,7 @@ public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
             ImGui.SetCursorPos(pos);
             using (ImRaii.Group())
             {
-                ImGui.Image(_iconDrawer.GetGameIconOrEmpty(parsedJobAction.IconID).ImGuiHandle, new Vector2(size.Y));
+                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(parsedJobAction.IconID).ImGuiHandle, new Vector2(size.Y));
                 CkGui.TextFrameAlignedInline(parsedJobAction.Name);
                 CkGui.ColorTextFrameAlignedInline($"({parsedJobAction.ActionID})", CkColor.ElementBG.Uint(), false);
             }

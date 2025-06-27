@@ -1,15 +1,17 @@
+using CkCommons;
+using CkCommons.Classes;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Drawers;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Components;
-using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Extensions;
@@ -57,8 +59,8 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
     private RestrictionGagCombo _gagItemCombo;
     private RestrictionCombo _restrictionItemCombo;
-    private TimeSpanTextEditor? LowerBound;
-    private TimeSpanTextEditor? UpperBound;
+    private InputTextTimeSpan? LowerBound;
+    private InputTextTimeSpan? UpperBound;
     private int Chance = -1;
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)
@@ -194,8 +196,8 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         var inputWidth = widthForStrInputs / 2;
 
         // Ensure persistent references
-        LowerBound ??= new TimeSpanTextEditor(() => _manager.LockRangeLower, _manager.SetLowerLimit);
-        UpperBound ??= new TimeSpanTextEditor(() => _manager.LockRangeUpper, _manager.SetUpperLimit);
+        LowerBound ??= new InputTextTimeSpan(() => _manager.LockRangeLower, _manager.SetLowerLimit);
+        UpperBound ??= new InputTextTimeSpan(() => _manager.LockRangeUpper, _manager.SetUpperLimit);
         var chance = Chance != -1 ? Chance : _manager.LockChance;
 
         // Draw UI

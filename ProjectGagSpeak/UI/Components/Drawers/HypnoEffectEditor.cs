@@ -1,8 +1,9 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Textures;
@@ -375,7 +376,7 @@ public class HypnoEffectEditor : IDisposable
 
     private Vector2 DisplayPreviewEffect(float height, string path)
     {
-        if (_effect is null || _display.GetImageMetadataPath(ImageDataType.Hypnosis, path) is not { } hypnoImage)
+        if (_effect is null || TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, path) is not { } hypnoImage)
             return Vector2.Zero;
 
         try

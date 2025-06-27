@@ -3,7 +3,6 @@ using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagspeakAPI.Extensions;
 

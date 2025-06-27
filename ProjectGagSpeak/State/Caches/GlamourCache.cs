@@ -1,8 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Gui;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
@@ -11,6 +11,7 @@ using Lumina.Extensions;
 using OtterGui;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
+using CkCommons.Gui;
 
 namespace GagSpeak.State.Caches;
 

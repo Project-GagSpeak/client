@@ -1,21 +1,19 @@
-using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.HybridSaver;
-using GagSpeak.CkCommons.Newtonsoft;
+using CkCommons;
+using CkCommons.Helpers;
+using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
-using OtterGui;
 
 namespace GagSpeak.State.Managers;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -350,21 +348,21 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             if (setJson["RestraintLayers"] is JArray layerArray)
             {
                 foreach (var layerToken in layerArray)
-                    Generic.ExecuteSafely(() => layers.Add(LoadRestraintLayer(layerToken)));
+                    Generic.Safe(() => layers.Add(LoadRestraintLayer(layerToken)));
             }
 
             var restraintMods = new List<ModSettingsPreset>();
             if(setJson["RestraintMods"] is JArray modArray)
             {
                 foreach (var modToken in modArray)
-                    Generic.ExecuteSafely(() => restraintMods.Add(ModSettingsPreset.FromRefToken(modToken, _modPresets)));
+                    Generic.Safe(() => restraintMods.Add(ModSettingsPreset.FromRefToken(modToken, _modPresets)));
             }
 
             var restraintMoodles = new HashSet<Moodle>();
             if(setJson["RestraintMoodles"] is JArray moodleArray)
             {
                 foreach (var moodleToken in moodleArray)
-                    Generic.ExecuteSafely(() => restraintMoodles.Add(JParser.LoadMoodle(moodleToken)));
+                    Generic.Safe(() => restraintMoodles.Add(GsExtensions.LoadMoodle(moodleToken)));
             }
 
             set = new RestraintSet()
@@ -377,9 +375,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 RestraintSlots = slotDict,
                 Glasses = _items.ParseBonusSlot(setJson["Glasses"]),
                 Layers = layers,
-                HeadgearState = JParser.FromJObject(setJson["HeadgearState"]),
-                VisorState = JParser.FromJObject(setJson["VisorState"]),
-                WeaponState = JParser.FromJObject(setJson["WeaponState"]),
+                HeadgearState = GsExtensions.FromJObject(setJson["HeadgearState"]),
+                VisorState = GsExtensions.FromJObject(setJson["VisorState"]),
+                WeaponState = GsExtensions.FromJObject(setJson["WeaponState"]),
                 RestraintMods = restraintMods,
                 RestraintMoodles = restraintMoodles,
             };
@@ -462,7 +460,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
         var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        var stains = JParser.ParseCompactStainIds(slotJson["CustomStains"]);
+        var stains = GsExtensions.ParseCompactStainIds(slotJson["CustomStains"]);
 
         if (refId== Guid.Empty)
         {
@@ -505,7 +503,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var id = Guid.TryParse(layerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
         var isActive = layerJson["IsActive"]?.Value<bool>() ?? false;
         var flags = layerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
-        var customStains = JParser.ParseCompactStainIds(layerJson["CustomStains"]);
+        var customStains = GsExtensions.ParseCompactStainIds(layerJson["CustomStains"]);
 
         var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
         if (refId== Guid.Empty)

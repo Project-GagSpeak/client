@@ -86,7 +86,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
     {
         // If the user does not have a profile set, return the default logo.
         if(string.IsNullOrEmpty(Base64ProfilePicture) || _imageData.Value.IsNullOrEmpty())
-            return CosmeticService.CoreTextures[CoreTexture.Icon256Bg];
+            return CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg];
 
         // Otherwise, fetch the profile image for it.
         if(_storedProfileImage is not null)
@@ -96,7 +96,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         try
         {
             Logger.LogTrace("Loading profile image data to wrap.");
-            _storedProfileImage = _cosmetics.GetProfilePicture(_imageData.Value);
+            _storedProfileImage = TextureManagerEx.GetProfilePicture(_imageData.Value);
         }
         catch (Exception ex)
         {

@@ -1,5 +1,5 @@
 using Dalamud.Plugin;
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.HybridSaver;
 
 namespace GagSpeak.Services.Configs;
 

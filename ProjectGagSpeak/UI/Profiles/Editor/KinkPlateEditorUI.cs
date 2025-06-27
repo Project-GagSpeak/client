@@ -1,7 +1,8 @@
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;

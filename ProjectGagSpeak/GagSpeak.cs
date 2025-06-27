@@ -1,3 +1,6 @@
+using CkCommons;
+using CkCommons.RichText;
+using CkCommons.Textures;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Interface.ImGuiFileDialog;
@@ -40,6 +43,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.Toybox;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OtterGui.Log;
@@ -101,6 +105,8 @@ public sealed class GagSpeak : IDalamudPlugin
     public GagSpeak(IDalamudPluginInterface pi)
     {
         pi.Create<Svc>();
+        // init the CkCommons.
+        CkCommonsHost.Init(pi, this);
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi);
         // start up the host
@@ -158,6 +164,9 @@ public sealed class GagSpeak : IDalamudPlugin
 
     public void Dispose()
     {
+        // dispose of CkCommons here maybe?
+        CkCommonsHost.Dispose();
+        // Dispose of the host.
         _host.StopAsync().GetAwaiter().GetResult();
         _host.Dispose();
     }

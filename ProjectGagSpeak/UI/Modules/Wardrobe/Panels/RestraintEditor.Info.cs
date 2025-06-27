@@ -1,13 +1,14 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Gui.Components;
 using ImGuiNET;
-using GagSpeak.CkCommons.Raii;
+using CkCommons.Raii;
 using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
+using CkCommons;
 
 namespace GagSpeak.Gui.Wardrobe;
 

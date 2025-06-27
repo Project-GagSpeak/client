@@ -1,9 +1,7 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;

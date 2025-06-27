@@ -1,4 +1,4 @@
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 
 namespace GagSpeak.Gui.Components;
 

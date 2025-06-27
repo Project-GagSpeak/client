@@ -32,6 +32,7 @@ public sealed class CommandManager : IDisposable
         _mainConfig = config;
         _pairManager = pairManager;
         _serverConfig = server;
+        _deathRolls = dr;
 
         // Add handlers to the main commands
         Svc.Commands.AddHandler(MainCommand, new CommandInfo(OnGagSpeak)

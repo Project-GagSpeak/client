@@ -1,6 +1,7 @@
+using CkCommons;
+using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -34,11 +35,11 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.PuppetVictimGlobal], SelectedTab.VictimGlobal,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimGlobal], SelectedTab.VictimGlobal,
             "Configure how others can control you like a puppet, Globally!");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.PuppetVictimUnique], SelectedTab.VictimUnique,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique], SelectedTab.VictimUnique,
             "Configure how others can control you, with unique configurations for every kinkster!");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.PuppetMaster], SelectedTab.ControllerUnique,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetMaster], SelectedTab.ControllerUnique,
             "View what another Kinkster allows you control over, and any aliases they made.");
 
         AllowPinning = false;

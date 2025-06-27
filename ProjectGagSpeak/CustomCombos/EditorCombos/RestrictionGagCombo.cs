@@ -1,12 +1,12 @@
+using CkCommons.Gui;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
-using GagSpeak.Gui;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Models;
 using GagspeakAPI.Util;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;

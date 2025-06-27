@@ -1,15 +1,13 @@
+using CkCommons.GarblerCore;
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.CkCommons.GarblerCore;
-using GagSpeak.CkCommons.Gui;
-using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Interop;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -232,7 +230,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var maxGlobalShockDuration = globals.GetTimespanFromDuration();
         var maxGlobalVibrateDuration = (int)globals.ShockVibrateDuration.TotalSeconds;
 
-        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderGags);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderGags, UiFontService.UidFont);
         using (ImRaii.Disabled(liveChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
@@ -252,8 +250,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.HelpText(GSLoc.Settings.MainOptions.GagPadlockTimerTT);
 
         ImGui.Separator();
-        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderWardrobe);
-
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderWardrobe, UiFontService.UidFont);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
             PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled).ConfigureAwait(false);
@@ -292,7 +289,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.HelpText(GSLoc.Settings.MainOptions.MimicsApplyTraitsTT);
         }
 
-        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderPuppet);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderPuppet, UiFontService.UidFont);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.PuppeteerActive, ref puppeteerEnabled))
             PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppeteerEnabled), puppeteerEnabled).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
@@ -341,8 +338,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
 
         ImGui.Separator();
-        CkGui.GagspeakBigText(GSLoc.Settings.MainOptions.HeaderToybox);
-
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderToybox, UiFontService.UidFont);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.ToyboxActive, ref toyboxEnabled))
             PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ToyboxEnabled), toyboxEnabled).ConfigureAwait(false);
         CkGui.HelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
@@ -471,18 +467,19 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(2, "PreferencesColumns", true);
         ImGui.SetColumnWidth(0, width);
 
-        CkGui.GagspeakBigText("Live Chat Garbler");
+        CkGui.FontText("Live Chat Garbler", UiFontService.UidFont);
+
         using (ImRaii.Group())
         {
             foreach (var (label, channels) in ChatLogAgent.SortedChannels)
             {
                 ImGui.Text(label); // Show the group label
 
-                for (int i = 0; i < channels.Length; i++)
+                for (var i = 0; i < channels.Length; i++)
                 {
                     var channel = channels[i];
                     var enabled = channel.IsChannelEnabled(globals.ChatGarblerChannelsBitfield);
-                    string checkboxLabel = channel.ToString();
+                    var checkboxLabel = channel.ToString();
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
@@ -530,18 +527,18 @@ public class SettingsUi : WindowMediatorSubscriberBase
         DrawChannelPreferences();
 
         ImGui.NextColumn();
-        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderPuppet);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderPuppet, UiFontService.UidFont);
         using (ImRaii.Group())
         {
             foreach (var (label, channels) in ChatLogAgent.SortedChannels)
             {
                 ImGui.Text(label); // Show the group label
 
-                for (int i = 0; i < channels.Length; i++)
+                for (var i = 0; i < channels.Length; i++)
                 {
                     var channel = channels[i];
                     var enabled = channel.IsChannelEnabled(_mainConfig.Current.PuppeteerChannelsBitfield);
-                    string checkboxLabel = channel.ToString();
+                    var checkboxLabel = channel.ToString();
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
@@ -561,7 +558,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(1);
 
         ImGui.Separator();
-        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderUiPrefs);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderUiPrefs, UiFontService.UidFont);
 
         var showMainUiOnStart = _mainConfig.Current.OpenMainUiOnStartup;
 
@@ -686,7 +683,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         /* --------------- Separator for moving onto the Notifications Section ----------- */
         ImGui.Separator();
-        CkGui.GagspeakBigText(GSLoc.Settings.Preferences.HeaderNotifications);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderNotifications, UiFontService.UidFont);
 
         var liveGarblerZoneChangeWarn = _mainConfig.Current.LiveGarblerZoneChangeWarn;
         var serverConnectionNotifs = _mainConfig.Current.NotifyForServerConnections;

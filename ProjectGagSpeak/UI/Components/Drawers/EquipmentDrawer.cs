@@ -1,12 +1,12 @@
+using CkCommons;
+using CkCommons.Classes;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Classes;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Interop;
@@ -20,11 +20,10 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using GagSpeak.CkCommons;
 
 namespace GagSpeak.Gui.Components;
 
@@ -201,7 +200,7 @@ public class EquipmentDrawer
         // If it has a thumbnail, we should use that.
         if (!restriction.Ref.ThumbnailPath.IsNullOrWhitespace())
         {
-            if (_cosmetics.GetImageMetadataPath(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
+            if (TextureManagerEx.GetMetadataPath(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
             {
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(GetRestraintItemH()), ImGui.GetStyle().FrameRounding);

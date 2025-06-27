@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Kinksters;
@@ -62,7 +63,7 @@ public sealed partial class PuppeteerHelper : DisposableMediatorSubscriberBase
         var pos = ImGui.GetCursorScreenPos();
         var size = new Vector2(width, ImGui.GetFrameHeight());
         ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, CkColor.FancyHeaderContrast.Uint(), ImGui.GetFrameHeight());
-        bool change = _pairCombo.Draw(width, 1.25f);
+        var change = _pairCombo.Draw(width, 1.25f);
         if(change)
         {
             Logger.LogInformation($"Selected Pair: {_pairCombo.Current?.GetNickAliasOrUid() ?? "None"} ({_pairCombo.Current?.UserData.ToString()})");

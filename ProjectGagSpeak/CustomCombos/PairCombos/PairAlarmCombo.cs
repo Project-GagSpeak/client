@@ -1,6 +1,7 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui;
+using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -8,7 +9,6 @@ using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Globalization;
-using GagSpeak.Kinksters;
 
 namespace GagSpeak.CustomCombos.Pairs;
 

@@ -1,20 +1,20 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Raii;
+using CkCommons.Textures;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Utility;
-using GagSpeak.CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
-using GagSpeak.CkCommons;
 
 namespace GagSpeak.Gui.Components;
 
@@ -27,7 +27,6 @@ public sealed partial class TriggerDrawer : IDisposable
     private readonly ILogger<TriggerDrawer> _logger;
     private readonly TriggerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly MoodleIcons _iconDisplayer;
 
     private RestraintCombo _restraintCombo;
     private RestrictionCombo _restrictionCombo;
@@ -42,7 +41,6 @@ public sealed partial class TriggerDrawer : IDisposable
         ILogger<TriggerDrawer> logger,
         GagspeakMediator mediator,
         MoodleDrawer moodleDrawer,
-        MoodleIcons iconDisplayer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -53,7 +51,6 @@ public sealed partial class TriggerDrawer : IDisposable
         _logger = logger;
         _manager = manager;
         _moodleDrawer = moodleDrawer;
-        _iconDisplayer = iconDisplayer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -67,11 +64,11 @@ public sealed partial class TriggerDrawer : IDisposable
             ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _statusCombo = new MoodleStatusCombo(1.15f, iconDisplayer, logger);
-        _presetCombo = new MoodlePresetCombo(1.15f, iconDisplayer, logger);
+        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
+        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
 
-        _jobCombo = new JobCombo(1.15f, iconDisplayer, logger);
-        _jobActionCombo = new JobActionCombo(1.15f, iconDisplayer, logger, () => [
+        _jobCombo = new JobCombo(logger, 1.15f);
+        _jobActionCombo = new JobActionCombo(logger, 1.15f, () => [
             .. _jobCombo.Current.JobId is not JobType.ADV
                 ? SpellActionService.GetJobActions(_jobCombo.Current) ?? []
                 : SpellActionService.AllActions.OrderBy(c => c.ParentJob)
@@ -250,7 +247,7 @@ public sealed partial class TriggerDrawer : IDisposable
         // Combo Row.
         using (ImRaii.Group())
         {
-            var img = MoodleIcons.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
+            var img = MoodleDisplay.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
             ImGui.Image(img.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
 
             ImUtf8.SameLineInner();
@@ -296,7 +293,7 @@ public sealed partial class TriggerDrawer : IDisposable
                     continue;
 
                 // Draw the icon.
-                ImGui.Image(MoodleIcons.GetGameIconOrEmpty(iconData.IconID).ImGuiHandle, iconSize);
+                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(iconData.IconID).ImGuiHandle, iconSize);
                 if(ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     // Remove the action from the list.

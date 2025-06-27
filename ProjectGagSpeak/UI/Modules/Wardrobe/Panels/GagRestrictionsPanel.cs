@@ -1,19 +1,20 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
-using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Util;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
 
@@ -139,7 +140,7 @@ public partial class GagRestrictionsPanel
             // Draw the type of restriction item as an image path here.
             if (_selector.Selected is not null)
             {
-                (var image, var tooltip) = (CosmeticService.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!");
+                (var image, var tooltip) = (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!");
                 ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
             }
         }

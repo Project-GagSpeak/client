@@ -1,5 +1,5 @@
 using GagSpeak.Gui;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
@@ -8,6 +8,7 @@ using ImGuiNET;
 using OtterGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Colors;
+using CkCommons.Gui;
 
 namespace GagSpeak.Services;
 

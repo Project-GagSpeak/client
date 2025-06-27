@@ -2,7 +2,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Configs;
@@ -149,7 +149,9 @@ public class Kinkster : IComparable<Kinkster>
     /// <summary> Update IPC Data </summary>
     public void UpdateVisibleData(KinksterUpdateIpc data)
     {
-        _applicationCts = _applicationCts.CancelRecreate();
+        _applicationCts?.Cancel();
+        _applicationCts?.Dispose();
+        _applicationCts = new CancellationTokenSource();
         LastIpcData = data.NewData;
 
         // if the cached player is null

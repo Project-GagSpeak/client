@@ -1,20 +1,21 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
-using GagSpeak.State;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -171,11 +172,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             {
                 (var image, var tooltip) = _selector.Selected?.Type switch
                 {
-                    RestrictionType.Gag => (CosmeticService.CoreTextures[CoreTexture.Gagged], "This is a Gag Restriction!"),
-                    RestrictionType.Collar => (CosmeticService.CoreTextures[CoreTexture.Collar], "This is a Collar Restriction!"),
-                    RestrictionType.Hypnotic => (CosmeticService.CoreTextures[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
-                    RestrictionType.Blindfold => (CosmeticService.CoreTextures[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
-                    _ => (CosmeticService.CoreTextures[CoreTexture.Restrained], "This is a generic Restriction.")
+                    RestrictionType.Gag => (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!"),
+                    RestrictionType.Collar => (CosmeticService.CoreTextures.Cache[CoreTexture.Collar], "This is a Collar Restriction!"),
+                    RestrictionType.Hypnotic => (CosmeticService.CoreTextures.Cache[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
+                    RestrictionType.Blindfold => (CosmeticService.CoreTextures.Cache[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
+                    _ => (CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], "This is a generic Restriction.")
                 };
                 ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
             }

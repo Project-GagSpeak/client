@@ -1,32 +1,27 @@
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
+using CkCommons.Textures;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.CkCommons.Gui.Utility;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
-using System.Collections.Immutable;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.Gui.Components;
-using GagSpeak.Services.Textures;
 
 namespace GagSpeak.Gui.MainWindow;
 
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
-    private readonly MoodleIcons _moodleDisplay;
     private readonly ShareHubService _shareHub;
-    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator,
-        MoodleIcons moodleDisplay, ShareHubService moodleHubService) 
+    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, ShareHubService moodleHubService) 
         : base(logger, mediator)
     {
-        _moodleDisplay = moodleDisplay;
         _shareHub = moodleHubService;
     }
 
@@ -167,7 +162,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             if (moodleInfo.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
             {
                 ImGui.SetCursorPos(imagePos);
-                _moodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+                MoodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodleDrawer.IconSize);
             }
         }
     }
@@ -196,7 +191,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
             // Show the filter combo.
             ImUtf8.SameLineInner();
-            if(CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out ResultFilter newFilterType, skip: 1))
+            if(CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, skip: 1))
                 _shareHub.SearchFilter = newFilterType;
             CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
 

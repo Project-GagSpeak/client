@@ -1,9 +1,9 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Classes;
+using CkCommons.Classes;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Raii;
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using GagSpeak.FileSystems;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
@@ -14,6 +14,8 @@ using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
+using CkCommons;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Wardrobe;
 

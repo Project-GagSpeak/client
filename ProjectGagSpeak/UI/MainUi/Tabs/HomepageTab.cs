@@ -13,6 +13,7 @@ using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Structs;
 using OtterGui.Text;
 using GagSpeak.Services.Textures;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -93,7 +94,7 @@ public class HomepageTab
             using var group = ImRaii.Group();
             var height = ImGui.GetContentRegionAvail().Y;
 
-            CkGui.GagspeakBigText(label);
+            CkGui.FontText(label, UiFontService.UidFont);
             ImGui.SetWindowFontScale(1.5f);
 
             var size = CkGui.IconSize(FAI.WaveSquare);

@@ -1,17 +1,15 @@
+using CkCommons.Classes;
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Classes;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
-using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Attributes;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui;

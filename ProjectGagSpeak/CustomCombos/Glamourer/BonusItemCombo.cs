@@ -1,9 +1,9 @@
-using Dalamud.Plugin.Services;
 using GagSpeak.Services;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;

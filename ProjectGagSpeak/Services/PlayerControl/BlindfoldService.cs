@@ -1,5 +1,4 @@
-using GagSpeak.CkCommons;
-using GagSpeak.Gui;
+using CkCommons.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
@@ -16,7 +15,6 @@ public class BlindfoldService : IDisposable
 
     private readonly ILogger<BlindfoldService> _logger;
     private readonly MainConfig _config;
-    private readonly CosmeticService _disp;
 
     // Animation Control
     private SemaphoreSlim _animationSlim = new(1, 1);
@@ -32,12 +30,10 @@ public class BlindfoldService : IDisposable
     // Display Corners (Currently unused, but useful in hypno)
     private readonly Vector2[] _blindfoldUV = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
 
-    public BlindfoldService(ILogger<BlindfoldService> logger, MainConfig config, 
-        CosmeticService display)
+    public BlindfoldService(ILogger<BlindfoldService> logger, MainConfig config)
     {
         _logger = logger;
         _config = config;
-        _disp = display;
     }
 
     public bool HasValidBlindfold => _appliedItem is not null;
@@ -46,7 +42,8 @@ public class BlindfoldService : IDisposable
     public void Dispose()
     {
         _logger.LogDebug("Disposing BlindfoldService");
-        _opacityAnimCTS?.CancelDispose();
+        _opacityAnimCTS?.Cancel();
+        _opacityAnimCTS?.Dispose();
     }
 
     /// <summary> Swaps between two blindfolds by removing one, then applying another. </summary
@@ -69,7 +66,8 @@ public class BlindfoldService : IDisposable
     public async Task EquipBlindfold(BlindfoldOverlay overlay, string enactor)
     {
         // reset the token thingy.
-        _opacityAnimCTS?.CancelDispose();
+        _opacityAnimCTS?.Cancel();
+        _opacityAnimCTS?.Dispose();
         _opacityAnimCTS = new CancellationTokenSource();
         await ExecuteWithSemaphore(() => EquipAnimationInternal(overlay, enactor));
     }
@@ -81,7 +79,8 @@ public class BlindfoldService : IDisposable
         if (_appliedItem is null)
             return;
         // reset the token thingy.
-        _opacityAnimCTS?.CancelDispose();
+        _opacityAnimCTS?.Cancel();
+        _opacityAnimCTS?.Dispose();
         _opacityAnimCTS = new CancellationTokenSource();
         await ExecuteWithSemaphore(RemoveAnimationInternal);
     }
@@ -167,7 +166,7 @@ public class BlindfoldService : IDisposable
         if (_appliedItem is null)
             return;
 
-        if (_disp.GetImageMetadataPath(ImageDataType.Blindfolds, _appliedItem.OverlayPath) is not { } blindfoldImage)
+        if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, _appliedItem.OverlayPath) is not { } blindfoldImage)
             return;
 
         // Fetch the windows foreground drawlist. This ensures that we do not conflict drawlist layers, with ChatTwo, or other windows.

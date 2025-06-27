@@ -1,10 +1,11 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
+using CkCommons;
 using GagSpeak.Gui;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui;
 using System.Collections.Immutable;
+using CkCommons.Gui;
 
 namespace GagSpeak.State.Caches;
 

@@ -1,10 +1,10 @@
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using Dalamud.Interface.Utility;
-using GagSpeak.Gui;
-using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
 using ImGuiNET;
-using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
 

@@ -1,13 +1,14 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Gui;
-using GagSpeak.CkCommons.Gui.Utility;
+using CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;
 using GagSpeak.Services;
 using GagspeakAPI.Hub;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Components;
 

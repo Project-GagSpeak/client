@@ -12,7 +12,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
-
+#nullable disable
 namespace GagSpeak.PlayerClient;
 
 /// <summary> 
@@ -22,13 +22,13 @@ public static unsafe class PlayerData
 {
     public static readonly int MaxLevel = 100;
     public static ClientLanguage Language => Svc.ClientState.ClientLanguage;
-    public static IPlayerCharacter? Object => Svc.ClientState.LocalPlayer;
+    public static IPlayerCharacter Object => Svc.ClientState.LocalPlayer;
     public static IntPtr ObjectAddress => Svc.ClientState.LocalPlayer?.Address ?? IntPtr.Zero;
     public static bool Available => Svc.ClientState.LocalPlayer != null;
     public unsafe static bool AvailableThreadSafe => GameObjectManager.Instance()->Objects.IndexSorted[0].Value != null;
     public static ulong ContentId => Svc.ClientState.LocalContentId;
     public static ulong ContendIdInstanced => Control.Instance()->LocalPlayer->ContentId;
-    public static StatusList? Status => Object?.StatusList;
+    public static StatusList Status => Object?.StatusList;
     public static string Name => Object?.Name.ToString() ?? string.Empty;
     public static string NameInstanced => Control.Instance()->LocalPlayer->Name.ToString() ?? string.Empty;
     public static string HomeWorld => Object?.HomeWorld.Value.Name.ToString() ?? string.Empty;
@@ -37,7 +37,7 @@ public static unsafe class PlayerData
     public static uint HomeWorldIdInstanced => Control.Instance()->LocalPlayer->HomeWorld;
     public static string NameWithWorld => GetNameWithWorld(Object);
     public static string NameWithWorldInstanced => NameInstanced + "@" + HomeWorldInstanced;
-    public static string GetNameWithWorld(this IPlayerCharacter? pc) => pc is null ? string.Empty : (pc.Name.ToString() + "@" + pc.HomeWorld.Value.Name.ToString());
+    public static string GetNameWithWorld(this IPlayerCharacter pc) => pc is null ? string.Empty : (pc.Name.ToString() + "@" + pc.HomeWorld.Value.Name.ToString());
     public static uint CurrentWorldId => Object?.CurrentWorld.RowId ?? 0;
     public static string CurrentWorld => Object?.CurrentWorld.Value.Name.ToString() ?? string.Empty;
     public static string HomeDataCenter => Svc.Data.GetExcelSheet<World>().GetRowOrDefault(HomeWorldId)?.DataCenter.ValueNullable?.Name.ToString();

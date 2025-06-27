@@ -1,7 +1,4 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Utility;
-using GagSpeak.Gui;
-using GagSpeak.CkCommons.Raii;
+using CkCommons.Gui;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -158,7 +155,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                 Padlocks.TimerPasswordPadlock => "Guess Password...",
                 _ => string.Empty,
             };
-            int maxLength = lastPadlock == Padlocks.CombinationPadlock ? 4 : 20;
+            var maxLength = lastPadlock == Padlocks.CombinationPadlock ? 4 : 20;
             CkGui.IconInputText($"##Unlocker_{label}", unlockWidth, FAI.Key, hint, ref Password, maxLength, flags);
         }
 
@@ -194,7 +191,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var passLabel = "##Input_" + id;
         var passHint = SelectedLock == Padlocks.CombinationPadlock ? "Enter 4 digit combination..." : "Enter password...";
         var timerHint = "Ex: 0h2m7s";
-        int maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
+        var maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
         var flags = SelectedLock == Padlocks.CombinationPadlock ? ITFlags.CharsDecimal : ITFlags.None;
 
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
@@ -212,7 +209,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     {
         var passHint = SelectedLock == Padlocks.CombinationPadlock ? "Enter 4 digit combination..." : "Enter password...";
         var timerHint = "Ex: 0h2m7s";
-        int maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
+        var maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
         var flags = SelectedLock == Padlocks.CombinationPadlock ? ITFlags.CharsDecimal : ITFlags.None;
 
         // Password Row

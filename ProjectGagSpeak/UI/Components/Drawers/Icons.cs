@@ -1,3 +1,5 @@
+using CkCommons.Gui;
+using CkCommons.Services;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
@@ -9,7 +11,7 @@ using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace GagSpeak.CkCommons.Widgets;
+namespace CkCommons.Widgets;
 
 public static class Icons
 {
@@ -48,7 +50,7 @@ public static class Icons
         }
         catch (Exception e)
         {
-            Svc.Logger.Error(e, "Error drawing icon");
+            Svc.Log.Error(e, "Error drawing icon");
         }
     }
 

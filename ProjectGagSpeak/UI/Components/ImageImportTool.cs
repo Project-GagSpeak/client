@@ -1,8 +1,9 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Helpers;
+using CkCommons.Textures;
+using CkCommons.Widgets;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons;
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.ImageHandling;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -283,7 +284,7 @@ public class ImageImportTool
             return;
         }
 
-        if(!ImageDataHandling.TryGetClipboardImage(out var byteArr, out var imgContext))
+        if(!Generic.TryGetClipboardImage(out var byteArr, out var imgContext))
         {
             _logger.LogWarning("Clipboard image is not valid.");
             return;
@@ -297,7 +298,7 @@ public class ImageImportTool
         // Get the data about the image.
         var image = Image.Load<Rgba32>(newImage.OriginalData);
         newImage.OriginalImage = image;
-        newImage.OriginalDisplay = _imageService.GetImageFromBytes(newImage.OriginalData);
+        newImage.OriginalDisplay = TextureManager.GetImageFromBytes(newImage.OriginalData);
 
         // Upscale if the image was too small, otherwise, continue.
         var lesserDimension = Math.Min(image.Width, image.Height);
@@ -355,7 +356,7 @@ public class ImageImportTool
                         newImage.OriginalImage = Image.Load<Rgba32>(fileContent);
                         newImage.OriginalData = ms.ToArray();
                         newImage.SizeDataOriginal = new ImageSizeData(info.Width, info.Height, fileContent.Length);
-                        newImage.OriginalDisplay = _imageService.GetImageFromBytes(newImage.OriginalData);
+                        newImage.OriginalDisplay = TextureManager.GetImageFromBytes(newImage.OriginalData);
                         PanX = PanY = 0f;
                     }
 
@@ -533,7 +534,7 @@ public class ImageImportTool
             final.SaveAsPng(ms);
             imageData.CroppedData = ms.ToArray();
             imageData.SizeDataCropped = new(final.Width, final.Height, imageData.CroppedData.Length);
-            imageData.CroppedDisplay = _imageService.GetImageFromBytes(imageData.CroppedData);
+            imageData.CroppedDisplay = TextureManager.GetImageFromBytes(imageData.CroppedData);
         }
     }
 }

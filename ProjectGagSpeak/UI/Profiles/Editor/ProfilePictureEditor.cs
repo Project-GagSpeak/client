@@ -1,3 +1,5 @@
+using CkCommons.Gui;
+using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps; // This is discouraged, try and look into better way to do it later.
 using Dalamud.Interface.Utility;
@@ -5,7 +7,6 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
@@ -108,7 +109,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         // we need here to draw the group for content.
         using (ImRaii.Group())
         {
-            CkGui.GagspeakTitleText("Current Image");
+            CkGui.FontText("Current Image", UiFontService.GagspeakTitleFont);
             ImGui.Separator();
             CkGui.ColorText("Square Image Preview:", ImGuiColors.ParsedGold);
             CkGui.TextWrapped("Meant to display the original display of the stored image data.");
@@ -243,7 +244,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
         using (ImRaii.Group())
         {
-            CkGui.GagspeakTitleText("Image Editor");
+            CkGui.FontText("Image Editor", UiFontService.GagspeakTitleFont);
             ImGui.Separator();
             if (_croppedImageData != null)
             {
@@ -430,7 +431,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 _croppedImageData = ms.ToArray();
 
                 // Load the cropped image for preview
-                _croppedImageToShow = _cosmetics.GetProfilePicture(_croppedImageData);
+                _croppedImageToShow = TextureManagerEx.GetProfilePicture(_croppedImageData);
                 CroppedFileSize = $"{_croppedImageData.Length / 1024.0:F2} KB";
                 // _logger.LogInformation($"Cropped image to {cropRectangle}");
             }

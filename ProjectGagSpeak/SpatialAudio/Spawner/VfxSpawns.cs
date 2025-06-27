@@ -6,6 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Extensions;
 
 namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 

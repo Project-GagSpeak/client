@@ -1,5 +1,5 @@
 using Dalamud.Plugin;
-using GagSpeak.CkCommons.GarblerCore;
+using CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;

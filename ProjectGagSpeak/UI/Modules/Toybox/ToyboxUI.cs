@@ -1,7 +1,8 @@
+using CkCommons;
+using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.UiToybox;
-using GagSpeak.CkCommons.Widgets;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
@@ -38,13 +39,13 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.ToysAndLobbies,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.ToysAndLobbies,
             "Configure & use your Toys, or join lobbies to control others");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Stimulated], ToyboxTabs.SelectedTab.Patterns,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], ToyboxTabs.SelectedTab.Patterns,
             "Create, Edit, and playback patterns");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Clock], ToyboxTabs.SelectedTab.Alarms,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Clock], ToyboxTabs.SelectedTab.Alarms,
             "Set various Alarms that play patterns when triggered");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.CircleDot], ToyboxTabs.SelectedTab.Triggers,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], ToyboxTabs.SelectedTab.Triggers,
             "Create various kinds of Triggers");
 
         AllowPinning = false;

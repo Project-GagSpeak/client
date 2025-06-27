@@ -1,4 +1,4 @@
-using Dalamud.Interface.Utility.Raii;using GagSpeak.CkCommons.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
+using Dalamud.Interface.Utility.Raii;using CkCommons.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using System.Collections.Immutable;using CkCommons.Gui;namespace GagSpeak.Gui.Components;
 
 // The permissions a Kinkster has set for us (their kinkster pair)
 // from our perspective, these will be the pairs 'PairPerms' [ permissions they have set for us. ]

@@ -1,13 +1,12 @@
-using Dalamud.Interface;
+using CkCommons.Gui;
+using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerClient;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -75,8 +74,8 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
             return;
         }
         // Calculate the height for the chat log, leaving space for the input text field
-        float inputTextHeight = ImGui.GetFrameHeightWithSpacing();
-        float chatLogHeight = CurrentRegion.Y - inputTextHeight;
+        var inputTextHeight = ImGui.GetFrameHeightWithSpacing();
+        var chatLogHeight = CurrentRegion.Y - inputTextHeight;
 
         // Create a child for the chat log
         var region = new Vector2(CurrentRegion.X, chatLogHeight);
@@ -101,7 +100,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         }
 
         // Set width for input box and create it with a hint
-        FontAwesomeIcon Icon = DiscoverService.GlobalChat.AutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
+        var Icon = DiscoverService.GlobalChat.AutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
         ImGui.SetNextItemWidth(CurrentRegion.X - CkGui.IconButtonSize(Icon).X*2 - ImGui.GetStyle().ItemInnerSpacing.X*2);
         if (ImGui.InputTextWithHint("##ChatInputBox" + windowId, "chat message here...", ref nextMessageRef, 300))
         {

@@ -1,8 +1,9 @@
-using GagSpeak.CkCommons.Widgets;
+using CkCommons;
+using CkCommons.Widgets;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Components;
 using ImGuiNET;
 using static GagSpeak.Gui.Components.WardrobeTabs;
 
@@ -33,13 +34,13 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Restrained], SelectedTab.MyRestraints,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], SelectedTab.MyRestraints,
             "Restraints--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
             "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.Gagged], SelectedTab.MyGags,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], SelectedTab.MyGags,
             "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
             "Cursed Loot--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
 
         AllowPinning = false;

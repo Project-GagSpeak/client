@@ -3,7 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Kinksters;

@@ -7,6 +7,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
 using ImGuiNET;
+using CkCommons.Gui;
 
 namespace GagSpeak.Gui;
 
@@ -40,17 +41,17 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     private string SelectedAccountUid = string.Empty;
 
     // The temporary data storage containers that we will use to store the data we are migrating.
-    private Dictionary<GagType, GarblerRestriction> LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
-    private List<RestraintSet> LoadedRestrictions = new List<RestraintSet>();
-    private List<CursedItem> LoadedCursedItems = new List<CursedItem>();
-    private List<Trigger> LoadedTriggers = new List<Trigger>();
-    private List<Alarm> LoadedAlarms = new List<Alarm>();
+    //private Dictionary<GagType, GarblerRestriction> LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
+    //private List<RestraintSet> LoadedRestrictions = new List<RestraintSet>();
+    //private List<CursedItem> LoadedCursedItems = new List<CursedItem>();
+    //private List<Trigger> LoadedTriggers = new List<Trigger>();
+    //private List<Alarm> LoadedAlarms = new List<Alarm>();
 
-    private GagType SelectedGag = GagType.None;
-    private RestraintSet? SelectedRestraintSet = null;
-    private CursedItem? SelectedCursedItem = null;
-    private Trigger? SelectedTrigger = null;
-    private Alarm? SelectedAlarm = null;
+    //private GagType SelectedGag = GagType.None;
+    //private RestraintSet? SelectedRestraintSet = null;
+    //private CursedItem? SelectedCursedItem = null;
+    //private Trigger? SelectedTrigger = null;
+    //private Alarm? SelectedAlarm = null;
 
     protected override void PreDrawInternal()
     {
@@ -533,11 +534,11 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         LoadedAlarms = importedAlarms.Where(x => _clientConfigs.IsGuidInAlarms(x.Identifier) is false).ToList();
 */
         // reset any selected variables
-        SelectedGag = GagType.None;
-        SelectedRestraintSet = null;
-        SelectedCursedItem = null;
-        SelectedTrigger = null;
-        SelectedAlarm = null;
+        //SelectedGag = GagType.None;
+        //SelectedRestraintSet = null;
+        //SelectedCursedItem = null;
+        //SelectedTrigger = null;
+        //SelectedAlarm = null;
     }
 
     public override void OnClose()
@@ -545,11 +546,11 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         base.OnClose();
 
         // clear out the temporary data storage containers.
-        LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
-        LoadedRestrictions = new List<RestraintSet>();
-        LoadedCursedItems = new List<CursedItem>();
-        LoadedTriggers = new List<Trigger>();
-        LoadedAlarms = new List<Alarm>();
+        //LoadedGagData = new Dictionary<GagType, GarblerRestriction>();
+        //LoadedRestrictions = new List<RestraintSet>();
+        //LoadedCursedItems = new List<CursedItem>();
+        //LoadedTriggers = new List<Trigger>();
+        //LoadedAlarms = new List<Alarm>();
     }
 
 }

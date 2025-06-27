@@ -85,7 +85,7 @@ public class ThumbnailFolder : IDisposable
 
         await Parallel.ForEachAsync(filePaths, async (filePath, ct) =>
         {
-            if (await _cosmetics.RentThumbnailFile(FolderName, filePath) is { } validImage)
+            if (await TextureManagerEx.RentMetadataPath(FolderName, filePath) is { } validImage)
             {
                 var fileName = Path.GetFileName(filePath);
                 if (fileName is null)

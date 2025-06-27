@@ -1,3 +1,5 @@
+using CkCommons;
+using CkCommons.Gui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
@@ -86,7 +88,7 @@ public class RemotePatternMaker : RemoteBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 7f);
 
             // attempt to obtain an image wrap for it
-            if (CosmeticService.CoreTextures[CoreTexture.ArrowSpin] is { } wrap)
+            if (CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin] is { } wrap)
             {
                 var buttonColor = IsLooping ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
@@ -103,7 +105,7 @@ public class RemotePatternMaker : RemoteBase
             // move it down from current position by another .2f scale
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + CurrentRegion.Y * .05f);
 
-            if (CosmeticService.CoreTextures[CoreTexture.CircleDot] is { } wrap2)
+            if (CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot] is { } wrap2)
             {
                 var buttonColor2 = IsFloating ? CkColor.LushPinkButton.Vec4() : CkColor.SideButton.Vec4();
                 // aligns the image in the center like we want.
@@ -122,7 +124,7 @@ public class RemotePatternMaker : RemoteBase
             // display the stop or play icon depending on if we are recording or not.
             if (!IsRecording)
             {
-                if (CosmeticService.CoreTextures[CoreTexture.Play] is { } wrap3)
+                if (CosmeticService.CoreTextures.Cache[CoreTexture.Play] is { } wrap3)
                 {
                     if (CkGui.DrawScaledCenterButtonImage("RecordStartButton" + _windowName, new Vector2(50, 50),
                         buttonColor3, new Vector2(40, 40), wrap3))
@@ -136,7 +138,7 @@ public class RemotePatternMaker : RemoteBase
             // we are recording so display stop
             else
             {
-                if (CosmeticService.CoreTextures[CoreTexture.Stop] is { } wrap4)
+                if (CosmeticService.CoreTextures.Cache[CoreTexture.Stop] is { } wrap4)
                 {
                     if (CkGui.DrawScaledCenterButtonImage("RecordStopButton" + _windowName, new Vector2(50, 50),
                         buttonColor3, new Vector2(40, 40), wrap4))

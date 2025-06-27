@@ -24,7 +24,7 @@ public sealed class OverlayController : IDisposable
 
     // Might need for mare fuckery.
     private CameraControlMode _forcedPerspective = CameraControlMode.Unknown;
-    private bool _initialRedrawMade = false;
+    // private bool _initialRedrawMade = false;
 
     public OverlayController(ILogger<OverlayController> logger, OverlayCache cache,
         BlindfoldService bfService, HypnoService hypnoService)

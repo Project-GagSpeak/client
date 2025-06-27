@@ -1,22 +1,21 @@
+using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using GagSpeak.PlayerClient;
-using GagSpeak.CkCommons.Helpers;
 using GagSpeak.Kinksters;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.State.Models;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using GagSpeak.Localization;
 
 namespace GagSpeak.State.Handlers;
 

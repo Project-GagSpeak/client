@@ -1,6 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;

@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Newtonsoft;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
@@ -150,7 +150,7 @@ public class ItemService
         {
             Slot = slot,
             GameItem = Resolve(slot, new CustomItemId(json["CustomItemId"]?.Value<ulong>() ?? 4294967164)),
-            GameStain = JParser.ParseCompactStainIds(json)
+            GameStain = GsExtensions.ParseCompactStainIds(json)
         };
     }
 

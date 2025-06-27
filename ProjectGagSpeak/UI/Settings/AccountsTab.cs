@@ -1,12 +1,12 @@
+using CkCommons.Gui;
+using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
@@ -38,7 +38,7 @@ public class AccountManagerTab
 
     public void DrawManager()
     {
-        CkGui.GagspeakBigText(GSLoc.Settings.Accounts.PrimaryLabel);
+        CkGui.FontText(GSLoc.Settings.Accounts.PrimaryLabel, UiFontService.UidFont);
         var localContentId = PlayerData.ContentId;
 
         // obtain the primary account auth.
@@ -53,7 +53,7 @@ public class AccountManagerTab
         DrawAccount(int.MaxValue, primaryAuth, primaryAuth.CharacterPlayerContentId == localContentId);
 
         // display title for account management
-        CkGui.GagspeakBigText(GSLoc.Settings.Accounts.SecondaryLabel);
+        CkGui.FontText(GSLoc.Settings.Accounts.SecondaryLabel, UiFontService.UidFont);
         if (_serverConfigs.HasAnyAltAuths())
         {
             // order the list of alts by prioritizing ones with successful connections first.

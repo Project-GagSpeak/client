@@ -1,14 +1,13 @@
+using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Gui.Components;
-using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -162,7 +161,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         //    _ = _ClientAchievements.ResetAchievementData();
         //}
         ImGui.SetNextItemWidth(availableWidth - clearButtonSize - spacingX);
-        string filter = AchievementSearchString;
+        var filter = AchievementSearchString;
         if (ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref filter, 255))
         {
             AchievementSearchString = filter;
@@ -244,7 +243,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     // draw the text in the second column.
                     ImGui.TableNextColumn();
                     // we should fetch the cached image from our texture cache service
-                    var achievementCosmetic = CosmeticService.CoreTextures[CoreTexture.Icon256Bg];
+                    var achievementCosmetic = CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg];
                     // Ensure its a valid texture wrap
                     if (!(achievementCosmetic is { } wrap))
                     {
@@ -298,8 +297,8 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var pos = ImGui.GetCursorScreenPos();
 
         // define the progress bar height and width for the windows drawlist.
-        int progressHeight = (int)progressBarStringTextSize.Y + 2;
-        int progressWidth = (int)(region.X - padding.X);
+        var progressHeight = (int)progressBarStringTextSize.Y + 2;
+        var progressWidth = (int)(region.X - padding.X);
 
         // mark the starting position of our progress bar in the drawlist.
         var progressBarDrawStart = pos;

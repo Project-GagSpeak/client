@@ -1,12 +1,11 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
-using GagSpeak.Gui;
 using GagSpeak.Services;
-using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 
 namespace GagSpeak.CustomCombos.Editor;
@@ -74,7 +73,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
         var parsedEmote = Items[globalIdx];
 
         // Draw a ghost selectable at first.
-        bool ret = false;
+        var ret = false;
         var pos = ImGui.GetCursorPos();
         var img = Svc.Texture.GetFromGameIcon((uint)parsedEmote.IconId).GetWrapOrEmpty();
         using (ImRaii.Group())

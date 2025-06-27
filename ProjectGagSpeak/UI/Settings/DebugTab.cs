@@ -1,7 +1,9 @@
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CkCommons.Gui.Utility;
+using CkCommons.Gui.Utility;
 using GagSpeak.PlayerClient;
 using ImGuiNET;
+using CkCommons.Gui;
+using GagSpeak.Services;
 
 namespace GagSpeak.Gui;
 
@@ -46,7 +48,7 @@ public class DebugTab
 
     public void DrawDebugMain()
     {
-        CkGui.GagspeakBigText("Debug Configuration");
+        CkGui.FontText("Debug Configuration", UiFontService.UidFont);
 
         // display the combo box for setting the log level we wish to have for our plugin
         if (CkGuiUtils.EnumCombo("Log Level", 400, MainConfig.LogLevel, out var newValue))

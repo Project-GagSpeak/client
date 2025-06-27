@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -117,7 +118,7 @@ public class Tutorial
         var windowSize = ImGui.GetContentRegionAvail();
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 5f);
-        CkGui.GagspeakBigText(step.Name);
+        CkGui.FontText(step.Name, UiFontService.GagspeakLabelFont);
         int? nextValue = null;
 
         ImGui.Separator();

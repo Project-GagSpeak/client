@@ -1,9 +1,9 @@
-using GagSpeak.CkCommons.Widgets;
+using CkCommons.Widgets;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;

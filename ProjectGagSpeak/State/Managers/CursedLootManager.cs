@@ -1,5 +1,5 @@
-using GagSpeak.CkCommons.Helpers;
-using GagSpeak.CkCommons.HybridSaver;
+using CkCommons.Helpers;
+using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
@@ -332,7 +332,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
                 CanOverride = jsonObject["CanOverride"]?.Value<bool>() ?? false,
                 Precedence = Enum.TryParse<Precedence>(jsonObject["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
-                RestrictionRef = restrictionRef
+                RestrictionRef = restrictionRef ?? throw new ArgumentNullException("RestrictionRef")
             };
 
             return true;

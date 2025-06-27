@@ -1,19 +1,22 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.CkCommons.Helpers;
+using CkCommons.Helpers;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Extensions;
+using CkCommons.Textures;
+using CkCommons.RichText;
 
 namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 {
     private Guid _currentItem;
-    public MoodleStatusCombo(float iconScale, MoodleIcons displayer, ILogger log)
-        : base(iconScale, displayer, log, () => [.. MoodleCache.IpcData.StatusList.OrderBy(x => x.Title)])
+    public MoodleStatusCombo(ILogger log, float iconScale)
+        : base(log, iconScale, () => [.. MoodleCache.IpcData.StatusList.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
     }
@@ -79,11 +82,11 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
         if (moodleStatus.IconID > 200000)
         {
             ImGui.SameLine(2, 2);
-            _displayer.DisplayMoodleTitle(moodleStatus.Title, ImGui.GetContentRegionAvail().X);
+            CkRichText.Text(ImGui.GetContentRegionAvail().X, moodleStatus.Title);
             ImGui.SameLine();
             var offset = ImGui.GetContentRegionAvail().X - IconSize.X;
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-            _displayer.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+            MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
             DrawItemTooltip(moodleStatus);
         }
         return ret;
