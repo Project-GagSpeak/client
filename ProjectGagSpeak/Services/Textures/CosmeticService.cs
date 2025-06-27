@@ -38,6 +38,7 @@ public class CosmeticService : IHostedService, IDisposable
             texture?.Dispose();
 
         // clear the dictionary, erasing all disposed textures.
+        CoreEmoteTextures.Clear();
         CoreTextures.Clear();
         InternalCosmeticCache.Clear();
     }

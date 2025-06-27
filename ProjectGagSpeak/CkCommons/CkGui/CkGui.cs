@@ -12,12 +12,24 @@ using ImGuiNET;
 
 // please dont change this namespace or you will mess up so many references i dont want to deal with fixing.
 // unless you are willing to, then by all means please do.
-namespace GagSpeak.Gui;
+namespace GagSpeak.CkCommons.Gui;
 
 // Primary Partial Class
 public static partial class CkGui
 {
-    public static readonly ImGuiWindowFlags PopupWindowFlags = WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoScrollWithMouse;
+    private static readonly Dictionary<string, float> CenteredLineWidths = new();
+    private static void ImGuiLineCentered(string id, Action func)
+    {
+        if (CenteredLineWidths.TryGetValue(id, out float dims))
+        {
+            ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
+        }
+        float oldCur = ImGui.GetCursorPosX();
+        func();
+        ImGui.SameLine(0, 0);
+        CenteredLineWidths[id] = ImGui.GetCursorPosX() - oldCur;
+        ImGui.NewLine(); // Use NewLine to finalize the line instead of Dummy
+    }
 
     /// <summary> A helper function for centering the next displayed window. </summary>
     /// <param name="width"> The width of the window. </param>
@@ -115,7 +127,7 @@ public static partial class CkGui
         // calculate the difference in height between the button and the image
         var heightDiff = buttonSize.Y - imageSize.Y;
         // draw out the button centered
-        if (GsExtensions.CenteredLineWidths.TryGetValue(ID, out var dims))
+        if (CenteredLineWidths.TryGetValue(ID, out var dims))
         {
             ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
         }
@@ -123,11 +135,11 @@ public static partial class CkGui
         var result = ImGui.Button(string.Empty, buttonSize);
         //_logger.LogTrace("Result of button: {result}", result);
         ImGui.SameLine(0, 0);
-        GsExtensions.CenteredLineWidths[ID] = ImGui.GetCursorPosX() - oldCur;
+        CenteredLineWidths[ID] = ImGui.GetCursorPosX() - oldCur;
         ImGui.Dummy(Vector2.Zero);
         // now go back up to the initial position, then step down by the height difference/2
         ImGui.SetCursorPosY(InitialPos.Y + heightDiff / 2);
-        GsExtensions.ImGuiLineCentered($"###CenterImage{ID}", () =>
+        ImGuiLineCentered($"###CenterImage{ID}", () =>
         {
             ImGui.Image(image.ImGuiHandle, imageSize, Vector2.Zero, Vector2.One, buttonColor);
         });

@@ -4,9 +4,8 @@ using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
-namespace GagSpeak.Gui;
+namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
 public static partial class CkGui
@@ -63,7 +62,7 @@ public static partial class CkGui
 
         // Otherwise, parse it!
         var useColor = false;
-        bool firstLineSegment = true;
+        var firstLineSegment = true;
 
         foreach (var token in tokens)
         {

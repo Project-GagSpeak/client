@@ -2,7 +2,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using ImGuiNET;
 using OtterGui.Raii;
 
-namespace GagSpeak.Gui.Clip;
+namespace GagSpeak.CkCommons.Gui.Clip;
 
 // ClippedDraw Methods are taken from OtterGui's ImGuiClip func, and modified to allow for a width parameter.
 public static class CkGuiClip

@@ -1,18 +1,28 @@
+[submodule "CkCommons"]
+	path = CkCommons
+	url = https://github.com/CordeliaMist/CkCommons.git
+	branch = main
 [submodule "OtterGui"]
 	path = OtterGui
 	url = https://github.com/Ottermandias/OtterGui.git
+	branch = main
 [submodule "GagspeakAPI"]
 	path = GagspeakAPI
 	url = https://github.com/Project-GagSpeak/api.git
+	branch = main
 [submodule "Penumbra.Api"]
 	path = Penumbra.Api
 	url = https://github.com/Ottermandias/Penumbra.Api.git
+	branch = main
 [submodule "Penumbra.String"]
 	path = Penumbra.String
 	url = https://github.com/Ottermandias/Penumbra.String.git
+	branch = main
 [submodule "Penumbra.GameData"]
 	path = Penumbra.GameData
 	url = https://github.com/Ottermandias/Penumbra.GameData.git
+    branch = main
 [submodule "Glamourer.Api"]
 	path = Glamourer.Api
 	url = https://github.com/Ottermandias/Glamourer.Api.git
+	branch = main

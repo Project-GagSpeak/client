@@ -7,7 +7,7 @@ using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Utility;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;

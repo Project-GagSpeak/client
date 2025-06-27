@@ -1,5 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Gui;
 using GagSpeak.Localization;
 using GagSpeak.Utils;

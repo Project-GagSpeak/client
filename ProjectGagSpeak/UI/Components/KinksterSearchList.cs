@@ -1,15 +1,15 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.Gui.Clip;
-using GagSpeak.Gui.Handlers;
+using GagSpeak.CkCommons.Gui;
+using GagSpeak.CkCommons.Gui.Clip;
 using GagSpeak.CkCommons.Widgets;
+using GagSpeak.Gui.Handlers;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using ImGuiNET;
 using System.Collections.Immutable;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.Components;
 

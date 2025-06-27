@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using GagSpeak.CkCommons.Classes;
-using GagSpeak.Gui.Utility;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.CkCommons.Raii;
 using GagSpeak.CkCommons.Widgets;
 using GagSpeak.CustomCombos.Editor;

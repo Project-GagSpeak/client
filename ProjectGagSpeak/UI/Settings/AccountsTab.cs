@@ -1,5 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -72,7 +73,7 @@ public class AccountManagerTab
 
     private void DrawAccount(int idx, Authentication account, bool isOnlineUser = false)
     {
-        bool isPrimary = account.IsPrimary;
+        var isPrimary = account.IsPrimary;
         // push rounding window corners
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
         // push a pink border color for the window border.
@@ -135,7 +136,7 @@ public class AccountManagerTab
         // next line:
         using (var group3 = ImRaii.Group())
         {
-            string keyDisplayText = (ShowKeyIdx == idx) ? account.SecretKey.Key : account.SecretKey.Label;
+            var keyDisplayText = (ShowKeyIdx == idx) ? account.SecretKey.Key : account.SecretKey.Label;
             ImGui.AlignTextToFramePadding();
             CkGui.IconText(FAI.Key);
             if (ImGui.IsItemClicked())
@@ -148,7 +149,7 @@ public class AccountManagerTab
             {
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.PenSquare).X - ImGui.GetStyle().ItemSpacing.X);
-                string key = account.SecretKey.Key;
+                var key = account.SecretKey.Key;
                 if (ImGui.InputTextWithHint("##SecondaryAuthKey" + account.CharacterPlayerContentId, "Paste Secret Key Here...", ref key, 64, ImGuiInputTextFlags.EnterReturnsTrue))
                 {
                     key = key.Trim(); // Trim any leading or trailing whitespace
@@ -195,7 +196,7 @@ public class AccountManagerTab
             }
         }
 
-        if (ImGui.BeginPopupModal("Delete your account?", ref DeleteAccountConfirmation, CkGui.PopupWindowFlags))
+        if (ImGui.BeginPopupModal("Delete your account?", ref DeleteAccountConfirmation, WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoScrollWithMouse))
         {
             if (isPrimary)
             {

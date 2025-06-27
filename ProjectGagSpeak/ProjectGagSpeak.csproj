@@ -48,8 +48,9 @@
     </ItemGroup>
     
     <ItemGroup>
-        <!--Submodules-->        
-        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI\ProjectGagspeakAPI.csproj" />
+        <!--Submodules-->
+        <ProjectReference Include="..\CkCommons\CkCommons.csproj" />
+        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI.csproj" />
         <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
         <ProjectReference Include="..\Penumbra.Api\Penumbra.Api.csproj" />
         <ProjectReference Include="..\Penumbra.String\Penumbra.String.csproj" />

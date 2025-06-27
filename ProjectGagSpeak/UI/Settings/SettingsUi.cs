@@ -4,8 +4,10 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.CkCommons.GarblerCore;
+using GagSpeak.CkCommons.Gui;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Agents;
+using GagSpeak.Interop;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -109,8 +111,42 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        CkGui.DrawOptionalPlugins();
+        var check = FAI.Check;
+        var cross = FAI.SquareXmark;
+        ImGui.TextUnformatted(GSLoc.Settings.OptionalPlugins);
 
+        ImGui.SameLine();
+        ImGui.TextUnformatted("Penumbra");
+        ImGui.SameLine();
+        CkGui.IconText(IpcCallerPenumbra.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerPenumbra.APIAvailable));
+        ImGui.SameLine();
+        CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+        ImGui.Spacing();
+
+        ImGui.SameLine();
+        ImGui.TextUnformatted("Glamourer");
+        ImGui.SameLine();
+        CkGui.IconText(IpcCallerGlamourer.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerGlamourer.APIAvailable));
+        ImGui.SameLine();
+        CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+        ImGui.Spacing();
+
+        ImGui.SameLine();
+        ImGui.TextUnformatted("Customize+");
+        ImGui.SameLine();
+        CkGui.IconText(IpcCallerCustomize.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerCustomize.APIAvailable));
+        ImGui.SameLine();
+        CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+        ImGui.Spacing();
+
+        ImGui.SameLine();
+        ImGui.TextUnformatted("Moodles");
+        ImGui.SameLine();
+        CkGui.IconText(IpcCallerMoodles.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerMoodles.APIAvailable));
+        ImGui.SameLine();
+        CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+        ImGui.Spacing();
+        
         ImUtf8.TextFrameAligned(GSLoc.Settings.AccountClaimText);
         
         ImGui.SameLine();

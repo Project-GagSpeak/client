@@ -8,6 +8,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using ImGuiNET;
+using GagSpeak.CkCommons;
 
 namespace GagSpeak.Gui.Wardrobe;
 

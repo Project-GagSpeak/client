@@ -3,6 +3,12 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ImGuiNET;
 using System.Runtime.InteropServices;
 using GagSpeak.PlayerClient;
+using Dalamud.Interface.Colors;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
+using OtterGui.Classes;
+using Penumbra.GameData.Structs;
 
 namespace GagSpeak.Utils;
 public static class GsExtensions
@@ -73,22 +79,140 @@ public static class GsExtensions
         }
     }
 
-
-    /// <summary>
-    /// Not my code, pulled from:
-    /// https://github.com/PunishXIV/PunishLib/blob/8cea907683c36fd0f9edbe700301a59f59b6c78e/PunishLib/ImGuiMethods/ImGuiEx.cs
-    /// </summary>
-    public static readonly Dictionary<string, float> CenteredLineWidths = new();
-    public static void ImGuiLineCentered(string id, Action func)
+    /// <summary> Retrieves the various UID text color based on the current server state. </summary>
+    /// <returns> The color of the UID text in Vector4 format .</returns>
+    public static Vector4 UidColor()
     {
-        if (CenteredLineWidths.TryGetValue(id, out var dims))
+        return MainHub.ServerStatus switch
         {
-            ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
+            ServerState.Connecting => ImGuiColors.DalamudYellow,
+            ServerState.Reconnecting => ImGuiColors.DalamudRed,
+            ServerState.Connected => ImGuiColors.ParsedPink,
+            ServerState.ConnectedDataSynced => ImGuiColors.ParsedPink,
+            ServerState.Disconnected => ImGuiColors.DalamudYellow,
+            ServerState.Disconnecting => ImGuiColors.DalamudYellow,
+            ServerState.Unauthorized => ImGuiColors.DalamudRed,
+            ServerState.VersionMisMatch => ImGuiColors.DalamudRed,
+            ServerState.Offline => ImGuiColors.DalamudRed,
+            ServerState.NoSecretKey => ImGuiColors.DalamudYellow,
+            _ => ImGuiColors.DalamudRed
+        };
+    }
+
+    public static Vector4 ServerStateColor()
+    {
+        return MainHub.ServerStatus switch
+        {
+            ServerState.Connecting => ImGuiColors.DalamudYellow,
+            ServerState.Reconnecting => ImGuiColors.DalamudYellow,
+            ServerState.Connected => ImGuiColors.HealerGreen,
+            ServerState.ConnectedDataSynced => ImGuiColors.HealerGreen,
+            ServerState.Disconnected => ImGuiColors.DalamudRed,
+            ServerState.Disconnecting => ImGuiColors.DalamudYellow,
+            ServerState.Unauthorized => ImGuiColors.ParsedOrange,
+            ServerState.VersionMisMatch => ImGuiColors.ParsedOrange,
+            ServerState.Offline => ImGuiColors.DPSRed,
+            ServerState.NoSecretKey => ImGuiColors.ParsedOrange,
+            _ => ImGuiColors.ParsedOrange
+        };
+    }
+
+    public static FAI ServerStateIcon(ServerState state)
+    {
+        return state switch
+        {
+            ServerState.Connecting => FAI.SatelliteDish,
+            ServerState.Reconnecting => FAI.SatelliteDish,
+            ServerState.Connected => FAI.Link,
+            ServerState.ConnectedDataSynced => FAI.Link,
+            ServerState.Disconnected => FAI.Unlink,
+            ServerState.Disconnecting => FAI.SatelliteDish,
+            ServerState.Unauthorized => FAI.Shield,
+            ServerState.VersionMisMatch => FAI.Unlink,
+            ServerState.Offline => FAI.Signal,
+            ServerState.NoSecretKey => FAI.Key,
+            _ => FAI.ExclamationTriangle
+        };
+    }
+
+    /// <summary> Retrieves the various UID text based on the current server state. </summary>
+    /// <returns> The text of the UID.</returns>
+    public static string GetUidText()
+    {
+        return MainHub.ServerStatus switch
+        {
+            ServerState.Reconnecting => "Reconnecting",
+            ServerState.Connecting => "Connecting",
+            ServerState.Disconnected => "Disconnected",
+            ServerState.Disconnecting => "Disconnecting",
+            ServerState.Unauthorized => "Unauthorized",
+            ServerState.VersionMisMatch => "Version mismatch",
+            ServerState.Offline => "Unavailable",
+            ServerState.NoSecretKey => "No Secret Key",
+            ServerState.Connected => MainHub.DisplayName,
+            ServerState.ConnectedDataSynced => MainHub.DisplayName,
+            _ => string.Empty
+        };
+    }
+
+    public static JObject Serialize(this Moodle moodle)
+    {
+        var type = moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status;
+
+        var json = new JObject
+        {
+            ["Type"] = type.ToString(),
+            ["Id"] = moodle.Id.ToString(),
+        };
+
+        if (moodle is MoodlePreset moodlePreset)
+        {
+            json["StatusIds"] = new JArray(moodlePreset.StatusIds.Select(x => x.ToString()));
         }
-        var oldCur = ImGui.GetCursorPosX();
-        func();
-        ImGui.SameLine(0, 0);
-        CenteredLineWidths[id] = ImGui.GetCursorPosX() - oldCur;
-        ImGui.NewLine(); // Use NewLine to finalize the line instead of Dummy
+
+        return json;
+    }
+
+    public static Moodle LoadMoodle(JToken? token)
+    {
+        if (token is not JObject jsonObject)
+            throw new ArgumentException("Invalid JObjectToken!");
+
+        var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
+        Guid id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
+        IEnumerable<Guid> statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
+        return type switch
+        {
+            MoodleType.Preset => new MoodlePreset(id, statusIds),
+            _ => new Moodle(id)
+        };
+    }
+
+    public static StainIds ParseCompactStainIds(JToken? jToken)
+    {
+        if (jToken is not JObject stainJson)
+            return StainIds.None;
+
+        var result = StainIds.None;
+        var gameStainString = (stainJson["Stains"]?.Value<string>() ?? "0,0").Split(',');
+        return gameStainString.Length == 2
+               && int.TryParse(gameStainString[0], out int stain1)
+               && int.TryParse(gameStainString[1], out int stain2)
+            ? new StainIds((StainId)stain1, (StainId)stain2)
+            : StainIds.None;
+    }
+    public static OptionalBool FromJObject(JToken? tokenValue)
+    {
+        if (tokenValue is null)
+            return OptionalBool.Null;
+
+        var value = tokenValue.Value<string>() ?? string.Empty;
+        return value.ToLowerInvariant() switch
+        {
+            "true" => OptionalBool.True,
+            "false" => OptionalBool.False,
+            "null" => OptionalBool.Null,
+            _ => throw new ArgumentException("Invalid string value for OptionalBool")
+        };
     }
 }

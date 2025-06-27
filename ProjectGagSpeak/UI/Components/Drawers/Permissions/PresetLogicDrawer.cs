@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Gui;
-using GagSpeak.Gui.Utility;
+using GagSpeak.CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;

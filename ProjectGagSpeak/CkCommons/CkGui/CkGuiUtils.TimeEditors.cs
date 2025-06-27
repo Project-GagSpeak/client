@@ -4,7 +4,7 @@ using ImGuiNET;
 using OtterGui.Raii;
 using System.Text.RegularExpressions;
 
-namespace GagSpeak.Gui.Utility;
+namespace GagSpeak.CkCommons.Gui.Utility;
 public static partial class CkGuiUtils
 {
     public static float GetDateTimeDisplayWidth(DateTimeOffset time)

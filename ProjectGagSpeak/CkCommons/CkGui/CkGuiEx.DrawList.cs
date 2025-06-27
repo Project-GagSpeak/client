@@ -1,7 +1,7 @@
 using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
 
-namespace GagSpeak.Gui;
+namespace GagSpeak.CkCommons.Gui;
 
 public enum CkGuiCircleBound : byte
 {

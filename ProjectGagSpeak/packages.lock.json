@@ -589,6 +589,14 @@
         "resolved": "8.0.0",
         "contentHash": "CMaFr7v+57RW7uZfZkPExsPB6ljwzhjACWW1gfU35Y56rk72B/Wu+sTqxVmGSk4SFUlPc3cjeKND0zktziyjBA=="
       },
+      "ckcommons": {
+        "type": "Project",
+        "dependencies": {
+          "Buttplug": "[4.0.0, )",
+          "OtterGui": "[1.0.0, )",
+          "SixLabors.ImageSharp": "[3.1.7, )"
+        }
+      },
       "glamourer.api": {
         "type": "Project"
       },
@@ -606,7 +614,7 @@
         "type": "Project",
         "dependencies": {
           "OtterGui": "[1.0.0, )",
-          "Penumbra.Api": "[5.6.1, )",
+          "Penumbra.Api": "[5.10.0, )",
           "Penumbra.String": "[1.0.6, )"
         }
       },

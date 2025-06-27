@@ -11,7 +11,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
-using GagSpeak.Gui.Utility;
+using GagSpeak.CkCommons.Gui.Utility;
 
 namespace GagSpeak.Gui.MainWindow;
 public class PatternHubTab : DisposableMediatorSubscriberBase

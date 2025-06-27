@@ -8,7 +8,7 @@ using OtterGui;
 using OtterGui.Text;
 using System.Runtime.CompilerServices;
 
-namespace GagSpeak.Gui;
+namespace GagSpeak.CkCommons.Gui;
 
 // Partial Class for Text Display Helpers.
 public static partial class CkGui
