@@ -333,6 +333,13 @@ public partial class MainHub
         if (dataDto.User.UID == MainHub.UID)
         {
             Logger.LogDebug("OWN Callback_ReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug("Internal New Restriction Data: " +
+                $"Identifier: {dataDto.NewData.Identifier}, " +
+                $"Padlock: {dataDto.NewData.Padlock}, " +
+                $"Timer: {dataDto.NewData.Timer - DateTimeOffset.UtcNow}, " +
+                $"Password: {dataDto.NewData.Password}, " +
+                $"PadlockAssigner: {dataDto.NewData.PadlockAssigner}, ");
+
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:

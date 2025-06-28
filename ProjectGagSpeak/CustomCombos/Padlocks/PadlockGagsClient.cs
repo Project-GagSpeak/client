@@ -102,21 +102,21 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         switch (SelectedLock)
         {
             case Padlocks.CombinationPadlock:
-                //Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
+                Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
                 break;
 
             case Padlocks.PasswordPadlock:
             case Padlocks.TimerPasswordPadlock when !PadlockValidation.IsValidPass(Password):
-                //Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
+                Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
             case Padlocks.TimerPadlock:
             case Padlocks.TimerPasswordPadlock when !PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)):
-                //Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
+                Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 
             default:
-                //Svc.Toasts.ShowError("Can't lock this Padlock.");
+                Svc.Toasts.ShowError("Can't lock this Padlock.");
                 break;
         }
 
@@ -127,7 +127,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     private bool ValidateUnlock(int layerIdx)
     {
         // Determine if we have access to unlock.
-        bool valid = SelectedLock switch
+        bool valid = Items[layerIdx].Padlock switch
         {
             Padlocks.MetalPadlock or Padlocks.FiveMinutesPadlock => true,
             Padlocks.CombinationPadlock => Items[layerIdx].Password == Password,
@@ -146,15 +146,15 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             case Padlocks.CombinationPadlock:
             case Padlocks.PasswordPadlock:
             case Padlocks.TimerPasswordPadlock:
-                //Svc.Toasts.ShowError("Password does not match!");
+                Svc.Toasts.ShowError("Password does not match!");
                 break;
 
             case Padlocks.TimerPadlock:
-                //Svc.Toasts.ShowError("Can only be removed early by Assigner!");
+                Svc.Toasts.ShowError("Can only be removed early by Assigner!");
                 break;
 
             default:
-                //Svc.Toasts.ShowError("Can't unlock this padlock!");
+                Svc.Toasts.ShowError("Can't unlock this padlock!");
                 break;
         }
 

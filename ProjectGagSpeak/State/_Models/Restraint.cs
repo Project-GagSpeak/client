@@ -42,8 +42,8 @@ public interface IRestraintSlot
 
 public class RestraintSlotBasic : IRestraintSlot
 {
-    public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.IsOverlay;
-    public GlamourSlot Glamour { get; set; }
+    public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.IsOverlay | RestraintFlags.Glamour;
+    public GlamourSlot Glamour { get; set; } = new();
     public EquipSlot EquipSlot => Glamour.Slot;
     public EquipItem EquipItem => Glamour.GameItem;
     public StainIds Stains => Glamour.GameStain;
@@ -106,7 +106,8 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 public interface IRestraintLayer
 {
     public Guid ID { get; }
-    public bool IsActive { get; }
+    public Arousal Arousal { get; }
+    public bool IsValid();
     public IRestraintLayer Clone();
     public JObject Serialize();
 }
@@ -114,18 +115,19 @@ public interface IRestraintLayer
 public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 {
     public Guid ID { get; internal set; } = Guid.NewGuid();
-    public bool IsActive { get; set; } = false;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
     public RestrictionItem Ref { get; set; } = new RestrictionItem() { Identifier = Guid.Empty };
     public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
     public EquipItem EquipItem => Ref.Glamour.GameItem;
     public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
+    public Arousal Arousal => Ref.Arousal;
 
-    internal RestrictionLayer() { }
+    internal RestrictionLayer()
+    { }
+
     internal RestrictionLayer(RestrictionLayer other)
     {
-        IsActive = other.IsActive;
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref; // Point to the same reference
         CustomStains = other.CustomStains;
@@ -140,10 +142,10 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
         {
             ["Type"] = RestraintLayerType.Restriction.ToString(),
             ["ID"] = ID,
-            ["IsActive"] = IsActive,
             ["ApplyFlags"] = (int)ApplyFlags,
             ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
             ["CustomStains"] = CustomStains.ToString(),
+            ["Arousal"] = Arousal.ToString(),
         };
     }
 }
@@ -151,15 +153,16 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 public class ModPresetLayer : IRestraintLayer, IModPreset
 {
     public Guid ID { get; internal set; } = Guid.NewGuid();
-    public bool IsActive { get; set; } = false;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
+    public Arousal Arousal { get; set; } = Arousal.None;
 
     internal ModPresetLayer() { }
     internal ModPresetLayer(ModPresetLayer other)
     {
-        IsActive = other.IsActive;
         Mod = other.Mod;
     }
+
+    public bool IsValid() => Mod.HasData;
     public IRestraintLayer Clone() => new ModPresetLayer(this);
 
     public JObject Serialize()
@@ -168,14 +171,18 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
         {
             ["Type"] = RestraintLayerType.ModPreset.ToString(),
             ["ID"] = ID,
-            ["IsActive"] = IsActive,
+            ["Arousal"] = Arousal.ToString(),
             ["Mod"] = Mod.SerializeReference()
         };
     }
 }
 
 
-
+/// <summary>
+///     This class is the most complex out of everything in CK.
+///     Any methods to get or fetch data from this should be in extension methods.
+/// </summary>
+/// <remarks></remarks>
 public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
@@ -188,14 +195,10 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public GlamourBonusSlot Glasses { get; set; } = new GlamourBonusSlot();
     public List<IRestraintLayer> Layers { get; set; } = new List<IRestraintLayer>();
 
-    // Satisfy IMetaToggles
-    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
-    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
-    public TriStateBool WeaponState { get; set; } = TriStateBool.Null;
+    public MetaDataStruct RestraintMeta { get; set; } = MetaDataStruct.Empty;
 
-    // Additional Appends
-    public List<ModSettingsPreset> RestraintMods { get; set; } = new List<ModSettingsPreset>();
-    public HashSet<Moodle> RestraintMoodles { get; set; } = new HashSet<Moodle>();
+    public List<ModSettingsPreset> RestraintMods { get; set; } = new();
+    public HashSet<Moodle> RestraintMoodles { get; set; } = new();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
 
@@ -221,60 +224,13 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         Glasses = new GlamourBonusSlot(other.Glasses);
         Layers = other.Layers.Select(layer => layer.Clone()).ToList();
 
-        HeadgearState = other.HeadgearState;
-        VisorState = other.VisorState;
-        WeaponState = other.WeaponState;
+        RestraintMeta = other.RestraintMeta;
 
         RestraintMods = other.RestraintMods.Select(mod => new ModSettingsPreset(mod)).ToList();
-        RestraintMoodles = other.RestraintMoodles.Select(moodle =>
-        {
-            return moodle switch
-            {
-                MoodlePreset preset => new MoodlePreset(preset),
-                _ => new Moodle(moodle)
-            };
-        }).ToHashSet();
+        RestraintMoodles = other.RestraintMoodles.Select(m => m is MoodlePreset p ? new MoodlePreset(p) : new Moodle(m)).ToHashSet();
 
         Traits = other.Traits;
         Arousal = other.Arousal;
-    }
-
-    #region Cache Helpers
-    /// <summary> Arranges the associated glamour slots for this restraint set through a helper function. </summary>
-    /// <returns> A dictionary of glamour slots associated with this restraint set. </returns>
-    /// <remarks> Prioritizes the base slots, then the restraint layers. </remarks>
-    public IReadOnlyDictionary<EquipSlot, GlamourSlot> GetGlamour()
-    {
-        var GlamourItems = new Dictionary<EquipSlot, GlamourSlot>();
-        foreach (var glamourItem in RestraintSlots.Values.Where(x => x != null))
-        {
-            if(!glamourItem.ApplyFlags.HasFlag(RestraintFlags.Glamour)) 
-                continue;
-
-            if(glamourItem.EquipItem.ItemId == ItemService.NothingItem(glamourItem.EquipSlot).ItemId && glamourItem.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
-                continue;
-
-            if(glamourItem is RestraintSlotBasic basic) 
-                GlamourItems[basic.EquipSlot] = basic.Glamour;
-            else if (glamourItem is RestraintSlotAdvanced adv && adv.Ref is not null && adv.ApplyFlags.HasAny(RestraintFlags.Glamour))
-                GlamourItems[adv.EquipSlot] = adv.Ref.Glamour;
-        }
-        // then handle the layers.
-        foreach (var layer in Layers.OfType<RestrictionLayer>())
-        {
-            if(layer.Ref is null)
-                continue;
-
-            if (!layer.ApplyFlags.HasFlag(RestraintFlags.Glamour))
-                continue;
-
-            if(layer.EquipItem.ItemId == ItemService.NothingItem(layer.EquipSlot).ItemId && layer.ApplyFlags.HasFlag(RestraintFlags.IsOverlay))
-                continue;
-            
-            GlamourItems[layer.EquipSlot] = layer.Ref.Glamour;
-        }
-        // Append
-        return GlamourItems;
     }
 
     /// <summary> Arranges the associated mods for this restraint set through a helper function. </summary>
@@ -307,9 +263,6 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         return associationPresets.Values.ToHashSet();
     }
 
-    /// <summary> Grabs all 3 MetaData states compiled into a MetaDataStruct to operate with. </summary>
-    public MetaDataStruct GetMetaData() => new MetaDataStruct(HeadgearState, VisorState, WeaponState);
-    
     /// <summary> Obtains the distinct Moodles collection across all enabled parts of the restraint set. </summary>
     /// <remarks> Prioritizes the base slots, then the restraint layers, then additional mods. </remarks>
     public HashSet<Moodle> GetMoodles()

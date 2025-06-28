@@ -131,7 +131,7 @@ public static class SPPIDExtensions
             SPPID.ChatBoxesHidden       => (nameof(GlobalPerms.ChatBoxesHidden),              PermissionType.Global),
             SPPID.ChatInputHidden       => (nameof(GlobalPerms.ChatInputHidden),              PermissionType.Global),
             SPPID.ChatInputBlocked      => (nameof(GlobalPerms.ChatInputBlocked),             PermissionType.Global),
-            SPPID.GarbleChannelEditing  => (nameof(GlobalPerms.ChatGarblerChannelsBitfield),  PermissionType.Global),*/
+            SPPID.GarbleChannelEditing  => (nameof(GlobalPerms.AllowedGarblerChannels),  PermissionType.Global),*/
             SPPID.PiShockShareCode      => (nameof(PairPerms.PiShockShareCode),               PermissionType.PairPerm),
             SPPID.MaxVibrateDuration    => (nameof(PairPerms.MaxVibrateDuration),             PermissionType.PairPerm),
 

@@ -166,8 +166,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 ImGui.TextUnformatted("Global Permissions:");
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn("ChatGarblerChannelsBitfield:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current!.ChatGarblerChannelsBitfield.ToString());
+                    ImGuiUtil.DrawTableColumn("AllowedGarblerChannels:");
+                    ImGuiUtil.DrawTableColumn(_globals.Current!.AllowedGarblerChannels.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
                     ImGuiUtil.DrawTableColumn(_globals.Current.ChatGarblerActive.ToString());

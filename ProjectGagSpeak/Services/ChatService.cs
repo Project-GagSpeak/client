@@ -242,7 +242,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         // if our message is longer than 5 words, fire our on-chat-message achievement.
         if (gagData.IsGagged() && globalPerms.ChatGarblerActive && msg.Split(' ').Length > 5)
-            if (channel.IsChannelEnabled(globalPerms.ChatGarblerChannelsBitfield))
+            if (channel.IsChannelEnabled(globalPerms.AllowedGarblerChannels))
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ChatMessageSent, channel);
     }
 

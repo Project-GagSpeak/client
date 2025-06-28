@@ -144,10 +144,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
     public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
 
-    public bool CanApply(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanLock());
-    public bool CanLock(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanLock());
-    public bool CanUnlock(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanUnlock());
-    public bool CanRemove(Guid id) => _serverRestraintData is { } d && (d.Identifier == id && d.CanRemove());
+    public bool CanApply(Guid id) => _serverRestraintData is { } d && d.CanApply();
+    public bool CanLock(Guid id) => _serverRestraintData is { } d && d.CanLock();
+    public bool CanUnlock(Guid id) => _serverRestraintData is { } d && d.CanUnlock();
+    public bool CanRemove(Guid id) => _serverRestraintData is { } d && d.CanRemove();
 
     #region Active Set Updates
     public bool ApplyRestraint(Guid restraintId, string enactor, [NotNullWhen(true)] out RestraintSet? set)

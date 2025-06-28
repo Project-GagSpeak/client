@@ -56,7 +56,7 @@ public partial class StaticDetours
             // Firstly, make sure that we are setup to allow garbling in the current channel.
             var prefix = string.Empty;
             InputChannel channel = 0;
-            var muffleMessage = ChatLogAgent.CurrentChannel().IsChannelEnabled(globalPerms.ChatGarblerChannelsBitfield);
+            var muffleMessage = ChatLogAgent.CurrentChannel().IsChannelEnabled(globalPerms.AllowedGarblerChannels);
 
             // It's possible to be in a channel (ex. Say) but send (/party Hello World), we must check this.
             if (messageDecoded.StartsWith("/"))
@@ -88,7 +88,7 @@ public partial class StaticDetours
                 Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
 
                 // Finally if we reached this point, update `muffleAllowedForChannel` to reflect the intended channel.
-                muffleMessage = channel.IsChannelEnabled(globalPerms.ChatGarblerChannelsBitfield);
+                muffleMessage = channel.IsChannelEnabled(globalPerms.AllowedGarblerChannels);
             }
 
             // If it's not allowed, do not garble.

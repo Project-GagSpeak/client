@@ -93,7 +93,8 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     private static WardrobeTabs _tabMenu = new WardrobeTabs();
     private bool ThemePushed = false;
 
-    public static float SelectedRestraintH() => ImGui.GetFrameHeight() * 2 + ImGui.GetTextLineHeightWithSpacing() * 4 + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float SelectedRestrictionH() => ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float SelectedRestraintH() => ImGui.GetFrameHeight() + ImGui.GetFrameHeightWithSpacing() * 4 + ImGui.GetStyle().ItemSpacing.Y * 2;
     public static float SelectedOtherH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
     private static float RightLength() => 7 * ImGui.GetFrameHeightWithSpacing() + (SelectedRestraintH() / 1.2f);
 

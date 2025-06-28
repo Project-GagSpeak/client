@@ -127,7 +127,7 @@ public partial class GagRestrictionsPanel
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
-            _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding, true);
+            _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding);
 
         void DrawLabel()
         {
@@ -192,7 +192,6 @@ public partial class GagRestrictionsPanel
         if (_manager.ServerGagData is not { } activeGagData)
             return;
 
-        // get the current content height.
         var height = ImGui.GetContentRegionAvail().Y;
         var groupH = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
         var groupSpacing = (height - 3 * groupH) / 4;
@@ -203,7 +202,7 @@ public partial class GagRestrictionsPanel
             // Spacing.
             if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
-            // Lock Display.
+            // Slot Display.
             if (gagData.GagItem is GagType.None)
                 _activeItemDrawer.ApplyItemGroup(index, gagData);
             else

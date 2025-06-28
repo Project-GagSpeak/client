@@ -93,8 +93,8 @@ public class Svc
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
     [PluginService] public static ITargetManager Targets { get; private set; } = null!;
     [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
-    // [PluginService] public static IToastGui Toasts { get; private set; } = null!;
-    // [PluginService] public static ITextureSubstitutionProvider TextureSubstitution { get; private set; } = null!;
+    [PluginService] public static IToastGui Toasts { get; private set; } = null!;
+    [PluginService] public static ITextureSubstitutionProvider TextureSubstitution { get; private set; } = null!;
 }
 
 

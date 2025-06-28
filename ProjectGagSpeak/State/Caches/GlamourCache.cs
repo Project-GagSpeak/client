@@ -252,16 +252,16 @@ public class GlamourCache
                         return;
 
                     ImGui.TableSetupColumn("Key", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Restrictionss(0)").X);
-                    ImGui.TableSetupColumn("HeadSlot");
-                    ImGui.TableSetupColumn("Chestpiece");
+                    ImGui.TableSetupColumn("Head");
+                    ImGui.TableSetupColumn("Chest");
                     ImGui.TableSetupColumn("Gloves");
                     ImGui.TableSetupColumn("Legs");
                     ImGui.TableSetupColumn("Feet");
                     ImGui.TableSetupColumn("Earring");
                     ImGui.TableSetupColumn("Necklace");
                     ImGui.TableSetupColumn("Bracelet");
-                    ImGui.TableSetupColumn("LeftRing");
-                    ImGui.TableSetupColumn("RightRing");
+                    ImGui.TableSetupColumn("L-Ring");
+                    ImGui.TableSetupColumn("R-Ring");
                     ImGui.TableHeadersRow();
 
                     var grouped = _glamours.GroupBy(kvp => kvp.Key.Item1);
@@ -292,16 +292,16 @@ public class GlamourCache
                 return;
 
             ImGui.TableSetupColumn("Combined Key");
-            ImGui.TableSetupColumn("HeadSlot");
-            ImGui.TableSetupColumn("Chestpiece");
+            ImGui.TableSetupColumn("Head");
+            ImGui.TableSetupColumn("Chest");
             ImGui.TableSetupColumn("Gloves");
             ImGui.TableSetupColumn("Legs");
             ImGui.TableSetupColumn("Feet");
             ImGui.TableSetupColumn("Earring");
             ImGui.TableSetupColumn("Necklace");
             ImGui.TableSetupColumn("Bracelet");
-            ImGui.TableSetupColumn("LeftRing");
-            ImGui.TableSetupColumn("RightRing");
+            ImGui.TableSetupColumn("L-Ring");
+            ImGui.TableSetupColumn("R-Ring");
             ImGui.TableHeadersRow();
             // Draw the final State.
             ImGuiUtil.DrawFrameColumn("Final State");
@@ -349,22 +349,21 @@ public class GlamourCache
 
         var iconSize = new Vector2(ImGui.GetFrameHeight());
         ImGui.Text("Unbound State Cache History:");
-        using (var table = ImRaii.Table("UnboundStateCacheHistory", 11, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+        using (var table = ImRaii.Table("UnboundStateCacheHistory", 10, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
         {
             if (!table)
                 return;
 
-            ImGui.TableSetupColumn("Queue Pos");
-            ImGui.TableSetupColumn("HeadSlot");
-            ImGui.TableSetupColumn("Chestpiece");
+            ImGui.TableSetupColumn("Head");
+            ImGui.TableSetupColumn("Chest");
             ImGui.TableSetupColumn("Gloves");
             ImGui.TableSetupColumn("Legs");
             ImGui.TableSetupColumn("Feet");
             ImGui.TableSetupColumn("Earring");
             ImGui.TableSetupColumn("Necklace");
             ImGui.TableSetupColumn("Bracelet");
-            ImGui.TableSetupColumn("LeftRing");
-            ImGui.TableSetupColumn("RightRing");
+            ImGui.TableSetupColumn("L-Ring");
+            ImGui.TableSetupColumn("R-Ring");
             ImGui.TableHeadersRow();
             // Draw the final State.
             foreach (var slot in EquipSlotExtensions.EqdpSlots)

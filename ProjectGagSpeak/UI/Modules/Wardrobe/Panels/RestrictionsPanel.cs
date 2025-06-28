@@ -150,7 +150,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, true);
+            _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, false);
             if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
@@ -219,27 +219,24 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     {
         using var child = CkRaii.Child("ActiveItems", region, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
 
-        if (_manager.ServerRestrictionData is not { } activeRestrictionSlots)
+        if (_manager.ServerRestrictionData is not { } activeSlots)
             return;
 
-        // get the current content height.
         var height = ImGui.GetContentRegionAvail().Y;
-        // calculate the Y spacing for the items.
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 7;
 
-        foreach (var (data, index) in activeRestrictionSlots.Restrictions.WithIndex())
+        foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
         {
             // Spacing.
             if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
-            // Draw the framed Item.
+            // Slot Display.
             if (data.Identifier == Guid.Empty)
                 _activeItemDrawer.ApplyItemGroup(index, data);
             else
             {
-                // Lock Display. For here we want the thumbnail we provide for the restriction item, so find it.
-                if (_manager.ActiveItems.TryGetValue(index, out var item) && item.Identifier != Guid.Empty)
+                if (_manager.ActiveItems.TryGetValue(index, out var item))
                 {
                     if (data.IsLocked())
                         _activeItemDrawer.UnlockItemGroup(index, data, item);

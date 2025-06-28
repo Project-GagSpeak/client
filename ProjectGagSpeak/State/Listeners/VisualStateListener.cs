@@ -229,6 +229,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
+
         Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Gags);
         if(_restraints.ApplyRestraint(itemData.NewData.Identifier, itemData.Enactor.UID, out var restraintSet))
         {
@@ -238,6 +239,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestraint, itemData.NewData.Identifier + " was applied to you!");
     }
+
+    public async Task ApplyRestraintLayer(KinksterUpdateRestraint)
 
     /// <summary> Locks the active restraint set. </summary>
     public void LockRestraint(KinksterUpdateRestraint itemData)

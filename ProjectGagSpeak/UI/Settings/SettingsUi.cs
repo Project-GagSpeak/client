@@ -478,13 +478,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 for (var i = 0; i < channels.Length; i++)
                 {
                     var channel = channels[i];
-                    var enabled = channel.IsChannelEnabled(globals.ChatGarblerChannelsBitfield);
+                    var enabled = channel.IsChannelEnabled(globals.AllowedGarblerChannels);
                     var checkboxLabel = channel.ToString();
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
-                        var newBitfield = channel.SetChannelState(globals.ChatGarblerChannelsBitfield, enabled);
-                        PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerChannelsBitfield), newBitfield)
+                        var newBitfield = channel.SetChannelState(globals.AllowedGarblerChannels, enabled);
+                        PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.AllowedGarblerChannels), newBitfield)
                             .ConfigureAwait(false);
                     }
 
