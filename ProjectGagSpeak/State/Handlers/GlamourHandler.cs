@@ -44,12 +44,20 @@ public class GlamourHandler
         => _ipcBlocker &= ~IpcBlockReason.Gearset;
 
     /// <summary> Add a single GlamourSlot to the GlamourCache for the key. </summary>
-    public bool TryAddGlamourToCache(CombinedCacheKey key, GlamourSlot glamour)
-        => _cache.AddGlamour(key, glamour);
+    public bool TryAddGlamourToCache(CombinedCacheKey key, GlamourSlot? glamour)
+    {
+        if (glamour is null)
+            return false;
+        return _cache.AddGlamour(key, glamour);
+    }
 
     /// <summary> Add Multiple GlamourSlots to the GlamourCache for the key. </summary>
     public bool TryAddGlamourToCache(CombinedCacheKey key, IEnumerable<GlamourSlot> glamours)
-        => _cache.AddGlamour(key, glamours);
+    {
+        if (glamours is null || !glamours.Any())
+            return false;
+        return _cache.AddGlamour(key, glamours);
+    }
 
     /// <summary> Remove a single key from the GlamourCache. </summary>
     public bool TryRemGlamourFromCache(CombinedCacheKey key)

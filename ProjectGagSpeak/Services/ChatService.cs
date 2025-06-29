@@ -14,6 +14,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
+using GagspeakAPI.Attributes;
 
 
 namespace GagSpeak.Services;
@@ -242,7 +243,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         // if our message is longer than 5 words, fire our on-chat-message achievement.
         if (gagData.IsGagged() && globalPerms.ChatGarblerActive && msg.Split(' ').Length > 5)
-            if (channel.IsChannelEnabled(globalPerms.AllowedGarblerChannels))
+            if (globalPerms.AllowedGarblerChannels.IsActiveChannel((int)channel))
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ChatMessageSent, channel);
     }
 

@@ -6,6 +6,7 @@ using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
@@ -134,24 +135,36 @@ public class CacheStateManager : IHostedService
         // Sync all server restraint data with the RestraintManager.
         _restraints.LoadServerData(connectionDto.SyncedRestraintSetData);
         _logger.LogInformation("------ Syncing Restraint Data to Cache ------");
-        if(_restraints.AppliedRestraint is { } restraintSet)
+        if (_restraints.AppliedRestraint is { } restraintSet)
         {
-            var serverItem = _restraints.ServerRestraintData!;
+            var serverItem = _restraints.ServerData!;
             _logger.LogDebug($"Adding RestraintSet [{restraintSet.Label}), which was enabled by {serverItem.Enabler}.");
-            
-            var key = new CombinedCacheKey(ManagerPriority.Restraints, -1, serverItem.Enabler, restraintSet.Label);
-            _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetGlamour().Values);
-            _glamourHandler.TryAddMetaToCache(key, restraintSet.GetMetaData());
-            _modHandler.TryAddModToCache(key, restraintSet.GetMods());
-            _moodleHandler.TryAddMoodleToCache(key, restraintSet.GetMoodles());
-            _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetTraits());
-            _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
-            // Conditional Additions.
-            if (restraintSet.GetBlindfoldOverlay() is { } bf) _overlayHandler.TryAddBlindfoldToCache(key, bf);
-            if (restraintSet.GetHypnoOverlay() is { } h) _overlayHandler.TryAddEffectToCache(key, h);
 
+            // Set the base RestraintSet (layer 0). The RestraintSet layers are index's 1-5
+            var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, serverItem.Enabler, restraintSet.Label);
+            _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetBaseGlamours());
+            _glamourHandler.TryAddMetaToCache(key, restraintSet.MetaStates);
+            _modHandler.TryAddModToCache(key, restraintSet.GetBaseMods());
+            _moodleHandler.TryAddMoodleToCache(key, restraintSet.GetBaseMoodles());
+            _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetBaseTraits());
+            _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
+            _overlayHandler.TryAddBlindfoldToCache(key, restraintSet.GetBaseBlindfold());
+            _overlayHandler.TryAddEffectToCache(key, restraintSet.GetBaseHypnoEffect());
+
+            // Add all enabled layers.
+            foreach (var idx in serverItem.ActiveLayers.GetLayerIndices())
+            {
+                var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), serverItem.Enabler, restraintSet.Label);
+                _glamourHandler.TryAddGlamourToCache(layerKey, restraintSet.GetGlamourAtLayer(idx));
+                _modHandler.TryAddModToCache(layerKey, restraintSet.GetModAtLayer(idx));
+                _moodleHandler.TryAddMoodleToCache(layerKey, restraintSet.GetMoodleAtLayer(idx));
+                _traitsHandler.TryAddTraitsToCache(layerKey, restraintSet.GetTraitsForLayer(idx));
+                _arousalHandler.TryAddArousalToCache(layerKey, restraintSet.Arousal);
+                _overlayHandler.TryAddBlindfoldToCache(layerKey, restraintSet.GetBlindfoldAtLayer(idx));
+                _overlayHandler.TryAddEffectToCache(layerKey, restraintSet.GetHypnoEffectAtLayer(idx));
+            }
+            _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
         }
-        _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
 
 
         // Now perform all updates in parallel.
@@ -240,50 +253,97 @@ public class CacheStateManager : IHostedService
             RemoveMoodle(key),
             RemoveTraits(key),
             RemoveArousalStrength(key),
-            // Worth tryiung even if they dont exist, just to be safe.
             RemoveBlindfold(key),
             RemoveHypnoEffect(key)
         );
     }
 
-    // This is going to be a whole other ballpark to deal with, so save for later, it will come with additional complexity.
-    public async Task AddRestraintSet(RestraintSet item, int layerIdx, string enabler)
+    public async Task AddRestraintSet(RestraintSet item, string enabler)
     {
         _logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
-        
-        // -1 is the base, 0-4 are the layers. (could make it 0 to line things up but this makes it better in code)
-        var key = new CombinedCacheKey(ManagerPriority.Restraints, layerIdx, enabler, item.Label);
-        var tasks = new List<Task>
-        {
-            AddGlamourMeta(key, item.GetGlamour().Values, item.GetMetaData()),
-            AddModPreset(key, item.GetMods()),
-            AddMoodle(key, item.GetMoodles()),
-            AddTraits(key, item.GetTraits()),
+        var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, enabler, item.Label);
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
+            AddGlamourMeta(key, item.GetBaseGlamours(), item.MetaStates),
+            AddModPreset(key, item.GetBaseMods()),
+            AddMoodle(key, item.GetBaseMoodles()),
+            AddTraits(key, item.GetBaseTraits()),
             AddArousalStrength(key, item.Arousal),
-        };
-        // Conditional additions
-        if (item.GetBlindfoldOverlay() is { } bf) tasks.Add(AddBlindfold(key, bf));
-        if (item.GetHypnoOverlay() is { } h) tasks.Add(AddHypnoEffect(key, h));
-
-        // Add and update in parallel.
-        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
+            AddBlindfold(key, item.GetBaseBlindfold()),
+            AddHypnoEffect(key, item.GetBaseHypnoEffect())
+        );
     }
 
-    // the layerIdx shouldnt even be here really if we are calling the layers seperately? idk.
-    public async Task RemoveRestraintSet(RestraintSet item, int layerIdx)
+    public async Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor)
     {
-        _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer {layerIdx}");
+        // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
+        // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
+        var enablerName = _restraints.ServerData is { } serverData ? (serverData.Padlock.IsDevotionalLock() ? serverData.PadlockAssigner : serverData.Enabler) : string.Empty;
+        _logger.LogInformation($"Adding RestraintSet ({item.Label}) Layers ({added}), applied by {enactor} (Enabler Name will go under [{enablerName}]).");
 
-        // -1 is the base, 0-4 are the layers. (could make it 0 to line things up but this makes it better in code)
+        // Add all enabled layers.
+        foreach (var idx in added.GetLayerIndices())
+        {
+            var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
+            _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
+            _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            _moodleHandler.TryAddMoodleToCache(layerKey, item.GetMoodleAtLayer(idx));
+            _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
+            _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
+            _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
+            _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
+        }
+
+        // Run the updates.
+        await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
+            _glamourHandler.UpdateCaches(),
+            _modHandler.UpdateModCache(),
+            _moodleHandler.UpdateMoodleCache(),
+            _traitsHandler.UpdateTraitCache(),
+            _arousalHandler.UpdateFinalCache(),
+            _overlayHandler.UpdateCaches()
+        );
+    }
+
+    // Enabler here is only for logging purposes.
+    public async Task RemoveRestraintSetLayers(RestraintSet item, RestraintLayer removed)
+    {
+        _logger.LogInformation($"Removing RestraintSet ({item.Label}) from cache on layers ({removed})");
+        // Add all enabled layers.
+        foreach (var idx in removed.GetLayerIndices())
+        {
+            var key = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), string.Empty, item.Label);
+            _glamourHandler.TryRemGlamourFromCache(key);
+            _modHandler.TryRemModFromCache(key);
+            _moodleHandler.TryRemMoodleFromCache(key);
+            _traitsHandler.TryRemTraitsFromCache(key);
+            _arousalHandler.TryRemArousalFromCache(key);
+            _overlayHandler.TryRemBlindfoldFromCache(key);
+            _overlayHandler.TryRemEffectFromCache(key);
+        }
+
+        // Run the updates.
+        await TimedWhenAll($"({item.Label}) had layers [{removed}] removed from cache and base states restored",
+            _glamourHandler.UpdateCaches(),
+            _modHandler.UpdateModCache(),
+            _moodleHandler.UpdateMoodleCache(),
+            _traitsHandler.UpdateTraitCache(),
+            _arousalHandler.UpdateFinalCache(),
+            _overlayHandler.UpdateCaches()
+        );
+    }
+
+    // I can almost garentee that removing this without considering for any
+    // active layers will cause issues, handle later, or restrict well.
+    public async Task RemoveRestraintSet(RestraintSet item)
+    {
+        _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer 0");
         var key = new CombinedCacheKey(ManagerPriority.Restraints, -1, string.Empty, item.Label);
-        // Remove and update in parallel.
         await TimedWhenAll($"[{key}] removed from cache and base states restored",
             RemoveGlamourMeta(key),
             RemoveModPreset(key),
             RemoveMoodle(key),
             RemoveTraits(key),
             RemoveArousalStrength(key),
-            // Worth trying even if they dont exist, just to be safe.
             RemoveBlindfold(key),
             RemoveHypnoEffect(key)
         );

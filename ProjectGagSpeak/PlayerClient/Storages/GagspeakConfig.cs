@@ -1,5 +1,6 @@
 using CkCommons.GarblerCore;
 using GagSpeak.Services;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.PlayerClient;
 public class GagspeakConfig
@@ -28,7 +29,7 @@ public class GagspeakConfig
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;
-    public int PuppeteerChannelsBitfield { get; set; } = 0;
+    public InptChannel PuppeteerChannelsBitfield { get; set; } = InptChannel.None;
 
     // logging (debug)
     public bool LiveGarblerZoneChangeWarn { get; set; } = true;

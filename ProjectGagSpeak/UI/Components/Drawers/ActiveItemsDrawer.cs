@@ -124,7 +124,7 @@ public class ActiveItemsDrawer
 
     public void DisplayRestraintPadlock(Vector2 region)
     {
-        if(_restraints.ServerRestraintData is not { } activeRestraint)
+        if(_restraints.ServerData is not { } activeRestraint)
             return;
 
         // unlike gags or restrictions, these only display the locking, or unlocking, interface.
@@ -367,8 +367,10 @@ public class ActiveItemsDrawer
 
     public void DrawRestraintImage(RestraintSet? rs, Vector2 size, float rounding, bool doFrame = true)
     {
-        if(rs != null && TextureManagerEx.GetMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath) is { } imageWrap)
+        if (rs != null && TextureManagerEx.GetMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath) is { } imageWrap)
             DrawImageInternal(imageWrap, null, size, rounding);
+        else
+            ImGui.Dummy(size);
     }
 
     public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, float size, float rounding, uint frameTint = 0, uint bgCol = 0, float padding = 0)

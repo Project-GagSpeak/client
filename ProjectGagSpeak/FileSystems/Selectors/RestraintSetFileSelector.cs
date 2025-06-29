@@ -87,7 +87,6 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2);
         ImGui.InvisibleButton("button-leaf", leafSize);
-
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -129,8 +128,15 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
             var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
-            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
+            var pos = ImGui.GetCursorScreenPos();
+            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            {
+                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                 _manager.Delete(leaf.Value);
+            }
             CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
     }

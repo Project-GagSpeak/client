@@ -478,27 +478,28 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         using (ImRaii.Table("##metadata", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGuiUtil.DrawTableColumn("Headgear");
-            ImGuiUtil.DrawTableColumn(rs.HeadgearState.ToString());
+            ImGuiUtil.DrawTableColumn(rs.MetaStates.Headgear.ToString());
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Visor");
-            ImGuiUtil.DrawTableColumn(rs.VisorState.ToString());
+            ImGuiUtil.DrawTableColumn(rs.MetaStates.Visor.ToString());
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Weapon");
-            ImGuiUtil.DrawTableColumn(rs.WeaponState.ToString());
+            ImGuiUtil.DrawTableColumn(rs.MetaStates.Weapon.ToString());
             ImGui.TableNextRow();
         }
 
+        // Its ok to do heavy loading here on drawframe time, as it is just a debug window, otherwise, DO NOT DO THIS.
         ImGui.Spacing();
         ImGui.TextUnformatted("Mods:");
         using (ImRaii.Table("##mods", 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-            foreach (var mod in rs.GetMods())
+            foreach (var mod in rs.GetAllMods())
                 DrawModAssociationRow(mod);
 
         ImGui.Spacing();
         ImGui.TextUnformatted("Moodles:");
         using (ImRaii.Table("##moodles", 1, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            _moodleDrawer.ShowStatusIcons(rs.GetMoodles(), ImGui.GetContentRegionAvail().X, MoodleDrawer.IconSizeFramed, 2);
+            _moodleDrawer.ShowStatusIcons(rs.GetAllMoodles(), ImGui.GetContentRegionAvail().X, MoodleDrawer.IconSizeFramed, 2);
         }
     }
 
@@ -692,12 +693,12 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             var layerIdx = 0;
             foreach (var layer in rs.Layers)
             {
+                ImGuiUtil.DrawTableColumn("Layer" + layerIdx);
+                ImGuiUtil.DrawTableColumn(layer.Label.ToString());
+                ImGui.TableNextRow();
+
                 if (layer is RestrictionLayer bindLayer)
                 {
-                    ImGuiUtil.DrawTableColumn("Layer" + layerIdx);
-                    ImGuiUtil.DrawTableColumn(bindLayer.IsActive ? "Active" : "Inactive");
-                    ImGuiUtil.DrawTableColumn(bindLayer.ID.ToString());
-                    ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("Restriction");
                     ImGuiUtil.DrawTableColumn(bindLayer.Ref?.Identifier.ToString() ?? "NULL REFERENCE");
                     ImGui.TableNextColumn();
@@ -717,11 +718,6 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 }
                 else if (layer is ModPresetLayer modLayer)
                 {
-                    ImGuiUtil.DrawTableColumn("Layer" + layerIdx);
-                    ImGuiUtil.DrawTableColumn(modLayer.IsActive ? "Active" : "Inactive");
-                    ImGuiUtil.DrawTableColumn(modLayer.ID.ToString());
-                    ImGui.TableNextRow();
-
                     ImGuiUtil.DrawTableColumn("ModLayer");
                     DrawModAssociationRow(modLayer.Mod);
                 }

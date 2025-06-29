@@ -4,6 +4,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using ImGuizmoNET;
+using Microsoft.IdentityModel.Tokens;
 using Penumbra.Api.Enums;
 
 namespace GagSpeak.State.Handlers;
@@ -28,12 +29,20 @@ public class ModHandler
     }
 
     /// <summary> Add a single Mod to the GlamourCache for the key. </summary>
-    public bool TryAddModToCache(CombinedCacheKey key, ModSettingsPreset mod)
-        => _cache.AddMod(key, mod);
+    public bool TryAddModToCache(CombinedCacheKey key, ModSettingsPreset? mod)
+    {
+        if (mod is null)
+            return false;
+        return _cache.AddMod(key, mod);
+    }
 
     /// <summary> Add Multiple Mods to the GlamourCache for the key. </summary>
     public bool TryAddModToCache(CombinedCacheKey key, IEnumerable<ModSettingsPreset> mods)
-        => _cache.AddMod(key, mods);
+    {
+        if (mods.IsNullOrEmpty())
+            return false;
+        return _cache.AddMod(key, mods);
+    }
 
     /// <summary> Remove a single key from the GlamourCache. </summary>
     public bool TryRemModFromCache(CombinedCacheKey key)

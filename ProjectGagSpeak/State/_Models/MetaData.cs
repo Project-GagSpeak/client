@@ -88,6 +88,27 @@ public struct MetaDataStruct
     }
 
     public static MetaDataStruct Empty => new MetaDataStruct();
+
+    public JObject ToJObject()
+        => new JObject
+        {
+            ["Headgear"] = Headgear.ToString(),
+            ["Visor"] = Visor.ToString(),
+            ["Weapon"] = Weapon.ToString()
+        };
+
+    public static MetaDataStruct FromJObject(JToken? token)
+    {
+        if (token is null)
+            return Empty;
+
+        return new MetaDataStruct
+        {
+            Headgear = TriStateBool.FromJObject(token["Headgear"]),
+            Visor = TriStateBool.FromJObject(token["Visor"]),
+            Weapon = TriStateBool.FromJObject(token["Weapon"])
+        };
+    }
 }
 
 

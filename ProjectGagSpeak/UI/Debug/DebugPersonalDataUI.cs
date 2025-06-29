@@ -112,7 +112,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGlobalPermissions("Player", _globals.Current ?? new GlobalPerms());
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
-        DrawRestraint("Player", _restraints.ServerRestraintData ?? new CharaActiveRestraint());
+        DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
     }
 
     private void DrawPermissionRowBool(string name, bool value)

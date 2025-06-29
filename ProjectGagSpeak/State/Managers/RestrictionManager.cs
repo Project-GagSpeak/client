@@ -344,15 +344,22 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 continue;
             }
 
-            // Create an instance of the correct type
-            var restrictionItem = restrictionType switch
+            try
             {
-                RestrictionType.Collar => CollarRestriction.FromToken(itemJson, _items, _modPresets),
-                RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _items, _modPresets),
-                RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _items, _modPresets),
-                _ => RestrictionItem.FromToken(itemJson, _items, _modPresets),
-            };
-            Storage.Add(restrictionItem);
+                // Create an instance of the correct type
+                var restrictionItem = restrictionType switch
+                {
+                    RestrictionType.Collar => CollarRestriction.FromToken(itemJson, _items, _modPresets),
+                    RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _items, _modPresets),
+                    RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _items, _modPresets),
+                    _ => RestrictionItem.FromToken(itemJson, _items, _modPresets),
+                };
+                Storage.Add(restrictionItem);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to load restriction item from JSON: {0}", itemJson);
+            }
         }
     }
 

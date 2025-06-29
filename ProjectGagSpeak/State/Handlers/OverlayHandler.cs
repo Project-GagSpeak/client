@@ -21,12 +21,20 @@ public class OverlayHandler
     }
 
     /// <summary> Add a single BlindfoldOverlay to the Blindfold Cache for the key. </summary>
-    public bool TryAddBlindfoldToCache(CombinedCacheKey key, BlindfoldOverlay overlay)
-        => _cache.TryAddBlindfold(key, overlay);
+    public bool TryAddBlindfoldToCache(CombinedCacheKey key, BlindfoldOverlay? overlay)
+    {
+        if (overlay is null)
+            return false;
+        return _cache.TryAddBlindfold(key, overlay);
+    }
 
     /// <summary> Add a single HypnoEffectOverlay to the HypnoEffect Cache for the key. </summary>
-    public bool TryAddEffectToCache(CombinedCacheKey key, HypnoticOverlay overlay)
-        => _cache.TryAddHypnoEffect(key, overlay);
+    public bool TryAddEffectToCache(CombinedCacheKey key, HypnoticOverlay? overlay)
+    {
+        if (overlay is null)
+            return false;
+        return _cache.TryAddHypnoEffect(key, overlay);
+    }
 
     /// <summary> Removes a single key from the Blindfold Cache. </summary>
     public bool TryRemBlindfoldFromCache(CombinedCacheKey key)

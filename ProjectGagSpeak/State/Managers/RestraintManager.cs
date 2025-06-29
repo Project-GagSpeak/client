@@ -13,6 +13,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
@@ -49,7 +50,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public RestraintSet? ItemInEditor => _itemEditor.ItemInEditor;
 
     // ----------- ACTIVE DATA --------------
-    public CharaActiveRestraint? ServerRestraintData => _serverRestraintData;
+    public CharaActiveRestraint? ServerData => _serverRestraintData;
     public RestraintSet? AppliedRestraint { get; private set; } = new();
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
@@ -144,35 +145,57 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
     public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
 
-    public bool CanApply(Guid id) => _serverRestraintData is { } d && d.CanApply();
-    public bool CanLock(Guid id) => _serverRestraintData is { } d && d.CanLock();
-    public bool CanUnlock(Guid id) => _serverRestraintData is { } d && d.CanUnlock();
-    public bool CanRemove(Guid id) => _serverRestraintData is { } d && d.CanRemove();
+    public bool CanApply(Guid id) => ServerData is { } d && d.CanApply();
+    public bool CanLock(Guid id) => ServerData is { } d && d.CanLock();
+    public bool CanUnlock(Guid id) => ServerData is { } d && d.CanUnlock();
+    public bool CanRemove(Guid id) => ServerData is { } d && d.CanRemove();
 
     #region Active Set Updates
-    public bool ApplyRestraint(Guid restraintId, string enactor, [NotNullWhen(true)] out RestraintSet? set)
+    /// <summary> Applies the restraint set for the defined GUID in the DTO. </summary>
+    /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
+    public bool Apply(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet)
     {
-        set = null;
+        visualSet = null;
 
         if (_serverRestraintData is not { } data)
             return false;
 
         // update values & ping achievement.
-        data.Identifier = restraintId;
-        data.Enabler = enactor;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, restraintId, true, enactor);
+        data.Identifier = updateDto.NewData.Identifier;
+        data.Enabler = updateDto.Enactor.UID;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, data.Identifier, true, data.Enabler);
 
-        // grab the collective data from the set to return.
-        if (Storage.TryGetRestraint(restraintId, out set))
-        {
-            AppliedRestraint = set;
-            return true;
-        }
+        // If we obtain the set here, it means we should apply the visual aspect of this change, otherwise return.
+        if (!Storage.TryGetRestraint(data.Identifier, out visualSet))
+            return false;
 
-        return false;
+        AppliedRestraint = visualSet;
+        return true;
     }
 
-    public void LockRestraint(Guid restraintId, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
+    /// <summary> Applies the restraint set layer(s) for the current equipped restraint set. </summary>
+    /// <param name="set"> The restraint set to apply the layers to. </param>
+    /// <param name="added"> The layers that became enabled on the set. </param>
+    /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
+    public bool ApplyLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
+    {
+        visualSet = null;
+        added = RestraintLayer.None;
+
+        if (_serverRestraintData is not { } data)
+            return false;
+
+        // set what layers were added and new.
+        added = updateDto.NewData.ActiveLayers & ~data.ActiveLayers;
+        // update the active layers.
+        data.ActiveLayers |= added;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, true, updateDto.Enactor.UID);
+
+        // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
+        return Storage.TryGetRestraint(data.Identifier, out visualSet);
+    }
+
+    public void Lock(Guid restraintId, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
     {
         if (_serverRestraintData is not { } data)
             return;
@@ -184,7 +207,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
     }
 
-    public void UnlockRestraint(Guid restraintId, string enactor)
+    public void Unlock(Guid restraintId, string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
         if (_serverRestraintData is not { } data)
@@ -202,16 +225,30 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             GagspeakEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
-    public bool RemoveRestraint(string enactor, [NotNullWhen(true)] out RestraintSet? item)
+    public bool RemoveLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removed)
     {
-        item = null;
+        visualSet = null;
+        removed = RestraintLayer.None;
+        if (_serverRestraintData is not { } data)
+            return false;
+        // Determine which layers are being removed (were present but not anymore)
+        removed = data.ActiveLayers & ~updateDto.NewData.ActiveLayers;
+        // Remove those layers
+        data.ActiveLayers &= ~removed;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, removed, false, updateDto.Enactor.UID);
+        // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
+        return Storage.TryGetRestraint(data.Identifier, out visualSet);
+    }
 
+    public bool Remove(string enactor, [NotNullWhen(true)] out RestraintSet? visualSet)
+    {
+        visualSet = null;
         if (_serverRestraintData is not { } data)
             return false;
 
-        // store the new data, then fire the achievement.
         var removedRestraint = data.Identifier;
         var setEnabler = data.Enabler;
+        // Update values, then fire achievements.
         data.Identifier = Guid.Empty;
         data.Enabler = string.Empty;
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, removedRestraint, false, enactor);
@@ -221,14 +258,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             GagspeakEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetRestraint(removedRestraint, out item))
-        {
-            // always revert the visuals.
-            AppliedRestraint = null;
-            return true;
-        }
-
-        return false;
+        if (!Storage.TryGetRestraint(removedRestraint, out visualSet))
+            return false;
+        
+        AppliedRestraint = null;
+        return true;
     }
     #endregion Active Set Updates
 
@@ -242,8 +276,13 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void WriteToStream(StreamWriter writer)
         => throw new NotImplementedException();
 
+    private bool AllowSaving = true;
+
     public string JsonSerialize()
     {
+        if(!AllowSaving)
+            throw new Exception("Attempted to serialize RestraintManager while saving is disabled.");
+
         var restraintSets = new JArray();
         foreach (var set in Storage)
         {
@@ -253,7 +292,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             }
             catch (Exception e)
             {
-                Logger.LogError(e.InnerException, "Failed to serialize RestraintSet.");
+                Logger.LogError($"Failed to serialize RestraintSet: {e}");
             }
         }
 
@@ -268,12 +307,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void Load()
     {
         var file = _fileNames.RestraintSets;
-        Logger.LogInformation("Loading in Restraints Config for file: " + file);
+        Logger.LogInformation($"Loading in Restraints Config for file: {file}");
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Restraints Config file found at {0}", file);
+            Logger.LogWarning($"No Restraints Config file found at {file}");
             // create a new file with default values.
             _saver.Save(this);
             return;
@@ -300,19 +339,24 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
     private void LoadV0(JToken? data)
     {
-        if (data is not JArray restraintSetList)
+        if (data is not JArray restraintArray)
             return;
 
         // otherwise, parse it out and stuff YIPPEE
-        foreach (var setToken in restraintSetList)
+        foreach (var setToken in restraintArray)
         {
-            if (TryLoadRestraintSet(setToken, out var loadedSet))
+            try
             {
+                // probably the single line of code that i fear the most out of this entire plugin.
+                var loadedSet = RestraintSet.FromToken(setToken, _items, _modPresets, _restrictions);
                 Storage.Add(loadedSet);
+                Logger.LogInformation($"LOADED IN RETRAINTSET: {loadedSet.Label}");
             }
-            else
+            catch (Exception ex)
             {
-                Logger.LogError("Failed to load RestraintSet from JSON.");
+                Logger.LogError($"Failed to load Restraint Set.\nError {ex}\nFrom JSON: {setToken}");
+                // Do not allow this to continue loading, just fucking crash the game i dont care. We need to see why it didnt load.
+                AllowSaving = false;
             }
         }
 
@@ -323,232 +367,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // update only the version value to 1, then return it.
         oldConfigJson["Version"] = 1;
     }
-
-    private bool TryLoadRestraintSet(JToken token, [NotNullWhen(true)] out RestraintSet? set)
-    {
-        try
-        {
-            if (token is not JObject setJson)
-                throw new Exception("Invalid JSON Token.");
-
-
-            // if the setJson's ["RestraintSlots"] value is not a Dictionary<Slot, RestraintSlotBase>, throw.
-            if (setJson["RestraintSlots"] is not JObject slotJson)
-                throw new Exception("RestraintSlots Dictionary.");
-
-            // Construct the dictionary item for it.
-            var slotDict = new Dictionary<EquipSlot, IRestraintSlot>();
-            foreach (var slot in slotJson)
-            {
-                var slotKey = (EquipSlot)Enum.Parse(typeof(EquipSlot), slot.Key);
-                var slotValue = LoadSlot(slot.Value, slotKey);
-                slotDict.Add(slotKey, slotValue);
-            }
-
-            var layers = new List<IRestraintLayer>();
-            if (setJson["RestraintLayers"] is JArray layerArray)
-            {
-                foreach (var layerToken in layerArray)
-                    Generic.Safe(() => layers.Add(LoadRestraintLayer(layerToken)));
-            }
-
-            var restraintMods = new List<ModSettingsPreset>();
-            if(setJson["RestraintMods"] is JArray modArray)
-            {
-                foreach (var modToken in modArray)
-                    Generic.Safe(() => restraintMods.Add(ModSettingsPreset.FromRefToken(modToken, _modPresets)));
-            }
-
-            var restraintMoodles = new HashSet<Moodle>();
-            if(setJson["RestraintMoodles"] is JArray moodleArray)
-            {
-                foreach (var moodleToken in moodleArray)
-                    Generic.Safe(() => restraintMoodles.Add(GsExtensions.LoadMoodle(moodleToken)));
-            }
-
-            set = new RestraintSet()
-            {
-                Identifier = Guid.TryParse(setJson["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID"),
-                Label = setJson["Label"]?.Value<string>() ?? string.Empty,
-                Description = setJson["Description"]?.Value<string>() ?? string.Empty,
-                ThumbnailPath = setJson["ThumbnailPath"]?.Value<string>() ?? string.Empty,
-                DoRedraw = setJson["DoRedraw"]?.Value<bool>() ?? false,
-                RestraintSlots = slotDict,
-                Glasses = _items.ParseBonusSlot(setJson["Glasses"]),
-                Layers = layers,
-                HeadgearState = TriStateBool.FromJObject(setJson["HeadgearState"]),
-                VisorState = TriStateBool.FromJObject(setJson["VisorState"]),
-                WeaponState = TriStateBool.FromJObject(setJson["WeaponState"]),
-                RestraintMods = restraintMods,
-                RestraintMoodles = restraintMoodles,
-            };
-            Logger.LogInformation($"Loaded RestraintSet {set.Label} with {set.RestraintSlots.Count} slots and {set.Layers.Count} layers.");
-            return true;
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Failed to load RestraintSet from JSON.");
-            set = null;
-            return false;
-        }
-    }
-
-    /// <summary> Attempts to load a restraint set slot item. This can be Basic or Advanced. </summary>
-    /// <param name="slotToken"> The JSON Token for the Slot. </param>
-    /// <returns> The loaded slot. </returns>
-    /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
-    /// <exception cref="InvalidOperationException"> If the JSON Token is missing required information. </exception>
-    private IRestraintSlot LoadSlot(JToken? slotToken, EquipSlot equipSlot)
-    {
-        if (slotToken is not JObject json)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
-        if (!Enum.TryParse(typeStr, out RestraintSlotType type))
-            throw new InvalidOperationException($"Unknown RestraintSlotType: {typeStr}");
-
-        IRestraintSlot slot = null!;
-        switch (type)
-        {
-            case RestraintSlotType.Basic:
-                slot = LoadBasicSlot(json);
-                break;
-            case RestraintSlotType.Advanced:
-                try
-                {
-                    slot = LoadAdvancedSlot(json);
-                }
-                catch (Exception e)
-                {
-                    // Create fallback for outdated advanced slots.
-                    Logger.LogError(e, "Failed to load Advanced Slot. Reference was invalid, resetting to basic slot.");
-                    slot = new RestraintSlotBasic(equipSlot);
-                }
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown RestraintSlotType: {type}");
-        }
-        return slot;
-
-    }
-
-    /// <summary> Attempts to load a BasicSlot from the restraint set. </summary>
-    /// <param name="slotToken"> The JSON Token for the Slot. </param>
-    /// <returns> The loaded BasicSlot. </returns>
-    /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
-    /// <remarks> Throws if the JToken is either not valid or the GlamourSlot fails to parse.</remarks>
-    private RestraintSlotBasic LoadBasicSlot(JToken? slotToken)
-    {
-        if (slotToken is not JObject slotJson)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        return new RestraintSlotBasic()
-        {
-            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.IsOverlay,
-            Glamour = _items.ParseGlamourSlot(slotJson["Glamour"])
-        };
-    }
-
-    /// <summary> Attempts to load a Advanced from the restraint set. </summary>
-    /// <param name="slotToken"> The JSON Token for the Slot. </param>
-    /// <returns> The loaded Advanced. </returns>
-    /// <exception cref="Exception"></exception>
-    /// <remarks> If advanced slot fails to load, a default, invalid restriction item will be put in place. </remarks>
-    private RestraintSlotAdvanced LoadAdvancedSlot(JToken? slotToken)
-    {
-        if(slotToken is not JObject slotJson)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
-        var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        var stains = GsExtensions.ParseCompactStainIds(slotJson["CustomStains"]);
-
-        if (refId== Guid.Empty)
-        {
-            Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
-            return new RestraintSlotAdvanced()
-            {
-                ApplyFlags = applyFlags,
-                Ref = new RestrictionItem() { Identifier = Guid.Empty },
-                CustomStains = stains,
-            };
-        }
-        else if (_restrictions.Storage.TryGetRestriction(refId, out var match))
-            return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = match, CustomStains = stains };
-        else
-            throw new Exception("Invalid Reference ID for Advanced Slot.");
-    }
-
-    private IRestraintLayer LoadRestraintLayer(JToken? layerToken)
-    {
-        if (layerToken is not JObject json)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
-        if (!Enum.TryParse(typeStr, out RestraintLayerType type))
-            throw new InvalidOperationException($"Unknown RestraintLayerType: {typeStr}");
-
-        return type switch
-        {
-            RestraintLayerType.Restriction => LoadBindLayer(json),
-            RestraintLayerType.ModPreset => LoadModPresetLayer(json),
-            _ => throw new InvalidOperationException($"Unknown RestraintLayerType: {type}"),
-        };
-    }
-
-    private RestrictionLayer LoadBindLayer(JToken? layerToken)
-    {
-        if (layerToken is not JObject layerJson)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        var id = Guid.TryParse(layerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
-        var isActive = layerJson["IsActive"]?.Value<bool>() ?? false;
-        var flags = layerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
-        var customStains = GsExtensions.ParseCompactStainIds(layerJson["CustomStains"]);
-
-        var refId = layerJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        if (refId== Guid.Empty)
-        {
-            Logger.LogWarning("No Advanced Restriction was attached to this advanced slot!");
-            return new RestrictionLayer()
-            {
-                ID = id,
-                IsActive = isActive,
-                ApplyFlags = flags,
-                Ref = new RestrictionItem() { Identifier = Guid.Empty },
-                CustomStains = customStains,
-            };
-        }
-        else if (_restrictions.Storage.TryGetRestriction(refId, out var match))
-        {
-            return new RestrictionLayer()
-            {
-                ID = id,
-                IsActive = isActive,
-                ApplyFlags = flags,
-                Ref = match,
-                CustomStains = customStains,
-            };
-        }
-        else
-            throw new Exception("Invalid Reference ID for Advanced Slot.");
-    }
-
-    private ModPresetLayer LoadModPresetLayer(JToken? layerToken)
-    {
-        if (layerToken is not JObject json)
-            throw new Exception("Invalid JSON Token for Slot.");
-
-        // Load the ModRef sub-object using ModSettingsPreset's loader
-        var modItem = ModSettingsPreset.FromRefToken(json["Mod"], _modPresets);
-        return new ModPresetLayer()
-        {
-            ID = Guid.TryParse(json["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!"),
-            IsActive = json["IsActive"]?.Value<bool>() ?? false,
-            Mod = modItem,
-        };
-    }
-
     #endregion HybridSaver
 
     private void CheckForExpiredLocks()

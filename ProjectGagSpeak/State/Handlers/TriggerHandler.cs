@@ -9,6 +9,7 @@ using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Handlers;
@@ -46,7 +47,7 @@ public class TriggerHandler
     public void CheckMessageForTrigger(string senderName, string senderWorld, InputChannel channel, SeString msg)
     {
         // return if the message type is not in our valid chat channels for puppeteer.
-        if (_globals.Current is null || channel.IsChannelEnabled(_config.Current.PuppeteerChannelsBitfield))
+        if (_globals.Current is null || _config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
             return;
 
         // Check for Global Triggers first.

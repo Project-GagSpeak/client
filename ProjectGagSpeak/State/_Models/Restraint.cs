@@ -1,6 +1,9 @@
+using CkCommons;
 using CkCommons.Classes;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -69,6 +72,23 @@ public class RestraintSlotBasic : IRestraintSlot
             ["Glamour"] = Glamour.Serialize(),
         };
     }
+
+    /// <summary> Attempts to load a BasicSlot from the restraint set. </summary>
+    /// <param name="token"> The JSON Token for the Slot. </param>
+    /// <returns> The loaded BasicSlot. </returns>
+    /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
+    /// <remarks> Throws if the JToken is either not valid or the GlamourSlot fails to parse.</remarks>
+    public static RestraintSlotBasic FromToken(JToken token, ItemService items)
+    {
+        if (token is not JObject slotJson)
+            throw new Exception("Invalid JSON Token for Slot.");
+
+        return new RestraintSlotBasic()
+        {
+            ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.IsOverlay | RestraintFlags.Glamour,
+            Glamour = items.ParseGlamourSlot(slotJson["Glamour"])
+        };
+    }
 }
 
 public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
@@ -100,12 +120,41 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
             ["CustomStains"] = CustomStains.ToString(),
         };
     }
+
+    /// <summary> Attempts to load a Advanced from the restraint set. </summary>
+    /// <param name="slotToken"> The JSON Token for the Slot. </param>
+    /// <returns> The loaded Advanced. </returns>
+    /// <exception cref="Exception"></exception>
+    /// <remarks> If advanced slot fails to load, a default, invalid restriction item will be put in place. </remarks>
+    public static RestraintSlotAdvanced FromToken(JToken? token, RestrictionManager restrictions)
+    {
+        if (token is not JObject slotJson) throw new Exception("Invalid JSON Token for Slot.");
+
+        var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
+        var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
+        var stains = GsExtensions.ParseCompactStainIds(slotJson["CustomStains"]);
+        // Handle invalid advanced slots.
+        if (restrictions.Storage.TryGetRestriction(refId, out var restriction))
+            return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = restriction, CustomStains = stains }; 
+        else
+        {
+            Svc.Logger.Warning("ID Was empty for advanced restriction or restriction was not found, resetting to empty item.");
+            return new RestraintSlotAdvanced()
+            {
+                ApplyFlags = applyFlags,
+                Ref = new RestrictionItem() { Identifier = Guid.Empty },
+                CustomStains = stains,
+            };
+            // try and help create a graceful RestraintBasic return maybe?
+        }
+    }
 }
 
 // This will eventually be able to be a mod customization toggle as well for a layer.
 public interface IRestraintLayer
 {
     public Guid ID { get; }
+    public string Label { get; }
     public Arousal Arousal { get; }
     public bool IsValid();
     public IRestraintLayer Clone();
@@ -115,13 +164,14 @@ public interface IRestraintLayer
 public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 {
     public Guid ID { get; internal set; } = Guid.NewGuid();
+    public string Label { get; set; } = string.Empty;
     public RestraintFlags ApplyFlags { get; set; } = RestraintFlags.Advanced;
     public RestrictionItem Ref { get; set; } = new RestrictionItem() { Identifier = Guid.Empty };
     public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
     public EquipItem EquipItem => Ref.Glamour.GameItem;
     public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
-    public Arousal Arousal => Ref.Arousal;
+    public Arousal Arousal => ApplyFlags.HasAny(RestraintFlags.Arousal) && IsValid() ? Ref.Arousal : Arousal.None;
 
     internal RestrictionLayer()
     { }
@@ -142,17 +192,55 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
         {
             ["Type"] = RestraintLayerType.Restriction.ToString(),
             ["ID"] = ID,
+            ["Label"] = Label,
             ["ApplyFlags"] = (int)ApplyFlags,
-            ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
             ["CustomStains"] = CustomStains.ToString(),
-            ["Arousal"] = Arousal.ToString(),
+            ["RestrictionRef"] = $"{Ref?.Identifier ?? Guid.Empty}",
         };
+    }
+
+    public static RestrictionLayer FromToken(JToken? token, RestrictionManager restrictions)
+    {
+        if (token is not JObject bLayerJson)
+            throw new Exception("Invalid JSON Token for Layer.");
+
+        var id = Guid.TryParse(bLayerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
+        var label = bLayerJson["Label"]?.Value<string>() ?? string.Empty;
+        var flags = bLayerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
+        var customStains = GsExtensions.ParseCompactStainIds(bLayerJson["CustomStains"]);
+
+        var refId = Guid.TryParse(bLayerJson["RestrictionRef"]?.Value<string>(), out var rId) ? rId : throw new Exception("Bad Ref GUID");
+        // Attempt firstly to get it from the storage.
+        if (restrictions.Storage.TryGetRestriction(refId, out var restriction))
+        {
+            return new RestrictionLayer()
+            {
+                ID = id,
+                Label = label,
+                ApplyFlags = flags,
+                Ref = restriction,
+                CustomStains = customStains,
+            };
+        }
+        // If the id was just empty, it was a blank layer, so we should make that.
+        else
+        {
+            Svc.Logger.Warning("ID Was empty for advanced restriction or restriction was not found, resetting to empty item.");
+            return new RestrictionLayer()
+            {
+                ID = id,
+                Label = label,
+                ApplyFlags = flags,
+                CustomStains = customStains,
+            };
+        }
     }
 }
 
 public class ModPresetLayer : IRestraintLayer, IModPreset
 {
     public Guid ID { get; internal set; } = Guid.NewGuid();
+    public string Label { get; set; } = string.Empty;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Arousal Arousal { get; set; } = Arousal.None;
 
@@ -171,8 +259,28 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
         {
             ["Type"] = RestraintLayerType.ModPreset.ToString(),
             ["ID"] = ID,
+            ["Label"] = Label,
             ["Arousal"] = Arousal.ToString(),
             ["Mod"] = Mod.SerializeReference()
+        };
+    }
+
+    public static ModPresetLayer FromToken(JToken? token, ModSettingPresetManager mods)
+    {
+        if (token is not JObject mLayerJson) throw new Exception("Invalid JSON Token for Layer.");
+        
+        // get the values from this token.
+        var id = Guid.TryParse(mLayerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
+        var label = mLayerJson["Label"]?.Value<string>() ?? string.Empty;
+        var arousal = mLayerJson["Arousal"]?.Value<string>() is string aStr ? Enum.Parse<Arousal>(aStr) : Arousal.None;
+        // Attempt to load in the mod ref using the presetManager.
+        var modItem = ModSettingsPreset.FromRefToken(mLayerJson["Mod"], mods);
+        return new ModPresetLayer()
+        {
+            ID = id,
+            Label = label,
+            Mod = modItem,
+            Arousal = arousal,
         };
     }
 }
@@ -195,7 +303,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public GlamourBonusSlot Glasses { get; set; } = new GlamourBonusSlot();
     public List<IRestraintLayer> Layers { get; set; } = new List<IRestraintLayer>();
 
-    public MetaDataStruct RestraintMeta { get; set; } = MetaDataStruct.Empty;
+    public MetaDataStruct MetaStates { get; set; } = MetaDataStruct.Empty;
 
     public List<ModSettingsPreset> RestraintMods { get; set; } = new();
     public HashSet<Moodle> RestraintMoodles { get; set; } = new();
@@ -224,7 +332,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         Glasses = new GlamourBonusSlot(other.Glasses);
         Layers = other.Layers.Select(layer => layer.Clone()).ToList();
 
-        RestraintMeta = other.RestraintMeta;
+        MetaStates = other.MetaStates;
 
         RestraintMods = other.RestraintMods.Select(mod => new ModSettingsPreset(mod)).ToList();
         RestraintMoodles = other.RestraintMoodles.Select(m => m is MoodlePreset p ? new MoodlePreset(p) : new Moodle(m)).ToHashSet();
@@ -232,100 +340,6 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         Traits = other.Traits;
         Arousal = other.Arousal;
     }
-
-    /// <summary> Arranges the associated mods for this restraint set through a helper function. </summary>
-    /// <remarks> Prioritizes the base slots, then the restraint layers, then additional mods. </remarks>
-    public HashSet<ModSettingsPreset> GetMods()
-    {
-        // Maybe consider making this a hash-set to begin with and checking by directory path for replacement.
-        var associationPresets = new SortedList<string, ModSettingsPreset>();
-
-        // Append all base slot mod attachments.
-        foreach (var slot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>().Where(x => x.Ref is not null))
-            if (slot.ApplyFlags.HasFlag(RestraintFlags.Mod) && slot.Ref!.Mod.HasData)
-                associationPresets[slot.Ref!.Mod.Container.DirectoryPath] = slot.Ref!.Mod;
-
-        // append the additional mods from the layers.
-        foreach (var layer in Layers.Where(l => l.IsActive))
-        {
-            if (layer is RestrictionLayer bindLayer && bindLayer.Ref is not null)
-            {
-                if (bindLayer.ApplyFlags.HasFlag(RestraintFlags.Mod) && bindLayer.Ref.Mod.HasData)
-                    associationPresets[bindLayer.Ref.Mod.Container.DirectoryPath] = bindLayer.Ref.Mod;
-            }
-            else if (layer is ModPresetLayer modLayer && modLayer.Mod.HasData)
-            {
-                associationPresets[modLayer.Mod.Container.DirectoryPath] = modLayer.Mod;
-            }
-        }
-
-        // Convert the dictionary entries back to ModSettingsPreset
-        return associationPresets.Values.ToHashSet();
-    }
-
-    /// <summary> Obtains the distinct Moodles collection across all enabled parts of the restraint set. </summary>
-    /// <remarks> Prioritizes the base slots, then the restraint layers, then additional mods. </remarks>
-    public HashSet<Moodle> GetMoodles()
-    {
-        return new HashSet<Moodle>(
-            RestraintSlots.Values
-                .OfType<RestraintSlotAdvanced>()
-                .Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Moodle))
-                .Select(x => x.Ref.Moodle)
-                .Union(Layers.OfType<RestrictionLayer>().Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Moodle)).Select(x => x.Ref.Moodle))
-                .Union(RestraintMoodles));
-    }
-
-    /// <summary> Grabs all aggregated traits across the base restraint slots and layers if enabled. </summary>
-    /// <remarks> Prioritizes RestraintSlots first, layers second. </remarks>
-    public Traits GetTraits()
-    {
-        return RestraintSlots.Values
-            .OfType<RestraintSlotAdvanced>()
-            .Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Trait))
-            .Select(x => x.Ref.Traits)
-            .DefaultIfEmpty(Traits.None)
-            .Aggregate((x, y) => x | y)
-            | Layers.OfType<RestrictionLayer>()
-                .Where(x => x.ApplyFlags.HasFlag(RestraintFlags.Trait))
-                .Select(x => x.Ref.Traits)
-                .DefaultIfEmpty(Traits.None)
-                .Aggregate((x, y) => x | y);
-    }
-
-    public BlindfoldOverlay? GetBlindfoldOverlay()
-    {
-        // Try to get from RestraintSlots first
-        foreach (var advSlot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
-            if (advSlot.Ref is BlindfoldRestriction bfr)
-                return bfr.Properties;
-
-        // Then try the Layers.
-        foreach (var layer in Layers.OfType<RestrictionLayer>())
-            if (layer.Ref is BlindfoldRestriction bfr)
-                return bfr.Properties;
-
-        // If no blindfold overlay is found, return null.
-        return null;
-    }
-
-    public HypnoticOverlay? GetHypnoOverlay()
-    {
-        // Try to get from RestraintSlots first
-        foreach (var advSlot in RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
-            if (advSlot.Ref is HypnoticRestriction hr)
-                return hr.Properties;
-
-        // Then try the Layers.
-        foreach (var layer in Layers.OfType<RestrictionLayer>())
-            if (layer.Ref is HypnoticRestriction hr)
-                return hr.Properties;
-
-        // If no Hypno Effect is found, return null.
-        return null;
-    }
-
-    #endregion Cache Helpers
 
     public JObject Serialize()
     {
@@ -339,16 +353,96 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
             ["Glasses"] = Glasses.Serialize(),
             ["RestraintLayers"] = new JArray(Layers.Select(x => x.Serialize())),
-            ["HeadgearState"] = HeadgearState.ToString(),
-            ["VisorState"] = VisorState.ToString(),
-            ["WeaponState"] = WeaponState.ToString(),
-            ["RestraintMods"] = new JArray(RestraintMods.Select(x => x.SerializeReference())),
-            ["RestraintMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
-            ["Traits"] = Traits.ToString(),
-            ["Stimulation"] = Arousal.ToString(),
+            ["MetaStates"] = MetaStates.ToJObject(),
+            ["BaseMods"] = new JArray(RestraintMods.Select(x => x.SerializeReference())),
+            ["BaseMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
+            ["BaseTraits"] = Traits.ToString(),
+            ["BaseArousal"] = Arousal.ToString(),
         };
     }
 
+    public static RestraintSet FromToken(JToken token, ItemService items, ModSettingPresetManager mods, RestrictionManager restrictions)
+    {
+        // if not a valid token, throw an exception
+        if (token is not JObject setJObj || setJObj["RestraintSlots"] is not JObject slotsJObj)
+            throw new InvalidDataException("Invalid RestraintSet JObject object.");
+
+        // Attempts to load a restraint set slot item. This can be Basic or Advanced.
+        var slotDict = new Dictionary<EquipSlot, IRestraintSlot>();
+        foreach (var restraintSlotToken in slotsJObj)
+        {
+            var equipSlot = (EquipSlot)Enum.Parse(typeof(EquipSlot), restraintSlotToken.Key);
+            // Attempt to process the Restraint Slot.
+            if (restraintSlotToken.Value is not JObject slotInnerToken)
+                throw new Exception("Invalid JSON Token for Slot.");
+            // Get the type identifier.
+            var typeStr = slotInnerToken["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
+            if (!Enum.TryParse(typeStr, out RestraintSlotType type))
+                throw new InvalidOperationException($"Unknown RestraintSlotType: {typeStr}");
+            // Attempt to add the type.
+            slotDict.TryAdd(equipSlot, type switch
+            {
+                RestraintSlotType.Basic => RestraintSlotBasic.FromToken(slotInnerToken, items),
+                RestraintSlotType.Advanced => RestraintSlotAdvanced.FromToken(slotInnerToken, restrictions),
+                _ => throw new InvalidOperationException($"Unsupported RestraintSlotType: {typeStr}")
+            });
+        }
+
+        // Attempts to load the Restraint Layers.
+        var layers = new List<IRestraintLayer>();
+        if (setJObj["RestraintLayers"] is JArray layerArray)
+        {
+            foreach (var layerToken in layerArray)
+            {
+                if (layerToken is not JObject json)
+                    throw new Exception("Invalid JSON Token for Layer.");
+
+                var typeStr = json["Type"]?.Value<string>() ?? throw new InvalidOperationException("Missing Type information in JSON.");
+                if (!Enum.TryParse(typeStr, out RestraintLayerType type))
+                    throw new InvalidOperationException($"Unknown RestraintLayerType: {typeStr}");
+
+                layers.Add(type switch
+                {
+                    RestraintLayerType.Restriction => RestrictionLayer.FromToken(json, restrictions),
+                    RestraintLayerType.ModPreset => ModPresetLayer.FromToken(json, mods),
+                    _ => throw new InvalidOperationException($"Unknown RestraintLayerType: {type}"),
+                });
+            }
+        }
+
+        // Handle the mod additions for the basic mods.
+        var baseMods = new List<ModSettingsPreset>();
+        if (setJObj["RestraintMods"] is JArray modArray)
+            foreach (var modToken in modArray)
+                Generic.Safe(() => baseMods.Add(ModSettingsPreset.FromRefToken(modToken, mods)));
+
+        // Handle the base Moodles.
+        var baseMoodles = new HashSet<Moodle>();
+        if (setJObj["RestraintMoodles"] is JArray moodleArray)
+            foreach (var moodleToken in moodleArray)
+                Generic.Safe(() => baseMoodles.Add(GsExtensions.LoadMoodle(moodleToken)));
+
+        // If you made it all the way here without the world absolutely imploding on itself
+        // and setting your pc on fire congrats we can now load the restraint set.
+        return new RestraintSet
+        {
+            Identifier = Guid.TryParse(setJObj["Identifier"]?.Value<string>(), out var id) ? id : Guid.NewGuid(),
+            Label = setJObj["Label"]?.Value<string>() ?? string.Empty,
+            Description = setJObj["Description"]?.Value<string>() ?? string.Empty,
+            ThumbnailPath = setJObj["ThumbnailPath"]?.Value<string>() ?? string.Empty,
+            DoRedraw = setJObj["DoRedraw"]?.Value<bool>() ?? false,
+            RestraintSlots = slotDict,
+            Glasses = items.ParseBonusSlot(setJObj["Glasses"]),
+            Layers = layers,
+            MetaStates = MetaDataStruct.FromJObject(setJObj["MetaStates"]),
+            RestraintMods = baseMods,
+            RestraintMoodles = baseMoodles,
+            Traits = Enum.TryParse<Traits>(setJObj["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(setJObj["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+        };
+    }
+
+    // Need to serialously overhaul a FromJObect method here.
     public LightRestraintSet ToLightRestraint()
     {
         var appliedSlots = new List<AppliedSlot>();
@@ -364,7 +458,3 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         return new LightRestraintSet(Identifier, Label, Description, appliedSlots, attributes);
     }
 }
-
-
-
-

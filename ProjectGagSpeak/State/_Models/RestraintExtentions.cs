@@ -7,6 +7,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.State.Models;
 
@@ -57,13 +58,22 @@ public static class RestraintExtentions
             yield return glam;
     }
 
+    public static GlamourSlot? GetGlamourAtLayer(this RestraintSet set, int idx)
+    {
+        if (idx < 0 || idx >= set.Layers.Count)
+            return null;
+
+        return set.Layers[idx] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Glamour) && l.IsValid() && !l.IsOverlayItem()
+            ? l.Ref.Glamour : null;
+    }
+
     /// <summary> Core internal Iterator that collects the GlamourSlot items from the base slots. </summary>
     /// <returns> An enumerable of GlamourSlot items retrieves, and seen equipslots updated. </returns>
     private static IEnumerable<GlamourSlot> IterateBaseGlamours(IEnumerable<IRestraintSlot> slots, HashSet<EquipSlot> seen)
     {
         foreach (var item in slots)
         {
-            if (!item.ApplyFlags.HasFlag(RestraintFlags.Glamour)
+            if (!item.ApplyFlags.HasAny(RestraintFlags.Glamour)
                 || item.IsOverlayItem()
                 || !seen.Add(item.EquipSlot))
                 continue;
@@ -80,15 +90,13 @@ public static class RestraintExtentions
     /// <returns> An enumerable of GlamourSlot items from the layers, and seen equipslots updated. </returns>
     private static IEnumerable<GlamourSlot> IterateLayerGlamours(List<IRestraintLayer> layers, HashSet<EquipSlot> seen, RestraintLayer active = RestraintLayer.All)
     {
-        for (var i = layers.Count - 1; i >= 0; i--)
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
-            // Ensure it is an active layer.
-            var layerBit = (RestraintLayer)(1 << i);
-            if (!active.HasAny(layerBit))
+            if (i < 0 || i >= layers.Count)
                 continue;
             // Ensure it satisfies the conditions for a valid layer.
             if (layers[i] is not RestrictionLayer layer
-                || !layer.ApplyFlags.HasFlag(RestraintFlags.Glamour)
+                || !layer.ApplyFlags.HasAny(RestraintFlags.Glamour)
                 || !layer.IsValid()
                 || layer.IsOverlayItem()
                 || !seen.Add(layer.EquipSlot))
@@ -121,6 +129,15 @@ public static class RestraintExtentions
             yield return mod;
     }
 
+    public static ModSettingsPreset? GetModAtLayer(this RestraintSet set, int idx)
+    {
+        if (idx < 0 || idx >= set.Layers.Count)
+            return null;
+
+        return set.Layers[idx] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Mod) && l.IsValid() && l.Ref.Mod.HasData
+            ? l.Ref.Mod : null;
+    }
+
 
     /// <summary> Core internal Iterator that collects the ModSettingPresets items from the base slots. </summary>
     /// <returns> An enumerable of ModSettingPresets items retrieves, and seen mods updated. </returns>
@@ -132,7 +149,7 @@ public static class RestraintExtentions
                 continue;
 
             var mod = slot.Ref.Mod;
-            if (slot.ApplyFlags.HasFlag(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
+            if (slot.ApplyFlags.HasAny(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
                 yield return mod;
         }
         // The base mods appended, if we have not yet already added them.
@@ -145,16 +162,15 @@ public static class RestraintExtentions
     /// <returns> An enumerable of ModSettingsPreset items from the layers, and seen mods updated. </returns>
     private static IEnumerable<ModSettingsPreset> IterateLayerMods(List<IRestraintLayer> layers, HashSet<ModSettingsPreset> seen, RestraintLayer active = RestraintLayer.All)
     {
-        for (var i = layers.Count - 1; i >= 0; i--)
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
-            var layerBit = (RestraintLayer)(1 << i);
-            if (!active.HasAny(layerBit))
+            if (i < 0 || i >= layers.Count)
                 continue;
 
             if (layers[i] is RestrictionLayer binder && binder.Ref is not null)
             {
                 var mod = binder.Ref.Mod;
-                if (binder.ApplyFlags.HasFlag(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
+                if (binder.ApplyFlags.HasAny(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
                     yield return mod;
             }
             else if (layers[i] is ModPresetLayer mpl)
@@ -165,6 +181,7 @@ public static class RestraintExtentions
         }
     }
     #endregion Mods
+
     #region Moodles
     public static IEnumerable<Moodle> GetBaseMoodles(this RestraintSet set)
     => IterateBaseMoodles(set, new());
@@ -187,6 +204,14 @@ public static class RestraintExtentions
             yield return moodles;
     }
 
+    public static Moodle? GetMoodleAtLayer(this RestraintSet set, int layerIndex)
+    {
+        if (layerIndex < 0 || layerIndex >= set.Layers.Count)
+            return null;
+
+        return set.Layers[layerIndex] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Moodle) && l.IsValid()
+            ? l.Ref.Moodle : null;
+    }
 
     /// <summary> Core internal Iterator that collects the Moodles from the base slots. </summary>
     /// <returns> An enumerable of applied Moodles, and seen Moodles updated. </returns>
@@ -197,7 +222,7 @@ public static class RestraintExtentions
             if (!slot.IsValid())
                 continue;
 
-            if (slot.ApplyFlags.HasFlag(RestraintFlags.Moodle) && seen.Add(slot.Ref.Moodle))
+            if (slot.ApplyFlags.HasAny(RestraintFlags.Moodle) && seen.Add(slot.Ref.Moodle))
                 yield return slot.Ref.Moodle;
         }
         // The base Moodles appended, if we have not yet already added them.
@@ -210,29 +235,154 @@ public static class RestraintExtentions
     /// <returns> All Moodles from the layers, and seen Moodles updated. </returns>
     private static IEnumerable<Moodle> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<Moodle> seen, RestraintLayer active = RestraintLayer.All)
     {
-        for (var i = layers.Count - 1; i >= 0; i--)
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
-            var layerBit = (RestraintLayer)(1 << i);
-            if (!active.HasAny(layerBit))
+            if (i < 0 || i >= layers.Count)
                 continue;
 
             // Ensure it satisfies the conditions for a valid layer.
-            if (layers[i] is not RestrictionLayer layer
-                || !layer.ApplyFlags.HasFlag(RestraintFlags.Moodle)
-                || !layer.IsValid()
-                || !seen.Add(layer.Ref.Moodle))
+            if (layers[i] is not RestrictionLayer l 
+                || !l.ApplyFlags.HasAny(RestraintFlags.Moodle) 
+                || !l.IsValid() 
+                || !seen.Add(l.Ref.Moodle))
                 continue;
 
-            yield return layer.Ref.Moodle;
+            yield return l.Ref.Moodle;
         }
     }
     #endregion Moodles
+    #region Traits
+    public static Traits GetBaseTraits(this RestraintSet set)
+    => CollectBaseTraits(set);
+
+    public static Traits GetLayerTraits(this RestraintSet set)
+        => CollectLayerTraits(set.Layers);
+
+    public static Traits GetActiveLayerTraits(this RestraintSet set, RestraintLayer active)
+        => CollectLayerTraits(set.Layers, active);
+
+    public static Traits GetAllTraits(this RestraintSet set)
+        => GetAllTraits(set, RestraintLayer.All);
+
+    public static Traits GetAllTraits(this RestraintSet set, RestraintLayer active)
+        => CollectLayerTraits(set.Layers, active) | CollectBaseTraits(set);
+
+    public static Traits GetTraitsForLayer(this RestraintSet set, int layerIndex)
+    {
+        if (layerIndex < 0 || layerIndex >= set.Layers.Count)
+            return Traits.None;
+        return set.Layers[layerIndex] is RestrictionLayer l && l.IsValid() && l.ApplyFlags.HasAny(RestraintFlags.Trait)
+            ? l.Ref.Traits : Traits.None;
+    }
+
+    /// <summary> Collect all traits from the base slots and base set flags. </summary>
+    private static Traits CollectBaseTraits(RestraintSet set)
+    {
+        Traits result = set.Traits;
+
+        foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+        {
+            if (!slot.IsValid() || !slot.ApplyFlags.HasAny(RestraintFlags.Trait))
+                continue;
+
+            result |= slot.Ref.Traits;
+        }
+
+        return result;
+    }
+
+    /// <summary> Collect all traits from layers. </summary>
+    private static Traits CollectLayerTraits(List<IRestraintLayer> layers, RestraintLayer active = RestraintLayer.All)
+    {
+        Traits result = Traits.None;
+
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        {
+            if (i < 0 || i >= layers.Count)
+                continue;
+
+            if (layers[i] is not RestrictionLayer l || !l.IsValid() || !l.ApplyFlags.HasAny(RestraintFlags.Trait))
+                continue;
+
+            result |= l.Ref.Traits;
+        }
+
+        return result;
+    }
+    #endregion Traits
+
+    #region Arousal
+    public static IEnumerable<Arousal> GetBaseArousals(this RestraintSet set)
+        => IterateBaseArousal(set);
+
+    public static IEnumerable<Arousal> GetLayerArousals(this RestraintSet set)
+        => IterateLayerArousal(set.Layers);
+
+    public static IEnumerable<Arousal> GetActiveLayerArousals(this RestraintSet set, RestraintLayer active)
+        => IterateLayerArousal(set.Layers, active);
+
+    public static IEnumerable<Arousal> GetAllArousals(this RestraintSet set)
+        => set.GetAllArousals(RestraintLayer.All);
+
+    public static IEnumerable<Arousal> GetAllArousals(this RestraintSet set, RestraintLayer active)
+    {
+        foreach (var arousal in IterateLayerArousal(set.Layers, active))
+            yield return arousal;
+
+        foreach (var arousal in IterateBaseArousal(set))
+            yield return arousal;
+    }
+
+    public static Arousal GetArousalForLayer(this RestraintSet set, int layerIndex)
+    {
+        if (layerIndex < 0 || layerIndex >= set.Layers.Count)
+            return Arousal.None;
+
+        return set.Layers[layerIndex].Arousal;
+    }
+
+    /// <summary> Yield Arousal flags from the base slots and set flags. </summary>
+    private static IEnumerable<Arousal> IterateBaseArousal(RestraintSet set)
+    {
+        if (set.Arousal != Arousal.None)
+            yield return set.Arousal;
+
+        foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+        {
+            if (!slot.IsValid() || !slot.ApplyFlags.HasAny(RestraintFlags.Arousal))
+                continue;
+
+            if (slot.Ref.Arousal != Arousal.None)
+                yield return slot.Ref.Arousal;
+        }
+    }
+
+    /// <summary> Yield Arousal flags from valid layers. </summary>
+    private static IEnumerable<Arousal> IterateLayerArousal(List<IRestraintLayer> layers, RestraintLayer active = RestraintLayer.All)
+    {
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        {
+            if (i < 0 || i >= layers.Count)
+                continue;
+
+            if (layers[i] is not RestrictionLayer l || !l.IsValid() || !l.ApplyFlags.HasAny(RestraintFlags.Arousal))
+                continue;
+
+            if (l.Ref.Arousal != Arousal.None)
+                yield return l.Ref.Arousal;
+        }
+    }
+    #endregion Arousal
+
 
     /// <summary> Retrieves the priority Blindfold Overlay if one exists from active layers (Layer 5 → 1) followed by base slots. </summary>
-    public static BlindfoldOverlay? GetPriorityBlindfold(this RestraintSet set)
+    public static BlindfoldOverlay? GetPriorityBlindfold(this RestraintSet set, RestraintLayer active)
     {
-        for (var i = set.Layers.Count - 1; i >= 0; i--)
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
+            if (i < 0 || i >= set.Layers.Count)
+                continue;
+
             if (set.Layers[i] is not RestrictionLayer layer
                 || layer.Ref is not BlindfoldRestriction br
                 || string.IsNullOrEmpty(br.Properties.OverlayPath))
@@ -249,30 +399,37 @@ public static class RestraintExtentions
         return null;
     }
 
-    public static BlindfoldOverlay? GetBlindfoldAtLayer(this RestraintSet set, int layerIndex)
+    // Only scan the base slots for a blindfold overlay.
+    public static BlindfoldOverlay? GetBaseBlindfold(this RestraintSet set)
     {
-        if (layerIndex >= 0 && layerIndex < set.Layers.Count)
-        {
-            if (set.Layers[layerIndex] is RestrictionLayer l && l.Ref is BlindfoldRestriction br && br.HasValidPath())
+        // Next try to fetch them from the RestraintSlots.
+        foreach (var advSlot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+            if (advSlot.Ref is BlindfoldRestriction br && br.HasValidPath())
                 return br.Properties;
-        }
-        else if (layerIndex == -1)
-        {
-            // Get the first blindfold found in base slots if -1.
-            foreach (var advSlot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
-                if (advSlot.Ref is BlindfoldRestriction br && br.HasValidPath())
-                    return br.Properties;
-        }
-
+        // If no Blindfold is found, return null.
         return null;
     }
 
+    public static BlindfoldOverlay? GetBlindfoldAtLayer(this RestraintSet set, int layerIndex)
+    {
+        // if the layer is not in bounds, return null.
+        if (set.Layers == null || layerIndex < 0 || layerIndex >= set.Layers.Count)
+            return null;
+        // If the layer is in bounds, check if it is a RestrictionLayer and has a valid BlindfoldRestriction.
+        return set.Layers[layerIndex] is RestrictionLayer layer && layer.Ref is BlindfoldRestriction br && br.HasValidPath()
+            ? br.Properties
+            : null;
+    }
+
     /// <summary> Retrieves the priority Hypno Overlay if one exists from active layers (Layer 5 → 1) followed by base slots. </summary>
-    public static HypnoticOverlay? GetPriorityHypnoEffect(this RestraintSet set)
+    public static HypnoticOverlay? GetPriorityHypnoEffect(this RestraintSet set, RestraintLayer active)
     {
         // return the first found effect in the layers.
-        for (var i = set.Layers.Count - 1; i >= 0; i--)
+        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
+            if (i < 0 || i >= set.Layers.Count)
+                continue;
+
             if (set.Layers[i] is RestrictionLayer l && l.Ref is HypnoticRestriction hr && hr.HasValidPath())
                 return hr.Properties;
         }
@@ -282,24 +439,29 @@ public static class RestraintExtentions
                 return hr.Properties;
 
         // If no Hypnotic Effect is found, return null.
+        return null;
+    }
+
+    // Only scan the base slots for a HypnoEffect overlay.
+    public static HypnoticOverlay? GetBaseHypnoEffect(this RestraintSet set)
+    {
+        // Next try to fetch them from the RestraintSlots.
+        foreach (var advSlot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
+            if (advSlot.Ref is HypnoticRestriction hr && hr.HasValidPath())
+                return hr.Properties;
+        // If no HypnoEffect is found, return null.
         return null;
     }
 
     public static HypnoticOverlay? GetHypnoEffectAtLayer(this RestraintSet set, int layerIdx)
     {
-        // return the first found effect in the layers.
-        for (var i = set.Layers.Count - 1; i >= 0; i--)
-        {
-            if (set.Layers[i] is RestrictionLayer l && l.Ref is HypnoticRestriction hr && hr.HasValidPath())
-                return hr.Properties;
-        }
-        // Next try to fetch them from the RestraintSlots.
-        foreach (var advSlot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
-            if (advSlot.Ref is HypnoticRestriction hr && hr.HasValidPath())
-                return hr.Properties;
+        // if the layer is not in bounds, return null.
+        if (layerIdx < 0 || layerIdx >= set.Layers.Count)
+            return null;
 
-        // If no Hypnotic Effect is found, return null.
-        return null;
+        return set.Layers[layerIdx] is RestrictionLayer l && l.Ref is HypnoticRestriction hr && hr.HasValidPath()
+            ? hr.Properties
+            : null;
     }
 
     // FIX LATER - Useful for Kinkster interaction.

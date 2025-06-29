@@ -133,21 +133,4 @@ public static class ChatLogAgent
         channel = 0;
         return false;
     }
-
-    /// <summary> Verifies if a channel is allowed. </summary>
-    public static bool IsChannelAllowed(this int channelBitfield, InputChannel channel)
-        => (channelBitfield & (1 << (int)channel)) != 0;
-
-    /// <summary>
-    ///     Verifies is the bitfield int of the InputChannels are enabled.
-    /// </summary>
-    public static bool IsChannelEnabled(this InputChannel channel, int channelBitfield)
-        => (channelBitfield & (1 << (int)channel)) != 0;
-
-    /// <summary> 
-    ///     Helper method to set the state of a bitfield at a defined channel.
-    /// </summary>
-    /// <returns> The updated bitfield. </returns>
-    public static int SetChannelState(this InputChannel channel, int channelBitfield, bool state)
-        => state ? channelBitfield | (1 << (int)channel) : channelBitfield & ~(1 << (int)channel);
 }

@@ -8,18 +8,14 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
-using GagSpeak.Localization;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using OtterGui.Classes;
 using OtterGui.Text;
-using static CkCommons.Widgets.CkHeader;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -66,14 +62,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        // create some dummy tabs to see if it even works.
-        EditorTabs = new IFancyTab[]
-        {
-            editorInfo,
-            editorEquipment,
-            editorLayers,
-            editorModsMoodles,
-        };
+        // The editor tab windows.
+        EditorTabs = [editorInfo, editorEquipment, editorLayers, editorModsMoodles];
 
         Mediator.Subscribe<TooltipSetItemToEditorMessage>(this, (msg) =>
         {
@@ -196,15 +186,15 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private void DrawSelectedInner(CkHeader.DrawRegion drawRegion, float rounding, float rightOffset)
     {
         using var innerGroup = ImRaii.Group();
-        float maxWidth = drawRegion.Size.X - rightOffset - ImGui.GetStyle().WindowPadding.X * 2;
+        var maxWidth = drawRegion.Size.X - rightOffset - ImGui.GetStyle().WindowPadding.X * 2;
 
         DrawAttributeRow();
         DrawLayerRow();
 
         _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
 
-        // Draw out the moodles row to finalize it off, only up to 7.
-        _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
+        // Draw out the moodles row to finalize it off, only up to 7. (reduce to only base moodles if this proves an issue with drawtime too much)
+        _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
     }
 
     private void DrawAttributeRow()
@@ -218,7 +208,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var layers = sel.Layers.Count > 0;
         var mods = sel.RestraintMods.Count > 0;
         var moodles = sel.RestraintMoodles.Count > 0;
-        var meta = sel.HeadgearState != TriStateBool.Null || sel.VisorState != TriStateBool.Null || sel.WeaponState != TriStateBool.Null;
+        var meta = !sel.MetaStates.Equals(MetaDataStruct.Empty);
         var redraws = sel.DoRedraw;
         var traits = sel.Traits != 0;
         var arousal = sel.Arousal != 0;
@@ -287,7 +277,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         using (var c = CkRaii.LabelChildText(regiun, labelSize, "Active Restraint Set", ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight))
         {
-            if (_manager.ServerRestraintData is not { } activeSet)
+            if (_manager.ServerData is not { } activeSet)
                 return;
             
             
@@ -329,12 +319,13 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var itemSpacing = (remainingWidth - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 4)) / 6;
 
         // Cast a child group for the drawer.
+        var curMeta = setInEdit.MetaStates;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
         using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
         {
             ImGui.AlignTextToFramePadding();
-            if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.HeadgearState, out var newHelmValue))
-                setInEdit.HeadgearState = newHelmValue;
+            if (HelmetCheckbox.Draw("##MetaHelmet", curMeta.Headgear, out var newHelmValue))
+                curMeta.SetMeta(MetaIndex.HatState, newHelmValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.HatCowboySide);
@@ -344,8 +335,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("VisorMetaGroup", childGroupSize))
         {
-            if (VisorCheckbox.Draw("##MetaVisor", setInEdit.VisorState, out var newVisorValue))
-                setInEdit.VisorState = newVisorValue;
+            if (VisorCheckbox.Draw("##MetaVisor", curMeta.Visor, out var newVisorValue))
+                curMeta.SetMeta(MetaIndex.VisorState, newVisorValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Glasses);
@@ -355,13 +346,14 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
         {
-            if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.WeaponState, out var newWeaponValue))
-                setInEdit.WeaponState = newWeaponValue;
+            if (WeaponCheckbox.Draw("##MetaWeapon", curMeta.Weapon, out var newWeaponValue))
+                curMeta.SetMeta(MetaIndex.WeaponState, newWeaponValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Explosion);
             CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
         }
+        setInEdit.MetaStates = curMeta;
 
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("RedrawMetaGroup", childGroupSize))

@@ -229,7 +229,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             {
                 Gags = _gagManager.ServerGagData ?? throw new Exception("ActiveGagData was null!"),
                 Restrictions = _restrictionManager.ServerRestrictionData ?? throw new Exception("ActiveRestrictionsData was null!"),
-                Restraint = _restraintManager.ServerRestraintData ?? throw new Exception("ActiveRestraintData was null!"),
+                Restraint = _restraintManager.ServerData ?? throw new Exception("ActiveRestraintData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier).ToList(),
                 GlobalAliasData = _puppetManager.GlobalAliasStorage,
                 PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
@@ -378,7 +378,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         var dto = new PushClientRestraintUpdate(onlinePlayers, msg.UpdateType)
         {
             ActiveSetId = msg.NewData.Identifier,
-            LayersBitfield = msg.NewData.LayersBitfield,
+            ActiveLayers = msg.NewData.ActiveLayers,
             Enabler = msg.NewData.Enabler,
             Padlock = msg.NewData.Padlock,
             Password = msg.NewData.Password,

@@ -6,6 +6,7 @@ using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using GagSpeak.GameInternals.Agents;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
 
@@ -56,7 +57,7 @@ public partial class StaticDetours
             // Firstly, make sure that we are setup to allow garbling in the current channel.
             var prefix = string.Empty;
             InputChannel channel = 0;
-            var muffleMessage = ChatLogAgent.CurrentChannel().IsChannelEnabled(globalPerms.AllowedGarblerChannels);
+            var muffleMessage = globalPerms.AllowedGarblerChannels.IsActiveChannel((int)ChatLogAgent.CurrentChannel());
 
             // It's possible to be in a channel (ex. Say) but send (/party Hello World), we must check this.
             if (messageDecoded.StartsWith("/"))
@@ -88,7 +89,7 @@ public partial class StaticDetours
                 Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
 
                 // Finally if we reached this point, update `muffleAllowedForChannel` to reflect the intended channel.
-                muffleMessage = channel.IsChannelEnabled(globalPerms.AllowedGarblerChannels);
+                muffleMessage = globalPerms.AllowedGarblerChannels.IsActiveChannel((int)channel);
             }
 
             // If it's not allowed, do not garble.

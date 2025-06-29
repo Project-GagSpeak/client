@@ -22,7 +22,11 @@ public class TraitsHandler
 
     /// <summary> Add additional traits into the Traits Cache for the key. </summary>
     public bool TryAddTraitsToCache(CombinedCacheKey key, Traits traits)
-        => _cache.AddTraits(key, traits);
+    {
+        if (traits is Traits.None)
+            return false;
+        return _cache.AddTraits(key, traits);
+    }
 
     /// <summary> Remove a single key from the Traits Cache. </summary>
     public bool TryRemTraitsFromCache(CombinedCacheKey key)

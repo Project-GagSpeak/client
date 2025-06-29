@@ -2,6 +2,7 @@ using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
+using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
 
 namespace GagSpeak.State.Handlers;
@@ -22,12 +23,20 @@ public class MoodleHandler
     }
 
     /// <summary> Add a single Moodle to the GlamourCache for the key. </summary>
-    public bool TryAddMoodleToCache(CombinedCacheKey key, Moodle mod)
-        => _cache.AddMoodle(key, mod);
+    public bool TryAddMoodleToCache(CombinedCacheKey key, Moodle? moodle)
+    {
+        if (moodle is null)
+            return false;
+        return _cache.AddMoodle(key, moodle);
+    }
 
     /// <summary> Add Multiple Moodles to the GlamourCache for the key. </summary>
-    public bool TryAddMoodleToCache(CombinedCacheKey key, IEnumerable<Moodle> mods)
-        => _cache.AddMoodle(key, mods);
+    public bool TryAddMoodleToCache(CombinedCacheKey key, IEnumerable<Moodle> moodles)
+    {
+        if (moodles.IsNullOrEmpty())
+            return false;
+        return _cache.AddMoodle(key, moodles);
+    }
 
     /// <summary> Remove a single key from the GlamourCache. </summary>
     public bool TryRemMoodleFromCache(CombinedCacheKey key)

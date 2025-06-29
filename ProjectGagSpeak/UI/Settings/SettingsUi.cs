@@ -11,6 +11,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using ImGuiNET;
 using OtterGui;
@@ -478,12 +479,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 for (var i = 0; i < channels.Length; i++)
                 {
                     var channel = channels[i];
-                    var enabled = channel.IsChannelEnabled(globals.AllowedGarblerChannels);
+                    var enabled = globals.AllowedGarblerChannels.IsActiveChannel((int)channel);
                     var checkboxLabel = channel.ToString();
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
-                        var newBitfield = channel.SetChannelState(globals.AllowedGarblerChannels, enabled);
+                        var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
                         PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.AllowedGarblerChannels), newBitfield)
                             .ConfigureAwait(false);
                     }
@@ -537,12 +538,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 for (var i = 0; i < channels.Length; i++)
                 {
                     var channel = channels[i];
-                    var enabled = channel.IsChannelEnabled(_mainConfig.Current.PuppeteerChannelsBitfield);
+                    var enabled = _mainConfig.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel);
                     var checkboxLabel = channel.ToString();
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
-                        var newBitfield = channel.SetChannelState(_mainConfig.Current.PuppeteerChannelsBitfield, enabled);
+                        var newBitfield = _mainConfig.Current.PuppeteerChannelsBitfield.SetChannelState((int)channel, enabled);
                         _mainConfig.Current.PuppeteerChannelsBitfield = newBitfield;
                         _mainConfig.Save();
                     }

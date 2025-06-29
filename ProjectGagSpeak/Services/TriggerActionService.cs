@@ -321,7 +321,7 @@ public class TriggerActionService
 
     private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
     {
-        if(_restraints.ServerRestraintData is not { } restraint)
+        if(_restraints.ServerData is not { } restraint)
             return false;
 
         CharaActiveRestraint restraintData = new() { Identifier = act.RestrictionId };

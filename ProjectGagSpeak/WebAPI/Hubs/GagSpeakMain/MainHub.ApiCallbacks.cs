@@ -378,11 +378,17 @@ public partial class MainHub
                 case DataUpdateType.Applied:
                     _visualListener.SwapOrApplyRestraint(dataDto).ConfigureAwait(false);
                     break;
+                case DataUpdateType.LayersApplied:
+                    _visualListener.ApplyRestraintLayers(dataDto).ConfigureAwait(false);
+                    break;
                 case DataUpdateType.Locked:
                     _visualListener.LockRestraint(dataDto);
                     break;
                 case DataUpdateType.Unlocked:
                     _visualListener.UnlockRestraint(dataDto);
+                    break;
+                case DataUpdateType.LayersRemoved:
+                    _visualListener.RemoveRestraintLayers(dataDto).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Removed:
                     _visualListener.RemoveRestraint(dataDto).ConfigureAwait(false);

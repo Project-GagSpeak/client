@@ -558,7 +558,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnRestraintSetUpdated(RestraintSet set)
     {
         // check for dyes
-        if (set.GetGlamour().Any(x => x.Value.GameStain != StainIds.None))
+        if (set.GetAllGlamours().Any(x => x.GameStain != StainIds.None))
         {
             (ClientAchievements.SaveData[Achievements.ToDyeFor.Id] as ProgressAchievement)?.IncrementProgress();
             (ClientAchievements.SaveData[Achievements.DyeAnotherDay.Id] as ProgressAchievement)?.IncrementProgress();
@@ -592,7 +592,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
                 if ((ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.IsCompleted is false)
                 {
                     if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
-                        (ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(match.GetGlamour().Count());
+                        (ClientAchievements.SaveData[Achievements.ExtremeBondageEnjoyer.Id] as ThresholdAchievement)?.UpdateThreshold(match.GetAllGlamours().Count());
                 }
 
                 // Track Bondage Bunny
@@ -603,7 +603,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
                 {
                     // attempt to retrieve the set from our sets.
                     if (_restraints.Storage.TryGetRestraint(restraintId, out var match))
-                        if (match.GetGlamour().Any(glam => glam.Key is EquipSlot.Hands))
+                        if (match.GetBaseGlamours().Any(glam => glam.Slot is EquipSlot.Hands))
                             (ClientAchievements.SaveData[Achievements.Cuffed19.Id] as ProgressAchievement)?.IncrementProgress();
                 }
             }

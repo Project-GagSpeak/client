@@ -135,10 +135,13 @@ public class PresetLogicDrawer
     {
         var pairPerms = new PairPerms()
         {
+            ApplyRestraintSets = true,
+            RemoveRestraintSets = true,
+
+            ApplyRestrictions = true,
+            RemoveRestrictions = true,
+
             ApplyGags = true,
-            LockGags = false,
-            MaxGagTime = new TimeSpan(0, 30, 0),
-            UnlockGags = false,
             RemoveGags = true,
         };
         var pairAccess = new PairPermAccess();
@@ -156,15 +159,11 @@ public class PresetLogicDrawer
             RemoveGags = true,
 
             ApplyRestrictions = true,
-            LockRestrictions = false,
-            MaxRestrictionTime = new TimeSpan(1, 0, 0),
-            UnlockRestrictions = false,
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
-            LockRestraintSets = false,
-            MaxRestraintTime = new TimeSpan(1, 0, 0),
-            UnlockRestraintSets = false,
+            ApplyLayers = true,
+            RemoveLayers = true,
             RemoveRestraintSets = true,
 
             MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes,
@@ -180,8 +179,6 @@ public class PresetLogicDrawer
         var pairPerms = new PairPerms()
         {
             PermanentLocks = true,
-            OwnerLocks = false,
-            DevotionalLocks = false,
 
             ApplyGags = true,
             LockGags = true,
@@ -196,9 +193,11 @@ public class PresetLogicDrawer
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
+            ApplyLayers = true,
             LockRestraintSets = true,
             MaxRestraintTime = new TimeSpan(1, 30, 0),
             UnlockRestraintSets = true,
+            RemoveLayers = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
@@ -224,11 +223,20 @@ public class PresetLogicDrawer
             OwnerLocks = false,
             DevotionalLocks = false,
 
+            ApplyRestraintSets = true,
+            RemoveRestraintSets = true,
+
+            ApplyRestrictions = true,
+            LockRestrictions = true,
+            MaxRestrictionTime = new TimeSpan(1, 0, 0),
+            RemoveRestrictions = true,
+
             ApplyGags = true,
             LockGags = true,
             MaxGagTime = new TimeSpan(2, 30, 0),
             UnlockGags = true,
             RemoveGags = true,
+
 
             TriggerPhrase = "",
             StartChar = '(',
@@ -256,11 +264,13 @@ public class PresetLogicDrawer
             OwnerLocks = false,
             DevotionalLocks = false,
 
-            ApplyGags = true,
-            LockGags = true,
-            MaxGagTime = new TimeSpan(3, 0, 0),
-            UnlockGags = true,
-            RemoveGags = true,
+            ApplyRestraintSets = true,
+            ApplyLayers = true,
+            LockRestraintSets = true,
+            MaxRestraintTime = new TimeSpan(3, 0, 0),
+            UnlockRestraintSets = true,
+            RemoveLayers = true,
+            RemoveRestraintSets = true,
 
             ApplyRestrictions = true,
             LockRestrictions = true,
@@ -268,11 +278,13 @@ public class PresetLogicDrawer
             UnlockRestrictions = true,
             RemoveRestrictions = true,
 
-            ApplyRestraintSets = true,
-            LockRestraintSets = true,
-            MaxRestraintTime = new TimeSpan(3, 0, 0),
-            UnlockRestraintSets = true,
-            RemoveRestraintSets = true,
+            ApplyGags = true,
+            LockGags = true,
+            MaxGagTime = new TimeSpan(3, 0, 0),
+            UnlockGags = true,
+            RemoveGags = true,
+
+
 
             TriggerPhrase = "",
             StartChar = '(',
@@ -315,9 +327,11 @@ public class PresetLogicDrawer
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
+            ApplyLayers = true,
             LockRestraintSets = true,
             MaxRestraintTime = new TimeSpan(12, 0, 0),
             UnlockRestraintSets = true,
+            RemoveLayers = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
@@ -367,9 +381,11 @@ public class PresetLogicDrawer
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
+            ApplyLayers = true,
             LockRestraintSets = true,
             MaxRestraintTime = new TimeSpan(3, 0, 0),
             UnlockRestraintSets = false,
+            RemoveLayers = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
@@ -402,10 +418,13 @@ public class PresetLogicDrawer
             RemoveGagsAllowed = true,
 
             ApplyRestrictionsAllowed = true,
-            ApplyRestraintLayersAllowed = false,
+            ApplyLayersAllowed = true,
+            ApplyLayersWhileLockedAllowed = false,
             LockRestrictionsAllowed = true,
             MaxRestrictionTimeAllowed = false,
             UnlockRestrictionsAllowed = true,
+            RemoveLayersAllowed = true,
+            RemoveLayersWhileLockedAllowed = false,
             RemoveRestrictionsAllowed = true,
 
             ApplyRestraintSetsAllowed = true,
@@ -454,10 +473,13 @@ public class PresetLogicDrawer
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
-            ApplyRestraintLayers = true,
+            ApplyLayers = true,
+            ApplyLayersWhileLocked = true,
             LockRestraintSets = true,
             MaxRestraintTime = new TimeSpan(3, 0, 0),
             UnlockRestraintSets = true,
+            RemoveLayers = true,
+            RemoveLayersWhileLocked = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
@@ -506,10 +528,13 @@ public class PresetLogicDrawer
             RemoveRestrictionsAllowed = true,
 
             ApplyRestraintSetsAllowed = true,
-            ApplyRestraintLayersAllowed = true,
+            ApplyLayersAllowed = true,
+            ApplyLayersWhileLockedAllowed = true,
             LockRestraintSetsAllowed = true,
             MaxRestraintTimeAllowed = false,
             UnlockRestraintSetsAllowed = true,
+            RemoveLayersAllowed = true,
+            RemoveLayersWhileLockedAllowed = true,
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
@@ -556,10 +581,13 @@ public class PresetLogicDrawer
             RemoveRestrictions = true,
 
             ApplyRestraintSets = true,
-            ApplyRestraintLayers = true,
+            ApplyLayers = true,
+            ApplyLayersWhileLocked = true,
             LockRestraintSets = true,
             MaxRestraintTime = new TimeSpan(12, 0, 0),
             UnlockRestraintSets = true,
+            RemoveLayers = true,
+            RemoveLayersWhileLocked = true,
             RemoveRestraintSets = true,
 
             TriggerPhrase = "",
@@ -611,10 +639,13 @@ public class PresetLogicDrawer
             RemoveRestrictionsAllowed = true,
             
             ApplyRestraintSetsAllowed = true,
-            ApplyRestraintLayersAllowed = true,
+            ApplyLayersAllowed = true,
+            ApplyLayersWhileLockedAllowed = true,
             LockRestraintSetsAllowed = true,
             MaxRestraintTimeAllowed = true,
             UnlockRestraintSetsAllowed = true,
+            RemoveLayersAllowed = true,
+            RemoveLayersWhileLockedAllowed = true,
             RemoveRestraintSetsAllowed = true,
 
             PuppeteerEnabledAllowed = false,
