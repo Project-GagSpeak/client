@@ -92,7 +92,8 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Subscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe(UnlocksEvent.ClientOneHp, () => (ClientAchievements.SaveData[Achievements.BoundgeeJumping.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Subscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Subscribe<InputChannel, string>(UnlocksEvent.GaggedChatSent, OnClientGaggedChatMessage);
+        _events.Subscribe<Kinkster, InputChannel, string>(UnlocksEvent.KinksterGaggedChatSent, OnKinksterGaggedChatMessage);
         _events.Subscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _events.Subscribe(UnlocksEvent.TutorialCompleted, () => (ClientAchievements.SaveData[Achievements.TutorialComplete.Id] as ProgressAchievement)?.IncrementProgress());
         _events.Subscribe(UnlocksEvent.PairAdded, OnPairAdded);
@@ -171,7 +172,8 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
-        _events.Unsubscribe<InputChannel>(UnlocksEvent.ChatMessageSent, OnChatMessage);
+        _events.Unsubscribe<InputChannel, string>(UnlocksEvent.GaggedChatSent, OnClientGaggedChatMessage);
+        _events.Unsubscribe<Kinkster, InputChannel, string>(UnlocksEvent.KinksterGaggedChatSent, OnKinksterGaggedChatMessage); 
         _events.Unsubscribe<IGameObject, ushort, IGameObject>(UnlocksEvent.EmoteExecuted, OnEmoteExecuted);
         _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (ClientAchievements.SaveData[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
@@ -997,7 +999,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     }
 
 
-    private void OnChatMessage(InputChannel channel)
+    private void OnClientGaggedChatMessage(InputChannel channel, string message)
     {
         (ClientAchievements.SaveData[Achievements.HelplessDamsel.Id] as ConditionalAchievement)?.CheckCompletion();
 
@@ -1017,6 +1019,11 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         {
             (ClientAchievements.SaveData[Achievements.FromCriesOfHumility.Id] as ProgressAchievement)?.IncrementProgress();
         }
+    }
+
+    private void OnKinksterGaggedChatMessage(Kinkster k, InputChannel channel, string message)
+    {
+        // Nothing here yet.., but at least now we can detect kinksters subby sounds :3
     }
 
     private void OnEmoteExecuted(IGameObject emoteCallerObj, ushort emoteId, IGameObject targetObject)

@@ -70,7 +70,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
             }
         });
 
-        Mediator.Subscribe<MoodlesUpdateNotifyMessage>(this, (_) => NotifyListChanged());
+        Mediator.Subscribe<VisibleKinkstersChanged>(this, (_) => NotifyListChanged());
 
         Mediator.Subscribe<GameObjectHandlerCreatedMessage>(this, (msg) =>
         {

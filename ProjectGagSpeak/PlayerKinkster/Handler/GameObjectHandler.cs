@@ -49,7 +49,6 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
     // Determines if this object is the Player Character or not.
     public readonly bool IsOwnedObject;
     public string NameWithWorld { get; private set; } // the name of the character
-
     public IPlayerCharacter? PlayerCharacterObjRef { get; private set; }
     public IntPtr Address { get; private set; } // addr of character
     private IntPtr DrawObjectAddress { get; set; } // the address of the characters draw object.

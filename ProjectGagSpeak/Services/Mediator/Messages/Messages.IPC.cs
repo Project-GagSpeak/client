@@ -16,5 +16,5 @@ public record MoodlesStatusManagerUpdate : MessageBase;
 public record MoodlesStatusModified(Guid Guid) : MessageBase; // when we change one of our moodles settings.
 public record MoodlesPresetModified(Guid Guid) : MessageBase; // when we change one of our moodles presets.
 public record MoodlesApplyStatusToPair(MoodlesApplierByStatus StatusDto) : MessageBase;
-public record MoodlesUpdateNotifyMessage : MessageBase; // for pinging the moodles.
+public record VisibleKinkstersChanged : MessageBase; // for pinging the moodles.
 public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;

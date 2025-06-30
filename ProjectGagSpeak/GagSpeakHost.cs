@@ -10,6 +10,7 @@ using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 
 namespace GagSpeak;
 
@@ -175,6 +176,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<NameplateService>();
         }
         catch (Exception ex)
         {

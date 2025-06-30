@@ -66,7 +66,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
                 // publish a refresh ui message to the mediator
                 Mediator.Publish(new RefreshUiMessage());
                 // push latest list details to Moodles.
-                Mediator.Publish(new MoodlesUpdateNotifyMessage());
+                Mediator.Publish(new VisibleKinkstersChanged());
             }
         }
     }

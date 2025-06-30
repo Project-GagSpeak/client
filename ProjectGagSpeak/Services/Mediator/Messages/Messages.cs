@@ -1,5 +1,7 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.GameInternals;
+using GagSpeak.Kinksters;
 using GagSpeak.Services.Events;
 using GagspeakAPI.Network;
 
@@ -47,6 +49,12 @@ public record SafewordUsedMessage(string UID = "") : MessageBase;
 /// <summary> Fires once we trigger the hardcore safeword command. </summary>
 /// <param name="UID"> The UID of the user we want to safeword for. </param>
 public record SafewordHardcoreUsedMessage(string UID = "") : MessageBase;
+
+/// <summary> Contains the message content of a Chatbox message. </summary>
+public record ChatboxMessageFromSelf(InputChannel channel, string message) : MessageBase;
+
+/// <summary> Contains the message content of a Chatbox message. </summary>
+public record ChatboxMessageFromKinkster(Kinkster kinkster, InputChannel channel, string message) : MessageBase;
 
 // Whenever we removed a vfx actor from the scene.
 // NOTE: This should likely be removed, and handled with a vfxManager class instead.

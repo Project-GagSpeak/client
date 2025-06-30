@@ -88,6 +88,7 @@ public class Svc
     [PluginService] public static IGamepadState GamepadState { get; private set; } = null!;
     [PluginService] public static IKeyState KeyState { get; private set; } = null!;
     [PluginService] public static INotificationManager Notifications { get; private set; } = null!;
+    [PluginService] public static INamePlateGui NamePlate { get; private set; } = null!;
     [PluginService] public static IObjectTable Objects { get; private set; } = null!;
     [PluginService] public static IPartyList Party { get; private set; } = null!;
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
@@ -269,6 +270,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<EmoteService>()
         .AddSingleton<ItemService>()
         .AddSingleton<MufflerService>()
+        .AddSingleton<NameplateService>()
         .AddSingleton<NotificationService>()
         .AddSingleton<OnFrameworkService>()
         .AddSingleton<SafewordService>()
@@ -493,7 +495,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<UiService>();
     #endregion ScopedServices
 
-    #region HostedServices
     /// <summary>
     ///     Services that must run logic on initialization to help with monitoring.
     ///     If it does not, it can also be an important monitor background service.
@@ -523,7 +524,6 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<AchievementsService>()) // Nessisary to begin the task that listens for 
 
         .AddHostedService(p => p.GetRequiredService<GagSpeakHost>());       // Make this always the final hosted service, initializing the startup.
-    #endregion HostedServices
 }
 
 public static class ValidateDependencyInjectorEx

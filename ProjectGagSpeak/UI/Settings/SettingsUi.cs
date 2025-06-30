@@ -490,11 +490,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     }
 
                     // Only SameLine if not the third column
-                    if ((i + 1) % 3 != 0 && (i + 1) != channels.Length)
+                    if ((i + 1) % 4 != 0 && (i + 1) != channels.Length)
                         ImGui.SameLine();
                 }
-
-                ImGui.NewLine();
             }
 
             ImGui.NewLine();
@@ -549,11 +547,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     }
 
                     // Only SameLine if not the third column
-                    if ((i + 1) % 3 != 0 && (i + 1) != channels.Length)
+                    if ((i + 1) % 4 != 0 && (i + 1) != channels.Length)
                         ImGui.SameLine();
                 }
-
-                ImGui.NewLine();
             }
         }
         ImGui.Columns(1);

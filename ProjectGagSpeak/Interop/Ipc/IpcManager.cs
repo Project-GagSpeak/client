@@ -12,17 +12,19 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
     public IpcCallerPenumbra Penumbra { get; }
     public IpcCallerMoodles Moodles { get; }
     public IpcCallerMare Mare { get; }
+    public IpcCallerLifestream Lifestream { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
         IpcCallerCustomize ipcCustomize, IpcCallerGlamourer ipcGlamourer,
         IpcCallerPenumbra ipcPenumbra, IpcCallerMoodles moodlesIpc,
-        IpcCallerMare mareIpc) : base(logger, mediator)
+        IpcCallerMare mareIpc, IpcCallerLifestream lifestreamIpc) : base(logger, mediator)
     {
         CustomizePlus = ipcCustomize;
         Glamourer = ipcGlamourer;
         Penumbra = ipcPenumbra;
         Moodles = moodlesIpc;
         Mare = mareIpc;
+        Lifestream = lifestreamIpc;
 
         // subscribe to the delayed framework update message, which will call upon the periodic API state check.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => PeriodicApiStateCheck());
@@ -45,5 +47,6 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Moodles.CheckAPI();
         // mare has no API to check, but we can do it anyways.
         Mare.CheckAPI();
+        Lifestream.CheckAPI();
     }
 }

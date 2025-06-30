@@ -3,11 +3,14 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using GagSpeak.CustomCombos;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
 using ImGuiNET;
 using Microsoft.Extensions.Hosting;
+using OtterGui.Classes;
+using Penumbra.GameData.Structs;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace GagSpeak.Services;
@@ -29,8 +32,10 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     private bool _isInCutscene = false;
 
     public static short LastCommendationsCount = 0;
-    public static Lazy<Dictionary<ushort, string>> WorldData { get; private set; }
-
+    
+    // Find a better place for this later i guess.
+    public static LazyList<KeyValuePair<ushort, string>> WorldData { get; private set; }
+    public static WorldCombo WorldCombo;
     public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator) 
         : base(logger, mediator)
     {
@@ -40,8 +45,11 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         {
             return Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.World>(Dalamud.Game.ClientLanguage.English)!
                 .Where(w => w.IsPublic && !w.Name.IsEmpty)
-                .ToDictionary(w => (ushort)w.RowId, w => w.Name.ToString());
+                .Select(w => new KeyValuePair<ushort, string>((ushort)w.RowId, w.Name.ToString()))
+                .OrderBy(c => c.Value)
+                .ToList();
         });
+        WorldCombo = new(logger);
 
         // This should probably be moved somewhere else idealy but whatever for now.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>

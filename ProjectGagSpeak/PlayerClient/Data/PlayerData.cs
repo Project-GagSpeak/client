@@ -30,7 +30,7 @@ public static unsafe class PlayerData
     public static ulong ContendIdInstanced => Control.Instance()->LocalPlayer->ContentId;
     public static StatusList Status => Object?.StatusList;
     public static string Name => Object?.Name.ToString() ?? string.Empty;
-    public static string NameInstanced => Control.Instance()->LocalPlayer->Name.ToString() ?? string.Empty;
+    public static string NameInstanced => Control.Instance()->LocalPlayer->NameString ?? string.Empty;
     public static string HomeWorld => Object?.HomeWorld.Value.Name.ToString() ?? string.Empty;
     public static string HomeWorldInstanced => Svc.Data.GetExcelSheet<World>().GetRowOrDefault(HomeWorldIdInstanced) is { } w ? w.Name.ToString() : string.Empty;
     public static uint HomeWorldId => Object?.HomeWorld.RowId ?? 0;

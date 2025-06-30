@@ -67,5 +67,19 @@ global using IPCProfileDataTuple = (
     int Priority,
     bool IsEnabled);
 
+global using AddressBookEntryTuple = (
+    string Name, 
+    int World, 
+    int City, 
+    int Ward, 
+    int PropertyType, 
+    int Plot, 
+    int Apartment, 
+    bool ApartmentSubdivision, 
+    bool AliasEnabled, 
+    string Alias
+    );
+
+
 // See later https://github.com/xivdev/Penumbra/blob/5c5e45114f25f9429d8757b6edf852ecc37173c9/Penumbra/UI/LaunchButton.cs#L27
 

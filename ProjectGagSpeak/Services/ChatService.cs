@@ -107,11 +107,20 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)
         {
             CheckOwnChatMessage(channel, msg.TextValue);
+            Mediator.Publish(new ChatboxMessageFromSelf(channel, msg.TextValue));
             return;
         }
 
         // check for global puppeteer triggers
-        _triggerHandler.CheckMessageForTrigger(senderName, senderWorld, channel, msg);
+        if (_triggerHandler.PotentialGlobalTriggerMsg(senderName, senderWorld, channel, msg))
+            return;
+
+        // Check for local puppeteer triggers.
+        if (_triggerHandler.PotentialPairTriggerMsg(senderName, senderWorld, channel, msg, out var kinkster))
+        {
+            // Let our mediator know a Kinkster sent a message.
+            Mediator.Publish(new ChatboxMessageFromKinkster(kinkster, channel, msg.TextValue)); 
+        }
     }
 
     /// <summary>
@@ -141,6 +150,46 @@ public class ChatService : DisposableMediatorSubscriberBase
                 _deathRolls.ProcessMessage(type, otherPlayer.PlayerName + "@" + otherPlayer.World.Value.Name.ToString(), msg);
             else
                 _deathRolls.ProcessMessage(type, PlayerData.NameWithWorld, msg);
+        }
+    }
+
+    /// <summary>
+    ///     When a message processed by the chatbox was spesifically from us, do some unique
+    ///     checks to help fulfill the conditoins for various Achievements.
+    /// </summary>
+    public void CheckOwnChatMessage(InputChannel channel, string msg)
+    {
+        // check if the message we sent contains any of our pairs triggers.
+        foreach (var pair in _pairs.DirectPairs)
+        {
+            var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+            // This ensures it is a full word.
+            var foundTrigger = triggers.FirstOrDefault(trigger
+                => Regex.IsMatch(msg, $@"(?<!\w){Regex.Escape(trigger)}(?!\w)", RegexOptions.IgnoreCase));
+
+            if (!string.IsNullOrEmpty(foundTrigger))
+            {
+                // This was a trigger message for the pair, so let's see what the pairs settings are for.
+                var startChar = pair.PairPerms.StartChar;
+                var endChar = pair.PairPerms.EndChar;
+
+                // Get the string that exists beyond the trigger phrase found in the message.
+                Logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
+                SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
+
+                // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
+                remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
+                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
+
+                // If the string contains the word "grovel", fire the grovel achievement. (Fix these to be ID's not names.)
+                if (remainingMessage.TextValue.Contains("grovel"))
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
+                else if (remainingMessage.TextValue.Contains("dance"))
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
+                else
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
+                return;
+            }
         }
     }
 
@@ -197,54 +246,6 @@ public class ChatService : DisposableMediatorSubscriberBase
         UIModule.Instance()->ProcessChatBoxEntry(utf8Str);
         // Free the Utf8String memory to avoid memory leaks.
         utf8Str->Dtor(true);
-    }
-
-    /// <summary>
-    ///     When a message processed by the chatbox was spesifically from us, do some unique
-    ///     checks to help fulfill the conditoins for various Achievements.
-    /// </summary>
-    public void CheckOwnChatMessage(InputChannel channel, string msg)
-    {
-        // check if the message we sent contains any of our pairs triggers.
-        foreach (var pair in _pairs.DirectPairs)
-        {
-            var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-            // This ensures it is a full word.
-            var foundTrigger = triggers.FirstOrDefault(trigger
-                => Regex.IsMatch(msg, $@"(?<!\w){Regex.Escape(trigger)}(?!\w)", RegexOptions.IgnoreCase));
-
-            if (!string.IsNullOrEmpty(foundTrigger))
-            {
-                // This was a trigger message for the pair, so let's see what the pairs settings are for.
-                var startChar = pair.PairPerms.StartChar;
-                var endChar = pair.PairPerms.EndChar;
-
-                // Get the string that exists beyond the trigger phrase found in the message.
-                Logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
-                SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
-
-                // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
-                remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
-                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
-
-                // If the string contains the word "grovel", fire the grovel achievement. (Fix these to be ID's not names.)
-                if (remainingMessage.TextValue.Contains("grovel"))
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
-                else if (remainingMessage.TextValue.Contains("dance"))
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
-                else
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
-                return;
-            }
-        }
-
-        if (_gags.ServerGagData is not { } gagData || _globals.Current is not { } globalPerms)
-            return;
-
-        // if our message is longer than 5 words, fire our on-chat-message achievement.
-        if (gagData.IsGagged() && globalPerms.ChatGarblerActive && msg.Split(' ').Length > 5)
-            if (globalPerms.AllowedGarblerChannels.IsActiveChannel((int)channel))
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.ChatMessageSent, channel);
     }
 
     /// <summary> 

@@ -74,15 +74,11 @@ public class AccountManagerTab
     private void DrawAccount(int idx, Authentication account, bool isOnlineUser = false)
     {
         var isPrimary = account.IsPrimary;
-        // push rounding window corners
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        // push a pink border color for the window border.
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
-        // push a less transparent very dark grey background color.
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // create the child window.
-
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
+            .Push(ImGuiStyleVar.WindowBorderSize, 1f);
+        using var col = ImRaii.PushColor(ImGuiCol.Border, isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink)
+            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+                    
         var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
         using var child = ImRaii.Child($"##AuthAccountListing" + idx + account.CharacterPlayerContentId, new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow);
         if (!child) return;
@@ -188,8 +184,8 @@ public class AccountManagerTab
                 var insertKey = CkGui.IconSize(FAI.PenSquare);
                 var rightEnd = ImGui.GetContentRegionAvail().X - insertKey.X;
                 ImGui.SameLine(rightEnd);
-                var col = account.SecretKey.HasHadSuccessfulConnection ? ImGuiColors.DalamudRed : ImGuiColors.DalamudGrey3;
-                CkGui.BooleanToColoredIcon(EditingIdx == idx, false, FAI.PenSquare, FAI.PenSquare, ImGuiColors.ParsedPink, col);
+                var boolCol = account.SecretKey.HasHadSuccessfulConnection ? ImGuiColors.DalamudRed : ImGuiColors.DalamudGrey3;
+                CkGui.BooleanToColoredIcon(EditingIdx == idx, false, FAI.PenSquare, FAI.PenSquare, ImGuiColors.ParsedPink, boolCol);
                 if (ImGui.IsItemClicked() && !account.SecretKey.HasHadSuccessfulConnection)
                     EditingIdx = EditingIdx == idx ? -1 : idx;
                 CkGui.AttachToolTip(account.SecretKey.HasHadSuccessfulConnection ? GSLoc.Settings.Accounts.EditKeyNotAllowed : GSLoc.Settings.Accounts.EditKeyAllowed);

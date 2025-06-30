@@ -4,6 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.GameInternals.Structs;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
@@ -11,6 +12,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Handlers;
 
@@ -41,34 +43,36 @@ public class TriggerHandler
         _frameworkUtils = frameworkUtils;
     }
 
-    /// <summary>
-    ///     Check a processed message from the chatbox for any potential triggers that can be detected.
-    /// </summary>
-    public void CheckMessageForTrigger(string senderName, string senderWorld, InputChannel channel, SeString msg)
+    public bool PotentialGlobalTriggerMsg(string senderName, string senderWorld, InputChannel channel, SeString msg)
     {
-        // return if the message type is not in our valid chat channels for puppeteer.
-        if (_globals.Current is null || _config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
-            return;
+        if (_globals.Current is not { } globals)
+            return false;
 
         // Check for Global Triggers first.
-        var globalTriggers = _globals.Current.TriggerPhrase.Split('|').ToList();
+        var globalTriggers = globals.TriggerPhrase.Split('|').ToList();
         if (IsValidTriggerWord(globalTriggers, msg, out var globalMatch))
         {
             ExecuteTrigger(globalMatch, msg, _globals.Current.PuppetPerms, _aliases.GlobalAliasStorage, ActionSource.GlobalAlias, MainHub.UID);
-            return;
+            return true;
         }
+        return false;
+    }
 
+    public bool PotentialPairTriggerMsg(string sName, string sWorld, InputChannel channel, SeString msg, [NotNullWhen(true)] out Kinkster? kinksterMatch)
+    {
         // Check for Pair Triggers.
-        if (_aliases.TryGetListenerPairPerms(senderName, senderWorld, out var pair))
+        if (_aliases.TryGetListenerPairPerms(sName, sWorld, out kinksterMatch))
         {
-            var triggers = pair.OwnPerms.TriggerPhrase.Split('|').ToList();
+            var triggers = kinksterMatch.OwnPerms.TriggerPhrase.Split('|').ToList();
             if (IsValidTriggerWord(triggers, msg, out var pairMatch))
             {
-                var storage = _aliases.PairAliasStorage[pair.UserData.UID].Storage;
-                ExecuteTrigger(pairMatch, msg, pair.OwnPerms.PuppetPerms, storage, ActionSource.PairAlias, 
-                    pair.UserData.UID, pair.OwnPerms.StartChar, pair.OwnPerms.EndChar);
+                var storage = _aliases.PairAliasStorage[kinksterMatch.UserData.UID].Storage;
+                ExecuteTrigger(pairMatch, msg, kinksterMatch.OwnPerms.PuppetPerms, storage, ActionSource.PairAlias,
+                    kinksterMatch.UserData.UID, kinksterMatch.OwnPerms.StartChar, kinksterMatch.OwnPerms.EndChar);
+                return true;
             }
         }
+        return false;
     }
 
     /// <summary>
