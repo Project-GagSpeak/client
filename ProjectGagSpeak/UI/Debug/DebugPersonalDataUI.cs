@@ -141,26 +141,35 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableSetupColumn("Value");
         ImGui.TableHeadersRow();
 
+        DrawPermissionRowString("Allowed Garble Channels", perms.AllowedGarblerChannels.ToString());
         DrawPermissionRowBool("Live Chat Garbler", perms.ChatGarblerActive);
         DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLocked);
+        DrawPermissionRowBool("Gagged Nameplate", perms.GaggedNameplate);
+        
         ImGui.TableNextRow();
         DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
         DrawPermissionRowBool("Gag Visuals", perms.GagVisuals);
         DrawPermissionRowBool("Restriction Visuals", perms.RestrictionVisuals);
         DrawPermissionRowBool("Restraint Visuals", perms.RestraintSetVisuals);
+        
         ImGui.TableNextRow();
         DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
         DrawPermissionRowString("Global Trigger Phrase", perms.TriggerPhrase);
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppetPerms.All));
+        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasAny(PuppetPerms.Sit));
+        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasAny(PuppetPerms.Emotes));
+        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasAny(PuppetPerms.Alias));
+        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasAny(PuppetPerms.All));
+        
         ImGui.TableNextRow();
         DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
         DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
         DrawPermissionRowBool("Sex Toy Active", perms.ToysAreConnected);
         DrawPermissionRowBool("Toys In Use", perms.ToysAreInUse);
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
+
+        ImGui.TableNextRow();
+        DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnosisCustomEffect);
+        
         ImGui.TableNextRow();
         DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
         DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
@@ -168,6 +177,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
         DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
         DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
+        
         ImGui.TableNextRow();
         DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
         DrawPermissionRowBool("Allow Shocks ", perms.AllowShocks);
@@ -235,6 +245,8 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarms);
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggers);
         ImGui.TableNextRow();
+        DrawPermissionRowBool("Allow Hypnosis Effect Sending", perms.HypnoEffectSending);
+        ImGui.TableNextRow();
         DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
         DrawPermissionRowBool("Devotional States For Pair", perms.PairLockedStates);
         DrawPermissionRowBool("Allow Forced Follow", perms.AllowForcedFollow);
@@ -245,7 +257,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
         DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
-        DrawPermissionRowBool("Allow Hypnosis Effect Sending", perms.AllowHypnoEffectSending);
         DrawPermissionRowBool("Allow Hypnosis Image Sending", perms.AllowHypnoImageSending);
         ImGui.TableNextRow();
         DrawPermissionRowString("Shock Collar Share Code", perms.PiShockShareCode);

@@ -8,7 +8,7 @@ namespace GagSpeak.CustomCombos;
 public sealed class WorldCombo : CkFilterComboCache<KeyValuePair<ushort, string>>
 {
     private ushort _current;
-    public WorldCombo(ILogger log) : base(() => OnFrameworkService.WorldData, log)
+    public WorldCombo(ILogger log) : base(() => OnFrameworkService.WorldData.ToList(), log)
     {
         // Start with the Any World entry selected.
         Current             = Items.FirstOrDefault();

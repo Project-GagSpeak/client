@@ -183,6 +183,8 @@ public static class SPPIDExtensions
             SPPID.AlarmToggling         => nameof(PairPermAccess.ToggleAlarmsAllowed),
             SPPID.TriggerToggling       => nameof(PairPermAccess.ToggleTriggersAllowed),
 
+            SPPID.HypnoticEffect        => nameof(PairPerms.HypnoEffectSending),
+
             SPPID.ForcedFollow          => nameof(PairPerms.AllowForcedFollow),
             SPPID.ForcedEmoteState      => isAllEmote ? nameof(PairPerms.AllowForcedEmote) : nameof(PairPerms.AllowForcedEmote),
             SPPID.ForcedStay            => nameof(PairPerms.AllowForcedStay),
@@ -190,7 +192,6 @@ public static class SPPIDExtensions
             SPPID.ChatBoxesHidden       => nameof(PairPerms.AllowHidingChatBoxes),
             SPPID.ChatInputHidden       => nameof(PairPerms.AllowHidingChatInput),
             SPPID.ChatInputBlocked      => nameof(PairPerms.AllowChatInputBlocking),
-            SPPID.HypnoticEffect        => nameof(PairPerms.AllowHypnoEffectSending),
             SPPID.HypnoticImage         => nameof(PairPerms.AllowHypnoImageSending),
             _ => string.Empty
         };

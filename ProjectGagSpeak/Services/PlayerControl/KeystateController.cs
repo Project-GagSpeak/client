@@ -22,6 +22,10 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     delegate ref int GetRefValue(int vkCode);
     private static GetRefValue? _getRefValue;
 
+    // Block everything but hardcore safeword keybind. (Maybe use keymonitor to handle this while logged out or something i dont know.
+    public static readonly List<VirtualKey> AllKeys = Enum.GetValues<VirtualKey>().Skip(4).Except([VirtualKey.CONTROL, VirtualKey.MENU, VirtualKey.BACK]).ToList();
+    public static readonly List<VirtualKey> MoveKeys = [VirtualKey.W, VirtualKey.A, VirtualKey.S, VirtualKey.D, VirtualKey.SPACE];
+
     // Dictates controlling the player's KeyState blocking.
     private PlayerControlSource _sources = PlayerControlSource.None;
     private bool _keysWereCancelled = false;
@@ -40,9 +44,12 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
-    // If keys are currently being blocked.
-    public bool BlockKeyInput => _sources != 0 || _moveService.IsMoveTaskRunning;
-
+    private bool BlockKeyInput => _sources != 0 || _moveService.IsMoveTaskRunning;
+    // this could potentially cause a race condition where the lifestream task is removed before it can reset the cancelled keys,
+    // but that will only occur if the framework tick is not fast enough for the cancel.
+    // an easy fix would be to just run the addition/removal of sources on the framework thread, but that would harm application time.
+    private List<VirtualKey> BlockedKeys => _sources.HasAny(PlayerControlSource.LifestreamTask) ? AllKeys : MoveKeys;
+    
     private unsafe void FrameworkUpdate()
     {
         if (BlockKeyInput)
@@ -62,7 +69,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     /// </summary>
     private void CancelMoveKeys()
     {
-        foreach (var x in MoveKeys)
+        foreach (var x in BlockedKeys)
         {
             // the action to execute for each of our moved keys
             if (Svc.KeyState.GetRawValue(x) == 0)
@@ -79,25 +86,21 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     /// </summary>
     private void ResetCancelledMoveKeys()
     {
-        if (_keysWereCancelled)
+        if (!_keysWereCancelled)
+            return;
+
+        // Make sure they become false.
+        _keysWereCancelled = false;
+        // Restore the state of the virtual keys
+        foreach (var x in BlockedKeys)
         {
-            _keysWereCancelled = false;
-            // Restore the state of the virtual keys
-            foreach (var x in MoveKeys)
-            {
-                if (KeyMonitor.IsKeyPressed((int)(Keys)x))
-                    SetKeyState(x, 3);
-            }
+            if (KeyMonitor.IsKeyPressed((int)(Keys)x))
+                SetKeyState(x, 3);
         }
     }
 
     /// <summary>
     ///     Sets the key state (if you start crashing when using this you probably have a fucked up getrefvalue)
     /// </summary>
-    private static void SetKeyState(VirtualKey key, int state) => _getRefValue!((int)key) = state;
-
-    // Allow Mouse VKeys, block the rest. (Likely dangerous to even invoke, since it could block everything, but yolo i guess)
-    private readonly HashSet<VirtualKey> AllKeys = Enum.GetValues<VirtualKey>().Skip(4).ToHashSet();
-    private readonly HashSet<VirtualKey> MoveKeys = [VirtualKey.W, VirtualKey.A, VirtualKey.S, VirtualKey.D, VirtualKey.SPACE];
-      
+    private static void SetKeyState(VirtualKey key, int state) => _getRefValue!((int)key) = state;      
 }

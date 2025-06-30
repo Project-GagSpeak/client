@@ -100,7 +100,9 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
     public EquipItem EquipItem => Ref.Glamour.GameItem ;
     public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
-    public RestraintSlotAdvanced() { }
+    public RestraintSlotAdvanced() 
+    { }
+
     public RestraintSlotAdvanced(RestraintSlotAdvanced other)
     {
         ApplyFlags = other.ApplyFlags;
@@ -118,6 +120,15 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
             ["ApplyFlags"] = (int)ApplyFlags,
             ["RestrictionRef"] = Ref.Identifier.ToString(),
             ["CustomStains"] = CustomStains.ToString(),
+        };
+    }
+
+    public static RestraintSlotAdvanced GetEmpty(EquipSlot slot, StainIds customStains)
+    {
+        return new RestraintSlotAdvanced()
+        {
+            Ref = new RestrictionItem() { Identifier = Guid.Empty, Glamour = new GlamourSlot(slot, ItemService.NothingItem(slot)) },
+            CustomStains = customStains
         };
     }
 
@@ -412,13 +423,13 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
 
         // Handle the mod additions for the basic mods.
         var baseMods = new List<ModSettingsPreset>();
-        if (setJObj["RestraintMods"] is JArray modArray)
+        if (setJObj["BaseMods"] is JArray modArray)
             foreach (var modToken in modArray)
                 Generic.Safe(() => baseMods.Add(ModSettingsPreset.FromRefToken(modToken, mods)));
 
         // Handle the base Moodles.
         var baseMoodles = new HashSet<Moodle>();
-        if (setJObj["RestraintMoodles"] is JArray moodleArray)
+        if (setJObj["BaseMoodles"] is JArray moodleArray)
             foreach (var moodleToken in moodleArray)
                 Generic.Safe(() => baseMoodles.Add(GsExtensions.LoadMoodle(moodleToken)));
 
@@ -437,8 +448,8 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             MetaStates = MetaDataStruct.FromJObject(setJObj["MetaStates"]),
             RestraintMods = baseMods,
             RestraintMoodles = baseMoodles,
-            Traits = Enum.TryParse<Traits>(setJObj["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
-            Arousal = Enum.TryParse<Arousal>(setJObj["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            Traits = Enum.TryParse<Traits>(setJObj["BaseTraits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
+            Arousal = Enum.TryParse<Arousal>(setJObj["BaseArousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
         };
     }
 

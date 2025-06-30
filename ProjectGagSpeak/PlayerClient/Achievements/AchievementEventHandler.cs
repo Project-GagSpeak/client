@@ -49,7 +49,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         Logger.LogInformation("Player Logged In, Subscribing to Events!");
         _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _events.Subscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Subscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
         _events.Subscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
         _events.Subscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _events.Subscribe(UnlocksEvent.GagUnlockGuessFailed, () => (ClientAchievements.SaveData[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -132,7 +132,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
             return;
 
         _events.Unsubscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, OnGagStateChanged);
-        _events.Unsubscribe<int, GagType, bool, string, string>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
+        _events.Unsubscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, OnPairGagStateChanged);
         _events.Unsubscribe<int, Padlocks, bool, string>(UnlocksEvent.GagLockStateChange, OnGagLockStateChange);
         _events.Unsubscribe<int, Padlocks, bool, string, string>(UnlocksEvent.PairGagLockStateChange, OnPairGagLockStateChange);
         _events.Unsubscribe(UnlocksEvent.GagUnlockGuessFailed, () => (ClientAchievements.SaveData[Achievements.RunningGag.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -434,7 +434,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.ShushtainableResource.Id] as ThresholdAchievement)?.UpdateThreshold(gagData.TotalGagsEquipped());
     }
 
-    private void OnPairGagStateChanged(int layer, GagType gag, bool applying, string assignerUid, string affectedUid)
+    private void OnPairGagStateChanged(int layer, GagType gag, bool applying, string enactor, Kinkster kinkster)
     {
         if (applying)
         {

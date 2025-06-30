@@ -33,8 +33,8 @@ public static unsafe class PlayerData
     public static string NameInstanced => Control.Instance()->LocalPlayer->NameString ?? string.Empty;
     public static string HomeWorld => Object?.HomeWorld.Value.Name.ToString() ?? string.Empty;
     public static string HomeWorldInstanced => Svc.Data.GetExcelSheet<World>().GetRowOrDefault(HomeWorldIdInstanced) is { } w ? w.Name.ToString() : string.Empty;
-    public static uint HomeWorldId => Object?.HomeWorld.RowId ?? 0;
-    public static uint HomeWorldIdInstanced => Control.Instance()->LocalPlayer->HomeWorld;
+    public static ushort HomeWorldId => (ushort)(Object?.HomeWorld.RowId ?? 0);
+    public static ushort HomeWorldIdInstanced => Control.Instance()->LocalPlayer->HomeWorld;
     public static string NameWithWorld => GetNameWithWorld(Object);
     public static string NameWithWorldInstanced => NameInstanced + "@" + HomeWorldInstanced;
     public static string GetNameWithWorld(this IPlayerCharacter pc) => pc is null ? string.Empty : (pc.Name.ToString() + "@" + pc.HomeWorld.Value.Name.ToString());

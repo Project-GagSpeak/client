@@ -114,38 +114,32 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var cross = FAI.SquareXmark;
         ImGui.TextUnformatted(GSLoc.Settings.OptionalPlugins);
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Penumbra");
+        CkGui.TextInline("Penumbra");
         ImGui.SameLine();
         CkGui.IconText(IpcCallerPenumbra.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerPenumbra.APIAvailable));
-        ImGui.SameLine();
         CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-        ImGui.Spacing();
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Glamourer");
+        CkGui.TextInline("Glamourer", false);
         ImGui.SameLine();
         CkGui.IconText(IpcCallerGlamourer.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerGlamourer.APIAvailable));
-        ImGui.SameLine();
         CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-        ImGui.Spacing();
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Customize+");
+        CkGui.TextInline("Customize +", false);
         ImGui.SameLine();
         CkGui.IconText(IpcCallerCustomize.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerCustomize.APIAvailable));
-        ImGui.SameLine();
         CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-        ImGui.Spacing();
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Moodles");
+        CkGui.TextInline("Moodles", false);
         ImGui.SameLine();
         CkGui.IconText(IpcCallerMoodles.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerMoodles.APIAvailable));
-        ImGui.SameLine();
         CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-        ImGui.Spacing();
-        
+
+        CkGui.TextInline("Lifestream", false);
+        ImGui.SameLine();
+        CkGui.IconText(IpcCallerLifestream.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerLifestream.APIAvailable));
+        CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+
         ImUtf8.TextFrameAligned(GSLoc.Settings.AccountClaimText);
         
         ImGui.SameLine();
@@ -201,6 +195,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         var liveChatGarblerActive = globals!.ChatGarblerActive;
         var liveChatGarblerLocked = globals.ChatGarblerLocked;
+        var gaggedNamePlates = globals.GaggedNameplate;
         var removeGagOnLockExpiration = _mainConfig.Current.RemoveRestrictionOnTimerExpire;
 
         var wardrobeEnabled = globals.WardrobeEnabled;
@@ -237,6 +232,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
                 PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.ChatGarblerActive), liveChatGarblerActive).ConfigureAwait(false);
             CkGui.HelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
+
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GaggedNameplates, ref gaggedNamePlates))
+                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GaggedNameplate), gaggedNamePlates).ConfigureAwait(false);
+            CkGui.HelpText(GSLoc.Settings.MainOptions.GaggedNameplatesTT);
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
@@ -267,9 +266,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         using (ImRaii.Disabled(!wardrobeEnabled))
         {
-            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restrictionVisuals))
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestrictionGlamours, ref restrictionVisuals))
                 PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestrictionVisuals), restrictionVisuals).ConfigureAwait(false);
-            CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
+            CkGui.HelpText(GSLoc.Settings.MainOptions.RestrictionGlamoursTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
                 PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestraintSetVisuals), restraintSetVisuals).ConfigureAwait(false);

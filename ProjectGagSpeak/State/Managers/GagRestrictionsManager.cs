@@ -128,7 +128,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
 
         Logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, true, layer, newGag, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, newGag, true, enactor);
 
         // Mark what parts of this item will end up having effective changes.
         Logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
@@ -182,14 +182,14 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             return false;
 
         // store what gag we are removing, then update data and fire achievement ping.
-        var removedGagType = data.GagSlots[layer].GagItem;
+        var removedGag = data.GagSlots[layer].GagItem;
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, false, layer, removedGagType, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, removedGag, false, enactor);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetGag(removedGagType, out item))
+        if (Storage.TryGetGag(removedGag, out item))
         {
             // always revert the visuals.
             _activeItems.Remove(layer);

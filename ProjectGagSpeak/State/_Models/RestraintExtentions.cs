@@ -52,10 +52,10 @@ public static class RestraintExtentions
     public static IEnumerable<GlamourSlot> GetAllGlamours(this RestraintSet set, RestraintLayer active)
     {
         var seen = new HashSet<EquipSlot>();
-        foreach (var glam in IterateLayerGlamours(set.Layers, seen, active))
-            yield return glam;
-        foreach (var glam in IterateBaseGlamours(set.RestraintSlots.Values, seen))
-            yield return glam;
+        var result = new List<GlamourSlot>();
+        result.AddRange(IterateLayerGlamours(set.Layers, seen, active));
+        result.AddRange(IterateBaseGlamours(set.RestraintSlots.Values, seen));
+        return result;
     }
 
     public static GlamourSlot? GetGlamourAtLayer(this RestraintSet set, int idx)
@@ -71,6 +71,7 @@ public static class RestraintExtentions
     /// <returns> An enumerable of GlamourSlot items retrieves, and seen equipslots updated. </returns>
     private static IEnumerable<GlamourSlot> IterateBaseGlamours(IEnumerable<IRestraintSlot> slots, HashSet<EquipSlot> seen)
     {
+        var applied = new List<GlamourSlot>();
         foreach (var item in slots)
         {
             if (!item.ApplyFlags.HasAny(RestraintFlags.Glamour)
@@ -80,16 +81,18 @@ public static class RestraintExtentions
 
             // Store the item. (no need to worry about slots since we only have one of each here)
             if (item is RestraintSlotBasic b)
-                yield return b.Glamour;
+                applied.Add(b.Glamour);
             else if (item is RestraintSlotAdvanced a && a.Ref != null)
-                yield return a.Ref.Glamour;
+                applied.Add(a.Ref.Glamour);
         }
+        return applied;
     }
 
     /// <summary> Iterate through all layers of a restraint set. </summary>
     /// <returns> An enumerable of GlamourSlot items from the layers, and seen equipslots updated. </returns>
     private static IEnumerable<GlamourSlot> IterateLayerGlamours(List<IRestraintLayer> layers, HashSet<EquipSlot> seen, RestraintLayer active = RestraintLayer.All)
     {
+        var applied = new List<GlamourSlot>();
         foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
@@ -102,8 +105,9 @@ public static class RestraintExtentions
                 || !seen.Add(layer.EquipSlot))
                 continue;
 
-            yield return layer.Ref.Glamour;
+            applied.Add(layer.Ref.Glamour);
         }
+        return applied;
     }
     #endregion Glamour
 
@@ -122,11 +126,11 @@ public static class RestraintExtentions
 
     public static IEnumerable<ModSettingsPreset> GetAllMods(this RestraintSet set, RestraintLayer active)
     {
+        var result = new List<ModSettingsPreset>();
         var seen = new HashSet<ModSettingsPreset>();
-        foreach (var mod in IterateLayerMods(set.Layers, seen, active))
-            yield return mod;
-        foreach (var mod in IterateBaseMods(set, seen))
-            yield return mod;
+        result.AddRange(IterateLayerMods(set.Layers, seen, active));
+        result.AddRange(IterateBaseMods(set, seen));
+        return result;
     }
 
     public static ModSettingsPreset? GetModAtLayer(this RestraintSet set, int idx)
@@ -143,6 +147,7 @@ public static class RestraintExtentions
     /// <returns> An enumerable of ModSettingPresets items retrieves, and seen mods updated. </returns>
     private static IEnumerable<ModSettingsPreset> IterateBaseMods(RestraintSet set, HashSet<ModSettingsPreset> seen)
     {
+        var applied = new List<ModSettingsPreset>();
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid())
@@ -150,18 +155,21 @@ public static class RestraintExtentions
 
             var mod = slot.Ref.Mod;
             if (slot.ApplyFlags.HasAny(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
-                yield return mod;
+                applied.Add(mod);
         }
         // The base mods appended, if we have not yet already added them.
         foreach (var mod in set.RestraintMods)
             if (mod.HasData && seen.Add(mod))
-                yield return mod;
+                applied.Add(mod);
+
+        return applied;
     }
 
     /// <summary> Iterate through all layers of a restraint set. </summary>
     /// <returns> An enumerable of ModSettingsPreset items from the layers, and seen mods updated. </returns>
     private static IEnumerable<ModSettingsPreset> IterateLayerMods(List<IRestraintLayer> layers, HashSet<ModSettingsPreset> seen, RestraintLayer active = RestraintLayer.All)
     {
+        var applied = new List<ModSettingsPreset>();
         foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
@@ -171,14 +179,15 @@ public static class RestraintExtentions
             {
                 var mod = binder.Ref.Mod;
                 if (binder.ApplyFlags.HasAny(RestraintFlags.Mod) && mod.HasData && seen.Add(mod))
-                    yield return mod;
+                    applied.Add(mod);
             }
             else if (layers[i] is ModPresetLayer mpl)
             {
                 if (mpl.Mod.HasData && seen.Add(mpl.Mod))
-                    yield return mpl.Mod;
+                    applied.Add(mpl.Mod);
             }
         }
+        return applied;
     }
     #endregion Mods
 
@@ -198,10 +207,10 @@ public static class RestraintExtentions
     public static IEnumerable<Moodle> GetAllMoodles(this RestraintSet set, RestraintLayer active)
     {
         var seen = new HashSet<Moodle>();
-        foreach (var moodles in IterateLayerMoodles(set.Layers, seen, active))
-            yield return moodles;
-        foreach (var moodles in IterateBaseMoodles(set, seen))
-            yield return moodles;
+        var result = new List<Moodle>();
+        result.AddRange(IterateLayerMoodles(set.Layers, seen, active));
+        result.AddRange(IterateBaseMoodles(set, seen));
+        return result;
     }
 
     public static Moodle? GetMoodleAtLayer(this RestraintSet set, int layerIndex)
@@ -217,24 +226,28 @@ public static class RestraintExtentions
     /// <returns> An enumerable of applied Moodles, and seen Moodles updated. </returns>
     private static IEnumerable<Moodle> IterateBaseMoodles(RestraintSet set, HashSet<Moodle> seen)
     {
+        var applied = new List<Moodle>();
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid())
                 continue;
 
             if (slot.ApplyFlags.HasAny(RestraintFlags.Moodle) && seen.Add(slot.Ref.Moodle))
-                yield return slot.Ref.Moodle;
+                applied.Add(slot.Ref.Moodle);
         }
         // The base Moodles appended, if we have not yet already added them.
         foreach (var moodle in set.RestraintMoodles)
             if (seen.Add(moodle))
-                yield return moodle;
+                applied.Add(moodle);
+
+        return applied;
     }
 
     /// <summary> Iterate through all layers of a restraint set. </summary>
     /// <returns> All Moodles from the layers, and seen Moodles updated. </returns>
     private static IEnumerable<Moodle> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<Moodle> seen, RestraintLayer active = RestraintLayer.All)
     {
+        var applied = new List<Moodle>();
         foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
@@ -247,8 +260,9 @@ public static class RestraintExtentions
                 || !seen.Add(l.Ref.Moodle))
                 continue;
 
-            yield return l.Ref.Moodle;
+            applied.Add(l.Ref.Moodle);
         }
+        return applied;
     }
     #endregion Moodles
     #region Traits
@@ -279,7 +293,6 @@ public static class RestraintExtentions
     private static Traits CollectBaseTraits(RestraintSet set)
     {
         Traits result = set.Traits;
-
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid() || !slot.ApplyFlags.HasAny(RestraintFlags.Trait))
@@ -326,11 +339,10 @@ public static class RestraintExtentions
 
     public static IEnumerable<Arousal> GetAllArousals(this RestraintSet set, RestraintLayer active)
     {
-        foreach (var arousal in IterateLayerArousal(set.Layers, active))
-            yield return arousal;
-
-        foreach (var arousal in IterateBaseArousal(set))
-            yield return arousal;
+        var arousals = new List<Arousal>();
+        arousals.AddRange(IterateLayerArousal(set.Layers, active));
+        arousals.AddRange(IterateBaseArousal(set));
+        return arousals;
     }
 
     public static Arousal GetArousalForLayer(this RestraintSet set, int layerIndex)
@@ -344,22 +356,26 @@ public static class RestraintExtentions
     /// <summary> Yield Arousal flags from the base slots and set flags. </summary>
     private static IEnumerable<Arousal> IterateBaseArousal(RestraintSet set)
     {
-        if (set.Arousal != Arousal.None)
-            yield return set.Arousal;
-
+        var arousals = new List<Arousal>();
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid() || !slot.ApplyFlags.HasAny(RestraintFlags.Arousal))
                 continue;
 
             if (slot.Ref.Arousal != Arousal.None)
-                yield return slot.Ref.Arousal;
+                arousals.Add(slot.Ref.Arousal);
         }
+
+        if (set.Arousal != Arousal.None)
+            arousals.Add(set.Arousal);
+
+        return arousals;
     }
 
     /// <summary> Yield Arousal flags from valid layers. </summary>
     private static IEnumerable<Arousal> IterateLayerArousal(List<IRestraintLayer> layers, RestraintLayer active = RestraintLayer.All)
     {
+        var arousals = new List<Arousal>();
         foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
@@ -369,8 +385,9 @@ public static class RestraintExtentions
                 continue;
 
             if (l.Ref.Arousal != Arousal.None)
-                yield return l.Ref.Arousal;
+                arousals.Add(l.Ref.Arousal);
         }
+        return arousals;
     }
     #endregion Arousal
 

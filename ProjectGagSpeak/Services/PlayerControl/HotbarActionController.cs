@@ -50,7 +50,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
         _cache = cache;
 
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon));
-        Svc.ClientState.ClassJobChanged += OnJobChange;
+        Svc.ClientState.ClassJobChanged += SetBannedJobActions;
     }
 
     /// <summary> The currently active traits that are blocking your actions. </summary>
@@ -60,7 +60,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     {
         base.Dispose(disposing);
         Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail");
-        Svc.ClientState.ClassJobChanged -= OnJobChange;
+        Svc.ClientState.ClassJobChanged -= SetBannedJobActions;
         // just incase.
         RestoreSavedSlots();
     }
@@ -70,8 +70,10 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
         // If the traits changed, update the slots.
         if (newSources != _sources)
         {
+            Logger.LogDebug($"Updating sources from [{_sources}] to [{newSources}].", LoggerType.HardcoreActions);
             _sources = newSources;
-            UpdateSlots();
+            // recalculate the banned slots for this job.
+            SetBannedJobActions(PlayerData.JobIdThreadSafe);
         }
     }
 
@@ -96,6 +98,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     /// </summary>
     private unsafe void SetBannedSlots()
     {
+        Logger.LogDebug("Setting banned slots based on current traits.", LoggerType.HardcoreActions);
         var hotbarModule = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
         // the length of our hotbar count
         var hotbarSpan = hotbarModule->StandardHotbars;
@@ -161,9 +164,9 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     /// <summary>
     ///     Every time we change jobs, we need to aquire the new banned actions.
     /// </summary>
-    private void OnJobChange(uint jobId)
+    private void SetBannedJobActions(uint jobId)
     {
-        Logger.LogDebug($"Job Changed to [{((JobType)jobId)}], recalculating Banned Actions.");
+        Logger.LogDebug($"Setting Banned Job Actions for [{((JobType)jobId)}].");
         _bannedActions = (JobType)jobId switch
         {
             JobType.ADV => RestrictedActions.Adventurer,

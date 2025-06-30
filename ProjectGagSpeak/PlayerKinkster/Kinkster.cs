@@ -13,6 +13,8 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using Penumbra.GameData.Interop;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.Kinksters;
 
@@ -215,16 +217,15 @@ public class Kinkster : IComparable<Kinkster>
     {
         _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
         LastGagData.GagSlots[data.AffectedLayer] = data.NewData;
-
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, this);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.Enactor.UID, this);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.NewData.Enabler, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.Enactor.UID, this);
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
@@ -234,7 +235,7 @@ public class Kinkster : IComparable<Kinkster>
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
                 return;
             case DataUpdateType.Removed:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, UserData.UID);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, this);
                 UpdateCachedLockedSlots();
                 return;
         }

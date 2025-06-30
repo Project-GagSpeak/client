@@ -648,6 +648,9 @@ namespace GagSpeak.Localization
         public readonly string LiveChatGarblerTT = Loc.Localize("MainOptions_LiveChatGarblerTT", "Generates garbled text using GagSpeak's server-side chat garbler." +
                 "--SEP--Note: Garbled text is visible to other players.");
 
+        public readonly string GaggedNameplates = Loc.Localize("MainOptions_GaggedNameplates", "Gagged Nameplates");
+        public readonly string GaggedNameplatesTT = Loc.Localize("MainOptions_GaggedNameplatesTT", "Displays custom icons indicating your gagstate on your nameplate while gagged!");
+
         public readonly string GagGlamours = Loc.Localize("MainOptions_GagGlamours", "Gag Glamours");
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply gag glamour items from your Gag Storage.");
 
@@ -656,6 +659,10 @@ namespace GagSpeak.Localization
 
         public readonly string WardrobeActive = Loc.Localize("MainOptions_WardrobeActive", "Wardrobe Features");
         public readonly string WardrobeActiveTT = Loc.Localize("MainOptions_WardrobeActiveTT", "Enables Wardrobe functionality.");
+
+        public readonly string RestrictionGlamours = Loc.Localize("MainOptions_RestrictionGlamours", "Restriction Glamours");
+        public readonly string RestrictionGlamoursTT = Loc.Localize("MainOptions_RestrictionGlamoursTT", "Allows Glamourer to apply restraint glamour items from your Restraint Storage." +
+            "--SEP--Restraint glamours can be created in the Wardrobe Interface.");
 
         public readonly string RestraintSetGlamour = Loc.Localize("MainOptions_RestraintSetGlamour", "Restraint Glamours");
         public readonly string RestraintSetGlamourTT = Loc.Localize("MainOptions_RestraintSetGlamourTT", "Allows Glamourer to apply restraints from your Restraint Sets." +

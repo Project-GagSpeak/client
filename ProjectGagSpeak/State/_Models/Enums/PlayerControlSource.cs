@@ -16,4 +16,5 @@ public enum PlayerControlSource : ushort
     ChatInputBlocked = 1 << 5,
     Immobile         = 1 << 6,
     Weighty          = 1 << 7,
+    LifestreamTask   = 1 << 8,
 }

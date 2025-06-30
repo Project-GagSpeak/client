@@ -21,7 +21,7 @@ public static class ChatLogAgent
         ("General Channels",
         [
             InputChannel.Tell, InputChannel.Say, InputChannel.Party, InputChannel.Alliance,
-            InputChannel.Yell, InputChannel.Shout, InputChannel.FreeCompany
+            InputChannel.Yell, InputChannel.Shout, InputChannel.FreeCompany, InputChannel.Echo,
         ]),
 
         ("Linkshells",
@@ -55,8 +55,7 @@ public static class ChatLogAgent
         .Add("/shout", InputChannel.Shout)
         .Add("/fc", InputChannel.FreeCompany)
         .Add("/freecompany", InputChannel.FreeCompany)
-        .Add("/n", InputChannel.NoviceNetwork)
-        .Add("/novice", InputChannel.NoviceNetwork)
+        .Add("/echo", InputChannel.Echo)
         .Add("/cwl1", InputChannel.CWL1)
         .Add("/cwl2", InputChannel.CWL2)
         .Add("/cwl3", InputChannel.CWL3)
@@ -114,6 +113,7 @@ public static class ChatLogAgent
             XivChatType.CrossLinkShell6 => InputChannel.CWL6,
             XivChatType.CrossLinkShell7 => InputChannel.CWL7,
             XivChatType.CrossLinkShell8 => InputChannel.CWL8,
+            XivChatType.Echo => InputChannel.Echo,
             _ => null
         };
     }

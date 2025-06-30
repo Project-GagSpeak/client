@@ -115,7 +115,7 @@ public class AccountManagerTab
             ImGui.AlignTextToFramePadding();
             CkGui.IconText(FAI.Globe);
             ImUtf8.SameLineInner();
-            CkGui.ColorText(OnFrameworkService.WorldData.Value[(ushort)account.WorldId], isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
+            CkGui.ColorText(OnFrameworkService.WorldData[account.WorldId], isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
             CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaWorldLabel);
 
             var isOnUserSize = CkGui.IconSize(FAI.Fingerprint);
@@ -163,7 +163,7 @@ public class AccountManagerTab
                     else
                     {
                         if (account.SecretKey.Label.IsNullOrEmpty())
-                            account.SecretKey.Label = "Alt Character Key for " + account.CharacterName + " on " + OnFrameworkService.WorldData.Value[(ushort)account.WorldId];
+                            account.SecretKey.Label = $"Alt Character Key for {account.CharacterName} on {OnFrameworkService.WorldData[account.WorldId]}";
                         account.SecretKey.Key = key;
                     }
 

@@ -1,5 +1,6 @@
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.WebAPI;
@@ -14,18 +15,21 @@ public sealed class OwnGlobalsManager
     private readonly GlobalPermissions _globals;
     private readonly KinksterManager _pairs;
     private readonly HardcoreHandler _hcHandler;
+    private readonly NameplateService _nameplates;
     public OwnGlobalsManager(
         ILogger<OwnGlobalsManager> logger,
         GagspeakMediator mediator,
         GlobalPermissions globals,
         KinksterManager pairs,
-        HardcoreHandler hcHandler)
+        HardcoreHandler hcHandler,
+        NameplateService nameplates)
     {
         _logger = logger;
         _mediator = mediator;
         _globals = globals;
         _pairs = pairs;
         _hcHandler = hcHandler;
+        _nameplates = nameplates;
     }
 
     public void ApplyBulkChange(GlobalPerms newGlobals, string enactor)
@@ -41,6 +45,10 @@ public sealed class OwnGlobalsManager
         OnHiddenChatBoxesChange(newGlobals.ChatBoxesHidden, prevGlobals?.ChatBoxesHidden, enactor);
         OnHiddenChatInputChange(newGlobals.ChatInputHidden, prevGlobals?.ChatInputHidden, enactor);
         OnBlockedChatInputChange(newGlobals.ChatInputBlocked, prevGlobals?.ChatInputBlocked, enactor);
+
+        // process a potential gaggedNameplate change.
+        if (!newGlobals.GaggedNameplate.Equals(prevGlobals?.GaggedNameplate))
+            _nameplates.RefreshClientGagState();
     }
 
     public void SingleGlobalPermissionChange(SingleChangeGlobal dto)
@@ -106,6 +114,8 @@ public sealed class OwnGlobalsManager
         // retrieve the previous value, in the case it is a hardcore change.
         var prevValue = dto.NewPerm.Key switch
         {
+            nameof(GlobalPerms.GaggedNameplate) => _globals.Current?.GaggedNameplate.ToString(),
+            nameof(GlobalPerms.HypnosisCustomEffect) => _globals.Current?.HypnosisCustomEffect,
             nameof(GlobalPerms.ForcedFollow) => _globals.Current?.ForcedFollow,
             nameof(GlobalPerms.ForcedEmoteState) => _globals.Current?.ForcedEmoteState,
             nameof(GlobalPerms.ForcedStay) => _globals.Current?.ForcedStay,
@@ -122,24 +132,37 @@ public sealed class OwnGlobalsManager
             return;
         }
 
-        // Handle the hardcore permissions.
+        // Handle the Special permissions.
         switch (dto.NewPerm.Key)
         {
+            case nameof(GlobalPerms.GaggedNameplate):
+                _nameplates.RefreshClientGagState(); // always refresh.
+                break;
+
+            case nameof(GlobalPerms.HypnosisCustomEffect):
+                OnHypnoEffectChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
+                break;
+
             case nameof(GlobalPerms.ForcedFollow):
                 OnForcedFollowChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID, pair);
                 break;
+
             case nameof(GlobalPerms.ForcedEmoteState):
                 OnForcedEmoteChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
                 break;
+
             case nameof(GlobalPerms.ForcedStay):
                 OnForcedStayChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
                 break;
+
             case nameof(GlobalPerms.ChatBoxesHidden):
                 OnHiddenChatBoxesChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
                 break;
+
             case nameof(GlobalPerms.ChatInputHidden):
                 OnHiddenChatInputChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
                 break;
+
             case nameof(GlobalPerms.ChatInputBlocked):
                 OnBlockedChatInputChange((string)dto.NewPerm.Value, prevValue, dto.Enactor.UID);
                 break;
@@ -154,6 +177,13 @@ public sealed class OwnGlobalsManager
 
     private void SendActionEventMessage(string applierNick, string applierUid, string message)
         => _mediator.Publish(new EventMessage(new(applierNick, applierUid, InteractionType.ForcedPermChange, message)));
+
+
+    private void OnHypnoEffectChange(string newPermVal, string? pervVal, string enactor, Kinkster? pair = null)
+    {
+        // Do stuff here later i guess, not really sure.
+    }
+
 
     private void OnForcedFollowChange(string newPermVal, string? prevVal, string enactor, Kinkster? pair = null)
     {

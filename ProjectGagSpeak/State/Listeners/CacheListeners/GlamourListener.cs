@@ -97,11 +97,11 @@ public class GlamourListener : IDisposable
         if (finalizationType is StateFinalizationType.Gearset)
         {
             // if there was not a gearset blocker that means we are just spamming the same gearset, so dont process it.
-            if (!_handler.BlockIpcCalls.HasFlag(IpcBlockReason.Gearset))
-                return;
-
-            _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
-            _handler.OnEquipGearsetFinalized();
+            if (_handler.BlockIpcCalls.HasFlag(IpcBlockReason.Gearset))
+            {
+                _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
+                _handler.OnEquipGearsetFinalized();
+            }
         }
 
         // we can always remove this if it ends up becoming an issue, and isntead making the conditional of storing the cache based if the ipc blockers == 0

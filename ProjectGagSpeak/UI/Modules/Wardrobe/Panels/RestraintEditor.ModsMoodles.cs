@@ -94,7 +94,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus))
         {
-            if (!_manager.ItemInEditor!.RestraintMods.Any(m => m.Label == _selectedPreset.Label))
+            if (!_manager.ItemInEditor!.RestraintMods.Any(m => m.Equals(_selectedPreset.Label)))
                 _manager.ItemInEditor!.RestraintMods.Add(new ModSettingsPreset(_selectedPreset));
         }
 

@@ -34,4 +34,6 @@ public enum InputChannel
     LS6 = 24,
     LS7 = 25,
     LS8 = 26,
+
+    Echo = 56,
 }

@@ -304,6 +304,24 @@ public class CacheStateManager : IHostedService
         );
     }
 
+    // I can almost garentee that removing this without considering for any
+    // active layers will cause issues, handle later, or restrict well.
+    public async Task RemoveRestraintSet(RestraintSet item)
+    {
+        _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer 0");
+        var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, string.Empty, item.Label);
+        await TimedWhenAll($"[{key}] removed from cache and base states restored",
+            RemoveGlamourMeta(key),
+            RemoveModPreset(key),
+            RemoveMoodle(key),
+            RemoveTraits(key),
+            RemoveArousalStrength(key),
+            RemoveBlindfold(key),
+            RemoveHypnoEffect(key)
+        );
+    }
+
+
     // Enabler here is only for logging purposes.
     public async Task RemoveRestraintSetLayers(RestraintSet item, RestraintLayer removed)
     {
@@ -332,22 +350,6 @@ public class CacheStateManager : IHostedService
         );
     }
 
-    // I can almost garentee that removing this without considering for any
-    // active layers will cause issues, handle later, or restrict well.
-    public async Task RemoveRestraintSet(RestraintSet item)
-    {
-        _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer 0");
-        var key = new CombinedCacheKey(ManagerPriority.Restraints, -1, string.Empty, item.Label);
-        await TimedWhenAll($"[{key}] removed from cache and base states restored",
-            RemoveGlamourMeta(key),
-            RemoveModPreset(key),
-            RemoveMoodle(key),
-            RemoveTraits(key),
-            RemoveArousalStrength(key),
-            RemoveBlindfold(key),
-            RemoveHypnoEffect(key)
-        );
-    }
 
     private async Task TimedWhenAll(string label, IEnumerable<Task> tasks)
     {

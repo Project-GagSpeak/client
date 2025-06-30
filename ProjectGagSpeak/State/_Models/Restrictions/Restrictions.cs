@@ -148,7 +148,9 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public Arousal Arousal { get; set; } = Arousal.None;
     public bool DoRedraw { get; set; } = false;
  
-    public RestrictionItem() { }
+    public RestrictionItem()
+    { }
+
     public RestrictionItem(RestrictionItem other, bool keepIdentifier)
     {
         Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();

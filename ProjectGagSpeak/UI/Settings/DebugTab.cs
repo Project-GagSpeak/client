@@ -15,8 +15,8 @@ public class DebugTab
         ("Achievements", [ LoggerType.Achievements, LoggerType.AchievementEvents, LoggerType.AchievementInfo ]),
         ("Hardcore", [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt ]),
         ("Interop / IPC", [ 
-            LoggerType.IpcGagSpeak, LoggerType.IpcMare, LoggerType.IpcPenumbra, 
-            LoggerType.IpcGlamourer, LoggerType.IpcCustomize, LoggerType.IpcMoodles
+            LoggerType.IpcGagSpeak, LoggerType.IpcMare, LoggerType.IpcPenumbra, LoggerType.IpcGlamourer, 
+            LoggerType.IpcCustomize, LoggerType.IpcMoodles, LoggerType.IpcLifestream,
             ]),
         ("MufflerCore", [ LoggerType.GarblerCore, LoggerType.ChatDetours ]),
         ("PlayerClientState", [ 

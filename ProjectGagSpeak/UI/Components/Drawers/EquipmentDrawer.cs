@@ -144,8 +144,9 @@ public class EquipmentDrawer
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.ArrowsLeftRight, GetRestraintItemH(), basicSlot.EquipSlot + "Swapper"))
             {
+                var slot = basicSlot.EquipSlot;
                 _logger.LogTrace($"Swapping {basicSlot.EquipSlot} from Basic to Advanced.");
-                slots[focus] = new RestraintSlotAdvanced() { CustomStains = basicSlot.Stains };
+                slots[focus] = RestraintSlotAdvanced.GetEmpty(slot, basicSlot.Stains);
             }
         }
         else if (restraintSlot is RestraintSlotAdvanced advSlot)

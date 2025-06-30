@@ -364,6 +364,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IpcCallerPenumbra>()
         .AddSingleton<IpcCallerGlamourer>()
         .AddSingleton<IpcCallerCustomize>()
+        .AddSingleton<IpcCallerLifestream>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraChangedItemTooltip>();

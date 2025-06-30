@@ -103,6 +103,8 @@ public class ChatService : DisposableMediatorSubscriberBase
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
 
+        Logger.LogTrace($"Chatbox Message Received: {senderName}@{senderWorld} in {channel} - {msg.TextValue}");
+
         // if we are the sender, return after checking if what we sent matches any of our pairs triggers.
         if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)
         {

@@ -11,6 +11,7 @@ using ImGuiNET;
 using Microsoft.Extensions.Hosting;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;
+using System.Collections.Frozen;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace GagSpeak.Services;
@@ -32,23 +33,20 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
     private bool _isInCutscene = false;
 
     public static short LastCommendationsCount = 0;
-    
+
     // Find a better place for this later i guess.
-    public static LazyList<KeyValuePair<ushort, string>> WorldData { get; private set; }
+    public static FrozenDictionary<ushort, string> WorldData = FrozenDictionary<ushort, string>.Empty;
     public static WorldCombo WorldCombo;
     public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator) 
         : base(logger, mediator)
     {
         _playerCharas = new(StringComparer.Ordinal);
 
-        WorldData = new(() =>
-        {
-            return Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.World>(Dalamud.Game.ClientLanguage.English)!
-                .Where(w => w.IsPublic && !w.Name.IsEmpty)
-                .Select(w => new KeyValuePair<ushort, string>((ushort)w.RowId, w.Name.ToString()))
-                .OrderBy(c => c.Value)
-                .ToList();
-        });
+        WorldData = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.World>(Dalamud.Game.ClientLanguage.English)!
+            .Where(w => w.IsPublic && !w.Name.IsEmpty)
+            .OrderBy(w => w.Name.ToString())
+            .ToFrozenDictionary(w => (ushort)w.RowId, w => w.Name.ToString());
+
         WorldCombo = new(logger);
 
         // This should probably be moved somewhere else idealy but whatever for now.
