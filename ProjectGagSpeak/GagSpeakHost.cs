@@ -177,6 +177,9 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<NameplateService>();
+
+            // Try and make these not required to initialize:
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<DiscoverService>();
         }
         catch (Exception ex)
         {
