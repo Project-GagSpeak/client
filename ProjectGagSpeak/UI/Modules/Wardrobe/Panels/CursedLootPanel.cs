@@ -16,7 +16,10 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui;
 using OtterGui.Text;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class CursedLootPanel : DisposableMediatorSubscriberBase
@@ -77,70 +80,110 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("CursedLootTopRight", drawRegions.TopRight.Size))
             tabMenu.Draw(drawRegions.TopRight.Size);
 
-        // For drawing the grey "selected Item" line.
-        var styler = ImGui.GetStyle();
-        var selectedH = ImGui.GetFrameHeight() * 3 + styler.ItemSpacing.Y * 2 + styler.WindowPadding.Y * 2;
-        var selectedSize = new Vector2(drawRegions.BotRight.SizeX, selectedH);
-        var linePos = drawRegions.BotRight.Pos - new Vector2(styler.WindowPadding.X, 0);
-        var linePosEnd = linePos + new Vector2(styler.WindowPadding.X, selectedSize.Y);
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkColor.FancyHeader.Uint());
-        ImGui.GetWindowDrawList().AddRectFilled(linePos, linePosEnd, CkGui.Color(ImGuiColors.DalamudGrey));
-
+        // Draw the selected Item
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        using (ImRaii.Child("CursedLootBottomRight", drawRegions.BotRight.Size))
-        {
-            DrawSelectedItemInfo(selectedSize, curveSize);
-            DrawCursedLootPool();
-        }
+        DrawSelectedItemInfo(drawRegions.BotRight, curveSize);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+
+        // Shift down and draw the Active items
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
+        DrawCursedLootPool(drawRegions.BotRight.Size - verticalShift);
     }
 
-    private void DrawCursedLootPool()
-    {
-        // Draw out the base window for our padding to be contained within.
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12);
-        using var _ = ImRaii.Child("CursedLootPoolFrame", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysUseWindowPadding);
-        DrawItemPoolInternal();
-    }
-
-    public void DrawItemPoolInternal()
+    private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
         var wdl = ImGui.GetWindowDrawList();
-        var pos = ImGui.GetCursorScreenPos();
-        var style = ImGui.GetStyle();
-        var height = ImGui.GetFrameHeight() + style.FramePadding.Y * 3;
-        var padding = style.WindowPadding;
-        var region = new Vector2(ImGui.GetContentRegionAvail().X, height);
+        var height = CkStyle.GetFrameRowsHeight(3);
+        var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
+        var disableNotSelected = _selector.Selected is null;
+        var IsEditorItem = !disableNotSelected && _selector.Selected?.Identifier == _manager.ItemInEditor?.Identifier;
+        var disableIsActive = _manager.Storage.ActiveItems.Any(gi => gi.Identifier == _selector.Selected?.Identifier);
+        var tooltipAct = disableNotSelected ? "No item selected!" : disableIsActive ? "Item is Active!" : string.Empty; // default tooltip.
+        var tooltip = disableNotSelected ? "No item selected!" : disableIsActive 
+            ? "Cursed Item is Active!" : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm.--SEP-- Right Click to cancel and exit Editor.";
 
-        // Draw the header frame and line
-        wdl.AddRectFilled(pos, pos + new Vector2(region.X, height), CkColor.ElementHeader.Uint(), CkStyle.HeaderRounding(), ImDrawFlags.RoundCornersTop);
-        wdl.AddLine(pos + new Vector2(0, height - 2), pos + new Vector2(region.X, height - 2), CkColor.ElementSplit.Uint(), 2);
+        using var inner = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 
-        // Position content within the header
-        ImGui.SetCursorScreenPos(pos + new Vector2(padding.X * 2, style.FramePadding.Y));
-        using (ImRaii.Group())
+        var pos = ImGui.GetItemRectMin();
+        var imgSize = new Vector2(inner.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+        // Draw the left items.
+        if (_selector.Selected is not null)
+            DrawSelectedInner(imgSize.X);
+
+        // Draw the right image item.
+        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.SetCursorScreenPos(imgDrawPos);
+        if (_selector.Selected is not null)
         {
-            ImUtf8.TextFrameAligned("Pool");
-            ImGui.SameLine(0, ImGui.GetFrameHeight());
-            DrawCursedLootTimeChance(ImGui.GetContentRegionAvail().X - padding.X); // Adjusted available width calculation
+            if (_selector.Selected!.RestrictionRef is GarblerRestriction gagItem)
+                _activeItemDrawer.DrawFramedImage(gagItem.GagType, imgSize.Y, rounding, 0);
+            else if (_selector.Selected!.RestrictionRef is BlindfoldRestriction blindfoldRestrictItem)
+                _activeItemDrawer.DrawRestrictionImage(blindfoldRestrictItem, imgSize.Y, rounding, false);
+            else if (_selector.Selected!.RestrictionRef is RestrictionItem normalRestrictItem)
+                _activeItemDrawer.DrawRestrictionImage(normalRestrictItem, imgSize.Y, rounding, false);
         }
 
-        // Set the cursor screen pos to the end of the group
-        ImGui.SetCursorScreenPos(pos + new Vector2(0, height));
-        using (CkRaii.ChildPadded("LootpoolFrame", ImGui.GetContentRegionAvail().WithoutWinPadding(), CkColor.ElementBG.Uint(), dFlags: ImDrawFlags.RoundCornersBottom))
+        bool DrawLabel()
         {
-            var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
-            using (CkRaii.FramedChildPaddedWH("PoolItems", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint()))
-            {
-                if (allItemsInPool.Count <= 0)
-                    return;
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
+            var label = _selector.Selected is null
+                ? "No Item Selected!" : _selector.Selected.Identifier.Equals(_manager.ItemInEditor?.Identifier)
+                    ? $"{_selector.Selected.Label} - (Editing)" : _selector.Selected.Label;
+            ImUtf8.TextFrameAligned(label);
+            return disableNotSelected || disableIsActive;
+        }
 
-                foreach (var item in allItemsInPool)
-                    DrawLootPoolItem(item, wdl);
+        void BeginEdits(ImGuiMouseButton b)
+        {
+            if (disableNotSelected || disableIsActive)
+                return;
+
+            if (b is ImGuiMouseButton.Right && IsEditorItem)
+                _manager.StopEditing();
+
+            if (b is ImGuiMouseButton.Left)
+            {
+                if (IsEditorItem)
+                    _manager.SaveChangesAndStopEditing();
+                else if (_manager.ItemInEditor is null)
+                    _manager.StartEditing(_selector.Selected!);
             }
         }
     }
 
-    private void DrawLootPoolItem(CursedItem item, ImDrawListPtr wdl)
+
+    private void DrawCursedLootPool(Vector2 region)
+    {
+        // Draw out the base window for our padding to be contained within.
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12);
+        using var c = CkRaii.CustomHeaderChild("##CursedLootPool", region, DrawHeader, ImGui.GetFrameHeight() / 2, HeaderFlags.SizeIncludesHeader);
+
+        // Set the cursor screen pos to the end of the group
+        var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
+        using (CkRaii.FramedChildPaddedWH("PoolItems", c.InnerRegion, CkColor.FancyHeaderContrast.Uint()))
+        {
+            if (allItemsInPool.Count <= 0)
+                return;
+
+            foreach (var item in allItemsInPool)
+                DrawLootPoolItem(item);
+        }
+
+        void DrawHeader()
+        {
+            using var c = CkRaii.ChildPaddedW("##CursedLootHeader", region.X, ImGui.GetFrameHeight());
+
+            ImUtf8.TextFrameAligned("Pool");
+            ImGui.SameLine(0, ImGui.GetFrameHeight());
+            DrawCursedLootTimeChance(ImGui.GetContentRegionAvail().X);
+        }
+    }
+
+    private void DrawLootPoolItem(CursedItem item)
     {
         var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
 
@@ -175,7 +218,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         }
     }
 
-    private void DrawActiveItem(CursedItem item, ImDrawListPtr wdl)
+    private void DrawActiveItem(CursedItem item)
     {
         var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         using var group = ImRaii.Group();

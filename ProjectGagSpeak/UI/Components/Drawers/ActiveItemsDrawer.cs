@@ -333,42 +333,40 @@ public class ActiveItemsDrawer
     public void UnlockItemGroup(CharaActiveRestraint data, RestraintSet? dispData)
     {
         using var group = ImRaii.Group();
-         
-        var isTimer = data.Padlock.IsTimerLock();
-        var size = new Vector2(CkStyle.ThreeRowHeight());
-        var padlockSize = new Vector2(CkStyle.TwoRowHeight());
-        var offsetV = ImGui.GetFrameHeight() / 2;
 
-        // Draw out the framed image first.
+        var isTimer = data.Padlock.IsTimerLock();
+        var size = new Vector2(CkStyle.TwoRowHeight());
+        var offsetV = ImGui.GetFrameHeightWithSpacing() * 0.5f;
+
+        // Go back and show the image.
+        DrawFramedImage(data.Padlock, size.X, size.X / 2);
+
+        // Move over the distance of the framed image.
+        ImGui.SameLine();
         using (ImRaii.Group())
         {
-            DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
-            ImGui.SameLine();
-            using (var c = CkRaii.Child($"UnlockRS-Group", new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.TwoRowHeight())))
-            {
-                var centerWidth = c.InnerRegion.X - ImGui.GetFrameHeight();
-                if (isTimer)
-                    CkGui.CenterColorTextAligned(data.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink, centerWidth);
-                else
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight());
-
-                // Display the unlock row.
-                _restraintPadlocks.DrawUnlockCombo(c.InnerRegion.X, "Attempt to unlock this Padlock!");
-            }
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetV);
+            _restraintPadlocks.DrawUnlockCombo(ImGui.GetContentRegionAvail().X, "Attempt to unlock this Padlock!");
         }
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkColor.FancyHeaderContrast.Uint());
+        ImGui.SameLine();
+        if (data.PadlockAssigner == MainHub.UID && dispData is not null)
+        {
+            _layerEditorClient.Draw("##ClientLayers", data.ActiveLayers, dispData.Layers.Count,
+                (l) => (int)l >= 0 && (int)l < dispData.Layers.Count ? dispData.Layers[(int)l].Label : l.ToString());
+        }
     }
 
-    public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = 0)
+    public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = uint.MaxValue)
     {
         var gagImage = gag is GagType.None ? null : TextureManagerEx.GagImage(gag);
         var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
         DrawImageInternal(gagImage, gagFrame, size, rounding, frameTint);
     }
 
-    public void DrawFramedImage(Padlocks padlock, float size, float rounding, uint frameTint = 0, uint bgCol = 0xFF000000)
+    public void DrawFramedImage(Padlocks padlock, float size, float rounding, uint frameTint = uint.MaxValue, uint bgCol = 0xFF000000)
     {
         var padlockImage = padlock is Padlocks.None ? null : TextureManagerEx.PadlockImage(padlock);
         var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;

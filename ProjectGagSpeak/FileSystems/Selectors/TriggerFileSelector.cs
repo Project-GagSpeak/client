@@ -1,21 +1,16 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
-using Dalamud.Plugin.Services;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
-using GagSpeak.Gui;
-using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
-using ImGuiNET;
-using OtterGui;
-using Dalamud.Interface.Utility.Raii;
-using OtterGui.Text;
-using CkCommons.Widgets;
-using GagSpeak.PlayerClient;
-using GagSpeak.State.Managers;
-using GagSpeak.State.Models;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using CkCommons.Widgets;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
+using ImGuiNET;
+using OtterGui;
 
 namespace GagSpeak.FileSystems;
 
@@ -38,23 +33,17 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     public new TriggerFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public TriggerFileSelector(ILogger<TriggerFileSelector> log, GagspeakMediator mediator,
-        FavoritesManager favorites, TriggerManager manager, TriggerFileSystem fileSystem)
-        : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##TriggerFS")
+    public TriggerFileSelector(GagspeakMediator mediator, FavoritesManager favorites, TriggerManager manager,
+        TriggerFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##TriggerFS")
     {
         Mediator = mediator;
         _favorites = favorites;
         _manager = manager;
 
         Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
-
-        // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
-    }
-
-    private void RenameLeafTrigger(TriggerFileSystem.Leaf leaf)
-    {
-        ImGui.Separator();
-        RenameLeaf(leaf);
+        // Do not subscribe to the default renamer, we only want to rename the item itself.
+        UnsubscribeRightClickLeaf(RenameLeaf);
+        SubscribeRightClickLeaf(RenameTrigger);
     }
 
     private void RenameTrigger(TriggerFileSystem.Leaf leaf)
@@ -75,39 +64,50 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     public override void Dispose()
     {
         base.Dispose();
-        Mediator.Unsubscribe<ConfigTriggerChanged>(this);
+        Mediator.UnsubscribeAll(this);
     }
 
     protected override void DrawLeafInner(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
     {
-        // must be a valid drag-drop source, so use invisible button.
-        ImGui.InvisibleButton("##leaf", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()));
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        ImGui.InvisibleButton("leaf", leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
         var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
-        using (ImRaii.Group())
-        {
-            ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-            ImGui.AlignTextToFramePadding();
-            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
-            ImGui.SameLine();
-            ImGui.Text(leaf.Value.Label);
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
-            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
-                _manager.Delete(leaf.Value);
-            CkGui.AttachToolTip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
-        }
-
-        // the border if selected.
         if (selected)
         {
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+                rectMin,
+                rectMin + leafSize,
+                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
             ImGui.GetWindowDrawList().AddRectFilled(
                 rectMin,
                 new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
                 CkGui.Color(ImGuiColors.ParsedPink), 5);
+        }
+
+        ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
+        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Trigger, leaf.Value.Identifier);
+        CkGui.TextFrameAlignedInline(leaf.Value.Label);
+
+        // Only draw the deletion if the item is not active or occupied.
+        if (!_manager.ActiveTriggers.Contains(leaf.Value))
+        {
+            ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
+            var pos = ImGui.GetCursorScreenPos();
+            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            {
+                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+                _manager.Delete(leaf.Value);
+            }
+            CkGui.AttachToolTip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
     }
 
@@ -119,30 +119,23 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
     {
-        var pos = ImGui.GetCursorPos();
-        var remainingWidth = width
+        return width
             - CkGui.IconButtonSize(FAI.Plus).X
             - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
+    }
 
-        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
-
-        ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FAI.Plus))
+    protected override void DrawCustomFilters()
+    {
+        if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewTrigger");
         CkGui.AttachToolTip("Create a new Trigger.");
 
-        ImUtf8.SameLineInner();
+        ImGui.SameLine(0, 1);
         DrawFolderButton();
-
-        ImGui.SetCursorPos(pos);
-        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
     }
-
     protected override void DrawPopups()
-    {
-        NewTriggerPopup();
-    }
+        => NewTriggerPopup();
 
     private void NewTriggerPopup()
     {

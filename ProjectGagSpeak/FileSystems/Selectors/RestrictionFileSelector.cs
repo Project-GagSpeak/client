@@ -1,21 +1,19 @@
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using CkCommons.FileSystem;
-using CkCommons.FileSystem.Selector;
-using GagSpeak.Gui;
-using CkCommons.Gui.Utility;
-using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
-using CkCommons.Gui;
-using CkCommons.Helpers;
 
 namespace GagSpeak.FileSystems;
 
@@ -42,9 +40,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     public new RestrictionFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public RestrictionFileSelector(ILogger<RestrictionFileSelector> log, GagspeakMediator mediator,
-        FavoritesManager favorites, RestrictionManager manager, RestrictionFileSystem fileSystem)
-        : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
+    public RestrictionFileSelector(GagspeakMediator mediator, FavoritesManager favorites, RestrictionManager manager, 
+        RestrictionFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
     {
         Mediator = mediator;
         _favorites = favorites;
@@ -108,7 +105,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier);
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
-        if(true /*!_manager.ActiveItemsAll.ContainsKey(leaf.Value.Identifier)*/)
+        if(!_manager.ActiveItemsAll.ContainsKey(leaf.Value.Identifier))
         {
             ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
             var pos = ImGui.GetCursorScreenPos();
@@ -144,7 +141,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             ImGui.OpenPopup("##NewRestriction");
         CkGui.AttachToolTip("Create a new Restriction Item.");
 
-        ImUtf8.SameLineInner();
+        ImGui.SameLine(0, 1);
         DrawFolderButton();
     }
 

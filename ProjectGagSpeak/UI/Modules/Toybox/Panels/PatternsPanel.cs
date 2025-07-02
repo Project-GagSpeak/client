@@ -61,7 +61,9 @@ public partial class PatternsPanel
     private void DrawSelectedPattern(CkHeader.DrawRegion region)
     {
         if (_selector.Selected is null)
-            DrawSelectedStatic(region.Size);
+        {
+            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Pattern Selected!", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+        }
         else
             DrawSelectedDisplay(region);
     }
@@ -69,7 +71,6 @@ public partial class PatternsPanel
     private void DrawSelectedDisplay(CkHeader.DrawRegion region)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
-
         var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
         var disabled = _selector.Selected is null || _manager.ActivePattern?.Identifier == _selector.Selected.Identifier;
         var tooltip = disabled
@@ -86,7 +87,7 @@ public partial class PatternsPanel
         bool LabelDraw()
         {
             ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
-            ImGui.SameLine(region.SizeX - ImGui.GetFrameHeight() * 1.5f);
+            ImGui.SameLine((region.SizeX * .7f) - ImGui.GetFrameHeight() * 1.5f);
             CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
             return !IsEditorItem;
         }
@@ -101,11 +102,6 @@ public partial class PatternsPanel
             else
                 _manager.StartEditing(_selector.Selected!);
         }
-    }
-
-    private void DrawSelectedStatic(Vector2 region)
-    {
-        using var _ = CkRaii.LabelChildText(region, .7f, "No Pattern Selected!", ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
     }
 
     // This will draw out the respective information for the pattern info.

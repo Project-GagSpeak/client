@@ -1,22 +1,19 @@
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
+using CkCommons.Gui;
+using CkCommons.Helpers;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using CkCommons.FileSystem;
-using CkCommons.FileSystem.Selector;
-using GagSpeak.Gui;
-using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
 using OtterGuiInternal.Structs;
-using CkCommons.Gui;
-using CkCommons.Helpers;
 
 namespace GagSpeak.FileSystems;
 
@@ -37,7 +34,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
     public new CursedLootFileSystem.Leaf? SelectedLeaf
-    => base.SelectedLeaf;
+        => base.SelectedLeaf;
 
     public CursedLootFileSelector(GagspeakMediator mediator, FavoritesManager favorites, CursedLootManager manager,
         CursedLootFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##CursedLootFS")
@@ -48,13 +45,9 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
         Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnCursedItemChange(msg.Type, msg.Item, msg.OldString));
 
-        // we can add, or unsubscribe from buttons here. Remember this down the line, it will become useful.
-    }
-
-    private void RenameLeafCursedItem(CursedLootFileSystem.Leaf leaf)
-    {
-        ImGui.Separator();
-        RenameLeaf(leaf);
+        // Do not subscribe to the default renamer, we only want to rename the item itself.
+        UnsubscribeRightClickLeaf(RenameLeaf);
+        SubscribeRightClickLeaf(RenameCursedItem);
     }
 
     private void RenameCursedItem(CursedLootFileSystem.Leaf leaf)
@@ -75,7 +68,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     public override void Dispose()
     {
         base.Dispose();
-        Mediator.Unsubscribe<ConfigCursedItemChanged>(this);
+        Mediator.UnsubscribeAll(this);
     }
 
     protected override void DrawLeafInner(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
@@ -111,26 +104,39 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         }
 
         // Contents.
-        using (ImRaii.Group())
-        {
-            ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-            ImGui.AlignTextToFramePadding();
-            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
-            ImGui.SameLine();
-            ImGui.Text(leaf.Value.Label);
-            var currentX = leafSize.X - iconSpacing;
-            ImGui.SameLine(currentX);
-            if (CkGui.IconButton(FAI.Trash, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
-                _manager.Delete(leaf.Value);
-            CkGui.AttachToolTip("Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+        ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
+        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier);
+        CkGui.TextFrameAlignedInline(leaf.Value.Label);
+        // Only draw the deletion if the item is not active or occupied.
+        var isInPool = leaf.Value.InPool;
+        var shiftPressed = KeyMonitor.ShiftPressed();
+        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
 
-            currentX -= iconSpacing;
-            ImGui.SameLine(currentX);
-            var isInPool = leaf.Value.InPool;
-            if (CkGui.IconButton(FAI.ArrowRight, disabled: isInPool, inPopup: true))
-                _manager.TogglePoolState(leaf.Value);
-            CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
+        var currentX = leafSize.X - iconSpacing;
+        ImGui.SameLine(currentX);
+        var pos = ImGui.GetCursorScreenPos();
+        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        var col = (!isInPool && hovering && shiftPressed) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+        if (hovering && shiftPressed && mouseReleased)
+        {
+            Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+            _manager.Delete(leaf.Value);
         }
+        CkGui.AttachToolTip("Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+
+        currentX -= iconSpacing;
+        ImGui.SameLine(currentX);
+        pos = ImGui.GetCursorScreenPos();
+        hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        col = (!isInPool && hovering) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+        CkGui.FramedIconText(FAI.ArrowRight, ImGui.GetColorU32(col));
+        if (hovering && !isInPool && mouseReleased)
+        {
+            Log.Debug($"Adding {leaf.Value.Label} to the Cursed Loot Pool.");
+            _manager.TogglePoolState(leaf.Value);
+        }
+        CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
@@ -140,30 +146,24 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
     {
-        var pos = ImGui.GetCursorPos();
-        var remainingWidth = width
+        return width
             - CkGui.IconButtonSize(FAI.Plus).X
             - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
+    }
 
-        var buttonsPos = new Vector2(pos.X + remainingWidth, pos.Y);
-
-        ImGui.SetCursorPos(buttonsPos);
-        if (CkGui.IconButton(FAI.Plus))
+    protected override void DrawCustomFilters()
+    {
+        if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewCursedItem");
         CkGui.AttachToolTip("Create a new Cursed Item.");
 
-        ImUtf8.SameLineInner();
+        ImGui.SameLine(0, 1);
         DrawFolderButton();
-
-        ImGui.SetCursorPos(pos);
-        return remainingWidth - ImGui.GetStyle().ItemInnerSpacing.X;
     }
 
     protected override void DrawPopups()
-    {
-        NewCursedItemPopup();
-    }
+        => NewCursedItemPopup();
 
     private void NewCursedItemPopup()
     {

@@ -68,16 +68,15 @@ public partial class TriggersPanel
         // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
         {
-            Svc.Logger.Debug("Label Size: ");
-            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Trigger Selected!", ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Trigger Selected!", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
         }
         else
         {
-            DrawSelectedDisplay(region, region.Size);
+            DrawSelectedDisplay(region);
         }
     }
 
-    private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
+    private void DrawSelectedDisplay(CkHeader.DrawRegion region)
     {
         var item = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
         var IsEditorItem = item.Identifier == _manager.ItemInEditor?.Identifier;
@@ -95,7 +94,7 @@ public partial class TriggersPanel
             try
             {
                 var minPos = ImGui.GetItemRectMin();
-                DrawSelectedHeader(labelSize, item, IsEditorItem);
+                DrawSelectedHeader(new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight()), item, IsEditorItem);
 
                 ImGui.SetCursorScreenPos(minPos with { Y = ImGui.GetItemRectMax().Y });
                 DrawTabSelector();
@@ -104,7 +103,7 @@ public partial class TriggersPanel
                 DrawSelectedBody(item, IsEditorItem, frameBgCol);
 
                 ImGui.SetCursorScreenPos(minPos);
-                DrawLabelWithToggle(labelSize, item, IsEditorItem);
+                DrawLabelWithToggle(new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight()), item, IsEditorItem);
             }
             catch (Exception ex)
             {

@@ -135,7 +135,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
         var disabled = _selector.Selected is null || _manager.ActiveItemsAll.ContainsKey(_selector.Selected.Identifier);
-        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click to begin editing!";
+        var tooltipAct = disabled ? "No item selected!" : "Double Click to begin editing!";
 
         using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 

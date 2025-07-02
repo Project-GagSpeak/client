@@ -104,6 +104,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
 
     protected override void DrawCustomFilters()
     {
+        ImGui.SameLine(0, 1);
         DrawFolderButton();
     }
 }

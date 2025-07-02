@@ -148,17 +148,14 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         // display the active padlock for the set in a disabled view.
         using (ImRaii.Group())
         {
-            using (ImRaii.Disabled(!Items[layerIdx].Padlock.IsPasswordLock()))
+            var hint = lastPadlock switch
             {
-                var hint = lastPadlock switch
-                {
-                    Padlocks.CombinationPadlock => "Guess Combo...",
-                    Padlocks.PasswordPadlock => "Guess Password...",
-                    Padlocks.TimerPasswordPadlock => "Guess Password...",
-                    _ => string.Empty,
-                };
-                DrawUnlockFieldSpecial(unlockWidth, hint, lastPadlock.IsTimerLock());
-            }
+                Padlocks.CombinationPadlock => "Guess Combo...",
+                Padlocks.PasswordPadlock => "Guess Password...",
+                Padlocks.TimerPasswordPadlock => "Guess Password...",
+                _ => string.Empty,
+            };
+            DrawUnlockFieldSpecial(unlockWidth, hint, lastPadlock.IsTimerLock());
         }
 
         // draw button thing.
@@ -181,7 +178,8 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             using var _ = ImRaii.Group();
             (ITFlags flags, int len) = SelectedLock == Padlocks.CombinationPadlock ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
             ImGui.SetNextItemWidth(width);
-            ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, (uint)len, flags);
+            using (ImRaii.Disabled(!Items[layerIdx].Padlock.IsPasswordLock()))
+                ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, (uint)len, flags);
 
             using var s = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, ImGui.GetStyle().FramePadding.Y));
             var widthOffset = ImGui.GetFrameHeight() * (isTimer ? 2 : 1);

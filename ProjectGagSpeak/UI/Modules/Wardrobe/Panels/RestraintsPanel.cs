@@ -13,12 +13,8 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
-using System;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -143,7 +139,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var wdl = ImGui.GetWindowDrawList();
         var region = new Vector2(drawRegion.Size.X, WardrobeUI.SelectedRestraintH().AddWinPadY());
         var disabled = _selector.Selected is null || _selector.Selected.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
-        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click me to begin editing!";
+        var tooltipAct = disabled ? "No item selected!" : "Double Click me to begin editing!";
 
         // Draw the inner label child action item.
         using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
@@ -223,11 +219,14 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
     }
 
+    private float GetActiveItemHeight()
+        => _manager.ServerData?.Identifier == Guid.Empty ? ImGui.GetFrameHeight() : CkStyle.GetFrameRowsHeight(8);
+
     private void DrawActiveItemInfo(Vector2 region)
     {
         var appliedSet = _manager.AppliedRestraint;
         var title = appliedSet is not null ? $"Active Set - {appliedSet.Label}" : "Active Restraint Set";
-        using var c = CkRaii.HeaderChild(title, region, HeaderFlags.SizeIncludesHeader);
+        using var c = CkRaii.HeaderChild(title, new Vector2(region.X, GetActiveItemHeight()), HeaderFlags.AddPaddingToHeight);
 
         if (_manager.ServerData is not { } data)
             return;

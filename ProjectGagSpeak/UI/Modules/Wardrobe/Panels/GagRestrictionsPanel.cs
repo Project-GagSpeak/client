@@ -112,8 +112,9 @@ public partial class GagRestrictionsPanel
         var wdl = ImGui.GetWindowDrawList();
         var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
-        var disabled = _selector.Selected is null || _manager.ActiveItems.Values.Any(gi => gi.GagType == _selector.Selected.GagType);
-        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click to begin editing!";
+        var disableNotSelected = _selector.Selected is null;
+        var disableIsActive = _manager.ActiveItems.Values.Any(gi => gi.GagType == _selector.Selected?.GagType);
+        var tooltipAct = disableNotSelected ? "No item selected!" : disableIsActive ? "Item is Active!" : "Double Click to begin editing!";
 
         using var inner = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 
@@ -128,19 +129,21 @@ public partial class GagRestrictionsPanel
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
-            _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding);
+            _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding, 0);
 
         bool DrawLabel()
         {
-            var imgPos = ImGui.GetCursorScreenPos() + new Vector2(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing(), 0);
-            CkGui.TextFrameAlignedInline(_selector.Selected?.GagType.GagName() ?? "No Item Selected!");
+            var imgSize = new Vector2(ImGui.GetFrameHeight());
+            var imgPos = ImGui.GetCursorScreenPos() + new Vector2(((region.X * .6f) - imgSize.X - ImGui.GetStyle().ItemSpacing.X), 0);
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
+            ImUtf8.TextFrameAligned(_selector.Selected?.GagType.GagName() ?? "No Item Selected!");
             // Draw the type of restriction item as an image path here.
             if (_selector.Selected is not null)
             {
                 (var image, var tooltip) = (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!");
-                ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
+                ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, imgSize, tooltip);
             }
-            return _selector.Selected is null;
+            return disableNotSelected || disableIsActive;
         }
 
         void BeginEdits(ImGuiMouseButton b)
