@@ -15,6 +15,7 @@ using OtterGui;
 using OtterGui.Text;
 using CkCommons;
 using CkCommons.Gui;
+using System.Drawing;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
 public partial class ControllerUniquePanel : IDisposable
@@ -113,12 +114,7 @@ public partial class ControllerUniquePanel : IDisposable
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
     {
-        using (ImRaii.Group())
-        {
-            DrawPermissionsBoxHeader(region);
-            ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetItemRectSize().Y));
-            DrawPermissionsBoxBody(region);
-        }
+        DrawPermissionsBox(region);
         var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
         var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
         ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
@@ -132,36 +128,14 @@ public partial class ControllerUniquePanel : IDisposable
         ImGui.GetWindowDrawList().AddRectFilled(botLineTopLeft, botLineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
-    private void DrawPermissionsBoxHeader(CkHeader.DrawRegion drawRegion)
-    {
-        var pos = ImGui.GetCursorPos();
-        var spacing = ImGui.GetStyle().ItemSpacing;
-        using (CkRaii.Child("##PermBoxHeader", new Vector2(drawRegion.SizeX, ImGui.GetFrameHeightWithSpacing()),
-            CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft))
-        {
-            // Ensure the Spacing, and draw the header.
-            ImGui.SameLine(ImGui.GetFrameHeight());
-            var headerText = _helper.SelectedPair is { } pair 
-                ? $"{pair.GetNickAliasOrUid()}'s Settings for You" 
-                : "Select a Kinkster from the 2nd panel first!";
-            ImUtf8.TextFrameAligned(headerText);
-        }
-        var max = ImGui.GetItemRectMax();
-        var linePos = ImGui.GetItemRectMin() with { Y = max.Y - spacing.Y / 2 };
-        ImGui.GetWindowDrawList().AddLine(linePos, linePos with { X = max.X }, CkColor.SideButton.Uint(), spacing.Y);
-    }
-
-    private void DrawPermissionsBoxBody(CkHeader.DrawRegion drawRegion)
+    private void DrawPermissionsBox(CkHeader.DrawRegion region)
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
-        var triggerPhrasesH = ImGui.GetFrameHeightWithSpacing() * 3; // 3 lines of buttons.
-        var spacingsH = spacing.Y * 2;
-        var permissionsH = ImGui.GetFrameHeight() * 4 + spacing.Y * 3;
-        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
-
-        // Create the inner child box.
-        using var child = CkRaii.ChildPaddedW("PermBoxBody", drawRegion.SizeX, childH, CkColor.FancyHeader.Uint(),
-            ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);
+        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3); // 3 lines of buttons.
+        var permissionsH = CkStyle.GetFrameRowsHeight(4);
+        var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
+        var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
+        using var c = CkRaii.LabelChildText(new Vector2(region.SizeX, childH.AddWinPadY()), 1, headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft);
 
         if(_helper.SelectedPair is not { } validPair)
         {
@@ -169,25 +143,22 @@ public partial class ControllerUniquePanel : IDisposable
             return;
         }
 
-        var cursorPos = ImGui.GetCursorPosY();
-        ImGui.Spacing();
-
         // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPaddedW("Triggers", child.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
             PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
 
-        CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpaced(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetMaster] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
-            ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));
+            ImGui.SetCursorPosX(pos.X + (((c.InnerRegion.X / 2) - permissionsH) / 2));
             ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
         }
 
         // Draw out the permission checkboxes
-        ImGui.SameLine(child.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
 
         using (ImRaii.Group())
         {
@@ -206,16 +177,12 @@ public partial class ControllerUniquePanel : IDisposable
                 });
             }
         }
-
-        ImGui.Spacing();
     }
 
     private void DrawExamplesBox(Vector2 region)
     {
         var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        var labelSize = new Vector2(region.X * .7f, ImGui.GetTextLineHeightWithSpacing());
-
-        using (var child = CkRaii.LabelChildText(size, labelSize, "Example Uses", ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
+        using (var child = CkRaii.LabelChildText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");

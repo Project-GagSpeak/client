@@ -172,37 +172,30 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
     private void DrawPermissionsBoxBody(CkHeader.DrawRegion drawRegion)
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
-        var triggerPhrasesH = ImGui.GetFrameHeightWithSpacing() * 3; // 3 lines of buttons.
-        var spacingsH = spacing.Y * 2;
-        var permissionsH = ImGui.GetFrameHeight() * 4 + spacing.Y * 3;
-        var childH = triggerPhrasesH.AddWinPadY() + spacingsH + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
-
-        // Create the inner child box.
-        using var child = CkRaii.ChildPaddedW("PermBoxBody", drawRegion.SizeX, childH, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomLeft);
-
-        var cursorPos = ImGui.GetCursorPosY();
-        ImGui.Spacing();
+        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3); // 3 lines of buttons.
+        var permissionsH = CkStyle.GetFrameRowsHeight(4);
+        var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
+        var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
+        using var c = CkRaii.LabelChildText(new Vector2(drawRegion.SizeX, childH.AddWinPadY()), 1, headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft);
 
         // extract the tabs by splitting the string by comma's
         using (ImRaii.Disabled(_helper.SelectedPair is null))
-            DrawTriggerPhraseBox(child.InnerRegion.X, triggerPhrasesH);
+            DrawTriggerPhraseBox(c.InnerRegion.X, triggerPhrasesH);
 
-        CkGui.SeparatorSpaced(spacing.Y, child.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpaced(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique] is { } wrap)
         {
             var pos = ImGui.GetCursorPos();
-            ImGui.SetCursorPosX(pos.X + (((child.InnerRegion.X / 2) - permissionsH) / 2));
+            ImGui.SetCursorPosX(pos.X + (((c.InnerRegion.X / 2) - permissionsH) / 2));
             ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
         }
 
         // Draw out the permission checkboxes
-        ImGui.SameLine(child.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         
         DrawPuppetPermsGroup(_helper.SelectedPair?.OwnPerms.PuppetPerms ?? PuppetPerms.None);
-
-        ImGui.Spacing();
     }
 
     private void DrawTriggerPhraseBox(float paddedWidth, float height)
@@ -245,9 +238,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
     private void DrawExamplesBox(Vector2 region)
     {
         var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        var labelSize = new Vector2(region.X * .7f, ImGui.GetTextLineHeightWithSpacing());
-
-        using (var child = CkRaii.LabelChildText(size, labelSize, "Example Uses", ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
+        using (var child = CkRaii.LabelChildText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");

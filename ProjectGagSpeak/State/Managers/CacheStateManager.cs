@@ -273,11 +273,58 @@ public class CacheStateManager : IHostedService
         );
     }
 
-    public async Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor)
+    public async Task SwapRestraintSetLayers(RestraintSet item, RestraintLayer added, RestraintLayer removed, string enactor)
     {
         // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
         // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
         var enablerName = _restraints.ServerData is { } serverData ? (serverData.Padlock.IsDevotionalLock() ? serverData.PadlockAssigner : serverData.Enabler) : string.Empty;
+        _logger.LogInformation($"Swapping RestraintSet ({item.Label}) [Added: ({added})] [Removed ({removed})], Enactor: {enactor}, Enabler: [{enablerName}]");
+
+        // Remove all disabled layers.
+        foreach (var idx in removed.GetLayerIndices())
+        {
+            var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
+            _glamourHandler.TryRemGlamourFromCache(layerKey);
+            _modHandler.TryRemModFromCache(layerKey);
+            _moodleHandler.TryRemMoodleFromCache(layerKey);
+            _traitsHandler.TryRemTraitsFromCache(layerKey);
+            _arousalHandler.TryRemArousalFromCache(layerKey);
+            _overlayHandler.TryRemBlindfoldFromCache(layerKey);
+            _overlayHandler.TryRemEffectFromCache(layerKey);
+        }
+
+        // Add all newly enabled layers.
+        foreach (var idx in added.GetLayerIndices())
+        {
+            var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
+            _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
+            _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            _moodleHandler.TryAddMoodleToCache(layerKey, item.GetMoodleAtLayer(idx));
+            _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
+            _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
+            _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
+            _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
+        }
+
+        // Run the updates.
+        await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
+            _glamourHandler.UpdateCaches(),
+            _modHandler.UpdateModCache(),
+            _moodleHandler.UpdateMoodleCache(),
+            _traitsHandler.UpdateTraitCache(),
+            _arousalHandler.UpdateFinalCache(),
+            _overlayHandler.UpdateCaches()
+        );
+    }
+
+    public async Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor)
+    {
+        // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
+        // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
+        var enablerName = _restraints.ServerData is { } serverData 
+            ? (serverData.Padlock.IsDevotionalLock() ? serverData.PadlockAssigner : serverData.Enabler) 
+            : string.Empty;
+
         _logger.LogInformation($"Adding RestraintSet ({item.Label}) Layers ({added}), applied by {enactor} (Enabler Name will go under [{enablerName}]).");
 
         // Add all enabled layers.
@@ -306,8 +353,20 @@ public class CacheStateManager : IHostedService
 
     // I can almost garentee that removing this without considering for any
     // active layers will cause issues, handle later, or restrict well.
-    public async Task RemoveRestraintSet(RestraintSet item)
+    public async Task RemoveRestraintSet(RestraintSet item, RestraintLayer removedLayers)
     {
+        foreach (var idx in removedLayers.GetLayerIndices())
+        {
+            var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), string.Empty, item.Label);
+            _glamourHandler.TryRemGlamourFromCache(layerKey);
+            _modHandler.TryRemModFromCache(layerKey);
+            _moodleHandler.TryRemMoodleFromCache(layerKey);
+            _traitsHandler.TryRemTraitsFromCache(layerKey);
+            _arousalHandler.TryRemArousalFromCache(layerKey);
+            _overlayHandler.TryRemBlindfoldFromCache(layerKey);
+            _overlayHandler.TryRemEffectFromCache(layerKey);
+        }
+
         _logger.LogInformation($"Removing RestraintSet [{item.Label}] from cache at layer 0");
         var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, string.Empty, item.Label);
         await TimedWhenAll($"[{key}] removed from cache and base states restored",

@@ -145,10 +145,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
     public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
 
-    public bool CanApply(Guid id) => ServerData is { } d && d.CanApply();
-    public bool CanLock(Guid id) => ServerData is { } d && d.CanLock();
-    public bool CanUnlock(Guid id) => ServerData is { } d && d.CanUnlock();
-    public bool CanRemove(Guid id) => ServerData is { } d && d.CanRemove();
+    public bool CanApply() => ServerData is { } d && d.CanApply();
+    public bool CanLock() => ServerData is { } d && d.CanLock();
+    public bool CanUnlock() => ServerData is { } d && d.CanUnlock();
+    public bool CanRemove() => ServerData is { } d && d.CanRemove();
 
     #region Active Set Updates
     /// <summary> Applies the restraint set for the defined GUID in the DTO. </summary>
@@ -173,9 +173,30 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         return true;
     }
 
+    /// <summary> Sets a new active layer configuration, both applying and removing some layers. </summary>
+    /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
+    public bool SwapLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added, out RestraintLayer removed)
+    {
+        visualSet = null;
+        added = RestraintLayer.None;
+        removed = RestraintLayer.None;
+
+        if (_serverRestraintData is not { } data)
+            return false;
+
+        // set what layers were added and new.
+        added = updateDto.NewData.ActiveLayers & ~data.ActiveLayers;
+        removed = data.ActiveLayers & ~updateDto.NewData.ActiveLayers;
+        // update the active layers.
+        data.ActiveLayers = updateDto.NewData.ActiveLayers;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, removed, updateDto.Enactor.UID);
+
+        // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
+        return Storage.TryGetRestraint(data.Identifier, out visualSet);
+    }
+
+
     /// <summary> Applies the restraint set layer(s) for the current equipped restraint set. </summary>
-    /// <param name="set"> The restraint set to apply the layers to. </param>
-    /// <param name="added"> The layers that became enabled on the set. </param>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
     public bool ApplyLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
     {
@@ -240,17 +261,21 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
     }
 
-    public bool Remove(string enactor, [NotNullWhen(true)] out RestraintSet? visualSet)
+    public bool Remove(string enactor, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removedLayers)
     {
         visualSet = null;
+        removedLayers = RestraintLayer.None;
+
         if (_serverRestraintData is not { } data)
             return false;
 
         var removedRestraint = data.Identifier;
         var setEnabler = data.Enabler;
+        removedLayers = data.ActiveLayers;
         // Update values, then fire achievements.
         data.Identifier = Guid.Empty;
         data.Enabler = string.Empty;
+        data.ActiveLayers = RestraintLayer.None;
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, removedRestraint, false, enactor);
 
         // set was applied by one person and removed by another where neither was the client.

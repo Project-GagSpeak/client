@@ -209,7 +209,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         {
             // Skip if not player character, if if the player character is null.
             if (h.NamePlateKind is not NamePlateKind.PlayerCharacter || h.PlayerCharacter is not { } pc)
-                return;
+                continue;
 
             // Force the icon to be visible.
             var nmo = (AddonNamePlate.NamePlateObject*)h.NamePlateObjectAddress;
@@ -223,7 +223,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // If they aint tracked, dont do nothin.
             var pnww = PlayerData.GetNameWithWorld(pc);
             if (!TrackedKinksters.TryGetValue(pnww, out var isSpeaking))
-                return;
+                continue;
 
             Logger.LogTrace($"Nameplate for {pnww} is {(isSpeaking ? "speaking" : "not speaking")}");
             LoadTextureToAsset(nameIcon, nameContainer, isSpeaking);
@@ -246,7 +246,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
         // Update the position.
         // (or not i guess because it likes to reload every frame you move your camera so this will be cancer to work with.)
-        //node->SetPositionFloat(((float)parentNode->Width / 2) - (32 / 2), 0f);
+        // node->OriginX += ((float)parentNode->Width / 2) - (32 / 2);
 
         // Release the old texture and replace it with the new one.
         node->PartsList->Parts[0].UldAsset->AtkTexture.ReleaseTexture();

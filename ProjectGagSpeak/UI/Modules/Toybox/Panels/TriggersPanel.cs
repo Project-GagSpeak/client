@@ -65,17 +65,15 @@ public partial class TriggersPanel
 
     private void DrawSelectedTrigger(CkHeader.DrawRegion region)
     {
-        var labelSize = new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight());
-
         // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
         {
-            using var _ = CkRaii.LabelChildText(region.Size, labelSize, "No Trigger Selected!",
-                ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+            Svc.Logger.Debug("Label Size: ");
+            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Trigger Selected!", ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
         }
         else
         {
-            DrawSelectedDisplay(region, labelSize);
+            DrawSelectedDisplay(region, region.Size);
         }
     }
 

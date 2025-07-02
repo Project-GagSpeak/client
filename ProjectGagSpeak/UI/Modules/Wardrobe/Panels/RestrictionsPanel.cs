@@ -17,6 +17,7 @@ using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui.Extensions;
 using OtterGui.Text;
+using System.Windows.Forms;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
@@ -136,7 +137,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var disabled = _selector.Selected is null || _manager.ActiveItemsAll.ContainsKey(_selector.Selected.Identifier);
         var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click to begin editing!";
 
-        using var c = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, disabled, ImDrawFlags.RoundCornersRight);
+        using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(c.InnerRegion.Y);
@@ -159,27 +160,29 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
 
-        void DrawLabel()
+        bool DrawLabel()
         {
-            using var _ = ImRaii.Child("LabelChild", new Vector2(region.X * .6f, ImGui.GetFrameHeight()));
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
-            ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
-            ImGui.SameLine(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing());
-            var imgPos = ImGui.GetCursorScreenPos();
-
-            // Draw the type of restriction item as an image path here.
-            if (_selector.Selected is not null)
+            using (ImRaii.Group())
             {
-                (var image, var tooltip) = _selector.Selected?.Type switch
+                var imgSize = new Vector2(ImGui.GetFrameHeight());
+                var imgPos = ImGui.GetCursorScreenPos() + new Vector2(((region.X * .6f) - imgSize.X - ImGui.GetStyle().ItemSpacing.X), 0);
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
+                ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
+                // Draw the type of restriction item as an image path here.
+                if (_selector.Selected is not null)
                 {
-                    RestrictionType.Gag => (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!"),
-                    RestrictionType.Collar => (CosmeticService.CoreTextures.Cache[CoreTexture.Collar], "This is a Collar Restriction!"),
-                    RestrictionType.Hypnotic => (CosmeticService.CoreTextures.Cache[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
-                    RestrictionType.Blindfold => (CosmeticService.CoreTextures.Cache[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
-                    _ => (CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], "This is a generic Restriction.")
-                };
-                ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
+                    (var image, var tooltip) = _selector.Selected?.Type switch
+                    {
+                        RestrictionType.Gag => (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!"),
+                        RestrictionType.Collar => (CosmeticService.CoreTextures.Cache[CoreTexture.Collar], "This is a Collar Restriction!"),
+                        RestrictionType.Hypnotic => (CosmeticService.CoreTextures.Cache[CoreTexture.HypnoSpiral], "This is a Hypnotic Restriction!"),
+                        RestrictionType.Blindfold => (CosmeticService.CoreTextures.Cache[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
+                        _ => (CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], "This is a generic Restriction.")
+                    };
+                    ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, imgSize, tooltip);
+                }
             }
+            return _selector.Selected is null; // add other conditionals later.
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -231,18 +234,22 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             // Spacing.
             if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
-            // Slot Display.
+            // if no item is selected, display the unique 'Applier' group.
             if (data.Identifier == Guid.Empty)
-                _activeItemDrawer.ApplyItemGroup(index, data);
-            else
             {
-                if (_manager.ActiveItems.TryGetValue(index, out var item))
-                {
-                    if (data.IsLocked())
-                        _activeItemDrawer.UnlockItemGroup(index, data, item);
-                    else
-                        _activeItemDrawer.LockItemGroup(index, data, item);
-                }
+                _activeItemDrawer.ApplyItemGroup(index, data);
+                continue;
+            }
+
+            // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
+            if (_manager.ActiveItems.TryGetValue(index, out var item))
+            {
+                // If the padlock is currently locked, show the 'Unlocking' group.
+                if (data.IsLocked())
+                    _activeItemDrawer.UnlockItemGroup(index, data, item);
+                // Otherwise, show the 'Locking' group. Locking group can still change applied items.
+                else
+                    _activeItemDrawer.LockItemGroup(index, data, item);
             }
         }
     }

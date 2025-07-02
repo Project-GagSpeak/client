@@ -501,8 +501,8 @@ public sealed class AliasItemDrawer
             ImUtf8.SameLineInner();
             if (_restraintCombo.Draw("##RestraintSelector", action.RestrictionId, 120f, CFlags.NoArrowButton))
             {
-                if (!action.RestrictionId.Equals(_restrictionCombo.Current?.Identifier))
-                    action.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
+                if (!action.RestrictionId.Equals(_restraintCombo.Current?.Identifier))
+                    action.RestrictionId = _restraintCombo.Current?.Identifier ?? Guid.Empty;
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 action.RestrictionId = Guid.Empty;

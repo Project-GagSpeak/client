@@ -65,6 +65,9 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
         return Draw(label, preview, tooltip, ref CurrentSelectionIdx, previewWidth, itemHeight, flags, customSearchBg);
     }
 
+    public bool DrawPopup(string label, Vector2 openPos, float itemHeight, uint? customSearchBg = null)
+        => DrawPopup(label, openPos, ref CurrentSelectionIdx, itemHeight, customSearchBg);
+
     /// <summary> Fires an event that gives us the previous and new selection. </summary>
     public event Action<T?, T?>? SelectionChanged;
 }

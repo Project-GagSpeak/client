@@ -87,6 +87,9 @@ public sealed class ModSettingsPreset : IModSettingPreset, IEquatable<ModSetting
         return (Container.ModName == other.Container.ModName);
     }
 
+    public override int GetHashCode()
+        => Container.ModName.GetHashCode();
+
     public string SelectedOption(string group)
         => ModSettings.TryGetValue(group, out var selected) ? selected[0] : string.Empty;
 

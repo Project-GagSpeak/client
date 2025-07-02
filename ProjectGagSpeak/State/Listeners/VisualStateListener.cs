@@ -232,6 +232,20 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestraint, itemData.NewData.Identifier + " was applied to you!");
     }
 
+    /// <summary> Updates the active Restraint Set's layers with a new configuration. Triggering removal and application of certain layers. </summary>
+    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
+    public async Task SwapRestraintLayers(KinksterUpdateRestraint itemData)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        Logger.LogTrace("Received SwapRestraintLayer instruction from server!", LoggerType.Gags);
+        if (_restraints.SwapLayers(itemData, out var restraintSet, out var removedLayers, out var addedLayers))
+            await _cacheManager.SwapRestraintSetLayers(restraintSet, removedLayers, addedLayers, itemData.Enactor.UID);
+        PostActionMsg(itemData.Enactor.UID, InteractionType.SwappedRestraintLayers, "Restraint Layers were swapped to a new configuration!");
+
+    }
+
     /// <summary> Applies a Restraint set layer(s) to the client. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task ApplyRestraintLayers(KinksterUpdateRestraint itemData)
@@ -287,8 +301,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveRestraint instruction from server!", LoggerType.Gags);
-        if (_restraints.Remove(itemData.Enactor.UID, out var restraintSet))
-            await _cacheManager.RemoveRestraintSet(restraintSet);
+        if (_restraints.Remove(itemData.Enactor.UID, out var restraintSet, out var removedLayers))
+            await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
 
         PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestraint, "A Restriction item was removed from you!");
     }

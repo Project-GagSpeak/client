@@ -45,14 +45,14 @@ public class ModPresetsUI : WindowMediatorSubscriberBase
         // define initial size of window and to not respect the close hotkey.
         this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(550, 470),
+            MinimumSize = new Vector2(LeftLength + ModPresetsPanel.PresetSelectorWidth + 225f, 300),
             MaximumSize = ImGui.GetIO().DisplaySize,
         };
         RespectCloseHotkey = false;
     }
 
     private bool ThemePushed = false;
-    private static float LeftLength = 250f * ImGuiHelpers.GlobalScale;
+    private static float LeftLength = 225f * ImGuiHelpers.GlobalScale;
 
     protected override void PreDrawInternal()
     {

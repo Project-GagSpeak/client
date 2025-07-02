@@ -138,8 +138,11 @@ public static class RestraintExtentions
         if (idx < 0 || idx >= set.Layers.Count)
             return null;
 
-        return set.Layers[idx] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Mod) && l.IsValid() && l.Ref.Mod.HasData
-            ? l.Ref.Mod : null;
+        if(set.Layers[idx] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Mod) && l.IsValid() && l.Ref.Mod.HasData)
+            return l.Ref.Mod;
+        else if (set.Layers[idx] is ModPresetLayer mpl && mpl.Mod.HasData)
+            return mpl.Mod;
+        return null;
     }
 
 

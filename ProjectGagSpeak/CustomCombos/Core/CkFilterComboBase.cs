@@ -1,3 +1,4 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using ImGuiNET;
 using OtterGui;
@@ -90,6 +91,39 @@ public abstract class CkFilterComboBase<T>
 
     // Maybe remove later, unsure what purpose this serves.
     protected virtual void PostCombo(float previewWidth) { }
+
+    private void DrawComboPopup(string label, Vector2 openPos, int currentSelected, float itemHeight, uint? customSearchBg = null)
+    {
+        // Begin the popup thingy.
+        ImGui.SetNextWindowPos(openPos);
+        using var popup = ImRaii.Popup(label, ImGuiWindowFlags.AlwaysAutoResize);
+        var id = ImGui.GetID(label);
+        if (popup)
+        {
+            // Appends the popup to display the window of items when opened.
+            _popupState.Add(id);
+            // Updates the filter to have the correct _available indexes.
+            UpdateFilter();
+
+            var width = GetFilterWidth();
+
+            // Draws the filter and updates the scroll to the selected items.
+            DrawFilter(currentSelected, width, customSearchBg);
+
+            // Draws the remaining list of items.
+            // If any items are selected, they are stored in `NewSelection`.
+            // `NewSelection` is cleared at the end of the parent DrawFunction.
+            DrawList(width, itemHeight);
+            // If we should close the popup (after selection), do so.
+            ClosePopup(id, label);
+        }
+        else if (_popupState.Remove(id))
+        {
+            // Clear the storage if the popup state can be removed. (We closed it)
+            ClearStorage(label);
+        }
+    }
+
 
     /// <summary> Called by the filter combo base Draw() call. Handles updates and changed items. </summary>
     private void DrawCombo(string label, string preview, string tooltip, int currentSelected, float previewWidth, float itemHeight,
@@ -230,7 +264,19 @@ public abstract class CkFilterComboBase<T>
         DrawCombo(label, preview, tooltip, currentSelection, previewWidth, itemHeight, flags, customSearchBg);
         if (NewSelection is null)
             return false;
+        currentSelection = NewSelection.Value;
+        NewSelection = null;
+        return true;
+    }
 
+    public virtual bool DrawPopup(string label, Vector2 openPos, ref int currentSelection, float itemHeight, uint? customSearchBg = null)
+    {
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+
+        DrawComboPopup(label, openPos, currentSelection, itemHeight, customSearchBg);
+        if (NewSelection is null)
+            return false;
         currentSelection = NewSelection.Value;
         NewSelection = null;
         return true;

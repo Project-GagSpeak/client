@@ -104,7 +104,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
 
     #region Validators
-    public bool CanApply(int layer, GagType newGag) => ServerGagData is { } data && data.GagSlots[layer].CanApply();
+    public bool CanApply(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanApply();
     public bool CanLock(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanLock();
     public bool CanUnlock(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanUnlock();
     public bool CanRemove(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanRemove();

@@ -68,21 +68,18 @@ public partial class AlarmsPanel
 
     private void DrawSelectedAlarm(CkHeader.DrawRegion region)
     {
-        var labelSize = new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight());
-
         // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
         {
-            using var _ = CkRaii.LabelChildText(region.Size, labelSize, "No Alarm Selected!",
-                ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Alarm Selected!", ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
         }
         else
         {
-            DrawSelectedDisplay(region, labelSize);
+            DrawSelectedDisplay(region);
         }
     }
 
-    private void DrawSelectedDisplay(CkHeader.DrawRegion region, Vector2 labelSize)
+    private void DrawSelectedDisplay(CkHeader.DrawRegion region)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
 
@@ -93,19 +90,19 @@ public partial class AlarmsPanel
             : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm. "
             + "--SEP-- Right Click to cancel and exit Editor.";
 
-        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, dFlag: DFlags.RoundCornersRight))
+        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, .7f, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight))
         {
             using (ImRaii.Child("Alarm_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
                 DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
         }
 
-        void LabelDraw()
+        bool LabelDraw()
         {
-            ImGui.Dummy(labelSize);
             ImGui.SetCursorScreenPos(region.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
             ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
-            ImGui.SameLine(labelSize.X - ImGui.GetFrameHeight() * 1.5f);
+            ImGui.SameLine(region.SizeX * .7f - (ImGui.GetFrameHeight() * 1.5f));
             CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
+            return _selector.Selected is null;
         }
 
         void BeginEdits(ImGuiMouseButton b)

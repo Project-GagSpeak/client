@@ -112,9 +112,10 @@ public partial class GagRestrictionsPanel
         var wdl = ImGui.GetWindowDrawList();
         var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
-        var tooltipAct = "Double Click me to begin editing!";
+        var disabled = _selector.Selected is null || _manager.ActiveItems.Values.Any(gi => gi.GagType == _selector.Selected.GagType);
+        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click to begin editing!";
 
-        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
+        using var inner = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y);
@@ -129,20 +130,17 @@ public partial class GagRestrictionsPanel
         if (_selector.Selected is not null)
             _activeItemDrawer.DrawFramedImage(_selector.Selected!.GagType, imgSize.Y, rounding);
 
-        void DrawLabel()
+        bool DrawLabel()
         {
-            using var _ = ImRaii.Child("LabelChild", new Vector2(region.X * .6f, ImGui.GetFrameHeight()));
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
-            ImUtf8.TextFrameAligned(_selector.Selected?.GagType.GagName() ?? "No Item Selected!");
-            ImGui.SameLine(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing());
-            var imgPos = ImGui.GetCursorScreenPos();
-
+            var imgPos = ImGui.GetCursorScreenPos() + new Vector2(region.WithoutWinPadding().X * .6f - ImGui.GetFrameHeightWithSpacing(), 0);
+            CkGui.TextFrameAlignedInline(_selector.Selected?.GagType.GagName() ?? "No Item Selected!");
             // Draw the type of restriction item as an image path here.
             if (_selector.Selected is not null)
             {
                 (var image, var tooltip) = (CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], "This is a Gag Restriction!");
                 ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, new Vector2(ImGui.GetFrameHeight()), tooltip);
             }
+            return _selector.Selected is null;
         }
 
         void BeginEdits(ImGuiMouseButton b)

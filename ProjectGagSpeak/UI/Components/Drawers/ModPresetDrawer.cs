@@ -130,9 +130,9 @@ public sealed class ModPresetDrawer
         {
             using (UiFontService.GagspeakLabelFont.Push())
             {
-                var offset = (region.X - ImGui.CalcTextSize("Previewing Settings").X) / 2;
+                var offset = (region.X - ImGui.CalcTextSize("Previewing").X) / 2;
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-                CkGui.OutlinedFont("Previewing Settings", CkGui.Color(ImGuiColors.DalamudRed), 0xFF000000, 2);
+                CkGui.OutlinedFont("Previewing", CkGui.Color(ImGuiColors.DalamudRed), 0xFF000000, 2);
             }
 
             DrawPresetPreviewInner(preset);

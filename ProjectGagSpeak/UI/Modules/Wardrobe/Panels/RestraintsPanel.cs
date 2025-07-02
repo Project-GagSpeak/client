@@ -13,9 +13,12 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui.Text;
+using System;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -140,24 +143,29 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var wdl = ImGui.GetWindowDrawList();
         var region = new Vector2(drawRegion.Size.X, WardrobeUI.SelectedRestraintH().AddWinPadY());
         var disabled = _selector.Selected is null || _selector.Selected.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
-        var tooltipAct = "Double Click me to begin editing!";
+        var tooltipAct = disabled ? "Cannot edit an Active Item!" : "Double Click me to begin editing!";
 
         // Draw the inner label child action item.
-        using var inner = CkRaii.LabelChildAction("SelItem", region, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, dFlag: ImDrawFlags.RoundCornersRight);
+        using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
-        var imgSize = new Vector2(inner.InnerRegion.Y / 1.2f, inner.InnerRegion.Y);
-        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+        var imgSize = new Vector2(c.InnerRegion.Y / 1.2f, c.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + c.InnerRegion.X - imgSize.X };
         // Draw the left item stuff.
         if (_selector.Selected is not null)
-            DrawSelectedInner(drawRegion, rounding, imgSize.X);
+        {
+            var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
+            DrawAttributeRow();
+            _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+            _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
+        }
 
         // Draw the right image item.
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            _activeItemDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding, true);
+            _activeItemDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
             if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
@@ -166,11 +174,12 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
         }
 
-        void DrawLabel()
+        // return if the label should be disabled.
+        bool DrawLabel()
         {
-            using var _ = ImRaii.Child("LabelChild", new Vector2(region.X * .6f, ImGui.GetFrameHeight()));
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
             ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
+            return _selector.Selected is null || IsEditing;
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -183,20 +192,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         }
     }
 
-    private void DrawSelectedInner(CkHeader.DrawRegion drawRegion, float rounding, float rightOffset)
-    {
-        using var innerGroup = ImRaii.Group();
-        var maxWidth = drawRegion.Size.X - rightOffset - ImGui.GetStyle().WindowPadding.X * 2;
-
-        DrawAttributeRow();
-        DrawLayerRow();
-
-        _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
-
-        // Draw out the moodles row to finalize it off, only up to 7. (reduce to only base moodles if this proves an issue with drawtime too much)
-        _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
-    }
-
     private void DrawAttributeRow()
     {
         using var _ = ImRaii.Group();
@@ -205,87 +200,52 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var trueCol = 0xFFFFFFFF;
         var falseCol = CkColor.FancyHeaderContrast.Uint();
 
-        var layers = sel.Layers.Count > 0;
-        var mods = sel.RestraintMods.Count > 0;
-        var moodles = sel.RestraintMoodles.Count > 0;
-        var meta = !sel.MetaStates.Equals(MetaDataStruct.Empty);
-        var redraws = sel.DoRedraw;
-        var traits = sel.Traits != 0;
-        var arousal = sel.Arousal != 0;
+        var attrs = new (FAI Icon, bool Condition, string Tooltip)[]
+{
+            (FAI.LayerGroup,      sel.Layers.Count > 0,                         "This Restraint has layers"),
+            (FAI.FileDownload,    sel.RestraintMods.Count > 0,                  "This Set has attached Mods"),
+            (FAI.TheaterMasks,    sel.RestraintMoodles.Count > 0,               "This Set has attached Moodles"),
+            (FAI.Glasses,         !sel.MetaStates.Equals(MetaDataStruct.Empty), "This Set is forcing Metadata states."),
+            (FAI.Repeat,          sel.DoRedraw,                                 "This Set redraws the player upon application / removal."),
+            (FAI.PersonRays,      sel.Traits != 0,                              "This Set applies Hardcore Traits when set by allowed kinksters."),
+            (FAI.Heartbeat,       sel.Arousal != 0,                             "This Set increases arousal levels."),
+};
 
-        CkGui.FramedIconText(FAI.LayerGroup, layers ? trueCol : falseCol);
-        CkGui.AttachToolTip(layers ? "This Restraint has layers" : string.Empty);
+        foreach (var (icon, condition, tooltip) in attrs)
+            DrawAttrIcon(icon, condition, tooltip);
 
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.FileDownload, mods ? trueCol : falseCol);
-        CkGui.AttachToolTip(mods ? "This Set has attached Mods" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.TheaterMasks, moodles ? trueCol : falseCol);
-        CkGui.AttachToolTip(moodles ? "This Set has attached Moodles" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.Glasses, meta ? trueCol : falseCol);
-        CkGui.AttachToolTip(meta ? "This Set is forcing Metadata states." : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.Repeat, redraws ? trueCol : falseCol);
-        CkGui.AttachToolTip(redraws ? "This Set redraws the player upon application / removal." : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.PersonRays, traits ? trueCol : falseCol);
-        CkGui.AttachToolTip(traits ? "This Set applies Hardcore Traits when set by allowed kinksters." : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.Heartbeat, arousal ? trueCol : falseCol);
-        CkGui.AttachToolTip(arousal ? "This Set increases arousal levels." : string.Empty);
-    }
-
-    private void DrawLayerRow()
-    {
-        using var _ = ImRaii.Group();
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(2, ImGui.GetStyle().ItemInnerSpacing.Y));
-        var sel = _selector.Selected!;
-        var trueCol = 0xFFFFFFFF;
-        var falseCol = CkColor.FancyHeaderContrast.Uint();
-
-        var layerCount = sel.Layers.Count;
-
-        CkGui.FramedIconText(FAI.DiceOne, layerCount > 0 ? trueCol : falseCol);
-        CkGui.AttachToolTip(layerCount > 0 ? "Layer 1 Exists" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.DiceTwo, layerCount > 1 ? trueCol : falseCol);
-        CkGui.AttachToolTip(layerCount > 1 ? "Layer 2 Exists" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.DiceThree, layerCount > 2 ? trueCol : falseCol);
-        CkGui.AttachToolTip(layerCount > 2 ? "Layer 3 Exists" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.DiceFour, layerCount > 3 ? trueCol : falseCol);
-        CkGui.AttachToolTip(layerCount > 3 ? "Layer 4 Exists" : string.Empty);
-
-        ImUtf8.SameLineInner();
-        CkGui.FramedIconText(FAI.DiceFive, layerCount > 4 ? trueCol : falseCol);
-        CkGui.AttachToolTip(layerCount > 4 ? "Layer 5 Exists" : string.Empty);
-    }
-
-    private void DrawActiveItemInfo(Vector2 regiun)
-    {
-        var labelSize = new Vector2(regiun.X * .7f, ImGui.GetTextLineHeightWithSpacing());
-
-        using (var c = CkRaii.LabelChildText(regiun, labelSize, "Active Restraint Set", ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight))
+        // Helper func.
+        void DrawAttrIcon(FAI icon, bool condition, string tooltip)
         {
-            if (_manager.ServerData is not { } activeSet)
-                return;
-            
-            
-            _activeItemDrawer.ApplyRestraintSetGroup(activeSet);
-            if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
-            {
-                Mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
-            }
+            CkGui.FramedIconText(icon, condition ? trueCol : falseCol);
+            CkGui.AttachToolTip(condition ? tooltip : string.Empty);
+            ImUtf8.SameLineInner();
+        }
+    }
+
+    private void DrawActiveItemInfo(Vector2 region)
+    {
+        var appliedSet = _manager.AppliedRestraint;
+        var title = appliedSet is not null ? $"Active Set - {appliedSet.Label}" : "Active Restraint Set";
+        using var c = CkRaii.HeaderChild(title, region, HeaderFlags.SizeIncludesHeader);
+
+        if (_manager.ServerData is not { } data)
+            return;
+
+        // if no item is selected, display the unique 'Applier' group.
+        if (data.Identifier == Guid.Empty)
+        {
+            _activeItemDrawer.ApplyItemGroup(data);
+            return;
+        }
+
+        // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
+        if (_manager.AppliedRestraint is { } item)
+        {
+            if (data.IsLocked())
+                _activeItemDrawer.UnlockItemGroup(data, item);
+            else
+                _activeItemDrawer.LockItemGroup(data, item);
         }
     }
 

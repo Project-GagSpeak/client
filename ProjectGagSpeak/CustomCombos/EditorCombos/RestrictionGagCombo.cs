@@ -50,6 +50,14 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
         return Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags, searchBg);
     }
 
+    public bool DrawPopup(string label, GagType current, float width, Vector2 drawPos, uint? searchBg = null)
+    {
+        InnerWidth = width * 1.25f;
+        _currentGag = current;
+        
+        return DrawPopup(label, drawPos, ImGui.GetTextLineHeightWithSpacing(), searchBg);
+    }
+
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)

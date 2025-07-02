@@ -3,6 +3,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Padlock;
 
@@ -11,7 +12,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     private readonly GagspeakMediator _mediator;
     private readonly RestraintManager _manager;
     public PadlockRestraintsClient(ILogger log, GagspeakMediator mediator, RestraintManager manager)
-        : base([ manager.ServerData ?? new CharaActiveRestraint() ], log)
+        : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], log)
     {
         _mediator = mediator;
         _manager = manager;
@@ -24,13 +25,13 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";
 
     protected override bool DisableCondition(int _)
-        => !Items[0].CanLock() || Items[0].Padlock == SelectedLock;
+        => Items[0].Identifier == Guid.Empty;
 
     public void DrawLockCombo(float width, string tooltip)
-    => DrawLockCombo("ClientRestraintLock", width, 0, string.Empty, tooltip, false);
+        => DrawLockCombo("##ClientRestraintLock", width, 0, string.Empty, tooltip, true);
 
     public void DrawUnlockCombo(float width, string tooltip)
-        => DrawUnlockCombo("ClientRestraintUnlock", width, 0, string.Empty, tooltip);
+        => DrawUnlockCombo("##ClientRestraintUnlock", width, 0, string.Empty, tooltip);
 
     protected override Task<bool> OnLockButtonPress(int _)
     {

@@ -9,6 +9,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -48,13 +49,13 @@ public class ModPresetsPanel
         ImGui.TextUnformatted("Mod Preset Manager");
     }
 
+    public static float PresetSelectorWidth => 200f * ImGuiHelpers.GlobalScale;
+
     public void DrawPresetEditor()
     {
         using var group = ImRaii.Group();
         // Create two sub components here, a preset selector and a preset editor.
-        var presetSelectorH = ImGui.GetFrameHeightWithSpacing() * 3;
-        var headerName = _selector.SelectedContainer.ModName.IsNullOrEmpty() ? "Select a Mod to view its Presets" : _selector.SelectedContainer.ModName;
-        using (CkRaii.HeaderChild(headerName, new Vector2(ImGui.GetContentRegionAvail().X, presetSelectorH), HeaderFlags.AddPaddingToHeight))
+        using (CkRaii.HeaderChild("Presets For Mod", new Vector2(PresetSelectorWidth, ImGui.GetContentRegionAvail().Y), HeaderFlags.SizeIncludesHeader))
             DrawPresetListForSelected();
 
         if (!_selector.SelectedContainer.ModPresets.Any(p => p.Label == _selectedPreset))
@@ -63,9 +64,10 @@ public class ModPresetsPanel
         var editingPreset = _manager.ItemInEditor is not null;
         var icon = editingPreset ? FAI.Save : FAI.Edit;
 
+        ImGui.SameLine();
         if (_selectedPreset.IsNullOrEmpty())
         {
-            using (CkRaii.HeaderChild("Customize Settings", ImGui.GetContentRegionAvail(), HeaderFlags.SizeIncludesHeader))
+            using (CkRaii.HeaderChild("Customize Settings", ImGui.GetContentRegionAvail(), CkStyle.HeaderRounding(), HeaderFlags.SizeIncludesHeader))
                 _modDrawer.DrawPresetEditor();
         }
         else
@@ -170,7 +172,7 @@ public class ModPresetsPanel
         {
             var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("New Preset").X) / 2;
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-            ImGui.TextUnformatted("New Preset");
+            ImUtf8.TextFrameAligned("New Preset");
         }
         var hovered = ImGui.IsItemHovered();
         var min = ImGui.GetItemRectMin();

@@ -22,15 +22,13 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     public AchievementsUI(ILogger<AchievementsUI> logger, GagspeakMediator mediator,
         AchievementTabs tabMenu, CosmeticService textures)
-        : base(logger, mediator, "###AchievementsUI")
+        : base(logger, mediator, "Achievements###AchievementsUI")
     {
         _tabMenu = tabMenu;
         _textures = textures;
 
         AllowPinning = false;
         AllowClickthrough = false;
-
-        WindowName = $"Achievements###GagSpeakAchievementsUI";
 
         Flags |= WFlags.NoDocking;
 
@@ -163,14 +161,11 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(availableWidth - clearButtonSize - spacingX);
         var filter = AchievementSearchString;
         if (ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref filter, 255))
-        {
             AchievementSearchString = filter;
-        }
+
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
-        {
             AchievementSearchString = string.Empty;
-        }
         CkGui.AttachToolTip("Clear the search filter.");
     }
 
@@ -180,11 +175,11 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     {
         // set up the style theme for the box.
         //using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(ImGui.GetStyle().WindowPadding.X, 3f));
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
         //using var itemSpacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 2f));
-        using var borderSize = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
+            .Push(ImGuiStyleVar.WindowBorderSize, 1f);
+        using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
+            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
         var imageTabWidth = AchievementIconSize.X + ImGui.GetStyle().ItemSpacing.X * 2;
 
@@ -196,7 +191,8 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                 // draw out a table that is 2 columns, and display the subsections in each column
                 using (var table = ImRaii.Table("##AchievementTable" + achievementItem.Title, 2, ImGuiTableFlags.RowBg))
                 {
-                    if (!table) return;
+                    if (!table)
+                        return;
 
                     ImGui.TableSetupColumn("##AchievementText", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("##AchievementIcon", ImGuiTableColumnFlags.WidthFixed, AchievementIconSize.X);
@@ -236,39 +232,21 @@ public class AchievementsUI : WindowMediatorSubscriberBase
                     // underneath this, we should draw the current progress towards the goal.
                     DrawProgressForAchievement(achievementItem);
                     if(ImGui.IsItemHovered() && achievementItem is DurationAchievement)
-                    {
                         CkGui.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
-                    }
 
                     // draw the text in the second column.
                     ImGui.TableNextColumn();
-                    // we should fetch the cached image from our texture cache service
-                    var achievementCosmetic = CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg];
                     // Ensure its a valid texture wrap
-                    if (!(achievementCosmetic is { } wrap))
-                    {
-                        _logger.LogWarning("Failed to render image!");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            ImGui.Image(wrap.ImGuiHandle, AchievementIconSize);
-
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError(e, "Failed to draw achievement icon.");
-                        }
-                    }
-                } // End of Table
+                    if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
+                        ImGui.Image(wrap.ImGuiHandle, AchievementIconSize);
+                }
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Failed to draw achievement progress box.");
             }
 
-        } // End of Achievement Child Window
+        }
     }
 
 
