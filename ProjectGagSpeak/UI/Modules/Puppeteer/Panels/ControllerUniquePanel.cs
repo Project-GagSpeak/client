@@ -135,13 +135,11 @@ public partial class ControllerUniquePanel : IDisposable
         var permissionsH = CkStyle.GetFrameRowsHeight(4);
         var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
         var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
-        using var c = CkRaii.LabelChildText(new Vector2(region.SizeX, childH.AddWinPadY()), 1, headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft);
+        
+        using var c = CkRaii.ChildLabelTextFull(new Vector2(region.SizeX, childH), headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
         if(_helper.SelectedPair is not { } validPair)
-        {
-            ImGuiUtil.Center("No Kinkster Selected!");
             return;
-        }
 
         // extract the tabs by splitting the string by comma's
         using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
@@ -182,7 +180,7 @@ public partial class ControllerUniquePanel : IDisposable
     private void DrawExamplesBox(Vector2 region)
     {
         var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        using (var child = CkRaii.LabelChildText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
+        using (var child = CkRaii.ChildLabelText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");

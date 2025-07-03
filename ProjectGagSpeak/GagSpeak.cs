@@ -42,6 +42,7 @@ using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Toybox;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -265,7 +266,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ChatService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DataDistributionService>()
-        .AddSingleton<DiscoverService>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
         .AddSingleton<ItemService>()
@@ -340,6 +340,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<HypnoEffectEditor>()
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
+        .AddSingleton<GlobalChatLog>()
 
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()

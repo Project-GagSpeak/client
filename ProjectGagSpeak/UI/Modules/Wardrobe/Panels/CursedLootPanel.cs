@@ -95,26 +95,30 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var wdl = ImGui.GetWindowDrawList();
-        var height = CkStyle.GetFrameRowsHeight(3);
+        var height = CkStyle.GetFrameRowsHeight(2);
         var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
-        var disableNotSelected = _selector.Selected is null;
-        var IsEditorItem = !disableNotSelected && _selector.Selected?.Identifier == _manager.ItemInEditor?.Identifier;
-        var disableIsActive = _manager.Storage.ActiveItems.Any(gi => gi.Identifier == _selector.Selected?.Identifier);
-        var tooltipAct = disableNotSelected ? "No item selected!" : disableIsActive ? "Item is Active!" : string.Empty; // default tooltip.
-        var tooltip = disableNotSelected ? "No item selected!" : disableIsActive 
-            ? "Cursed Item is Active!" : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm.--SEP-- Right Click to cancel and exit Editor.";
+        var item = _selector.Selected;
+        var editorItem = _manager.ItemInEditor;
 
-        using var inner = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
+        bool notSelected = item is null;
+        bool isEditing = !notSelected && item!.Identifier == editorItem?.Identifier;
+        bool isActive = !notSelected && _manager.Storage.ActiveItems.Any(g => g.Identifier == item!.Identifier);
+
+        string label = notSelected ? "No Item Selected!" : isEditing ? $"{item!.Label} - (Editing)" : item!.Label;
+        string tooltip = notSelected ? "No item selected!" : isActive  ? "Cursed Item is Active!"
+                : $"Double Click to {(editorItem is null ? "Edit" : "Save Changes to")} this Cursed Item.--SEP--Right Click to cancel and exit Editor.";
+
+        using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, ImDrawFlags.RoundCornersRight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y);
         var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
-        // Draw the left items.
-        if (_selector.Selected is not null)
+
+        // Left side content
+        if (item is not null)
             DrawSelectedInner(imgSize.X);
 
-        // Draw the right image item.
+        // Right side image
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
@@ -127,27 +131,17 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
                 _activeItemDrawer.DrawRestrictionImage(normalRestrictItem, imgSize.Y, rounding, false);
         }
 
-        bool DrawLabel()
-        {
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
-            var label = _selector.Selected is null
-                ? "No Item Selected!" : _selector.Selected.Identifier.Equals(_manager.ItemInEditor?.Identifier)
-                    ? $"{_selector.Selected.Label} - (Editing)" : _selector.Selected.Label;
-            ImUtf8.TextFrameAligned(label);
-            return disableNotSelected || disableIsActive;
-        }
-
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (disableNotSelected || disableIsActive)
+            if (notSelected || isActive)
                 return;
 
-            if (b is ImGuiMouseButton.Right && IsEditorItem)
+            if (b is ImGuiMouseButton.Right && isEditing)
                 _manager.StopEditing();
 
             if (b is ImGuiMouseButton.Left)
             {
-                if (IsEditorItem)
+                if (isEditing)
                     _manager.SaveChangesAndStopEditing();
                 else if (_manager.ItemInEditor is null)
                     _manager.StartEditing(_selector.Selected!);
@@ -158,7 +152,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
     private void DrawCursedLootPool(Vector2 region)
     {
-        // Draw out the base window for our padding to be contained within.
+        // Draw out the base window for our padding          to be contained within.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12);
         using var c = CkRaii.CustomHeaderChild("##CursedLootPool", region, DrawHeader, ImGui.GetFrameHeight() / 2, HeaderFlags.SizeIncludesHeader);
 

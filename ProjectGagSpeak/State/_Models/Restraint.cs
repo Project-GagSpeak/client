@@ -139,7 +139,8 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
     /// <remarks> If advanced slot fails to load, a default, invalid restriction item will be put in place. </remarks>
     public static RestraintSlotAdvanced FromToken(JToken? token, RestrictionManager restrictions)
     {
-        if (token is not JObject slotJson) throw new Exception("Invalid JSON Token for Slot.");
+        if (token is not JObject slotJson) 
+            throw new Exception("Invalid JSON Token for Slot.");
 
         var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;

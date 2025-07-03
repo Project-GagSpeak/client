@@ -133,12 +133,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
     {
-        using (ImRaii.Group())
-        {
-            DrawPermissionsBoxHeader(region);
-            ImGui.SetCursorScreenPos(ImGui.GetItemRectMin() + new Vector2(0, ImGui.GetItemRectSize().Y));
-            DrawPermissionsBoxBody(region);
-        }
+        DrawPermissionsBox(region);
         var lineTopLeft = ImGui.GetItemRectMin() with { X = ImGui.GetItemRectMax().X };
         var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
         ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
@@ -152,31 +147,13 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         ImGui.GetWindowDrawList().AddRectFilled(botLineTopLeft, botLineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
-    private void DrawPermissionsBoxHeader(CkHeader.DrawRegion drawRegion)
-    {
-        var pos = ImGui.GetCursorPos();
-        var spacing = ImGui.GetStyle().ItemSpacing;
-        using (var c = CkRaii.Child("##PermBoxHeader", new Vector2(drawRegion.SizeX, ImGui.GetFrameHeight() + spacing.Y), CkColor.VibrantPink.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersTopLeft))
-        {
-            // Ensure the Spacing, and draw the header.
-            ImGui.SameLine(ImGui.GetFrameHeight());
-            ImUtf8.TextFrameAligned("Your Settings For");
-            ImGui.SameLine();
-            _helper.DrawPairSelector("VictimUnique", ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X);
-        }
-        var max = ImGui.GetItemRectMax();
-        var linePos = ImGui.GetItemRectMin() with { Y = max.Y - spacing.Y / 2 };
-        ImGui.GetWindowDrawList().AddLine(linePos, linePos with { X = max.X }, CkColor.SideButton.Uint(), spacing.Y);
-    }
-
-    private void DrawPermissionsBoxBody(CkHeader.DrawRegion drawRegion)
+    private void DrawPermissionsBox(CkHeader.DrawRegion drawRegion)
     {
         var spacing = ImGui.GetStyle().ItemSpacing;
         var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3); // 3 lines of buttons.
         var permissionsH = CkStyle.GetFrameRowsHeight(4);
         var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
-        var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
-        using var c = CkRaii.LabelChildText(new Vector2(drawRegion.SizeX, childH.AddWinPadY()), 1, headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft);
+        using var c = CkRaii.ChildLabelCustomFull("PupPairSelector", new Vector2(drawRegion.SizeX, childH), ImGui.GetFrameHeight(), PairSelector, DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
         // extract the tabs by splitting the string by comma's
         using (ImRaii.Disabled(_helper.SelectedPair is null))
@@ -196,6 +173,17 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         
         DrawPuppetPermsGroup(_helper.SelectedPair?.OwnPerms.PuppetPerms ?? PuppetPerms.None);
+
+        void PairSelector()
+        {
+            using (CkRaii.Child("##PairSelector", new Vector2(drawRegion.SizeX, ImGui.GetFrameHeight())))
+            {
+                ImGui.SameLine(ImGui.GetFrameHeight());
+                ImUtf8.TextFrameAligned("Your Settings For");
+                ImGui.SameLine();
+                _helper.DrawPairSelector("VictimUnique", ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X);
+            }
+        }
     }
 
     private void DrawTriggerPhraseBox(float paddedWidth, float height)
@@ -238,7 +226,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
     private void DrawExamplesBox(Vector2 region)
     {
         var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        using (var child = CkRaii.LabelChildText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
+        using (var child = CkRaii.ChildLabelText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");

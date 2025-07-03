@@ -58,12 +58,6 @@ public class ButtPlugDevice
     private DebounceDispatcher VibrateDebouncer = new DebounceDispatcher(TimeSpan.FromMilliseconds(20));
     private DebounceDispatcher RotateDebouncer = new DebounceDispatcher(TimeSpan.FromMilliseconds(20));
 
-    /// <summary> Resets all motors of the device to 0, stopping all vibrations. </summary>
-    public void ResetMotors()
-    {
-        _logger.LogInformation("Reset Motors called!", LoggerType.Toys);
-    }
-
     public async void UpdateBatteryPercentage()
     {
         // early return if the device is null or we can't check the battery.
@@ -95,7 +89,6 @@ public class ButtPlugDevice
         {
             _logger.LogError($"Error Stopping Device: {ex.Message}");
         }
-        ResetMotors();
     }
 
     public double GetVibrationDoubleFromByte(byte intensity) => Math.Round((intensity / 100.0) / VibeMotorInterval) * VibeMotorInterval;
@@ -151,7 +144,7 @@ public class ButtPlugDevice
     public void SendRotate(byte intensity, bool clockwise = true, int motorIndex = -1)
     {
         _logger.LogDebug("Rotation Disabled Currently", LoggerType.Toys);
-        /*
+        
         if (ClientDevice == null || !CanRotate || !IsConnected)
         {
             _logger.LogError("Cannot send rotation command, device is not connected or does not support rotation.");
@@ -182,14 +175,14 @@ public class ButtPlugDevice
             }
 
             // send them off.
-            RotateDebouncer.Debounce(delegate
-            {
-                ClientDevice.RotateAsync(motorIntensitysToSend);
-            });
+            //RotateDebouncer.Debounce(delegate
+            //{
+            //    ClientDevice.RotateAsync(motorIntensitysToSend);
+            //});
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error Sending Rotation: {ex.Message}");
-        }*/
+        }
     }
 }

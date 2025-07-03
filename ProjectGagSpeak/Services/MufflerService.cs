@@ -18,17 +18,17 @@ public class MufflerService : DisposableMediatorSubscriberBase
     ///    The collected GagData for all Gags, indexed by gag name and phoneme,
     ///    taken from the dictionary of the selected dialect.
     /// </summary>
-    private Dictionary<string, Dictionary<string, PhonemeProperties>> _gagData;
+    private static Dictionary<string, Dictionary<string, PhonemeProperties>> _gagData;
 
     /// <summary>
     ///     The collected GarblerData for all Gags.
     /// </summary>
-    private List<GagData> _allGarblerData = new List<GagData>();
+    private static List<GagData> _allGarblerData = new List<GagData>();
 
     /// <summary>
     ///     The Muffler GagData for the currently active Gags worn.
     /// </summary>
-    private List<GagData> _activeGags;
+    private static List<GagData> _activeGags;
 
     public MufflerService(
         ILogger<MufflerService> logger,
@@ -190,7 +190,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
         }
         catch (Exception e)
         {
-            Logger.LogError($"[GagGarbleManager] Error converting from IPA Spaced to final output. Puncutation error or other type possible : {e.Message}");
+            Svc.Logger.Error($"[GagGarbleManager] Error converting from IPA Spaced to final output: {e.Message}");
         }
         return finalMessage.ToString().Trim();
     }
@@ -198,7 +198,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// <summary>
     ///     Phonetic IPA -> Garbled sound equivalent in selected language
     /// </summary>
-    private string ConvertPhoneticsToGagSpeak(List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
+    private static string ConvertPhoneticsToGagSpeak(List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {
         var outputString = new StringBuilder();
         foreach (var phonetic in phonetics)
@@ -217,7 +217,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             }
             catch (Exception e)
             {
-                Logger.LogError($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
+                Svc.Logger.Error($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
             }
         }
         var result = outputString.ToString();

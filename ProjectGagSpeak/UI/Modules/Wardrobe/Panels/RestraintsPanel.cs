@@ -136,19 +136,26 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var wdl = ImGui.GetWindowDrawList();
-        var region = new Vector2(drawRegion.Size.X, WardrobeUI.SelectedRestraintH().AddWinPadY());
-        var disabled = _selector.Selected is null || _selector.Selected.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
-        var tooltipAct = disabled ? "No item selected!" : "Double Click me to begin editing!";
+        var height = ImGui.GetFrameHeightWithSpacing() * 2 + MoodleDrawer.IconSize.Y;
+        var region = new Vector2(drawRegion.Size.X, height);
+        var item = _selector.Selected;
+        var editorItem = _manager.ItemInEditor;
 
+        bool isEditing = item is not null && item.Identifier.Equals(editorItem?.Identifier);
+        bool isActive = item is not null && item.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
+
+        string label = item is null ? "No Item Selected!" : item.Label;
+        string tooltip = item is null ? "No item selected!" : isActive ? "Restraint Set is Active!" : "Double Click to edit this Restraint Set.";
+        
         // Draw the inner label child action item.
-        using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
+        using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
 
         var pos = ImGui.GetItemRectMin();
-        var imgSize = new Vector2(c.InnerRegion.Y / 1.2f, c.InnerRegion.Y);
-        var imgDrawPos = pos with { X = pos.X + c.InnerRegion.X - imgSize.X };
-        // Draw the left item stuff.
-        if (_selector.Selected is not null)
+        var imgSize = new Vector2(inner.InnerRegion.Y / 1.2f, inner.InnerRegion.Y);
+        var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
+
+        // Left side content
+        if (item is not null)
         {
             var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
             DrawAttributeRow();
@@ -156,7 +163,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
         }
 
-        // Draw the right image item.
+        // Right side image
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
@@ -170,17 +177,9 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
         }
 
-        // return if the label should be disabled.
-        bool DrawLabel()
-        {
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
-            ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
-            return _selector.Selected is null || IsEditing;
-        }
-
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || disabled)
+            if (b is not ImGuiMouseButton.Left || editorItem is not null)
                 return;
 
             if (_selector.Selected is not null)

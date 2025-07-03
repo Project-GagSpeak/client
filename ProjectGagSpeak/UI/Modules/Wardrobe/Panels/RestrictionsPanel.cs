@@ -132,12 +132,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
         var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
-        var region = new Vector2(drawRegion.Size.X, height.AddWinPadY());
-        var disabled = _selector.Selected is null || _manager.ActiveItemsAll.ContainsKey(_selector.Selected.Identifier);
-        var tooltipAct = disabled ? "No item selected!" : "Double Click to begin editing!";
+        var height = ImGui.GetFrameHeightWithSpacing() + MoodleDrawer.IconSize.Y;
+        var region = new Vector2(drawRegion.Size.X, height);
+        var nothingSelected = _selector.Selected is null;
+        var isActive = _manager.ActiveItemsAll.ContainsKey(_selector.Selected?.Identifier ?? Guid.Empty);
+        var tooltip = nothingSelected ? "No item selected!" : isActive ? "Cannot edit Active Item!" : "Double Click to begin editing!";
 
-        using var c = CkRaii.LabelChildAction("SelItem", region, .6f, DrawLabel, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight);
+        using var c = CkRaii.ChildLabelCustomButton("SelItem", region, ImGui.GetFrameHeight(), LabelButton, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(c.InnerRegion.Y);
@@ -160,15 +161,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
 
-        bool DrawLabel()
+        void LabelButton()
         {
-            using (ImRaii.Group())
+            using (var c = CkRaii.Child("##RestrictionSelectorLabel", new Vector2(region.X * .6f, ImGui.GetFrameHeight())))
             {
-                var imgSize = new Vector2(ImGui.GetFrameHeight());
-                var imgPos = ImGui.GetCursorScreenPos() + new Vector2(((region.X * .6f) - imgSize.X - ImGui.GetStyle().ItemSpacing.X), 0);
+                var imgSize = new Vector2(c.InnerRegion.Y);
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetStyle().WindowPadding.X);
                 ImUtf8.TextFrameAligned(_selector.Selected?.Label ?? "No Item Selected!");
-                // Draw the type of restriction item as an image path here.
+                ImGui.SameLine(c.InnerRegion.X - imgSize.X * 1.5f);
                 if (_selector.Selected is not null)
                 {
                     (var image, var tooltip) = _selector.Selected?.Type switch
@@ -179,15 +179,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                         RestrictionType.Blindfold => (CosmeticService.CoreTextures.Cache[CoreTexture.Blindfolded], "This is a Blindfold Restriction!"),
                         _ => (CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], "This is a generic Restriction.")
                     };
-                    ImGui.GetWindowDrawList().AddDalamudImage(image, imgPos, imgSize, tooltip);
+                    ImGui.GetWindowDrawList().AddDalamudImage(image, ImGui.GetCursorScreenPos(), imgSize, tooltip);
                 }
             }
-            return _selector.Selected is null; // add other conditionals later.
         }
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || disabled)
+            if (b is not ImGuiMouseButton.Left || nothingSelected)
                 return;
             
             if(_selector.Selected is not null)

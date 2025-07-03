@@ -7,6 +7,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
@@ -19,6 +20,7 @@ namespace GagSpeak.Gui.MainWindow;
 public class GlobalChatTab : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
+    private readonly GlobalChatLog _globalChat;
     private readonly GlobalPermissions _globals;
     private readonly MufflerService _garbler;
     private readonly GagRestrictionManager _gagManager;
@@ -30,6 +32,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         ILogger<GlobalChatTab> logger,
         GagspeakMediator mediator,
         MainHub hub,
+        GlobalChatLog globalChat,
         GlobalPermissions globals,
         MufflerService garbler,
         GagRestrictionManager gagManager,
@@ -38,6 +41,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         TutorialService guides) : base(logger, mediator)
     {
         _hub = hub;
+        _globalChat = globalChat;
         _globals = globals;
         _garbler = garbler;
         _gagManager = gagManager;
@@ -79,15 +83,11 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
         // Create a child for the chat log
         var region = new Vector2(CurrentRegion.X, chatLogHeight);
-        using (ImRaii.Child($"###ChatlogChildGlobal"+windowId, region, false))
-        {
-            DiscoverService.GlobalChat.PrintChatLogHistory(showMessagePreview, NextChatMessage, region, windowId);
-        }
+        _globalChat.DrawChat(region, showMessagePreview);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Now draw out the input text field
         var nextMessageRef = NextChatMessage;
-
         // Set keyboard focus to the chat input box if needed
         if (shouldFocusChatInput)
         {
@@ -100,7 +100,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         }
 
         // Set width for input box and create it with a hint
-        var Icon = DiscoverService.GlobalChat.AutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
+        var Icon = _globalChat.DoAutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
         ImGui.SetNextItemWidth(CurrentRegion.X - CkGui.IconButtonSize(Icon).X*2 - ImGui.GetStyle().ItemInnerSpacing.X*2);
         if (ImGui.InputTextWithHint("##ChatInputBox" + windowId, "chat message here...", ref nextMessageRef, 300))
         {
@@ -136,8 +136,8 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(Icon))
-            DiscoverService.GlobalChat.AutoScroll = !DiscoverService.GlobalChat.AutoScroll;
-        CkGui.AttachToolTip("Toggles the AutoScroll Functionality (Current: " + (DiscoverService.GlobalChat.AutoScroll ? "Enabled" : "Disabled") + ")");
+            _globalChat.SetAutoScroll(!_globalChat.DoAutoScroll);
+        CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(_globalChat.DoAutoScroll ? "Enabled" : "Disabled")})");
 
         // draw the popout button
         ImUtf8.SameLineInner();

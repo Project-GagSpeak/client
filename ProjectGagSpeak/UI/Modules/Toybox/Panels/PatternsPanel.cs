@@ -52,52 +52,53 @@ public partial class PatternsPanel
 
     private void DrawPatternInfo(CkHeader.DrawRegion region, float curveSize)
     {
-        DrawSelectedPattern(region);
+        DrawSelectedDisplay(region);
         var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
         var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
         ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
     }
 
-    private void DrawSelectedPattern(CkHeader.DrawRegion region)
-    {
-        if (_selector.Selected is null)
-        {
-            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Pattern Selected!", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
-        }
-        else
-            DrawSelectedDisplay(region);
-    }
-
     private void DrawSelectedDisplay(CkHeader.DrawRegion region)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
-        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
-        var disabled = _selector.Selected is null || _manager.ActivePattern?.Identifier == _selector.Selected.Identifier;
-        var tooltip = disabled
-            ? "Cannot edit an Active Pattern!"
-            : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Pattern. "
-            + "--SEP-- Right Click to cancel and exit Editor.";
+        var item = _selector.Selected;
+        var editorItem = _manager.ItemInEditor;
 
-        using (CkRaii.LabelChildAction("##SelPattern", region.Size, .7f, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight))
+        var isEditing = item is not null && item.Identifier == editorItem?.Identifier;
+        var isActive = item is not null && item.Identifier.Equals(_manager.ActivePattern?.Identifier);
+
+        var label = item is null ? "No Item Selected!" : isEditing ? $"{item.Label} - (Editing)" : item.Label;
+        var tooltip = item is null ? "No item selected!" : isActive ? "Pattern is Active!"
+                : $"Double Click to {(editorItem is null ? "Edit" : "Save Changes to")} this Pattern.--SEP--Right Click to cancel and exit Editor.";
+
+        using (CkRaii.ChildLabelCustomButton("##PatternSel", region.Size, ImGui.GetFrameHeight(), DrawLabel, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.SizeIncludesHeader))
         {
-            // Show the info for either the editor item details, or the selected item details.
-            DrawSelectedItemInfo(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
+            if (item is null)
+                return;
+
+            if (isEditing && editorItem is not null)
+                DrawSelectedInner(editorItem, true);
+            else
+                DrawSelectedInner(item, false);
         }
 
-        bool LabelDraw()
+        void DrawLabel()
         {
-            ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
-            ImGui.SameLine((region.SizeX * .7f) - ImGui.GetFrameHeight() * 1.5f);
-            CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
-            return !IsEditorItem;
+            using var c = CkRaii.Child("##PatternSelLabel", new Vector2(region.SizeX * .6f, ImGui.GetFrameHeight()));
+            ImGui.Spacing();
+            ImGui.SameLine();
+            ImUtf8.TextFrameAligned(label);
+            ImGui.TextUnformatted(label);
+            ImGui.SameLine(c.InnerRegion.X * .7f - (ImGui.GetFrameHeight() * 1.5f));
+            CkGui.FramedIconText(isEditing ? FAI.Save : FAI.Edit);
         }
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || disabled)
+            if (b is not ImGuiMouseButton.Left || item is null || isActive)
                 return;
 
-            if (IsEditorItem)
+            if (isEditing)
                 _manager.SaveChangesAndStopEditing();
             else
                 _manager.StartEditing(_selector.Selected!);
@@ -106,7 +107,7 @@ public partial class PatternsPanel
 
     // This will draw out the respective information for the pattern info.
     // Displayed information can call the preview or editor versions of each field.
-    private void DrawSelectedItemInfo(Pattern pattern, bool isEditorItem)
+    private void DrawSelectedInner(Pattern pattern, bool isEditorItem)
     {
         using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 1));

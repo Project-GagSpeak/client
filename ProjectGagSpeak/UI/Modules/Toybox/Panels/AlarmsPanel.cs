@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
@@ -68,49 +69,41 @@ public partial class AlarmsPanel
 
     private void DrawSelectedAlarm(CkHeader.DrawRegion region)
     {
-        // Draw either the interactable label child, or the static label.
-        if (_selector.Selected is null)
-        {
-            using var _ = CkRaii.LabelChildText(region.Size, .7f, "No Alarm Selected!", ImGui.GetStyle().WindowPadding.X, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
-        }
-        else
-        {
-            DrawSelectedDisplay(region);
-        }
-    }
+        var item = _selector.Selected;
+        var editorItem = _manager.ItemInEditor;
 
-    private void DrawSelectedDisplay(CkHeader.DrawRegion region)
-    {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
+        var isEditing = item is not null && item.Identifier == editorItem?.Identifier;
+        var isActive = item is not null && _manager.ActiveAlarms.Any(g => g.Identifier == item.Identifier);
 
-        var IsEditorItem = _selector.Selected!.Identifier == _manager.ItemInEditor?.Identifier;
-        var disabled = _selector.Selected is null || _manager.ActiveAlarms.Any(a => a.Identifier == _selector.Selected.Identifier);
-        var tooltip = disabled 
-            ? "Cannot edit an Active Alarm!" 
-            : $"Double Click to {(_manager.ItemInEditor is null ? "Edit" : "Save Changes to")} this Alarm. "
-            + "--SEP-- Right Click to cancel and exit Editor.";
+        var label = item is null ? "No Item Selected!" : isEditing ? $"{item!.Label} - (Editing)" : item!.Label;
+        var tooltip = item is null ? "No item selected!" : isActive ? "Alarm is Active!"
+                : $"Double Click to {(editorItem is null ? "Edit" : "Save Changes to")} this Alarm.--SEP--Right Click to cancel and exit Editor.";
 
-        using (var c = CkRaii.LabelChildAction("Sel_Alarm", region.Size, .7f, LabelDraw, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight))
+        using (CkRaii.ChildLabelCustomButton("##AlarmSel", region.Size, ImGui.GetFrameHeight(), DrawLabel, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.SizeIncludesHeader))
         {
-            using (ImRaii.Child("Alarm_Selected_Inner", c.InnerRegion with { Y = c.InnerRegion.Y - c.LabelRegion.Y }))
-                DrawSelectedInner(_manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!, IsEditorItem);
+            if(editorItem is { } itemInEditor)
+                DrawSelectedInner(itemInEditor, true);
+            else
+                DrawSelectedInner(item!, false);
         }
 
-        bool LabelDraw()
+        void DrawLabel()
         {
-            ImGui.SetCursorScreenPos(region.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
-            ImUtf8.TextFrameAligned(IsEditorItem ? _manager.ItemInEditor!.Label : _selector.Selected!.Label);
-            ImGui.SameLine(region.SizeX * .7f - (ImGui.GetFrameHeight() * 1.5f));
-            CkGui.FramedIconText(IsEditorItem ? FAI.Save : FAI.Edit);
-            return _selector.Selected is null;
+            using var c = CkRaii.Child("##AlarmSelLabel", new Vector2(region.SizeX * .6f, ImGui.GetFrameHeight()));
+            ImGui.Spacing();
+            ImGui.SameLine();
+            ImUtf8.TextFrameAligned(label);
+            ImGui.TextUnformatted(label);
+            ImGui.SameLine(c.InnerRegion.X * .7f - (ImGui.GetFrameHeight() * 1.5f));
+            CkGui.FramedIconText(isEditing ? FAI.Save : FAI.Edit);
         }
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || disabled)
+            if (b is not ImGuiMouseButton.Left || isActive)
                 return;
 
-            if (IsEditorItem) 
+            if (isEditing) 
                 _manager.SaveChangesAndStopEditing();
             else 
                 _manager.StartEditing(_selector.Selected!);
