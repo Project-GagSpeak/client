@@ -620,10 +620,10 @@ namespace GagSpeak.Localization
     #region Settings
     public class Settings
     {
-        public readonly string OptionalPlugins = Loc.Localize("Settings_OptionalPlugins", "Optional Plugins:");
+        public readonly string OptionalPlugins = Loc.Localize("Settings_OptionalPlugins", "Plugins:");
         public readonly string PluginValid = Loc.Localize("Settings_PluginValid", "Plugin enabled and up to date.");
         public readonly string PluginInvalid = Loc.Localize("Settings_PluginInvalid", "Plugin is not up to date or GagSpeak has an outdated API.");
-        public readonly string AccountClaimText = Loc.Localize("Settings_AccountClaimText", "Register your account using the GagSpeak bot:");
+        public readonly string AccountClaimText = Loc.Localize("Settings_AccountClaimText", "Register account:");
 
         public readonly string TabsGlobal = Loc.Localize("Settings_TabsGlobal", "General");
         public readonly string TabsHardcore = Loc.Localize("Settings_TabsHardcore", "Hardcore");

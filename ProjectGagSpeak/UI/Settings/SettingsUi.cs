@@ -112,7 +112,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         var check = FAI.Check;
         var cross = FAI.SquareXmark;
-        ImGui.TextUnformatted(GSLoc.Settings.OptionalPlugins);
+        CkGui.ColorText(GSLoc.Settings.OptionalPlugins, ImGuiColors.ParsedGold);
 
         CkGui.TextInline("Penumbra");
         ImGui.SameLine();
@@ -139,11 +139,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.IconText(IpcCallerLifestream.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerLifestream.APIAvailable));
         CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-
-        ImUtf8.TextFrameAligned(GSLoc.Settings.AccountClaimText);
-        
+        CkGui.TextInline("Intiface", false);
         ImGui.SameLine();
-        if (ImGui.Button("CK Discord"))
+        CkGui.IconText(IpcCallerIntiface.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerIntiface.APIAvailable));
+        CkGui.AttachToolTip(IpcCallerIntiface.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+
+        CkGui.ColorText(GSLoc.Settings.AccountClaimText, ImGuiColors.ParsedGold);
+
+        ImGui.SameLine();
+        if (ImUtf8.SmallButton("CK Discord"))
             Util.OpenLink("https://discord.gg/kinkporium");
 
         // draw out the tab bar for us.

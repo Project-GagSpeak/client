@@ -46,15 +46,22 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         APIAvailable = IsConnected;
     }
 
-    public async void Dispose()
+    public void Dispose()
     {
-        if(IsConnected)
-            await client.DisconnectAsync();
-        // Unsubscribe from events to prevent memory leaks.
-        client.DeviceAdded -= (_, args) => OnDeviceAdded(args.Device);
-        client.DeviceRemoved -= (_, args) => OnDeviceRemoved(args.Device);
-        client.ScanningFinished -= (_, args) => OnScanFinished();
-        client.ServerDisconnect -= (_, args) => OnIntifaceDisconnected();
+        if (client is not null)
+        {
+            // Unsubscribe from events to prevent memory leaks.
+            client.DeviceAdded -= (_, args) => OnDeviceAdded(args.Device);
+            client.DeviceRemoved -= (_, args) => OnDeviceRemoved(args.Device);
+            client.ScanningFinished -= (_, args) => OnScanFinished();
+            client.ServerDisconnect -= (_, args) => OnIntifaceDisconnected();
+
+            if (IsConnected)
+                client.DisconnectAsync().Wait();
+
+            client?.Dispose();
+            connector?.Dispose();
+        }
     }
 
     private void OnDeviceAdded(ButtplugClientDevice device)

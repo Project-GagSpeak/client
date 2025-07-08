@@ -5,6 +5,7 @@ using CkCommons.Helpers;
 using CkCommons.RichText;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -15,6 +16,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using ImGuiNET;
+using OtterGui.Text;
 using System.Globalization;
 
 namespace GagSpeak.Utils;
@@ -35,15 +37,23 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
     private string _requestMessage = string.Empty;
     private static int _newMessages = 0;
 
-    public GlobalChatLog(ILogger<GlobalChatLog> logger, GagspeakMediator mediator,
-        MainHub hub, MainMenuTabs tabs, MainConfig config, GlobalPermissions globals, 
-        GagRestrictionManager gags, KinksterManager kinksters, MufflerService garbler) 
+    public GlobalChatLog(
+        ILogger<GlobalChatLog> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        MainMenuTabs tabs,
+        MainConfig config,
+        GlobalPermissions globals, 
+        GagRestrictionManager gags,
+        KinksterManager kinksters,
+        MufflerService garbler) 
         : base(0, "Global Chat", 1000)
     {
         _logger = logger;
         Mediator = mediator;
         _hub = hub;
         _tabMenu = tabs;
+        _config = config;
         _globals = globals;
         _gags = gags;
         _kinksters = kinksters;
@@ -95,7 +105,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         var userData = networkChat.Message.Sender;
         // Set the SenderName according to conditions.
         if (userData.Tier is CkSupporterTier.KinkporiumMistress)
-            SenderName = $"Mistress Cordy";
+            SenderName = $"Mistress Cordy";
         else if (_kinksters.DirectPairs.FirstOrDefault(p => p.UserData.UID == userData.UID) is { } match)
             SenderName = match.GetNickAliasOrUid() + " (" + userTagCode + ")";
         else if (networkChat.FromSelf)
@@ -106,6 +116,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
 
     protected override void AddMessage(GSGlobalChatMessage newMsg)
     {
+        _logger.LogDebug($"Adding Message: {newMsg.Message} from {newMsg.Name} ({newMsg.UID})", LoggerType.GlobalChat);
         // Cordy is special girl :3
         if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
         {
@@ -113,6 +124,13 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             UserColors[newMsg.UID] = CkColor.CkMistressColor.Vec4();
             // allow any rich text tags, as she is a special case.
             var prefix = $"[img=RequiredImages\\Tier4Icon][rawcolor={CkColor.CkMistressColor.Uint()}]{newMsg.Name}[/rawcolor]: ";
+            Messages.PushBack(newMsg with { Message = prefix + newMsg.Message });
+            unreadSinceScroll++;
+        }
+        else if (newMsg.UID == "System")
+        {
+            // System messages are special, they are not colored.
+            var prefix = $"[rawcolor=0xFF0000FF]{newMsg.Name}[/rawcolor]: ";
             Messages.PushBack(newMsg with { Message = prefix + newMsg.Message });
             unreadSinceScroll++;
         }
@@ -134,6 +152,70 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             Messages.PushBack(newMsg with { Message = prefix + sanitizedMsg });
             unreadSinceScroll++;
         }
+    }
+
+    private void AddExistingMessage(GSGlobalChatMessage newMsg)
+    {
+        _logger.LogDebug($"Adding Message: {newMsg.Message} from {newMsg.Name} ({newMsg.UID})", LoggerType.GlobalChat);
+        // Cordy is special girl :3
+        if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
+        {
+            // Force set the uid color to her favorite color.
+            UserColors[newMsg.UID] = CkColor.CkMistressColor.Vec4();
+            Messages.PushBack(newMsg);
+            unreadSinceScroll++;
+        }
+        else
+        {
+            // Assign the sender color
+            AssignSenderColor(newMsg);
+            Messages.PushBack(newMsg);
+            unreadSinceScroll++;
+        }
+    }
+
+    public override void DrawChatInputRow(ref bool showPreview)
+    {
+        using var _ = ImRaii.Group();
+
+        var Icon = DoAutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
+        var width = ImGui.GetContentRegionAvail().X;
+
+        // Set keyboard focus to the chat input box if needed
+        if (shouldFocusChatInput)
+        {
+            // if we currently are focusing the window this is present on, set the keyboard focus.
+            if (ImGui.IsWindowFocused())
+            {
+                ImGui.SetKeyboardFocusHere(0);
+                shouldFocusChatInput = false;
+            }
+        }
+
+        ImGui.SetNextItemWidth(width - CkGui.IconButtonSize(Icon).X * 2 - ImGui.GetStyle().ItemInnerSpacing.X * 2);
+        ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 400);
+
+        // Process submission Prevent losing chat focus after pressing the Enter key.
+        if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
+        {
+            shouldFocusChatInput = true;
+            OnSendMessage(previewMessage);
+        }
+
+        // Update preview display based on input field activity
+        showPreview = ImGui.IsItemActive();
+
+        // Toggle AutoScroll functionality
+        ImUtf8.SameLineInner();
+        if (CkGui.IconButton(Icon))
+            DoAutoScroll = !DoAutoScroll;
+        CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
+
+        // draw the popout button
+        ImUtf8.SameLineInner();
+        if (CkGui.IconButton(FAI.Expand, disabled: !KeyMonitor.ShiftPressed()))
+            Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
+        CkGui.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }
 
     protected override void OnMiddleClick(GSGlobalChatMessage message)
@@ -162,6 +244,9 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
     {
         var shiftHeld = KeyMonitor.ShiftPressed();
         var ctrlHeld = KeyMonitor.CtrlPressed();
+
+        if(LastInteractedMsg is null)
+            return;
 
         CkGui.FontText(LastInteractedMsg.Name, Svc.PluginInterface.UiBuilder.MonoFontHandle);
         ImGui.Separator();
@@ -225,8 +310,8 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             // Add the basic welcome message and return.
             _logger.LogInformation("Chat log file does not exist. Adding welcome message.", LoggerType.GlobalChat);
             AddMessage(new(new("System"), "System",
-                "Welcome to the GagSpeak Global Chat!.[line]" +
-                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi!"));
+                "Welcome to the GagSpeak Global Chat![para]" +
+                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
             return;
         }
 
@@ -248,8 +333,8 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         {
             _logger.LogError(ex, "Failed to load chat log.");
             AddMessage(new(new("System"), "System",
-                "Welcome to the GagSpeak Global Chat!.[line]" +
-                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi!"));
+                "Welcome to the GagSpeak Global Chat![para]" +
+                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
             return;
         }
 
@@ -258,13 +343,15 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         {
             _logger.LogInformation("Chat log is from a different day. Not restoring.", LoggerType.GlobalChat);
             AddMessage(new(new("System"), "System",
-                "Welcome to the GagSpeak Global Chat!.[line]" +
-                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi!"));
+                "Welcome to the GagSpeak Global Chat![para]" +
+                "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
             return;
         }
 
-        // The date is the same, so instead, let's load in the chat messages into the buffer and not add a welcome message.
-        AddMessages(savedChatlog.Messages);
+        // print out all messages:
+        foreach (var msg in savedChatlog.Messages)
+            AddExistingMessage(msg);
+
         _logger.LogInformation($"Loaded {savedChatlog.Messages.Count} messages from the chat log.", LoggerType.GlobalChat);
     }
 
