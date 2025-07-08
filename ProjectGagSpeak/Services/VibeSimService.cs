@@ -1,21 +1,25 @@
-using Dalamud.Plugin;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
+using GagSpeak.Toybox;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
-/*
- * TODO: Migrate this format from the audio player to the scd effect 
- * spawner if possible. Or keep this if more accurate.
- *
- * This is susceptible to audio scrapes when hitting the lowest volume or the highest volume.
- * Going above and below the max threshold causes this, and is why migrating to an scd may be better.
- * 
- * This is a scuffed port from the old gagspeak to get something working by open beta. 
- */
-namespace GagSpeak.Toybox;
-public class VibeSimAudio
+
+namespace GagSpeak.Services;
+
+/// <summary>
+///     <b> TODO: Migrate this format from the audio player to the scd effect spawner if possible. Or keep this if more accurate. </b><para/>
+///     
+///     This is a scuffed port from the old gagspeak to get something working by open beta. <para/>
+///     
+///     This is susceptible to audio scrapes when hitting the lowest volume or the highest volume.
+///     Going above and below the max threshold causes this, and is why migrating to an scd may be better.
+/// </summary>
+/// <remarks>
+///     If anything should be fixed for QoL it would be finding a better waveplayer, as this
+///     scratches audio when hitting 0.0 and 1.0 thresholds.
+/// </remarks>
+public sealed class VibeSimService
 {
-    private readonly ILogger<VibeSimAudio> _logger;
+    private readonly ILogger<VibeSimService> _logger;
     private IWavePlayer waveOutDevice;
     private AudioFileReader audioFileReader;
     private VibeSimLooper loopStream;
@@ -34,7 +38,7 @@ public class VibeSimAudio
     public int ActivePlaybackDeviceId { get; set; } = 0;
 
 
-    public VibeSimAudio(ILogger<VibeSimAudio> logger)
+    public VibeSimService(ILogger<VibeSimService> logger)
     {
         _logger = logger;
         StartupNAudioProvider("vibratorQuiet.wav");
@@ -43,7 +47,7 @@ public class VibeSimAudio
     protected void StartupNAudioProvider(string audioPathInput, bool isDeviceChange = false)
     {
         // get the audio file
-        string audioPath = Path.Combine(ConfigFileProvider.AssemblyDirectory, "Assets", audioPathInput);
+        var audioPath = Path.Combine(ConfigFileProvider.AssemblyDirectory, "Assets", audioPathInput);
         audioFileReader = new AudioFileReader(audioPath);
         loopStream = new VibeSimLooper(audioFileReader);
         pitchShifter = new SmbPitchShiftingSampleProvider(loopStream.ToSampleProvider());
@@ -63,7 +67,7 @@ public class VibeSimAudio
             // if devicechange is false, assume we are initializing
             _logger.LogDebug($"Detected Device Count: {WaveOut.DeviceCount}", LoggerType.Toys);
             // see what device is currently selected
-            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            for (var i = 0; i < WaveOut.DeviceCount; i++)
             {
                 var capabilities = WaveOut.GetCapabilities(i);
                 _logger.LogTrace($"Device {i}: {capabilities.ProductName}", LoggerType.Toys);
@@ -81,7 +85,7 @@ public class VibeSimAudio
                 _logger.LogError("Bad Default Device ID. Attempting manual assignment.");
 
                 // attempt to do it manually
-                for (int i = 0; i < WaveOut.DeviceCount; i++)
+                for (var i = 0; i < WaveOut.DeviceCount; i++)
                 {
                     try
                     {
@@ -127,7 +131,7 @@ public class VibeSimAudio
             return;
         }
 
-        bool wasActiveBeforeChange = isPlaying;
+        var wasActiveBeforeChange = isPlaying;
         if (isPlaying)
         {
             waveOutDevice.Stop();
@@ -151,7 +155,7 @@ public class VibeSimAudio
     public void ChangeAudioPath(string audioPath)
     {
         // Stop the current audio
-        bool wasActiveBeforeChange = isPlaying;
+        var wasActiveBeforeChange = isPlaying;
         if (isPlaying)
         {
             waveOutDevice.Stop();

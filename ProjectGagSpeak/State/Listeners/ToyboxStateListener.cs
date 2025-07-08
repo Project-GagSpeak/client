@@ -17,7 +17,7 @@ public sealed class ToyboxStateListener
     private readonly KinksterManager        _pairs;
 
     // Managers:
-    // - SexToyManager (Manages what kind of toy is connected (actual vs simulated), and handles various reactions.
+    // - BuzzToyManager (Manages what kind of toy is connected (actual vs simulated), and handles various reactions.
     // MAYBE CONSIDER ADDING:
     // - VibeControlLobbyManager (Future WIP Section)
     // - SpatialAudioManager (Huge WIP, highly dependant on if SCD's data can be properly parsed out or whatever.
@@ -26,7 +26,7 @@ public sealed class ToyboxStateListener
     private readonly AlarmManager   _alarms;
     private readonly TriggerManager _triggers;
 /*    private readonly VibeRoomManager _vibeLobbyManager;*/    // Currently Caused circular dependancy with the mainhub, see how to fix later.
-    private readonly SexToyManager _toys;
+    private readonly BuzzToyManager _toys;
     // private readonly ShockCollarManager = _shockCollars;
     // private readonly SpatialAudioManager _spatialAudio;
 
@@ -38,7 +38,7 @@ public sealed class ToyboxStateListener
         PatternManager patterns,
         AlarmManager alarmManager,
         TriggerManager triggers,
-        SexToyManager toys,
+        BuzzToyManager toys,
         OnFrameworkService frameworkUtils)
     {
         _logger = logger;

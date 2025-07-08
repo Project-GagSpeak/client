@@ -7,17 +7,19 @@ namespace GagSpeak.Interop;
 /// </summary>
 public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 {
-    public IpcCallerCustomize CustomizePlus { get; init; }
+    public IpcCallerCustomize CustomizePlus { get; }
     public IpcCallerGlamourer Glamourer { get; }
     public IpcCallerPenumbra Penumbra { get; }
     public IpcCallerMoodles Moodles { get; }
     public IpcCallerMare Mare { get; }
     public IpcCallerLifestream Lifestream { get; }
+    public IpcCallerIntiface Intiface { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
         IpcCallerCustomize ipcCustomize, IpcCallerGlamourer ipcGlamourer,
         IpcCallerPenumbra ipcPenumbra, IpcCallerMoodles moodlesIpc,
-        IpcCallerMare mareIpc, IpcCallerLifestream lifestreamIpc) : base(logger, mediator)
+        IpcCallerMare mareIpc, IpcCallerLifestream lifestreamIpc,
+        IpcCallerIntiface intifaceIpc) : base(logger, mediator)
     {
         CustomizePlus = ipcCustomize;
         Glamourer = ipcGlamourer;
@@ -25,6 +27,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Moodles = moodlesIpc;
         Mare = mareIpc;
         Lifestream = lifestreamIpc;
+        Intiface = intifaceIpc;
 
         // subscribe to the delayed framework update message, which will call upon the periodic API state check.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => PeriodicApiStateCheck());
@@ -45,8 +48,8 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Glamourer.CheckAPI();
         CustomizePlus.CheckAPI();
         Moodles.CheckAPI();
-        // mare has no API to check, but we can do it anyways.
         Mare.CheckAPI();
         Lifestream.CheckAPI();
+        Intiface.CheckAPI();
     }
 }

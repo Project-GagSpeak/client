@@ -4,6 +4,18 @@ using GagSpeak.State.Models;
 
 namespace GagSpeak.PlayerClient;
 
+public class BuzzToyStorage : ConcurrentDictionary<Guid, BuzzToy>, IEditableStorage<VirtualBuzzToy>
+{
+    public bool TryApplyChanges(VirtualBuzzToy oldItem, VirtualBuzzToy changedItem)
+    {
+        if (changedItem is null || changedItem is not VirtualBuzzToy)
+            return false;
+
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
+}
+
 public class PatternStorage : List<Pattern>, IEditableStorage<Pattern>
 {
     public bool TryGetPattern(Guid id, [NotNullWhen(true)] out Pattern? item)

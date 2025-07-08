@@ -17,7 +17,6 @@ namespace GagSpeak.Services.Controller;
 /// </remarks>
 public sealed class OverlayController : IDisposable
 {
-    private readonly ILogger<OverlayController> _logger;
     private readonly OverlayCache _cache;
     private readonly BlindfoldService _bfService;
     private readonly HypnoService _hypnoService;
@@ -26,10 +25,8 @@ public sealed class OverlayController : IDisposable
     private CameraControlMode _forcedPerspective = CameraControlMode.Unknown;
     // private bool _initialRedrawMade = false;
 
-    public OverlayController(ILogger<OverlayController> logger, OverlayCache cache,
-        BlindfoldService bfService, HypnoService hypnoService)
+    public OverlayController(OverlayCache cache, BlindfoldService bfService, HypnoService hypnoService)
     {
-        _logger = logger;
         _cache = cache;
         _bfService = bfService;
         _hypnoService = hypnoService;

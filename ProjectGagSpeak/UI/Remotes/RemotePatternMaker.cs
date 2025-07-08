@@ -5,7 +5,8 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Toybox;
+using GagSpeak.State.Handlers;
+using GagSpeak.State.Managers;
 using ImGuiNET;
 using OtterGui;
 using System.Timers;
@@ -14,21 +15,16 @@ namespace GagSpeak.Gui.UiRemote;
 
 public class RemotePatternMaker : RemoteBase
 {
-    // the class includes are shared however (i think), so dont worry about that.
-    private readonly CosmeticService _cosmetics;
-    private readonly SexToyManager _vibeService;
     private readonly string _windowName;
     public RemotePatternMaker(ILogger<RemotePatternMaker> logger, GagspeakMediator mediator,
-        CosmeticService cosmetics, SexToyManager vibeService, TutorialService guides, string windowName = "Pattern Creator") 
-        : base(logger, mediator, vibeService, guides, windowName)
+        BuzzToyManager manager, BuzzToyHandler handler, TutorialService guides, string winName = "Pattern Creator") 
+        : base(logger, mediator, handler, manager, guides, winName)
     {
-        _cosmetics = cosmetics;
-        _vibeService = vibeService;
-        _windowName = windowName;
+        _windowName = winName;
     }
 
     // The storage buffer of all recorded vibration data in byte format. Eventually stored into a pattern.
-    public List<byte> StoredVibrationData = new List<byte>();
+    public List<double> StoredVibrationData = new List<double>();
     public bool IsRecording { get; protected set; } = false;
     public bool FinishedRecording { get; protected set; } = false;
 
@@ -201,13 +197,13 @@ public class RemotePatternMaker : RemoteBase
         {
             //_logger.LogTrace($"Looping & not Dragging: {(byte)Math.Round(StoredLoopDataBlock[BufferLoopIndex])}");
             // If looping, but not dragging, and have stored LoopData, add the stored data to the vibration data.
-            StoredVibrationData.Add((byte)Math.Round(StoredLoopDataBlock[BufferLoopIndex]));
+            StoredVibrationData.Add(Math.Round(StoredLoopDataBlock[BufferLoopIndex]));
         }
         else
         {
             //_logger.LogTrace($"Injecting new data: {(byte)Math.Round(CirclePosition[1])}");
             // Otherwise, add the current circle position to the vibration data.
-            StoredVibrationData.Add((byte)Math.Round(CirclePosition[1]));
+            StoredVibrationData.Add(Math.Round(CirclePosition[1]));
         }
         // if we reached passed our "capped limit", (its like 3 hours) stop recording.
         if (StoredVibrationData.Count > 270000)
@@ -220,19 +216,21 @@ public class RemotePatternMaker : RemoteBase
     private void PlayIntensityToDevices()
     {
         // if any devices are currently connected, and our intiface client is connected,
-        if (_vibeService.ConnectedToyActive)
+        if (true)
         {
             //_logger.LogTrace("Sending Vibration Data to Devices!");
             // send the vibration data to all connected devices
             if (IsLooping && !IsDragging && StoredLoopDataBlock.Count > 0)
             {
-                //_logger.LogTrace($"{(byte)Math.Round(StoredLoopDataBlock[BufferLoopIndex])}");
-                _vibeService.SendNextIntensity((byte)Math.Round(StoredLoopDataBlock[BufferLoopIndex]));
+                var value = Math.Round(StoredLoopDataBlock[BufferLoopIndex], 3);
+                _logger.LogTrace($"{value}");
+                _handler.VibrateAll(value);
             }
             else
             {
-                //_logger.LogTrace($"{(byte)Math.Round(CirclePosition[1])}");
-                _vibeService.SendNextIntensity((byte)Math.Round(CirclePosition[1]));
+                var value = Math.Round(CirclePosition[1], 3);
+                _logger.LogTrace($"{value}");
+                _handler.VibrateAll(value);
             }
         }
     }

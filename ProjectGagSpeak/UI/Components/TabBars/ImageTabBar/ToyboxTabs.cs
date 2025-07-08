@@ -7,7 +7,8 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
     // Look, its hard to come up with a proper way to word this, it's very confusing in technical terms.
     public enum SelectedTab
     {
-        ToysAndLobbies,
+        BuzzToys,
+        VibeLobbies,
         Patterns,
         Alarms,
         Triggers

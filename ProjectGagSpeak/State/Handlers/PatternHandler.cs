@@ -1,4 +1,6 @@
+using CkCommons;
 using GagSpeak.PlayerClient;
+using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Toybox;
 
@@ -11,24 +13,24 @@ public class PatternHandler : IDisposable
 {
     private readonly ILogger<PatternHandler> _logger;
     private readonly MainConfig _config;
-    private readonly SexToyManager _vibeService;
+    private readonly BuzzToyHandler _toyHandler;
 
     private CancellationTokenSource? _playbackCTS;
     private Task? _playbackTask;
 
     // Pattern MetaData
+    private List<double> _simulatedVolumes = new();
+
     public Stopwatch DisplayTime { get; private set; }
     public int ReadBufferIdx { get; private set; }
-    public IReadOnlyList<byte> PlaybackData { get; private set; }
+    public IReadOnlyList<double> PlaybackData { get; private set; }
     public Pattern? ActivePatternInfo { get; private set; }
-    private List<float> SimulatedVolumes = new();
 
-    public PatternHandler(ILogger<PatternHandler> logger, MainConfig config,
-        SexToyManager vibeService)
+    public PatternHandler(ILogger<PatternHandler> logger, MainConfig config, BuzzToyHandler toyHandler)
     {
         _logger = logger;
         _config = config;
-        _vibeService = vibeService;
+        _toyHandler = toyHandler;
     }
 
     public bool CanPlaybackPattern => _playbackTask is null || _playbackTask.IsCompleted;
@@ -78,12 +80,12 @@ public class PatternHandler : IDisposable
         _logger.LogDebug($"Stopping playback of pattern", LoggerType.Patterns);
         _playbackCTS?.Cancel();
         _playbackTask?.Wait();
-        _vibeService.StopActiveVibes();
+        _toyHandler.StopAllDevices();
 
         // turn off all meta.
         DisplayTime.Stop();
         DisplayTime.Reset();
-        PlaybackData = Array.Empty<byte>();
+        PlaybackData = Array.Empty<double>();
         _playbackCTS?.Dispose();
         _playbackCTS = null;
 
@@ -91,8 +93,8 @@ public class PatternHandler : IDisposable
         ActivePatternInfo = null;
     }
 
-    /// <summary> Extracts the range of byte data from the defined startpoint, for the playback duration. </summary>
-    private IReadOnlyList<byte> TrimDataToPlayableRegion(List<byte> bytes, TimeSpan startPoint, TimeSpan duration)
+    /// <summary> Extracts the range of data from the defined startpoint, for the playback duration. </summary>
+    private IReadOnlyList<double> TrimDataToPlayableRegion(List<double> baseData, TimeSpan startPoint, TimeSpan duration)
     {
         // The pattern stores 1 byte every 20ms. We need to compress this information to contain the subset starting at the defined startpoint, for the defined duration.
         _logger.LogDebug($"Start point at " + startPoint + " and duration at " + duration, LoggerType.Patterns);
@@ -100,26 +102,26 @@ public class PatternHandler : IDisposable
         var length = (int)(duration.TotalSeconds * 50);
 
         // Ensure startIndex is within bounds
-        if (startIndex >= bytes.Count || length >= bytes.Count - startIndex)
+        if (startIndex >= baseData.Count || length >= baseData.Count - startIndex)
         {
             _logger.LogWarning("Total Byte size exceeds the available data range.");
-            return Array.Empty<byte>(); // Return empty list if start index is out of range
+            return Array.Empty<double>(); // Return empty list if start index is out of range
         }
 
         // Clamp the length just incase.
-        var endIndex = Math.Min(startIndex + length, bytes.Count);
+        var endIndex = Math.Min(startIndex + length, baseData.Count);
 
         // return the correct range.
-        return bytes.GetRange(startIndex, endIndex - startIndex);
+        return baseData.GetRange(startIndex, endIndex - startIndex);
 
     }
 
     /// <summary> Helps make the simulated vibrator audio have volumes levels that dont turn your headphone audio into a shredding machine. </summary>
-    private void InitializeVolumeLevels(IReadOnlyList<byte> intensityPattern)
+    private void InitializeVolumeLevels(IReadOnlyList<double> intensityPattern)
     {
-        SimulatedVolumes.Clear();
+        _simulatedVolumes.Clear();
         foreach (var intensity in intensityPattern)
-            SimulatedVolumes.Add(intensity / 100f);
+            _simulatedVolumes.Add(intensity);
     }
 
     /// <summary> The operating task responcible for running the active pattern. </summary>
@@ -146,7 +148,7 @@ public class PatternHandler : IDisposable
                 }
 
                 // send off the vibe instruction to the actual or simulated sex toy.
-                _vibeService.SendNextIntensity(PlaybackData[ReadBufferIdx]);
+                _toyHandler.VibrateAll(PlaybackData[ReadBufferIdx]);
                 ReadBufferIdx++;
                 // 20 millisecond delay before next read.
                 await Task.Delay(20, token);

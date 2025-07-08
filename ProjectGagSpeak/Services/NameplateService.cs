@@ -104,9 +104,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Removing {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.Remove(PlayerData.NameWithWorldInstanced, out var ____);
         }
-        Logger.LogTrace("Requesting Redraw!");
         Svc.NamePlate.RequestRedraw();
-
     }
 
     private void UpdateKinkster(int _, GagType __, bool applied, string ___, Kinkster k)
@@ -125,7 +123,6 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Removing {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.Remove(k.PlayerNameWithWorld, out var ____);
         }
-        Logger.LogTrace("Requesting Redraw!");
         Svc.NamePlate.RequestRedraw();
     }
 
@@ -148,7 +145,6 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
         // Update the Tracked Kinksters here (we dont do it during recalculation because of concurrent access)
         TrackedKinksters = newTrackedKinksters;
-        Logger.LogTrace("Requesting Redraw!");
         Svc.NamePlate.RequestRedraw();
     }
 
@@ -156,8 +152,6 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     {
         if (_gags.ServerGagData is not { } data || _globals.Current is not { } perms)
             return;
-
-        Logger.LogTrace($"OnOwnMessage: Channel: {c}, Message: {message}");
 
         // Discard if not a garbled message.
         if (!data.IsGagged() 
@@ -190,20 +184,17 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         // Add the key or update the value to true.
         TrackedKinksters.AddOrUpdate(playerNameWorld, true, (key, oldValue) => true);
         // request a nameplate update.
-        Logger.LogTrace("Requesting Redraw!");
         Svc.NamePlate.RequestRedraw();
         // wait the desired milliseconds.
         await Task.Delay(milliseconds).ConfigureAwait(false);
         // Update the value to false (do not remove, we are still gagged)
         TrackedKinksters.TryUpdate(playerNameWorld, false, true);
         // request a nameplate update.
-        Logger.LogTrace("Requesting Redraw!");
         Svc.NamePlate.RequestRedraw();
     }
 
     private unsafe void NamePlateOnPostUpdate(INamePlateUpdateContext context, IReadOnlyList<INamePlateUpdateHandler> handlers)
     {
-        Logger.LogTrace($"NamePlateOnPostUpdate called with context: {context.ActiveNamePlateCount}, handlers count: {handlers.Count}");
         // Iterate through our handlers.
         foreach (var h in handlers)
         {

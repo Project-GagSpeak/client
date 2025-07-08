@@ -27,10 +27,12 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
     public readonly string Favorites;
+    public readonly string BuzzToys;
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
     public string CKFS_CursedLoot => Path.Combine(FileSysDirectory, "fs-cursedloot.json");
+    public string CKFS_BuzzToys => Path.Combine(FileSysDirectory, "fs-buzzdevices.json");
     public string CKFS_Patterns => Path.Combine(FileSysDirectory, "fs-patterns.json");
     public string CKFS_Alarms => Path.Combine(FileSysDirectory, "fs-alarms.json");
     public string CKFS_Triggers => Path.Combine(FileSysDirectory, "fs-triggers.json");
@@ -64,6 +66,7 @@ public class ConfigFileProvider : IConfigFileProvider
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
+        BuzzToys = Path.Combine(GagSpeakDirectory, "buzz-devices.json");
 
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
         ServerConfig = Path.Combine(GagSpeakDirectory, "server.json");

@@ -3,6 +3,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Handlers;
+using GagSpeak.State.Managers;
 using GagSpeak.Toybox;
 using ImGuiNET;
 using ImPlotNET;
@@ -18,14 +20,17 @@ namespace GagSpeak.Gui.UiRemote;
 public abstract class RemoteBase : WindowMediatorSubscriberBase
 {
     // the class includes are shared however (i think), so dont worry about that.
-    private readonly SexToyManager _vibeService;
+    protected readonly BuzzToyHandler _handler;
+    protected readonly BuzzToyManager _manager;
     protected readonly TutorialService _guides;
 
-    public RemoteBase(ILogger logger, GagspeakMediator mediator, 
-        SexToyManager vibeService, TutorialService guides, string windowName)
+    public RemoteBase(ILogger logger, GagspeakMediator mediator,
+        BuzzToyHandler handler, BuzzToyManager manager, 
+        TutorialService guides, string windowName)
         : base(logger, mediator, windowName + " Remote")
     {
-        _vibeService = vibeService;
+        _handler = handler;
+        _manager = manager;
         _guides = guides;
 
         AllowPinning = false;
@@ -130,9 +135,9 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
 
     // Graph data. Does not need to be distinct, but is shared across all types. (base class)
     public const float XAxisLimit = 40;
-    public const float YAxisLimitLower = 0;
-    public const float YAxisLimitUpper = 100;
-    public double[] Positions = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 }; 
+    public const float YAxisLimitLower = 0.0f;
+    public const float YAxisLimitUpper = 1.0f;
+    public double[] Positions = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }; 
     public string[] Labels = { "0%", "", "", "", "", "", "", "", "", "", "100%" };
 
     // Toggles the size constraints.
@@ -207,13 +212,11 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             {
                 ImGui.TableSetupColumn("##RemoteUIContent", ImGuiTableColumnFlags.WidthFixed, WindowWidthMin);
                 if (IsExpanded)
-                {
                     ImGui.TableSetupColumn("##RemoteUIExtraContent", ImGuiTableColumnFlags.WidthStretch);
-                }
 
                 ImGui.TableNextColumn();
 
-                using (var childBg = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.1f, 0.930f)))
+                using (ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.1f, 0.930f)))
                 {
                     // draw the playback display, this particular playback display should have its width increased by 20, and moved up 10f and left 10f
                     ImGui.SetCursorPos(new Vector2(xPos - ImGuiHelpers.GlobalScale * 10f, yPos - ImGuiHelpers.GlobalScale * 10f));
@@ -238,16 +241,10 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
                 }
 
                 if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && isFocused)
-                {
                     ProcessLoopToggle();
-                }
+
                 if (ImGui.IsMouseClicked(ImGuiMouseButton.Middle) && isFocused)
-                {
                     ProcessFloatToggle();
-                }
-
-                // move to the next column if we should.
-
             }
         }
     }
@@ -273,7 +270,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
             ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemotePlaybackBg.Uint());
 
             // setup and draw the waveform graph axis
-            ImPlot.SetNextAxesLimits(-150, 0, -5, 110, ImPlotCond.Always);
+            ImPlot.SetNextAxesLimits(-150, 0, -0.05, 1.1, ImPlotCond.Always);
 
             if (ImPlot.BeginPlot("##Waveform", new Vector2(width, 125), ImPlotFlags.NoBoxSelect | ImPlotFlags.NoMenus | ImPlotFlags.NoLegend | ImPlotFlags.NoFrame))
             {
@@ -313,7 +310,6 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
     /// This abstract method for the center bar will change how it is drawn based on the remote type.
     /// <para> Personal will display personal devices, their motors and additional options. </para>
     /// <para> Patterns will display the device the pattern is being recorded for, which motor and type we are recording for.</para>
-    /// <para> Pattern will display </para>
     /// </summary>
     public abstract void DrawCenterBar(ref float xPos, ref float yPos, ref float width);
 
@@ -358,7 +354,7 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         // go to the next line and draw the grid we can move out thing in
         yPos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(yPos - ImGui.GetTextLineHeight());
-        ImPlot.SetNextAxesLimits(-50, +50, -10, 110, ImPlotCond.Always);
+        ImPlot.SetNextAxesLimits(-50, +50, -0.1, 1.1, ImPlotCond.Always);
         var PreviousPos = CirclePosition[1]; // store the Y position
 
         // now draw the actual damn thing
@@ -416,22 +412,26 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
     public void AccountForFloating()
     {
         // Check if the circle's position is beyond the axis limit and set it to the limit if it is
-        if (CirclePosition[0] > XAxisLimit) { CirclePosition[0] = XAxisLimit; }
-        if (CirclePosition[0] < -XAxisLimit) { CirclePosition[0] = -XAxisLimit; }
-        if (CirclePosition[1] > YAxisLimitUpper) { CirclePosition[1] = YAxisLimitUpper; }
-        if (CirclePosition[1] < YAxisLimitLower) { CirclePosition[1] = YAxisLimitLower; }
+        if (CirclePosition[0] > XAxisLimit) 
+            CirclePosition[0] = XAxisLimit;
+
+        if (CirclePosition[0] < -XAxisLimit)
+            CirclePosition[0] = -XAxisLimit;
+
+        if (CirclePosition[1] > YAxisLimitUpper)
+            CirclePosition[1] = YAxisLimitUpper;
+
+        if (CirclePosition[1] < YAxisLimitLower) 
+            CirclePosition[1] = YAxisLimitLower;
+
         // if the isfloating is not active and we have let go of the circle, drop it.
         if (IsFloating == false && IsDragging == false)
         {
             // drop the circle by 10
-            if (CirclePosition[1] < 10)
-            {
-                CirclePosition[1] = 0;
-            }
+            if (CirclePosition[1] < 0.01)
+                CirclePosition[1] = 0.0;
             else
-            {
-                CirclePosition[1] -= 10;
-            }
+                CirclePosition[1] -= 0.075;
         }
     }
 
@@ -443,8 +443,8 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         IntensityUpdateTimer.Start();
         DurationStopwatch.Start();
         RemoteOnline = true;
-        // start up the simulated vibrator if active.
-        _vibeService.StartActiveVibes();
+        // startup vibe stuff below. 
+        // TODO:
     }
 
     public virtual void StopVibrating()
@@ -458,8 +458,8 @@ public abstract class RemoteBase : WindowMediatorSubscriberBase
         // clear our stored data (not the byte intensity block)
         RecordedPositions.Clear();
         StoredLoopDataBlock.Clear();
-        // Reset vibrations on motors prior to recording back to original state.
-        _vibeService.StopActiveVibes();
+        // Reset vibrations on motors prior to recording back to original state below.
+        // TODO:
     }
 
     /// <summary>

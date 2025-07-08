@@ -12,7 +12,7 @@ public class Pattern : IEditableStorageItem<Pattern>
     public TimeSpan StartPoint { get; set; } = TimeSpan.Zero;
     public TimeSpan PlaybackDuration { get; set; } = TimeSpan.Zero;
     public bool ShouldLoop { get; set; } = false;
-    public List<byte> PatternData { get; set; } = new();
+    public List<double> PatternData { get; set; } = new();
 
     public Pattern() { }
 
@@ -74,12 +74,12 @@ public class Pattern : IEditableStorageItem<Pattern>
             if (!string.IsNullOrEmpty(patternDataString))
             {
                 PatternData = patternDataString.Split(',')
-                    .Select(byte.Parse)
+                    .Select(double.Parse)
                     .ToList();
             }
             else
             {
-                PatternData = new List<byte> { (byte)0 }; // Default case
+                PatternData = new List<double>() { 0.0 }; // Default case
             }
         }
         catch (Exception e) { throw new Exception($"{e} Error deserializing pattern data"); }

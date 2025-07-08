@@ -27,16 +27,16 @@ public static class IntifaceCentral
         }
     }
 
-    public static void OpenIntiface(ILogger logger, bool pushToForeground)
+    public static void OpenIntiface(bool pushToForeground)
     {
         // search for the intiface celtral window
-        var windowHandle = FindWindowByRegex(logger, @"Intiface\u00AE Central*");
+        var windowHandle = FindWindowByRegex(@"Intiface\u00AE Central*");
         // if it's present, place it to the foreground
         if (windowHandle != IntPtr.Zero)
         {
             if (pushToForeground)
             {
-                logger.LogDebug("Intiface Central found, bringing to foreground.");
+                Svc.Logger.Debug("Intiface Central found, bringing to foreground.");
                 User32.ShowWindow(windowHandle, User32.WindowShowStyle.SW_RESTORE);
                 User32.SetForegroundWindow(windowHandle);
             }
@@ -44,19 +44,19 @@ public static class IntifaceCentral
         // otherwise, start the process to open intiface central
         else if (!string.IsNullOrEmpty(AppPath) && File.Exists(AppPath))
         {
-            logger.LogInformation("Starting Intiface Central");
+            Svc.Logger.Information("Starting Intiface Central");
             Process.Start(AppPath);
         }
         // or just open the installer if it doesnt exist.
         else
         {
-            logger.LogWarning("Application not found, redirecting you to download installer."
-                + Environment.NewLine + "Current App Path is: " + AppPath);
+            Svc.Logger.Warning("Application not found, redirecting you to download installer.\n" +
+                $"Current App Path is: {AppPath}");
             Util.OpenLink("https://intiface.com/central/");
         }
     }
 
-    public static IntPtr FindWindowByRegex(ILogger logger, string pattern)
+    public static IntPtr FindWindowByRegex(string pattern)
     {
         var matchedWindowHandle = IntPtr.Zero;
         var regex = new Regex(pattern, RegexOptions.IgnoreCase);

@@ -31,7 +31,7 @@ public class TriggerActionService
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
-    private readonly SexToyManager _toys;
+    private readonly BuzzToyManager _toys;
     private readonly MoodleHandler _moodles;
     private readonly DataDistributionService _distributer; // Allows us to directly execute the calls and await for them to finish.
 
@@ -47,7 +47,7 @@ public class TriggerActionService
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
-        SexToyManager toys,
+        BuzzToyManager toys,
         MoodleHandler moodles)
     {
         _logger = logger;

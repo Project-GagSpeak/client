@@ -33,7 +33,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
-    private readonly SexToyManager _sexToys;
+    private readonly BuzzToyManager _sexToys;
     private readonly AchievementEventHandler _handler;
     private readonly NotificationService _notifier;
     private readonly OnFrameworkService _frameworkUtils;
@@ -51,7 +51,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         ClientAchievements saveData, MainConfig config, GlobalPermissions globals, TraitsCache traits,
         KinksterManager pairs, GagRestrictionManager gags, RestrictionManager restrictions,
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns,
-        AlarmManager alarms, TriggerManager triggers, SexToyManager sexToys,
+        AlarmManager alarms, TriggerManager triggers, BuzzToyManager sexToys,
         AchievementEventHandler handler, NotificationService notifier, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
@@ -356,7 +356,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             var activeItems = 0;
             if (_gags.ServerGagData?.IsGagged() ?? false) activeItems++;
             if (_restraints.AppliedRestraint is not null) activeItems++;
-            if (_sexToys.ConnectedToyActive) activeItems++;
+            if (_sexToys.HasActiveToys) activeItems++;
             return activeItems >= 2;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Duties Completed");
 
@@ -484,7 +484,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Toybox, Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
         _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.CollectorOfSinfulTreasures, () =>
-        { return (_globals.Current?.HasValidShareCode() ?? false) || _sexToys.DeviceHandler.AnyDeviceConnected; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
+        { return (_globals.Current?.HasValidShareCode() ?? false) || _sexToys.HasActiveToys; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
 
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox, Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
             () => _patterns.ActivePattern is not null, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
@@ -637,21 +637,21 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             return targetIsImmobile;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.ConnectedToyActive),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _sexToys.HasActiveToys),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 
@@ -660,16 +660,16 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
         {
-            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _patterns.ActivePattern is not null && _triggers.ActiveTriggers.Count() > 0 && _alarms.ActiveAlarms.Count() > 0 && _sexToys.ConnectedToyActive;
+            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _patterns.ActivePattern is not null && _triggers.ActiveTriggers.Count() > 0 && _alarms.ActiveAlarms.Count() > 0 && _sexToys.HasActiveToys;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Conditions", isSecret: true);
 
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
         {
-            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _sexToys.ConnectedToyActive && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
+            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _sexToys.HasActiveToys && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
             && _globals.Current is { } globals && (!globals.ForcedFollow.IsNullOrWhitespace() || !globals.ForcedEmoteState.IsNullOrWhitespace());
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Hardcore Conditions", isSecret: true);
 
-        _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _sexToys.ConnectedToyActive && _gags.ServerGagData is { } gags && gags.IsGagged(), (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
+        _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _sexToys.HasActiveToys && _gags.ServerGagData is { } gags && gags.IsGagged(), (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
         _saveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.AppliedRestraint is not null && PlayerData.IsDead, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
         _saveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.AppliedRestraint is not null, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);

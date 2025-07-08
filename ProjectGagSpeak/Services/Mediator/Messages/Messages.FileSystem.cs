@@ -18,4 +18,6 @@ public record ConfigAlarmChanged(StorageChangeType Type, Alarm Item, string? Old
 
 public record ConfigTriggerChanged(StorageChangeType Type, Trigger Item, string? OldString = null) : MessageBase;
 
+public record ConfigSexToyChanged(StorageChangeType Type, BuzzToy Item, string? OldString = null) : MessageBase;
+
 public record ReloadFileSystem(GagspeakModule Module) : MessageBase;

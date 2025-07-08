@@ -3,17 +3,15 @@ using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.UiRemote;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
+using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State;
+using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Toybox;
 using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
@@ -24,27 +22,28 @@ public class ToysPanel
 {
     private readonly ILogger<ToysPanel> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly GlobalPermissions _globals;
-    private readonly SexToyManager _manager;
-    private readonly MainConfig _clientConfigs;
-    private readonly ServerConfigService _serverConfigs;
+    private readonly BuzzToyFileSelector _selector;
+    private readonly BuzzToyManager _manager;
+    private readonly IpcCallerIntiface _ipc;
+
+    //private readonly GlobalPermissions _globals;
+    //private readonly MainConfig _clientConfigs;
+    //private readonly ServerConfigService _serverConfigs;
     private readonly TutorialService _guides;
 
     public ToysPanel(
         ILogger<ToysPanel> logger,
         GagspeakMediator mediator,
-        GlobalPermissions globals,
-        SexToyManager toysManager,
-        MainConfig clientConfigs,
-        ServerConfigService serverConfigs,
+        BuzzToyFileSelector selector,
+        BuzzToyManager manager,
+        IpcCallerIntiface ipc,
         TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
-        _globals = globals;
-        _manager = toysManager;
-        _clientConfigs = clientConfigs;
-        _serverConfigs = serverConfigs;
+        _selector = selector;
+        _manager = manager;
+        _ipc = ipc;
         _guides = guides;
 
         // grab path to the intiface
@@ -52,197 +51,137 @@ public class ToysPanel
             IntifaceCentral.GetApplicationPath();
     }
 
-    public void DrawContents(CkHeader.DrawRegions regions, float rightLength, float curveSize, ToyboxTabs tabMenu)
+    public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, ToyboxTabs tabMenu)
     {
-        ImGui.SetCursorScreenPos(regions.Top.Pos);
-        using (ImRaii.Child("ToysAndLobbiesTop", regions.Top.Size))
-            DrawHeader(regions.Top, rightLength, curveSize, tabMenu);
+        ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
+        using (ImRaii.Child("BuzzToysTL", drawRegions.TopLeft.Size))
+            _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
 
-        ImGui.SetCursorScreenPos(regions.Bottom.Pos);
-        using (var c = CkRaii.Child("ToysAndLobbiesBot", regions.Bottom.Size, WFlags.AlwaysUseWindowPadding))
-            DrawPanel(c.InnerRegion);
+        ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
+        using (ImRaii.Child("BuzzToysBL", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
+            _selector.DrawList(drawRegions.BotLeft.SizeX);
+
+        ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
+        using (ImRaii.Child("BuzzToysTR", drawRegions.TopRight.Size))
+            tabMenu.Draw(drawRegions.TopRight.Size);
+
+        // Draw the selected Item
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
+        DrawSelectedToyInfo(drawRegions.BotRight, curveSize);
+        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+
+        // Shift down and draw the Active items
+        var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
+        ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
+        DrawActiveToys(drawRegions.BotRight.Size - verticalShift);
     }
 
-    private void DrawHeader(CkHeader.DrawRegion drawRegion, float rightLen, float curveSize, ToyboxTabs tabMenu)
+    private void DrawSelectedToyInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        // Calculate the size of the left box, and the size of the right box, with the spacing in mind.
-        var leftBoxSize = new Vector2(drawRegion.Size.X - rightLen - ImGui.GetFrameHeight(), drawRegion.Size.Y);
-        var rightBoxSize = new Vector2(rightLen, drawRegion.Size.Y);
+        var wdl = ImGui.GetWindowDrawList();
+        var height = ImGui.GetTextLineHeightWithSpacing() * 6;
+        var region = new Vector2(drawRegion.Size.X, height);
+        var notSelected = _selector.Selected is null;
+        var labelText = notSelected ? "No Item Selected!" : $"{_selector.Selected!.LabelName} ({_selector.Selected!.FactoryName})";
+        var tooltipAct = notSelected ? "No item selected!" : "Double Click to begin editing!";
 
-        // Create the CkRaii Child for the left side to draw the connection status inside.
-        ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(curveSize, 0));
-        using (CkRaii.ChildPadded("##ToyStatus", leftBoxSize.WithoutWinPadding(), CkColor.FancyHeaderContrast.Uint(),
-            CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using var c = CkRaii.ChildLabelButton(region, .6f, labelText, ImGui.GetFrameHeight(), BeginEdits, tooltipAct, ImDrawFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
+
+        var pos = ImGui.GetItemRectMin();
+        // Draw the left items.
+        if (_selector.Selected is not null)
+            DrawSelectedInner();
+
+        void BeginEdits(ImGuiMouseButton b)
         {
-            DrawIntifaceConnectionStatus();
+            if (b is ImGuiMouseButton.Left && _selector.Selected is VirtualBuzzToy vbt)
+                _manager.StartEditing(vbt);
         }
-
-        // Setup position for the right area.
-        ImGui.SetCursorScreenPos(drawRegion.Pos + new Vector2(leftBoxSize.X + ImGui.GetFrameHeight(), 0));
-        tabMenu.Draw(rightBoxSize);
     }
 
-    public void DrawPanel(Vector2 region)
+    private void DrawSelectedInner()
     {
-        // display a dropdown for the type of vibrator to use
-        ImGui.SetNextItemWidth(125f);
-        if (ImGui.BeginCombo("Set Vibrator Type##VibratorMode", _clientConfigs.Current.VibratorMode.ToString()))
+        using var _ = ImRaii.Child("SelectedChildInner", ImGui.GetContentRegionAvail());
+
+        if (_selector.Selected is not { } selected)
+            return;
+
+        if(selected is IntifaceBuzzToy ibt)
+            ImGui.Text($"Intiface Idx: {ibt.DeviceIdx}");
+        
+        ImGui.Text("Factory (Default) Name: " + selected.FactoryName);
+        ImGui.Text("Display Name: " + selected.LabelName);
+        ImGui.Text("Battery Level: " + selected.BatteryLevel);
+        ImGui.Text("Can Interact: " + selected.CanInteract);
+
+        if (selected.CanVibrate)
         {
-            foreach (VibratorEnums mode in Enum.GetValues(typeof(VibratorEnums)))
+            ImGui.Text("Vibe Motors:");
+            for (var i = 0; i < selected.VibeMotorCount; i++)
             {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Current.VibratorMode))
-                {
-                    _clientConfigs.Current.VibratorMode = mode;
-                    _clientConfigs.Save();
-                }
+                ImUtf8.SameLineInner();
+                using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    ImUtf8.TextFrameAligned($" #{i} ");
+                CkGui.AttachToolTip($"--COL--Step Count:--COL-- {selected.VibeMotors[i].StepCount}" +
+                    $"--NL----COL--Interval:--COL-- {selected.VibeMotors[i].Interval}" +
+                    $"--NL----COL--Current Intensity:--COL-- {selected.VibeMotors[i].Intensity}", color: ImGuiColors.ParsedGold);
             }
-            ImGui.EndCombo();
         }
 
-        // display the wide list of connected devices, along with if they are active or not, below some scanner options
+        if (selected.CanRotate)
+        {
+            ImGui.Text("Rotate Motors:");
+            for (var i = 0; i < selected.RotateMotorCount; i++)
+            {
+                ImUtf8.SameLineInner();
+                using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    ImUtf8.TextFrameAligned($" #{i} ");
+                CkGui.AttachToolTip(
+                    $"--COL--Step Count:--COL-- {selected.RotateMotors[i].StepCount}" +
+                    $"--COL--Interval:--COL-- {selected.RotateMotors[i].Interval}" +
+                    $"--COL--Current Intensity:--COL-- {selected.RotateMotors[i].Intensity}", color: ImGuiColors.ParsedGold);
+            }
+        }
+
+        if (selected.CanOscillate)
+        {
+            ImGui.Text("Oscillation Motors:");
+            for (var i = 0; i < selected.OscillateMotorCount; i++)
+            {
+                ImUtf8.SameLineInner();
+                using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    ImUtf8.TextFrameAligned($" #{i} ");
+                CkGui.AttachToolTip(
+                    $"--COL--Step Count:--COL-- {selected.OscillateMotors[i].StepCount}" +
+                    $"--COL--Interval:--COL-- {selected.OscillateMotors[i].Interval}" +
+                    $"--COL--Current Intensity:--COL-- {selected.OscillateMotors[i].Intensity}", color: ImGuiColors.ParsedGold);
+            }
+        }
+    }
+
+    private void DrawActiveToys(Vector2 region)
+    {
+        using var child = CkRaii.Child("ActiveToys", region, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
+
+        ImGui.Text("Active Toys Listed here and stuff yes yes.");
+
         if (CkGui.IconTextButton(FAI.TabletAlt, "Personal Remote", 125f))
         {
             // open the personal remote window
             _mediator.Publish(new UiToggleMessage(typeof(RemotePersonal)));
         }
-        ImUtf8.SameLineInner();
-        ImGui.Text("Open Personal Remote");
+        CkGui.HelpText("Open Personal Remote");
 
-        if (_globals.Current is { } globals)
-            ImGui.Text("Active Toys State: " + (globals.ToysAreConnected ? "Active" : "Inactive"));
-
-        ImGui.Text("ConnectedToyActive: " + _manager.ConnectedToyActive);
-
-        // draw out the list of devices
-        ImGui.Separator();
-        CkGui.FontText("Connected Device(s)", UiFontService.UidFont);
-        if (_clientConfigs.Current.VibratorMode == VibratorEnums.Simulated)
-        {
-            DrawSimulatedVibeInfo();
-        }
-        else
-        {
-            DrawDevicesTable();
-        }
-    }
-
-
-    private void DrawSimulatedVibeInfo()
-    {
-        ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        var vibeType = _clientConfigs.Current.VibeSimAudio;
-        if (ImGui.BeginCombo("Vibe Sim Audio##SimVibeAudioType", _clientConfigs.Current.VibeSimAudio.ToString()))
-        {
-            foreach (VibeSimType mode in Enum.GetValues(typeof(VibeSimType)))
-            {
-                if (ImGui.Selectable(mode.ToString(), mode == _clientConfigs.Current.VibeSimAudio))
-                {
-                    _manager.UpdateVibeSimAudioType(mode);
-                }
-            }
-            ImGui.EndCombo();
-        }
-        CkGui.AttachToolTip("Select the type of simulated vibrator sound to play when the intensity is adjusted.");
-
-        // draw out the combo for the audio device selection to play to
-        ImGui.SetNextItemWidth(175 * ImGuiHelpers.GlobalScale);
-        var prevDeviceId = _manager.VibeSimAudio.ActivePlaybackDeviceId; // to only execute code to update data once it is changed
-        // display the list        
-        if (ImGui.BeginCombo("Playback Device##Playback Device", _manager.ActiveSimPlaybackDevice))
-        {
-            foreach (var device in _manager.PlaybackDevices)
-            {
-                var isSelected = (_manager.ActiveSimPlaybackDevice == device);
-                if (ImGui.Selectable(device, isSelected))
-                {
-                    _manager.SwitchPlaybackDevice(_manager.PlaybackDevices.IndexOf(device));
-                }
-            }
-            ImGui.EndCombo();
-        }
-        CkGui.AttachToolTip("Select the audio device to play the simulated vibrator sound to.");
-    }
-
-    public void DrawDevicesTable()
-    {
-        if (CkGui.IconTextButton(FAI.Search, "Device Scanner", null, false, !_manager.IntifaceConnected))
-        {
-            // search scanning if we are not scanning, otherwise stop scanning.
-            if (_manager.ScanningForDevices)
-            {
-                _manager.DeviceHandler.StopDeviceScanAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                _manager.DeviceHandler.StartDeviceScanAsync().ConfigureAwait(false);
-            }
-        }
-
-        var color = _manager.ScanningForDevices ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudRed;
-        var scanText = _manager.ScanningForDevices ? "Scanning..." : "Idle";
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Scanner Status: ");
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Text, color))
-        {
-            ImGui.TextUnformatted(scanText);
-        }
-
-        foreach (var device in _manager.DeviceHandler.ConnectedDevices)
-        {
-            DrawToyInfo(device);
-        }
-    }
-
-    private void DrawToyInfo(ButtPlugDevice Device)
-    {
-        if (Device == null) { ImGui.Text("Device is null for this index."); return; }
-
-        ImGui.Text("Device Index: " + Device.DeviceIdx);
-
-        ImGui.Text("Device Name: " + Device.DeviceName);
-
-        ImGui.Text("Device Display Name: " + Device.DisplayName);
-
-        // Draw Vibrate Attributes
-        ImGui.Text("Vibrate Attributes:");
-        ImGui.Indent();
-        foreach (var attr in Device.VibeAttributes)
-        {
-            ImGui.Text("Feature: " + attr.FeatureDescriptor);
-            ImGui.Text("Actuator Type: " + attr.ActuatorType);
-            ImGui.Text("Step Count: " + attr.StepCount);
-            ImGui.Text("Index: " + attr.Index);
-        }
-        ImGui.Unindent();
-
-        // Draw Rotate Attributes
-        ImGui.Text("Rotate Attributes:");
-        ImGui.Indent();
-        foreach (var attr in Device.RotateAttributes)
-        {
-            ImGui.Text("Feature: " + attr.FeatureDescriptor);
-            ImGui.Text("Actuator Type: " + attr.ActuatorType);
-            ImGui.Text("Step Count: " + attr.StepCount);
-            ImGui.Text("Index: " + attr.Index);
-        }
-        ImGui.Unindent();
-
-        // Check if the device has a battery
-        ImGui.Text("Has Battery: " + Device.BatteryPresent);
-        ImGui.Text("Battery Level: " + Device.BatteryLevel);
-    }
-
-
-    private void DrawIntifaceConnectionStatus()
-    {
+        // temp placeholder connection stuff.
         var windowPadding = ImGui.GetStyle().WindowPadding;
         // push the style var to supress the Y window padding.
         var intifaceOpenIcon = FAI.ArrowUpRightFromSquare;
         var intifaceIconSize = CkGui.IconButtonSize(intifaceOpenIcon);
-        var connectedIcon = !_manager.IntifaceConnected ? FAI.Link : FAI.Unlink;
+        var connectedIcon = IpcCallerIntiface.IsConnected ? FAI.Link : FAI.Unlink;
         var buttonSize = CkGui.IconButtonSize(FAI.Link);
-        var buttplugServerAddr = IntifaceController.IntifaceClientName;
+        var buttplugServerAddr = IpcCallerIntiface.ClientName;
         var addrSize = ImGui.CalcTextSize(buttplugServerAddr);
 
         var intifaceConnectionStr = "Intiface Central Connection";
@@ -263,13 +202,13 @@ public class ToysPanel
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
             if (CkGui.IconButton(intifaceOpenIcon, inPopup: true))
-                IntifaceCentral.OpenIntiface(_logger, true);
+                IntifaceCentral.OpenIntiface(true);
             CkGui.AttachToolTip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
 
             // in the next column, draw the centered status.
             ImGui.TableNextColumn();
 
-            if (_manager.IntifaceConnected)
+            if (IpcCallerIntiface.IsConnected)
             {
                 // fancy math shit for clean display, adjust when moving things around
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - (addrSize.X) / 2);
@@ -288,27 +227,18 @@ public class ToysPanel
             // draw the connection link button
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - intifaceIconSize.Y) / 2);
-            // now we need to display the connection link button beside it.
-            var color = CkGui.GetBoolColor(_manager.IntifaceConnected);
-
             // we need to turn the button from the connected link to the disconnected link.
-            using (ImRaii.PushColor(ImGuiCol.Text, color))
+            using (ImRaii.PushColor(ImGuiCol.Text, CkGui.GetBoolColor(IpcCallerIntiface.IsConnected)))
             {
                 if (CkGui.IconButton(connectedIcon, inPopup: true))
                 {
-                    // if we are connected to intiface, then we should disconnect.
-                    if (_manager.IntifaceConnected)
-                    {
-                        _manager.DeviceHandler.DisconnectFromIntifaceAsync();
-                    }
-                    // otherwise, we should connect to intiface.
+                    if (IpcCallerIntiface.IsConnected)
+                        _ipc.Disconnect().ConfigureAwait(false);
                     else
-                    {
-                        _manager.DeviceHandler.ConnectToIntifaceAsync();
-                    }
+                        _ipc.Connect().ConfigureAwait(false);
                 }
-                CkGui.AttachToolTip(_manager.IntifaceConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
             }
+            CkGui.AttachToolTip(IpcCallerIntiface.IsConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
         }
     }
 }

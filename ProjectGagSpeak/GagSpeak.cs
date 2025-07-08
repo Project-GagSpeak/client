@@ -193,6 +193,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<RestrictionFileSelector>()
         .AddSingleton<RestraintSetFileSelector>()
         .AddSingleton<CursedLootFileSelector>()
+        .AddSingleton<BuzzToyFileSelector>()
         .AddSingleton<PatternFileSelector>()
         .AddSingleton<AlarmFileSelector>()
         .AddSingleton<TriggerFileSelector>()
@@ -200,6 +201,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<RestrictionFileSystem>()
         .AddSingleton<RestraintSetFileSystem>()
         .AddSingleton<CursedLootFileSystem>()
+        .AddSingleton<BuzzToyFileSystem>()
         .AddSingleton<PatternFileSystem>()
         .AddSingleton<AlarmFileSystem>()
         .AddSingleton<TriggerFileSystem>()
@@ -277,15 +279,13 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ShareHubService>()
         .AddSingleton<SpellActionService>()
         .AddSingleton<TriggerActionService>()
+        .AddSingleton<VibeSimService>()
 
         // Spatial Audio
         .AddSingleton<ResourceLoader>()
         .AddSingleton<AvfxManager>()
         .AddSingleton<ScdManager>()
         .AddSingleton<VfxSpawns>()
-
-        // State (Controllers)
-        .AddSingleton<IntifaceController>()
 
         // State (Caches)
         .AddSingleton<CustomizePlusCache>()
@@ -296,6 +296,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<OverlayCache>()
 
         // State (Handlers)
+        .AddSingleton<BuzzToyHandler>()
         .AddSingleton<CustomizePlusHandler>()
         .AddSingleton<GlamourHandler>()
         .AddSingleton<HardcoreHandler>()
@@ -313,6 +314,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ModListener>()
         .AddSingleton<MoodleListener>()
         .AddSingleton<PlayerHpListener>()
+        .AddSingleton<IntifaceListener>()
         .AddSingleton<PuppeteerListener>()
         .AddSingleton<ToyboxStateListener>()
         .AddSingleton<VisualStateListener>()
@@ -324,17 +326,13 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagRestrictionManager>()
         .AddSingleton<ModSettingPresetManager>()
         .AddSingleton<OwnGlobalsManager>()
+        .AddSingleton<BuzzToyManager>()
+        .AddSingleton<VibeLobbyManager>()
         .AddSingleton<PatternManager>()
         .AddSingleton<PuppeteerManager>()
         .AddSingleton<RestraintManager>()
         .AddSingleton<RestrictionManager>()
         .AddSingleton<TriggerManager>()
-
-        // Toybox
-        .AddSingleton<VibeRoomManager>()
-        .AddSingleton<SexToyManager>()
-        .AddSingleton<ToyboxFactory>()
-        .AddSingleton<VibeSimAudio>()
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<HypnoEffectEditor>()
@@ -366,6 +364,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IpcCallerGlamourer>()
         .AddSingleton<IpcCallerCustomize>()
         .AddSingleton<IpcCallerLifestream>()
+        .AddSingleton<IpcCallerIntiface>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraChangedItemTooltip>();
@@ -437,6 +436,7 @@ public static class GagSpeakServiceExtensions
         // Scoped UI (Toybox)
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<ToysPanel>()
+        .AddScoped<VibeLobbiesPanel>()
         .AddScoped<PatternsPanel>()
         .AddScoped<AlarmsPanel>()
         .AddScoped<TriggersPanel>()
