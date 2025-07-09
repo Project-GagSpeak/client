@@ -26,96 +26,65 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
     {
         LabelName = virtualBuzzToy.LabelName;
         BatteryLevel = virtualBuzzToy.BatteryLevel;
-        CanInteract = virtualBuzzToy.CanInteract;
+        Interactable = virtualBuzzToy.Interactable;
         VibeMotors = virtualBuzzToy.VibeMotors.Select(m => new SexToyMotor(m)).ToArray();
-        RotateMotors = virtualBuzzToy.RotateMotors.Select(m => new SexToyMotor(m)).ToArray();
+        RotateMotor = new SexToyMotor(virtualBuzzToy.RotateMotor);
         OscillateMotors = virtualBuzzToy.OscillateMotors.Select(m => new SexToyMotor(m)).ToArray();
     }
 
     public override SexToyType Type => SexToyType.Simulated;
 
-    public override void StopAllMotors()
-    {
-        if (!IpcCallerIntiface.IsConnected)
-            return;
-
-        // stop all motors.
-        if (CanVibrate)
-            VibrateAll(0.0);
-
-        if (CanRotate)
-            RotateAll(0.0, true);
-
-        if (CanOscillate)
-            OscillateAll(0.0);
-    }
-
     public override void VibrateAll(double intensity)
     {
-        if (!CanVibrate)
-            return;
-
-        foreach (var motor in VibeMotors)
-            motor.Intensity = intensity;
-
+        base.VibrateAll(intensity);
         // adjust audio here.
     }
 
-    public override void Vibrate(int motorIdx, double intensity)
+    public override void Vibrate(uint motorIdx, double intensity)
     {
-        if (!CanVibrate || !motorIdx.IsInRange(VibeMotors))
-            return;
-
-        VibeMotors[motorIdx].Intensity = intensity;
+        base.Vibrate(motorIdx, intensity);
         // adjust audio here.
-
     }
 
-    public override void ViberateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
-        if (!CanVibrate)
-            return;
-
-        foreach (var cmd in newValues)
-            VibeMotors[cmd.index].Intensity = cmd.scalar;
-
+        base.VibrateDistinct(newValues);
         // adjust audio here.
     }
 
     public override void OscillateAll(double speed)
     {
-        if (!CanOscillate)
-            return;
-
-        foreach (var motor in OscillateMotors)
-            motor.Intensity = speed;
-
+        base.OscillateAll(speed);
         // adjust audio here.
     }
 
-    public override void Oscillate(int motorIdx, double speed)
+    public override void Oscillate(uint motorIdx, double speed)
     {
-        if (!CanOscillate || !motorIdx.IsInRange(OscillateMotors))
-            return;
-
-        OscillateMotors[motorIdx].Intensity = speed;
+        base.Oscillate(motorIdx, speed);
         // adjust audio here.
     }
 
     public override void OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
-        if (!CanOscillate)
-            return;
-
-        foreach (var cmd in newValues)
-            OscillateMotors[cmd.index].Intensity = cmd.scalar;
-
+        base.OscillateDistinct(newValues);
         // adjust audio here.
     }
 
-    public override void RotateAll(double speed, bool clockwise)
+    public override void Rotate(double speed, bool clockwise)
     {
-        
+        base.Rotate(speed, clockwise);
+        // adjust audio here.
+    }
+
+    public override void Constrict(double severity)
+    {
+        base.Constrict(severity);
+        // adjust audio here.
+    }
+
+    public override void Inflate(double severity)
+    {
+        base.Inflate(severity);
         // adjust audio here.
     }
 
@@ -129,13 +98,17 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
     {
         return new VirtualBuzzToy()
         {
+            Id = Guid.TryParse(token["Id"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             FactoryName = token["FactoryName"]?.Value<string>() ?? string.Empty,
             LabelName = token["LabelName"]?.Value<string>() ?? string.Empty,
             BatteryLevel = token["BatteryLevel"]?.Value<double>() ?? 0.0,
-            CanInteract = token["CanInteract"]?.Value<bool>() ?? false,
-            VibeMotors = token["VibeMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
-            RotateMotors = token["RotateMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
-            OscillateMotors = token["OscillateMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
+            Interactable = token["Interactable"]?.Value<bool>() ?? false,
+
+            VibeMotors = token["VibeMotors"] is JArray vArray ? vArray.Select(t => SexToyMotor.FromCompact(t?.ToString())).ToArray() : Array.Empty<SexToyMotor>(),
+            OscillateMotors = token["OscillateMotors"] is JArray oArray ? oArray.Select(t => SexToyMotor.FromCompact(t?.ToString())).ToArray() : Array.Empty<SexToyMotor>(),
+            RotateMotor = token["RotateMotor"]?.ToString() is { } rotStr ? SexToyMotor.FromCompact(rotStr) : SexToyMotor.Empty,
+            ConstrictMotor = token["ConstrictMotor"]?.ToString() is { } constrictStr ? SexToyMotor.FromCompact(constrictStr) : SexToyMotor.Empty,
+            InflateMotor = token["InflateMotor"]?.ToString() is { } inflateStr ? SexToyMotor.FromCompact(inflateStr) : SexToyMotor.Empty,
         };
     }
 }

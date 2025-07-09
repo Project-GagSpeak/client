@@ -19,13 +19,15 @@ public class CosmeticService : IHostedService, IDisposable
         _logger = logger;
         CoreTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.NecessaryImages);
         EmoteTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.ChatEmoteTextures);
+        IntifaceTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.IntifaceImages);
         CkRichText.DefineEmoteResolver(TryResolveEmote);
 
         LoadAllCosmetics();
     }
     
-    public static EnumTextureCache<CoreTexture>      CoreTextures;
-    public static EnumTextureCache<CoreEmoteTexture> EmoteTextures;
+    public static EnumTextureCache<CoreTexture>         CoreTextures;
+    public static EnumTextureCache<CoreEmoteTexture>    EmoteTextures;
+    public static EnumTextureCache<CoreIntifaceTexture> IntifaceTextures;
     private static ConcurrentDictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
 
     public void Dispose()

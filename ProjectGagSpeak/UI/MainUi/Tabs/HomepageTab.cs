@@ -14,6 +14,7 @@ using GagSpeak.GameInternals.Structs;
 using OtterGui.Text;
 using GagSpeak.Services.Textures;
 using CkCommons.Gui;
+using GagSpeak.Gui.Remote;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -34,7 +35,7 @@ public class HomepageTab
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Type)>
         {
-            ("Sex Toy Remote", FAI.WaveSquare, typeof(RemotePersonal)),
+            ("Sex Toy Remote", FAI.WaveSquare, typeof(SexToyRemoteUI)),
             ("Wardrobe", FAI.ToiletPortable, typeof(WardrobeUI)),
             ("Puppeteer", FAI.PersonHarassing, typeof(PuppeteerUI)),
             ("Toybox", FAI.BoxOpen, typeof(ToyboxUI)),
@@ -66,7 +67,7 @@ public class HomepageTab
             if (HomepageSelectable(module.Label, module.Icon, selectableSize, isHovered))
             {
                 _mediator.Publish(new UiToggleMessage(module.ToggleType));
-                if (module.ToggleType == typeof(RemotePersonal))
+                if (module.ToggleType == typeof(SexToyRemoteUI))
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
             }
 

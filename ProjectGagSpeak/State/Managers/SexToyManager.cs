@@ -5,12 +5,10 @@ using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.State.Managers;
 
@@ -44,8 +42,8 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     // maybe migrate to dictionary if we need faster access but otherwise this is fine for now.
     public IReadOnlyDictionary<Guid, BuzzToy> SexToys => _storage;
     public VirtualBuzzToy? ItemInEditor => _itemEditor.ItemInEditor;
-    public IEnumerable<BuzzToy> ActiveToys => _storage.Values.Where(st => st.CanInteract);
-    public bool HasActiveToys => ActiveToys.Count() > 0; // placeholder.
+    public IEnumerable<BuzzToy> InteractableToys => _storage.Values.Where(st => st.Interactable);
+    public bool HasInteractableToys => InteractableToys.Count() > 0; // placeholder.
 
     public void Dispose()
     {
@@ -96,13 +94,11 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         foreach (var toy in _storage.Values.OfType<IntifaceBuzzToy>())
         {
             if (toy.VibeMotorCount != newToy.VibrateAttributes.Count
-            || (toy.RotateMotorCount != newToy.RotateAttributes.Count)
             || (toy.OscillateMotorCount != newToy.OscillateAttributes.Count)
             || (toy.FactoryName != newToy.Name))
             {
                 _logger.LogDebug($"Skipping toy [{toy.FactoryName}] ({toy.LabelName}) as it does not match the new device attributes: " +
                     $"Vibe: {toy.VibeMotorCount} vs {newToy.VibrateAttributes.Count}, " +
-                    $"Rotate: {toy.RotateMotorCount} vs {newToy.RotateAttributes.Count}, " +
                     $"Oscillate: {toy.OscillateMotorCount} vs {newToy.OscillateAttributes.Count}" +
                     $"Factory: {toy.FactoryName} vs {newToy.Name}");
                 continue;
@@ -134,18 +130,15 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         }
     }
 
-    public void RemoveDevice(BuzzToy device)
+    public void ToggleInteractableState(BuzzToy device)
     {
-        if(_storage.TryRemove(device.Id, out var removedDevice))
+        if (_storage.Values.Contains(device))
         {
-            removedDevice.Dispose();
-            _logger.LogInformation($"Removed device {removedDevice.LabelName} ({removedDevice.Id}) from connected toys.", LoggerType.Toys);
+            device.Interactable = !device.Interactable;
+            _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Modified, device));
             _saver.Save(this);
-            _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Deleted, removedDevice, null));
         }
-
     }
-
     public void Rename(BuzzToy device, string newName)
     {
         var oldName = device.LabelName;
@@ -158,6 +151,17 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Renamed, device, oldName));
     }
 
+    public void RemoveDevice(BuzzToy device)
+    {
+        if(_storage.TryRemove(device.Id, out var removedDevice))
+        {
+            removedDevice.Dispose();
+            _logger.LogInformation($"Removed device {removedDevice.LabelName} ({removedDevice.Id}) from connected toys.", LoggerType.Toys);
+            _saver.Save(this);
+            _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Deleted, removedDevice, null));
+        }
+
+    }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
     public void StartEditing(VirtualBuzzToy device) => _itemEditor.StartEditing(_storage, device);
@@ -291,7 +295,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deserializing SexToy: {ex}");
+                _logger.LogWarning($"Error deserializing SexToy, skipping this item!: {ex}");
             }
         }
     }

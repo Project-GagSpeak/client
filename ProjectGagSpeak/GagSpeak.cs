@@ -18,6 +18,7 @@ using GagSpeak.Gui.MainWindow;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
+using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.UiRemote;
 using GagSpeak.Gui.UiToybox;
@@ -275,6 +276,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<NameplateService>()
         .AddSingleton<NotificationService>()
         .AddSingleton<OnFrameworkService>()
+        .AddSingleton<RemoteService>()
         .AddSingleton<SafewordService>()
         .AddSingleton<ShareHubService>()
         .AddSingleton<SpellActionService>()
@@ -473,8 +475,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<KinkPlateLight>()
 
         // Scoped Remotes
-        .AddScoped<WindowMediatorSubscriberBase, RemotePersonal>()
-        .AddScoped<WindowMediatorSubscriberBase, RemotePatternMaker>()
+        .AddScoped<WindowMediatorSubscriberBase, SexToyRemoteUI>()
 
         // Scoped Settings
         .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()

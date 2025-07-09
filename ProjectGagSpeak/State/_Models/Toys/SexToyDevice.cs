@@ -1,7 +1,4 @@
 using Buttplug.Core.Messages;
-using CkCommons;
-using Dalamud.Game.ClientState.Keys;
-using GagSpeak.Interop;
 
 namespace GagSpeak.State.Models;
 
@@ -40,49 +37,36 @@ public abstract class BuzzToy : IDisposable
     ///     If the device can be interacted with. <para/>
     ///     (An indicator for other kinksters and toy manager)
     /// </summary>
-    public bool CanInteract { get; set; } = false;
+    public bool Interactable { get; set; } = false;
 
     // Validators.
     public bool CanVibrate => VibeMotors.Length > 0;
-    public bool CanRotate => RotateMotors.Length > 0;
     public bool CanOscillate => OscillateMotors.Length > 0;
+    public bool CanRotate => RotateMotor.MotorIdx != uint.MaxValue;
+    public bool CanConstrict => RotateMotor.MotorIdx != uint.MaxValue;
+    public bool CanInflate => RotateMotor.MotorIdx != uint.MaxValue;
+
     public int VibeMotorCount => VibeMotors.Length;
-    public int RotateMotorCount => RotateMotors.Length;
     public int OscillateMotorCount => OscillateMotors.Length;
 
-    /// <summary>
-    ///    The motors that are used for vibration.
-    /// </summary>
     public SexToyMotor[] VibeMotors { get; protected set; } = Array.Empty<SexToyMotor>();
-
-    /// <summary>
-    ///    The motors that are used for rotation.
-    /// </summary>
-    public SexToyMotor[] RotateMotors { get; protected set; } = Array.Empty<SexToyMotor>();
-
-    /// <summary>
-    ///     The motors that are used for oscillation.
-    /// </summary>
     public SexToyMotor[] OscillateMotors { get; protected set; } = Array.Empty<SexToyMotor>();
+    public SexToyMotor RotateMotor { get; protected set; } = SexToyMotor.Empty;
+    public SexToyMotor ConstrictMotor { get; protected set; } = SexToyMotor.Empty;
+    public SexToyMotor InflateMotor { get; protected set; } = SexToyMotor.Empty;
 
-    public virtual void Dispose()
-    {
-        // Any Disposal logic here.
-    }
+    public virtual void Dispose() { }
 
     /// <summary>
     ///     Halts all current activity on the device.
     /// </summary>
-    public virtual void StopAllMotors()
+    public void StopAllMotors()
     {
-        if (CanVibrate)
-            VibrateAll(0.0);
-
-        if (CanRotate)
-            RotateAll(0.0, true);
-
-        if (CanOscillate)
-            OscillateAll(0.0);
+        VibrateAll(0.0);
+        OscillateAll(0.0);
+        Rotate(0.0, true);
+        Constrict(0.0);
+        Inflate(0.0);
     }
 
     /// <summary>
@@ -100,9 +84,9 @@ public abstract class BuzzToy : IDisposable
     /// <summary>
     ///     Set the intensity of a specific motor.
     /// </summary>
-    public virtual void Vibrate(int motorIdx, double intensity)
+    public virtual void Vibrate(uint motorIdx, double intensity)
     {
-        if (!CanVibrate || !motorIdx.IsInRange(VibeMotors))
+        if (!CanVibrate || motorIdx > OscillateMotorCount)
             return;
 
         VibeMotors[motorIdx].Intensity = intensity;
@@ -112,7 +96,7 @@ public abstract class BuzzToy : IDisposable
     ///     Update all motors to their new unique intensity at once.
     /// </summary>
     /// <remarks> This will likely never happen as its difficult to encode. </remarks>
-    public virtual void ViberateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public virtual void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!CanVibrate)
             return;
@@ -136,9 +120,9 @@ public abstract class BuzzToy : IDisposable
     /// <summary>
     ///    Set the speed of a specific oscillation motor.
     /// </summary>
-    public virtual void Oscillate(int motorIdx, double speed)
+    public virtual void Oscillate(uint motorIdx, double speed)
     {
-        if (!CanOscillate || !motorIdx.IsInRange(OscillateMotors))
+        if (!CanOscillate || motorIdx > OscillateMotorCount)
             return;
 
         OscillateMotors[motorIdx].Intensity = speed;
@@ -158,15 +142,36 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Update the rotation speed of all rotation motors, in the defined direction.
+    ///     Update the speed and direction of the rotation motor.
     /// </summary>
-    public virtual void RotateAll(double speed, bool clockwise)
+    public virtual void Rotate(double speed, bool clockwise)
     {
         if (!CanRotate)
             return;
+        
+        RotateMotor.Intensity = speed;
+    }
 
-        foreach (var motor in RotateMotors)
-            motor.Intensity = speed;
+    /// <summary>
+    ///     Update the severity of the constriction motor.
+    /// </summary>
+    public virtual void Constrict(double severity)
+    {
+        if (!CanConstrict)
+            return;
+
+        ConstrictMotor.Intensity = severity;
+    }
+
+    /// <summary>
+    ///     Update the severity of the inflation motor.
+    /// </summary>
+    public virtual void Inflate(double severity)
+    {
+        if (!CanInflate)
+            return;
+
+        RotateMotor.Intensity = severity;
     }
 
     /// <summary>
@@ -179,13 +184,16 @@ public abstract class BuzzToy : IDisposable
         return new JObject
         {
             ["Type"] = Type.ToString(),
+            ["Id"] = Id.ToString(),
             ["FactoryName"] = FactoryName,
             ["LabelName"] = LabelName,
             ["BatteryLevel"] = BatteryLevel,
-            ["CanInteract"] = CanInteract,
-            ["VibeMotors"] = JArray.FromObject(VibeMotors.Select(m => m.StepCount)),
-            ["RotateMotors"] = JArray.FromObject(RotateMotors.Select(m => m.StepCount)),
-            ["OscillateMotors"] = JArray.FromObject(OscillateMotors.Select(m => m.StepCount)),
+            ["Interactable"] = Interactable,
+            ["VibeMotors"] = new JArray(VibeMotors.Select(m => m.SerializeCompact())),
+            ["OscillateMotors"] = new JArray(OscillateMotors.Select(m => m.SerializeCompact())),
+            ["RotateMotor"] = RotateMotor.SerializeCompact(),
+            ["ConstrictMotor"] = ConstrictMotor.SerializeCompact(),
+            ["InflateMotor"] = InflateMotor.SerializeCompact(),
         };
     }
 }

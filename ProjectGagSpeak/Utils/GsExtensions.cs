@@ -157,6 +157,101 @@ public static class GsExtensions
         };
     }
 
+    public static CoreIntifaceTexture FromFactoryName(string factoryName)
+    {
+        return factoryName switch
+        {
+            "Lovense Ambi" => CoreIntifaceTexture.Ambi,
+            "Lovense Calor" => CoreIntifaceTexture.Calor,
+            "Lovense Diamo" => CoreIntifaceTexture.Diamo,
+            "Lovense Dolce" => CoreIntifaceTexture.Dolce,
+            "Lovense Domi" => CoreIntifaceTexture.Domi,
+            "Lovense Domi 2" => CoreIntifaceTexture.Domi2,
+            "Lovense Edge" => CoreIntifaceTexture.Edge,
+            "Lovense Edge 2" => CoreIntifaceTexture.Edge2,
+            "Lovense Exomoon" => CoreIntifaceTexture.Exomoon,
+            "Lovense Ferri" => CoreIntifaceTexture.Ferri,
+            "Lovense Flexer" => CoreIntifaceTexture.Flexer,
+            "Lovense Gemini" => CoreIntifaceTexture.Gemini,
+            "Lovense Gravity" => CoreIntifaceTexture.Gravity,
+            "Lovense Gush" => CoreIntifaceTexture.Gush,
+            "Lovense Gush 2" => CoreIntifaceTexture.Gush2,
+            "Lovense Hush" => CoreIntifaceTexture.Hush,
+            "Lovense Hush 2 (1 Inch)" => CoreIntifaceTexture.Hush2,
+            "Lovense Hush 2 (1.5 Inch)" => CoreIntifaceTexture.Hush2,
+            "Lovense Hush 2 (1.75 Inch)" => CoreIntifaceTexture.Hush2,
+            "Lovense Hush 2 (2.25 Inch)" => CoreIntifaceTexture.Hush2,
+            "Lovense Hyphy" => CoreIntifaceTexture.Hyphy,
+            "Lovense Lapis" => CoreIntifaceTexture.Lapis,
+            "Lovense Mini Sex Machine" => CoreIntifaceTexture.MiniSexMachine,
+            "Lovense Sex Machine" => CoreIntifaceTexture.SexMachine,
+            "Lovense Lush" => CoreIntifaceTexture.Lush,
+            "Lovense Lush 2" => CoreIntifaceTexture.Lush2,
+            "Lovense Lush 3" => CoreIntifaceTexture.Lush3,
+            "Lovense Lush 4" => CoreIntifaceTexture.Lush4,
+            "Lovense Max" => CoreIntifaceTexture.Max,
+            "Lovense Max 2" => CoreIntifaceTexture.Max2,
+            "Lovense Mission" => CoreIntifaceTexture.Mission,
+            "Lovense Mission 2" => CoreIntifaceTexture.Mission2,
+            "Lovense Nora" => CoreIntifaceTexture.Nora,
+            "Lovense Osci" => CoreIntifaceTexture.Osci,
+            "Lovense Osci 2" => CoreIntifaceTexture.Osci2,
+            "Lovense Osci 3" => CoreIntifaceTexture.Osci3,
+            "Lovense Ridge" => CoreIntifaceTexture.Ridge,
+            "Lovense Solace" => CoreIntifaceTexture.Solace,
+            "Lovense Solace Pro" => CoreIntifaceTexture.SolacePro,
+            "Lovense Tenera 2" => CoreIntifaceTexture.Tenera2,
+            "Lovense Vulse" => CoreIntifaceTexture.Vulse,
+            _ => CoreIntifaceTexture.MotorVibration // fallback case to tell us we failed.
+        };
+    }
+
+    public static string ToFactoryName(this CoreIntifaceTexture intifaceItem)
+    {
+        return intifaceItem switch
+        {
+            CoreIntifaceTexture.Ambi => "Lovense Ambi",
+            CoreIntifaceTexture.Calor => "Lovense Calor",
+            CoreIntifaceTexture.Diamo => "Lovense Diamo",
+            CoreIntifaceTexture.Dolce => "Lovense Dolce",
+            CoreIntifaceTexture.Domi => "Lovense Domi",
+            CoreIntifaceTexture.Domi2 => "Lovense Domi 2",
+            CoreIntifaceTexture.Edge => "Lovense Edge",
+            CoreIntifaceTexture.Edge2 => "Lovense Edge 2",
+            CoreIntifaceTexture.Exomoon => "Lovense Exomoon",
+            CoreIntifaceTexture.Ferri => "Lovense Ferri",
+            CoreIntifaceTexture.Flexer => "Lovense Flexer",
+            CoreIntifaceTexture.Gemini => "Lovense Gemini",
+            CoreIntifaceTexture.Gravity => "Lovense Gravity",
+            CoreIntifaceTexture.Gush => "Lovense Gush",
+            CoreIntifaceTexture.Gush2 => "Lovense Gush 2",
+            CoreIntifaceTexture.Hush => "Lovense Hush",
+            CoreIntifaceTexture.Hush2 => "Lovense Hush 2 (1.75 Inch)",
+            CoreIntifaceTexture.Hyphy => "Lovense Hyphy",
+            CoreIntifaceTexture.Lapis => "Lovense Lapis",
+            CoreIntifaceTexture.MiniSexMachine => "Lovense Mini Sex Machine",
+            CoreIntifaceTexture.SexMachine => "Lovense Sex Machine",
+            CoreIntifaceTexture.Lush => "Lovense Lush",
+            CoreIntifaceTexture.Lush2 => "Lovense Lush 2",
+            CoreIntifaceTexture.Lush3 => "Lovense Lush 3",
+            CoreIntifaceTexture.Lush4 => "Lovense Lush 4",
+            CoreIntifaceTexture.Max => "Lovense Max",
+            CoreIntifaceTexture.Max2 => "Lovense Max 2",
+            CoreIntifaceTexture.Mission => "Lovense Mission",
+            CoreIntifaceTexture.Mission2 => "Lovense Mission 2",
+            CoreIntifaceTexture.Nora => "Lovense Nora",
+            CoreIntifaceTexture.Osci => "Lovense Osci",
+            CoreIntifaceTexture.Osci2 => "Lovense Osci 2",
+            CoreIntifaceTexture.Osci3 => "Lovense Osci 3",
+            CoreIntifaceTexture.Ridge => "Lovense Ridge",
+            CoreIntifaceTexture.Solace => "Lovense Solace",
+            CoreIntifaceTexture.SolacePro => "Lovense Solace Pro",
+            CoreIntifaceTexture.Tenera2 => "Lovense Tenera 2",
+            CoreIntifaceTexture.Vulse => "Lovense Vulse",
+            _ => string.Empty
+        };
+    }
+
     public static JObject Serialize(this Moodle moodle)
     {
         var type = moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status;

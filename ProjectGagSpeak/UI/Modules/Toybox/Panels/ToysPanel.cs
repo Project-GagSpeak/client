@@ -6,6 +6,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.UiRemote;
 using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
@@ -81,7 +82,7 @@ public class ToysPanel
     private void DrawSelectedToyInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
         var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetTextLineHeightWithSpacing() * 6;
+        var height = ImGui.GetTextLineHeightWithSpacing() * 9;
         var region = new Vector2(drawRegion.Size.X, height);
         var notSelected = _selector.Selected is null;
         var labelText = notSelected ? "No Item Selected!" : $"{_selector.Selected!.LabelName} ({_selector.Selected!.FactoryName})";
@@ -114,11 +115,10 @@ public class ToysPanel
         ImGui.Text("Factory (Default) Name: " + selected.FactoryName);
         ImGui.Text("Display Name: " + selected.LabelName);
         ImGui.Text("Battery Level: " + selected.BatteryLevel);
-        ImGui.Text("Can Interact: " + selected.CanInteract);
 
         if (selected.CanVibrate)
         {
-            ImGui.Text("Vibe Motors:");
+            ImUtf8.TextFrameAligned("Vibe Motors:");
             for (var i = 0; i < selected.VibeMotorCount; i++)
             {
                 ImUtf8.SameLineInner();
@@ -130,24 +130,9 @@ public class ToysPanel
             }
         }
 
-        if (selected.CanRotate)
-        {
-            ImGui.Text("Rotate Motors:");
-            for (var i = 0; i < selected.RotateMotorCount; i++)
-            {
-                ImUtf8.SameLineInner();
-                using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
-                    ImUtf8.TextFrameAligned($" #{i} ");
-                CkGui.AttachToolTip(
-                    $"--COL--Step Count:--COL-- {selected.RotateMotors[i].StepCount}" +
-                    $"--COL--Interval:--COL-- {selected.RotateMotors[i].Interval}" +
-                    $"--COL--Current Intensity:--COL-- {selected.RotateMotors[i].Intensity}", color: ImGuiColors.ParsedGold);
-            }
-        }
-
         if (selected.CanOscillate)
         {
-            ImGui.Text("Oscillation Motors:");
+            ImUtf8.TextFrameAligned("Oscillation Motors:");
             for (var i = 0; i < selected.OscillateMotorCount; i++)
             {
                 ImUtf8.SameLineInner();
@@ -159,6 +144,50 @@ public class ToysPanel
                     $"--COL--Current Intensity:--COL-- {selected.OscillateMotors[i].Intensity}", color: ImGuiColors.ParsedGold);
             }
         }
+
+        if (selected.CanRotate)
+        {
+            ImUtf8.TextFrameAligned("Rotate Motor:");
+            ImUtf8.SameLineInner();
+            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                ImUtf8.TextFrameAligned(" Rotate Motor ");
+            CkGui.AttachToolTip(
+                $"--COL--Step Count:--COL-- {selected.RotateMotor.StepCount}" +
+                $"--COL--Interval:--COL-- {selected.RotateMotor.Interval}" +
+                $"--COL--Current Intensity:--COL-- {selected.RotateMotor.Intensity}", color: ImGuiColors.ParsedGold);
+        }
+
+        if (selected.CanConstrict)
+        {
+            ImUtf8.TextFrameAligned("Constrict Motor:");
+            ImUtf8.SameLineInner();
+            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                ImUtf8.TextFrameAligned(" Constrict Motor ");
+            CkGui.AttachToolTip(
+                $"--COL--Step Count:--COL-- {selected.ConstrictMotor.StepCount}" +
+                $"--COL--Interval:--COL-- {selected.ConstrictMotor.Interval}" +
+                $"--COL--Current Intensity:--COL-- {selected.ConstrictMotor.Intensity}", color: ImGuiColors.ParsedGold);
+        }
+
+        if (selected.CanInflate)
+        {
+            ImUtf8.TextFrameAligned("Inflate Motor:");
+            ImUtf8.SameLineInner();
+            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                ImUtf8.TextFrameAligned(" Inflate Motor ");
+            CkGui.AttachToolTip(
+                $"--COL--Step Count:--COL-- {selected.InflateMotor.StepCount}" +
+                $"--COL--Interval:--COL-- {selected.InflateMotor.Interval}" +
+                $"--COL--Current Intensity:--COL-- {selected.InflateMotor.Intensity}", color: ImGuiColors.ParsedGold);
+        }
+
+        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        {
+            CkGui.BooleanToColoredIcon(_selector.Selected!.Interactable, false);
+            CkGui.TextFrameAlignedInline($"Interactable  ");
+        }
+        if (ImGui.IsItemHovered() && ImGui.IsItemClicked())
+            _manager.ToggleInteractableState(_selector.Selected);
     }
 
     private void DrawActiveToys(Vector2 region)
@@ -170,13 +199,13 @@ public class ToysPanel
         if (CkGui.IconTextButton(FAI.TabletAlt, "Personal Remote", 125f))
         {
             // open the personal remote window
-            _mediator.Publish(new UiToggleMessage(typeof(RemotePersonal)));
+            _mediator.Publish(new UiToggleMessage(typeof(SexToyRemoteUI)));
         }
         CkGui.HelpText("Open Personal Remote");
 
         // temp placeholder connection stuff.
         var windowPadding = ImGui.GetStyle().WindowPadding;
-        // push the style var to supress the Y window padding.
+        // push the style var to suppress the Y window padding.
         var intifaceOpenIcon = FAI.ArrowUpRightFromSquare;
         var intifaceIconSize = CkGui.IconButtonSize(intifaceOpenIcon);
         var connectedIcon = IpcCallerIntiface.IsConnected ? FAI.Link : FAI.Unlink;

@@ -7,7 +7,7 @@ using GagSpeak.Interop;
 namespace GagSpeak.State.Models;
 
 /// <summary>
-///     IntifaceBuzzToy is a little special, as it can be deserialized to hold its cache. <para/>
+///     IntifaceBuzzToy is a little special, as it can be Deserialization to hold its cache. <para/>
 ///     
 ///     However, it should not be interactable until the <see cref="_device"/> is valid. <para/>
 /// 
@@ -19,15 +19,18 @@ public class IntifaceBuzzToy : BuzzToy
     private DebounceDispatcher VibeDebouncer = new(TimeSpan.FromMilliseconds(20));
     private DebounceDispatcher RotateDebouncer = new(TimeSpan.FromMilliseconds(20));
     private DebounceDispatcher OscillateDebouncer = new(TimeSpan.FromMilliseconds(20));
+    private DebounceDispatcher ConstrictDebouncer = new(TimeSpan.FromMilliseconds(20));
+    private DebounceDispatcher InflateDebouncer = new(TimeSpan.FromMilliseconds(20));
 
     private ButtplugClientDevice _device;
     private uint _deviceIdx = uint.MaxValue;
-
+    private bool _hasBattery = false;
     public IntifaceBuzzToy()
     {
         // Default constructor for deserialization.
         _device = null!;
         _deviceIdx = uint.MaxValue;
+        _hasBattery = false;
     }
 
     public IntifaceBuzzToy(ButtplugClientDevice device)
@@ -43,23 +46,30 @@ public class IntifaceBuzzToy : BuzzToy
     {
         _device = newDevice;
         _deviceIdx = newDevice.Index;
+        _hasBattery = newDevice.HasBattery;
         FactoryName = newDevice.Name;
 
         if(LabelName == string.Empty)
             LabelName = (string.IsNullOrEmpty(newDevice.DisplayName) 
                 ? newDevice.Name : newDevice.DisplayName);
 
-        VibeMotors = newDevice.VibrateAttributes.OrderBy(a => a.Index).Select(attr => new SexToyMotor(attr.StepCount)).ToArray();
-        RotateMotors = newDevice.RotateAttributes.OrderBy(a => a.Index).Select(attr => new SexToyMotor(attr.StepCount)).ToArray();
-        OscillateMotors = newDevice.OscillateAttributes.OrderBy(a => a.Index).Select(attr => new SexToyMotor(attr.StepCount)).ToArray();
-    }
+        // obtain and assign vibration motors.
+        VibeMotors = newDevice.VibrateAttributes.OrderBy(a => a.Index).Select(attr => new SexToyMotor(attr.Index, attr.StepCount)).ToArray();
+        
+        // obtain and assign oscillation motors.
+        OscillateMotors = newDevice.OscillateAttributes.OrderBy(a => a.Index).Select(attr => new SexToyMotor(attr.Index, attr.StepCount)).ToArray();
+        
+        // obtain and assign the rotation motor, if it exists.
+        if(newDevice.RotateAttributes.FirstOrDefault() is { } attr)
+            RotateMotor = new SexToyMotor(attr.Index, attr.StepCount);
 
-    public override void StopAllMotors()
-    {
-        if (!IpcCallerIntiface.IsConnected)
-            return;
-        // Update Values (which calls all other methods for this)
-        base.StopAllMotors();
+        // obtain the constrict motor, if it exists.
+        if (newDevice.GenericAcutatorAttributes(ActuatorType.Constrict).FirstOrDefault() is { } constrictAttr)
+            ConstrictMotor = new SexToyMotor(constrictAttr.Index, constrictAttr.StepCount);
+
+        // obtain the inflate motor, if it exists.
+        if (newDevice.GenericAcutatorAttributes(ActuatorType.Inflate).FirstOrDefault() is { } inflateAttr)
+            InflateMotor = new SexToyMotor(inflateAttr.Index, inflateAttr.StepCount);
     }
 
     public override void VibrateAll(double intensity)
@@ -68,27 +78,24 @@ public class IntifaceBuzzToy : BuzzToy
             return;
         // Update Values
         base.VibrateAll(intensity);
-        // Debounce
         VibeDebouncer.Debounce(() => _device!.VibrateAsync(intensity));
     }
 
-    public override void Vibrate(int motorIdx, double intensity)
+    public override void Vibrate(uint motorIdx, double intensity)
     {
         if (!IpcCallerIntiface.IsConnected)
             return;
         // Update Values
         base.Vibrate(motorIdx, intensity);
-        // Debounce
-        VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand((uint)motorIdx, intensity, ActuatorType.Vibrate)));
+        VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, intensity, ActuatorType.Vibrate)));
     }
 
-    public override void ViberateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!IpcCallerIntiface.IsConnected)
             return;
         // Update Values
-        base.ViberateDistinct(newValues);
-        // Debounce
+        base.VibrateDistinct(newValues);
         VibeDebouncer.Debounce(() => _device.VibrateAsync(newValues));
     }
 
@@ -98,17 +105,15 @@ public class IntifaceBuzzToy : BuzzToy
             return;
         // Update Values
         base.OscillateAll(speed);
-        // Debounce
         OscillateDebouncer.Debounce(() => _device!.OscillateAsync(speed));
     }
 
-    public override void Oscillate(int motorIdx, double speed)
+    public override void Oscillate(uint motorIdx, double speed)
     {
         if (!IpcCallerIntiface.IsConnected)
             return;
         // Update Values
         base.Oscillate(motorIdx, speed);
-        // Debounce
         OscillateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand((uint)motorIdx, speed, ActuatorType.Oscillate)));
     }
 
@@ -118,34 +123,59 @@ public class IntifaceBuzzToy : BuzzToy
             return;
         // Update Values
         base.OscillateDistinct(newValues);
-        // Debounce
         OscillateDebouncer.Debounce(() => _device.OscillateAsync(newValues));
     }
 
-    public override void RotateAll(double speed, bool clockwise)
+    public override void Rotate(double speed, bool clockwise)
     {
         if (!IpcCallerIntiface.IsConnected)
             return;
-        // Update Values
-        base.RotateAll(speed, clockwise);
-        // Debounce
+        // Update Value
+        base.Rotate(speed, clockwise);
         RotateDebouncer.Debounce(() => _device.RotateAsync(speed, clockwise));
     }
 
+    public override void Constrict(double severity)
+    {
+        if (!IpcCallerIntiface.IsConnected)
+            return;
+        // Update Value
+        base.Constrict(severity);
+        ConstrictDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(ConstrictMotor.MotorIdx, severity, ActuatorType.Constrict)));
+    }
+
+    public override void Inflate(double severity)
+    {
+        if (!IpcCallerIntiface.IsConnected)
+            return;
+        // Update Value
+        base.Inflate(severity);
+        InflateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(InflateMotor.MotorIdx, severity, ActuatorType.Inflate)));
+    }
+
     public override async Task UpdateBattery()
-        => await Generic.Safe(async () => BatteryLevel = await _device.BatteryAsync());
+    {
+        if (!_hasBattery || !IsValid)
+            return;
+
+        await Generic.Safe(async () => BatteryLevel = await _device.BatteryAsync());
+    }
 
     public static IntifaceBuzzToy FromToken(JToken token)
     {
         return new IntifaceBuzzToy()
         {
+            Id = Guid.TryParse(token["Id"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             FactoryName = token["FactoryName"]?.Value<string>() ?? string.Empty,
             LabelName = token["LabelName"]?.Value<string>() ?? string.Empty,
             BatteryLevel = token["BatteryLevel"]?.Value<double>() ?? 0.0,
-            CanInteract = token["CanInteract"]?.Value<bool>() ?? false,
-            VibeMotors = token["VibeMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
-            RotateMotors = token["RotateMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
-            OscillateMotors = token["OscillateMotors"]?.Values<int>().Select(v => new SexToyMotor((uint)v)).ToArray() ?? Array.Empty<SexToyMotor>(),
+            Interactable = token["Interactable"]?.Value<bool>() ?? false,
+
+            VibeMotors = token["VibeMotors"] is JArray vArray ? vArray.Select(t => SexToyMotor.FromCompact(t?.ToString())).ToArray() : Array.Empty<SexToyMotor>(),
+            OscillateMotors = token["OscillateMotors"] is JArray oArray ? oArray.Select(t => SexToyMotor.FromCompact(t?.ToString())).ToArray() : Array.Empty<SexToyMotor>(),
+            RotateMotor = token["RotateMotor"]?.ToString() is { } rotStr ? SexToyMotor.FromCompact(rotStr) : SexToyMotor.Empty,
+            ConstrictMotor = token["ConstrictMotor"]?.ToString() is { } constrictStr ? SexToyMotor.FromCompact(constrictStr) : SexToyMotor.Empty,
+            InflateMotor = token["InflateMotor"]?.ToString() is { } inflateStr ? SexToyMotor.FromCompact(inflateStr) : SexToyMotor.Empty,
         };
     }
 }
