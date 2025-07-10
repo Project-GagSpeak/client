@@ -4,6 +4,7 @@ using CkCommons;
 using DebounceThrottle;
 using GagSpeak.Interop;
 using GagSpeak.Utils;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.State.Models;
 
@@ -49,8 +50,8 @@ public class IntifaceBuzzToy : BuzzToy
         => base.ApplyChanges(other);
 
     public override SexToyType Type => SexToyType.Real;
-    public override string FactoryName { get; protected set; } = CoreIntifaceTexture.Hush.ToFactoryName();
-    public override string LabelName { get; set; } = "UNK";
+    public override CoreIntifaceElement FactoryName { get; protected set; } = CoreIntifaceElement.UnknownDevice;
+    public override string LabelName { get; set; } = "UNK Device";
     public override bool ValidForRemotes => _device != null && DeviceConnected && Interactable;
 
     public bool DeviceConnected => IpcCallerIntiface.IsConnected && _deviceIdx != uint.MaxValue;
@@ -61,9 +62,9 @@ public class IntifaceBuzzToy : BuzzToy
         _device = newDevice;
         _deviceIdx = newDevice.Index;
         _hasBattery = newDevice.HasBattery;
-        FactoryName = newDevice.Name;
+        FactoryName = GsExtensions.FromFactoryName(newDevice.Name);
 
-        if(LabelName == string.Empty)
+        if(LabelName == "UNK Device")
             LabelName = (string.IsNullOrEmpty(newDevice.DisplayName) 
                 ? newDevice.Name : newDevice.DisplayName);
 
@@ -86,86 +87,94 @@ public class IntifaceBuzzToy : BuzzToy
             InflateMotor = new SexToyMotor(inflateAttr.Index, inflateAttr.StepCount);
     }
 
-    public override void VibrateAll(double intensity)
+    public override bool VibrateAll(double intensity)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.VibrateAll(intensity);
-        VibeDebouncer.Debounce(() => _device!.VibrateAsync(intensity));
+        if(base.VibrateAll(intensity))
+            VibeDebouncer.Debounce(() => _device!.VibrateAsync(intensity));
+        return true;
     }
 
-    public override void Vibrate(uint motorIdx, double intensity)
+    public override bool Vibrate(uint motorIdx, double intensity)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.Vibrate(motorIdx, intensity);
-        Svc.Logger.Verbose($"Vibrating motor {motorIdx} with intensity {intensity}");
-        VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, intensity, ActuatorType.Vibrate)));
+        if(base.Vibrate(motorIdx, intensity))
+            VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, intensity, ActuatorType.Vibrate)));
+        return true;
     }
 
-    public override void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override bool VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.VibrateDistinct(newValues);
-        VibeDebouncer.Debounce(() => _device.VibrateAsync(newValues));
+        if(base.VibrateDistinct(newValues))
+            VibeDebouncer.Debounce(() => _device.VibrateAsync(newValues));
+        return true;
     }
 
-    public override void OscillateAll(double speed)
+    public override bool OscillateAll(double speed)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.OscillateAll(speed);
-        OscillateDebouncer.Debounce(() => _device!.OscillateAsync(speed));
+        if (base.OscillateAll(speed))
+            OscillateDebouncer.Debounce(() => _device!.OscillateAsync(speed));
+        return true;
     }
 
-    public override void Oscillate(uint motorIdx, double speed)
+    public override bool Oscillate(uint motorIdx, double speed)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.Oscillate(motorIdx, speed);
-        OscillateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand((uint)motorIdx, speed, ActuatorType.Oscillate)));
+        if (base.Oscillate(motorIdx, speed))
+            OscillateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand((uint)motorIdx, speed, ActuatorType.Oscillate)));
+        return true;
     }
 
-    public override void OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override bool OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Values
-        base.OscillateDistinct(newValues);
-        OscillateDebouncer.Debounce(() => _device.OscillateAsync(newValues));
+        if(base.OscillateDistinct(newValues))
+            OscillateDebouncer.Debounce(() => _device.OscillateAsync(newValues));
+        return true;
     }
 
-    public override void Rotate(double speed, bool clockwise)
+    public override bool Rotate(double speed, bool clockwise)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Value
-        base.Rotate(speed, clockwise);
-        RotateDebouncer.Debounce(() => _device.RotateAsync(speed, clockwise));
+        if (base.Rotate(speed, clockwise))
+            RotateDebouncer.Debounce(() => _device.RotateAsync(speed, clockwise));
+        return true;
     }
 
-    public override void Constrict(double severity)
+    public override bool Constrict(double severity)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Value
-        base.Constrict(severity);
-        ConstrictDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(ConstrictMotor.MotorIdx, severity, ActuatorType.Constrict)));
+        if(base.Constrict(severity))
+            ConstrictDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(ConstrictMotor.MotorIdx, severity, ActuatorType.Constrict)));
+        return true;
     }
 
-    public override void Inflate(double severity)
+    public override bool Inflate(double severity)
     {
         if (!IpcCallerIntiface.IsConnected)
-            return;
+            return false;
         // Update Value
-        base.Inflate(severity);
-        InflateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(InflateMotor.MotorIdx, severity, ActuatorType.Inflate)));
+        if(base.Inflate(severity))
+            InflateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(InflateMotor.MotorIdx, severity, ActuatorType.Inflate)));
+        return true;
     }
 
     public override async Task UpdateBattery()
@@ -181,7 +190,7 @@ public class IntifaceBuzzToy : BuzzToy
         return new IntifaceBuzzToy()
         {
             Id = Guid.TryParse(token["Id"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
-            FactoryName = token["FactoryName"]?.Value<string>() ?? string.Empty,
+            FactoryName = Enum.TryParse<CoreIntifaceElement>(token["FactoryName"]?.ToObject<string>(), out var name) ? name : CoreIntifaceElement.UnknownDevice,
             LabelName = token["LabelName"]?.Value<string>() ?? string.Empty,
             BatteryLevel = token["BatteryLevel"]?.Value<double>() ?? 0.0,
             Interactable = token["Interactable"]?.Value<bool>() ?? false,

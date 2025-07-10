@@ -27,7 +27,7 @@ public class CosmeticService : IHostedService, IDisposable
     
     public static EnumTextureCache<CoreTexture>         CoreTextures;
     public static EnumTextureCache<CoreEmoteTexture>    EmoteTextures;
-    public static EnumTextureCache<CoreIntifaceTexture> IntifaceTextures;
+    public static EnumTextureCache<CoreIntifaceElement> IntifaceTextures;
     private static ConcurrentDictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
 
     public void Dispose()

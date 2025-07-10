@@ -6,21 +6,14 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
-using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagspeakAPI.Network;
 using ImGuiNET;
 using ImPlotNET;
-using NAudio.CoreAudioApi;
-using static Penumbra.GameData.Data.GamePaths;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.Gui.Remote;
 
@@ -43,24 +36,22 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
 
     private static readonly double[] PLOT_POSITIONS = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
     private static readonly string[] PLOT_LABELS = { "0%", "", "", "", "", "", "", "", "", "", "100%" };
-    private static readonly double[] PLOT_STATIC_X = Enumerable.Range(0, 1000).Select(i => (double)(i - 999)).ToArray();
+    private static readonly double[] PLOT_STATIC_X = Enumerable.Range(0, 1000).Select(i => (double)-i).ToArray();
 
-    private readonly BuzzToyHandler _handler;
     private readonly BuzzToyManager _manager;
     private readonly RemoteService _service;
     private readonly TutorialService _guides;
 
     private bool _themePushed = false;
-    private uint _imageButtonIdleTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.475f, .475f, .475f, .475f));
-    private uint _imageButtonHoverTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.65f, .65f, .65f, .7f));
     private DevicePlotState? _selectedDevice = null;
     private MotorDot? _selectedMotor = null;
+    private uint _idleTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.475f, .475f, .475f, .475f));
+    private uint _hoverTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.65f, .65f, .65f, .7f));
 
     public SexToyRemoteUI(ILogger<SexToyRemoteUI> logger, GagspeakMediator mediator,
-        BuzzToyHandler handler, BuzzToyManager manager, RemoteService service, 
-        TutorialService guides) : base(logger, mediator, "Personal Remote" + REMOTE_IDENTIFIER)
+        BuzzToyManager manager, RemoteService service,  TutorialService guides) 
+        : base(logger, mediator, "Personal Remote" + REMOTE_IDENTIFIER)
     {
-        _handler = handler;
         _manager = manager;
         _service = service;
         _guides = guides;
@@ -118,20 +109,6 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         _logger.LogTrace($"Selected Device: {newSelection.Device.FactoryName} ({newSelection.Device.LabelName})");
     }
 
-    private void ThrottleSelectedMotor(MotorDot newSelection)
-    {
-        // if the selection is the same, return it to null.
-        if (_selectedMotor is not null && _selectedMotor == newSelection)
-        {
-            _selectedMotor = null; // reset the selected motor.
-            _logger.LogTrace("Deselected Motor from Device.");
-            return;
-        }
-        // Otherwise, update the selection and return.
-        _selectedMotor = newSelection;
-        _logger.LogTrace($"Selected different / new Motor");
-    }
-
     protected override void PreDrawInternal()
     {
         if (!_themePushed)
@@ -172,7 +149,6 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
     {
         try
         {
-            var isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
             var lineThickness = ImGui.GetStyle().ItemSpacing.Y * 0.5f;
             var lineYOffset = new Vector2(0, lineThickness * 0.5f);
 
@@ -212,6 +188,7 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
 
     private void DrawControls()
     {
+        var isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
         using var _ = ImRaii.Table("Controls", 2, ImGuiTableFlags.NoPadInnerX | ImGuiTableFlags.NoPadOuterX | ImGuiTableFlags.BordersInnerV, ImGui.GetContentRegionAvail());
 
         if (!_) return;
@@ -221,6 +198,15 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
 
         ImGui.TableNextColumn();
         DrawInteractionPlot();
+
+        // Handle Hotkey operations for the selected motor.
+        if (_selectedMotor is { } motor)
+        {
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && isFocused)
+                motor.IsLooping = !motor.IsLooping;
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Middle) && isFocused)
+                motor.IsFloating = !motor.IsFloating;
+        }
 
         ImGui.TableNextColumn();
         DrawSideButtons();
@@ -235,29 +221,38 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         {
             var pos = ImGui.GetCursorScreenPos();
             ImPlot.SetupAxes("X Label", "Y Label", PLAYBACK_AXIS_FLAGS, PLAYBACK_AXIS_FLAGS);
-            if (_selectedDevice != null)
+            if (_service.DurationTimer.IsRunning)
             {
-                // Draw the Vibe Motors
-                for (var i = 0; i < _selectedDevice.VibeDots.Count; i++)
+                try
                 {
-                    var vibeMotor = _selectedDevice.VibeDots[i];
-                    ImPlot.PlotLine($"VibeMotor{i}", ref PLOT_STATIC_X[0], ref vibeMotor.RecordedPositions[0], vibeMotor.RecordedPositions.Count);
+                    foreach (var device in _service.ActiveDevices)
+                    {
+                        // Draw the Vibe Motors
+                        for (var i = 0; i < device.VibeDots.Count; i++)
+                            ImPlot.PlotLine($"VibeMotor{i}", ref PLOT_STATIC_X[0], ref device.VibeDots[i].PosHistory[0], device.VibeDots[i].PosHistory.Count);
+
+                        // Draw the Oscillation Motors
+                        for (var i = 0; i < device.OscillateDots.Count; i++)
+                            ImPlot.PlotLine($"OsciMotor{i}", ref PLOT_STATIC_X[0], ref device.OscillateDots[i].PosHistory[0], device.OscillateDots[i].PosHistory.Count);
+
+                        // Draw the RotateMotor
+                        if (device.Device.CanRotate)
+                            ImPlot.PlotLine("RotMotor", ref PLOT_STATIC_X[0], ref device.RotateDot.PosHistory[0], device.RotateDot.PosHistory.Count);
+
+                        // Draw the ConstrictMotor
+                        if (device.Device.CanConstrict)
+                            ImPlot.PlotLine("ConstMotor", ref PLOT_STATIC_X[0], ref device.ConstrictDot.PosHistory[0], device.ConstrictDot.PosHistory.Count);
+
+                        // Draw the InflateMotor
+                        if (device.Device.CanInflate)
+                            ImPlot.PlotLine("InflMotor", ref PLOT_STATIC_X[0], ref device.InflateDot.PosHistory[0], device.InflateDot.PosHistory.Count);
+                    }
                 }
-                // Draw the Oscillation Motors
-                for (var i = 0; i < _selectedDevice.OscillateDots.Count; i++)
+                catch (Exception e)
                 {
-                    var vibeMotor = _selectedDevice.OscillateDots[i];
-                    ImPlot.PlotLine($"VibeMotor{i}", ref PLOT_STATIC_X[0], ref vibeMotor.RecordedPositions[0], vibeMotor.RecordedPositions.Count);
+                    _logger.LogError(e, "Error while drawing the Remote UI playback display.");
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "An error occurred while drawing the playback display. Check the logs for details.");
                 }
-                // Draw the RotateMotor
-                if (_selectedDevice.Device.CanRotate)
-                    ImPlot.PlotLine("RotateMotor", ref PLOT_STATIC_X[0], ref _selectedDevice.RotateDot.RecordedPositions[0], _selectedDevice.RotateDot.RecordedPositions.Count);
-                // Draw the ConstrictMotor
-                if (_selectedDevice.Device.CanConstrict)
-                    ImPlot.PlotLine("ConstrictMotor", ref PLOT_STATIC_X[0], ref _selectedDevice.ConstrictDot.RecordedPositions[0], _selectedDevice.ConstrictDot.RecordedPositions.Count);
-                // Draw the InflateMotor
-                if (_selectedDevice.Device.CanInflate)
-                    ImPlot.PlotLine("InflateMotor", ref PLOT_STATIC_X[0], ref _selectedDevice.InflateDot.RecordedPositions[0], _selectedDevice.InflateDot.RecordedPositions.Count);
             }
 
             var lineOffset = new Vector2(0, ImGui.GetStyle().ItemSpacing.Y);
@@ -280,30 +275,37 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         var imgSize = new Vector2(inner.InnerRegion.Y);
 
         // Display all Devices.
-        int validDevices = 0;
+        var validDevices = 0;
         foreach (var deviceState in _service.ManagedDevices.Values.Where(x => x.Device.ValidForRemotes))
         {
-            var textureEnum = GsExtensions.FromFactoryName(deviceState.Device.FactoryName);
-            if (textureEnum is CoreIntifaceTexture.MotorVibration)
+            if (deviceState.Device.FactoryName is CoreIntifaceElement.UnknownDevice)
                 continue;
 
-            if (CosmeticService.IntifaceTextures.Cache[textureEnum] is not { } wrap)
+            if (CosmeticService.IntifaceTextures.Cache[deviceState.Device.FactoryName] is not { } wrap)
                 continue;
 
             validDevices++;
             // draw the custom image button.
-            if (CustomImageButton(imgSize, wrap, deviceState.IsPoweredOn))
-                ThrottleSelectedDevice(deviceState);
-            // draw a highlighted circle around it if selected.
-            if (deviceState.Equals(_selectedDevice))
-                ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + imgSize / 2, imgSize.X / 2, CkGui.Color(ImGuiColors.ParsedGold), 32, 2);
-
+            using (ImRaii.PushStyle(ImGuiStyleVar.Alpha, deviceState.IsPoweredOn ? 1.0f : 0.5f))
+            {
+                ImGui.Dummy(imgSize);
+                var col = deviceState.IsPoweredOn ? uint.MaxValue : ImGui.IsItemHovered() ? _hoverTint : _idleTint;
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
+                if (ImGui.IsItemClicked())
+                    ThrottleSelectedDevice(deviceState);
+                if (deviceState.Equals(_selectedDevice))
+                {
+                    if (deviceState.IsPoweredOn)
+                        ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + imgSize / 2, imgSize.X / 2 - 1, 0xFF000000, 32, 2);
+                    ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + imgSize / 2, imgSize.X / 2, CkGui.Color(ImGuiColors.ParsedGold), 32, 2);
+                }
+            }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                deviceState.IsPoweredOn = !deviceState.IsPoweredOn;
+                deviceState.ThrottlePower();
 
             CkGui.AttachToolTip($"{deviceState.Device.FactoryName} ({deviceState.Device.LabelName})" +
-                $"--SEP----COL--Left-Click:--COL-- Focus this Device" +
-                $"--NL----COL--Right-Click:--COL-- Toggle Power State", color: ImGuiColors.ParsedGold);
+                $"--SEP----COL--Left-Click:--COL-- View Device's Motors" +
+                $"--NL----COL--Right-Click:--COL-- Toggle Device power, {(deviceState.IsPoweredOn ? "disabling" : "enabling")} it's Motors", color: ImGuiColors.ParsedGold);
         }
 
         if(validDevices > 0)
@@ -319,124 +321,140 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         if (_selectedDevice is not { } device)
             return;
 
+        var idleTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.475f, .475f, .475f, .475f));
+        var hoverTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.65f, .65f, .65f, .7f));
         var imgSize = new Vector2(availableHeight);
         var imgCache = CosmeticService.IntifaceTextures.Cache;
 
         // Vibration motors
         if (device.Device.CanVibrate)
-            for (int i = 0; i < device.Device.VibeMotorCount; i++)
-                DrawMotor(device.VibeDots[i], $"Vibe Motor #{i}", CoreIntifaceTexture.MotorVibration);
+            for (var i = 0; i < device.Device.VibeMotorCount; i++)
+                DrawMotor(device.VibeDots[i], $"Vibe Motor #{i}", CoreIntifaceElement.MotorVibration);
 
         // Oscillation motors
         if (device.Device.CanOscillate)
-            for (int i = 0; i < device.Device.OscillateMotorCount; i++)
-                DrawMotor(device.OscillateDots[i], $"Oscillation Motor #{i}", CoreIntifaceTexture.MotorOscillation);
+            for (var i = 0; i < device.Device.OscillateMotorCount; i++)
+                DrawMotor(device.OscillateDots[i], $"Oscillation Motor #{i}", CoreIntifaceElement.MotorOscillation);
 
         // Single motors
         if (device.Device.CanRotate)
-            DrawMotor(device.RotateDot, "Rotation Motor", CoreIntifaceTexture.MotorRotation);
+            DrawMotor(device.RotateDot, "Rotation Motor", CoreIntifaceElement.MotorRotation);
 
         if (device.Device.CanConstrict)
-            DrawMotor(device.ConstrictDot, "Constriction Motor", CoreIntifaceTexture.MotorConstriction);
+            DrawMotor(device.ConstrictDot, "Constriction Motor", CoreIntifaceElement.MotorConstriction);
 
         if (device.Device.CanInflate)
-            DrawMotor(device.InflateDot, "Inflation Motor", CoreIntifaceTexture.MotorInflation);
+            DrawMotor(device.InflateDot, "Inflation Motor", CoreIntifaceElement.MotorInflation);
 
-        void DrawMotor(MotorDot motor, string label, CoreIntifaceTexture textureType)
+        void DrawMotor(MotorDot motor, string label, CoreIntifaceElement textureType)
         {
             if (!imgCache.TryGetValue(textureType, out var wrap))
                 return;
 
-            var isSelected = motor.Equals(_selectedMotor);
-
-            if (CustomImageButton(imgSize, wrap, isSelected))
-                ThrottleSelectedMotor(motor);
-
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            ImGui.Dummy(imgSize);
+            var col = motor.Visible ? uint.MaxValue : ImGui.IsItemHovered() ? hoverTint : idleTint;
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
+            if (ImGui.IsItemClicked()) 
                 motor.Visible = !motor.Visible;
+            if (motor.Equals(_selectedMotor))
+                ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + imgSize / 2, imgSize.X / 2, CkGui.Color(ImGuiColors.ParsedGold), 32, 2);
 
-            CkGui.AttachToolTip(
-                $"{label}" +
-                $"--SEP----COL--Left-Click:--COL-- Focus this Motor" +
-                $"--NL----COL--Right-Click:--COL-- Toggle Motor Visibility (Will still run)",
-                color: ImGuiColors.ParsedGold
-            );
+            CkGui.AttachToolTip($"{label}--SEP----COL--Left-Click:--COL--Toggle Visibility (still runs)", color: ImGuiColors.ParsedGold);
         }
     }
 
     private void DrawInteractionPlot()
     {
+        var recordingData = _service.DurationTimer.IsRunning;
         var mouseDown = ImGui.IsMouseDown(ImGuiMouseButton.Left);
         var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
         // Define the axis limits.
         ImPlot.SetNextAxesLimits(-50, +50, -0.1, 1.1, ImPlotCond.Always);
         // Attempt to draw the plot thing.
-        if (ImPlot.BeginPlot("##DataPointRecorderBox", ImGui.GetContentRegionAvail(), PLOT_FLAGS))
+        using var plot = ImRaii.Plot("##DataPointRecorderBox", ImGui.GetContentRegionAvail(), PLOT_FLAGS);
+        if (!plot)
+            return;
+
+        var pdl = ImPlot.GetPlotDrawList();
+        ImPlot.SetupAxes("X Label", "Y Label", RECORDER_X_AXIS, RECORDER_Y_AXIS);
+        ImPlot.SetupAxisTicks(ImAxis.Y1, ref PLOT_POSITIONS[0], 11, PLOT_LABELS);
+
+        var dragPointIdx = 0;
+        if (_selectedDevice is { } device)
         {
-            ImPlot.SetupAxes("X Label", "Y Label", RECORDER_X_AXIS, RECORDER_Y_AXIS);
-            ImPlot.SetupAxisTicks(ImAxis.Y1, ref PLOT_POSITIONS[0], 11, PLOT_LABELS);
+            using var disabled = ImRaii.Disabled(!_service.DurationTimer.IsRunning);
+            // Process the vibe motors.
+            if (device.Device.CanVibrate)
+                for (var i = 0; i < device.VibeDots.Count(); i++)
+                    ProcessMotorDot(device.VibeDots[i], device.IsPoweredOn, $"#{i}");
 
-            var dragPointIdx = 0;
-            if (_selectedDevice is { } device)
-            {
-                using var disabled = ImRaii.Disabled(!device.IsPoweredOn);
+            // Process the OscillationMotors
+            if (device.Device.CanOscillate)
+                for (var i = 0; i < device.OscillateDots.Count(); i++)
+                    ProcessMotorDot(device.OscillateDots[i], device.IsPoweredOn, $"#{i}");
 
-                ImPlot.DragPoint(dragPointIdx, ref device.VibeDots[0].Position[0], ref device.VibeDots[0].Position[1], CkColor.LushPinkButton.Vec4(), 20, ImPlotDragToolFlags.NoCursors);
+            // Process the rotate motor.
+            if (device.Device.CanRotate)
+                ProcessMotorDot(device.RotateDot, device.IsPoweredOn);
 
-                // Process the vibe motors.
-                if (_selectedDevice.Device.CanVibrate)
-                    foreach (var vibeMotor in _selectedDevice.VibeDots)
-                        ProcessMotorDot(vibeMotor, ref dragPointIdx);
+            // Process the constrict motor.
+            if (device.Device.CanConstrict)
+                ProcessMotorDot(device.ConstrictDot, device.IsPoweredOn);
 
-                // Process the OscillationMotors
-                if (_selectedDevice.Device.CanOscillate)
-                    foreach (var oscMotor in _selectedDevice.OscillateDots)
-                        ProcessMotorDot(oscMotor, ref dragPointIdx);
-
-                // Process the rotate motor.
-                if (_selectedDevice.Device.CanRotate)
-                    ProcessMotorDot(_selectedDevice.RotateDot, ref dragPointIdx);
-
-                // Process the constrict motor.
-                if (_selectedDevice.Device.CanConstrict)
-                    ProcessMotorDot(_selectedDevice.ConstrictDot, ref dragPointIdx);
-
-                // Process the inflate motor.
-                if (_selectedDevice.Device.CanInflate)
-                    ProcessMotorDot(_selectedDevice.InflateDot, ref dragPointIdx);
-            }
-            _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, GetWindowPos(), GetWindowSize());
-            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, GetWindowPos(), GetWindowSize());
-            // end the plot
-            ImPlot.EndPlot();
+            // Process the inflate motor.
+            if (device.Device.CanInflate)
+                ProcessMotorDot(device.InflateDot, device.IsPoweredOn);
         }
+        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, GetWindowPos(), GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, GetWindowPos(), GetWindowSize());
 
         // See if we can get away is IsItemHovered here
-        void ProcessMotorDot(MotorDot motor, ref int dragPointIdx)
+        void ProcessMotorDot(MotorDot motor, bool deviceOn, string? label = null)
         {
-            ImPlot.DragPoint(dragPointIdx, ref PLOT_STATIC_X[0], ref motor.Position[1], CkColor.LushPinkButton.Vec4(), 20, ImPlotDragToolFlags.NoCursors);
+            using var disabled = ImRaii.Disabled(!deviceOn);
+            var dragPointCol = deviceOn && _service.DurationTimer.IsRunning ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
+            // if the motor is not visible simply return.
+            if (!motor.Visible)
+                return;
+            
+            var radius = 20f;
+            ImPlot.DragPoint(dragPointIdx, ref motor.Position[0], ref motor.Position[1], dragPointCol, radius, ImPlotDragToolFlags.NoCursors);
+            
+            dragPointIdx++;
+            var plotCenter = ImPlot.PlotToPixels(motor.Position[0], motor.Position[1]);
+            if (!string.IsNullOrEmpty(label))
+            {
+                var textSize = ImGui.CalcTextSize(label);
+                var textPos = plotCenter - textSize * 0.5f;
+                pdl.AddText(textPos, ImGui.GetColorU32(ImGuiCol.Text), label);
+            }
+
             // Handle a drag release.
-            if (motor.IsDragging && ImGui.IsItemHovered() && mouseReleased)
+            if (motor.IsDragging && mouseReleased)
                 motor.EndDrag();
 
             // Handle a drag begin.
-            if (!motor.IsDragging && ImGui.IsItemHovered() && mouseDown)
+            var hovering = Vector2.Distance(ImGui.GetMousePos(), plotCenter) <= radius;
+            if (!motor.IsDragging && hovering && mouseDown)
             {
                 motor.BeginDrag();
-                ThrottleSelectedMotor(motor);
+                _selectedMotor = motor;
             }
 
             // Clamp the button bounds and account for dropping to the floor.
-            if (!motor.IsLooping || ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            if (!motor.IsLooping || mouseDown)
             {
-                // If the motor is not floating, drop it to the floor.
+                var newY = motor.Position[1];
                 if (!motor.IsFloating && !motor.IsDragging)
-                    motor.Position[1] = (motor.Position[1] < 0.01) ? 0.0f : motor.Position[1] - 0.075f;
-
-                // Clamp X and Y to their respective axis limits
+                    newY = (motor.Position[1] < 0.01f) ? 0.0f : motor.Position[1] - 0.075f;
+                
                 motor.Position[0] = Math.Clamp(motor.Position[0], -X_AXIS_LIMIT, X_AXIS_LIMIT);
-                motor.Position[1] = Math.Clamp(motor.Position[1], Y_AXIS_LIMIT_LOWER, Y_AXIS_LIMIT_UPPER);
+                motor.Position[1] = Math.Clamp(newY, Y_AXIS_LIMIT_LOWER, Y_AXIS_LIMIT_UPPER);
             }
+
+            // Add to history
+            if (recordingData && deviceOn)
+                motor.AddPosToHistory();
         }
     }
 
@@ -450,38 +468,37 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         ImGui.Spacing();
 
-        var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var drawRegion = ImGui.GetContentRegionAvail();
         var imgSize = new Vector2(drawRegion.X * 0.75f);
         var xOffset = (drawRegion.X - imgSize.X) * 0.5f;
         var cursorPos = ImGui.GetCursorPos();
-        var minCursorPosX = cursorPos.X;
-        var powerDrawPos = cursorPos + drawRegion - imgSize - new Vector2(xOffset, itemSpacing.Y * 1.5f);
+        var powerDrawPos = cursorPos + drawRegion - imgSize - new Vector2(xOffset, ImGui.GetStyle().ItemSpacing.Y * 1.5f);
+
         // Draw the Loop Button.
         ImGui.SetCursorPosX(ImGui.GetCursorPos().X + xOffset);
-        if (CustomImageButton(imgSize, CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin], false, CkColor.LushPinkButton.Uint()))
-        {
-            if (_selectedMotor is { } motor)
-                motor.IsLooping = !motor.IsLooping;
-        }
-        CkGui.AttachToolTip("Toggle Looping mode for selected Motor");
+        var loopState = _selectedMotor?.IsLooping ?? false;
+        var disableLoop = _selectedMotor is null;
+        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin], disableLoop, loopState))
+            _selectedMotor!.IsLooping = !_selectedMotor.IsLooping;
+        CkGui.AttachToolTip(disableLoop ? "No Motor currently selected!"
+            : $"{(loopState ? "Disable" : "Enable")} looping for this motor.--SEP----COL--Right-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
         _guides.OpenTutorial(TutorialType.Remote, StepsRemote.LoopButton, GetWindowPos(), GetWindowSize());
 
         CkGui.Separator(0);
 
         // Process the Float Button.
         ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPos().X + xOffset, ImGui.GetCursorPos().Y));
-        if (CustomImageButton(imgSize, CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], false, CkColor.LushPinkButton.Uint()))
-        {
-            if (_selectedMotor is { } motor)
-                motor.IsFloating = !motor.IsFloating;
-        }
-        CkGui.AttachToolTip("Toggle Floating mode for selected Motor");
+        var floatState = _selectedMotor?.IsFloating ?? false;
+        var disableFloat = _selectedMotor is null;
+        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], disableFloat, floatState))
+            _selectedMotor!.IsFloating = !_selectedMotor.IsFloating;
+        CkGui.AttachToolTip(disableFloat ? "No Motor currently selected!"
+            : $"{(floatState ? "Disable" : "Enable")} floating for this motor.--SEP----COL--Middle-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
         _guides.OpenTutorial(TutorialType.Remote, StepsRemote.FloatButton, GetWindowPos(), GetWindowSize());
 
         // push to the bottom right  minus the button height to draw the last centered button.
         ImGui.SetCursorPos(powerDrawPos);
-        if (CustomImageButton(imgSize, CosmeticService.CoreTextures.Cache[CoreTexture.Power], _service.DurationTimer.IsRunning, CkColor.LushPinkButton.Uint()))
+        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], false, _service.DurationTimer.IsRunning))
         {
             if (_service.DurationTimer.IsRunning)
                 _service.StopRecording();
@@ -490,20 +507,21 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         }
         CkGui.AttachToolTip("Start/Stop Recording the SexToy data stream");
         _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, GetWindowPos(), GetWindowSize());
+
+        bool CustomImageButton(IDalamudTextureWrap wrap, bool isDisabled, bool isActive)
+        {
+            using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, isDisabled ? 0.5f : 1.0f);
+            ImGui.Dummy(imgSize);
+            var col = isDisabled ? (isActive ? CkColor.LushPinkButton.Uint() : _idleTint)
+                : isActive ? CkColor.LushPinkButton.Uint() : ImGui.IsItemHovered() ? _hoverTint : _idleTint;
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
+            return !isDisabled && ImGui.IsItemClicked();
+        }
     }
 
-    private bool CustomImageButton(Vector2 size, IDalamudTextureWrap imgWrap, bool selected, uint? activeColorTint = null)
+    public override void OnClose()
     {
-        // Draw the invisible button
-        var pressed = ImGui.InvisibleButton($"{imgWrap.ImGuiHandle.ToString()}", size);
-        var hovered = ImGui.IsItemHovered();
-        var imgTint = selected ? (activeColorTint ?? uint.MaxValue) : (hovered ? _imageButtonHoverTint : _imageButtonIdleTint);
-        // Draw the image, over the button.
-        ImGui.GetWindowDrawList().AddDalamudImageRounded(imgWrap, ImGui.GetItemRectMin(), size, 45, imgTint);
-
-        if(selected)
-            ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + size / 2, size.X / 2, CkGui.Color(ImGuiColors.ParsedGold), 32, 2);
-
-        return pressed;
+        base.OnClose();
+        _service.StopRecording();
     }
 }

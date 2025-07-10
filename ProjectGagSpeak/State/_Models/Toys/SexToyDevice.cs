@@ -1,4 +1,5 @@
 using Buttplug.Core.Messages;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Models;
@@ -25,7 +26,7 @@ public abstract class BuzzToy : IDisposable, IEditableStorageItem<BuzzToy>
     ///     Factory Name of the SexToy [Lovense Hush]
     /// </summary>
     /// <remarks> This is static and pre-assigned. (its Identifier) </remarks>
-    public abstract string FactoryName { get; protected set; }
+    public abstract CoreIntifaceElement FactoryName { get; protected set; }
 
     /// <summary> 
     ///     The labeled name given for the connected device.
@@ -101,106 +102,115 @@ public abstract class BuzzToy : IDisposable, IEditableStorageItem<BuzzToy>
     /// <summary>
     ///     Set all VibeMotors to the defined <paramref name="intensity"/>
     /// </summary>
-    public virtual void VibrateAll(double intensity)
+    public virtual bool VibrateAll(double intensity)
     {
         if (!CanVibrate)
-            return;
+            return false;
 
         foreach (var motor in VibeMotors)
             motor.Intensity = intensity;
+        return true;
     }
 
     /// <summary>
     ///     Set the intensity of a specific motor.
     /// </summary>
-    public virtual void Vibrate(uint motorIdx, double intensity)
+    public virtual bool Vibrate(uint motorIdx, double intensity)
     {
         if (!CanVibrate || motorIdx > OscillateMotorCount)
-            return;
+            return false;
 
         VibeMotors[motorIdx].Intensity = intensity;
+        return true;
     }
 
     /// <summary>
     ///     Update all motors to their new unique intensity at once.
     /// </summary>
     /// <remarks> This will likely never happen as its difficult to encode. </remarks>
-    public virtual void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public virtual bool VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!CanVibrate)
-            return;
+            return false;
 
         foreach (var cmd in newValues)
             VibeMotors[cmd.index].Intensity = cmd.scalar;
+        return true;
     }
 
     /// <summary>
     ///     Set all Oscillations to the defined <paramref name="speed"/>
     /// </summary>
-    public virtual void OscillateAll(double speed)
+    public virtual bool OscillateAll(double speed)
     {
         if (!CanOscillate)
-            return;
+            return false;
 
         foreach (var motor in OscillateMotors)
             motor.Intensity = speed;
+        return true;
     }
 
     /// <summary>
     ///    Set the speed of a specific oscillation motor.
     /// </summary>
-    public virtual void Oscillate(uint motorIdx, double speed)
+    public virtual bool Oscillate(uint motorIdx, double speed)
     {
         if (!CanOscillate || motorIdx > OscillateMotorCount)
-            return;
+            return false;
 
         OscillateMotors[motorIdx].Intensity = speed;
+        return true;
     }
 
     /// <summary>
     ///     Update all motors to their new unique Oscillation at once.
     /// </summary>
     /// <remarks> This will likely never happen as its difficult to encode. </remarks>
-    public virtual void OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public virtual bool OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
         if (!CanOscillate)
-            return;
+            return false;
 
         foreach (var cmd in newValues)
             OscillateMotors[cmd.index].Intensity = cmd.scalar;
+        return true;
     }
 
     /// <summary>
     ///     Update the speed and direction of the rotation motor.
     /// </summary>
-    public virtual void Rotate(double speed, bool clockwise)
+    public virtual bool Rotate(double speed, bool clockwise)
     {
         if (!CanRotate)
-            return;
+            return false;
         
         RotateMotor.Intensity = speed;
+        return true;
     }
 
     /// <summary>
     ///     Update the severity of the constriction motor.
     /// </summary>
-    public virtual void Constrict(double severity)
+    public virtual bool Constrict(double severity)
     {
         if (!CanConstrict)
-            return;
+            return false;
 
         ConstrictMotor.Intensity = severity;
+        return true;
     }
 
     /// <summary>
     ///     Update the severity of the inflation motor.
     /// </summary>
-    public virtual void Inflate(double severity)
+    public virtual bool Inflate(double severity)
     {
         if (!CanInflate)
-            return;
+            return false;
 
         RotateMotor.Intensity = severity;
+        return true;
     }
 
     /// <summary>
@@ -214,7 +224,7 @@ public abstract class BuzzToy : IDisposable, IEditableStorageItem<BuzzToy>
         {
             ["Type"] = Type.ToString(),
             ["Id"] = Id.ToString(),
-            ["FactoryName"] = FactoryName,
+            ["FactoryName"] = FactoryName.ToString(),
             ["LabelName"] = LabelName,
             ["BatteryLevel"] = BatteryLevel,
             ["Interactable"] = Interactable,

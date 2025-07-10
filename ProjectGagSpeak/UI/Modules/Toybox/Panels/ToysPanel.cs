@@ -158,18 +158,14 @@ public class ToysPanel
                 return;
 
             // Draw the image preview for the selected item if valid.
-            var textureEnum = GsExtensions.FromFactoryName(item.FactoryName);
-            if (GsExtensions.FromFactoryName(item.FactoryName) is { } res && res is not CoreIntifaceTexture.MotorVibration)
+            if (item.FactoryName is not CoreIntifaceElement.UnknownDevice)
             {
                 var availWidth = (c.InnerNoLabel.X - ImGui.GetItemRectSize().X);
                 var imgSize = new Vector2(availWidth - ImGui.GetFrameHeight());
-                if (CosmeticService.IntifaceTextures.Cache[textureEnum] is { } wrap)
-                {
-                    var drawPos = ImGui.GetItemRectMax() + new Vector2((availWidth - imgSize.X) /2, -ImGui.GetFrameHeight() / 2);
-                    ImGui.GetWindowDrawList().AddDalamudImage(wrap, drawPos, imgSize);
-                    if (item is IntifaceBuzzToy ibt)
-                        CkGui.AttachToolTipRect(drawPos, drawPos + imgSize, $"Intiface DeviceIdx: {ibt.DeviceIdx}");
-                }
+                var drawPos = ImGui.GetItemRectMax() + new Vector2((availWidth - imgSize.X) /2, -ImGui.GetFrameHeight() / 2);
+                ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.IntifaceTextures.Cache[item.FactoryName], drawPos, imgSize);
+                if (item is IntifaceBuzzToy ibt)
+                    CkGui.AttachToolTipRect(drawPos, drawPos + imgSize, $"Intiface DeviceIdx: {ibt.DeviceIdx}");
             }
 
             if (editingSelectedDevice)
@@ -238,8 +234,7 @@ public class ToysPanel
         var childSize = new Vector2(comboW, ImGui.GetFrameHeight());
         if(isEditing && device is VirtualBuzzToy vbt)
         {
-            var enumValue = GsExtensions.FromFactoryName(vbt.FactoryName);
-            if (CkGuiUtils.EnumCombo("##NameSelector", comboW, enumValue, out var newVal, (n) => n.ToFactoryName(), "Choose Brand Name..", 5, CFlags.None))
+            if (CkGuiUtils.EnumCombo("##NameSelector", comboW, vbt.FactoryName, out var newVal, (n) => n.ToFactoryName(), "Choose Brand Name..", 5, CFlags.None))
             {
                 vbt.SetFactoryName(newVal);
                 vbt.LabelName = newVal.ToFactoryName();
@@ -252,7 +247,7 @@ public class ToysPanel
                 ImGui.Dummy(childSize);
                 ImGui.SetCursorScreenPos(ImGui.GetItemRectMin());
                 CkGui.InlineSpacingInner();
-                ImUtf8.TextFrameAligned(device.FactoryName);
+                ImUtf8.TextFrameAligned(device.FactoryName.ToFactoryName());
             }
         }
     }
@@ -303,7 +298,7 @@ public class ToysPanel
                 using (ImRaii.Group())
                 {
                     ImGui.Dummy(imgSize);
-                    wdl.AddDalamudImage(imgCache[CoreIntifaceTexture.MotorVibration], ImGui.GetItemRectMin(), imgSize);
+                    wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorVibration], ImGui.GetItemRectMin(), imgSize);
 
                     ImUtf8.SameLineInner();
                     using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
@@ -338,7 +333,7 @@ public class ToysPanel
                 using (ImRaii.Group())
                 {
                     ImGui.Dummy(imgSize);
-                    wdl.AddDalamudImage(imgCache[CoreIntifaceTexture.MotorOscillation], ImGui.GetItemRectMin(), imgSize);
+                    wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorOscillation], ImGui.GetItemRectMin(), imgSize);
 
                     ImGui.SameLine();
                     using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
@@ -370,7 +365,7 @@ public class ToysPanel
             CkGui.ColorText("Rotation Motor", ImGuiColors.ParsedGold);
             using var _ = ImRaii.Group();
             ImGui.Dummy(imgSize);
-            wdl.AddDalamudImage(imgCache[CoreIntifaceTexture.MotorRotation], ImGui.GetItemRectMin(), imgSize);
+            wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorRotation], ImGui.GetItemRectMin(), imgSize);
 
             ImGui.SameLine();
             using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
@@ -400,7 +395,7 @@ public class ToysPanel
             CkGui.ColorText("Constriction Motor", ImGuiColors.ParsedGold);
             using var _ = ImRaii.Group();
             ImGui.Dummy(imgSize);
-            wdl.AddDalamudImage(imgCache[CoreIntifaceTexture.MotorConstriction], ImGui.GetItemRectMin(), imgSize);
+            wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorConstriction], ImGui.GetItemRectMin(), imgSize);
 
             ImGui.SameLine();
             using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
@@ -430,7 +425,7 @@ public class ToysPanel
             CkGui.ColorText("Inflation Motor", ImGuiColors.ParsedGold);
             using var _ = ImRaii.Group();
             ImGui.Dummy(imgSize);
-            wdl.AddDalamudImage(imgCache[CoreIntifaceTexture.MotorInflation], ImGui.GetItemRectMin(), imgSize);
+            wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorInflation], ImGui.GetItemRectMin(), imgSize);
 
             ImGui.SameLine();
             using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))

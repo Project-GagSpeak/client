@@ -5,8 +5,8 @@ namespace GagSpeak.State.Models;
 
 public class VirtualBuzzToy : BuzzToy
 {
-    public override string FactoryName { get; protected set; } = "Virtual Toy";
-    public override string LabelName { get; set; } = "UNK";
+    public override CoreIntifaceElement FactoryName { get; protected set; } = CoreIntifaceElement.UnknownDevice;
+    public override string LabelName { get; set; } = "UNK Device";
 
     public VirtualBuzzToy()
     { }
@@ -28,64 +28,64 @@ public class VirtualBuzzToy : BuzzToy
     public override SexToyType Type => SexToyType.Simulated;
     public override bool ValidForRemotes => Interactable; // Always valid for virtual toys.
 
-    public void SetFactoryName(CoreIntifaceTexture newName)
+    public void SetFactoryName(CoreIntifaceElement newName)
     {
         if ((int)newName < 5)
             return;
-        FactoryName = newName.ToFactoryName();
+        FactoryName = newName;
     }
 
-    public override void VibrateAll(double intensity)
+    public override bool VibrateAll(double intensity)
     {
-        base.VibrateAll(intensity);
+        return base.VibrateAll(intensity);
         // adjust audio here.
     }
 
-    public override void Vibrate(uint motorIdx, double intensity)
+    public override bool Vibrate(uint motorIdx, double intensity)
     {
-        base.Vibrate(motorIdx, intensity);
+        return base.Vibrate(motorIdx, intensity);
         // adjust audio here.
     }
 
-    public override void VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override bool VibrateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
-        base.VibrateDistinct(newValues);
+        return base.VibrateDistinct(newValues);
         // adjust audio here.
     }
 
-    public override void OscillateAll(double speed)
+    public override bool OscillateAll(double speed)
     {
-        base.OscillateAll(speed);
+        return base.OscillateAll(speed);
         // adjust audio here.
     }
 
-    public override void Oscillate(uint motorIdx, double speed)
+    public override bool Oscillate(uint motorIdx, double speed)
     {
-        base.Oscillate(motorIdx, speed);
+        return base.Oscillate(motorIdx, speed);
         // adjust audio here.
     }
 
-    public override void OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
+    public override bool OscillateDistinct(IEnumerable<ScalarCmd.ScalarCommand> newValues)
     {
-        base.OscillateDistinct(newValues);
+        return base.OscillateDistinct(newValues);
         // adjust audio here.
     }
 
-    public override void Rotate(double speed, bool clockwise)
+    public override bool Rotate(double speed, bool clockwise)
     {
-        base.Rotate(speed, clockwise);
+        return base.Rotate(speed, clockwise);
         // adjust audio here.
     }
 
-    public override void Constrict(double severity)
+    public override bool Constrict(double severity)
     {
-        base.Constrict(severity);
+        return base.Constrict(severity);
         // adjust audio here.
     }
 
-    public override void Inflate(double severity)
+    public override bool Inflate(double severity)
     {
-        base.Inflate(severity);
+        return base.Inflate(severity);
         // adjust audio here.
     }
 
@@ -100,7 +100,7 @@ public class VirtualBuzzToy : BuzzToy
         return new VirtualBuzzToy()
         {
             Id = Guid.TryParse(token["Id"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
-            FactoryName = token["FactoryName"]?.Value<string>() ?? string.Empty,
+            FactoryName = Enum.TryParse<CoreIntifaceElement>(token["FactoryName"]?.ToObject<string>(), out var stim) ? stim : CoreIntifaceElement.UnknownDevice,
             LabelName = token["LabelName"]?.Value<string>() ?? string.Empty,
             BatteryLevel = token["BatteryLevel"]?.Value<double>() ?? 0.0,
             Interactable = token["Interactable"]?.Value<bool>() ?? false,

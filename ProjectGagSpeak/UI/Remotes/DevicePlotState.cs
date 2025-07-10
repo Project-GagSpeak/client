@@ -41,23 +41,33 @@ public class DevicePlotState : IEquatable<DevicePlotState>
     {
         // Update Vibe Motors
         for (var i = 0; i < VibeDots.Count; i++)
-            VibeDots[i].TrySendLatestValue((newValue) => Device.Vibrate((uint)i, newValue));
+            if(VibeDots[i].RecordPosition())
+                Device.Vibrate((uint)i, VibeDots[i].RecordedData.LastOrDefault());
 
         // Update Oscillation Motors
         for (var i = 0; i < OscillateDots.Count; i++)
-            OscillateDots[i].TrySendLatestValue((newValue) => Device.Oscillate((uint)i, newValue));
+            if (OscillateDots[i].RecordPosition())
+                Device.Vibrate((uint)i, OscillateDots[i].RecordedData.LastOrDefault());
 
         // Update Rotation Motor
-        if (Device.CanRotate)
-            RotateDot.TrySendLatestValue((newValue) => Device.Rotate(newValue, RotateDot.IsFloating));
+        if (Device.CanRotate && RotateDot.RecordPosition())
+            Device.Rotate(RotateDot.RecordedData.LastOrDefault(), IsClockwise);
 
         // Update Constrict Motor
-        if (Device.CanConstrict)
-            ConstrictDot.TrySendLatestValue((newValue) => Device.Constrict(newValue));
+        if (Device.CanConstrict && ConstrictDot.RecordPosition())
+            Device.Constrict(ConstrictDot.RecordedData.LastOrDefault());
 
         // Update Inflate Motor
-        if (Device.CanInflate)
-            InflateDot.TrySendLatestValue((newValue) => Device.Inflate(newValue));
+        if (Device.CanInflate && InflateDot.RecordPosition())
+            Device.Inflate(InflateDot.RecordedData.LastOrDefault());
+    }
+
+    public void ThrottlePower()
+    {
+        if (IsPoweredOn)
+            PowerDown();
+        else
+            IsPoweredOn = true;
     }
 
     public void PowerDown()
@@ -67,6 +77,7 @@ public class DevicePlotState : IEquatable<DevicePlotState>
         // power down by stopping all motors.
         Svc.Logger.Verbose($"Powering down device {Device.FactoryName} ({Device.LabelName})");
         Device.StopAllMotors();
+        IsPoweredOn = false;
     }
 
     public static bool operator ==(DevicePlotState? left, DevicePlotState? right)

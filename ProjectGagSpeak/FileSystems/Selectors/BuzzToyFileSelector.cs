@@ -2,14 +2,17 @@ using CkCommons;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -22,6 +25,8 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
     private readonly FavoritesManager _favorites;
     private readonly BuzzToyManager _manager;
     public GagspeakMediator Mediator { get; init; }
+
+    private CoreIntifaceElement _newItemName = CoreIntifaceElement.UnknownDevice;
 
     /// <summary> 
     /// For now, use this 'state storage', it is a list of attributes linked to each leaf.
@@ -176,11 +181,19 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
 
     private void NewSexToyPopup()
     {
-        if (!ImGuiUtil.OpenNameField("##NewSexToy", ref _newName))
+        using var popup = ImRaii.Popup("##NewSexToy");
+        if (!popup)
             return;
 
-        _manager.CreateNew(_newName);
-        _newName = string.Empty;
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+            ImGui.CloseCurrentPopup();
+
+        if (CkGuiUtils.EnumCombo("##newName", 300 * ImGuiHelpers.GlobalScale, _newItemName, out var newVal, (n) => n.ToFactoryName(), "Choose Brand Name..", 5, CFlags.None))
+        {
+            _manager.CreateNew(_newItemName);
+            _newName = string.Empty;
+            ImGui.CloseCurrentPopup();
+        }
     }
 }
 

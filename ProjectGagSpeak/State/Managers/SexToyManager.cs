@@ -8,6 +8,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Managers;
@@ -55,10 +56,11 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         _batteryCTS.SafeDispose();
     }
 
-    public VirtualBuzzToy CreateNew(string deviceName)
+    public VirtualBuzzToy CreateNew(CoreIntifaceElement deviceName)
     {
-        deviceName  = RegexEx.EnsureUniqueName(deviceName, _storage.Values, t => t.LabelName);
-        var newItem = new VirtualBuzzToy() { LabelName = deviceName };
+        var newItem = new VirtualBuzzToy(){ LabelName = deviceName.ToFactoryName() };
+        newItem.SetFactoryName(deviceName);
+
         _storage.TryAdd(newItem.Id, newItem);
         _saver.Save(this);
 
@@ -95,7 +97,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         {
             if (toy.VibeMotorCount != newToy.VibrateAttributes.Count
             || (toy.OscillateMotorCount != newToy.OscillateAttributes.Count)
-            || (toy.FactoryName != newToy.Name))
+            || (toy.FactoryName != GsExtensions.FromFactoryName(newToy.Name)))
             {
                 _logger.LogDebug($"Skipping toy [{toy.FactoryName}] ({toy.LabelName}) as it does not match the new device attributes: " +
                     $"Vibe: {toy.VibeMotorCount} vs {newToy.VibrateAttributes.Count}, " +

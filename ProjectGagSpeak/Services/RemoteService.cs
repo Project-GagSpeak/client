@@ -24,10 +24,6 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     {
         _manager = manager;
 
-        _updateCTS = new CancellationTokenSource();
-        _updateTask = RecordDataLoop();
-        DurationTimer = new Stopwatch();
-
         // Monitor any changes to a toy.
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnBuzzToyChanged(msg.Type, msg.Item));
         Mediator.Subscribe<ReloadFileSystem>(this, (msg) =>
@@ -141,6 +137,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
         Logger.LogInformation($"Starting recording SexToy data stream");
         DurationTimer.Start();
+        _updateCTS = _updateCTS.SafeCancelRecreate();
+        _updateTask = RecordDataLoop();
     }
 
     public void StopRecording()
@@ -153,7 +151,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
         Logger.LogInformation($"Stopping SexToy data stream recording");
         DurationTimer.Stop();
-
+        _updateCTS.SafeCancel();
+        // Power down all active devices.
         foreach (var device in ActiveDevices)
             device.PowerDown();
     }
