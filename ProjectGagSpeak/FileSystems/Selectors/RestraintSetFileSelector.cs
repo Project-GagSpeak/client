@@ -164,7 +164,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewRestraintPopup();
 
     private void NewRestraintPopup()

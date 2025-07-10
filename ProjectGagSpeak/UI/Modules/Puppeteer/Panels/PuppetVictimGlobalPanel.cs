@@ -147,7 +147,7 @@ public sealed partial class PuppetVictimGlobalPanel
             }
         }
 
-        CkGui.SeparatorSpaced(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimGlobal] is { } wrap)

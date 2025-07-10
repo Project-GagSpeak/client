@@ -1,4 +1,5 @@
 using Buttplug.Client;
+using Buttplug.Core;
 using Buttplug.Core.Messages;
 using CkCommons;
 using Dalamud.Plugin.Ipc;
@@ -6,6 +7,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Struct;
+using System.Net.WebSockets;
 
 namespace GagSpeak.Interop;
 
@@ -17,8 +19,9 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
 
-    private ButtplugWebsocketConnector connector;
     private static ButtplugClient client = new ButtplugClient(ClientName);
+
+    private CancellationTokenSource _scannerCTS = new();
 
     public IpcCallerIntiface(ILogger<IpcCallerIntiface> logger, GagspeakMediator mediator, MainConfig config)
     {
@@ -26,8 +29,6 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         _mediator = mediator;
         _config = config;
 
-        // create the WebSocket connector
-        connector = CreateNewConnection();
         // Subscribe to the main hub connected message to open and connect.
         client.DeviceAdded += (_, args) => OnDeviceAdded(args.Device);
         client.DeviceRemoved += (_, args) => OnDeviceRemoved(args.Device);
@@ -48,6 +49,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
 
     public void Dispose()
     {
+        _scannerCTS.SafeCancel();
         if (client is not null)
         {
             // Unsubscribe from events to prevent memory leaks.
@@ -56,12 +58,21 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
             client.ScanningFinished -= (_, args) => OnScanFinished();
             client.ServerDisconnect -= (_, args) => OnIntifaceDisconnected();
 
-            if (IsConnected)
+            try
+            {
+                // Handle actions to perform upon disconnect.
                 client.DisconnectAsync().Wait();
-
-            client?.Dispose();
-            connector?.Dispose();
+                client.Dispose();
+                ScanningForDevices = false;
+            }
+            catch (ButtplugException ex) { _logger.LogDebug($"Dumb ButtplugException: {ex}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}");
+            }
         }
+
+        _scannerCTS.SafeDispose();
     }
 
     private void OnDeviceAdded(ButtplugClientDevice device)
@@ -116,20 +127,15 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
                 _logger.LogInformation("Already connected to Intiface Central", LoggerType.Toys);
                 return;
             }
-            else if (connector is null)
-            {
-                _logger.LogError("WebsocketConnector is null. Cannot connect to Intiface Central");
-                return;
-            }
 
             // Attempt connection to server
             _logger.LogDebug("Attempting connection to Intiface Central", LoggerType.Toys);
-            await client.ConnectAsync(connector);
+            await client.ConnectAsync(CreateNewConnection());
 
             // let other classes know of the connection.
             _mediator.Publish(new IntifaceClientConnected());
         }
-        catch (ButtplugClientConnectorException socketEx)
+        catch (ButtplugException socketEx)
         {
             _logger.LogError($"Error Connecting to Websocket. Is your Intiface Opened? | {socketEx}");
             await Disconnect();
@@ -146,7 +152,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
     public async Task Disconnect()
     {
         // try safely executing this incase Intiface Central goes explotano
-        await Generic.Safe(async () =>
+        try
         {
             if (IsConnected)
             {
@@ -156,13 +162,22 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
                 _logger.LogInformation("Disconnected from Intiface Central", LoggerType.Toys);
                 ScanningForDevices = false;
             }
-            // Regardless, recreate the websocket connector.
-            connector?.Dispose();
-            connector = CreateNewConnection();
-        });
+        }
+        catch (ButtplugException ex)
+        {
+            _logger.LogError($"Buttplug Exception while disconnecting: {ex.Message}", LoggerType.Toys);
+        }
+        catch (WebSocketException ex)
+        {
+            _logger.LogError($"WebSocket Exception while disconnecting: {ex.Message}", LoggerType.Toys);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}", LoggerType.Toys);
+        }
     }
 
-    public async Task StartScanning()
+    public async Task DeviceScannerTask()
     {
         if (!client.Connected || ScanningForDevices)
             return;
@@ -172,17 +187,9 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
             _logger.LogDebug("Scanning for new devices...", LoggerType.Toys);
             await client.StartScanningAsync();
             ScanningForDevices = true;
-        });
-    }
 
-    public async Task StopScanning()
-    {
-        // stop scan if we are connected
-        if (!client.Connected || !ScanningForDevices)
-            return;
+            await Task.Delay(2500); // Wait for 2.5 seconds to allow scanning to complete
 
-        await Generic.Safe(async () =>
-        {
             _logger.LogDebug("Stopping device scan...", LoggerType.Toys);
             await client.StopScanningAsync();
             ScanningForDevices = false;

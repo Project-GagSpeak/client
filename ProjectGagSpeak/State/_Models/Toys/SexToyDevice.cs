@@ -1,13 +1,19 @@
 using Buttplug.Core.Messages;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Models;
 
-public abstract class BuzzToy : IDisposable
+public abstract class BuzzToy : IDisposable, IEditableStorageItem<BuzzToy>
 {
     /// <summary>
     ///     Determines the kind of connected device
     /// </summary>
     public abstract SexToyType Type { get; }
+
+    /// <summary>
+    ///     If a device is currently valid or not.
+    /// </summary>
+    public abstract bool ValidForRemotes { get; }
 
     /// <summary>
     ///     Unique identifier for the BuzzToy, useful for maintaining data
@@ -19,13 +25,13 @@ public abstract class BuzzToy : IDisposable
     ///     Factory Name of the SexToy [Lovense Hush]
     /// </summary>
     /// <remarks> This is static and pre-assigned. (its Identifier) </remarks>
-    public string FactoryName { get; protected set; } = string.Empty;
+    public abstract string FactoryName { get; protected set; }
 
     /// <summary> 
     ///     The labeled name given for the connected device.
     /// </summary>
     /// <remarks> Used for display in the UI. </remarks>
-    public string LabelName { get; set; } = string.Empty;
+    public abstract string LabelName { get; set; }
 
     /// <summary>
     ///     The current battery level of the device.
@@ -54,6 +60,29 @@ public abstract class BuzzToy : IDisposable
     public SexToyMotor RotateMotor { get; protected set; } = SexToyMotor.Empty;
     public SexToyMotor ConstrictMotor { get; protected set; } = SexToyMotor.Empty;
     public SexToyMotor InflateMotor { get; protected set; } = SexToyMotor.Empty;
+
+    public BuzzToy()
+    { }
+
+    public BuzzToy(BuzzToy other, bool keepId)
+    {
+        Id = keepId ? other.Id : Guid.NewGuid();
+        ApplyChanges(other);
+    }
+
+    public abstract BuzzToy Clone(bool keepId);
+
+    public virtual void ApplyChanges(BuzzToy other)
+    {
+        LabelName = other.LabelName;
+        BatteryLevel = other.BatteryLevel;
+        Interactable = other.Interactable;
+        VibeMotors = other.VibeMotors.Select(m => new SexToyMotor(m)).ToArray();
+        OscillateMotors = other.OscillateMotors.Select(m => new SexToyMotor(m)).ToArray();
+        RotateMotor = new SexToyMotor(other.RotateMotor);
+        ConstrictMotor = new SexToyMotor(other.ConstrictMotor);
+        InflateMotor = new SexToyMotor(other.InflateMotor);
+    }
 
     public virtual void Dispose() { }
 

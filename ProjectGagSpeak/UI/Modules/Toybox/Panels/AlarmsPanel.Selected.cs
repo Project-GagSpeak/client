@@ -16,29 +16,6 @@ namespace GagSpeak.Gui.Toybox;
 
 public partial class AlarmsPanel
 {
-    private void DrawLabel(Alarm alarm, bool isEditing)
-    {
-        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
-        CkGui.ColorTextFrameAligned("Name", ImGuiColors.ParsedGold);
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
-        using (var c = CkRaii.ChildPaddedW("PatternName", ImGui.GetContentRegionAvail().X * .6f, ImGui.GetFrameHeight(),
-            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
-        {
-            if (isEditing)
-            {
-                var refName = alarm.Label;
-                ImGui.SetNextItemWidth(c.InnerRegion.X);
-                if (ImGui.InputTextWithHint("##AlarmName", "Name Here...", ref refName, 50))
-                    alarm.Label = refName;
-            }
-            else
-            {
-                ImUtf8.TextFrameAligned(alarm.Label);
-            }
-        }
-        _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmName, Vector2.Zero, Vector2.Zero, () => alarm.Label = "Tutorial Alarm");
-    }
-
     private void DrawAlarmTime(Alarm alarm, bool isEditing)
     {
         // Display the local time zone

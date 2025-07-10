@@ -134,7 +134,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewAlarmPopup();
 
     private void NewAlarmPopup()

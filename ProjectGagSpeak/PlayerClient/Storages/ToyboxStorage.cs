@@ -4,11 +4,11 @@ using GagSpeak.State.Models;
 
 namespace GagSpeak.PlayerClient;
 
-public class BuzzToyStorage : ConcurrentDictionary<Guid, BuzzToy>, IEditableStorage<VirtualBuzzToy>
+public class BuzzToyStorage : ConcurrentDictionary<Guid, BuzzToy>, IEditableStorage<BuzzToy>
 {
-    public bool TryApplyChanges(VirtualBuzzToy oldItem, VirtualBuzzToy changedItem)
+    public bool TryApplyChanges(BuzzToy oldItem, BuzzToy changedItem)
     {
-        if (changedItem is null || changedItem is not VirtualBuzzToy)
+        if (changedItem is null || changedItem is not BuzzToy)
             return false;
 
         oldItem.ApplyChanges(changedItem);

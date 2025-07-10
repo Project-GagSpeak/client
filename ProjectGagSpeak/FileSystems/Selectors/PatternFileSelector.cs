@@ -169,7 +169,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewPatternPopup();
 
     private void NewPatternPopup()

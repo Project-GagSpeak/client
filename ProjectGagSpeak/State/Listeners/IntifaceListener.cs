@@ -38,8 +38,8 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         {
             // Get the idx of the removed device.
             Logger.LogInformation($"Device {removed.Name} removed from device list.", LoggerType.Toys);
-            var realToys = _manager.SexToys.OfType<IntifaceBuzzToy>();
-            if (realToys.FirstOrDefault(st => st.DeviceIdx == (int)removed.Index) is { } match)
+            var realToys = _manager.SexToys.Values.OfType<IntifaceBuzzToy>();
+            if (realToys.FirstOrDefault(st => st.DeviceIdx == removed.Index) is { } match)
                 _manager.RemoveDevice(match);
             else
                 throw new Exception($"Device with index {removed.Index} not found in connected toys list.");
@@ -56,14 +56,7 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
     {
         // see if we sucessfully connected
         Logger.LogInformation("Connected to Intiface Central", LoggerType.Toys);
-        await Generic.Safe(async () =>
-        {
-            // scan for any devices for the next 2 seconds
-            Logger.LogInformation("Scanning for devices over the next 2 seconds.", LoggerType.Toys);
-            await _ipc.StartScanning();
-            await Task.Delay(2000);
-            await _ipc.StopScanning();
-        });
+        await _ipc.DeviceScannerTask();
         // begin the battery check loop
         _manager.StartBatteryCheck();
     }

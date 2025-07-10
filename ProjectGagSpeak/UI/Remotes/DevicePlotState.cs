@@ -1,3 +1,4 @@
+using CkCommons.Classes;
 using GagSpeak.State.Models;
 
 namespace GagSpeak.Gui.Remote;
@@ -5,7 +6,7 @@ namespace GagSpeak.Gui.Remote;
 /// <summary>
 ///    The state of a <see cref="BuzzToy"/>, whose motors are to be drawn in a ImPlot chart for recording or playback.
 /// </summary>
-public class DevicePlotState
+public class DevicePlotState : IEquatable<DevicePlotState>
 {
     /// <summary> The <see cref="BuzzToy"/> the attached <see cref="MotorDot"/>'s stem from. </summary>
     public BuzzToy Device { get; }
@@ -64,6 +65,44 @@ public class DevicePlotState
         if (!IsPoweredOn)
             return;
         // power down by stopping all motors.
+        Svc.Logger.Verbose($"Powering down device {Device.FactoryName} ({Device.LabelName})");
         Device.StopAllMotors();
+    }
+
+    public static bool operator ==(DevicePlotState? left, DevicePlotState? right)
+    {
+        // Same reference or both null → true
+        if (ReferenceEquals(left, right))
+            return true;
+
+        // One is null → false
+        if (left is null || right is null)
+            return false;
+
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(DevicePlotState? left, DevicePlotState? right)
+    {
+        return !(left == right);
+    }
+
+    public bool Equals(DevicePlotState? other)
+    {
+        if (other is null)
+            return false;
+
+        // Check if Device or Device.Id are null
+        return Device?.Id == other.Device?.Id;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is DevicePlotState other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return Device?.Id.GetHashCode() ?? 0;
     }
 }

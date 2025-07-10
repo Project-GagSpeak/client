@@ -134,7 +134,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         ImGui.SameLine(0, 1);
         DrawFolderButton();
     }
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewTriggerPopup();
 
     private void NewTriggerPopup()

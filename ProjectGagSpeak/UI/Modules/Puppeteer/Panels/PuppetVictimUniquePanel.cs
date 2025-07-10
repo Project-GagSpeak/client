@@ -159,7 +159,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
         using (ImRaii.Disabled(_helper.SelectedPair is null))
             DrawTriggerPhraseBox(c.InnerRegion.X, triggerPhrasesH);
 
-        CkGui.SeparatorSpaced(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique] is { } wrap)

@@ -1,9 +1,11 @@
+using CkCommons;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -11,6 +13,7 @@ using GagSpeak.State.Models;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
+using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 
@@ -72,10 +75,18 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         // must be a valid drag-drop source, so use invisible button
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         ImGui.InvisibleButton("leaf", leafSize);
-        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+        var iconSize = CkGui.IconSize(FAI.Trash).X;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var iconSpacing = iconSize + spacing;
+
+        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
+        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 3, 0));
+
+        var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
+        var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
 
         if (selected)
@@ -94,19 +105,46 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
         ImUtf8.TextFrameAligned(leaf.Value.LabelName);
         // Only draw the deletion if the item is not active or occupied.
-        if (true)
+
+        var shiftPressed = KeyMonitor.ShiftPressed();
+        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+        bool isEditingItem = leaf.Value.Id.Equals(_manager.ItemInEditor?.Id);
+        var currentX = leafSize.X - iconSpacing;
+
+        ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
+        var pos = ImGui.GetCursorScreenPos();
+        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        var col = (hovering && shiftPressed) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+        if (!isEditingItem && hovering && shiftPressed && mouseReleased)
         {
-            ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
-            var pos = ImGui.GetCursorScreenPos();
-            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
-            {
-                Log.Debug($"Deleting {leaf.Value.LabelName} with SHIFT pressed.");
-                _manager.RemoveDevice(leaf.Value);
-            }
-            CkGui.AttachToolTip("Delete this alarm. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            Log.Debug($"Deleting {leaf.Value.LabelName} with SHIFT pressed.");
+            _manager.RemoveDevice(leaf.Value);
+        }
+        CkGui.AttachToolTip("Delete this device from storage.--SEP--Must be holding SHIFT to remove.");
+
+        currentX -= iconSpacing;
+        ImGui.SameLine(currentX);
+        pos = ImGui.GetCursorScreenPos();
+        hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        var interactIcon = leaf.Value.Interactable ? FAI.Handshake : FAI.HandshakeSlash;
+        var interactCol = leaf.Value.Interactable ? CkColor.TriStateCheck.Vec4() : CkColor.TriStateCross.Vec4();
+        CkGui.FramedIconText(interactIcon, interactCol);
+        CkGui.AttachToolTip(leaf.Value.Interactable
+            ? "Device interactions are active, and can be used by GagSpeak's Remote."
+            : "This device has interactions off, preventing usage via GagSpeak's Remote.");
+
+        if (leaf.Value is IntifaceBuzzToy ibt)
+        {
+            currentX -= iconSpacing;
+            ImGui.SameLine(currentX);
+            pos = ImGui.GetCursorScreenPos();
+            hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+            var onlineCol = ibt.DeviceConnected ? CkColor.TriStateCheck.Vec4() : CkColor.TriStateCross.Vec4();
+            CkGui.FramedIconText(FAI.Globe, onlineCol);
+            CkGui.AttachToolTip(ibt.DeviceConnected
+                ? "This device is online and connected to Intiface."
+                : "This device is offline or not connected to Intiface.");
         }
     }
 
@@ -133,7 +171,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewSexToyPopup();
 
     private void NewSexToyPopup()

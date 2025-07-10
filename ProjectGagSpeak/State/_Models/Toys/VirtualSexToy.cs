@@ -1,38 +1,39 @@
 using Buttplug.Core.Messages;
-using CkCommons;
-using GagSpeak.Interop;
-using GagspeakAPI.Data;
+using GagSpeak.Utils;
 
 namespace GagSpeak.State.Models;
 
-public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
+public class VirtualBuzzToy : BuzzToy
 {
+    public override string FactoryName { get; protected set; } = "Virtual Toy";
+    public override string LabelName { get; set; } = "UNK";
+
     public VirtualBuzzToy()
-    {
-        FactoryName = "Virtual Toy";
-        LabelName = "UNK";
-        // would need a way to dynamically adjust the array sizes if we are not going list?
-    }
+    { }
+
+    public VirtualBuzzToy(BuzzToy baseDevice, bool keepId)
+        : base(baseDevice, keepId)
+    { }
 
     public VirtualBuzzToy(VirtualBuzzToy other, bool keepId)
-    {
-        Id = keepId ? other.Id : Guid.NewGuid();
-        ApplyChanges(other);
-    }
+        : base(other, keepId)
+    { }
 
-    public VirtualBuzzToy Clone(bool keepId) => new VirtualBuzzToy(this, keepId);
+    public override VirtualBuzzToy Clone(bool keepId) 
+        => new VirtualBuzzToy(this, keepId);
 
-    public void ApplyChanges(VirtualBuzzToy virtualBuzzToy)
-    {
-        LabelName = virtualBuzzToy.LabelName;
-        BatteryLevel = virtualBuzzToy.BatteryLevel;
-        Interactable = virtualBuzzToy.Interactable;
-        VibeMotors = virtualBuzzToy.VibeMotors.Select(m => new SexToyMotor(m)).ToArray();
-        RotateMotor = new SexToyMotor(virtualBuzzToy.RotateMotor);
-        OscillateMotors = virtualBuzzToy.OscillateMotors.Select(m => new SexToyMotor(m)).ToArray();
-    }
+    public void ApplyChanges(VirtualBuzzToy other)
+        => base.ApplyChanges(other);
 
     public override SexToyType Type => SexToyType.Simulated;
+    public override bool ValidForRemotes => Interactable; // Always valid for virtual toys.
+
+    public void SetFactoryName(CoreIntifaceTexture newName)
+    {
+        if ((int)newName < 5)
+            return;
+        FactoryName = newName.ToFactoryName();
+    }
 
     public override void VibrateAll(double intensity)
     {

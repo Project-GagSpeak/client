@@ -3,6 +3,7 @@ using Buttplug.Core.Messages;
 using CkCommons;
 using DebounceThrottle;
 using GagSpeak.Interop;
+using GagSpeak.Utils;
 
 namespace GagSpeak.State.Models;
 
@@ -22,25 +23,38 @@ public class IntifaceBuzzToy : BuzzToy
     private DebounceDispatcher ConstrictDebouncer = new(TimeSpan.FromMilliseconds(20));
     private DebounceDispatcher InflateDebouncer = new(TimeSpan.FromMilliseconds(20));
 
-    private ButtplugClientDevice _device;
+    private ButtplugClientDevice _device = null!; // This is set by the constructor or UpdateDevice.
     private uint _deviceIdx = uint.MaxValue;
     private bool _hasBattery = false;
     public IntifaceBuzzToy()
-    {
-        // Default constructor for deserialization.
-        _device = null!;
-        _deviceIdx = uint.MaxValue;
-        _hasBattery = false;
-    }
+    { }
 
     public IntifaceBuzzToy(ButtplugClientDevice device)
     {
         UpdateDevice(device);
     }
 
+    public IntifaceBuzzToy(BuzzToy baseDevice, bool keepId)
+    : base(baseDevice, keepId)
+    { }
+
+    public IntifaceBuzzToy(IntifaceBuzzToy other, bool keepId)
+        : base(other, keepId)
+    { }
+
+    public override IntifaceBuzzToy Clone(bool keepId)
+        => new IntifaceBuzzToy(this, keepId);
+
+    public void ApplyChanges(IntifaceBuzzToy other)
+        => base.ApplyChanges(other);
+
     public override SexToyType Type => SexToyType.Real;
+    public override string FactoryName { get; protected set; } = CoreIntifaceTexture.Hush.ToFactoryName();
+    public override string LabelName { get; set; } = "UNK";
+    public override bool ValidForRemotes => _device != null && DeviceConnected && Interactable;
+
+    public bool DeviceConnected => IpcCallerIntiface.IsConnected && _deviceIdx != uint.MaxValue;
     public uint DeviceIdx => _deviceIdx;
-    public bool IsValid => _device is not null && _deviceIdx != uint.MaxValue;
 
     public void UpdateDevice(ButtplugClientDevice newDevice)
     {
@@ -87,6 +101,7 @@ public class IntifaceBuzzToy : BuzzToy
             return;
         // Update Values
         base.Vibrate(motorIdx, intensity);
+        Svc.Logger.Verbose($"Vibrating motor {motorIdx} with intensity {intensity}");
         VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, intensity, ActuatorType.Vibrate)));
     }
 
@@ -155,7 +170,7 @@ public class IntifaceBuzzToy : BuzzToy
 
     public override async Task UpdateBattery()
     {
-        if (!_hasBattery || !IsValid)
+        if (!_hasBattery || !DeviceConnected)
             return;
 
         await Generic.Safe(async () => BatteryLevel = await _device.BatteryAsync());

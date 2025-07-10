@@ -162,7 +162,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewCursedItemPopup();
 
     private void NewCursedItemPopup()

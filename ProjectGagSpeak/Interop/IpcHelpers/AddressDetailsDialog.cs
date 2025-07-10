@@ -111,7 +111,7 @@ public static class AddressDetailsDialog
 
                     ImGui.EndTable();
                 }
-                CkGui.SeparatorSpaced(col: CkColor.LushPinkLine.Uint());
+                CkGui.SeparatorSpacedColored(col: CkColor.LushPinkLine.Uint());
 
                 CkGui.SetCursorXtoCenter(CkGui.IconTextButtonSize(FAI.Save, "Save and Close"));
                 if (CkGui.IconTextButton(FAI.Save, "Save and Close"))

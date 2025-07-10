@@ -22,7 +22,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     private readonly HybridSaveService _saver;
 
     private BuzzToyStorage _storage = new();
-    private StorageItemEditor<VirtualBuzzToy> _itemEditor = new();
+    private StorageItemEditor<BuzzToy> _itemEditor = new();
 
     // Maybe make nullable if running into issues.
     private Task? _batteryCheckTask = null;
@@ -41,7 +41,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
 
     // maybe migrate to dictionary if we need faster access but otherwise this is fine for now.
     public IReadOnlyDictionary<Guid, BuzzToy> SexToys => _storage;
-    public VirtualBuzzToy? ItemInEditor => _itemEditor.ItemInEditor;
+    public BuzzToy? ItemInEditor => _itemEditor.ItemInEditor;
     public IEnumerable<BuzzToy> InteractableToys => _storage.Values.Where(st => st.Interactable);
     public bool HasInteractableToys => InteractableToys.Count() > 0; // placeholder.
 

@@ -59,7 +59,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         switch (changeType)
         {
             case StorageChangeType.Created:
-                if (!_interactableToys.ContainsKey(item.Id))
+                // if the device already exists dont add the device.
+                if (!_interactableToys.ContainsKey(item.Id) && item.ValidForRemotes)
                 {
                     if (TryAddActiveDevice(item))
                         Logger.LogInformation($"Added new device {item.LabelName} to RemoteService.");
@@ -69,6 +70,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 break;
 
             case StorageChangeType.Deleted:
+                // Try removing the device, if it fails, show why.
                 if (TryRemoveActiveDevice(item))
                     Logger.LogInformation($"Removed device {item.LabelName} from RemoteService.");
                 else
@@ -76,6 +78,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 break;
 
             case StorageChangeType.Modified:
+                // Update all toys, additions and removals.
                 UpdateInteractableToys();
                 break;
         }
@@ -85,13 +88,27 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     {
         foreach (var interactableToy in _manager.InteractableToys)
         {
+            // if the toy already exists currently
             if (_interactableToys.ContainsKey(interactableToy.Id))
-                continue;
-            // add it in.
-            if (TryAddActiveDevice(interactableToy))
-                Logger.LogInformation($"Added {interactableToy.LabelName} from BuzzToyManager Reload.");
+            {
+                // and the toy is no longer valid for remotes, remove it.
+                if (!interactableToy.ValidForRemotes)
+                {
+                    // Try and remove the device, if it fails, log the error.
+                    if (TryRemoveActiveDevice(interactableToy))
+                        Logger.LogInformation($"Removed {interactableToy.LabelName} from BuzzToyManager Reload.");
+                    else
+                        Logger.LogWarning($"Failed to remove {interactableToy.LabelName} from BuzzToyManager Reload.");
+                }
+            }
             else
-                Logger.LogWarning($"Failed to add {interactableToy.LabelName} from BuzzToyManager Reload.");
+            {
+                // Otherwise, try to add it in. If it fails, log the error.
+                if (TryAddActiveDevice(interactableToy))
+                    Logger.LogInformation($"Added {interactableToy.LabelName} from BuzzToyManager Reload.");
+                else
+                    Logger.LogWarning($"Failed to add {interactableToy.LabelName} from BuzzToyManager Reload.");
+            }
         }
     }
 
@@ -158,8 +175,19 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
     public bool TryRemoveActiveDevice(BuzzToy device)
     {
-        if (_interactableToys.Remove(device.Id))
-            return true;
+        // try and find the device to remove, as we have to shut it down first.
+        if (_interactableToys.TryGetValue(device.Id, out var match))
+        {
+            if (match.IsPoweredOn)
+                match.PowerDown();
+
+            // now remove it.
+            if(_interactableToys.Remove(device.Id));
+            {
+                Logger.LogInformation($"Device {device.LabelName} removed from InteractableDevices.");
+                return true;
+            }
+        }
 
         Logger.LogWarning($"Device {device.LabelName} failed to remove from the InteractableDevices.");
         return false;

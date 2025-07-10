@@ -145,7 +145,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         DrawFolderButton();
     }
 
-    protected override void DrawPopups()
+    public override void DrawPopups()
         => NewRestrictionPopup();
 
     private void NewRestrictionPopup()
