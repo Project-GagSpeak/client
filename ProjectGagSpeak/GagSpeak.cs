@@ -298,14 +298,13 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<OverlayCache>()
 
         // State (Handlers)
-        .AddSingleton<BuzzToyHandler>()
+        .AddSingleton<RemoteHandler>()
         .AddSingleton<CustomizePlusHandler>()
         .AddSingleton<GlamourHandler>()
         .AddSingleton<HardcoreHandler>()
         .AddSingleton<LootHandler>()
         .AddSingleton<ModHandler>()
         .AddSingleton<MoodleHandler>()
-        .AddSingleton<PatternHandler>()
         .AddSingleton<TriggerHandler>()
         .AddSingleton<TraitsHandler>()
         .AddSingleton<OverlayHandler>()
@@ -389,7 +388,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<AttributeDrawer>()
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
-        .AddScoped<PlaybackDrawer>()
         .AddScoped<ActiveItemsDrawer>()
         .AddScoped<AliasItemDrawer>()
         .AddScoped<PuppeteerHelper>()
@@ -475,7 +473,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<KinkPlateLight>()
 
         // Scoped Remotes
-        .AddScoped<WindowMediatorSubscriberBase, SexToyRemoteUI>()
+        .AddScoped<WindowMediatorSubscriberBase, BuzzToyRemoteUI>()
 
         // Scoped Settings
         .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()

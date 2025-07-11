@@ -117,7 +117,7 @@ public abstract class BuzzToy : IDisposable, IEditableStorageItem<BuzzToy>
     /// </summary>
     public virtual bool Vibrate(uint motorIdx, double intensity)
     {
-        if (!CanVibrate || motorIdx > OscillateMotorCount)
+        if (!CanVibrate || motorIdx > VibeMotorCount)
             return false;
 
         VibeMotors[motorIdx].Intensity = intensity;

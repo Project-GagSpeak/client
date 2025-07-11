@@ -91,7 +91,7 @@ public class ToysPanel
 
         // Draw the leftmost button, the personal remote.
         if (CkGui.IconButton(FAI.TabletAlt))
-            _mediator.Publish(new UiToggleMessage(typeof(SexToyRemoteUI)));
+            _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
         CkGui.AttachToolTip("Open Personal Remote");
 
         // Draw the center child with the connection state.
@@ -147,7 +147,7 @@ public class ToysPanel
         var editorItem = _manager.ItemInEditor;
         bool editingAnyDevice = editorItem is not null;
         bool editingSelectedDevice = item != null && editingAnyDevice && item.Id.Equals(editorItem!.Id);
-        var inUse = item is not null && _service.ManagedDevices.TryGetValue(item.Id, out var match) && match.IsPoweredOn;
+        var inUse = item is not null && (_service.ClientDevices.FirstOrDefault(i => i.Equals(item))?.IsPoweredOn ?? false);
 
         var tooltip = (item is null) ? "No item selected!" : inUse 
             ? "Device is currently in use!" : $"Double Click to {(editingSelectedDevice ? "Edit" : "Save ")} this Device.--SEP--Right Click to cancel and exit Editor.";

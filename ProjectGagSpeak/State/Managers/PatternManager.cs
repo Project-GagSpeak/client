@@ -11,27 +11,28 @@ using GagspeakAPI.Data;
 namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly PatternHandler _applier;
+    private readonly RemoteHandler _handler;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
+    private PatternStorage _storage = new PatternStorage();
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
-        PatternHandler applier, FavoritesManager favorites, ConfigFileProvider fileNames,
+        RemoteHandler handler, FavoritesManager favorites, ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
-        _applier = applier;
+        _handler = handler;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
         Load();
     }
 
-    public PatternStorage Storage { get; private set; } = new PatternStorage();
+    public PatternStorage Storage => _storage;
     public Pattern? ItemInEditor => _itemEditor.ItemInEditor;
-    public Pattern? ActivePattern => _applier.ActivePatternInfo;
+    public Pattern? ActivePattern => _storage.FirstOrDefault(p => p.Identifier == Guid.Empty); // TODO: MAKE VALID LATER.
 
     public Pattern CreateNew(string patternName)
     {
@@ -137,13 +138,13 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public void EnablePattern(Guid patternId, string enactor)
     {
         if(Storage.TryGetPattern(patternId, out var pattern))
-            _applier.StartPlayback(pattern);
+            _handler.StartPattern(pattern);
     }
 
     public void DisablePattern(Guid patternId, string enactor)
     {
         if(ActivePattern is not null && ActivePattern.Identifier == patternId)
-            _applier.StopPlayback();
+            _handler.StopActivePattern();
     }
 
     #region HybridSavable
@@ -193,20 +194,14 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-                LoadV0(jObject["Patterns"]);
-                break;
-            default:
-                Logger.LogError("Invalid Version!");
-                return;
-        }
+        MigrateV0toV1(jObject, version);
+        LoadV1(jObject["Patterns"]);
+
         _saver.Save(this);
         Mediator.Publish(new ReloadFileSystem(GagspeakModule.Pattern));
     }
 
-    private void LoadV0(JToken? data)
+    private void LoadV1(JToken? data)
     {
         if (data is not JArray patterns)
             return;
@@ -222,10 +217,53 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         }
     }
 
-    private void MigrateV0toV1(JObject oldConfigJson)
+    private void MigrateV0toV1(JObject oldConfigJson, int version)
     {
-        // update only the version value to 1, then return it.
+        if(version != 0)
+            return; // already migrated.
+
         oldConfigJson["Version"] = 1;
+
+        // We need to update the stored pattern data here.
+        if (oldConfigJson["Patterns"] is not JArray patterns)
+            return;
+
+        // Do so by migrating the old PatternByteData.
+        foreach (var token in patterns)
+        {
+            if (token is not JObject patternObj)
+                continue;
+
+            var patternByteData = patternObj["PatternByteData"]?.ToString();
+            if (string.IsNullOrWhiteSpace(patternByteData))
+                continue;
+
+            try
+            {
+                // Parse byte list
+                var byteArray = patternByteData.Split(',').Select(s => byte.TryParse(s, out var b) ? b : (byte)0).ToArray();
+
+                // Convert to normalized doubles
+                var doubleData = byteArray.Select(b => b / 100.0).ToArray();
+
+                // Build motor/device pattern, defaulted to Hush, but can be migrated later.
+                var motor = new PatternMotorData(CoreIntifaceElement.MotorVibration, 0, doubleData);
+                var device = new PatternDeviceData(CoreIntifaceElement.Hush, [ motor ]);
+                var fullPattern = new FullPatternData([ device ]);
+
+                // Set new format
+                patternObj["PlaybackData"] = fullPattern.ToCompressedBase64();
+
+                // Remove legacy format
+                patternObj.Remove("PatternByteData");
+            }
+            catch (Exception ex)
+            {
+                // Log or handle if needed
+                Svc.Logger.Error($"[MigrateV0toV1] Failed to migrate pattern: {ex.Message}");
+            }
+        }
+
     }
 
     #endregion HybridSavable

@@ -10,8 +10,8 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State.Managers;
-using GagspeakAPI.Network;
+using GagSpeak.State.Handlers;
+using GagSpeak.WebAPI;
 using ImGuiNET;
 using ImPlotNET;
 
@@ -23,7 +23,7 @@ namespace GagSpeak.Gui.Remote;
 ///     
 ///     (change this later, just do personal for now, we can worry about other things later)
 /// </summary>
-public class SexToyRemoteUI : WindowMediatorSubscriberBase
+public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 {
     private const ImPlotFlags PLOT_FLAGS = ImPlotFlags.NoBoxSelect | ImPlotFlags.NoMenus | ImPlotFlags.NoLegend | ImPlotFlags.NoFrame | ImPlotFlags.NoMouseText;
     private const ImPlotAxisFlags PLAYBACK_AXIS_FLAGS = ImPlotAxisFlags.NoGridLines | ImPlotAxisFlags.NoLabel | ImPlotAxisFlags.NoTickLabels | ImPlotAxisFlags.NoTickMarks | ImPlotAxisFlags.NoHighlight;
@@ -38,7 +38,7 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
     private static readonly string[] PLOT_LABELS = { "0%", "", "", "", "", "", "", "", "", "", "100%" };
     private static readonly double[] PLOT_STATIC_X = Enumerable.Range(0, 1000).Select(i => (double)-i).ToArray();
 
-    private readonly BuzzToyManager _manager;
+    private readonly RemoteHandler _handler;
     private readonly RemoteService _service;
     private readonly TutorialService _guides;
 
@@ -48,11 +48,11 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
     private uint _idleTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.475f, .475f, .475f, .475f));
     private uint _hoverTint = ColorHelpers.RgbaVector4ToUint(new Vector4(.65f, .65f, .65f, .7f));
 
-    public SexToyRemoteUI(ILogger<SexToyRemoteUI> logger, GagspeakMediator mediator,
-        BuzzToyManager manager, RemoteService service,  TutorialService guides) 
+    public BuzzToyRemoteUI(ILogger<BuzzToyRemoteUI> logger, GagspeakMediator mediator,
+        RemoteHandler handler, RemoteService service,  TutorialService guides) 
         : base(logger, mediator, "Personal Remote" + REMOTE_IDENTIFIER)
     {
-        _manager = manager;
+        _handler = handler;
         _service = service;
         _guides = guides;
         
@@ -163,15 +163,18 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
             wdl.AddLine(pos + lineYOffset, pos + new Vector2(topDispSize.X, lineYOffset.Y), CkColor.RemoteLines.Uint(), lineThickness);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lineThickness);
 
+            // Get the devices we are handling for the selected kinkster.
+            var devices = _service.GetManagedDevicesByMode();
+
             // Draw the playback display.
-            DrawRecordedDisplay(topDispSize);
+            DrawRecordedDisplay(topDispSize, devices);
             var pbMin = ImGui.GetItemRectMin();
             var pbMax = ImGui.GetItemRectMax();
             wdl.AddLine(pbMax with { X = pbMin.X } + lineYOffset, pbMax + lineYOffset, CkColor.RemoteLines.Uint(), lineThickness);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineThickness);
 
             // draw the center bar for recording information and things
-            DrawCenterBar(40 * ImGuiHelpers.GlobalScale);
+            DrawCenterBar(40 * ImGuiHelpers.GlobalScale, devices);
             var barMax = ImGui.GetItemRectMax();
             _guides.OpenTutorial(TutorialType.Remote, StepsRemote.DeviceList, GetWindowPos(), GetWindowSize());
             wdl.AddLine(pbMin with { Y = barMax.Y } + lineYOffset, barMax + lineYOffset, CkColor.RemoteLines.Uint(), lineThickness);
@@ -212,71 +215,67 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         DrawSideButtons();
     }
 
-    public void DrawRecordedDisplay(Vector2 size)
+    public void DrawRecordedDisplay(Vector2 size, IEnumerable<DevicePlotState> devices)
     {
-        // Prepare the Plot for display.
         ImPlot.SetNextAxesLimits(-150, 0, -0.05, 1.1, ImPlotCond.Always);
-        // Attempt to draw the plot.
-        if (ImPlot.BeginPlot("##PlaybackDisplay", size, PLOT_FLAGS))
+        using var _ = ImRaii.Plot("##PlaybackDisplay", size, PLOT_FLAGS);
+        if (!_)
+            return;
+
+        var pos = ImGui.GetCursorScreenPos();
+        ImPlot.SetupAxes("X Label", "Y Label", PLAYBACK_AXIS_FLAGS, PLAYBACK_AXIS_FLAGS);
+
+        // If the service is not currently processing any remote mode, do not display any details.
+        if (_service.CurrentMode is RemoteService.RemoteMode.None)
+            return;
+
+        // If the timer is not actively running, do not display any datapoints.        
+        if (!_service.RemoteIsActive)
+            return;
+
+        foreach (var device in devices.Where(d => d.IsPoweredOn))
         {
-            var pos = ImGui.GetCursorScreenPos();
-            ImPlot.SetupAxes("X Label", "Y Label", PLAYBACK_AXIS_FLAGS, PLAYBACK_AXIS_FLAGS);
-            if (_service.DurationTimer.IsRunning)
-            {
-                try
-                {
-                    foreach (var device in _service.ActiveDevices)
-                    {
-                        // Draw the Vibe Motors
-                        for (var i = 0; i < device.VibeDots.Count; i++)
-                            ImPlot.PlotLine($"VibeMotor{i}", ref PLOT_STATIC_X[0], ref device.VibeDots[i].PosHistory[0], device.VibeDots[i].PosHistory.Count);
+            // Draw the Vibe Motors
+            for (var i = 0; i < device.VibeDots.Count; i++) 
+                ImPlot.PlotLine($"VibeMotor{i}", ref PLOT_STATIC_X[0], ref device.VibeDots[i].PosHistory[0], device.VibeDots[i].PosHistory.Count);
 
-                        // Draw the Oscillation Motors
-                        for (var i = 0; i < device.OscillateDots.Count; i++)
-                            ImPlot.PlotLine($"OsciMotor{i}", ref PLOT_STATIC_X[0], ref device.OscillateDots[i].PosHistory[0], device.OscillateDots[i].PosHistory.Count);
+            // Draw the Oscillation Motors
+            for (var i = 0; i < device.OscillateDots.Count; i++)
+                ImPlot.PlotLine($"OsciMotor{i}", ref PLOT_STATIC_X[0], ref device.OscillateDots[i].PosHistory[0], device.OscillateDots[i].PosHistory.Count);
 
-                        // Draw the RotateMotor
-                        if (device.Device.CanRotate)
-                            ImPlot.PlotLine("RotMotor", ref PLOT_STATIC_X[0], ref device.RotateDot.PosHistory[0], device.RotateDot.PosHistory.Count);
+            // Draw the RotateMotor
+            if (device.Device.CanRotate)
+                ImPlot.PlotLine("RotMotor", ref PLOT_STATIC_X[0], ref device.RotateDot.PosHistory[0], device.RotateDot.PosHistory.Count);
 
-                        // Draw the ConstrictMotor
-                        if (device.Device.CanConstrict)
-                            ImPlot.PlotLine("ConstMotor", ref PLOT_STATIC_X[0], ref device.ConstrictDot.PosHistory[0], device.ConstrictDot.PosHistory.Count);
+            // Draw the ConstrictMotor
+            if (device.Device.CanConstrict)
+                ImPlot.PlotLine("ConstMotor", ref PLOT_STATIC_X[0], ref device.ConstrictDot.PosHistory[0], device.ConstrictDot.PosHistory.Count);
 
-                        // Draw the InflateMotor
-                        if (device.Device.CanInflate)
-                            ImPlot.PlotLine("InflMotor", ref PLOT_STATIC_X[0], ref device.InflateDot.PosHistory[0], device.InflateDot.PosHistory.Count);
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error while drawing the Remote UI playback display.");
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "An error occurred while drawing the playback display. Check the logs for details.");
-                }
-            }
-
-            var lineOffset = new Vector2(0, ImGui.GetStyle().ItemSpacing.Y);
-            ImGui.GetWindowDrawList().AddLine(pos + lineOffset, pos + new Vector2(size.X, lineOffset.Y), CkColor.RemoteLines.Uint(), ImGui.GetStyle().ItemSpacing.Y);
-
-            ImPlot.EndPlot();
+            // Draw the InflateMotor
+            if (device.Device.CanInflate)
+                ImPlot.PlotLine("InflMotor", ref PLOT_STATIC_X[0], ref device.InflateDot.PosHistory[0], device.InflateDot.PosHistory.Count);
         }
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.OutputDisplay, GetWindowPos(), GetWindowSize());
+
+        var lineOffset = new Vector2(0, ImGui.GetStyle().ItemSpacing.Y);
+        ImGui.GetWindowDrawList().AddLine(pos + lineOffset, pos + new Vector2(size.X, lineOffset.Y), CkColor.RemoteLines.Uint(), ImGui.GetStyle().ItemSpacing.Y);
     }
     
     /// <summary>
     ///     Used to draw out the connected devices Motors for selection and control interaction. 
     ///     Clicking a motor button makes it's visibility toggle, and toggles the buttons alpha as well.
     /// </summary>
-    public void DrawCenterBar(float height)
+    public void DrawCenterBar(float height, IEnumerable<DevicePlotState> devices)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(4));
         using var inner = CkRaii.ChildPaddedW("###CenterBar", ImGui.GetContentRegionAvail().X, height.RemoveWinPadY(), CkColor.RemoteBg.Uint());
 
-        var imgSize = new Vector2(inner.InnerRegion.Y);
+        // If the service is not currently processing any remote mode, do not display any details.
+        if (_service.CurrentMode is RemoteService.RemoteMode.None)
+            return;
 
-        // Display all Devices.
+        var imgSize = new Vector2(inner.InnerRegion.Y);
         var validDevices = 0;
-        foreach (var deviceState in _service.ManagedDevices.Values.Where(x => x.Device.ValidForRemotes))
+        foreach (var deviceState in devices)
         {
             if (deviceState.Device.FactoryName is CoreIntifaceElement.UnknownDevice)
                 continue;
@@ -365,16 +364,18 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
 
     private void DrawInteractionPlot()
     {
-        var recordingData = _service.DurationTimer.IsRunning;
-        var mouseDown = ImGui.IsMouseDown(ImGuiMouseButton.Left);
-        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
-        // Define the axis limits.
         ImPlot.SetNextAxesLimits(-50, +50, -0.1, 1.1, ImPlotCond.Always);
-        // Attempt to draw the plot thing.
         using var plot = ImRaii.Plot("##DataPointRecorderBox", ImGui.GetContentRegionAvail(), PLOT_FLAGS);
         if (!plot)
             return;
 
+        // If the service is not currently processing any remote mode, do not display any details.
+        if (_service.CurrentMode is RemoteService.RemoteMode.None)
+            return;
+
+        var recordingData = _service.RemoteIsActive;
+        var mouseDown = ImGui.IsMouseDown(ImGuiMouseButton.Left);
+        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
         var pdl = ImPlot.GetPlotDrawList();
         ImPlot.SetupAxes("X Label", "Y Label", RECORDER_X_AXIS, RECORDER_Y_AXIS);
         ImPlot.SetupAxisTicks(ImAxis.Y1, ref PLOT_POSITIONS[0], 11, PLOT_LABELS);
@@ -382,26 +383,22 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         var dragPointIdx = 0;
         if (_selectedDevice is { } device)
         {
-            using var disabled = ImRaii.Disabled(!_service.DurationTimer.IsRunning);
-            // Process the vibe motors.
+            // Process all the motor dots for the device. (for active UI display only, not recording data points (but maybe they are? idk)
+            using var disabled = ImRaii.Disabled(!_service.RemoteIsActive);
             if (device.Device.CanVibrate)
                 for (var i = 0; i < device.VibeDots.Count(); i++)
                     ProcessMotorDot(device.VibeDots[i], device.IsPoweredOn, $"#{i}");
 
-            // Process the OscillationMotors
             if (device.Device.CanOscillate)
                 for (var i = 0; i < device.OscillateDots.Count(); i++)
                     ProcessMotorDot(device.OscillateDots[i], device.IsPoweredOn, $"#{i}");
 
-            // Process the rotate motor.
             if (device.Device.CanRotate)
                 ProcessMotorDot(device.RotateDot, device.IsPoweredOn);
 
-            // Process the constrict motor.
             if (device.Device.CanConstrict)
                 ProcessMotorDot(device.ConstrictDot, device.IsPoweredOn);
 
-            // Process the inflate motor.
             if (device.Device.CanInflate)
                 ProcessMotorDot(device.InflateDot, device.IsPoweredOn);
         }
@@ -411,14 +408,14 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         // See if we can get away is IsItemHovered here
         void ProcessMotorDot(MotorDot motor, bool deviceOn, string? label = null)
         {
-            using var disabled = ImRaii.Disabled(!deviceOn);
-            var dragPointCol = deviceOn && _service.DurationTimer.IsRunning ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
             // if the motor is not visible simply return.
             if (!motor.Visible)
                 return;
+
+            using var disabled = ImRaii.Disabled(!deviceOn);
             
-            var radius = 20f;
-            ImPlot.DragPoint(dragPointIdx, ref motor.Position[0], ref motor.Position[1], dragPointCol, radius, ImPlotDragToolFlags.NoCursors);
+            var col = deviceOn && _service.RemoteIsActive ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
+            ImPlot.DragPoint(dragPointIdx, ref motor.Position[0], ref motor.Position[1], col, 20f, ImPlotDragToolFlags.NoCursors);
             
             dragPointIdx++;
             var plotCenter = ImPlot.PlotToPixels(motor.Position[0], motor.Position[1]);
@@ -434,7 +431,7 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
                 motor.EndDrag();
 
             // Handle a drag begin.
-            var hovering = Vector2.Distance(ImGui.GetMousePos(), plotCenter) <= radius;
+            var hovering = Vector2.Distance(ImGui.GetMousePos(), plotCenter) <= 20f;
             if (!motor.IsDragging && hovering && mouseDown)
             {
                 motor.BeginDrag();
@@ -461,7 +458,7 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
     public void DrawSideButtons()
     {
         // draw the timer
-        var timerText = _service.DurationTimer.IsRunning ? $"{_service.DurationTimer.Elapsed:mm\\:ss}" : "00:00";
+        var timerText = _service.RemoteIsActive ? $"{_service.ElapsedTime:mm\\:ss}" : "00:00";
         CkGui.CenterTextAligned(timerText);
         _guides.OpenTutorial(TutorialType.Remote, StepsRemote.TimerButton, GetWindowPos(), GetWindowSize());
 
@@ -498,12 +495,13 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
 
         // push to the bottom right  minus the button height to draw the last centered button.
         ImGui.SetCursorPos(powerDrawPos);
-        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], false, _service.DurationTimer.IsRunning))
+        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], false, _service.RemoteIsActive))
         {
-            if (_service.DurationTimer.IsRunning)
-                _service.StopRecording();
+            // set to variable UID's once we integrate the vibe room and stuff.
+            if (_service.RemoteIsActive)
+                _service.PowerOnRemote(MainHub.UID);
             else
-                _service.StartRecording();
+                _service.PowerOffRemote(MainHub.UID);
         }
         CkGui.AttachToolTip("Start/Stop Recording the SexToy data stream");
         _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, GetWindowPos(), GetWindowSize());
@@ -519,9 +517,21 @@ public class SexToyRemoteUI : WindowMediatorSubscriberBase
         }
     }
 
+    public override void OnOpen()
+    {
+        base.OnOpen();
+        // If we are not currently in any valid mode, close the window immidiately.
+        if (_service.CurrentMode is RemoteService.RemoteMode.None)
+        {
+            _logger.LogWarning("Remote UI opened while not in a valid mode, closing immediately.");
+            Toggle();
+            return;
+        }
+    }
+
     public override void OnClose()
     {
         base.OnClose();
-        _service.StopRecording();
+        // _handler.SetRemoteMode(RemoteService.RemoteMode.None);
     }
 }

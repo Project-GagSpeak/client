@@ -53,6 +53,21 @@ public class MotorDot(SexToyMotor motor)
     /// <remarks> Positions are still updated when not visible. </remarks>
     public bool Visible { get; set; } = true;
 
+    public double GetLastMotorPos() => _prioritizeLoopCache 
+        ? _cachedLoopData[_loopPlaybackIdx] : Position[1];
+
+    public double GetLastMotorIntervalPos() => _prioritizeLoopCache 
+        ? _cachedLoopData[_loopPlaybackIdx] : Math.Round(Position[1] / _motor.Interval) * _motor.Interval;
+
+    public void ClearData(bool keepRecordedData)
+    {
+        _cachedLoopData.Clear();
+        PosHistory.Clear();
+        if (!keepRecordedData)
+            RecordedData.Clear();
+        Svc.Logger.Verbose("MotorDot Data Cleared!");
+    }
+
     /// <summary> Begin the dragging state on a motor. </summary>
     /// <remarks> Resets <see cref="_loopPlaybackIdx"/> and <see cref="_cachedLoopData"/> to record a new loop if looping. </remarks>
     public void BeginDrag()
@@ -115,5 +130,14 @@ public class MotorDot(SexToyMotor motor)
                 _loopPlaybackIdx = 0;
         }
         return differentValue;
+    }
+
+    public void InjectRecordedPositions(IEnumerable<double> positions)
+    {
+        RecordedData.Clear();
+        RecordedData.AddRange(positions);
+        _cachedLoopData.Clear();
+        _loopPlaybackIdx = 0;
+        Svc.Logger.Verbose("Recorded Positions Injected!");
     }
 }

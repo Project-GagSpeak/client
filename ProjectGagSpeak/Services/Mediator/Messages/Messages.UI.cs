@@ -1,6 +1,7 @@
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 
@@ -82,7 +83,7 @@ public record VerificationPopupMessage(VerificationCode VerificationCode) : Mess
 /// <summary> Fires whenever we finished recording a new pattern, and need to finalize it's details. </summary>
 /// <param name="StoredData"> The data we are saving. </param>
 /// <param name="Duration"> The duration of the pattern. </param>
-public record PatternSavePromptMessage(List<double> StoredData, TimeSpan Duration) : MessageBase;
+public record PatternSavePromptMessage(FullPatternData Data, TimeSpan Duration) : MessageBase;
 
 
 public record ClosePatternSavePromptMessage : MessageBase;

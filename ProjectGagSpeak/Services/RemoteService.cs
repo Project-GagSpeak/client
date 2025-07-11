@@ -4,6 +4,7 @@ using GagSpeak.Gui.Remote;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 
 namespace GagSpeak.Services;
 
@@ -11,193 +12,498 @@ namespace GagSpeak.Services;
 ///     Service to maintain the active devices selected for recording, 
 ///     and cache their recorded states.
 /// </summary>
-public sealed class RemoteService : DisposableMediatorSubscriberBase
+public sealed class RemoteService
 {
-    private readonly BuzzToyManager _manager;
-
-    private Task _updateTask;
-    private CancellationTokenSource _updateCTS;
-
-    private Dictionary<Guid, DevicePlotState> _interactableToys = new();
-    public RemoteService(ILogger<RemoteService> logger, GagspeakMediator mediator, BuzzToyManager manager)
-        : base(logger, mediator)
+    private readonly ILogger<RemoteService> _logger;
+    private readonly GagspeakMediator _mediator;
+    public enum RemoteMode
     {
-        _manager = manager;
-
-        // Monitor any changes to a toy.
-        Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnBuzzToyChanged(msg.Type, msg.Item));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) =>
-        {
-            if (msg.Module is GagspeakModule.SexToys)
-                UpdateInteractableToys();
-        });
+        None,
+        Personal,
+        Recording,
+        Playback,
+        VibeRoom,
     }
 
-    public IReadOnlyDictionary<Guid, DevicePlotState> ManagedDevices => _interactableToys;
-    public IReadOnlyList<DevicePlotState> ActiveDevices => _interactableToys.Values.Where(toy => toy.IsPoweredOn).ToList();
-    public bool ClientIsBeingBuzzed => ActiveDevices.Any() && DurationTimer.IsRunning;
+    // The current mode being supported by the service.
+    private RemoteMode _currentMode = RemoteMode.None;
 
-    public readonly Stopwatch DurationTimer = new();
+    // Stores all cached Kinkster Devices for all cached Kinkster UID's.
+    private Dictionary<string, HashSet<DevicePlotState>> _managedKinksterDevices = new();
 
-    protected override void Dispose(bool disposing)
+    // Stopwatch played in tandem with the UpdateLoopTask.
+    private Stopwatch _remoteStopwatch = new();
+
+    // The current cached pattern data and pattern playback idx.
+    private Guid _patternId = Guid.Empty;
+    private FullPatternData _cachedPatternData = FullPatternData.Empty;
+    private int _patternPlaybackIdx = 0;
+    private bool _loopPattern = false;
+    private TimeSpan _patternStartPoint = TimeSpan.Zero;
+    private TimeSpan _patternDuration = TimeSpan.Zero;
+
+    // Kinkster Selection. Default to the main hub UID.
+    private string _selectedUid = MainHub.UID;
+
+    // The Task containing the UpdateLoopTask operation, so that it can be canceled by the CTS.
+    private Task _updateLoopTask;
+    private CancellationTokenSource _updateCTS = new();
+    public RemoteService(ILogger<RemoteService> logger, GagspeakMediator mediator)
     {
-        base.Dispose(disposing);
+        _logger = logger;
+        _mediator = mediator;
+    }
 
-        Logger.LogInformation("Disposing RemoteService and stopping all timers.");
-        DurationTimer.Stop();
+    public TimeSpan ElapsedTime => _remoteStopwatch.Elapsed;
+    public string SelectedKinkster => _selectedUid;
+    public bool RemoteIsActive => _remoteStopwatch.IsRunning;
+    // If the client is being actively teased. (placeholder value? Maybe?)
+    public bool ClientIsBeingBuzzed => ClientDevices.Any(t => t.IsPoweredOn) && RemoteIsActive;
+    public RemoteMode CurrentMode => _currentMode;
+    public IEnumerable<string> KinksterIdList => _managedKinksterDevices.Keys;
+    public IEnumerable<DevicePlotState> ClientDevices => _managedKinksterDevices.GetValueOrDefault(MainHub.UID) ?? new();
+    public IEnumerable<DevicePlotState> DevicesForKinkster(string kinksterUid) => _managedKinksterDevices.GetValueOrDefault(kinksterUid) ?? new();
+
+    public void Dispose()
+    {
+        _logger.LogInformation("Disposing RemoteService and stopping all timers.");
+        _remoteStopwatch.Stop();
         _updateCTS.SafeCancel();
-        Generic.Safe(() => _updateTask?.Wait(), true);
+        Generic.Safe(() => _updateLoopTask?.Wait(), true);
         _updateCTS.SafeDispose();
     }
 
-    private void OnBuzzToyChanged(StorageChangeType changeType, BuzzToy item)
+    public IEnumerable<DevicePlotState> GetManagedDevicesByMode()
     {
-        switch (changeType)
+        // Return the devices based on the current mode.
+        return _currentMode switch
         {
-            case StorageChangeType.Created:
-                // if the device already exists dont add the device.
-                if (!_interactableToys.ContainsKey(item.Id) && item.ValidForRemotes)
-                {
-                    if (TryAddActiveDevice(item))
-                        Logger.LogInformation($"Added new device {item.LabelName} to RemoteService.");
-                    else
-                        Logger.LogWarning($"Failed to add device {item.LabelName} to RemoteService.");
-                }
-                break;
-
-            case StorageChangeType.Deleted:
-                // Try removing the device, if it fails, show why.
-                if (TryRemoveActiveDevice(item))
-                    Logger.LogInformation($"Removed device {item.LabelName} from RemoteService.");
-                else
-                    Logger.LogWarning($"Failed to remove device {item.LabelName} from RemoteService.");
-                break;
-
-            case StorageChangeType.Modified:
-                // Update all toys, additions and removals.
-                UpdateInteractableToys();
-                break;
-        }
+            RemoteMode.Personal => ClientDevices,
+            RemoteMode.Recording => ClientDevices,
+            RemoteMode.Playback => ClientDevices,
+            RemoteMode.VibeRoom => DevicesForKinkster(_selectedUid),
+            _ => Enumerable.Empty<DevicePlotState>(),
+        };
     }
 
-    private void UpdateInteractableToys()
+    // Can cleanup once we are finished debug logging things.
+    public bool TryAddDeviceForKinkster(string uid, BuzzToy device)
     {
-        foreach (var interactableToy in _manager.InteractableToys)
+        // Ignore if the device is not valid for remotes.
+        if (!device.ValidForRemotes)
         {
-            // if the toy already exists currently
-            if (_interactableToys.ContainsKey(interactableToy.Id))
-            {
-                // and the toy is no longer valid for remotes, remove it.
-                if (!interactableToy.ValidForRemotes)
-                {
-                    // Try and remove the device, if it fails, log the error.
-                    if (TryRemoveActiveDevice(interactableToy))
-                        Logger.LogInformation($"Removed {interactableToy.LabelName} from BuzzToyManager Reload.");
-                    else
-                        Logger.LogWarning($"Failed to remove {interactableToy.LabelName} from BuzzToyManager Reload.");
-                }
-            }
-            else
-            {
-                // Otherwise, try to add it in. If it fails, log the error.
-                if (TryAddActiveDevice(interactableToy))
-                    Logger.LogInformation($"Added {interactableToy.LabelName} from BuzzToyManager Reload.");
-                else
-                    Logger.LogWarning($"Failed to add {interactableToy.LabelName} from BuzzToyManager Reload.");
-            }
-        }
-    }
-
-    private async Task RecordDataLoop()
-    {
-        try
-        {
-            var recordDataOnCycle = true;
-            while (!_updateCTS.IsCancellationRequested)
-            {
-                RecordPosition(recordDataOnCycle);
-                recordDataOnCycle = !recordDataOnCycle; // Toggle recording state
-                await Task.Delay(10, _updateCTS.Token);
-            }
-        }
-        catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error in RemoteService UpdateLoop.");
-        }
-    }
-
-    public void StartRecording()
-    {
-        if (DurationTimer.IsRunning)
-        {
-            Logger.LogWarning("Timer is already running.");
-            return;
-        }
-
-        Logger.LogInformation($"Starting recording SexToy data stream");
-        DurationTimer.Start();
-        _updateCTS = _updateCTS.SafeCancelRecreate();
-        _updateTask = RecordDataLoop();
-    }
-
-    public void StopRecording()
-    {
-        if (!DurationTimer.IsRunning)
-        {
-            Logger.LogWarning("Timer is not running.");
-            return;
-        }
-
-        Logger.LogInformation($"Stopping SexToy data stream recording");
-        DurationTimer.Stop();
-        _updateCTS.SafeCancel();
-        // Power down all active devices.
-        foreach (var device in ActiveDevices)
-            device.PowerDown();
-    }
-
-    public bool TryAddActiveDevice(BuzzToy device)
-    {
-        if (_interactableToys.ContainsKey(device.Id))
-        {
-            Logger.LogWarning($"Device {device.LabelName} is already managed in RemoteService.");
+            _logger.LogWarning($"Device {device.LabelName} is not valid for remotes, cannot add to kinkster {uid}.");
             return false;
         }
 
-        if (_interactableToys.TryAdd(device.Id, new DevicePlotState(device)))
-            return true;
-
-        Logger.LogError($"Failed to add device {device.LabelName} to RemoteService.");
-        return false;
-    }
-
-    public bool TryRemoveActiveDevice(BuzzToy device)
-    {
-        // try and find the device to remove, as we have to shut it down first.
-        if (_interactableToys.TryGetValue(device.Id, out var match))
+        if (!_managedKinksterDevices.TryGetValue(uid, out var kinksterDevices))
         {
-            if (match.IsPoweredOn)
-                match.PowerDown();
-
-            // now remove it.
-            if(_interactableToys.Remove(device.Id));
-            {
-                Logger.LogInformation($"Device {device.LabelName} removed from InteractableDevices.");
-                return true;
-            }
+            kinksterDevices = new HashSet<DevicePlotState>();
+            _managedKinksterDevices[uid] = kinksterDevices;
         }
 
-        Logger.LogWarning($"Device {device.LabelName} failed to remove from the InteractableDevices.");
+        // Create a new DevicePlotState and attempt to add (can maybe remove Uid if not nessisary)
+        if (kinksterDevices.Add(new DevicePlotState(device, uid)))
+        {
+            _logger.LogInformation($"Added device {device.LabelName} for kinkster {uid}.");
+            return true;
+        }
+        else
+        {
+            _logger.LogWarning($"Failed to add device {device.LabelName} for kinkster {uid}, it may already exist.");
+            return false;
+        }
+    }
+
+    // Can cleanup once we are finished debug logging things.
+    public bool TryRemoveDeviceForKinkster(string uid, BuzzToy device)
+    {
+        if (_managedKinksterDevices.TryGetValue(uid, out var kinksterDevices))
+        {
+            if (kinksterDevices.FirstOrDefault(d => d.Device.Id == device.Id) is { } match)
+            {
+                // If the device is powered on, power it down first.
+                match.PowerDown();
+                _logger.LogInformation($"Powered down device {device.LabelName} for kinkster {uid} before removal.");
+
+                // Remove the device from the kinkster's devices.
+                if (kinksterDevices.Remove(match))
+                {
+                    _logger.LogInformation($"Removed device {device.LabelName} for kinkster {uid}.");
+                    return true;
+                }
+            }
+        }
+        _logger.LogWarning($"Failed to remove device {device.LabelName} for kinkster {uid}, it may not exist.");
         return false;
     }
 
-    private void RecordPosition(bool sendToMotors)
+    // the task update loop handled while in our personal remote.
+    private async Task PersonalRemoteLoop()
     {
-        if (!sendToMotors)
-            return;
+        await Generic.Safe(async () =>
+        {
+            while (!_updateCTS.IsCancellationRequested)
+            {
+                // Send an update to all the client's valid device motors
+                foreach (var device in ClientDevices)
+                    device.SendLatestToMotors();
+                // await 20ms for the next update. (the delay of our debouncers)
+                await Task.Delay(20, _updateCTS.Token);
+            }
+        });
 
-        foreach (var device in ActiveDevices)
-            device.SendLatestToToys();
+    }
+    private async Task PatternRecorderLoop()
+    {
+        await Generic.Safe(async () =>
+        {
+            while (!_updateCTS.IsCancellationRequested)
+            {
+                // Record and update all the client's valid device motors
+                foreach (var device in ClientDevices)
+                    device.SendLatestToMotors();
+                // await 20ms for the next update. (the delay of our debouncers)
+                await Task.Delay(20, _updateCTS.Token);
+            }
+        });
+    }
+    private async Task PatternPlaybackLoop()
+    {
+        await Generic.Safe(async () =>
+        {
+            while (!_updateCTS.IsCancellationRequested)
+            {
+                // Update all the client's valid device motors to the intensity of the pattern playback idx.
+                foreach (var device in ClientDevices)
+                    device.SendIndexedPlaybackToMotors(_patternPlaybackIdx);
+                
+                _patternPlaybackIdx++;
+
+                // If we have hit our cap, but should loop, reset the index, otherwise, break out and stop.
+                if (_patternPlaybackIdx >= _patternDuration.Milliseconds / 20)
+                {
+                    if (_loopPattern)
+                    {
+                        _patternPlaybackIdx = 0; // Reset playback index if looping.
+                        _logger.LogInformation("Pattern playback looped back to start.");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Pattern playback completed.");
+                        break;
+                    }
+                }
+                await Task.Delay(20, _updateCTS.Token);
+            }
+        });
+    }
+
+    private async Task VibeRoomRemoteLoop()
+    {
+        return; // not yet implemented.
+
+        await Generic.Safe(async () =>
+        {
+            while (!_updateCTS.IsCancellationRequested)
+            {
+                // Send any updated recieved on your end from others to your client devices, or, update the data sent by self.
+                // TODO
+
+                // for any devices that we can send data to, and are sending data to, record the data chunk onto them.
+                // TODO
+
+                // await 20ms for the next update. (the delay of our debouncers)
+                await Task.Delay(20, _updateCTS.Token);
+            }
+        });
+    }
+
+    public void PowerOnRemote(string uidToPowerOn)
+    {
+        // if the remote is already powered on, return with an error.
+        if (_remoteStopwatch.IsRunning)
+        {
+            _logger.LogWarning("Cannot use Remote in an undefined mode.");
+            return;
+        }
+
+        // The Mode determines how we startup the devices.
+        switch (_currentMode)
+        {
+            case RemoteMode.None:
+                _logger.LogWarning("Cannot power on Remote in None mode.");
+                return;
+
+            case RemoteMode.Personal:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Personal Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+
+                // Cleanup all previous data to free up memory.
+                foreach (var device in ClientDevices)
+                    device.CleanupData(false);
+
+                // Begin the stopwatch and personal remote update loop.
+                _logger.LogInformation("Powering on Personal Remote.");
+                _remoteStopwatch.Restart();
+                _updateCTS = _updateCTS.SafeCancelRecreate();
+                _updateLoopTask = PersonalRemoteLoop();
+                break;
+
+            case RemoteMode.Recording:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Pattern Recorder Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+
+                // Cleanup all previous data to free up memory.
+                foreach (var device in ClientDevices)
+                    device.CleanupData(false);
+
+                // Begin the stopwatch and pattern recorder update loop.
+                _logger.LogInformation("Powering on Recording Remote.");
+                _remoteStopwatch.Restart();
+                _updateCTS = _updateCTS.SafeCancelRecreate();
+                _updateLoopTask = PatternRecorderLoop();
+                break;
+
+            case RemoteMode.Playback:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Pattern Playback Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+                // Cleanup any excess data in the containers..
+                foreach (var device in ClientDevices)
+                    device.CleanupData(false);
+
+                // Compile and store FullPaternData into the collection of all valid client devices.
+                InjectDataIntoClientDevices(_cachedPatternData, _patternStartPoint, _patternDuration);
+                _patternPlaybackIdx = 0;
+
+                // Begin the stopwatch and pattern playback update loop.
+                _logger.LogInformation("Powering on Playback Remote.");
+                _remoteStopwatch.Restart();
+                _updateCTS = _updateCTS.SafeCancelRecreate();
+                _updateLoopTask = PatternPlaybackLoop();
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Started, _patternId, false);
+                break;
+
+            case RemoteMode.VibeRoom:
+                _logger.LogInformation("Powering on Vibe Room Remote.");
+                return; // not yet implemented.
+
+                // TODO: Handle power on logic here later.
+
+                // Will need to perform cleanup and startup on both client and connected vibeRoomUsers.
+                _remoteStopwatch.Restart();
+                _updateCTS = _updateCTS.SafeCancelRecreate();
+                _updateLoopTask = VibeRoomRemoteLoop();
+                break;
+
+        }
+    }
+
+    public void PowerOffRemote(string uidToPowerOn)
+    {
+        // if the remote is already powered on, return with an error.
+        if (!_remoteStopwatch.IsRunning)
+        {
+            _logger.LogError($"Cannot power off a remote that isnt powered on!");
+            return;
+        }
+
+        // The Mode determines how we startup the devices.
+        switch (_currentMode)
+        {
+            case RemoteMode.None:
+                _logger.LogWarning("Cannot use Remote in an undefined mode.");
+                return;
+
+            case RemoteMode.Personal:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Personal Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+
+                // stop the timer and cancel the task.
+                _logger.LogInformation("Powering off Personal Remote.");
+                _remoteStopwatch.Stop();
+                _updateCTS.SafeCancel();
+
+                // Power down all client devices, and free up memory.
+                _logger.LogInformation("Freeing up memory from client device containers.");
+                foreach (var device in ClientDevices)
+                {
+                    device.PowerDown();
+                    device.CleanupData(false);
+                }
+                break;
+
+            case RemoteMode.Recording:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Pattern Recorder Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+
+                // stop the timer and cancel the task.
+                _logger.LogInformation("Powering off Personal Remote.");
+                var duration = _remoteStopwatch.Elapsed;
+                _remoteStopwatch.Stop();
+                _updateCTS.SafeCancel();
+
+                // Power down all client devices, and free up memory, but keep the recorded data.
+                _logger.LogInformation("Freeing up memory from client device containers.");
+                foreach (var device in ClientDevices)
+                {
+                    device.PowerDown();
+                    device.CleanupData(true);
+                }
+
+                var compiledData = PatternFromDevices(ClientDevices, duration);
+                _mediator.Publish(new PatternSavePromptMessage(compiledData, duration));
+                _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Hide));
+                break;
+
+            case RemoteMode.Playback:
+                if (uidToPowerOn != MainHub.UID)
+                {
+                    _logger.LogError($"The Pattern Playback Remote is for the client only! UID {uidToPowerOn} is not valid!");
+                    return;
+                }
+
+                // Stop the timer and cancel the task.
+                _logger.LogInformation("Powering off Playback Remote.");
+                _remoteStopwatch.Stop();
+                _updateCTS.SafeCancel();
+
+                // Power down all client devices, and free up memory, but keep the recorded data.
+                _logger.LogInformation("Freeing up memory from client device containers.");
+                foreach (var device in ClientDevices)
+                {
+                    device.PowerDown();
+                    device.CleanupData(true);
+                }
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Stopped, _patternId, false);
+                break;
+
+            case RemoteMode.VibeRoom:
+                _logger.LogInformation("Powering on Vibe Room Remote.");
+                return; // not yet implemented.
+
+                // TODO: Handle power on logic here later.
+
+                // Will need to perform cleanup and startup on both client and connected vibeRoomUsers.
+                _remoteStopwatch.Restart();
+                _updateCTS = _updateCTS.SafeCancelRecreate();
+                _updateLoopTask = VibeRoomRemoteLoop();
+                break;
+
+        }
+    }
+
+    public static FullPatternData PatternFromDevices(IEnumerable<DevicePlotState> deviceStates, TimeSpan duration)
+    {
+        var patternDevices = new List<PatternDeviceData>();
+
+        foreach (var state in deviceStates)
+        {
+            if (!state.IsPoweredOn || state.Device is null)
+                continue;
+
+            var motorData = new List<PatternMotorData>();
+            // Add all Vibe Dots
+            for (int i = 0; i < state.VibeDots.Count; i++)
+            {
+                var dot = state.VibeDots[i];
+                if (dot.RecordedData.Count > 0)
+                    motorData.Add(new PatternMotorData(
+                        CoreIntifaceElement.MotorVibration, state.Device.VibeMotors[i].MotorIdx, dot.RecordedData.ToArray()));
+            }
+
+            // Add all Oscillate Dots
+            for (int i = 0; i < state.OscillateDots.Count; i++)
+            {
+                var dot = state.OscillateDots[i];
+                if (dot.RecordedData.Count > 0)
+                    motorData.Add(new PatternMotorData(
+                        CoreIntifaceElement.MotorOscillation, state.Device.OscillateMotors[i].MotorIdx, dot.RecordedData.ToArray()));
+            }
+
+            // Add Rotate
+            if (state.Device.CanRotate && state.RotateDot.RecordedData.Count > 0)
+                motorData.Add(new PatternMotorData(
+                    CoreIntifaceElement.MotorRotation, state.Device.RotateMotor.MotorIdx, state.RotateDot.RecordedData.ToArray()));
+
+            // Add Constrict
+            if (state.Device.CanConstrict && state.ConstrictDot.RecordedData.Count > 0)
+                motorData.Add(new PatternMotorData(
+                    CoreIntifaceElement.MotorConstriction, state.Device.ConstrictMotor.MotorIdx, state.ConstrictDot.RecordedData.ToArray()));
+
+            // Add Inflate
+            if (state.Device.CanInflate && state.InflateDot.RecordedData.Count > 0)
+                motorData.Add(new PatternMotorData(
+                    CoreIntifaceElement.MotorInflation, state.Device.InflateMotor.MotorIdx, state.InflateDot.RecordedData.ToArray()));
+
+            if (motorData.Count > 0)
+                patternDevices.Add(new PatternDeviceData(state.Device.FactoryName, motorData.ToArray()));
+        }
+
+        return new FullPatternData(patternDevices.ToArray());
+    }
+
+    // Parses out the client devices for some recorded playback data, at a custom startpoint and duration.
+    public void InjectDataIntoClientDevices(FullPatternData pattern, TimeSpan startPoint, TimeSpan duration)
+    {
+        var results = new List<DevicePlotState>();
+        var startIndex = (int)(startPoint.TotalMilliseconds / 20);
+        var count = (int)(duration.TotalMilliseconds / 20);
+
+        foreach (var deviceData in pattern.DeviceData)
+        {
+            // if the device is not a device that we own, and is usable for remotes, do not add it.
+            if (ClientDevices.FirstOrDefault(cd => cd.Device.FactoryName == deviceData.DeviceBrand) is not { } matchedDevice)
+                continue;
+
+            // Otherwise, insert the recorded data into the devices corrisponding motors, if they are present.
+            foreach (var motor in deviceData.MotorDots)
+            {
+                var sliced = motor.Data.Skip(startIndex).Take(count);
+
+                switch (motor.Type)
+                {
+                    case CoreIntifaceElement.MotorVibration:
+                        if (motor.Index < matchedDevice.Device.VibeMotors.Length)
+                            matchedDevice.VibeDots[(int)motor.Index].InjectRecordedPositions(sliced);
+                        break;
+
+                    case CoreIntifaceElement.MotorOscillation:
+                        if (motor.Index < matchedDevice.Device.OscillateMotors.Length)
+                            matchedDevice.OscillateDots[(int)motor.Index].InjectRecordedPositions(sliced);
+                        break;
+
+                    case CoreIntifaceElement.MotorRotation:
+                        if (matchedDevice.Device.CanRotate)
+                            matchedDevice.RotateDot.InjectRecordedPositions(sliced);
+                        break;
+
+                    case CoreIntifaceElement.MotorConstriction:
+                        if (matchedDevice.Device.CanConstrict)
+                            matchedDevice.ConstrictDot.InjectRecordedPositions(sliced);
+                        break;
+
+                    case CoreIntifaceElement.MotorInflation:
+                        if (matchedDevice.Device.CanInflate)
+                            matchedDevice.InflateDot.InjectRecordedPositions(sliced);
+                        break;
+                }
+            }
+        }
     }
 }

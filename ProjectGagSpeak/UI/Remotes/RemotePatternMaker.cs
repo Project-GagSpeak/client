@@ -17,7 +17,7 @@ namespace GagSpeak.Gui.UiRemote;
 //{
 //    private readonly string _windowName;
 //    public RemotePatternMaker(ILogger<RemotePatternMaker> logger, GagspeakMediator mediator,
-//        BuzzToyManager manager, BuzzToyHandler handler, TutorialService guides, string winName = "Pattern Creator") 
+//        BuzzToyManager manager, RemoteHandler handler, TutorialService guides, string winName = "Pattern Creator") 
 //        : base(logger, mediator, handler, manager, guides, winName)
 //    {
 //        _windowName = winName;

@@ -108,7 +108,7 @@ public class SavePatternPopupHandler : IPopupHandler
         CompiledPatternData.Duration = message.Duration;
         CompiledPatternData.PlaybackDuration = message.Duration;
         // set the pattern data
-        CompiledPatternData.PatternData = message.StoredData;
+        CompiledPatternData.PlaybackData = message.Data;
     }
 
     public void Close()

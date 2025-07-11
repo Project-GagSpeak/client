@@ -14,7 +14,7 @@ namespace GagSpeak.State.Managers;
 public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly PatternManager _patterns;
-    private readonly PatternHandler _applier;
+    private readonly RemoteHandler _remoteHandler;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -22,11 +22,11 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     private StorageItemEditor<Alarm> _itemEditor = new();
     private DateTime _lastAlarmCheck = DateTime.MinValue;
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, PatternHandler applier, FavoritesManager favorites,
+        PatternManager patterns, RemoteHandler remoteHandler, FavoritesManager favorites,
         ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
         _patterns = patterns;
-        _applier = applier;
+        _remoteHandler = remoteHandler;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
@@ -254,7 +254,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                  && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
                 {
                     Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.Alarms);
-                    _applier.StartPlayback(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
+                    _remoteHandler.StartPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
                 }
             }
         }

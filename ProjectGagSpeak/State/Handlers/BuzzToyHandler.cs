@@ -1,113 +1,98 @@
-using Buttplug.Client;
-using Buttplug.Core.Messages;
+using GagSpeak.FileSystems;
 using GagSpeak.Interop;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 
 namespace GagSpeak.State.Handlers;
-public sealed class BuzzToyHandler
+public sealed class RemoteHandler : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<BuzzToyHandler> _logger;
     private readonly IpcCallerIntiface _ipc;
     private readonly BuzzToyManager _manager;
-    private readonly VibeSimService _vibeSim;
+    private readonly RemoteService _service;
 
-    public BuzzToyHandler(ILogger<BuzzToyHandler> logger, IpcCallerIntiface ipc,
-        BuzzToyManager manager, VibeSimService vibeSim)
+    public RemoteHandler(ILogger<RemoteHandler> logger, GagspeakMediator mediator,
+        IpcCallerIntiface ipc, BuzzToyManager manager, RemoteService service)
+        : base(logger, mediator)
     {
-        _logger = logger;
         _ipc = ipc;
         _manager = manager;
-        _vibeSim = vibeSim;
+        _service = service;
+
+        /// Monitors for changes to the client players devices.
+        Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnClientToyChange(msg.Type, msg.Item));
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) =>
+        {
+            if (msg.Module is GagspeakModule.SexToys)
+                UpdateClientToys();
+        });
     }
 
-    public void AddDevice(VirtualBuzzToy newToy)
-        => _manager.AddDevice(newToy);
-
-    public void AddOrUpdateDevice(ButtplugClientDevice newToy)
-        => _manager.AddOrUpdateDevice(newToy);
-    public void RemoveDevice(BuzzToy device)
-        => _manager.RemoveDevice(device);
-
-    /// <summary>
-    ///     Stop ALL motors for ALL devices.
-    /// </summary>
-    public void StopAllDevices()
+    // What to do when the client's toys change state.
+    private void OnClientToyChange(StorageChangeType changeType, BuzzToy item)
     {
-        _logger.LogInformation("Stopping all connected devices.", LoggerType.Toys);
-        foreach (var toy in _manager.SexToys.Values)
-            toy.StopAllMotors();
-    }
+        switch (changeType)
+        {
+            case StorageChangeType.Created:
+                _service.TryAddDeviceForKinkster(MainHub.UID, item);
+                break;
 
-    public void StopAllMotors(Guid deviceId)
-    {
-        if (_manager.SexToys.TryGetValue(deviceId, out var toy))
-        {
-            _logger.LogInformation($"Stopping all motors for device: {toy.LabelName}", LoggerType.Toys);
-            toy.StopAllMotors();
-        }
-        else
-        {
-            _logger.LogWarning($"Device for ID {deviceId} not found when trying to stop all motors.", LoggerType.Toys);
+            case StorageChangeType.Deleted:
+                _service.TryRemoveDeviceForKinkster(MainHub.UID, item);
+                break;
+
+            case StorageChangeType.Modified:
+                UpdateClientToys();
+                break;
         }
     }
 
-    public void VibrateAll(double intensity)
+    // Add any missing active toys, and remove any toys that are no longer interactable.
+    private void UpdateClientToys()
     {
-        foreach (var toy in _manager.SexToys.Values)
-            toy.VibrateAll(intensity);
-    }
-
-    public void VibrateAll(Guid deviceId, double intensity)
-    {
-
-    }
-
-    public void Vibrate(Guid deviceId, int motorIdx, double intensity)
-    {
-
-    }
-
-    public void ViberateDistinct(Guid deviceId, IEnumerable<ScalarCmd.ScalarCommand> newValues)
-    {
-
-    }
-
-    public void OscillateAll(Guid deviceId, double speed)
-    {
-
-    }
-
-    public void Oscillate(Guid deviceId, int motorIdx, double speed)
-    {
-
-    }
-
-    public void OscillateDistinct(Guid deviceId, IEnumerable<ScalarCmd.ScalarCommand> newValues)
-    {
-
-    }
-
-    public void RotateAll(Guid deviceId, double speed, bool clockwise)
-    {
-
-    }
-
-    public void StartBatteryCheck()
-        => _manager.StartBatteryCheck();
-
-    public void StopBatteryCheck()
-        => _manager.StopBatteryCheck();
-
-    public static string VibeSimAudioPath(VibeSimType type)
-    {
-        return type switch
+        var clientServiceDevices = _service.ClientDevices;
+        foreach (var toy in _manager.InteractableToys)
         {
-            VibeSimType.Normal => "vibrator.wav",
-            VibeSimType.Quiet => "vibratorQuiet.wav",
-            _ => "vibratorQuiet.wav",
-        };
+            // if the toy already exists currently and is no longer valid, remove it. Otherwise, try and add it.
+            if (clientServiceDevices.Any(dps => dps.Equals(toy)) && !toy.ValidForRemotes)
+                _service.TryRemoveDeviceForKinkster(MainHub.UID, toy);
+            else
+                _service.TryAddDeviceForKinkster(MainHub.UID, toy);
+        }
+    }
+
+    public bool TryChangeRemoteMode(RemoteService.RemoteMode newMode)
+    {
+        // Lots of things here can reject the change of mode.
+        Logger.LogDebug($"Attempting to change remote mode to {newMode}.");
+        return false;
+    }
+
+    public void StartPattern(Guid patternId)
+        => StartPattern(patternId, TimeSpan.Zero, TimeSpan.Zero);
+
+    public void StartPattern(Guid patternId, TimeSpan customStart, TimeSpan customDuration)
+    {
+        // Handle Logic Later
+        Logger.LogDebug($"Beginning pattern {patternId} on all toys.");
+        // would need to find from storage or something.
+    }
+
+    public void StartPattern(Pattern pattern)
+        => StartPattern(pattern, pattern.StartPoint, pattern.PlaybackDuration);
+
+    public void StartPattern(Pattern pattern, TimeSpan customStart, TimeSpan customDuration)
+    {
+        // Handle Logic Later
+        Logger.LogDebug($"Beginning pattern {pattern.Label} on all toys.");
+    }
+
+    public void StopActivePattern()
+    {
+        // Handle logic later
+        Logger.LogDebug($"Stopping active pattern for all toys.");
     }
 }
 

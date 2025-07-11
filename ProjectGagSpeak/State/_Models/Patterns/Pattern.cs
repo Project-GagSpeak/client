@@ -12,9 +12,10 @@ public class Pattern : IEditableStorageItem<Pattern>
     public TimeSpan StartPoint { get; set; } = TimeSpan.Zero;
     public TimeSpan PlaybackDuration { get; set; } = TimeSpan.Zero;
     public bool ShouldLoop { get; set; } = false;
-    public List<double> PatternData { get; set; } = new();
+    public FullPatternData PlaybackData { get; set; } = new();
 
-    public Pattern() { }
+    public Pattern()
+    { }
 
     public Pattern(Pattern other, bool copyIdentifier = true)
     {
@@ -33,7 +34,8 @@ public class Pattern : IEditableStorageItem<Pattern>
         StartPoint = other.StartPoint;
         PlaybackDuration = other.PlaybackDuration;
         ShouldLoop = other.ShouldLoop;
-        PatternData = [ ..other.PatternData ];
+        PlaybackData = other.PlaybackData;
+
     }
 
     public LightPattern ToLightPattern() 
@@ -41,9 +43,6 @@ public class Pattern : IEditableStorageItem<Pattern>
 
     public JObject Serialize()
     {
-        // Convert _patternData to a comma-separated string
-        var patternDataString = string.Join(",", PatternData);
-
         return new JObject()
         {
             ["Identifier"] = Identifier,
@@ -53,35 +52,22 @@ public class Pattern : IEditableStorageItem<Pattern>
             ["StartPoint"] = StartPoint,
             ["PlaybackDuration"] = PlaybackDuration,
             ["ShouldLoop"] = ShouldLoop,
-            ["PatternByteData"] = patternDataString,
+            ["PlaybackData"] = PlaybackData.ToCompressedBase64(),
         };
     }
 
     public void Deserialize(JObject jsonObject)
     {
-        try
-        {
-            Identifier = Guid.TryParse(jsonObject["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!");
-            Label = jsonObject["Label"]?.Value<string>() ?? string.Empty;
-            Description = jsonObject["Description"]?.Value<string>() ?? string.Empty;
-            Duration = TimeSpan.TryParse(jsonObject["Duration"]?.Value<string>(), out var duration) ? duration : TimeSpan.Zero;
-            StartPoint = TimeSpan.TryParse(jsonObject["StartPoint"]?.Value<string>(), out var startPoint) ? startPoint : TimeSpan.Zero;
-            PlaybackDuration = TimeSpan.TryParse(jsonObject["PlaybackDuration"]?.Value<string>(), out var playbackDuration) ? playbackDuration : TimeSpan.Zero;
-            ShouldLoop = jsonObject["ShouldLoop"]?.Value<bool>() ?? false;
+        Identifier = Guid.TryParse(jsonObject["Identifier"]?.Value<string>(), out var guid) ? guid : throw new Exception("Invalid GUID Data!");
+        Label = jsonObject["Label"]?.Value<string>() ?? string.Empty;
+        Description = jsonObject["Description"]?.Value<string>() ?? string.Empty;
+        Duration = TimeSpan.TryParse(jsonObject["Duration"]?.Value<string>(), out var duration) ? duration : TimeSpan.Zero;
+        StartPoint = TimeSpan.TryParse(jsonObject["StartPoint"]?.Value<string>(), out var startPoint) ? startPoint : TimeSpan.Zero;
+        PlaybackDuration = TimeSpan.TryParse(jsonObject["PlaybackDuration"]?.Value<string>(), out var playbackDuration) ? playbackDuration : TimeSpan.Zero;
+        ShouldLoop = jsonObject["ShouldLoop"]?.Value<bool>() ?? false;
 
-            // Deserialize PatternByteData from CSV (comma-separated)
-            var patternDataString = jsonObject["PatternByteData"]?.Value<string>();
-            if (!string.IsNullOrEmpty(patternDataString))
-            {
-                PatternData = patternDataString.Split(',')
-                    .Select(double.Parse)
-                    .ToList();
-            }
-            else
-            {
-                PatternData = new List<double>() { 0.0 }; // Default case
-            }
-        }
-        catch (Exception e) { throw new Exception($"{e} Error deserializing pattern data"); }
+        // Deserialize the FullPatternData.
+        var patternDataString = jsonObject["PatternByteData"]?.Value<string>();
+        PlaybackData = string.IsNullOrEmpty(patternDataString) ? FullPatternData.Empty : FullPatternData.FromCompressedBase64(patternDataString);
     }
 }

@@ -35,7 +35,7 @@ public class HomepageTab
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Type)>
         {
-            ("Sex Toy Remote", FAI.WaveSquare, typeof(SexToyRemoteUI)),
+            ("Sex Toy Remote", FAI.WaveSquare, typeof(BuzzToyRemoteUI)),
             ("Wardrobe", FAI.ToiletPortable, typeof(WardrobeUI)),
             ("Puppeteer", FAI.PersonHarassing, typeof(PuppeteerUI)),
             ("Toybox", FAI.BoxOpen, typeof(ToyboxUI)),
@@ -67,7 +67,7 @@ public class HomepageTab
             if (HomepageSelectable(module.Label, module.Icon, selectableSize, isHovered))
             {
                 _mediator.Publish(new UiToggleMessage(module.ToggleType));
-                if (module.ToggleType == typeof(SexToyRemoteUI))
+                if (module.ToggleType == typeof(BuzzToyRemoteUI))
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
             }
 
