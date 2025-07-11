@@ -67,7 +67,7 @@ public class Pattern : IEditableStorageItem<Pattern>
         ShouldLoop = jsonObject["ShouldLoop"]?.Value<bool>() ?? false;
 
         // Deserialize the FullPatternData.
-        var patternDataString = jsonObject["PatternByteData"]?.Value<string>();
+        var patternDataString = jsonObject["PlaybackData"]?.Value<string>();
         PlaybackData = string.IsNullOrEmpty(patternDataString) ? FullPatternData.Empty : FullPatternData.FromCompressedBase64(patternDataString);
     }
 }

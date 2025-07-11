@@ -246,6 +246,10 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
                 // Convert to normalized doubles
                 var doubleData = byteArray.Select(b => b / 100.0).ToArray();
 
+                // Debug log
+                Svc.Logger.Debug($"[MigrateV0toV1] Migrating pattern {patternObj["Label"]} - {byteArray.Length} values, First few: {string.Join(", ", byteArray.Take(5))}");
+
+
                 // Build motor/device pattern, defaulted to Hush, but can be migrated later.
                 var motor = new PatternMotorData(CoreIntifaceElement.MotorVibration, 0, doubleData);
                 var device = new PatternDeviceData(CoreIntifaceElement.Hush, [ motor ]);
