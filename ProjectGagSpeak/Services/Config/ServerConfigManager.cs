@@ -149,20 +149,6 @@ public class ServerConfigManager
         auth.SecretKey.HasHadSuccessfulConnection = true;
         auth.SecretKey.LinkedProfileUID = connectedInfo.User.UID;
         _logger.LogDebug($"Updating authentication for {auth.CharacterName} with UID {connectedInfo.User.UID}");
-
-        // Now, we should iterate through each of our authentications.
-        foreach (var authentication in ServerStorage.Authentications)
-        {
-            // If the LinkedProfileUID is has a UID listed, but it's not in the list of auth UID's, remove the authentication.
-            if (!string.IsNullOrWhiteSpace(authentication.SecretKey.LinkedProfileUID))
-            {
-                if (!connectedInfo.ActiveAccountUidList.Contains(authentication.SecretKey.LinkedProfileUID))
-                {
-                    ServerStorage.Authentications.Remove(authentication);
-                    continue;
-                }
-            }
-        }
         Save();
     }
 
