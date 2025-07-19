@@ -54,7 +54,7 @@ public class GagspeakConfig
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
 
     // GLOBAL TOYBOX SETTINGS
-    public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
+    // public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
     public Guid DirectOutDevice { get; set; } = Guid.Empty;
     public string AsioDevice { get; set; } = "";
     public string WasapiDevice { get; set; } = "";

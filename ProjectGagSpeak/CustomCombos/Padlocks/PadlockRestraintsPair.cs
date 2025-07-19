@@ -12,15 +12,13 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 {
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster kinkster)
-        : base(() => [ kinkster.LastRestraintData ], log)
+    public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+        : base(() => [k.LastRestraintData], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
-        _ref = kinkster;
+        _ref = k;
     }
 
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.GetLocksForPair(_ref.PairPerms);
     protected override string ItemName(CharaActiveRestraint item)
         => _ref.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
             ? restraint.Label : "None";

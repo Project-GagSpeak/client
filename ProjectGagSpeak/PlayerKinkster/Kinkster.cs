@@ -56,15 +56,15 @@ public class Kinkster : IComparable<Kinkster>
     // Latest cached data for this pair.
     private PairHandler? CachedPlayer { get; set; }
 
-    public CharaIPCData LastIpcData { get; set; } = new();
-    public CharaActiveGags LastGagData { get; set; } = new();
-    public CharaActiveRestrictions LastRestrictionsData { get; set; } = new();
-    public CharaActiveRestraint LastRestraintData { get; set; } = new();
+    public CharaIPCData LastIpcData { get; set; } = new CharaIPCData();
+    public CharaActiveGags LastGagData { get; set; } = new CharaActiveGags();
+    public CharaActiveRestrictions LastRestrictionsData { get; set; } = new CharaActiveRestrictions();
+    public CharaActiveRestraint LastRestraintData { get; set; } = new CharaActiveRestraint();
     public List<Guid> ActiveCursedItems { get; set; } = new();
-    public AliasStorage LastGlobalAliasData { get; set; } = new();
-    public NamedAliasStorage LastPairAliasData { get; set; } = new();
-    public CharaToyboxData LastToyboxData { get; set; } = new();
-    public CharaLightStorageData LastLightStorage { get; set; } = new();
+    public AliasStorage LastGlobalAliasData { get; set; } = new AliasStorage();
+    public NamedAliasStorage LastPairAliasData { get; set; } = new NamedAliasStorage();
+    public CharaToyboxData LastToyboxData { get; set; } = new CharaToyboxData();
+    public CharaLightStorageData LastLightStorage { get; set; } = new CharaLightStorageData();
 
     // Most of these attributes should be self explanatory, but they are public methods you can fetch from the pair manager.
     public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _OnlineKinkster != null;

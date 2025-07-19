@@ -479,54 +479,54 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderAudio, UiFontService.UidFont);
 
-        if (CkGuiUtils.EnumCombo("##AudioType", 150f, _mainConfig.Current.AudioOutputType, out var newVal, defaultText: "Select Audio Type.."))
-        {
-            _mainConfig.Current.AudioOutputType = newVal;
-            _mainConfig.Save();
-            AudioSystem.InitializeOutputDevice(newVal, _mainConfig.GetDefaultAudioDevice());
-        }
+        //if (CkGuiUtils.EnumCombo("##AudioType", 150f, _mainConfig.Current.AudioOutputType, out var newVal, defaultText: "Select Audio Type.."))
+        //{
+        //    _mainConfig.Current.AudioOutputType = newVal;
+        //    _mainConfig.Save();
+        //    AudioSystem.InitializeOutputDevice(newVal, _mainConfig.GetDefaultAudioDevice());
+        //}
 
-        // the Dropdown based on the type.
-        switch (_mainConfig.Current.AudioOutputType)
-        {
-            case OutputType.DirectSound:
-                if (CkGuiUtils.GuidCombo("##DirectOutDevice", 150f, _mainConfig.Current.DirectOutDevice, out var newDirectDevice, AudioSystem.DirectSoundAudioDevices.Keys,
-                    d => AudioSystem.DirectSoundAudioDevices.GetValueOrDefault(d, "Unknown Device"), defaultText: "Select Device.."))
-                {
-                    _mainConfig.Current.DirectOutDevice = newDirectDevice;
-                    _mainConfig.Save();
-                    AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, newDirectDevice.ToString());
-                }
-                break;
+        //// the Dropdown based on the type.
+        //switch (_mainConfig.Current.AudioOutputType)
+        //{
+        //    case OutputType.DirectSound:
+        //        if (CkGuiUtils.GuidCombo("##DirectOutDevice", 150f, _mainConfig.Current.DirectOutDevice, out var newDirectDevice, AudioSystem.DirectSoundAudioDevices.Keys,
+        //            d => AudioSystem.DirectSoundAudioDevices.GetValueOrDefault(d, "Unknown Device"), defaultText: "Select Device.."))
+        //        {
+        //            _mainConfig.Current.DirectOutDevice = newDirectDevice;
+        //            _mainConfig.Save();
+        //            AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, newDirectDevice.ToString());
+        //        }
+        //        break;
 
-            case OutputType.Asio:
-                if (CkGuiUtils.StringCombo("##AsioDevice", 150f, _mainConfig.Current.AsioDevice, out var newAsioDevice, AudioSystem.AsioAudioDevices, "Select ASIO Device.."))
-                {
-                    _mainConfig.Current.AsioDevice = newAsioDevice;
-                    _mainConfig.Save();
-                    AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, newAsioDevice);
-                }
-                break;
+        //    case OutputType.Asio:
+        //        if (CkGuiUtils.StringCombo("##AsioDevice", 150f, _mainConfig.Current.AsioDevice, out var newAsioDevice, AudioSystem.AsioAudioDevices, "Select ASIO Device.."))
+        //        {
+        //            _mainConfig.Current.AsioDevice = newAsioDevice;
+        //            _mainConfig.Save();
+        //            AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, newAsioDevice);
+        //        }
+        //        break;
 
-            case OutputType.Wasapi:
-                var deviceId = AudioSystem.WasapiAudioDevices.GetValueOrDefault(_mainConfig.Current.WasapiDevice, string.Empty);
-                if (CkGuiUtils.StringCombo("##WasapiDevice", 150f, deviceId, out var newWasapiDevice, AudioSystem.WasapiAudioDevices.Values, "Select WASAPI Device.."))
-                {
-                    // we got the value so we need to get its corrisponding key.
-                    var finalDeviceId = AudioSystem.WasapiAudioDevices.FirstOrDefault(x => x.Value == newWasapiDevice).Key;
-                    _mainConfig.Current.WasapiDevice = finalDeviceId;
-                    _mainConfig.Save();
-                    AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, finalDeviceId);
-                }
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+        //    case OutputType.Wasapi:
+        //        var deviceId = AudioSystem.WasapiAudioDevices.GetValueOrDefault(_mainConfig.Current.WasapiDevice, string.Empty);
+        //        if (CkGuiUtils.StringCombo("##WasapiDevice", 150f, deviceId, out var newWasapiDevice, AudioSystem.WasapiAudioDevices.Values, "Select WASAPI Device.."))
+        //        {
+        //            // we got the value so we need to get its corrisponding key.
+        //            var finalDeviceId = AudioSystem.WasapiAudioDevices.FirstOrDefault(x => x.Value == newWasapiDevice).Key;
+        //            _mainConfig.Current.WasapiDevice = finalDeviceId;
+        //            _mainConfig.Save();
+        //            AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, finalDeviceId);
+        //        }
+        //        break;
+        //    default:
+        //        throw new ArgumentOutOfRangeException();
+        //}
 
-        if (CkGui.IconTextButton(FAI.Sync, "Refresh audio devices", disabled: UiService.DisableUI))
-            AudioSystem.FetchLatestAudioDevices();
-        CkGui.AttachToolTip("Refreshes the list of audio devices available for selection.\n" +
-                            "This is useful if you have changed your audio devices while the game was running.");
+        //if (CkGui.IconTextButton(FAI.Sync, "Refresh audio devices", disabled: UiService.DisableUI))
+        //    AudioSystem.FetchLatestAudioDevices();
+        //CkGui.AttachToolTip("Refreshes the list of audio devices available for selection.\n" +
+        //                    "This is useful if you have changed your audio devices while the game was running.");
 
         ImGui.InputTextWithHint("##VfxPathFileLabel", "Vfx Path In Audio Folder", ref _currentVfxPath, 300, ITFlags.EnterReturnsTrue);
 

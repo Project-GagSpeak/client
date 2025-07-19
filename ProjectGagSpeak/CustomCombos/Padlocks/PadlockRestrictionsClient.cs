@@ -11,16 +11,11 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     private readonly GagspeakMediator _mediator;
     private readonly RestrictionManager _manager;
     public PadlockRestrictionsClient(ILogger log, GagspeakMediator mediator, RestrictionManager manager)
-        : base(() => manager.ServerRestrictionData?.Restrictions ?? [], log)
+        : base(() => manager.ServerRestrictionData?.Restrictions ?? [], PadlockEx.ClientLocks, log)
     {
         _mediator = mediator;
         _manager = manager;
     }
-
-    public int ItemCount => Items.Count;
-
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.ClientLocks;
 
     protected override string ItemName(ActiveRestriction item)
         => _manager.Storage.TryGetRestriction(item.Identifier, out var restriction) ? restriction.Label : "None";

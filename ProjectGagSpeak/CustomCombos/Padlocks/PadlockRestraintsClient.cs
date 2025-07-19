@@ -12,14 +12,11 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     private readonly GagspeakMediator _mediator;
     private readonly RestraintManager _manager;
     public PadlockRestraintsClient(ILogger log, GagspeakMediator mediator, RestraintManager manager)
-        : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], log)
+        : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], PadlockEx.ClientLocks, log)
     {
         _mediator = mediator;
         _manager = manager;
     }
-
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.ClientLocks;
 
     protected override string ItemName(CharaActiveRestraint item)
         => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";

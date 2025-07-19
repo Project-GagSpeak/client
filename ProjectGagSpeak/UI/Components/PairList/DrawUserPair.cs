@@ -153,7 +153,7 @@ public class DrawUserPair
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Cog))
         {
-            if (Pair != null) _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.PermsForKinkster));
+            _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.PermsForKinkster));
         }
         CkGui.AttachToolTip($"Set your Permissions for {_pair.UserData.AliasOrUID}");
 

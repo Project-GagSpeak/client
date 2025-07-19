@@ -20,7 +20,6 @@ namespace GagSpeak.CustomCombos;
 public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 {
     protected readonly ILogger Log;
-    private readonly HashSet<uint> _popupState = [];
 
     public readonly IReadOnlyList<T> Items;
 
@@ -32,19 +31,25 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     protected string Timer = string.Empty;
 
     public Padlocks SelectedLock { get; protected set; } = Padlocks.None;
-    protected CkPadlockComboBase(IEnumerable<T> items, ILogger log)
+    protected CkPadlockComboBase(IEnumerable<T> items, IEnumerable<Padlocks> padlocks, ILogger log)
     {
         Log = log;
         Items = new TemporaryList<T>(items);
-        ComboPadlocks = new TemporaryList<Padlocks>(ExtractPadlocks());
-
+        ComboPadlocks = new TemporaryList<Padlocks>(padlocks);
     }
 
-    protected CkPadlockComboBase(Func<IReadOnlyList<T>> generator, ILogger log)
+    protected CkPadlockComboBase(Func<IReadOnlyList<T>> itemGen, IEnumerable<Padlocks> padlocks, ILogger log)
     {
         Log = log;
-        Items = new LazyList<T>(generator);
-        ComboPadlocks = new TemporaryList<Padlocks>(ExtractPadlocks());
+        Items = new LazyList<T>(itemGen);
+        ComboPadlocks = new TemporaryList<Padlocks>(padlocks);
+    }
+
+    protected CkPadlockComboBase(Func<IReadOnlyList<T>> itemGen, Func<IReadOnlyList<Padlocks>> padlockGen, ILogger log)
+    {
+        Log = log;
+        Items = new LazyList<T>(itemGen);
+        ComboPadlocks = new LazyList<Padlocks>(padlockGen);
     }
 
     public void ResetSelection()
@@ -65,9 +70,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     protected abstract bool DisableCondition(int layerIdx);
 
-    // we run this here so that we can get the specific padlocks we have access to.
-    // This is ok because it is only a small list being made.
-    protected abstract IEnumerable<Padlocks> ExtractPadlocks();
     protected virtual string ItemName(T item) => item.ToString() ?? string.Empty;
 
     /// <summary> The logic that occurs when the lock button is pressed. </summary>

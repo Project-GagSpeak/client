@@ -115,16 +115,16 @@ public class MainConfig : IHybridSavable
     [JsonIgnore] internal static TextEntryNode LastSelectedListNode { get; set; } = new();
 
     #region Hardcore & Helpers
-    public string GetDefaultAudioDevice()
-    {
-        return Current.AudioOutputType switch
-        {
-            OutputType.DirectSound => Current.DirectOutDevice.ToString(),
-            OutputType.Asio => Current.AsioDevice,
-            OutputType.Wasapi => Current.WasapiDevice,
-            _ => throw new NotSupportedException("Unsupported audio output type.")
-        };
-    }
+    //public string GetDefaultAudioDevice()
+    //{
+    //    return Current.AudioOutputType switch
+    //    {
+    //        OutputType.DirectSound => Current.DirectOutDevice.ToString(),
+    //        OutputType.Asio => Current.AsioDevice,
+    //        OutputType.Wasapi => Current.WasapiDevice,
+    //        _ => throw new NotSupportedException("Unsupported audio output type.")
+    //    };
+    //}
 
     public static IEnumerable<ITextNode> GetAllNodes()
     {

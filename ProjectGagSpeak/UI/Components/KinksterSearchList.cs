@@ -36,9 +36,9 @@ public class KinksterSearchList
         _cosmetics = cosmetics;
     }
 
-    public virtual void DrawSearch(string id, string hint = "Search for Kinksters", uint len = 128, float buttonWidth = 0f, Action? buttons = null)
+    public virtual void DrawSearch(string id, string hint = "Search for Kinksters", uint len = 128)
     {
-        if (FancySearchBar.Draw(id, ImGui.GetContentRegionAvail().X, hint, ref _searchValue, len, buttonWidth, buttons))
+        if (FancySearchBar.Draw(id, ImGui.GetContentRegionAvail().X, hint, ref _searchValue, len))
             UpdateList();
     }
     

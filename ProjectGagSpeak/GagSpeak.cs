@@ -460,7 +460,10 @@ public static class GagSpeakServiceExtensions
         .AddScoped<AchievementTabs>()
 
         // StickyWindow
+        .AddScoped<WindowMediatorSubscriberBase, KinksterInteractionsUI>()
         .AddScoped<PresetLogicDrawer>()
+        .AddScoped<ClientPermsForKinkster>()
+        .AddScoped<KinksterPermsForClient>()
 
         // Scoped Migrations
         .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()

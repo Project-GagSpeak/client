@@ -11,15 +11,13 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster kinkster)
-        : base(() => [ ..kinkster.LastRestrictionsData.Restrictions ], log)
+    public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+        : base(() => [..k.LastRestrictionsData.Restrictions], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
-        _ref = kinkster;
+        _ref = k;
     }
 
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.GetLocksForPair(_ref.PairPerms);
     protected override string ItemName(ActiveRestriction item)
         => _ref.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
             ? restriction.Label : "None";

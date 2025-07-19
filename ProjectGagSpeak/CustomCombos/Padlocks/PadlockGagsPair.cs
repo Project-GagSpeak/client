@@ -12,15 +12,13 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster kinkster)
-        : base(() => [ ..kinkster.LastGagData.GagSlots ], log)
+    public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+        : base(() => [ .. k.LastGagData.GagSlots ], () => [ ..PadlockEx.GetLocksForPair(k.PairPerms) ], log)
     {
         _mainHub = hub;
-        _ref = kinkster;
+        _ref = k;
     }
 
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.GetLocksForPair(_ref.PairPerms);
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
     

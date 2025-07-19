@@ -14,13 +14,10 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly GagspeakMediator _mediator;
     public PadlockGagsClient(ILogger log, GagspeakMediator mediator, GagRestrictionManager manager)
-        : base(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ], log)
+        : base(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ], PadlockEx.ClientLocks, log)
     {
         _mediator = mediator;
     }
-
-    protected override IEnumerable<Padlocks> ExtractPadlocks()
-        => PadlockEx.ClientLocks;
 
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();

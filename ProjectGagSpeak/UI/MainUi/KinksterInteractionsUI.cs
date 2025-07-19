@@ -111,6 +111,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
     private void UpdateWindow(Kinkster kinkster, InteractionsTab type)
     {
+        _logger.LogInformation($"Updating Sticky UI for {kinkster.GetNickAliasOrUid()} with type {type}.");
         // if this is not 0 it means they do not have the same UID and are different.
         if (kinkster.CompareTo(_kinkster) != 0)
             SetWindowForKinkster(kinkster);
@@ -118,6 +119,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         // After setting the window for the Kinkster, we need to make sure the main window is opened.
         Mediator.Publish(new UiToggleMessage(typeof(MainUI), ToggleType.Show));
         _mainTabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
+        _openTab = type;
         IsOpen = true;
     }
 
@@ -126,25 +128,25 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _kinkster = kinkster;
         _selections = new StickyWindowSelections();
 
-        _pairGags = new PairGagCombo(_logger, _hub, kinkster);
-        _pairGagPadlocks = new PairGagPadlockCombo(_logger, _hub, kinkster);
-        _pairRestrictionItems = new PairRestrictionCombo(_logger, _hub, kinkster);
-        _pairRestrictionPadlocks = new PairRestrictionPadlockCombo(_logger, _hub, kinkster);
-        _pairRestraintSets = new PairRestraintCombo(_logger, _hub, kinkster);
-        _pairRestraintSetPadlocks = new PairRestraintPadlockCombo(_logger, _hub, kinkster);
-        _pairMoodleStatuses = new PairMoodleStatusCombo(_logger, _hub, kinkster, 1.3f);
-        _pairMoodlePresets = new PairMoodlePresetCombo(_logger, _hub, kinkster, 1.3f);
-        _pairPatterns = new PairPatternCombo(_logger, _hub, kinkster);
-        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, kinkster);
-        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, kinkster);
-        _moodleStatuses = new OwnMoodleStatusToPairCombo(_logger, _hub, kinkster, 1.3f);
-        _moodlePresets = new OwnMoodlePresetToPairCombo(_logger, _hub, kinkster, 1.3f);
-        _activePairStatusCombo = new PairMoodleStatusCombo(_logger, _hub, kinkster, 1.3f,
-            () => [ .. kinkster.LastIpcData.DataInfo.Values.OrderBy(x => x.Title)
+        _pairGags = new PairGagCombo(_logger, _hub, _kinkster);
+        _pairGagPadlocks = new PairGagPadlockCombo(_logger, _hub, _kinkster);
+        _pairRestrictionItems = new PairRestrictionCombo(_logger, _hub, _kinkster);
+        _pairRestrictionPadlocks = new PairRestrictionPadlockCombo(_logger, _hub, _kinkster);
+        _pairRestraintSets = new PairRestraintCombo(_logger, _hub, _kinkster);
+        _pairRestraintSetPadlocks = new PairRestraintPadlockCombo(_logger, _hub, _kinkster);
+        _pairMoodleStatuses = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f);
+        _pairMoodlePresets = new PairMoodlePresetCombo(_logger, _hub, _kinkster, 1.3f);
+        _pairPatterns = new PairPatternCombo(_logger, _hub, _kinkster);
+        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, _kinkster);
+        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, _kinkster);
+        _moodleStatuses = new OwnMoodleStatusToPairCombo(_logger, _hub, _kinkster, 1.3f);
+        _moodlePresets = new OwnMoodlePresetToPairCombo(_logger, _hub, _kinkster, 1.3f);
+        _activePairStatusCombo = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f,
+            () => [ .. _kinkster.LastIpcData.DataInfo.Values.OrderBy(x => x.Title)
         ]);
 
         _emoteCombo = new EmoteCombo(_logger, 1.3f, () => [
-            ..kinkster.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
+            .._kinkster.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
         ]);
     }
 
@@ -169,11 +171,14 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         var width = ImGui.GetContentRegionAvail().X;
-        using var _ = CkRaii.Child("##KinksterInteractions", new Vector2(0, ImGui.GetContentRegionAvail().Y));
+        using var _ = CkRaii.Child("##KinksterInteractions", ImGui.GetContentRegionAvail());
 
         // if the pair is not valid dont draw anything after this.
         if (_kinkster is null)
+        {
+            CkGui.ColorTextCentered("Kinkster is null!", ImGuiColors.DalamudRed);
             return;
+        }
 
         if (_openTab is InteractionsTab.KinkstersPerms)
             _kinksterPerms.DrawPermissions(_kinkster, width);
@@ -189,7 +194,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var dispName = _kinkster!.GetNickAliasOrUid();
         DrawCommon(k, width, dispName);
 
-        if (_kinkster!.IsOnline)
+        if (k.IsOnline)
         {
             DrawGagActions(k, width, dispName);
             DrawRestrictionActions(k, width, dispName);
@@ -202,8 +207,8 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         ImGui.TextUnformatted("Individual Pair Functions");
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
-            _hub.UserRemoveKinkster(new(_kinkster!.UserData)).ConfigureAwait(false);
-        CkGui.AttachToolTip("--COL--CTRL + SHIFT + L-Click--COL-- to remove kinkster " + _kinkster.GetNickAliasOrUid(), color: ImGuiColors.DalamudRed);
+            _hub.UserRemoveKinkster(new(k.UserData)).ConfigureAwait(false);
+        CkGui.AttachToolTip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);
     }
 
     private void DrawCommon(Kinkster k, float width, string dispName)

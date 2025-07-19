@@ -81,7 +81,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _remotes = remotes;
         _iconTextures = iconTextures;
 
-        IsOpen = true;
+        // IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
 
