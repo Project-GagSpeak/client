@@ -113,7 +113,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
             Logger.LogDebug("OWN SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
             PerformPermissionChange(dto);
         }
-        else if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } pair)
+        else if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID) is { } pair)
         {
             Logger.LogDebug("OWN SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
             PerformPermissionChange(dto, pair);
@@ -127,8 +127,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     public void ExecutePiShockAction(ShockCollarAction dto)
     {
         // figure out who sent the command, and see if we have a unique sharecode setup for them.
-        var pairMatch = _pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID);
-        if (pairMatch != null)
+        if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } enactor)
         {
             var interactionType = dto.OpCode switch
             {
@@ -140,18 +139,18 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
             var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
             Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
 
-            if (!pairMatch.OwnPerms.PiShockShareCode.IsNullOrEmpty())
+            if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
             {
                 Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                _shockies.ExecuteOperation(pairMatch.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
+                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                _shockies.ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
                 if (dto.OpCode is 0)
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
             }
             else if (_perms is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
             {
                 Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(pairMatch.GetNickAliasOrUid(), pairMatch.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
                 _shockies.ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
                 if (dto.OpCode is 0)
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
