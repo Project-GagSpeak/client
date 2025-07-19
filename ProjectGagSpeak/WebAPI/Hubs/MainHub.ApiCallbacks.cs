@@ -224,6 +224,7 @@ public partial class MainHub
         // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
         {
+            Logger.LogDebug("OWN Callback_SingleChangeGlobal: " + dto, LoggerType.Callbacks);
             Generic.Safe(() => _globalPerms.SingleGlobalPermissionChange(dto));
             return Task.CompletedTask;
         }

@@ -7,6 +7,7 @@ public enum SPPID : byte
 {
     ChatGarblerActive,
     ChatGarblerLocked,
+    GaggedNameplate, // maybe remove but im not sure.
 
     PermanentLocks,
     OwnerLocks,
@@ -28,9 +29,13 @@ public enum SPPID : byte
 
     RestraintSetVisuals,
     ApplyRestraintSets,
+    ApplyLayers,
+    ApplyLayersWhileLocked,
     LockRestraintSets,
     MaxRestraintTime,
     UnlockRestraintSets,
+    RemoveLayers,
+    RemoveLayersWhileLocked,
     RemoveRestraintSets,
 
     PuppetPermSit,
@@ -47,7 +52,6 @@ public enum SPPID : byte
     PermanentMoodles,
     RemoveMoodles,
 
-    ToyControl,
     PatternStarting,
     PatternStopping,
     AlarmToggling,
@@ -97,9 +101,13 @@ public static class SPPIDExtensions
 
             SPPID.RestraintSetVisuals   => (nameof(GlobalPerms.RestraintSetVisuals),          PermissionType.Global),
             SPPID.ApplyRestraintSets    => (nameof(PairPerms.ApplyRestraintSets),             PermissionType.PairPerm),
+            SPPID.ApplyLayers           => (nameof(PairPerms.ApplyLayers),                    PermissionType.PairPerm),
+            SPPID.ApplyLayersWhileLocked => (nameof(PairPerms.ApplyLayersWhileLocked),        PermissionType.PairPerm),
             SPPID.LockRestraintSets     => (nameof(PairPerms.LockRestraintSets),              PermissionType.PairPerm),
             SPPID.MaxRestraintTime      => (nameof(PairPerms.MaxRestraintTime),               PermissionType.PairPerm),
             SPPID.UnlockRestraintSets   => (nameof(PairPerms.UnlockRestraintSets),            PermissionType.PairPerm),
+            SPPID.RemoveLayers          => (nameof(PairPerms.RemoveLayers),                   PermissionType.PairPerm),
+            SPPID.RemoveLayersWhileLocked => (nameof(PairPerms.RemoveLayersWhileLocked),     PermissionType.PairPerm),
             SPPID.RemoveRestraintSets   => (nameof(PairPerms.RemoveRestraintSets),            PermissionType.PairPerm),
 
             SPPID.PuppetPermSit         => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),
@@ -115,11 +123,12 @@ public static class SPPIDExtensions
             SPPID.MaxMoodleTime         => (nameof(PairPerms.MaxMoodleTime),                  PermissionType.PairPerm),
             SPPID.RemoveMoodles         => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
 
-            SPPID.ToyControl            => (nameof(PairPerms.RemoteControlAccess),            PermissionType.PairPerm),
             SPPID.PatternStarting       => (nameof(PairPerms.ExecutePatterns),                PermissionType.PairPerm),
             SPPID.PatternStopping       => (nameof(PairPerms.StopPatterns),                   PermissionType.PairPerm),
             SPPID.AlarmToggling         => (nameof(PairPerms.ToggleAlarms),                   PermissionType.PairPerm),
             SPPID.TriggerToggling       => (nameof(PairPerms.ToggleTriggers),                 PermissionType.PairPerm),
+
+            SPPID.HypnoticEffect        => (nameof(PairPerms.HypnoEffectSending),             PermissionType.PairPerm),
 
             SPPID.HardcoreModeState     => (nameof(PairPerms.InHardcore),                     PermissionType.PairPerm),
             SPPID.PairLockedStates      => (nameof(PairPerms.PairLockedStates),               PermissionType.PairPerm),
@@ -141,31 +150,42 @@ public static class SPPIDExtensions
         {
             SPPID.ChatGarblerActive     => nameof(PairPermAccess.ChatGarblerActiveAllowed),
             SPPID.ChatGarblerLocked     => nameof(PairPermAccess.ChatGarblerLockedAllowed),
+            SPPID.GaggedNameplate       => nameof(PairPermAccess.GaggedNameplateAllowed), // maybe remove but im not sure.
+            
             SPPID.PermanentLocks        => nameof(PairPermAccess.PermanentLocksAllowed),
             SPPID.OwnerLocks            => nameof(PairPermAccess.OwnerLocksAllowed),
             SPPID.DevotionalLocks       => nameof(PairPermAccess.DevotionalLocksAllowed),
+            
             SPPID.GagVisuals            => nameof(PairPermAccess.GagVisualsAllowed),
             SPPID.ApplyGags             => nameof(PairPermAccess.ApplyGagsAllowed),
             SPPID.LockGags              => nameof(PairPermAccess.LockGagsAllowed),
             SPPID.MaxGagTime            => nameof(PairPermAccess.MaxGagTimeAllowed),
             SPPID.UnlockGags            => nameof(PairPermAccess.UnlockGagsAllowed),
             SPPID.RemoveGags            => nameof(PairPermAccess.RemoveGagsAllowed),
+            
             SPPID.RestrictionVisuals    => nameof(PairPermAccess.RestrictionVisualsAllowed),
             SPPID.ApplyRestrictions     => nameof(PairPermAccess.ApplyRestrictionsAllowed),
             SPPID.LockRestrictions      => nameof(PairPermAccess.LockRestrictionsAllowed),
             SPPID.MaxRestrictionTime    => nameof(PairPermAccess.MaxRestrictionTimeAllowed),
             SPPID.UnlockRestrictions    => nameof(PairPermAccess.UnlockRestrictionsAllowed),
             SPPID.RemoveRestrictions    => nameof(PairPermAccess.RemoveRestrictionsAllowed),
+            
             SPPID.RestraintSetVisuals   => nameof(PairPermAccess.RestraintSetVisualsAllowed),
             SPPID.ApplyRestraintSets    => nameof(PairPermAccess.ApplyRestraintSetsAllowed),
+            SPPID.ApplyLayers           => nameof(PairPermAccess.ApplyLayersAllowed),
+            SPPID.ApplyLayersWhileLocked => nameof(PairPermAccess.ApplyLayersWhileLockedAllowed),
             SPPID.LockRestraintSets     => nameof(PairPermAccess.LockRestraintSetsAllowed),
             SPPID.MaxRestraintTime      => nameof(PairPermAccess.MaxRestraintTimeAllowed),
             SPPID.UnlockRestraintSets   => nameof(PairPermAccess.UnlockRestraintSetsAllowed),
+            SPPID.RemoveLayers          => nameof(PairPermAccess.RemoveLayersAllowed),
+            SPPID.RemoveLayersWhileLocked => nameof(PairPermAccess.RemoveLayersWhileLockedAllowed),
             SPPID.RemoveRestraintSets   => nameof(PairPermAccess.RemoveRestraintSetsAllowed),
+            
             SPPID.PuppetPermSit         => nameof(PairPermAccess.PuppetPermsAllowed),
             SPPID.PuppetPermEmote       => nameof(PairPermAccess.PuppetPermsAllowed),
             SPPID.PuppetPermAlias       => nameof(PairPermAccess.PuppetPermsAllowed),
             SPPID.PuppetPermAll         => nameof(PairPermAccess.PuppetPermsAllowed),
+            
             SPPID.ApplyPositive         => nameof(PairPermAccess.MoodlePermsAllowed),
             SPPID.ApplyNegative         => nameof(PairPermAccess.MoodlePermsAllowed),
             SPPID.ApplySpecial          => nameof(PairPermAccess.MoodlePermsAllowed),
@@ -174,7 +194,7 @@ public static class SPPIDExtensions
             SPPID.MaxMoodleTime         => nameof(PairPermAccess.MaxMoodleTimeAllowed),
             SPPID.PermanentMoodles      => nameof(PairPermAccess.MoodlePermsAllowed),
             SPPID.RemoveMoodles         => nameof(PairPermAccess.MoodlePermsAllowed),
-            SPPID.ToyControl            => nameof(PairPermAccess.RemoteControlAccessAllowed),
+
             SPPID.PatternStarting       => nameof(PairPermAccess.ExecutePatternsAllowed),
             SPPID.PatternStopping       => nameof(PairPermAccess.StopPatternsAllowed),
             SPPID.AlarmToggling         => nameof(PairPermAccess.ToggleAlarmsAllowed),

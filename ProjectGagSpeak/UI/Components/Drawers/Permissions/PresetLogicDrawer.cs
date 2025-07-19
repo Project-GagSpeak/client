@@ -246,8 +246,6 @@ public class PresetLogicDrawer
             MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(1, 30, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
         };
@@ -294,8 +292,6 @@ public class PresetLogicDrawer
             MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(3, 0, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
             ToggleAlarms = true,
@@ -343,8 +339,6 @@ public class PresetLogicDrawer
             | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles | MoodlePerms.RemovingMoodles,
             MaxMoodleTime = new TimeSpan(12, 0, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
             ToggleAlarms = true,
@@ -396,8 +390,6 @@ public class PresetLogicDrawer
             MoodlePerms = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(1, 30, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
             ToggleAlarms = true,
@@ -440,10 +432,7 @@ public class PresetLogicDrawer
             MoodlePermsAllowed = MoodlePerms.PositiveStatusTypes | MoodlePerms.NegativeStatusTypes | MoodlePerms.SpecialStatusTypes
             | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
 
-            LockToyboxUIAllowed = true,
             SpatialAudioAllowed = true,
-            ToggleToyStateAllowed = true,
-            RemoteControlAccessAllowed = true,
             ExecutePatternsAllowed = true,
             StopPatternsAllowed = true,
         };
@@ -491,8 +480,6 @@ public class PresetLogicDrawer
             | MoodlePerms.PairCanApplyYourMoodlesToYou,
             MaxMoodleTime = new TimeSpan(3, 0, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
             ToggleAlarms = true,
@@ -545,11 +532,7 @@ public class PresetLogicDrawer
             | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
             MaxMoodleTimeAllowed = false,
 
-            ToyboxEnabledAllowed = true,
-            LockToyboxUIAllowed = true,
             SpatialAudioAllowed = true,
-            ToggleToyStateAllowed = true,
-            RemoteControlAccessAllowed = true,
             ExecutePatternsAllowed = true,
             StopPatternsAllowed = true,
             ToggleAlarmsAllowed = true,
@@ -599,8 +582,6 @@ public class PresetLogicDrawer
             | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles | MoodlePerms.RemovingMoodles,
             MaxMoodleTime = new TimeSpan(12, 0, 0),
 
-            ToggleToyState = true,
-            RemoteControlAccess = true,
             ExecutePatterns = true,
             StopPatterns = true,
             ToggleAlarms = true,
@@ -656,11 +637,7 @@ public class PresetLogicDrawer
             | MoodlePerms.PairCanApplyTheirMoodlesToYou | MoodlePerms.PairCanApplyYourMoodlesToYou | MoodlePerms.PermanentMoodles,
             MaxMoodleTimeAllowed = true,
 
-            ToyboxEnabledAllowed = true,
-            LockToyboxUIAllowed = true,
             SpatialAudioAllowed = true,
-            ToggleToyStateAllowed = true,
-            RemoteControlAccessAllowed = true,
             ExecutePatternsAllowed = true,
             StopPatternsAllowed = true,
             ToggleAlarmsAllowed = true,

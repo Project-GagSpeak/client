@@ -452,10 +452,14 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         var applyText = "Apply Restraint Set";
         var applyTT = $"Applies a Restraint Set to {dispName}.";
+        var applyLayerText = "Apply Restraint Layer";
+        var applyLayerTT = $"Applies a Restraint Layer to {dispName}'s Restraint Set.";
         var lockText = hasPadlock ? "Lock Restraint Set" : $"Locked with a {k.LastRestraintData.Padlock.ToName()}.";
         var lockTT = hasPadlock ? $"Set is currently locked with a {k.LastRestraintData.Padlock.ToName()}." : $"Locks the active Restraint Set on {dispName}.";
         var unlockText = $"Unlock {dispName}'s Restraint Set.";
         var unlockTT = $"Unlock {dispName}'s Restriction.";
+        var removeLayerText = $"Remove a Restraint Layer.";
+        var removeLayerTT = $"Remove a Restraint Layer from {dispName}'s Restraint Set.";
         var removeText = $"Remove {dispName}'s Restraint Set.";
         var removeTT = $"Remove {dispName}'s Restriction.";
 
@@ -469,6 +473,20 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         {
             using (ImRaii.Child("SetApplyChild", new Vector2(width, ImGui.GetFrameHeight())))
                 _pairRestrictionItems.DrawComboButton("##PairApplyRestraint", width, -1, "Apply", applyTT);
+            ImGui.Separator();
+        }
+
+        // Expander for ApplyRestraintLayer
+        var canOpen = hasItem && (hasPadlock ? k.PairPerms.ApplyLayersWhileLocked : k.PairPerms.ApplyLayers); 
+        if (CkGui.IconTextButton(FAI.LayerGroup, applyLayerText, width, true, !canOpen))
+            _selections.OpenOrClose(InteractionType.ApplyRestraintLayers);
+        CkGui.AttachToolTip(applyLayerTT);
+
+        // Interaction Window for ApplyRestraintLayer
+        if (_selections.OpenInteraction is InteractionType.ApplyRestraintLayers)
+        {
+            using (ImRaii.Child("SetApplyLayerChild", new Vector2(width, ImGui.GetFrameHeight())))
+                CkGui.ColorText("Logic for layer editing has yet to be implemented for paired kinksters!", ImGuiColors.DalamudRed);
             ImGui.Separator();
         }
 
@@ -501,6 +519,20 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         {
             using (ImRaii.Child("SetUnlockChild", new Vector2(width, _pairRestraintSetPadlocks.PadlockUnlockWindowHeight(0))))
                 _pairRestraintSetPadlocks.DrawUnlockCombo("PairUnlockRestraint", width, 0, unlockText, unlockTT);
+            ImGui.Separator();
+        }
+
+        // Expander for RemoveRestraintLayer
+        var canOpenLayerRemove = hasItem && (hasPadlock ? k.PairPerms.RemoveLayersWhileLocked : k.PairPerms.RemoveLayers);
+        if (CkGui.IconTextButton(FAI.LayerGroup, removeLayerText, width, true, !canOpenLayerRemove))
+            _selections.OpenOrClose(InteractionType.RemoveRestraintLayers);
+        CkGui.AttachToolTip(removeLayerTT);
+
+        // Interaction Window for ApplyRestraintLayer
+        if (_selections.OpenInteraction is InteractionType.RemoveRestraintLayers)
+        {
+            using (ImRaii.Child("SetRemoveLayerChild", new Vector2(width, ImGui.GetFrameHeight())))
+                CkGui.ColorText("Logic for layer editing has yet to be implemented for paired kinksters!", ImGuiColors.DalamudRed);
             ImGui.Separator();
         }
 
@@ -613,12 +645,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private void DrawToyboxActions(Kinkster k, float width, string dispName)
     {
         ImGui.TextUnformatted("Toybox Actions");
-
-        // Probably rework this once we figure more of this stuff out.
-        if (CkGui.IconTextButton(FAI.Mobile, $"Toggle {dispName}'s SexToys", width, true, !k.PairPerms.ToggleToyState))
-            _logger.LogDebug("Would be focibly controlling the toy state here!");
-        CkGui.AttachToolTip($"Forcibly Turn On/Off {dispName}'s connected SexToys");
-
 
         // Pattern Execution
         if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || k.PairGlobals.InVibeRoom || !k.LastLightStorage.Patterns.Any()))

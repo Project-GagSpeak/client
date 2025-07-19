@@ -248,11 +248,15 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Unlock Restrictions", perms.UnlockRestrictions);
         DrawPermissionRowBool("Remove Restrictions", perms.RemoveRestrictions);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Apply Restriction Sets", perms.ApplyRestraintSets);
-        DrawPermissionRowBool("Lock Restriction Sets", perms.LockRestraintSets);
-        DrawPermissionRowString("Max Restriction Lock Time", perms.MaxRestrictionTime.ToString());
-        DrawPermissionRowBool("Unlock Restriction Sets", perms.UnlockRestraintSets);
-        DrawPermissionRowBool("Remove Restriction Sets", perms.RemoveRestraintSets);
+        DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSets);
+        DrawPermissionRowBool("Apply Restraint Layers", perms.ApplyLayers);
+        DrawPermissionRowBool("Apply Layers while locked", perms.ApplyLayersWhileLocked);
+        DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSets);
+        DrawPermissionRowString("Max Restraint Set Lock Time", perms.MaxRestraintTime.ToString());
+        DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSets);
+        DrawPermissionRowBool("Remove Restraint Layers", perms.RemoveLayers);
+        DrawPermissionRowBool("Remove Layers while locked", perms.RemoveLayersWhileLocked);
+        DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSets);
         ImGui.TableNextRow();
         DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
         DrawPermissionRowString("Start Char", perms.StartChar.ToString());
@@ -271,7 +275,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Allow Permanent Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
         DrawPermissionRowBool("Allow Removing Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.RemoteControlAccess);
         DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatterns);
         DrawPermissionRowBool("Can Stop Patterns", perms.StopPatterns);
         DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarms);
@@ -370,11 +373,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
 
         // Toybox Permissions
-        DrawPermissionRowBool("Toybox Enabled", perms.ToyboxEnabledAllowed);
-        DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUIAllowed);
         DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
-        DrawPermissionRowBool("Can Toggle Toy State", perms.ToggleToyStateAllowed);
-        DrawPermissionRowBool("Can Use Vibe Remote", perms.RemoteControlAccessAllowed);
         DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatternsAllowed);
         DrawPermissionRowBool("Can Stop Patterns", perms.StopPatternsAllowed);
         DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
